@@ -1,0 +1,158 @@
+{
+  "common": {
+    "appName": "MyWatch",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "noResults": "No results found",
+    "seeAll": "See All",
+    "movie": "Movie",
+    "tvShow": "TV Show",
+    "movies": "Movies",
+    "tvShows": "TV Shows",
+    "all": "All"
+  },
+  "nav": {
+    "home": "Home",
+    "search": "Search",
+    "watchlist": "Watchlist",
+    "watched": "Watched",
+    "recommendations": "Recommendations",
+    "profile": "Profile",
+    "privacy": "Privacy",
+    "signIn": "Sign In",
+    "signOut": "Sign Out"
+  },
+  "home": {
+    "trending": "Trending",
+    "trendingToday": "Trending Today",
+    "trendingWeek": "Trending This Week",
+    "popular": "Popular",
+    "topRated": "Top Rated",
+    "hero": {
+      "title": "Track Your Entertainment Journey",
+      "subtitle": "Discover, track, and remember every movie and TV show you watch"
+    }
+  },
+  "search": {
+    "placeholder": "Search movies and TV shows...",
+    "searchResults": "Search Results",
+    "resultsFor": "Results for \"{{query}}\""
+  },
+  "details": {
+    "overview": "Overview",
+    "cast": "Cast",
+    "similar": "Similar Titles",
+    "recommendations": "You Might Also Like",
+    "rating": "Rating",
+    "releaseDate": "Release Date",
+    "firstAirDate": "First Air Date",
+    "runtime": "Runtime",
+    "episodes": "Episodes",
+    "seasons": "Seasons",
+    "genres": "Genres",
+    "status": "Status",
+    "minutes": "min",
+    "noOverview": "No overview available"
+  },
+  "actions": {
+    "addToWatchlist": "Add to Watchlist",
+    "removeFromWatchlist": "Remove from Watchlist",
+    "markAsWatched": "Mark as Watched",
+    "removeFromWatched": "Remove from Watched",
+    "rateTitle": "Rate",
+    "addNote": "Add Note",
+    "inWatchlist": "In Watchlist",
+    "watched": "Watched"
+  },
+  "watchlist": {
+    "title": "My Watchlist",
+    "empty": "Your watchlist is empty",
+    "emptyDesc": "Start adding movies and TV shows you want to watch!"
+  },
+  "watched": {
+    "title": "Watched",
+    "empty": "You haven't watched anything yet",
+    "emptyDesc": "Mark movies and TV shows as watched to track your viewing history"
+  },
+  "recommendations": {
+    "title": "Recommendations",
+    "subtitle": "Based on your watched titles",
+    "empty": "No recommendations yet",
+    "emptyDesc": "Watch more titles to get personalized recommendations",
+    "hideTitle": "Hide from Recommendations"
+  },
+  "profile": {
+    "title": "Profile",
+    "stats": "Your Stats",
+    "moviesWatched": "Movies Watched",
+    "showsWatched": "Shows Watched",
+    "totalWatchlist": "In Watchlist",
+    "settings": "Settings",
+    "language": "Language"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot Password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "signInWith": "Sign in with {{provider}}",
+    "orContinueWith": "Or continue with",
+    "checkEmail": "Check your email for the login link"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: {{date}}",
+    "dataCollected": "Data We Collect",
+    "dataCollectedDesc": "We collect the following information when you use MyWatch:",
+    "dataList": {
+      "email": "Email address (for authentication)",
+      "watchlist": "Your watchlist and watched items",
+      "ratings": "Your ratings and notes for titles",
+      "preferences": "Your language preferences"
+    },
+    "dataUsage": "How We Use Your Data",
+    "dataUsageDesc": "Your data is used solely to provide you with a personalized experience, including recommendations based on your viewing history.",
+    "dataSharing": "Data Sharing",
+    "dataSharingDesc": "We do not sell or share your personal data with third parties.",
+    "contact": "Contact",
+    "contactDesc": "For any privacy-related questions, please contact us."
+  },
+  "filters": {
+    "type": "Type",
+    "genre": "Genre",
+    "year": "Year",
+    "sort": "Sort By",
+    "sortOptions": {
+      "popularity": "Popularity",
+      "rating": "Rating",
+      "newest": "Newest",
+      "title": "Title"
+    }
+  },
+  "status": {
+    "watching": "Watching",
+    "completed": "Completed",
+    "dropped": "Dropped",
+    "planToWatch": "Plan to Watch"
+  },
+  "footer": {
+    "attribution": "This product uses the TMDB API but is not endorsed or certified by TMDB.",
+    "allRightsReserved": "All rights reserved."
+  },
+  "rating": {
+    "yourRating": "Your Rating",
+    "averageRating": "Average Rating",
+    "rateThis": "Rate this {{type}}",
+    "note": "Note",
+    "notePlaceholder": "Add your thoughts about this title..."
+  }
+}
