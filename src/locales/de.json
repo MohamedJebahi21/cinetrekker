@@ -1,0 +1,158 @@
+{
+  "common": {
+    "appName": "MyWatch",
+    "loading": "Wird geladen...",
+    "error": "Ein Fehler ist aufgetreten",
+    "retry": "Erneut versuchen",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "search": "Suchen",
+    "noResults": "Keine Ergebnisse gefunden",
+    "seeAll": "Alle anzeigen",
+    "movie": "Film",
+    "tvShow": "Serie",
+    "movies": "Filme",
+    "tvShows": "Serien",
+    "all": "Alle"
+  },
+  "nav": {
+    "home": "Startseite",
+    "search": "Suche",
+    "watchlist": "Merkliste",
+    "watched": "Gesehen",
+    "recommendations": "Empfehlungen",
+    "profile": "Profil",
+    "privacy": "Datenschutz",
+    "signIn": "Anmelden",
+    "signOut": "Abmelden"
+  },
+  "home": {
+    "trending": "Im Trend",
+    "trendingToday": "Heute im Trend",
+    "trendingWeek": "Diese Woche im Trend",
+    "popular": "Beliebt",
+    "topRated": "Bestbewertet",
+    "hero": {
+      "title": "Verfolge deine Unterhaltungsreise",
+      "subtitle": "Entdecke, verfolge und erinnere dich an jeden Film und jede Serie"
+    }
+  },
+  "search": {
+    "placeholder": "Filme und Serien suchen...",
+    "searchResults": "Suchergebnisse",
+    "resultsFor": "Ergebnisse für \"{{query}}\""
+  },
+  "details": {
+    "overview": "Übersicht",
+    "cast": "Besetzung",
+    "similar": "Ähnliche Titel",
+    "recommendations": "Das könnte dir auch gefallen",
+    "rating": "Bewertung",
+    "releaseDate": "Erscheinungsdatum",
+    "firstAirDate": "Erstausstrahlung",
+    "runtime": "Laufzeit",
+    "episodes": "Episoden",
+    "seasons": "Staffeln",
+    "genres": "Genres",
+    "status": "Status",
+    "minutes": "Min",
+    "noOverview": "Keine Übersicht verfügbar"
+  },
+  "actions": {
+    "addToWatchlist": "Zur Merkliste hinzufügen",
+    "removeFromWatchlist": "Von Merkliste entfernen",
+    "markAsWatched": "Als gesehen markieren",
+    "removeFromWatched": "Von Gesehen entfernen",
+    "rateTitle": "Bewerten",
+    "addNote": "Notiz hinzufügen",
+    "inWatchlist": "Auf der Merkliste",
+    "watched": "Gesehen"
+  },
+  "watchlist": {
+    "title": "Meine Merkliste",
+    "empty": "Deine Merkliste ist leer",
+    "emptyDesc": "Füge Filme und Serien hinzu, die du sehen möchtest!"
+  },
+  "watched": {
+    "title": "Gesehen",
+    "empty": "Du hast noch nichts gesehen",
+    "emptyDesc": "Markiere Filme und Serien als gesehen, um deinen Verlauf zu verfolgen"
+  },
+  "recommendations": {
+    "title": "Empfehlungen",
+    "subtitle": "Basierend auf deinen gesehenen Titeln",
+    "empty": "Noch keine Empfehlungen",
+    "emptyDesc": "Schau mehr Titel, um personalisierte Empfehlungen zu erhalten",
+    "hideTitle": "Aus Empfehlungen ausblenden"
+  },
+  "profile": {
+    "title": "Profil",
+    "stats": "Deine Statistiken",
+    "moviesWatched": "Gesehene Filme",
+    "showsWatched": "Gesehene Serien",
+    "totalWatchlist": "Auf der Merkliste",
+    "settings": "Einstellungen",
+    "language": "Sprache"
+  },
+  "auth": {
+    "signIn": "Anmelden",
+    "signUp": "Registrieren",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "forgotPassword": "Passwort vergessen?",
+    "noAccount": "Kein Konto?",
+    "hasAccount": "Bereits ein Konto?",
+    "signInWith": "Mit {{provider}} anmelden",
+    "orContinueWith": "Oder fortfahren mit",
+    "checkEmail": "Prüfe deine E-Mail für den Anmeldelink"
+  },
+  "privacy": {
+    "title": "Datenschutzerklärung",
+    "lastUpdated": "Zuletzt aktualisiert: {{date}}",
+    "dataCollected": "Erfasste Daten",
+    "dataCollectedDesc": "Wir erfassen folgende Informationen, wenn du MyWatch nutzt:",
+    "dataList": {
+      "email": "E-Mail-Adresse (zur Authentifizierung)",
+      "watchlist": "Deine Merkliste und gesehene Titel",
+      "ratings": "Deine Bewertungen und Notizen zu Titeln",
+      "preferences": "Deine Spracheinstellungen"
+    },
+    "dataUsage": "Wie wir deine Daten verwenden",
+    "dataUsageDesc": "Deine Daten werden ausschließlich verwendet, um dir ein personalisiertes Erlebnis zu bieten, einschließlich Empfehlungen basierend auf deinem Verlauf.",
+    "dataSharing": "Datenweitergabe",
+    "dataSharingDesc": "Wir verkaufen oder teilen deine persönlichen Daten nicht mit Dritten.",
+    "contact": "Kontakt",
+    "contactDesc": "Bei Fragen zum Datenschutz kontaktiere uns bitte."
+  },
+  "filters": {
+    "type": "Typ",
+    "genre": "Genre",
+    "year": "Jahr",
+    "sort": "Sortieren nach",
+    "sortOptions": {
+      "popularity": "Beliebtheit",
+      "rating": "Bewertung",
+      "newest": "Neueste",
+      "title": "Titel"
+    }
+  },
+  "status": {
+    "watching": "Schaue ich",
+    "completed": "Abgeschlossen",
+    "dropped": "Abgebrochen",
+    "planToWatch": "Geplant"
+  },
+  "footer": {
+    "attribution": "Dieses Produkt verwendet die TMDB-API, ist jedoch nicht von TMDB unterstützt oder zertifiziert.",
+    "allRightsReserved": "Alle Rechte vorbehalten."
+  },
+  "rating": {
+    "yourRating": "Deine Bewertung",
+    "averageRating": "Durchschnittsbewertung",
+    "rateThis": "Diese(n) {{type}} bewerten",
+    "note": "Notiz",
+    "notePlaceholder": "Füge deine Gedanken zu diesem Titel hinzu..."
+  }
+}
