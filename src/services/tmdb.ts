@@ -1,11 +1,6 @@
 import { Media, MediaDetails, TMDBResponse, TimeWindow, Genre } from '@/types/media';
 
-const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
-
-// For demo purposes, using a read-only API key
-// In production, this should be handled via environment variables on the backend
-const TMDB_API_KEY = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJkMmZlNjkwMzNmMGVhYjdlMGYzNTI0NDQ5NjFkMzNlMyIsIm5iZiI6MTc0NjkwMjM0OC42MjgsInN1YiI6IjY4MWYxNjNjOWQ4NzFhM2VkZDQzMjhmZCIsInNjb3BlcyI6WyJhcGlfcmVhZF9hY2Nlc3MiXSwidmVyc2lvbiI6MX0.JBIp1Y67N8ZHZeFVNDKvYdD4Cg9YKN0D0dXpCGrJk9E';
 
 export const getImageUrl = (path: string | null, size: 'w92' | 'w154' | 'w185' | 'w342' | 'w500' | 'w780' | 'original' = 'w500') => {
   if (!path) return null;
@@ -17,21 +12,31 @@ export const getBackdropUrl = (path: string | null, size: 'w300' | 'w780' | 'w12
   return `${TMDB_IMAGE_BASE}/${size}${path}`;
 };
 
-const fetchTMDB = async <T>(endpoint: string, language: string = 'en'): Promise<T> => {
-  const url = new URL(`${TMDB_BASE_URL}${endpoint}`);
-  url.searchParams.set('language', language);
-  
-  const response = await fetch(url.toString(), {
-    headers: {
-      'Authorization': `Bearer ${TMDB_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+const fetchTMDB = async <T>(endpoint: string, language: string = 'en', extraParams: Record<string, string> = {}): Promise<T> => {
+  const params = new URLSearchParams({
+    endpoint,
+    language,
+    ...extraParams,
   });
-  
+
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/tmdb-proxy?${params.toString()}`,
+    {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+
   if (!response.ok) {
-    throw new Error(`TMDB API error: ${response.status}`);
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `API error: ${response.status}`);
   }
-  
+
   return response.json();
 };
 
@@ -40,18 +45,15 @@ export const getTrending = async (mediaType: 'all' | 'movie' | 'tv' = 'all', tim
 };
 
 export const searchMulti = async (query: string, page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
-  const encoded = encodeURIComponent(query);
-  return fetchTMDB(`/search/multi?query=${encoded}&page=${page}&include_adult=false`, language);
+  return fetchTMDB(`/search/multi`, language, { query, page: page.toString() });
 };
 
 export const searchMovies = async (query: string, page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
-  const encoded = encodeURIComponent(query);
-  return fetchTMDB(`/search/movie?query=${encoded}&page=${page}&include_adult=false`, language);
+  return fetchTMDB(`/search/movie`, language, { query, page: page.toString() });
 };
 
 export const searchTV = async (query: string, page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
-  const encoded = encodeURIComponent(query);
-  return fetchTMDB(`/search/tv?query=${encoded}&page=${page}&include_adult=false`, language);
+  return fetchTMDB(`/search/tv`, language, { query, page: page.toString() });
 };
 
 export const getMovieDetails = async (id: number, language: string = 'en'): Promise<MediaDetails> => {
@@ -63,19 +65,19 @@ export const getTVDetails = async (id: number, language: string = 'en'): Promise
 };
 
 export const getPopularMovies = async (page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
-  return fetchTMDB(`/movie/popular?page=${page}`, language);
+  return fetchTMDB(`/movie/popular`, language, { page: page.toString() });
 };
 
 export const getPopularTV = async (page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
-  return fetchTMDB(`/tv/popular?page=${page}`, language);
+  return fetchTMDB(`/tv/popular`, language, { page: page.toString() });
 };
 
 export const getTopRatedMovies = async (page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
-  return fetchTMDB(`/movie/top_rated?page=${page}`, language);
+  return fetchTMDB(`/movie/top_rated`, language, { page: page.toString() });
 };
 
 export const getTopRatedTV = async (page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
-  return fetchTMDB(`/tv/top_rated?page=${page}`, language);
+  return fetchTMDB(`/tv/top_rated`, language, { page: page.toString() });
 };
 
 export const getSimilar = async (mediaType: 'movie' | 'tv', id: number, language: string = 'en'): Promise<TMDBResponse<Media>> => {
