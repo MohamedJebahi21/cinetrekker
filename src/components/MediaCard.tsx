@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Star, Bookmark, Check, Plus } from 'lucide-react';
+import { Star, Bookmark, Check, Plus, Eye, EyeOff } from 'lucide-react';
 import { Media } from '@/types/media';
 import { getImageUrl, getMediaTitle, getMediaYear, getMediaType } from '@/services/tmdb';
 import { useUserLists } from '@/contexts/UserListsContext';
@@ -15,7 +15,7 @@ interface MediaCardProps {
 
 export function MediaCard({ media, showType = true }: MediaCardProps) {
   const { t } = useTranslation();
-  const { isInWatchlist, isWatched, addToWatchlist, removeFromWatchlist } = useUserLists();
+  const { isInWatchlist, isWatched, addToWatchlist, removeFromWatchlist, addToWatched, removeFromWatched } = useUserLists();
   
   const title = getMediaTitle(media);
   const year = getMediaYear(media);
@@ -34,6 +34,16 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
       removeFromWatchlist(media.id, mediaType);
     } else {
       addToWatchlist(media.id, mediaType);
+    }
+  };
+
+  const handleWatchedClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (watched) {
+      removeFromWatched(media.id, mediaType);
+    } else {
+      addToWatched(media.id, mediaType);
     }
   };
 
@@ -81,11 +91,11 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
         )}
 
         {/* Hover Overlay with Actions */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4 gap-2">
           <Button
             variant={inWatchlist ? "secondary" : "default"}
             size="sm"
-            className="gap-2"
+            className="gap-1.5"
             onClick={handleWatchlistClick}
           >
             {inWatchlist ? (
@@ -97,6 +107,24 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
               <>
                 <Plus className="w-4 h-4" />
                 {t('actions.addToWatchlist')}
+              </>
+            )}
+          </Button>
+          <Button
+            variant={watched ? "secondary" : "outline"}
+            size="sm"
+            className="gap-1.5"
+            onClick={handleWatchedClick}
+          >
+            {watched ? (
+              <>
+                <EyeOff className="w-4 h-4" />
+                {t('actions.removeFromWatched')}
+              </>
+            ) : (
+              <>
+                <Eye className="w-4 h-4" />
+                {t('actions.watched')}
               </>
             )}
           </Button>
