@@ -35,7 +35,7 @@ serve(async (req) => {
     let tmdbUrl = `${TMDB_BASE_URL}${endpoint}`;
     const separator = tmdbUrl.includes('?') ? '&' : '?';
     tmdbUrl += `${separator}language=${language}`;
-    
+
     if (query) {
       tmdbUrl += `&query=${encodeURIComponent(query)}`;
     }
@@ -44,13 +44,25 @@ serve(async (req) => {
     }
     tmdbUrl += '&include_adult=false';
 
+    // TMDB supports either:
+    // - v4 "API Read Access Token" via Authorization: Bearer <token> (JWT-like, contains '.')
+    // - v3 "API Key" via ?api_key=<key> query param
+    const isV4Token = TMDB_API_KEY.includes('.');
+    if (!isV4Token) {
+      tmdbUrl += `&api_key=${encodeURIComponent(TMDB_API_KEY)}`;
+    }
+
     console.log(`Fetching TMDB: ${tmdbUrl}`);
 
     const response = await fetch(tmdbUrl, {
-      headers: {
-        'Authorization': `Bearer ${TMDB_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
+      headers: isV4Token
+        ? {
+            'Authorization': `Bearer ${TMDB_API_KEY}`,
+            'Content-Type': 'application/json',
+          }
+        : {
+            'Content-Type': 'application/json',
+          },
     });
 
     if (!response.ok) {
