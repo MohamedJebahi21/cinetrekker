@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Star, Bookmark, Check, Plus, Eye, EyeOff } from 'lucide-react';
+import { Star, Bookmark, Check, Plus, Eye } from 'lucide-react';
 import { Media } from '@/types/media';
 import { getImageUrl, getMediaTitle, getMediaYear, getMediaType } from '@/services/tmdb';
 import { useUserLists } from '@/contexts/UserListsContext';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 interface MediaCardProps {
@@ -92,42 +93,45 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
 
         {/* Hover Overlay with Actions */}
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4 gap-2">
-          <Button
-            variant={inWatchlist ? "secondary" : "default"}
-            size="sm"
-            className="gap-1.5"
-            onClick={handleWatchlistClick}
-          >
-            {inWatchlist ? (
-              <>
-                <Bookmark className="w-4 h-4 fill-current" />
-                {t('actions.inWatchlist')}
-              </>
-            ) : (
-              <>
-                <Plus className="w-4 h-4" />
-                {t('actions.addToWatchlist')}
-              </>
-            )}
-          </Button>
-          <Button
-            variant={watched ? "secondary" : "outline"}
-            size="sm"
-            className="gap-1.5"
-            onClick={handleWatchedClick}
-          >
-            {watched ? (
-              <>
-                <EyeOff className="w-4 h-4" />
-                {t('actions.removeFromWatched')}
-              </>
-            ) : (
-              <>
-                <Eye className="w-4 h-4" />
-                {t('actions.watched')}
-              </>
-            )}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={inWatchlist ? "secondary" : "default"}
+                size="icon"
+                className="h-9 w-9"
+                onClick={handleWatchlistClick}
+              >
+                {inWatchlist ? (
+                  <Bookmark className="w-4 h-4 fill-current" />
+                ) : (
+                  <Plus className="w-4 h-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="bg-popover text-popover-foreground">
+              {inWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={watched ? "secondary" : "outline"}
+                size="icon"
+                className="h-9 w-9"
+                onClick={handleWatchedClick}
+              >
+                {watched ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="bg-popover text-popover-foreground">
+              {watched ? t('actions.removeFromWatched') : t('actions.markAsWatched')}
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
 
