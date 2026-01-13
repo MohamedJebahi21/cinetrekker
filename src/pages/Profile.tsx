@@ -1,7 +1,10 @@
 import { useTranslation } from 'react-i18next';
-import { User, Film, Tv, Bookmark, Globe } from 'lucide-react';
+import { User, Film, Tv, Bookmark, Globe, Heart, PlayCircle } from 'lucide-react';
 import { useUserLists } from '@/contexts/UserListsContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useFollowedShows, useWatchedEpisodes } from '@/hooks/useFollowedShows';
 import { languages } from '@/i18n';
+import { Link } from 'react-router-dom';
 import {
   Select,
   SelectContent,
@@ -9,11 +12,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export default function Profile() {
   const { t, i18n } = useTranslation();
   const { watched, watchlist } = useUserLists();
+  const { user } = useAuth();
+  const { followedShows } = useFollowedShows();
+  const { watchedEpisodes } = useWatchedEpisodes();
 
   const moviesWatched = watched.filter(w => w.mediaType === 'movie').length;
   const showsWatched = watched.filter(w => w.mediaType === 'tv').length;
@@ -27,6 +34,10 @@ export default function Profile() {
     { label: t('profile.moviesWatched'), value: moviesWatched, icon: Film },
     { label: t('profile.showsWatched'), value: showsWatched, icon: Tv },
     { label: t('profile.totalWatchlist'), value: totalWatchlist, icon: Bookmark },
+    ...(user ? [
+      { label: t('profile.showsFollowed'), value: followedShows.length, icon: Heart },
+      { label: t('profile.episodesWatched'), value: watchedEpisodes.length, icon: PlayCircle },
+    ] : []),
   ];
 
   return (
@@ -39,26 +50,37 @@ export default function Profile() {
           <User className="w-10 h-10 text-primary-foreground" />
         </div>
         <div>
-          <h2 className="text-xl font-semibold">{t('common.appName')} {t('nav.profile')}</h2>
-          <p className="text-muted-foreground">{t('home.hero.subtitle')}</p>
+          {user ? (
+            <>
+              <h2 className="text-xl font-semibold">{user.email?.split('@')[0]}</h2>
+              <p className="text-muted-foreground">{user.email}</p>
+            </>
+          ) : (
+            <>
+              <h2 className="text-xl font-semibold">{t('common.appName')} {t('nav.profile')}</h2>
+              <Link to="/auth">
+                <Button variant="link" className="p-0 h-auto text-primary">
+                  {t('auth.signInRequired')}
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
       {/* Stats */}
       <section className="mb-8">
         <h2 className="text-lg font-semibold mb-4">{t('profile.stats')}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {stats.map((stat) => (
             <Card key={stat.label} className="glass-card">
               <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col items-center gap-2 text-center">
                   <div className="p-3 rounded-lg bg-primary/10">
                     <stat.icon className="w-6 h-6 text-primary" />
                   </div>
-                  <div>
-                    <p className="text-3xl font-bold">{stat.value}</p>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  </div>
+                  <p className="text-2xl font-bold">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
                 </div>
               </CardContent>
             </Card>

@@ -34,6 +34,7 @@
     "trendingWeek": "Trending This Week",
     "popular": "Popular",
     "topRated": "Top Rated",
+    "newEpisodes": "New Episodes",
     "hero": {
       "title": "Track Your Entertainment Journey",
       "subtitle": "Discover, track, and remember every movie and TV show you watch"
@@ -58,7 +59,10 @@
     "genres": "Genres",
     "status": "Status",
     "minutes": "min",
-    "noOverview": "No overview available"
+    "noOverview": "No overview available",
+    "followShow": "Follow Show",
+    "unfollowShow": "Unfollow",
+    "following": "Following"
   },
   "actions": {
     "addToWatchlist": "Add to Watchlist",
@@ -93,6 +97,8 @@
     "moviesWatched": "Movies Watched",
     "showsWatched": "Shows Watched",
     "totalWatchlist": "In Watchlist",
+    "showsFollowed": "Shows Followed",
+    "episodesWatched": "Episodes Watched",
     "settings": "Settings",
     "language": "Language"
   },
@@ -106,7 +112,18 @@
     "hasAccount": "Already have an account?",
     "signInWith": "Sign in with {{provider}}",
     "orContinueWith": "Or continue with",
-    "checkEmail": "Check your email for the login link"
+    "checkEmail": "Check your email for the login link",
+    "signInRequired": "Sign in to save your data"
+  },
+  "episodes": {
+    "new": "New",
+    "upcoming": "Upcoming",
+    "watched": "Watched",
+    "markWatched": "Mark Watched",
+    "season": "Season",
+    "episode": "Episode",
+    "allEpisodes": "All Episodes",
+    "watchedEpisodes": "Watched Episodes"
   },
   "privacy": {
     "title": "Privacy Policy",

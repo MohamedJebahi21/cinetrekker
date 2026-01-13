@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Search, Menu, X, Globe } from 'lucide-react';
+import { Search, Menu, X, Globe, LogIn, LogOut, User } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,12 +8,15 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { languages } from '@/i18n';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function Header() {
   const { t, i18n } = useTranslation();
   const location = useLocation();
+  const { user, signOut, loading } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
@@ -28,6 +31,10 @@ export function Header() {
 
   const handleLanguageChange = (code: string) => {
     i18n.changeLanguage(code);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   return (
@@ -84,12 +91,41 @@ export function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Profile Link */}
-          <Link to="/profile">
-            <Button variant="ghost" size="sm">
-              {t('nav.profile')}
-            </Button>
-          </Link>
+          {/* User Menu / Auth */}
+          {!loading && (
+            user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <User className="h-4 w-4" />
+                    <span className="hidden sm:inline max-w-[100px] truncate">
+                      {user.email?.split('@')[0]}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[160px]">
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      {t('nav.profile')}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    {t('nav.signOut')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link to="/auth">
+                <Button variant="default" size="sm" className="gap-2">
+                  <LogIn className="h-4 w-4" />
+                  <span className="hidden sm:inline">{t('nav.signIn')}</span>
+                </Button>
+              </Link>
+            )
+          )}
 
           {/* Mobile Menu Toggle */}
           <Button
@@ -121,6 +157,27 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
+            
+            {/* Mobile Auth Button */}
+            {!user ? (
+              <Link
+                to="/auth"
+                className="px-4 py-3 rounded-lg text-sm font-medium bg-primary text-primary-foreground text-center"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {t('nav.signIn')}
+              </Link>
+            ) : (
+              <button
+                onClick={() => {
+                  handleSignOut();
+                  setIsMenuOpen(false);
+                }}
+                className="px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 text-left"
+              >
+                {t('nav.signOut')}
+              </button>
+            )}
           </div>
         </nav>
       )}

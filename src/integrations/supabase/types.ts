@@ -14,7 +14,153 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      followed_shows: {
+        Row: {
+          followed_at: string
+          id: string
+          last_watched_episode: number | null
+          last_watched_season: number | null
+          poster_path: string | null
+          show_id: number
+          show_name: string
+          user_id: string
+        }
+        Insert: {
+          followed_at?: string
+          id?: string
+          last_watched_episode?: number | null
+          last_watched_season?: number | null
+          poster_path?: string | null
+          show_id: number
+          show_name: string
+          user_id: string
+        }
+        Update: {
+          followed_at?: string
+          id?: string
+          last_watched_episode?: number | null
+          last_watched_season?: number | null
+          poster_path?: string | null
+          show_id?: number
+          show_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_watched: {
+        Row: {
+          id: string
+          media_id: number
+          media_type: string
+          note: string | null
+          rating: number | null
+          status: string | null
+          user_id: string
+          watched_at: string
+        }
+        Insert: {
+          id?: string
+          media_id: number
+          media_type: string
+          note?: string | null
+          rating?: number | null
+          status?: string | null
+          user_id: string
+          watched_at?: string
+        }
+        Update: {
+          id?: string
+          media_id?: number
+          media_type?: string
+          note?: string | null
+          rating?: number | null
+          status?: string | null
+          user_id?: string
+          watched_at?: string
+        }
+        Relationships: []
+      }
+      user_watchlist: {
+        Row: {
+          added_at: string
+          id: string
+          media_id: number
+          media_type: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          media_id: number
+          media_type: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          media_id?: number
+          media_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      watched_episodes: {
+        Row: {
+          air_date: string | null
+          episode_name: string | null
+          episode_number: number
+          id: string
+          season_number: number
+          show_id: number
+          user_id: string
+          watched_at: string
+        }
+        Insert: {
+          air_date?: string | null
+          episode_name?: string | null
+          episode_number: number
+          id?: string
+          season_number: number
+          show_id: number
+          user_id: string
+          watched_at?: string
+        }
+        Update: {
+          air_date?: string | null
+          episode_name?: string | null
+          episode_number?: number
+          id?: string
+          season_number?: number
+          show_id?: number
+          user_id?: string
+          watched_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

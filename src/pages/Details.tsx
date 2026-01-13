@@ -2,11 +2,13 @@ import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { 
-  Star, Clock, Calendar, Bookmark, Check, Plus, X, 
-  MessageSquare, ChevronLeft 
+  Star, Clock, Calendar, Bookmark, Check, Plus, 
+  MessageSquare, ChevronLeft, Heart, HeartOff, PlayCircle
 } from 'lucide-react';
-import { getMovieDetails, getTVDetails, getImageUrl, getBackdropUrl } from '@/services/tmdb';
+import { getMovieDetails, getTVDetails, getImageUrl, getBackdropUrl, getTVSeasonDetails } from '@/services/tmdb';
 import { useUserLists } from '@/contexts/UserListsContext';
+import { useFollowedShows, useWatchedEpisodes } from '@/hooks/useFollowedShows';
+import { useAuth } from '@/contexts/AuthContext';
 import { MediaSection } from '@/components/MediaSection';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,8 +19,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -29,9 +38,12 @@ export default function Details() {
   const mediaId = parseInt(id || '0');
   const mediaType = type as 'movie' | 'tv';
 
+  const { user } = useAuth();
   const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
   const [tempRating, setTempRating] = useState(5);
   const [tempNote, setTempNote] = useState('');
+  const [episodesDialogOpen, setEpisodesDialogOpen] = useState(false);
+  const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
 
   const {
     isInWatchlist,
@@ -44,12 +56,21 @@ export default function Details() {
     updateWatchedItem,
   } = useUserLists();
 
+  const { isFollowing, followShow, unfollowShow } = useFollowedShows();
+  const { isEpisodeWatched, markEpisodeWatched, removeEpisodeWatched } = useWatchedEpisodes(mediaId);
+
   const { data: details, isLoading } = useQuery({
     queryKey: ['details', mediaType, mediaId, language],
     queryFn: () => mediaType === 'movie' 
       ? getMovieDetails(mediaId, language) 
       : getTVDetails(mediaId, language),
     enabled: !!mediaId && !!mediaType,
+  });
+
+  const { data: seasonDetails } = useQuery({
+    queryKey: ['season-details', mediaId, selectedSeason, language],
+    queryFn: () => getTVSeasonDetails(mediaId, selectedSeason!, language),
+    enabled: !!selectedSeason && mediaType === 'tv',
   });
 
   if (isLoading) {
@@ -81,6 +102,7 @@ export default function Details() {
   const inWatchlist = isInWatchlist(mediaId, mediaType);
   const watched = isWatched(mediaId, mediaType);
   const watchedItem = getWatchedItem(mediaId, mediaType);
+  const following = user ? isFollowing(mediaId) : false;
 
   const handleAddToWatchlist = () => {
     if (inWatchlist) {
@@ -109,6 +131,29 @@ export default function Details() {
     setRatingDialogOpen(false);
   };
 
+  const handleFollowShow = () => {
+    if (!user) return;
+    if (following) {
+      unfollowShow(mediaId);
+    } else {
+      followShow({ showId: mediaId, showName: title, posterPath: details.poster_path });
+    }
+  };
+
+  const handleEpisodeToggle = (seasonNumber: number, episodeNumber: number, episodeName: string, airDate: string | null) => {
+    if (isEpisodeWatched(mediaId, seasonNumber, episodeNumber)) {
+      removeEpisodeWatched({ showId: mediaId, seasonNumber, episodeNumber });
+    } else {
+      markEpisodeWatched({ 
+        showId: mediaId, 
+        seasonNumber, 
+        episodeNumber, 
+        episodeName,
+        airDate: airDate || undefined,
+      });
+    }
+  };
+
   const similarItems = details.similar?.results?.slice(0, 6).map(item => ({
     ...item,
     media_type: mediaType,
@@ -118,6 +163,8 @@ export default function Details() {
     ...item,
     media_type: mediaType,
   })) || [];
+
+  const seasons = details.number_of_seasons ? Array.from({ length: details.number_of_seasons }, (_, i) => i + 1) : [];
 
   return (
     <div className="min-h-screen">
@@ -249,6 +296,107 @@ export default function Details() {
                 )}
               </Button>
 
+              {/* Follow Show Button - TV only */}
+              {mediaType === 'tv' && user && (
+                <Button
+                  variant={following ? "secondary" : "outline"}
+                  className="gap-2"
+                  onClick={handleFollowShow}
+                >
+                  {following ? (
+                    <>
+                      <HeartOff className="w-4 h-4" />
+                      {t('details.unfollowShow')}
+                    </>
+                  ) : (
+                    <>
+                      <Heart className="w-4 h-4" />
+                      {t('details.followShow')}
+                    </>
+                  )}
+                </Button>
+              )}
+
+              {/* Episodes Button - TV only */}
+              {mediaType === 'tv' && seasons.length > 0 && user && (
+                <Dialog open={episodesDialogOpen} onOpenChange={setEpisodesDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="gap-2">
+                      <PlayCircle className="w-4 h-4" />
+                      {t('episodes.allEpisodes')}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>{t('episodes.allEpisodes')} - {title}</DialogTitle>
+                    </DialogHeader>
+                    <Accordion type="single" collapsible className="w-full" onValueChange={(val) => setSelectedSeason(val ? parseInt(val) : null)}>
+                      {seasons.map((seasonNum) => (
+                        <AccordionItem key={seasonNum} value={seasonNum.toString()}>
+                          <AccordionTrigger className="hover:no-underline">
+                            <span className="flex items-center gap-2">
+                              {t('episodes.season')} {seasonNum}
+                            </span>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            {selectedSeason === seasonNum && seasonDetails?.episodes ? (
+                              <div className="space-y-2">
+                                {seasonDetails.episodes.map((episode) => {
+                                  const episodeWatched = isEpisodeWatched(mediaId, seasonNum, episode.episode_number);
+                                  return (
+                                    <div 
+                                      key={episode.id}
+                                      className={cn(
+                                        "flex items-start gap-3 p-3 rounded-lg transition-colors",
+                                        episodeWatched ? "bg-muted/50" : "hover:bg-muted/30"
+                                      )}
+                                    >
+                                      <Checkbox
+                                        checked={episodeWatched}
+                                        onCheckedChange={() => handleEpisodeToggle(
+                                          seasonNum,
+                                          episode.episode_number,
+                                          episode.name,
+                                          episode.air_date
+                                        )}
+                                      />
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-sm font-medium">
+                                            E{episode.episode_number}
+                                          </span>
+                                          <span className={cn("text-sm", episodeWatched && "line-through opacity-60")}>
+                                            {episode.name}
+                                          </span>
+                                        </div>
+                                        {episode.air_date && (
+                                          <span className="text-xs text-muted-foreground">
+                                            {new Date(episode.air_date).toLocaleDateString(language)}
+                                          </span>
+                                        )}
+                                      </div>
+                                      {episode.runtime && (
+                                        <span className="text-xs text-muted-foreground">
+                                          {episode.runtime} {t('details.minutes')}
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <div className="text-center py-4 text-muted-foreground">
+                                {t('common.loading')}
+                              </div>
+                            )}
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  </DialogContent>
+                </Dialog>
+              )}
+
               {watched && (
                 <Dialog open={ratingDialogOpen} onOpenChange={setRatingDialogOpen}>
                   <DialogTrigger asChild>
@@ -297,6 +445,16 @@ export default function Details() {
                 </Dialog>
               )}
             </div>
+
+            {/* Sign in prompt for TV shows */}
+            {mediaType === 'tv' && !user && (
+              <div className="glass-card p-4 text-sm text-muted-foreground">
+                <Link to="/auth" className="text-primary hover:underline">
+                  {t('auth.signInRequired')}
+                </Link>
+                {' '}{t('home.hero.subtitle')}
+              </div>
+            )}
 
             {/* Overview */}
             <div>

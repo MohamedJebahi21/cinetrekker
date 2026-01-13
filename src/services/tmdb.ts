@@ -64,6 +64,10 @@ export const getTVDetails = async (id: number, language: string = 'en'): Promise
   return fetchTMDB(`/tv/${id}?append_to_response=credits,similar,recommendations`, language);
 };
 
+export const getTVSeasonDetails = async (tvId: number, seasonNumber: number, language: string = 'en'): Promise<TVSeason> => {
+  return fetchTMDB(`/tv/${tvId}/season/${seasonNumber}`, language);
+};
+
 export const getPopularMovies = async (page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
   return fetchTMDB(`/movie/popular`, language, { page: page.toString() });
 };
@@ -110,3 +114,27 @@ export const getMediaType = (media: Media): 'movie' | 'tv' => {
   if ('title' in media && media.title) return 'movie';
   return 'tv';
 };
+
+// TV Season & Episode Types
+export interface TVEpisode {
+  id: number;
+  name: string;
+  overview: string;
+  episode_number: number;
+  season_number: number;
+  air_date: string | null;
+  still_path: string | null;
+  vote_average: number;
+  runtime: number | null;
+}
+
+export interface TVSeason {
+  id: number;
+  name: string;
+  overview: string;
+  season_number: number;
+  episode_count: number;
+  air_date: string | null;
+  poster_path: string | null;
+  episodes: TVEpisode[];
+}

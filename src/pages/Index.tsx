@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Sparkles } from 'lucide-react';
 import { getTrending } from '@/services/tmdb';
 import { MediaSection } from '@/components/MediaSection';
+import { NewEpisodesSection } from '@/components/NewEpisodesSection';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function Index() {
@@ -53,6 +54,9 @@ export default function Index() {
 
       {/* Main Content */}
       <div className="page-container space-y-12">
+        {/* New Episodes Section - Shows for logged-in users with followed shows */}
+        <NewEpisodesSection />
+
         {/* Trending Section with Tabs */}
         <section>
           <Tabs defaultValue="day" className="w-full">
