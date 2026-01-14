@@ -271,12 +271,15 @@ export default function Search() {
           {/* Genre Filter */}
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">{t('filters.genre')}</label>
-            <Select value={genreFilter} onValueChange={setGenreFilter}>
+            <Select
+              value={genreFilter || '__all__'}
+              onValueChange={(v) => setGenreFilter(v === '__all__' ? '' : v)}
+            >
               <SelectTrigger className="bg-background">
-                <SelectValue placeholder={t('common.all')} />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">{t('common.all')}</SelectItem>
+                <SelectItem value="__all__">{t('common.all')}</SelectItem>
                 {allGenres.map((genre) => (
                   <SelectItem key={genre.id} value={genre.id.toString()}>
                     {genre.name}
@@ -289,12 +292,12 @@ export default function Search() {
           {/* Year Filter */}
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">{t('filters.year')}</label>
-            <Select value={yearFilter} onValueChange={setYearFilter}>
+            <Select value={yearFilter || '__all__'} onValueChange={(v) => setYearFilter(v === '__all__' ? '' : v)}>
               <SelectTrigger className="bg-background">
-                <SelectValue placeholder={t('common.all')} />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">{t('common.all')}</SelectItem>
+                <SelectItem value="__all__">{t('common.all')}</SelectItem>
                 {YEARS.map((year) => (
                   <SelectItem key={year} value={year}>
                     {year}
@@ -307,12 +310,15 @@ export default function Search() {
           {/* Language Filter */}
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">{t('filters.language')}</label>
-            <Select value={languageFilter} onValueChange={setLanguageFilter}>
+            <Select
+              value={languageFilter || '__all__'}
+              onValueChange={(v) => setLanguageFilter(v === '__all__' ? '' : v)}
+            >
               <SelectTrigger className="bg-background">
-                <SelectValue placeholder={t('common.all')} />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">{t('common.all')}</SelectItem>
+                <SelectItem value="__all__">{t('common.all')}</SelectItem>
                 {LANGUAGES.map((lang) => (
                   <SelectItem key={lang.code} value={lang.code}>
                     {lang.name}
