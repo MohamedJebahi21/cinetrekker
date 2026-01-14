@@ -84,6 +84,22 @@ export const getTopRatedTV = async (page: number = 1, language: string = 'en'): 
   return fetchTMDB(`/tv/top_rated`, language, { page: page.toString() });
 };
 
+export const getNowPlayingMovies = async (page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
+  return fetchTMDB(`/movie/now_playing`, language, { page: page.toString() });
+};
+
+export const getUpcomingMovies = async (page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
+  return fetchTMDB(`/movie/upcoming`, language, { page: page.toString() });
+};
+
+export const getAiringTodayTV = async (page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
+  return fetchTMDB(`/tv/airing_today`, language, { page: page.toString() });
+};
+
+export const getOnTheAirTV = async (page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
+  return fetchTMDB(`/tv/on_the_air`, language, { page: page.toString() });
+};
+
 export const getSimilar = async (mediaType: 'movie' | 'tv', id: number, language: string = 'en'): Promise<TMDBResponse<Media>> => {
   return fetchTMDB(`/${mediaType}/${id}/similar`, language);
 };
