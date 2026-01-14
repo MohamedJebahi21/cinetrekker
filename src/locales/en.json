@@ -50,7 +50,13 @@
   "search": {
     "placeholder": "Search movies and TV shows...",
     "searchResults": "Search Results",
-    "resultsFor": "Results for \"{{query}}\""
+    "resultsFor": "Results for \"{{query}}\"",
+    "filterHint": "Use filters below to browse without typing a search query",
+    "filters": "Filters",
+    "active": "active",
+    "clearFilters": "Clear filters",
+    "filterResults": "Filtered results",
+    "trendingNow": "Trending now"
   },
   "details": {
     "overview": "Overview",
@@ -154,6 +160,7 @@
     "type": "Type",
     "genre": "Genre",
     "year": "Year",
+    "language": "Language",
     "sort": "Sort By",
     "sortOptions": {
       "popularity": "Popularity",

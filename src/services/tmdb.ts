@@ -100,6 +100,43 @@ export const getOnTheAirTV = async (page: number = 1, language: string = 'en'): 
   return fetchTMDB(`/tv/on_the_air`, language, { page: page.toString() });
 };
 
+// Discover endpoints for filter-based search
+export const discoverMovies = async (
+  params: {
+    page?: number;
+    with_genres?: string;
+    primary_release_year?: string;
+    with_original_language?: string;
+    sort_by?: string;
+  },
+  language: string = 'en'
+): Promise<TMDBResponse<Media>> => {
+  const queryParams: Record<string, string> = { page: (params.page || 1).toString() };
+  if (params.with_genres) queryParams.with_genres = params.with_genres;
+  if (params.primary_release_year) queryParams.primary_release_year = params.primary_release_year;
+  if (params.with_original_language) queryParams.with_original_language = params.with_original_language;
+  if (params.sort_by) queryParams.sort_by = params.sort_by;
+  return fetchTMDB(`/discover/movie`, language, queryParams);
+};
+
+export const discoverTV = async (
+  params: {
+    page?: number;
+    with_genres?: string;
+    first_air_date_year?: string;
+    with_original_language?: string;
+    sort_by?: string;
+  },
+  language: string = 'en'
+): Promise<TMDBResponse<Media>> => {
+  const queryParams: Record<string, string> = { page: (params.page || 1).toString() };
+  if (params.with_genres) queryParams.with_genres = params.with_genres;
+  if (params.first_air_date_year) queryParams.first_air_date_year = params.first_air_date_year;
+  if (params.with_original_language) queryParams.with_original_language = params.with_original_language;
+  if (params.sort_by) queryParams.sort_by = params.sort_by;
+  return fetchTMDB(`/discover/tv`, language, queryParams);
+};
+
 export const getSimilar = async (mediaType: 'movie' | 'tv', id: number, language: string = 'en'): Promise<TMDBResponse<Media>> => {
   return fetchTMDB(`/${mediaType}/${id}/similar`, language);
 };
