@@ -1,9 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Sparkles } from 'lucide-react';
-import { getTrending } from '@/services/tmdb';
+import { getTrending, getPopularMovies, getPopularTV } from '@/services/tmdb';
 import { MediaSection } from '@/components/MediaSection';
+import { MediaCarousel } from '@/components/MediaCarousel';
 import { NewEpisodesSection } from '@/components/NewEpisodesSection';
+import { RecentlyAddedMovies } from '@/components/RecentlyAddedMovies';
+import { RecentlyAddedEpisodes } from '@/components/RecentlyAddedEpisodes';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function Index() {
@@ -18,6 +21,26 @@ export default function Index() {
   const { data: trendingWeek, isLoading: loadingWeek } = useQuery({
     queryKey: ['trending', 'week', language],
     queryFn: () => getTrending('all', 'week', language),
+  });
+
+  const { data: trendingMoviesWeek, isLoading: loadingMoviesWeek } = useQuery({
+    queryKey: ['trending', 'movie', 'week', language],
+    queryFn: () => getTrending('movie', 'week', language),
+  });
+
+  const { data: trendingTVWeek, isLoading: loadingTVWeek } = useQuery({
+    queryKey: ['trending', 'tv', 'week', language],
+    queryFn: () => getTrending('tv', 'week', language),
+  });
+
+  const { data: popularMovies, isLoading: loadingPopularMovies } = useQuery({
+    queryKey: ['popular', 'movie', language],
+    queryFn: () => getPopularMovies(1, language),
+  });
+
+  const { data: popularTV, isLoading: loadingPopularTV } = useQuery({
+    queryKey: ['popular', 'tv', language],
+    queryFn: () => getPopularTV(1, language),
   });
 
   const heroMedia = trendingDay?.results?.[0];
@@ -53,9 +76,29 @@ export default function Index() {
       </section>
 
       {/* Main Content */}
-      <div className="page-container space-y-12">
+      <div className="page-container space-y-10">
+        {/* Recently Added Sections - Top of Page */}
+        <RecentlyAddedEpisodes />
+        <RecentlyAddedMovies />
+
         {/* New Episodes Section - Shows for logged-in users with followed shows */}
         <NewEpisodesSection />
+
+        {/* Top Movies This Week Carousel */}
+        <MediaCarousel
+          title={t('home.topMoviesWeek')}
+          items={trendingMoviesWeek?.results?.slice(0, 20) || []}
+          loading={loadingMoviesWeek}
+          showMoreLink="/search?type=movie"
+        />
+
+        {/* Top Series This Week Carousel */}
+        <MediaCarousel
+          title={t('home.topSeriesWeek')}
+          items={trendingTVWeek?.results?.slice(0, 20) || []}
+          loading={loadingTVWeek}
+          showMoreLink="/search?type=tv"
+        />
 
         {/* Trending Section with Tabs */}
         <section>
@@ -75,20 +118,38 @@ export default function Index() {
             <TabsContent value="day" className="mt-0">
               <MediaSection
                 title=""
-                items={trendingDay?.results?.slice(0, 12) || []}
+                items={trendingDay?.results?.slice(0, 18) || []}
                 loading={loadingDay}
+                showMoreLink="/search?sort=popularity"
               />
             </TabsContent>
 
             <TabsContent value="week" className="mt-0">
               <MediaSection
                 title=""
-                items={trendingWeek?.results?.slice(0, 12) || []}
+                items={trendingWeek?.results?.slice(0, 18) || []}
                 loading={loadingWeek}
+                showMoreLink="/search?sort=popularity"
               />
             </TabsContent>
           </Tabs>
         </section>
+
+        {/* Popular Movies Section */}
+        <MediaCarousel
+          title={t('home.popularMovies')}
+          items={popularMovies?.results?.slice(0, 20) || []}
+          loading={loadingPopularMovies}
+          showMoreLink="/search?type=movie"
+        />
+
+        {/* Popular Series Section */}
+        <MediaCarousel
+          title={t('home.popularSeries')}
+          items={popularTV?.results?.slice(0, 20) || []}
+          loading={loadingPopularTV}
+          showMoreLink="/search?type=tv"
+        />
       </div>
     </div>
   );

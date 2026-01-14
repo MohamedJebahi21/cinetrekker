@@ -30,11 +30,18 @@
   },
   "home": {
     "trending": "Trending",
-    "trendingToday": "Trending Today",
-    "trendingWeek": "Trending This Week",
+    "trendingToday": "Today",
+    "trendingWeek": "This Week",
     "popular": "Popular",
     "topRated": "Top Rated",
     "newEpisodes": "New Episodes",
+    "topMoviesWeek": "Top Movies This Week",
+    "topSeriesWeek": "Top Series This Week",
+    "recentMovies": "Recently Added Movies",
+    "recentEpisodes": "Recently Added Episodes",
+    "newEpisode": "New Episode",
+    "popularMovies": "Popular Movies",
+    "popularSeries": "Popular Series",
     "hero": {
       "title": "Track Your Entertainment Journey",
       "subtitle": "Discover, track, and remember every movie and TV show you watch"
