@@ -104,7 +104,7 @@ export default function Search() {
   }, [movieGenres, tvGenres]);
 
   // Determine if we should use text search or discover API
-  const hasFilters = mediaTypeFilter !== 'all' || genreFilter || yearFilter || languageFilter;
+  const hasFilters = mediaTypeFilter !== 'all' || !!genreFilter || !!yearFilter || !!languageFilter;
   const useDiscoverMode = !debouncedQuery && hasFilters;
   const useSearchMode = debouncedQuery.length > 0;
   const showTrending = !useDiscoverMode && !useSearchMode;
@@ -113,7 +113,7 @@ export default function Search() {
   const { data: searchResults, isLoading: isSearching } = useQuery({
     queryKey: ['search', debouncedQuery, language],
     queryFn: () => searchMulti(debouncedQuery, 1, language),
-    enabled: useSearchMode,
+    enabled: Boolean(useSearchMode),
   });
 
   // Discover movies query
@@ -125,7 +125,7 @@ export default function Search() {
       with_original_language: languageFilter || undefined,
       sort_by: sortBy,
     }, language),
-    enabled: useDiscoverMode && (mediaTypeFilter === 'movie' || mediaTypeFilter === 'all'),
+    enabled: Boolean(useDiscoverMode && (mediaTypeFilter === 'movie' || mediaTypeFilter === 'all')),
   });
 
   // Discover TV query
@@ -137,14 +137,14 @@ export default function Search() {
       with_original_language: languageFilter || undefined,
       sort_by: sortBy,
     }, language),
-    enabled: useDiscoverMode && (mediaTypeFilter === 'tv' || mediaTypeFilter === 'all'),
+    enabled: Boolean(useDiscoverMode && (mediaTypeFilter === 'tv' || mediaTypeFilter === 'all')),
   });
 
   // Trending for default view
   const { data: trendingResults, isLoading: isTrendingLoading } = useQuery({
     queryKey: ['trending', 'all', 'week', language],
     queryFn: () => getTrending('all', 'week', language),
-    enabled: showTrending,
+    enabled: Boolean(showTrending),
   });
 
   const isLoading = isSearching || isDiscoveringMovies || isDiscoveringTV || isTrendingLoading;
