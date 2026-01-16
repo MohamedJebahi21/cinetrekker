@@ -57,11 +57,11 @@ export const searchTV = async (query: string, page: number = 1, language: string
 };
 
 export const getMovieDetails = async (id: number, language: string = 'en'): Promise<MediaDetails> => {
-  return fetchTMDB(`/movie/${id}?append_to_response=credits,similar,recommendations`, language);
+  return fetchTMDB(`/movie/${id}`, language, { append_to_response: 'credits,similar,recommendations' });
 };
 
 export const getTVDetails = async (id: number, language: string = 'en'): Promise<MediaDetails> => {
-  return fetchTMDB(`/tv/${id}?append_to_response=credits,similar,recommendations`, language);
+  return fetchTMDB(`/tv/${id}`, language, { append_to_response: 'credits,similar,recommendations' });
 };
 
 export const getTVSeasonDetails = async (tvId: number, seasonNumber: number, language: string = 'en'): Promise<TVSeason> => {
