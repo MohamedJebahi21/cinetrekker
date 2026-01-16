@@ -1,3 +1,4 @@
+// TMDB API Service - handles all TMDB API requests via edge function proxy
 import { Media, MediaDetails, TMDBResponse, TimeWindow, Genre } from '@/types/media';
 
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
