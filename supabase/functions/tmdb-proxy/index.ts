@@ -8,6 +8,9 @@ const corsHeaders = {
 
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
+// Parameters that should not be forwarded to TMDB
+const EXCLUDED_PARAMS = new Set(['endpoint']);
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -23,35 +26,38 @@ serve(async (req) => {
 
     const url = new URL(req.url);
     const endpoint = url.searchParams.get('endpoint');
-    const language = url.searchParams.get('language') || 'en';
-    const query = url.searchParams.get('query') || '';
-    const page = url.searchParams.get('page') || '1';
 
     if (!endpoint) {
       throw new Error('Missing endpoint parameter');
     }
 
-    // Build TMDB URL
-    let tmdbUrl = `${TMDB_BASE_URL}${endpoint}`;
-    const separator = tmdbUrl.includes('?') ? '&' : '?';
-    tmdbUrl += `${separator}language=${language}`;
-
-    if (query) {
-      tmdbUrl += `&query=${encodeURIComponent(query)}`;
+    // Build TMDB URL - forward ALL query parameters except 'endpoint'
+    const tmdbParams = new URLSearchParams();
+    
+    for (const [key, value] of url.searchParams.entries()) {
+      if (!EXCLUDED_PARAMS.has(key) && value) {
+        tmdbParams.set(key, value);
+      }
     }
-    if (page) {
-      tmdbUrl += `&page=${page}`;
+    
+    // Set defaults if not provided
+    if (!tmdbParams.has('language')) {
+      tmdbParams.set('language', 'en');
     }
-    tmdbUrl += '&include_adult=false';
+    if (!tmdbParams.has('page')) {
+      tmdbParams.set('page', '1');
+    }
+    tmdbParams.set('include_adult', 'false');
 
     // TMDB supports either:
     // - v4 "API Read Access Token" via Authorization: Bearer <token> (JWT-like, contains '.')
     // - v3 "API Key" via ?api_key=<key> query param
     const isV4Token = TMDB_API_KEY.includes('.');
     if (!isV4Token) {
-      tmdbUrl += `&api_key=${encodeURIComponent(TMDB_API_KEY)}`;
+      tmdbParams.set('api_key', TMDB_API_KEY);
     }
 
+    const tmdbUrl = `${TMDB_BASE_URL}${endpoint}?${tmdbParams.toString()}`;
     console.log(`Fetching TMDB: ${tmdbUrl}`);
 
     const response = await fetch(tmdbUrl, {

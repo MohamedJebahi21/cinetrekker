@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Star, Bookmark, Check, Plus, Eye } from 'lucide-react';
@@ -148,14 +149,17 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
   );
 }
 
-export function MediaCardSkeleton() {
-  return (
-    <div className="glass-card overflow-hidden">
-      <div className="poster-skeleton" />
-      <div className="p-3 space-y-2">
-        <div className="h-4 bg-muted rounded animate-pulse" />
-        <div className="h-3 bg-muted rounded w-1/2 animate-pulse" />
+export const MediaCardSkeleton = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  (props, ref) => {
+    return (
+      <div ref={ref} className="glass-card overflow-hidden" {...props}>
+        <div className="poster-skeleton" />
+        <div className="p-3 space-y-2">
+          <div className="h-4 bg-muted rounded animate-pulse" />
+          <div className="h-3 bg-muted rounded w-1/2 animate-pulse" />
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
+);
+MediaCardSkeleton.displayName = "MediaCardSkeleton";
