@@ -146,6 +146,10 @@ export const getRecommendations = async (mediaType: 'movie' | 'tv', id: number, 
   return fetchTMDB(`/${mediaType}/${id}/recommendations`, language);
 };
 
+export const getPersonDetails = async (id: number, language: string = 'en'): Promise<PersonDetails> => {
+  return fetchTMDB(`/person/${id}`, language, { append_to_response: 'combined_credits' });
+};
+
 export const getMovieGenres = async (language: string = 'en'): Promise<{ genres: Genre[] }> => {
   return fetchTMDB(`/genre/movie/list`, language);
 };
@@ -187,6 +191,33 @@ export interface TVSeason {
   name: string;
   overview: string;
   season_number: number;
+  episode_count: number;
+  air_date: string | null;
+  poster_path: string | null;
+  episodes: TVEpisode[];
+}
+
+// Person/Actor Types
+export interface PersonCredit extends Media {
+  credit_id?: string;
+  character?: string;
+  department?: string;
+  job?: string;
+}
+
+export interface PersonDetails {
+  id: number;
+  name: string;
+  biography: string;
+  birthday: string | null;
+  deathday: string | null;
+  place_of_birth: string | null;
+  profile_path: string | null;
+  known_for_department: string;
+  combined_credits?: {
+    cast: PersonCredit[];
+    crew: PersonCredit[];
+  };
   episode_count: number;
   air_date: string | null;
   poster_path: string | null;

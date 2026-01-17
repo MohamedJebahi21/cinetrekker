@@ -10,6 +10,7 @@ import { Footer } from "@/components/Footer";
 import Index from "./pages/Index";
 import Search from "./pages/Search";
 import Details from "./pages/Details";
+import Person from "./pages/Person";
 import Watchlist from "./pages/Watchlist";
 import Watched from "./pages/Watched";
 import Recommendations from "./pages/Recommendations";
@@ -36,6 +37,7 @@ const App = () => (
                   <Route path="/search" element={<Search />} />
                   <Route path="/movie/:id" element={<Details />} />
                   <Route path="/tv/:id" element={<Details />} />
+                  <Route path="/person/:id" element={<Person />} />
                   <Route path="/watchlist" element={<Watchlist />} />
                   <Route path="/watched" element={<Watched />} />
                   <Route path="/recommendations" element={<Recommendations />} />
