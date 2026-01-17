@@ -488,23 +488,27 @@ export default function Details() {
             <h2 className="section-title">{t('details.cast')}</h2>
             <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
               {details.credits.cast.slice(0, 10).map((person) => (
-                <div key={person.id} className="flex-shrink-0 w-24 text-center">
+                <Link 
+                  key={person.id} 
+                  to={`/person/${person.id}`}
+                  className="flex-shrink-0 w-24 text-center group"
+                >
                   {person.profile_path ? (
                     <img
                       src={getImageUrl(person.profile_path, 'w185') || ''}
                       alt={person.name}
-                      className="w-24 h-24 rounded-full object-cover mx-auto mb-2"
+                      className="w-24 h-24 rounded-full object-cover mx-auto mb-2 transition-transform group-hover:scale-105 group-hover:ring-2 group-hover:ring-primary"
                     />
                   ) : (
-                    <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-2">
+                    <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-2 transition-transform group-hover:scale-105 group-hover:ring-2 group-hover:ring-primary">
                       <span className="text-2xl text-muted-foreground">
                         {person.name.charAt(0)}
                       </span>
                     </div>
                   )}
-                  <p className="text-sm font-medium line-clamp-1">{person.name}</p>
+                  <p className="text-sm font-medium line-clamp-1 group-hover:text-primary transition-colors">{person.name}</p>
                   <p className="text-xs text-muted-foreground line-clamp-1">{person.character}</p>
-                </div>
+                </Link>
               ))}
             </div>
           </section>
