@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -32,11 +32,13 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 export default function Details() {
-  const { type, id } = useParams<{ type: 'movie' | 'tv'; id: string }>();
+  const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const { t, i18n } = useTranslation();
   const language = i18n.language;
   const mediaId = parseInt(id || '0');
-  const mediaType = type as 'movie' | 'tv';
+  // Infer media type from the URL path (e.g., /movie/123 or /tv/456)
+  const mediaType: 'movie' | 'tv' = location.pathname.startsWith('/tv') ? 'tv' : 'movie';
 
   const { user } = useAuth();
   const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
@@ -59,12 +61,18 @@ export default function Details() {
   const { isFollowing, followShow, unfollowShow } = useFollowedShows();
   const { isEpisodeWatched, markEpisodeWatched, removeEpisodeWatched } = useWatchedEpisodes(mediaId);
 
-  const { data: details, isLoading } = useQuery({
+  const { data: details, isLoading, error, isError } = useQuery({
     queryKey: ['details', mediaType, mediaId, language],
-    queryFn: () => mediaType === 'movie' 
-      ? getMovieDetails(mediaId, language) 
-      : getTVDetails(mediaId, language),
+    queryFn: async () => {
+      console.log(`Fetching ${mediaType} details for ID: ${mediaId}`);
+      const result = mediaType === 'movie' 
+        ? await getMovieDetails(mediaId, language) 
+        : await getTVDetails(mediaId, language);
+      console.log(`Received ${mediaType} details:`, result);
+      return result;
+    },
     enabled: !!mediaId && !!mediaType,
+    retry: 1,
   });
 
   const { data: seasonDetails } = useQuery({
@@ -81,10 +89,12 @@ export default function Details() {
     );
   }
 
-  if (!details) {
+  if (isError || !details) {
+    console.error('Details page error:', error);
     return (
       <div className="page-container text-center py-16">
         <p className="text-lg text-muted-foreground">{t('common.error')}</p>
+        {error && <p className="text-sm text-destructive mt-2">{(error as Error).message}</p>}
       </div>
     );
   }
