@@ -1,9 +1,10 @@
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, Calendar, MapPin } from 'lucide-react';
+import { ChevronLeft, Calendar, MapPin, Film, Tv } from 'lucide-react';
 import { getPersonDetails, getImageUrl } from '@/services/tmdb';
-import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
+import { MediaCard } from '@/components/MediaCard';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function Person() {
   const { id } = useParams<{ id: string }>();
@@ -123,34 +124,50 @@ export default function Person() {
           </div>
         </div>
 
-        {/* Movies Section */}
-        {movies.length > 0 && (
-          <section className="mb-12">
-            <h2 className="section-title">{t('person.movies')}</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {movies.map((movie) => (
-                <MediaCard 
-                  key={`movie-${movie.id}-${movie.credit_id}`} 
-                  media={{ ...movie, media_type: 'movie' }} 
-                />
-              ))}
-            </div>
-          </section>
-        )}
+        {/* Filmography Tabs */}
+        {(movies.length > 0 || tvShows.length > 0) && (
+          <Tabs defaultValue="movies" className="mb-12">
+            <TabsList className="mb-6">
+              <TabsTrigger value="movies" className="gap-2">
+                <Film className="w-4 h-4" />
+                {t('person.movies')} ({movies.length})
+              </TabsTrigger>
+              <TabsTrigger value="tv" className="gap-2">
+                <Tv className="w-4 h-4" />
+                {t('person.tvSeries')} ({tvShows.length})
+              </TabsTrigger>
+            </TabsList>
 
-        {/* TV Series Section */}
-        {tvShows.length > 0 && (
-          <section className="mb-12">
-            <h2 className="section-title">{t('person.tvSeries')}</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {tvShows.map((show) => (
-                <MediaCard 
-                  key={`tv-${show.id}-${show.credit_id}`} 
-                  media={{ ...show, media_type: 'tv' }} 
-                />
-              ))}
-            </div>
-          </section>
+            <TabsContent value="movies">
+              {movies.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                  {movies.map((movie) => (
+                    <MediaCard 
+                      key={`movie-${movie.id}-${movie.credit_id}`} 
+                      media={{ ...movie, media_type: 'movie' }} 
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-center py-8">{t('person.noMovies')}</p>
+              )}
+            </TabsContent>
+
+            <TabsContent value="tv">
+              {tvShows.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                  {tvShows.map((show) => (
+                    <MediaCard 
+                      key={`tv-${show.id}-${show.credit_id}`} 
+                      media={{ ...show, media_type: 'tv' }} 
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-center py-8">{t('person.noTvSeries')}</p>
+              )}
+            </TabsContent>
+          </Tabs>
         )}
 
         {/* No credits message */}

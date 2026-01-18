@@ -1,4 +1,12 @@
 {
+  "person": {
+    "biography": "Biography",
+    "movies": "Movies",
+    "tvSeries": "TV Series",
+    "noCredits": "No filmography available",
+    "noMovies": "No movies available",
+    "noTvSeries": "No TV series available"
+  },
   "common": {
     "appName": "MyWatch",
     "loading": "Loading...",
@@ -185,11 +193,5 @@
     "rateThis": "Rate this {{type}}",
     "note": "Note",
     "notePlaceholder": "Add your thoughts about this title..."
-  },
-  "person": {
-    "biography": "Biography",
-    "movies": "Movies",
-    "tvSeries": "TV Series",
-    "noCredits": "No filmography available"
   }
 }
