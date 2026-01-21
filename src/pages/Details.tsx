@@ -65,11 +65,9 @@ export default function Details() {
   const { data: details, isLoading, error, isError } = useQuery({
     queryKey: ['details', mediaType, mediaId, language],
     queryFn: async () => {
-      console.log(`Fetching ${mediaType} details for ID: ${mediaId}`);
       const result = mediaType === 'movie' 
         ? await getMovieDetails(mediaId, language) 
         : await getTVDetails(mediaId, language);
-      console.log(`Received ${mediaType} details:`, result);
       return result;
     },
     enabled: !!mediaId && !!mediaType,
