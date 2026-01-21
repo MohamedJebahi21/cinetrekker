@@ -6,6 +6,7 @@ import {
   MessageSquare, ChevronLeft, Heart, HeartOff, PlayCircle
 } from 'lucide-react';
 import { getMovieDetails, getTVDetails, getImageUrl, getBackdropUrl, getTVSeasonDetails } from '@/services/tmdb';
+import { Media } from '@/types/media';
 import { useUserLists } from '@/contexts/UserListsContext';
 import { useFollowedShows, useWatchedEpisodes } from '@/hooks/useFollowedShows';
 import { useAuth } from '@/contexts/AuthContext';
@@ -164,15 +165,99 @@ export default function Details() {
     }
   };
 
-  const similarItems = details.similar?.results?.slice(0, 6).map(item => ({
-    ...item,
-    media_type: mediaType,
-  })) || [];
+  // Get genre IDs from current item
+  const currentGenreIds = new Set(details.genres?.map(g => g.id) || details.genre_ids || []);
+  
+  // Get original language for language-based matching (important for non-English content)
+  const originalLanguage = details.original_language;
 
-  const recommendedItems = details.recommendations?.results?.slice(0, 6).map(item => ({
-    ...item,
-    media_type: mediaType,
-  })) || [];
+  // Helper function to score a recommendation based on similarity
+  const scoreSimilarity = (item: Media & { original_language?: string }): number => {
+    let score = 0;
+    
+    // Genre overlap (most important - 5 points per matching genre)
+    const itemGenres = item.genre_ids || [];
+    const genreOverlap = itemGenres.filter(id => currentGenreIds.has(id)).length;
+    score += genreOverlap * 5;
+    
+    // Language match (very important for non-English content - 4 points)
+    if (originalLanguage && item.original_language === originalLanguage) {
+      score += 4;
+    }
+    
+    // Penalize if no genre overlap at all
+    if (genreOverlap === 0 && currentGenreIds.size > 0) {
+      score -= 10;
+    }
+    
+    // Rating similarity (1 point if within 2 points)
+    if (item.vote_average && rating) {
+      const ratingDiff = Math.abs(item.vote_average - rating);
+      if (ratingDiff <= 2) score += 1;
+    }
+    
+    // Popularity boost for well-known titles (0.5 points)
+    if (item.vote_count && item.vote_count > 100) {
+      score += 0.5;
+    }
+    
+    return score;
+  };
+
+  // Filter similar items - require genre overlap for relevance
+  const filteredSimilar = (details.similar?.results || [])
+    .map(item => ({
+      ...item,
+      media_type: mediaType,
+      _score: scoreSimilarity(item as Media & { original_language?: string }),
+    }))
+    .filter(item => item._score > 0) // Only show items with positive score (some relevance)
+    .sort((a, b) => b._score - a._score)
+    .slice(0, 6);
+
+  // For Similar section - show genre-matched items
+  const similarItems = filteredSimilar.length > 0 
+    ? filteredSimilar 
+    : (details.similar?.results?.slice(0, 6).map(item => ({
+        ...item,
+        media_type: mediaType,
+        _score: 0,
+      })) || []);
+
+  // Combine TMDB recommendations with similar for better pool
+  const allRecommendations = [
+    ...(details.recommendations?.results || []),
+    ...(details.similar?.results || []),
+  ];
+  
+  // Deduplicate by ID, excluding items already in similar
+  const similarIds = new Set(similarItems.map(item => item.id));
+  const seenIds = new Set<number>();
+  const uniqueRecommendations = allRecommendations.filter(item => {
+    if (seenIds.has(item.id) || similarIds.has(item.id)) return false;
+    seenIds.add(item.id);
+    return true;
+  });
+
+  // Score and filter recommendations - prioritize relevance
+  const scoredRecommendations = uniqueRecommendations
+    .map(item => ({
+      ...item,
+      media_type: mediaType,
+      _score: scoreSimilarity(item as Media & { original_language?: string }),
+    }))
+    .filter(item => item._score > 0) // Only show relevant items
+    .sort((a, b) => b._score - a._score)
+    .slice(0, 6);
+
+  // If we have enough scored recommendations, use them; otherwise fall back to TMDB order
+  const recommendedItems = scoredRecommendations.length >= 3
+    ? scoredRecommendations
+    : uniqueRecommendations.slice(0, 6).map(item => ({
+        ...item,
+        media_type: mediaType,
+        _score: 0,
+      }));
 
   const seasons = details.number_of_seasons ? Array.from({ length: details.number_of_seasons }, (_, i) => i + 1) : [];
 

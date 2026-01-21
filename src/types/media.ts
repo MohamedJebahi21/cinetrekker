@@ -67,6 +67,7 @@ export interface MediaDetails extends Media {
   number_of_episodes?: number;
   number_of_seasons?: number;
   status?: string;
+  original_language?: string;
 }
 
 export interface TMDBResponse<T> {
