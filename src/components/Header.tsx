@@ -25,6 +25,7 @@ export function Header() {
     { path: '/watchlist', label: t('nav.watchlist') },
     { path: '/watched', label: t('nav.watched') },
     { path: '/recommendations', label: t('nav.recommendations') },
+    { path: '/calendar', label: t('nav.calendar') },
   ];
 
   const currentLanguage = languages.find(l => l.code === i18n.language) || languages[0];
