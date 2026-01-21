@@ -2,9 +2,9 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, isToday } from 'date-fns';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Film, Tv, Filter } from 'lucide-react';
-import { getUpcomingMovies, getOnTheAirTV, getImageUrl, getTVDetails, getMovieDetails } from '@/services/tmdb';
+import { format, parseISO, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isToday, isSameDay } from 'date-fns';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Film, Tv, Filter, Star } from 'lucide-react';
+import { getUpcomingMovies, getOnTheAirTV, getImageUrl } from '@/services/tmdb';
 import { useUserLists } from '@/contexts/UserListsContext';
 import { useFollowedShows } from '@/hooks/useFollowedShows';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -30,6 +31,7 @@ interface CalendarItem {
   posterPath: string | null;
   overview?: string;
   isFollowed?: boolean;
+  voteAverage?: number;
 }
 
 export default function Calendar() {
@@ -39,7 +41,7 @@ export default function Calendar() {
   const { watchlist } = useUserLists();
   const { followedShows } = useFollowedShows();
   
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentWeek, setCurrentWeek] = useState(new Date());
   const [showOnlyFollowed, setShowOnlyFollowed] = useState(false);
   const [mediaTypeFilter, setMediaTypeFilter] = useState<'all' | 'movie' | 'tv'>('all');
 
@@ -93,7 +95,6 @@ export default function Calendar() {
         if (movie.release_date) {
           const isInWatchlist = watchlistMovieIds.has(movie.id);
           
-          // Skip if filtering for followed only and not in watchlist
           if (showOnlyFollowed && !isInWatchlist) return;
           
           items.push({
@@ -104,6 +105,7 @@ export default function Calendar() {
             posterPath: movie.poster_path,
             overview: movie.overview,
             isFollowed: isInWatchlist,
+            voteAverage: movie.vote_average,
           });
         }
       });
@@ -116,7 +118,6 @@ export default function Calendar() {
         if (airDate) {
           const isFollowed = followedShowIds.has(show.id) || watchlistTVIds.has(show.id);
           
-          // Skip if filtering for followed only and not followed
           if (showOnlyFollowed && !isFollowed) return;
           
           items.push({
@@ -127,6 +128,7 @@ export default function Calendar() {
             posterPath: show.poster_path,
             overview: show.overview,
             isFollowed,
+            voteAverage: show.vote_average,
           });
         }
       });
@@ -135,12 +137,12 @@ export default function Calendar() {
     return items;
   }, [upcomingMovies, onAirTV, mediaTypeFilter, showOnlyFollowed, watchlistMovieIds, watchlistTVIds, followedShowIds]);
 
-  // Get days in current month view
-  const monthDays = useMemo(() => {
-    const start = startOfMonth(currentMonth);
-    const end = endOfMonth(currentMonth);
+  // Get days in current week
+  const weekDays = useMemo(() => {
+    const start = startOfWeek(currentWeek, { weekStartsOn: 1 }); // Start on Monday
+    const end = endOfWeek(currentWeek, { weekStartsOn: 1 });
     return eachDayOfInterval({ start, end });
-  }, [currentMonth]);
+  }, [currentWeek]);
 
   // Group items by date
   const itemsByDate = useMemo(() => {
@@ -157,55 +159,208 @@ export default function Calendar() {
 
   const isLoading = loadingMovies || loadingTV;
 
-  // Get first day of week offset (0 = Sunday)
-  const firstDayOffset = startOfMonth(currentMonth).getDay();
+  // Get week range for display
+  const weekRange = useMemo(() => {
+    const start = startOfWeek(currentWeek, { weekStartsOn: 1 });
+    const end = endOfWeek(currentWeek, { weekStartsOn: 1 });
+    return `${format(start, 'MMM d')} - ${format(end, 'MMM d, yyyy')}`;
+  }, [currentWeek]);
+
+  const CalendarCard = ({ item }: { item: CalendarItem }) => (
+    <Link
+      to={`/${item.type}/${item.id}`}
+      className="group block"
+    >
+      <div className={`
+        relative overflow-hidden rounded-xl bg-card border border-border
+        transition-all duration-300 ease-out
+        hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5
+        hover:-translate-y-1
+        ${item.isFollowed ? 'ring-2 ring-primary/40' : ''}
+      `}>
+        {/* Poster */}
+        <div className="relative aspect-[2/3] overflow-hidden">
+          {item.posterPath ? (
+            <img
+              src={getImageUrl(item.posterPath, 'w342')}
+              alt={item.title}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-full h-full bg-muted flex items-center justify-center">
+              {item.type === 'movie' ? (
+                <Film className="w-8 h-8 text-muted-foreground" />
+              ) : (
+                <Tv className="w-8 h-8 text-muted-foreground" />
+              )}
+            </div>
+          )}
+          
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          
+          {/* Type badge */}
+          <Badge 
+            variant="secondary" 
+            className={`absolute top-2 left-2 text-xs font-medium ${
+              item.type === 'movie' 
+                ? 'bg-blue-500/90 text-white border-0' 
+                : 'bg-purple-500/90 text-white border-0'
+            }`}
+          >
+            {item.type === 'movie' ? (
+              <><Film className="w-3 h-3 mr-1" />{t('common.movie')}</>
+            ) : (
+              <><Tv className="w-3 h-3 mr-1" />{t('common.tvShow')}</>
+            )}
+          </Badge>
+
+          {/* Followed indicator */}
+          {item.isFollowed && (
+            <Badge className="absolute top-2 right-2 bg-primary text-primary-foreground border-0">
+              <Star className="w-3 h-3 mr-1 fill-current" />
+              {t('calendar.followed')}
+            </Badge>
+          )}
+
+          {/* Rating */}
+          {item.voteAverage !== undefined && item.voteAverage > 0 && (
+            <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-md">
+              <Star className="w-3 h-3 text-primary fill-primary" />
+              <span className="text-xs font-semibold text-white">
+                {item.voteAverage.toFixed(1)}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="p-3">
+          <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-tight mb-1 group-hover:text-primary transition-colors">
+            {item.title}
+          </h3>
+          {item.overview && (
+            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+              {item.overview}
+            </p>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+
+  const DayColumn = ({ day, items }: { day: Date; items: CalendarItem[] }) => {
+    const isCurrentDay = isToday(day);
+    
+    return (
+      <div className={`
+        flex-1 min-w-[200px] md:min-w-0
+        ${isCurrentDay ? 'relative' : ''}
+      `}>
+        {/* Day Header */}
+        <div className={`
+          sticky top-0 z-10 p-3 text-center border-b border-border backdrop-blur-sm
+          ${isCurrentDay 
+            ? 'bg-primary/10' 
+            : 'bg-card/95'
+          }
+        `}>
+          <div className={`
+            text-xs font-medium uppercase tracking-wider mb-1
+            ${isCurrentDay ? 'text-primary' : 'text-muted-foreground'}
+          `}>
+            {format(day, 'EEE')}
+          </div>
+          <div className={`
+            inline-flex items-center justify-center w-10 h-10 rounded-full text-lg font-bold
+            ${isCurrentDay 
+              ? 'bg-primary text-primary-foreground' 
+              : 'text-foreground'
+            }
+          `}>
+            {format(day, 'd')}
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {format(day, 'MMM')}
+          </div>
+        </div>
+
+        {/* Items */}
+        <div className={`
+          p-2 space-y-3 min-h-[400px]
+          ${isCurrentDay ? 'bg-primary/5' : 'bg-background'}
+        `}>
+          {items.length > 0 ? (
+            items.map((item) => (
+              <CalendarCard key={`${item.type}-${item.id}`} item={item} />
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <CalendarIcon className="w-8 h-8 text-muted-foreground/30 mb-2" />
+              <p className="text-xs text-muted-foreground/50">
+                {t('calendar.noReleases')}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div className="page-container py-8">
+    <div className="page-container py-6">
       {/* Header */}
-      <div className="flex flex-col gap-6 mb-8">
+      <div className="flex flex-col gap-4 mb-6">
         <div className="flex items-center gap-3">
-          <CalendarIcon className="w-8 h-8 text-primary" />
-          <h1 className="text-3xl font-bold">{t('calendar.title')}</h1>
+          <div className="p-2 rounded-xl bg-primary/10">
+            <CalendarIcon className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">{t('calendar.title')}</h1>
+            <p className="text-sm text-muted-foreground">{t('calendar.subtitle')}</p>
+          </div>
         </div>
 
         {/* Controls */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-between">
-          {/* Month Navigation */}
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+          {/* Week Navigation */}
+          <div className="flex items-center gap-2 bg-card border border-border rounded-xl p-1">
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
-              onClick={() => setCurrentMonth(prev => subMonths(prev, 1))}
+              onClick={() => setCurrentWeek(prev => subWeeks(prev, 1))}
+              className="h-9 w-9 rounded-lg"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-lg font-semibold min-w-[180px] text-center">
-              {format(currentMonth, 'MMMM yyyy')}
+            <span className="text-sm font-medium min-w-[160px] text-center px-2">
+              {weekRange}
             </span>
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
-              onClick={() => setCurrentMonth(prev => addMonths(prev, 1))}
+              onClick={() => setCurrentWeek(prev => addWeeks(prev, 1))}
+              className="h-9 w-9 rounded-lg"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
-              onClick={() => setCurrentMonth(new Date())}
-              className="ml-2"
+              onClick={() => setCurrentWeek(new Date())}
+              className="ml-1 rounded-lg"
             >
               {t('calendar.today')}
             </Button>
           </div>
 
           {/* Filters */}
-          <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
             {/* Media Type Filter */}
             <Select value={mediaTypeFilter} onValueChange={(v) => setMediaTypeFilter(v as 'all' | 'movie' | 'tv')}>
-              <SelectTrigger className="w-[140px]">
-                <Filter className="h-4 w-4 mr-2" />
+              <SelectTrigger className="w-[130px] rounded-xl">
+                <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -217,13 +372,13 @@ export default function Calendar() {
 
             {/* Show Only Followed Toggle */}
             {user && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 bg-card border border-border rounded-xl px-3 py-2">
                 <Switch
                   id="followed-only"
                   checked={showOnlyFollowed}
                   onCheckedChange={setShowOnlyFollowed}
                 />
-                <Label htmlFor="followed-only" className="text-sm cursor-pointer">
+                <Label htmlFor="followed-only" className="text-sm cursor-pointer whitespace-nowrap">
                   {t('calendar.onlyFollowed')}
                 </Label>
               </div>
@@ -232,118 +387,88 @@ export default function Calendar() {
         </div>
       </div>
 
-      {/* Calendar Grid */}
+      {/* Weekly Calendar Grid */}
       {isLoading ? (
         <div className="grid grid-cols-7 gap-2">
-          {Array.from({ length: 35 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-lg" />
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div key={i} className="space-y-3">
+              <Skeleton className="h-20 rounded-xl" />
+              <Skeleton className="h-48 rounded-xl" />
+              <Skeleton className="h-48 rounded-xl" />
+            </div>
           ))}
         </div>
       ) : (
-        <div className="border border-border rounded-xl overflow-hidden bg-card">
-          {/* Day Headers */}
-          <div className="grid grid-cols-7 bg-muted/50">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-              <div
-                key={day}
-                className="p-3 text-center text-sm font-medium text-muted-foreground border-b border-border"
-              >
-                {day}
+        <>
+          {/* Desktop View */}
+          <div className="hidden md:block border border-border rounded-2xl overflow-hidden bg-card shadow-sm">
+            <div className="grid grid-cols-7 divide-x divide-border">
+              {weekDays.map((day) => {
+                const dateKey = format(day, 'yyyy-MM-dd');
+                const dayItems = itemsByDate.get(dateKey) || [];
+                return (
+                  <DayColumn key={dateKey} day={day} items={dayItems} />
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Mobile View - Horizontal Scroll */}
+          <div className="md:hidden">
+            <ScrollArea className="w-full">
+              <div className="flex gap-3 pb-4">
+                {weekDays.map((day) => {
+                  const dateKey = format(day, 'yyyy-MM-dd');
+                  const dayItems = itemsByDate.get(dateKey) || [];
+                  return (
+                    <div 
+                      key={dateKey} 
+                      className="flex-shrink-0 w-[280px] border border-border rounded-2xl overflow-hidden bg-card"
+                    >
+                      <DayColumn day={day} items={dayItems} />
+                    </div>
+                  );
+                })}
               </div>
-            ))}
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
           </div>
-
-          {/* Calendar Days */}
-          <div className="grid grid-cols-7">
-            {/* Empty cells for offset */}
-            {Array.from({ length: firstDayOffset }).map((_, i) => (
-              <div key={`empty-${i}`} className="min-h-[120px] p-2 border-b border-r border-border bg-muted/20" />
-            ))}
-
-            {/* Actual days */}
-            {monthDays.map((day) => {
-              const dateKey = format(day, 'yyyy-MM-dd');
-              const dayItems = itemsByDate.get(dateKey) || [];
-              const isCurrentDay = isToday(day);
-
-              return (
-                <div
-                  key={dateKey}
-                  className={`min-h-[120px] p-2 border-b border-r border-border transition-colors ${
-                    isCurrentDay ? 'bg-primary/5' : 'hover:bg-muted/30'
-                  }`}
-                >
-                  {/* Day Number */}
-                  <div className={`text-sm font-medium mb-1 ${
-                    isCurrentDay 
-                      ? 'w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center' 
-                      : 'text-foreground'
-                  }`}>
-                    {format(day, 'd')}
-                  </div>
-
-                  {/* Items for this day */}
-                  <div className="space-y-1 overflow-y-auto max-h-[80px]">
-                    {dayItems.slice(0, 3).map((item) => (
-                      <Link
-                        key={`${item.type}-${item.id}`}
-                        to={`/${item.type}/${item.id}`}
-                        className={`block text-xs p-1 rounded truncate transition-colors ${
-                          item.type === 'movie'
-                            ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20'
-                            : 'bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20'
-                        } ${item.isFollowed ? 'ring-1 ring-primary/50' : ''}`}
-                        title={item.title}
-                      >
-                        <span className="flex items-center gap-1">
-                          {item.type === 'movie' ? (
-                            <Film className="h-3 w-3 flex-shrink-0" />
-                          ) : (
-                            <Tv className="h-3 w-3 flex-shrink-0" />
-                          )}
-                          <span className="truncate">{item.title}</span>
-                        </span>
-                      </Link>
-                    ))}
-                    {dayItems.length > 3 && (
-                      <div className="text-xs text-muted-foreground text-center">
-                        +{dayItems.length - 3} {t('calendar.more')}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        </>
       )}
 
       {/* Legend */}
-      <div className="mt-6 flex flex-wrap gap-4 justify-center text-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-blue-500/20 flex items-center justify-center">
-            <Film className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-          </div>
+      <div className="mt-6 flex flex-wrap gap-4 justify-center">
+        <div className="flex items-center gap-2 text-sm">
+          <Badge variant="secondary" className="bg-blue-500/90 text-white border-0">
+            <Film className="w-3 h-3 mr-1" />
+            {t('common.movie')}
+          </Badge>
           <span className="text-muted-foreground">{t('common.movies')}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-purple-500/20 flex items-center justify-center">
-            <Tv className="h-3 w-3 text-purple-600 dark:text-purple-400" />
-          </div>
+        <div className="flex items-center gap-2 text-sm">
+          <Badge variant="secondary" className="bg-purple-500/90 text-white border-0">
+            <Tv className="w-3 h-3 mr-1" />
+            {t('common.tvShow')}
+          </Badge>
           <span className="text-muted-foreground">{t('common.tvShows')}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded border-2 border-primary/50" />
-          <span className="text-muted-foreground">{t('calendar.followed')}</span>
+        <div className="flex items-center gap-2 text-sm">
+          <Badge className="bg-primary text-primary-foreground border-0">
+            <Star className="w-3 h-3 mr-1 fill-current" />
+            {t('calendar.followed')}
+          </Badge>
+          <span className="text-muted-foreground">{t('calendar.inYourList')}</span>
         </div>
       </div>
 
       {/* Empty State */}
       {!isLoading && showOnlyFollowed && calendarItems.length === 0 && (
-        <div className="text-center py-12">
-          <CalendarIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">{t('calendar.noFollowedReleases')}</h3>
-          <p className="text-muted-foreground max-w-md mx-auto">
+        <div className="text-center py-16 mt-8 bg-card border border-border rounded-2xl">
+          <div className="p-4 rounded-full bg-muted inline-flex mb-4">
+            <CalendarIcon className="w-10 h-10 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-semibold mb-2 text-foreground">{t('calendar.noFollowedReleases')}</h3>
+          <p className="text-muted-foreground max-w-md mx-auto text-sm">
             {t('calendar.noFollowedReleasesDesc')}
           </p>
         </div>

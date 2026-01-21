@@ -42,10 +42,14 @@
   },
   "calendar": {
     "title": "Release Calendar",
+    "subtitle": "Upcoming movies and TV shows this week",
     "today": "Today",
+    "upcomingReleases": "Upcoming Releases",
     "onlyFollowed": "Only followed",
     "more": "more",
-    "followed": "Followed",
+    "followed": "Following",
+    "inYourList": "In your list",
+    "noReleases": "No releases",
     "noFollowedReleases": "No upcoming releases",
     "noFollowedReleasesDesc": "Add movies to your watchlist or follow TV shows to see their upcoming releases here."
   },
