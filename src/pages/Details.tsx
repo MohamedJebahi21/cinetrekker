@@ -408,53 +408,61 @@ export default function Details() {
               )}
 
               {watched && (
-                <Dialog open={ratingDialogOpen} onOpenChange={setRatingDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="gap-2">
-                      <MessageSquare className="w-4 h-4" />
-                      {watchedItem?.rating ? `${watchedItem.rating}/10` : t('actions.rateTitle')}
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>{t('rating.rateThis', { type: mediaType === 'movie' ? t('common.movie') : t('common.tvShow') })}</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-6 py-4">
-                      <div>
-                        <label className="text-sm font-medium mb-4 block">
-                          {t('rating.yourRating')}: {tempRating}/10
-                        </label>
-                        <Slider
-                          value={[tempRating]}
-                          onValueChange={([value]) => setTempRating(value)}
-                          min={1}
-                          max={10}
-                          step={1}
-                          className="mt-2"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">{t('rating.note')}</label>
-                        <Textarea
-                          value={tempNote}
-                          onChange={(e) => setTempNote(e.target.value)}
-                          placeholder={t('rating.notePlaceholder')}
-                          rows={4}
-                        />
-                      </div>
-                      <div className="flex gap-3 justify-end">
-                        <Button variant="outline" onClick={() => setRatingDialogOpen(false)}>
-                          {t('common.cancel')}
-                        </Button>
-                        <Button onClick={handleSaveRating}>
-                          {t('common.save')}
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <Button 
+                  variant="outline" 
+                  className="gap-2"
+                  onClick={() => {
+                    setTempRating(watchedItem?.rating || 5);
+                    setTempNote(watchedItem?.note || '');
+                    setRatingDialogOpen(true);
+                  }}
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  {watchedItem?.rating ? `${watchedItem.rating}/10` : t('actions.rateTitle')}
+                </Button>
               )}
             </div>
+
+            {/* Rating Dialog - Always render so it can be opened from "Mark as Watched" button */}
+            <Dialog open={ratingDialogOpen} onOpenChange={setRatingDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{t('rating.rateThis', { type: mediaType === 'movie' ? t('common.movie') : t('common.tvShow') })}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-6 py-4">
+                  <div>
+                    <label className="text-sm font-medium mb-4 block">
+                      {t('rating.yourRating')}: {tempRating}/10
+                    </label>
+                    <Slider
+                      value={[tempRating]}
+                      onValueChange={([value]) => setTempRating(value)}
+                      min={1}
+                      max={10}
+                      step={1}
+                      className="mt-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">{t('rating.note')}</label>
+                    <Textarea
+                      value={tempNote}
+                      onChange={(e) => setTempNote(e.target.value)}
+                      placeholder={t('rating.notePlaceholder')}
+                      rows={4}
+                    />
+                  </div>
+                  <div className="flex gap-3 justify-end">
+                    <Button variant="outline" onClick={() => setRatingDialogOpen(false)}>
+                      {t('common.cancel')}
+                    </Button>
+                    <Button onClick={handleSaveRating}>
+                      {t('common.save')}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
 
             {/* Sign in prompt for TV shows */}
             {mediaType === 'tv' && !user && (
