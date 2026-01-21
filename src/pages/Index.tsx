@@ -8,6 +8,7 @@ import { NewEpisodesSection } from '@/components/NewEpisodesSection';
 import { WatchedShowsNewEpisodes } from '@/components/WatchedShowsNewEpisodes';
 import { RecentlyAddedMovies } from '@/components/RecentlyAddedMovies';
 import { RecentlyAddedEpisodes } from '@/components/RecentlyAddedEpisodes';
+import { RandomTrekButton } from '@/components/RandomTrekButton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function Index() {
@@ -70,9 +71,12 @@ export default function Index() {
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight heading-cinematic tracking-wide">
               {t('home.hero.title')}
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed mb-8">
               {t('home.hero.subtitle')}
             </p>
+            
+            {/* Random Trek Hero Button */}
+            <RandomTrekButton variant="hero" />
           </div>
         </div>
       </section>

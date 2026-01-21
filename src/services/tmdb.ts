@@ -109,6 +109,10 @@ export const discoverMovies = async (
     primary_release_year?: string;
     with_original_language?: string;
     sort_by?: string;
+    with_runtime_gte?: string;
+    with_runtime_lte?: string;
+    with_watch_providers?: string;
+    watch_region?: string;
   },
   language: string = 'en'
 ): Promise<TMDBResponse<Media>> => {
@@ -117,6 +121,10 @@ export const discoverMovies = async (
   if (params.primary_release_year) queryParams.primary_release_year = params.primary_release_year;
   if (params.with_original_language) queryParams.with_original_language = params.with_original_language;
   if (params.sort_by) queryParams.sort_by = params.sort_by;
+  if (params.with_runtime_gte) queryParams['with_runtime.gte'] = params.with_runtime_gte;
+  if (params.with_runtime_lte) queryParams['with_runtime.lte'] = params.with_runtime_lte;
+  if (params.with_watch_providers) queryParams.with_watch_providers = params.with_watch_providers;
+  if (params.watch_region) queryParams.watch_region = params.watch_region;
   return fetchTMDB(`/discover/movie`, language, queryParams);
 };
 
@@ -127,6 +135,10 @@ export const discoverTV = async (
     first_air_date_year?: string;
     with_original_language?: string;
     sort_by?: string;
+    with_runtime_gte?: string;
+    with_runtime_lte?: string;
+    with_watch_providers?: string;
+    watch_region?: string;
   },
   language: string = 'en'
 ): Promise<TMDBResponse<Media>> => {
@@ -135,8 +147,30 @@ export const discoverTV = async (
   if (params.first_air_date_year) queryParams.first_air_date_year = params.first_air_date_year;
   if (params.with_original_language) queryParams.with_original_language = params.with_original_language;
   if (params.sort_by) queryParams.sort_by = params.sort_by;
+  if (params.with_runtime_gte) queryParams['with_runtime.gte'] = params.with_runtime_gte;
+  if (params.with_runtime_lte) queryParams['with_runtime.lte'] = params.with_runtime_lte;
+  if (params.with_watch_providers) queryParams.with_watch_providers = params.with_watch_providers;
+  if (params.watch_region) queryParams.watch_region = params.watch_region;
   return fetchTMDB(`/discover/tv`, language, queryParams);
 };
+
+// Get movie videos (trailers, etc.)
+export const getMovieVideos = async (id: number, language: string = 'en'): Promise<{ results: VideoResult[] }> => {
+  return fetchTMDB(`/movie/${id}/videos`, language);
+};
+
+export const getTVVideos = async (id: number, language: string = 'en'): Promise<{ results: VideoResult[] }> => {
+  return fetchTMDB(`/tv/${id}/videos`, language);
+};
+
+export interface VideoResult {
+  id: string;
+  key: string;
+  name: string;
+  site: string;
+  type: string;
+  official: boolean;
+}
 
 export const getSimilar = async (mediaType: 'movie' | 'tv', id: number, language: string = 'en'): Promise<TMDBResponse<Media>> => {
   return fetchTMDB(`/${mediaType}/${id}/similar`, language);
