@@ -5,6 +5,7 @@ import { getTrending, getPopularMovies, getPopularTV } from '@/services/tmdb';
 import { MediaSection } from '@/components/MediaSection';
 import { MediaCarousel } from '@/components/MediaCarousel';
 import { NewEpisodesSection } from '@/components/NewEpisodesSection';
+import { WatchedShowsNewEpisodes } from '@/components/WatchedShowsNewEpisodes';
 import { RecentlyAddedMovies } from '@/components/RecentlyAddedMovies';
 import { RecentlyAddedEpisodes } from '@/components/RecentlyAddedEpisodes';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -77,6 +78,9 @@ export default function Index() {
 
       {/* Main Content */}
       <div className="page-container space-y-10">
+        {/* Did You Watch? - New episodes for watched TV shows */}
+        <WatchedShowsNewEpisodes />
+
         {/* Recently Added Sections - Top of Page */}
         <RecentlyAddedEpisodes />
         <RecentlyAddedMovies />

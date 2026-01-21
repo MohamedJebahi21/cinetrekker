@@ -23,7 +23,10 @@
     "tvShow": "TV Show",
     "movies": "Movies",
     "tvShows": "TV Shows",
-    "all": "All"
+    "all": "All",
+    "yes": "Yes",
+    "no": "No",
+    "details": "Details"
   },
   "nav": {
     "home": "Home",
@@ -50,6 +53,8 @@
     "newEpisode": "New Episode",
     "popularMovies": "Popular Movies",
     "popularSeries": "Popular Series",
+    "didYouWatch": "Did You Watch?",
+    "didYouWatchPrompt": "New episode is out!",
     "hero": {
       "title": "Track Your Entertainment Journey",
       "subtitle": "Discover, track, and remember every movie and TV show you watch"
