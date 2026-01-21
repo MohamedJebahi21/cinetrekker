@@ -210,7 +210,7 @@ export default function Search() {
   return (
     <div className="page-container">
       {/* Search Header */}
-      <div className="mb-6">
+      <div className="mb-8">
         <h1 className="section-title">{t('nav.search')}</h1>
         
         {/* Search Input */}
@@ -221,38 +221,38 @@ export default function Search() {
             placeholder={t('search.placeholder')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="pl-12 h-12 text-lg bg-card border-border/50"
+            className="pl-12 h-14 text-lg bg-card/50 border-white/10 rounded-xl focus:border-primary focus:ring-primary/20 transition-all"
           />
         </div>
         
         {/* Filter hint */}
-        <p className="text-sm text-muted-foreground mt-2 flex items-center gap-2">
+        <p className="text-sm text-muted-foreground mt-3 flex items-center gap-2">
           <SlidersHorizontal className="w-4 h-4" />
           {t('search.filterHint')}
         </p>
       </div>
 
       {/* Filters */}
-      <div className="bg-card/50 rounded-lg p-4 mb-6 border border-border/50">
+      <div className="glass-card p-5 mb-8">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-primary" />
-            <span className="font-medium">{t('search.filters')}</span>
+            <span className="font-semibold">{t('search.filters')}</span>
             {activeFiltersCount > 0 && (
-              <Badge variant="secondary" className="ml-2">
+              <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary border-0">
                 {activeFiltersCount} {t('search.active')}
               </Badge>
             )}
           </div>
           {activeFiltersCount > 0 && (
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground hover:text-primary">
               <X className="w-4 h-4 mr-1" />
               {t('search.clearFilters')}
             </Button>
           )}
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {/* Type Filter */}
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">{t('filters.type')}</label>
@@ -373,12 +373,20 @@ export default function Search() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-16">
-          <SearchIcon className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
-          <p className="text-lg text-muted-foreground">{t('common.noResults')}</p>
-          {hasFilters && (
-            <Button variant="outline" onClick={clearFilters} className="mt-4">
-              {t('search.clearFilters')}
+        <div className="empty-state">
+          <div className="w-24 h-24 rounded-full bg-muted/30 flex items-center justify-center mb-6">
+            <SearchIcon className="empty-state-icon w-12 h-12" />
+          </div>
+          <h3 className="empty-state-title">{t('search.noResultsTitle') || 'No results found'}</h3>
+          <p className="empty-state-description">
+            {debouncedQuery 
+              ? t('search.noResultsDescription') || `We couldn't find anything matching "${debouncedQuery}". Try adjusting your search or filters.`
+              : t('search.trySearching') || 'Try searching for movies, TV shows, or actors.'
+            }
+          </p>
+          {(hasFilters || debouncedQuery) && (
+            <Button variant="default" onClick={() => { clearFilters(); setQuery(''); }} className="btn-primary-glow">
+              {t('search.resetAll') || 'Reset Filters'}
             </Button>
           )}
         </div>

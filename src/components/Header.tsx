@@ -39,14 +39,16 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 w-full glass-nav">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-gold">
-            <span className="text-lg font-bold text-primary-foreground">M</span>
+        <Link to="/" className="flex items-center gap-3 group">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary transition-all duration-300 group-hover:shadow-[0_0_20px_hsl(358_81%_47%/0.5)]">
+            <span className="text-xl font-bold text-primary-foreground font-display">C</span>
           </div>
-          <span className="text-xl font-bold gradient-text">{t('common.appName')}</span>
+          <span className="text-xl font-bold text-foreground hidden sm:block">
+            <span className="text-primary">Cine</span>Trekker
+          </span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -120,7 +122,7 @@ export function Header() {
               </DropdownMenu>
             ) : (
               <Link to="/auth">
-                <Button variant="default" size="sm" className="gap-2">
+                <Button variant="default" size="sm" className="gap-2 btn-primary-glow">
                   <LogIn className="h-4 w-4" />
                   <span className="hidden sm:inline">{t('nav.signIn')}</span>
                 </Button>
@@ -142,7 +144,7 @@ export function Header() {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <nav className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur-xl animate-fade-in">
+        <nav className="md:hidden border-t border-white/5 bg-background/95 backdrop-blur-xl animate-fade-in">
           <div className="container mx-auto px-4 py-4 flex flex-col gap-2">
             {navLinks.map((link) => (
               <Link

@@ -8,7 +8,7 @@
     "noTvSeries": "No TV series available"
   },
   "common": {
-    "appName": "MyWatch",
+    "appName": "CineTrekker",
     "loading": "Loading...",
     "error": "An error occurred",
     "retry": "Retry",
@@ -89,15 +89,19 @@
     }
   },
   "search": {
-    "placeholder": "Search movies and TV shows...",
+    "placeholder": "Search movies, TV shows, actors...",
     "searchResults": "Search Results",
     "resultsFor": "Results for \"{{query}}\"",
-    "filterHint": "Use filters below to browse without typing a search query",
+    "filterHint": "Use filters below to narrow your results",
     "filters": "Filters",
     "active": "active",
     "clearFilters": "Clear filters",
     "filterResults": "Filtered results",
-    "trendingNow": "Trending now"
+    "trendingNow": "Trending now",
+    "noResultsTitle": "No results found",
+    "noResultsDescription": "We couldn't find anything matching your search. Try adjusting your filters or search terms.",
+    "trySearching": "Start typing to search for movies, TV shows, or actors.",
+    "resetAll": "Reset All Filters"
   },
   "details": {
     "overview": "Overview",
