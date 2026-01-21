@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { UserMediaItem, HiddenRecommendation } from '@/types/media';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-
+import { validateNote, validateRating } from '@/lib/validation';
 interface UserListsContextType {
   watchlist: UserMediaItem[];
   watched: UserMediaItem[];
@@ -149,13 +149,17 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const addToWatched = useCallback(async (mediaId: number, mediaType: 'movie' | 'tv', rating?: number, note?: string, status?: string) => {
+    // Validate user inputs
+    const validatedNote = validateNote(note);
+    const validatedRating = validateRating(rating);
+    
     const newItem: UserMediaItem = {
       id: `${mediaType}-${mediaId}`,
       mediaId,
       mediaType,
       userId: user?.id || 'local',
-      rating,
-      note,
+      rating: validatedRating,
+      note: validatedNote,
       status: (status as UserMediaItem['status']) || 'completed',
       addedAt: new Date().toISOString(),
       watchedAt: new Date().toISOString(),
@@ -171,8 +175,8 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
         user_id: user.id,
         media_id: mediaId,
         media_type: mediaType,
-        rating: rating ?? null,
-        note: note ?? null,
+        rating: validatedRating ?? null,
+        note: validatedNote ?? null,
         status: status || 'completed',
         watched_at: newItem.watchedAt,
       }, { onConflict: 'user_id,media_id,media_type' });
@@ -193,18 +197,27 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const updateWatchedItem = useCallback(async (mediaId: number, mediaType: 'movie' | 'tv', updates: Partial<UserMediaItem>) => {
+    // Validate user inputs
+    const validatedUpdates = { ...updates };
+    if (updates.note !== undefined) {
+      validatedUpdates.note = validateNote(updates.note);
+    }
+    if (updates.rating !== undefined) {
+      validatedUpdates.rating = validateRating(updates.rating);
+    }
+    
     // Optimistic update
     setWatched(prev => prev.map(item => 
       item.mediaId === mediaId && item.mediaType === mediaType
-        ? { ...item, ...updates }
+        ? { ...item, ...validatedUpdates }
         : item
     ));
 
     if (user) {
       const dbUpdates: Record<string, unknown> = {};
-      if (updates.rating !== undefined) dbUpdates.rating = updates.rating;
-      if (updates.note !== undefined) dbUpdates.note = updates.note;
-      if (updates.status !== undefined) dbUpdates.status = updates.status;
+      if (validatedUpdates.rating !== undefined) dbUpdates.rating = validatedUpdates.rating;
+      if (validatedUpdates.note !== undefined) dbUpdates.note = validatedUpdates.note;
+      if (validatedUpdates.status !== undefined) dbUpdates.status = validatedUpdates.status;
 
       await supabase.from('user_watched')
         .update(dbUpdates)
