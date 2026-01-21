@@ -207,12 +207,23 @@
     "year": "Year",
     "language": "Language",
     "sort": "Sort By",
+    "mood": "Mood",
+    "runtime": "Runtime",
+    "streaming": "Streaming",
     "sortOptions": {
       "popularity": "Popularity",
       "rating": "Rating",
       "newest": "Newest",
       "title": "Title"
     }
+  },
+  "randomTrek": {
+    "button": "Random Trek",
+    "finding": "Finding something great..."
+  },
+  "modal": {
+    "trailerNotAvailable": "Trailer not available",
+    "viewDetails": "View Details"
   },
   "status": {
     "watching": "Watching",
