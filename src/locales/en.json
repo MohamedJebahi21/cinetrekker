@@ -37,7 +37,17 @@
     "profile": "Profile",
     "privacy": "Privacy",
     "signIn": "Sign In",
-    "signOut": "Sign Out"
+    "signOut": "Sign Out",
+    "calendar": "Calendar"
+  },
+  "calendar": {
+    "title": "Release Calendar",
+    "today": "Today",
+    "onlyFollowed": "Only followed",
+    "more": "more",
+    "followed": "Followed",
+    "noFollowedReleases": "No upcoming releases",
+    "noFollowedReleasesDesc": "Add movies to your watchlist or follow TV shows to see their upcoming releases here."
   },
   "home": {
     "trending": "Trending",

@@ -17,6 +17,7 @@ import Recommendations from "./pages/Recommendations";
 import Profile from "./pages/Profile";
 import Privacy from "./pages/Privacy";
 import Auth from "./pages/Auth";
+import Calendar from "./pages/Calendar";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
                   <Route path="/watchlist" element={<Watchlist />} />
                   <Route path="/watched" element={<Watched />} />
                   <Route path="/recommendations" element={<Recommendations />} />
+                  <Route path="/calendar" element={<Calendar />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/privacy" element={<Privacy />} />
                   <Route path="/auth" element={<Auth />} />
