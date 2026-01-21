@@ -1,10 +1,28 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// Allowed origins for CORS - restrict to known domains
+const ALLOWED_ORIGINS = [
+  'https://id-preview--d285a624-146f-4e47-902a-6348ef29940b.lovable.app',
+  'https://d285a624-146f-4e47-902a-6348ef29940b.lovableproject.com',
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:8080',
+];
+
+function getCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get('origin') || '';
+  
+  // Check if origin is in allowed list or matches lovable patterns
+  const isAllowed = ALLOWED_ORIGINS.includes(origin) || 
+    origin.endsWith('.lovable.app') || 
+    origin.endsWith('.lovableproject.com');
+  
+  return {
+    'Access-Control-Allow-Origin': isAllowed ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+}
 
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -12,6 +30,8 @@ const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const EXCLUDED_PARAMS = new Set(['endpoint']);
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });

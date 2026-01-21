@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
-
+import { validateShowName, validateEpisodeName } from '@/lib/validation';
 export interface FollowedShow {
   id: string;
   user_id: string;
@@ -49,12 +49,15 @@ export function useFollowedShows() {
     mutationFn: async ({ showId, showName, posterPath }: { showId: number; showName: string; posterPath: string | null }) => {
       if (!user) throw new Error('Not authenticated');
       
+      // Validate show name
+      const validatedShowName = validateShowName(showName);
+      
       const { error } = await supabase
         .from('followed_shows')
         .upsert({
           user_id: user.id,
           show_id: showId,
-          show_name: showName,
+          show_name: validatedShowName,
           poster_path: posterPath,
         }, { onConflict: 'user_id,show_id' });
       
@@ -145,6 +148,9 @@ export function useWatchedEpisodes(showId?: number) {
     }) => {
       if (!user) throw new Error('Not authenticated');
       
+      // Validate episode name
+      const validatedEpisodeName = validateEpisodeName(episodeName);
+      
       const { error } = await supabase
         .from('watched_episodes')
         .upsert({
@@ -152,7 +158,7 @@ export function useWatchedEpisodes(showId?: number) {
           show_id: showId,
           season_number: seasonNumber,
           episode_number: episodeNumber,
-          episode_name: episodeName || null,
+          episode_name: validatedEpisodeName || null,
           air_date: airDate || null,
         }, { onConflict: 'user_id,show_id,season_number,episode_number' });
       
