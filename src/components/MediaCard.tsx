@@ -52,19 +52,19 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
   return (
     <Link
       to={`/${mediaType}/${media.id}`}
-      className="group relative glass-card-hover overflow-hidden"
+      className="group relative glass-card-hover overflow-hidden block"
     >
       {/* Poster */}
-      <div className="aspect-[2/3] relative overflow-hidden rounded-t-lg">
+      <div className="aspect-[2/3] relative overflow-hidden rounded-t-xl">
         {posterUrl ? (
           <img
             src={posterUrl}
             alt={title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full bg-muted flex items-center justify-center">
+          <div className="w-full h-full skeleton-shimmer flex items-center justify-center">
             <span className="text-muted-foreground text-xs">{t('common.noResults')}</span>
           </div>
         )}
@@ -152,11 +152,11 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
 export const MediaCardSkeleton = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   (props, ref) => {
     return (
-      <div ref={ref} className="glass-card overflow-hidden" {...props}>
+      <div ref={ref} className="glass-card overflow-hidden rounded-xl" {...props}>
         <div className="poster-skeleton" />
         <div className="p-3 space-y-2">
-          <div className="h-4 bg-muted rounded animate-pulse" />
-          <div className="h-3 bg-muted rounded w-1/2 animate-pulse" />
+          <div className="h-4 skeleton-shimmer rounded" />
+          <div className="h-3 skeleton-shimmer rounded w-1/2" />
         </div>
       </div>
     );

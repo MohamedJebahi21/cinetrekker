@@ -52,24 +52,25 @@ export default function Index() {
       <section className="relative overflow-hidden">
         {heroMedia?.backdrop_path && (
           <div 
-            className="absolute inset-0 bg-cover bg-center opacity-20"
+            className="absolute inset-0 bg-cover bg-center opacity-30"
             style={{ 
               backgroundImage: `url(https://image.tmdb.org/t/p/w1280${heroMedia.backdrop_path})`,
             }}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/80 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-background/40" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-transparent" />
         
-        <div className="relative container mx-auto px-4 py-16 md:py-24">
+        <div className="relative container mx-auto px-4 py-20 md:py-32">
           <div className="max-w-2xl">
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="w-5 h-5 text-primary" />
-              <span className="text-sm font-medium text-primary">{t('common.appName')}</span>
+              <span className="text-sm font-medium text-primary uppercase tracking-wider">{t('common.appName')}</span>
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight heading-cinematic tracking-wide">
               {t('home.hero.title')}
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-xl">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed">
               {t('home.hero.subtitle')}
             </p>
           </div>
@@ -109,11 +110,11 @@ export default function Index() {
           <Tabs defaultValue="day" className="w-full">
             <div className="flex items-center justify-between mb-6">
               <h2 className="section-title mb-0">{t('home.trending')}</h2>
-              <TabsList className="bg-muted/50">
-                <TabsTrigger value="day" className="text-sm">
+              <TabsList className="bg-card/50 border border-white/5">
+                <TabsTrigger value="day" className="text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   {t('home.trendingToday')}
                 </TabsTrigger>
-                <TabsTrigger value="week" className="text-sm">
+                <TabsTrigger value="week" className="text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   {t('home.trendingWeek')}
                 </TabsTrigger>
               </TabsList>

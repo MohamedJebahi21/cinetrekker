@@ -75,7 +75,11 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Bebas Neue', 'Inter', 'system-ui', 'sans-serif'],
         arabic: ['Noto Sans Arabic', 'Inter', 'system-ui', 'sans-serif'],
+      },
+      screens: {
+        'xs': '480px',
       },
       keyframes: {
         "accordion-down": {
@@ -94,16 +98,21 @@ export default {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.5" },
         },
+        "scale-up": {
+          "0%": { transform: "scale(1)" },
+          "100%": { transform: "scale(1.02)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        shimmer: "shimmer 2s infinite linear",
+        shimmer: "shimmer 1.5s ease-in-out infinite",
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "scale-up": "scale-up 0.3s ease-out forwards",
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-        "gradient-gold": "linear-gradient(135deg, hsl(var(--primary)), hsl(28, 92%, 45%))",
+        "gradient-primary": "linear-gradient(135deg, hsl(var(--primary)), hsl(358, 81%, 40%))",
       },
     },
   },
