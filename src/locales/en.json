@@ -50,8 +50,17 @@
     "followed": "Following",
     "inYourList": "In your list",
     "noReleases": "No releases",
+    "noReleasesToday": "Nothing scheduled",
     "noFollowedReleases": "No upcoming releases",
-    "noFollowedReleasesDesc": "Add movies to your watchlist or follow TV shows to see their upcoming releases here."
+    "noFollowedReleasesDesc": "Add movies to your watchlist or follow TV shows to see their upcoming releases here.",
+    "releasedAt": "Released {{time}}",
+    "releasesAt": "Releases {{time}}",
+    "justReleased": "Just released",
+    "comingSoon": "Coming soon",
+    "releasedHoursAgo": "{{hours}}h ago",
+    "inHours": "In {{hours}}h",
+    "channel": "Channel",
+    "unknownChannel": "Streaming"
   },
   "home": {
     "trending": "Trending",
@@ -69,6 +78,11 @@
     "popularSeries": "Popular Series",
     "didYouWatch": "Did You Watch?",
     "didYouWatchPrompt": "New episode is out!",
+    "didYouWatchEmpty": "No new episodes to watch",
+    "didYouWatchEmptyDesc": "Episodes will appear here after they air",
+    "justReleased": "Just released",
+    "releasedToday": "Today",
+    "releasedHoursAgo": "{{hours}}h ago",
     "hero": {
       "title": "Track Your Entertainment Journey",
       "subtitle": "Discover, track, and remember every movie and TV show you watch"
