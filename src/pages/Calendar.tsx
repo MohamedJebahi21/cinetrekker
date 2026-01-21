@@ -2,18 +2,29 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { format, parseISO, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isToday, isSameDay } from 'date-fns';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Film, Tv, Filter, Star } from 'lucide-react';
-import { getUpcomingMovies, getOnTheAirTV, getImageUrl } from '@/services/tmdb';
+import {
+  format,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+  isToday,
+  addWeeks,
+  subWeeks,
+  isBefore,
+  isAfter,
+} from 'date-fns';
+import { CalendarIcon, ChevronLeft, ChevronRight, Film, Tv, Star, Filter, Clock } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useUserLists } from '@/contexts/UserListsContext';
 import { useFollowedShows } from '@/hooks/useFollowedShows';
-import { useAuth } from '@/contexts/AuthContext';
+import { getUpcomingMovies, getOnTheAirTV, getImageUrl, getTVDetails } from '@/services/tmdb';
+import { Media } from '@/types/media';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -21,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Media } from '@/types/media';
+import { getReleaseTimeInfo, formatReleaseDateTime, type ReleaseTimeInfo } from '@/lib/timeUtils';
 
 interface CalendarItem {
   id: number;
@@ -32,6 +43,9 @@ interface CalendarItem {
   overview?: string;
   isFollowed?: boolean;
   voteAverage?: number;
+  seasonNumber?: number;
+  episodeNumber?: number;
+  network?: string;
 }
 
 export default function Calendar() {
@@ -57,16 +71,36 @@ export default function Calendar() {
     },
   });
 
-  // Fetch on-the-air TV shows
+  // Fetch on-the-air TV shows with network info
   const { data: onAirTV, isLoading: loadingTV } = useQuery({
-    queryKey: ['on-air-tv', language],
+    queryKey: ['on-air-tv-with-networks', language],
     queryFn: async () => {
       const [page1, page2] = await Promise.all([
         getOnTheAirTV(1, language),
         getOnTheAirTV(2, language),
       ]);
-      return [...(page1.results || []), ...(page2.results || [])];
+      const shows = [...(page1.results || []), ...(page2.results || [])];
+      
+      // Fetch additional details for network info (limited to first 20 for performance)
+      const detailedShows = await Promise.all(
+        shows.slice(0, 30).map(async (show) => {
+          try {
+            const details = await getTVDetails(show.id, language);
+            return {
+              ...show,
+              networks: details.networks || [],
+              next_episode_to_air: details.next_episode_to_air,
+              last_episode_to_air: details.last_episode_to_air,
+            };
+          } catch {
+            return show;
+          }
+        })
+      );
+      
+      return detailedShows;
     },
+    staleTime: 1000 * 60 * 15,
   });
 
   // Create sets for quick lookup
@@ -106,19 +140,25 @@ export default function Calendar() {
             overview: movie.overview,
             isFollowed: isInWatchlist,
             voteAverage: movie.vote_average,
+            network: 'Theatrical',
           });
         }
       });
     }
 
-    // Add TV shows
+    // Add TV shows with episode info
     if (onAirTV && (mediaTypeFilter === 'all' || mediaTypeFilter === 'tv')) {
-      onAirTV.forEach((show: Media) => {
-        const airDate = show.first_air_date;
+      onAirTV.forEach((show: any) => {
+        const nextEp = show.next_episode_to_air || show.last_episode_to_air;
+        const airDate = nextEp?.air_date || show.first_air_date;
+        
         if (airDate) {
           const isFollowed = followedShowIds.has(show.id) || watchlistTVIds.has(show.id);
           
           if (showOnlyFollowed && !isFollowed) return;
+          
+          // Get network name
+          const networkName = show.networks?.[0]?.name || t('calendar.unknownChannel');
           
           items.push({
             id: show.id,
@@ -129,13 +169,16 @@ export default function Calendar() {
             overview: show.overview,
             isFollowed,
             voteAverage: show.vote_average,
+            seasonNumber: nextEp?.season_number,
+            episodeNumber: nextEp?.episode_number,
+            network: networkName,
           });
         }
       });
     }
 
     return items;
-  }, [upcomingMovies, onAirTV, mediaTypeFilter, showOnlyFollowed, watchlistMovieIds, watchlistTVIds, followedShowIds]);
+  }, [upcomingMovies, onAirTV, mediaTypeFilter, showOnlyFollowed, watchlistMovieIds, watchlistTVIds, followedShowIds, t]);
 
   // Get days in current week
   const weekDays = useMemo(() => {
@@ -148,7 +191,7 @@ export default function Calendar() {
   const itemsByDate = useMemo(() => {
     const grouped = new Map<string, CalendarItem[]>();
     calendarItems.forEach(item => {
-      const dateKey = item.date;
+      const dateKey = item.date.split('T')[0]; // Normalize to date only
       if (!grouped.has(dateKey)) {
         grouped.set(dateKey, []);
       }
@@ -166,96 +209,144 @@ export default function Calendar() {
     return `${format(start, 'MMM d')} - ${format(end, 'MMM d, yyyy')}`;
   }, [currentWeek]);
 
-  const CalendarCard = ({ item }: { item: CalendarItem }) => (
-    <Link
-      to={`/${item.type}/${item.id}`}
-      className="group block"
-    >
-      <div className={`
-        relative overflow-hidden rounded-xl bg-card border border-border
-        transition-all duration-300 ease-out
-        hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5
-        hover:-translate-y-1
-        ${item.isFollowed ? 'ring-2 ring-primary/40' : ''}
-      `}>
-        {/* Poster */}
-        <div className="relative aspect-[2/3] overflow-hidden">
-          {item.posterPath ? (
-            <img
-              src={getImageUrl(item.posterPath, 'w342')}
-              alt={item.title}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              loading="lazy"
-            />
-          ) : (
-            <div className="w-full h-full bg-muted flex items-center justify-center">
-              {item.type === 'movie' ? (
-                <Film className="w-8 h-8 text-muted-foreground" />
-              ) : (
-                <Tv className="w-8 h-8 text-muted-foreground" />
-              )}
-            </div>
-          )}
-          
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-          
-          {/* Type badge */}
-          <Badge 
-            variant="secondary" 
-            className={`absolute top-2 left-2 text-xs font-medium ${
-              item.type === 'movie' 
-                ? 'bg-blue-500/90 text-white border-0' 
-                : 'bg-purple-500/90 text-white border-0'
-            }`}
-          >
-            {item.type === 'movie' ? (
-              <><Film className="w-3 h-3 mr-1" />{t('common.movie')}</>
+  const CalendarCard = ({ item }: { item: CalendarItem }) => {
+    const now = new Date();
+    const itemDate = new Date(item.date);
+    const isPast = isBefore(itemDate, now);
+    const releaseInfo = getReleaseTimeInfo(item.date);
+    
+    return (
+      <Link
+        to={`/${item.type}/${item.id}`}
+        className="group block"
+      >
+        <div className={`
+          relative overflow-hidden rounded-xl bg-card border border-border
+          transition-all duration-300 ease-out
+          hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5
+          hover:-translate-y-1
+          ${item.isFollowed ? 'ring-2 ring-primary/40' : ''}
+          ${isPast ? 'opacity-80' : ''}
+        `}>
+          {/* Poster with aspect ratio */}
+          <div className="relative aspect-[2/3] overflow-hidden">
+            {item.posterPath ? (
+              <img
+                src={getImageUrl(item.posterPath, 'w342')}
+                alt={item.title}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                loading="lazy"
+              />
             ) : (
-              <><Tv className="w-3 h-3 mr-1" />{t('common.tvShow')}</>
+              <div className="w-full h-full bg-muted flex items-center justify-center">
+                {item.type === 'movie' ? (
+                  <Film className="w-8 h-8 text-muted-foreground" />
+                ) : (
+                  <Tv className="w-8 h-8 text-muted-foreground" />
+                )}
+              </div>
             )}
-          </Badge>
-
-          {/* Followed indicator */}
-          {item.isFollowed && (
-            <Badge className="absolute top-2 right-2 bg-primary text-primary-foreground border-0">
-              <Star className="w-3 h-3 mr-1 fill-current" />
-              {t('calendar.followed')}
+            
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+            
+            {/* Type badge - top left */}
+            <Badge 
+              variant="secondary" 
+              className={`absolute top-2 left-2 text-xs font-medium shadow-md ${
+                item.type === 'movie' 
+                  ? 'bg-blue-500/90 text-white border-0' 
+                  : 'bg-purple-500/90 text-white border-0'
+              }`}
+            >
+              {item.type === 'movie' ? (
+                <><Film className="w-3 h-3 mr-1" />{t('common.movie')}</>
+              ) : (
+                <><Tv className="w-3 h-3 mr-1" />{t('common.tvShow')}</>
+              )}
             </Badge>
-          )}
 
-          {/* Rating */}
-          {item.voteAverage !== undefined && item.voteAverage > 0 && (
-            <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-md">
-              <Star className="w-3 h-3 text-primary fill-primary" />
-              <span className="text-xs font-semibold text-white">
-                {item.voteAverage.toFixed(1)}
-              </span>
-            </div>
-          )}
-        </div>
+            {/* Followed indicator - top right */}
+            {item.isFollowed && (
+              <Badge className="absolute top-2 right-2 bg-primary text-primary-foreground border-0 shadow-md">
+                <Star className="w-3 h-3 mr-1 fill-current" />
+                {t('calendar.followed')}
+              </Badge>
+            )}
 
-        {/* Content */}
-        <div className="p-3">
-          <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-tight mb-1 group-hover:text-primary transition-colors">
-            {item.title}
-          </h3>
-          {item.overview && (
-            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-              {item.overview}
+            {/* Release time indicator */}
+            {releaseInfo && (
+              <div className={`absolute bottom-2 left-2 right-2 flex items-center gap-1 text-xs ${
+                releaseInfo.isPast ? 'text-green-400' : 'text-yellow-400'
+              }`}>
+                <Clock className="w-3 h-3" />
+                <span className="font-medium truncate">
+                  {releaseInfo.relativeTime}
+                </span>
+              </div>
+            )}
+
+            {/* Rating - bottom right */}
+            {item.voteAverage !== undefined && item.voteAverage > 0 && (
+              <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-md">
+                <Star className="w-3 h-3 text-primary fill-primary" />
+                <span className="text-xs font-semibold text-white">
+                  {item.voteAverage.toFixed(1)}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Content */}
+          <div className="p-3 space-y-2">
+            {/* Title */}
+            <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-tight group-hover:text-primary transition-colors">
+              {item.title}
+            </h3>
+            
+            {/* Episode info for TV */}
+            {item.type === 'tv' && item.seasonNumber && item.episodeNumber && (
+              <p className="text-xs font-medium text-muted-foreground">
+                S{item.seasonNumber} E{item.episodeNumber}
+              </p>
+            )}
+            
+            {/* Network/Channel */}
+            {item.network && (
+              <p className="text-xs text-muted-foreground/80 truncate">
+                📺 {item.network}
+              </p>
+            )}
+            
+            {/* Date & Time */}
+            <p className="text-xs text-muted-foreground">
+              {formatReleaseDateTime(item.date, language)}
             </p>
-          )}
+          </div>
         </div>
-      </div>
-    </Link>
-  );
+      </Link>
+    );
+  };
 
   const DayColumn = ({ day, items }: { day: Date; items: CalendarItem[] }) => {
     const isCurrentDay = isToday(day);
+    const isPastDay = isBefore(day, new Date()) && !isCurrentDay;
+    
+    // Sort items: future first, then past
+    const sortedItems = [...items].sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      const now = new Date();
+      const aIsPast = isBefore(dateA, now);
+      const bIsPast = isBefore(dateB, now);
+      
+      if (aIsPast !== bIsPast) return aIsPast ? 1 : -1;
+      return dateA.getTime() - dateB.getTime();
+    });
     
     return (
       <div className={`
-        flex-1 min-w-[200px] md:min-w-0
+        flex-1 min-w-[220px] md:min-w-0
         ${isCurrentDay ? 'relative' : ''}
       `}>
         {/* Day Header */}
@@ -263,7 +354,9 @@ export default function Calendar() {
           sticky top-0 z-10 p-3 text-center border-b border-border backdrop-blur-sm
           ${isCurrentDay 
             ? 'bg-primary/10' 
-            : 'bg-card/95'
+            : isPastDay 
+              ? 'bg-muted/50' 
+              : 'bg-card/95'
           }
         `}>
           <div className={`
@@ -275,8 +368,10 @@ export default function Calendar() {
           <div className={`
             inline-flex items-center justify-center w-10 h-10 rounded-full text-lg font-bold
             ${isCurrentDay 
-              ? 'bg-primary text-primary-foreground' 
-              : 'text-foreground'
+              ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30' 
+              : isPastDay
+                ? 'text-muted-foreground'
+                : 'text-foreground'
             }
           `}>
             {format(day, 'd')}
@@ -289,17 +384,17 @@ export default function Calendar() {
         {/* Items */}
         <div className={`
           p-2 space-y-3 min-h-[400px]
-          ${isCurrentDay ? 'bg-primary/5' : 'bg-background'}
+          ${isCurrentDay ? 'bg-primary/5' : isPastDay ? 'bg-muted/20' : 'bg-background'}
         `}>
-          {items.length > 0 ? (
-            items.map((item) => (
+          {sortedItems.length > 0 ? (
+            sortedItems.map((item) => (
               <CalendarCard key={`${item.type}-${item.id}`} item={item} />
             ))
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <CalendarIcon className="w-8 h-8 text-muted-foreground/30 mb-2" />
               <p className="text-xs text-muted-foreground/50">
-                {t('calendar.noReleases')}
+                {t('calendar.noReleasesToday')}
               </p>
             </div>
           )}
@@ -325,7 +420,7 @@ export default function Calendar() {
         {/* Controls */}
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           {/* Week Navigation */}
-          <div className="flex items-center gap-2 bg-card border border-border rounded-xl p-1">
+          <div className="flex items-center gap-2 bg-card border border-border rounded-xl p-1 shadow-sm">
             <Button
               variant="ghost"
               size="icon"
@@ -372,7 +467,7 @@ export default function Calendar() {
 
             {/* Show Only Followed Toggle */}
             {user && (
-              <div className="flex items-center gap-2 bg-card border border-border rounded-xl px-3 py-2">
+              <div className="flex items-center gap-2 bg-card border border-border rounded-xl px-3 py-2 shadow-sm">
                 <Switch
                   id="followed-only"
                   checked={showOnlyFollowed}
@@ -423,7 +518,7 @@ export default function Calendar() {
                   return (
                     <div 
                       key={dateKey} 
-                      className="flex-shrink-0 w-[280px] border border-border rounded-2xl overflow-hidden bg-card"
+                      className="flex-shrink-0 w-[280px] border border-border rounded-2xl overflow-hidden bg-card shadow-sm"
                     >
                       <DayColumn day={day} items={dayItems} />
                     </div>
@@ -463,7 +558,7 @@ export default function Calendar() {
 
       {/* Empty State */}
       {!isLoading && showOnlyFollowed && calendarItems.length === 0 && (
-        <div className="text-center py-16 mt-8 bg-card border border-border rounded-2xl">
+        <div className="text-center py-16 mt-8 bg-card border border-border rounded-2xl shadow-sm">
           <div className="p-4 rounded-full bg-muted inline-flex mb-4">
             <CalendarIcon className="w-10 h-10 text-muted-foreground" />
           </div>

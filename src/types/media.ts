@@ -58,6 +58,25 @@ export interface Credits {
   cast: Cast[];
 }
 
+export interface TVNetwork {
+  id: number;
+  name: string;
+  logo_path?: string | null;
+  origin_country?: string;
+}
+
+export interface TVEpisodeInfo {
+  id: number;
+  name: string;
+  overview: string;
+  air_date: string;
+  episode_number: number;
+  season_number: number;
+  still_path?: string | null;
+  vote_average?: number;
+  runtime?: number;
+}
+
 export interface MediaDetails extends Media {
   credits?: Credits;
   similar?: { results: Media[] };
@@ -68,6 +87,9 @@ export interface MediaDetails extends Media {
   number_of_seasons?: number;
   status?: string;
   original_language?: string;
+  networks?: TVNetwork[];
+  next_episode_to_air?: TVEpisodeInfo | null;
+  last_episode_to_air?: TVEpisodeInfo | null;
 }
 
 export interface TMDBResponse<T> {
