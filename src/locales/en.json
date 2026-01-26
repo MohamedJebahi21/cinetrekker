@@ -83,6 +83,7 @@
     "justReleased": "Just released",
     "releasedToday": "Today",
     "releasedHoursAgo": "{{hours}}h ago",
+    "becauseYouLiked": "Because You Liked {{title}}",
     "hero": {
       "title": "Track Your Entertainment Journey",
       "subtitle": "Discover, track, and remember every movie and TV show you watch"
@@ -130,7 +131,8 @@
     "rateTitle": "Rate",
     "addNote": "Add Note",
     "inWatchlist": "In Watchlist",
-    "watched": "Watched"
+    "watched": "Watched",
+    "quickView": "Quick View"
   },
   "watchlist": {
     "title": "My Watchlist",

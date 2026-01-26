@@ -11,7 +11,7 @@ export default function Privacy() {
   });
 
   return (
-    <div className="page-container max-w-3xl">
+    <div className="page-container pt-20 max-w-3xl">
       <div className="flex items-center gap-3 mb-8">
         <Shield className="w-8 h-8 text-primary" />
         <div>

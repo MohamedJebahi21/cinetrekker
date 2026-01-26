@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { UserListsProvider } from "@/contexts/UserListsContext";
 import { Header } from "@/components/Header";
@@ -23,14 +24,62 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Page transition variants - subtle and fast
+const pageVariants = {
+  initial: { opacity: 0 },
+  enter: { opacity: 1, transition: { duration: 0.2 } },
+  exit: { opacity: 0, transition: { duration: 0.15 } },
+};
+
+function AnimatedRoutes() {
+  const location = useLocation();
+  
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={location.pathname}
+        variants={pageVariants}
+        initial="initial"
+        animate="enter"
+        exit="exit"
+      >
+        <Routes location={location}>
+          {/* Public routes */}
+          <Route path="/" element={<Index />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="/movie/:id" element={<Details />} />
+          <Route path="/tv/:id" element={<Details />} />
+          <Route path="/person/:id" element={<Person />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/auth" element={<Auth />} />
+          
+          {/* Protected routes */}
+          <Route path="/profile" element={
+            <ProtectedRoute><Profile /></ProtectedRoute>
+          } />
+          <Route path="/watchlist" element={
+            <ProtectedRoute><Watchlist /></ProtectedRoute>
+          } />
+          <Route path="/watched" element={
+            <ProtectedRoute><Watched /></ProtectedRoute>
+          } />
+          <Route path="/recommendations" element={
+            <ProtectedRoute><Recommendations /></ProtectedRoute>
+          } />
+          <Route path="/calendar" element={
+            <ProtectedRoute><Calendar /></ProtectedRoute>
+          } />
+          
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 /**
  * Security: Route Protection
- * 
  * Protected routes require authentication and email verification.
- * Public routes are accessible without authentication.
- * 
- * Protected: /profile, /watchlist, /watched, /recommendations, /calendar
- * Public: /, /search, /movie/:id, /tv/:id, /person/:id, /privacy, /auth
  */
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -38,50 +87,12 @@ const App = () => (
       <AuthProvider>
         <UserListsProvider>
           <Toaster />
-          <Sonner />
+          <Sonner position="bottom-right" />
           <BrowserRouter>
             <div className="flex min-h-screen flex-col">
               <Header />
               <main className="flex-1">
-                <Routes>
-                  {/* Public routes */}
-                  <Route path="/" element={<Index />} />
-                  <Route path="/search" element={<Search />} />
-                  <Route path="/movie/:id" element={<Details />} />
-                  <Route path="/tv/:id" element={<Details />} />
-                  <Route path="/person/:id" element={<Person />} />
-                  <Route path="/privacy" element={<Privacy />} />
-                  <Route path="/auth" element={<Auth />} />
-                  
-                  {/* Protected routes - require authentication and email verification */}
-                  <Route path="/profile" element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/watchlist" element={
-                    <ProtectedRoute>
-                      <Watchlist />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/watched" element={
-                    <ProtectedRoute>
-                      <Watched />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/recommendations" element={
-                    <ProtectedRoute>
-                      <Recommendations />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/calendar" element={
-                    <ProtectedRoute>
-                      <Calendar />
-                    </ProtectedRoute>
-                  } />
-                  
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                <AnimatedRoutes />
               </main>
               <Footer />
             </div>

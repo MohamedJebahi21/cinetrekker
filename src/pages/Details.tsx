@@ -1,6 +1,7 @@
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { 
   Star, Clock, Calendar, Bookmark, Check, Plus, 
   MessageSquare, ChevronLeft, Heart, HeartOff, PlayCircle
@@ -10,6 +11,7 @@ import { Media } from '@/types/media';
 import { useUserLists } from '@/contexts/UserListsContext';
 import { useFollowedShows, useWatchedEpisodes } from '@/hooks/useFollowedShows';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLastViewed } from '@/hooks/useLastViewed';
 import { MediaSection } from '@/components/MediaSection';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -61,6 +63,7 @@ export default function Details() {
 
   const { isFollowing, followShow, unfollowShow } = useFollowedShows();
   const { isEpisodeWatched, markEpisodeWatched, removeEpisodeWatched } = useWatchedEpisodes(mediaId);
+  const { saveLastViewed } = useLastViewed();
 
   const { data: details, isLoading, error, isError } = useQuery({
     queryKey: ['details', mediaType, mediaId, language],
@@ -80,9 +83,16 @@ export default function Details() {
     enabled: !!selectedSeason && mediaType === 'tv',
   });
 
+  // Phase 3: Save last viewed to localStorage for "Because you liked" recommendations
+  useEffect(() => {
+    if (details && (details.title || details.name)) {
+      saveLastViewed(mediaId, details.title || details.name || '', mediaType);
+    }
+  }, [details, mediaId, mediaType, saveLastViewed]);
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen pt-16 flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">{t('common.loading')}</div>
       </div>
     );
@@ -260,9 +270,9 @@ export default function Details() {
   const seasons = details.number_of_seasons ? Array.from({ length: details.number_of_seasons }, (_, i) => i + 1) : [];
 
   return (
-    <div className="min-h-screen">
-      {/* Backdrop */}
-      <div className="relative h-[50vh] md:h-[60vh] overflow-hidden">
+    <div className="min-h-screen pt-16">
+      {/* Phase 4: Full-width, high-resolution backdrop with smooth fade */}
+      <div className="relative h-[50vh] md:h-[70vh] overflow-hidden -mt-16">
         {backdropUrl && (
           <img
             src={backdropUrl}
@@ -270,12 +280,13 @@ export default function Details() {
             className="w-full h-full object-cover"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/30" />
+        {/* Smooth fade-to-black transition */}
+        <div className="backdrop-fade absolute inset-0" />
         
         {/* Back Button */}
         <Link 
           to="/" 
-          className="absolute top-4 left-4 z-10 flex items-center gap-2 text-sm text-foreground/80 hover:text-foreground bg-background/50 backdrop-blur-sm px-3 py-2 rounded-lg transition-colors"
+          className="absolute top-20 left-4 z-10 flex items-center gap-2 text-sm text-foreground/80 hover:text-foreground bg-background/50 backdrop-blur-sm px-3 py-2 rounded-lg transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
           {t('nav.home')}

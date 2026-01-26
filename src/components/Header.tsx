@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Search, Menu, X, Globe, LogIn, LogOut, User } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -12,12 +12,23 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { languages } from '@/i18n';
 import { useAuth } from '@/contexts/AuthContext';
+import { cn } from '@/lib/utils';
 
 export function Header() {
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const { user, signOut, loading } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Track scroll for enhanced glass effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const navLinks = [
     { path: '/', label: t('nav.home') },
@@ -39,27 +50,31 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full glass-nav">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+    <header className={cn(
+      "glass-nav h-16 transition-all duration-300",
+      isScrolled && "shadow-lg"
+    )}>
+      <div className="container mx-auto flex h-full items-center justify-between px-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 group">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary transition-all duration-300 group-hover:shadow-[0_0_20px_hsl(358_81%_47%/0.5)]">
-            <span className="text-xl font-bold text-primary-foreground font-display">C</span>
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary transition-all duration-300 group-hover:shadow-[0_0_20px_hsl(358_94%_46%/0.5)]">
+            <span className="text-xl font-bold text-primary-foreground">CT</span>
           </div>
           <span className="text-xl font-bold text-foreground hidden sm:block">
-            <span className="text-primary">Cine</span>Trekker
+            {t('common.appName')}
           </span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => (
             <Link
               key={link.path}
               to={link.path}
-              className={`nav-link text-sm font-medium ${
-                location.pathname === link.path ? 'nav-link-active' : ''
-              }`}
+              className={cn(
+                "nav-link text-sm font-medium",
+                location.pathname === link.path && "nav-link-active"
+              )}
             >
               {link.label}
             </Link>
@@ -69,19 +84,19 @@ export function Header() {
         {/* Right Section */}
         <div className="flex items-center gap-2">
           {/* Search Icon (Mobile) */}
-          <Link to="/search" className="md:hidden p-2 text-muted-foreground hover:text-foreground">
+          <Link to="/search" className="md:hidden p-2 text-muted-foreground hover:text-foreground transition-colors">
             <Search className="h-5 w-5" />
           </Link>
 
           {/* Language Switcher */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="gap-2">
+              <Button variant="ghost" size="sm" className="gap-2 hover:bg-white/5">
                 <Globe className="h-4 w-4" />
                 <span className="hidden sm:inline">{currentLanguage.name}</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[140px]">
+            <DropdownMenuContent align="end" className="min-w-[140px] bg-popover/95 backdrop-blur-xl border-border/50">
               {languages.map((lang) => (
                 <DropdownMenuItem
                   key={lang.code}
@@ -99,14 +114,14 @@ export function Header() {
             user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-2">
+                  <Button variant="ghost" size="sm" className="gap-2 hover:bg-white/5">
                     <User className="h-4 w-4" />
                     <span className="hidden sm:inline max-w-[100px] truncate">
                       {user.email?.split('@')[0]}
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-[160px]">
+                <DropdownMenuContent align="end" className="min-w-[160px] bg-popover/95 backdrop-blur-xl border-border/50">
                   <DropdownMenuItem asChild>
                     <Link to="/profile" className="flex items-center gap-2">
                       <User className="h-4 w-4" />
@@ -134,7 +149,7 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="md:hidden hover:bg-white/5"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -150,11 +165,12 @@ export function Header() {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                className={cn(
+                  "px-4 py-3 rounded-lg text-sm font-medium transition-colors",
                   location.pathname === link.path
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                }`}
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                )}
                 onClick={() => setIsMenuOpen(false)}
               >
                 {link.label}
@@ -165,7 +181,7 @@ export function Header() {
             {!user ? (
               <Link
                 to="/auth"
-                className="px-4 py-3 rounded-lg text-sm font-medium bg-primary text-primary-foreground text-center"
+                className="px-4 py-3 rounded-lg text-sm font-medium bg-primary text-primary-foreground text-center mt-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 {t('nav.signIn')}
@@ -176,7 +192,7 @@ export function Header() {
                   handleSignOut();
                   setIsMenuOpen(false);
                 }}
-                className="px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 text-left"
+                className="px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 text-left mt-2"
               >
                 {t('nav.signOut')}
               </button>

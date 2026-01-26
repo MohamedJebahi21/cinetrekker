@@ -41,12 +41,12 @@ export default function Profile() {
   ];
 
   return (
-    <div className="page-container max-w-4xl">
+    <div className="page-container pt-20 max-w-4xl">
       <h1 className="section-title">{t('profile.title')}</h1>
 
       {/* User Avatar */}
       <div className="flex items-center gap-4 mb-8">
-        <div className="w-20 h-20 rounded-full bg-gradient-gold flex items-center justify-center">
+        <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center">
           <User className="w-10 h-10 text-primary-foreground" />
         </div>
         <div>

@@ -33,7 +33,7 @@ export default function Watchlist() {
   });
 
   return (
-    <div className="page-container">
+    <div className="page-container pt-20">
       <h1 className="section-title">{t('watchlist.title')}</h1>
 
       {isLoading ? (

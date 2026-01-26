@@ -147,7 +147,7 @@ export default function Auth() {
   };
 
   return (
-    <div className="page-container flex items-center justify-center min-h-[70vh]">
+    <div className="page-container pt-20 flex items-center justify-center min-h-[70vh]">
       <Card className="w-full max-w-md glass-card">
         <Tabs defaultValue="signin" className="w-full">
           <CardHeader className="space-y-4">

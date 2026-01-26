@@ -285,7 +285,7 @@ export default function Search() {
   };
 
   return (
-    <div className="page-container">
+    <div className="page-container pt-20">
       {/* Search Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
