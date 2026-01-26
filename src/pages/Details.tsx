@@ -212,60 +212,42 @@ export default function Details() {
     return score;
   };
 
-  // Filter similar items - require genre overlap for relevance
-  const filteredSimilar = (details.similar?.results || [])
-    .map(item => ({
-      ...item,
-      media_type: mediaType,
-      _score: scoreSimilarity(item as Media & { original_language?: string }),
-    }))
-    .filter(item => item._score > 0) // Only show items with positive score (some relevance)
-    .sort((a, b) => b._score - a._score)
-    .slice(0, 6);
-
-  // For Similar section - show genre-matched items
-  const similarItems = filteredSimilar.length > 0 
-    ? filteredSimilar 
-    : (details.similar?.results?.slice(0, 6).map(item => ({
-        ...item,
-        media_type: mediaType,
-        _score: 0,
-      })) || []);
-
-  // Combine TMDB recommendations with similar for better pool
-  const allRecommendations = [
-    ...(details.recommendations?.results || []),
-    ...(details.similar?.results || []),
-  ];
+  // "You Might Also Like" - Primary: /recommendations, Fallback: /similar
+  // Use TMDB recommendations (collaborative filtering based on user viewing patterns) as primary source
+  const recommendationsResults = details.recommendations?.results || [];
+  const similarResults = details.similar?.results || [];
   
-  // Deduplicate by ID, excluding items already in similar
-  const similarIds = new Set(similarItems.map(item => item.id));
-  const seenIds = new Set<number>();
-  const uniqueRecommendations = allRecommendations.filter(item => {
-    if (seenIds.has(item.id) || similarIds.has(item.id)) return false;
-    seenIds.add(item.id);
-    return true;
-  });
-
-  // Score and filter recommendations - prioritize relevance
-  const scoredRecommendations = uniqueRecommendations
-    .map(item => ({
-      ...item,
-      media_type: mediaType,
-      _score: scoreSimilarity(item as Media & { original_language?: string }),
-    }))
-    .filter(item => item._score > 0) // Only show relevant items
-    .sort((a, b) => b._score - a._score)
-    .slice(0, 6);
-
-  // If we have enough scored recommendations, use them; otherwise fall back to TMDB order
-  const recommendedItems = scoredRecommendations.length >= 3
-    ? scoredRecommendations
-    : uniqueRecommendations.slice(0, 6).map(item => ({
+  // Start with recommendations (collaborative filtering)
+  let combinedRecommendations = recommendationsResults.map(item => ({
+    ...item,
+    media_type: mediaType,
+  }));
+  
+  // If recommendations < 10, supplement with similar items (content-based)
+  if (combinedRecommendations.length < 10) {
+    const existingIds = new Set(combinedRecommendations.map(r => r.id));
+    const supplementalItems = similarResults
+      .filter(item => !existingIds.has(item.id))
+      .map(item => ({
         ...item,
         media_type: mediaType,
-        _score: 0,
       }));
+    combinedRecommendations = [...combinedRecommendations, ...supplementalItems];
+  }
+  
+  // Score and sort for relevance
+  const scoredRecommendations = combinedRecommendations
+    .map(item => ({
+      ...item,
+      _score: scoreSimilarity(item as Media & { original_language?: string }),
+    }))
+    .sort((a, b) => b._score - a._score)
+    .slice(0, 12); // Show up to 12 items for a full row
+
+  // Final recommendations - prioritize scored items but ensure we have content
+  const recommendedItems = scoredRecommendations.length > 0
+    ? scoredRecommendations
+    : combinedRecommendations.slice(0, 12).map(item => ({ ...item, _score: 0 }));
 
   const seasons = details.number_of_seasons ? Array.from({ length: details.number_of_seasons }, (_, i) => i + 1) : [];
 
@@ -616,17 +598,7 @@ export default function Details() {
           </section>
         )}
 
-        {/* Similar */}
-        {similarItems.length > 0 && (
-          <section className="mt-12">
-            <MediaSection
-              title={t('details.similar')}
-              items={similarItems}
-            />
-          </section>
-        )}
-
-        {/* Recommendations */}
+        {/* You Might Also Like - Single consolidated recommendation section */}
         {recommendedItems.length > 0 && (
           <section className="mt-12">
             <MediaSection

@@ -8,10 +8,10 @@ export function Footer() {
   return (
     <footer className="border-t border-border/30 bg-background/50 mt-auto safe-area-bottom">
       <div className="container mx-auto px-4 py-12">
-        {/* Main Footer Grid - 4 columns */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
-          {/* Brand Column */}
-          <div className="col-span-2 md:col-span-1">
+        {/* Main Footer Grid - 5 columns on desktop (Brand spans 2) */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-10">
+          {/* Brand Column - takes 2 columns on desktop */}
+          <div className="col-span-2">
             <div className="flex items-center gap-2 mb-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
                 <span className="text-lg font-bold text-primary-foreground">CT</span>
@@ -22,24 +22,17 @@ export function Footer() {
               {t('footer.tagline', 'Your personal movie and TV show tracker. Discover, track, and share your cinematic journey.')}
             </p>
           </div>
-
-          {/* Discover Column */}
+          {/* Explore Column */}
           <div>
             <h3 className="font-semibold text-sm uppercase tracking-wider text-foreground mb-4">
-              {t('footer.discover', 'Discover')}
+              {t('footer.explore', 'Explore')}
             </h3>
-            <nav className="flex flex-col gap-3" aria-label="Discover links">
+            <nav className="flex flex-col gap-3" aria-label="Explore links">
               <Link 
-                to="/search?type=movie" 
+                to="/search?sort=popularity.desc" 
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                {t('common.movies', 'Movies')}
-              </Link>
-              <Link 
-                to="/search?type=tv" 
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {t('common.tvShows', 'TV Shows')}
+                {t('footer.trending', 'Trending')}
               </Link>
               <Link 
                 to="/calendar" 
@@ -48,25 +41,25 @@ export function Footer() {
                 {t('footer.upcoming', 'Upcoming')}
               </Link>
               <Link 
-                to="/recommendations" 
+                to="/search?sort=vote_average.desc" 
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                {t('nav.recommendations', 'Recommendations')}
+                {t('footer.topRated', 'Top Rated')}
               </Link>
             </nav>
           </div>
 
-          {/* Community Column */}
+          {/* Support Column */}
           <div>
             <h3 className="font-semibold text-sm uppercase tracking-wider text-foreground mb-4">
-              {t('footer.community', 'Community')}
+              {t('footer.support', 'Support')}
             </h3>
-            <nav className="flex flex-col gap-3" aria-label="Community links">
+            <nav className="flex flex-col gap-3" aria-label="Support links">
               <Link 
                 to="/" 
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                {t('footer.about', 'About Us')}
+                {t('footer.about', 'About')}
               </Link>
               <Link 
                 to="/" 
@@ -80,14 +73,8 @@ export function Footer() {
                 rel="noopener noreferrer"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                {t('footer.api', 'API')}
+                {t('footer.tmdbApi', 'TMDB API')}
               </a>
-              <Link 
-                to="/" 
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {t('footer.support', 'Support')}
-              </Link>
             </nav>
           </div>
 
