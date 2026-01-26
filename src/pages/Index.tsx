@@ -9,6 +9,7 @@ import { WatchedShowsNewEpisodes } from '@/components/WatchedShowsNewEpisodes';
 import { RecentlyAddedMovies } from '@/components/RecentlyAddedMovies';
 import { RecentlyAddedEpisodes } from '@/components/RecentlyAddedEpisodes';
 import { RandomTrekButton } from '@/components/RandomTrekButton';
+import { BecauseYouLiked } from '@/components/BecauseYouLiked';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function Index() {
@@ -48,27 +49,28 @@ export default function Index() {
   const heroMedia = trendingDay?.results?.[0];
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
+    <div className="min-h-screen pt-16">
+      {/* Hero Section with full-width backdrop */}
+      <section className="relative overflow-hidden -mt-16">
         {heroMedia?.backdrop_path && (
           <div 
-            className="absolute inset-0 bg-cover bg-center opacity-30"
+            className="absolute inset-0 bg-cover bg-center"
             style={{ 
-              backgroundImage: `url(https://image.tmdb.org/t/p/w1280${heroMedia.backdrop_path})`,
+              backgroundImage: `url(https://image.tmdb.org/t/p/original${heroMedia.backdrop_path})`,
             }}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-background/40" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-transparent" />
+        {/* Smooth fade-to-black transition */}
+        <div className="absolute inset-0 backdrop-fade" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
         
-        <div className="relative container mx-auto px-4 py-20 md:py-32">
+        <div className="relative container mx-auto px-4 py-32 md:py-40 pt-24 md:pt-32">
           <div className="max-w-2xl">
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="w-5 h-5 text-primary" />
               <span className="text-sm font-medium text-primary uppercase tracking-wider">{t('common.appName')}</span>
             </div>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight heading-cinematic tracking-wide">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight heading-cinematic">
               {t('home.hero.title')}
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed mb-8">
@@ -83,17 +85,20 @@ export default function Index() {
 
       {/* Main Content */}
       <div className="page-container space-y-10">
+        {/* Phase 3: "Because You Liked" personalized row */}
+        <BecauseYouLiked />
+
         {/* Did You Watch? - New episodes for watched TV shows */}
         <WatchedShowsNewEpisodes />
 
-        {/* Recently Added Sections - Top of Page */}
+        {/* Recently Added Sections */}
         <RecentlyAddedEpisodes />
         <RecentlyAddedMovies />
 
-        {/* New Episodes Section - Shows for logged-in users with followed shows */}
+        {/* New Episodes Section */}
         <NewEpisodesSection />
 
-        {/* Top Movies This Week Carousel */}
+        {/* Top Movies This Week - Horizontal scroll */}
         <MediaCarousel
           title={t('home.topMoviesWeek')}
           items={trendingMoviesWeek?.results?.slice(0, 20) || []}
@@ -101,7 +106,7 @@ export default function Index() {
           showMoreLink="/search?type=movie"
         />
 
-        {/* Top Series This Week Carousel */}
+        {/* Top Series This Week - Horizontal scroll */}
         <MediaCarousel
           title={t('home.topSeriesWeek')}
           items={trendingTVWeek?.results?.slice(0, 20) || []}
@@ -144,7 +149,7 @@ export default function Index() {
           </Tabs>
         </section>
 
-        {/* Popular Movies Section */}
+        {/* Popular Movies - Horizontal scroll */}
         <MediaCarousel
           title={t('home.popularMovies')}
           items={popularMovies?.results?.slice(0, 20) || []}
@@ -152,7 +157,7 @@ export default function Index() {
           showMoreLink="/search?type=movie"
         />
 
-        {/* Popular Series Section */}
+        {/* Popular Series - Horizontal scroll */}
         <MediaCarousel
           title={t('home.popularSeries')}
           items={popularTV?.results?.slice(0, 20) || []}

@@ -20,7 +20,7 @@ export default function Person() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen pt-16 flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">{t('common.loading')}</div>
       </div>
     );
@@ -59,7 +59,7 @@ export default function Person() {
   const deathYear = person.deathday ? new Date(person.deathday).getFullYear() : null;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pt-16">
       {/* Header */}
       <div className="page-container pt-6">
         <Link 

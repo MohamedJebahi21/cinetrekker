@@ -57,9 +57,9 @@ export default function Recommendations() {
     .slice(0, 24) || [];
 
   return (
-    <div className="page-container">
+    <div className="page-container pt-20">
       <div className="mb-8">
-        <h1 className="section-title flex items-center gap-2">
+        <h1 className="section-title flex items-center gap-3">
           <Sparkles className="w-8 h-8 text-primary" />
           {t('recommendations.title')}
         </h1>

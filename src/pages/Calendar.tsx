@@ -404,7 +404,7 @@ export default function Calendar() {
   };
 
   return (
-    <div className="page-container py-6">
+    <div className="page-container pt-20 py-6">
       {/* Header */}
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex items-center gap-3">

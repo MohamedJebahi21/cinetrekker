@@ -42,7 +42,7 @@ export default function Watched() {
   });
 
   return (
-    <div className="page-container">
+    <div className="page-container pt-20">
       <h1 className="section-title">{t('watched.title')}</h1>
 
       {isLoading ? (
