@@ -9,6 +9,8 @@ import { UserListsProvider } from "@/contexts/UserListsContext";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import Index from "./pages/Index";
 import Search from "./pages/Search";
 import Details from "./pages/Details";
@@ -22,7 +24,15 @@ import Auth from "./pages/Auth";
 import Calendar from "./pages/Calendar";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 // Page transition variants - subtle and fast
 const pageVariants = {
@@ -30,6 +40,12 @@ const pageVariants = {
   enter: { opacity: 1, transition: { duration: 0.2 } },
   exit: { opacity: 0, transition: { duration: 0.15 } },
 };
+
+// Network status monitor component
+function NetworkMonitor() {
+  useNetworkStatus();
+  return null;
+}
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -86,17 +102,22 @@ const App = () => (
     <TooltipProvider>
       <AuthProvider>
         <UserListsProvider>
-          <Toaster />
-          <Sonner position="bottom-right" />
-          <BrowserRouter>
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <main className="flex-1">
-                <AnimatedRoutes />
-              </main>
-              <Footer />
-            </div>
-          </BrowserRouter>
+          <ErrorBoundary>
+            <Toaster />
+            <Sonner position="bottom-right" />
+            <BrowserRouter>
+              <NetworkMonitor />
+              <div className="flex min-h-screen flex-col">
+                <Header />
+                <main className="flex-1">
+                  <ErrorBoundary>
+                    <AnimatedRoutes />
+                  </ErrorBoundary>
+                </main>
+                <Footer />
+              </div>
+            </BrowserRouter>
+          </ErrorBoundary>
         </UserListsProvider>
       </AuthProvider>
     </TooltipProvider>
