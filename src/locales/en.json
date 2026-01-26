@@ -26,7 +26,8 @@
     "all": "All",
     "yes": "Yes",
     "no": "No",
-    "details": "Details"
+    "details": "Details",
+    "discoverTrending": "Discover Trending"
   },
   "nav": {
     "home": "Home",
@@ -152,7 +153,8 @@
     "subtitle": "Based on your watched titles",
     "empty": "No recommendations yet",
     "emptyDesc": "Watch more titles to get personalized recommendations",
-    "hideTitle": "Hide from Recommendations"
+    "hideTitle": "Hide from Recommendations",
+    "watchMore": "Keep watching to discover more personalized recommendations."
   },
   "profile": {
     "title": "Profile",
@@ -251,7 +253,10 @@
     "api": "API",
     "support": "Support",
     "legal": "Legal",
-    "cookies": "Cookie Policy"
+    "cookies": "Cookie Policy",
+    "discover": "Discover",
+    "upcoming": "Upcoming",
+    "feedback": "Feedback"
   },
   "onboarding": {
     "step1Title": "Welcome to CineTrekker!",

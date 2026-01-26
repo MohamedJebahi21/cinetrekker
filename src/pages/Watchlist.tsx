@@ -1,10 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Bookmark } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Bookmark, TrendingUp } from 'lucide-react';
 import { useUserLists } from '@/contexts/UserListsContext';
 import { getMovieDetails, getTVDetails, getMediaTitle, getMediaType } from '@/services/tmdb';
 import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
 import { Media } from '@/types/media';
+import { Button } from '@/components/ui/button';
 
 export default function Watchlist() {
   const { t, i18n } = useTranslation();
@@ -49,10 +51,18 @@ export default function Watchlist() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-16">
-          <Bookmark className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
-          <h2 className="text-xl font-semibold mb-2">{t('watchlist.empty')}</h2>
-          <p className="text-muted-foreground">{t('watchlist.emptyDesc')}</p>
+        <div className="text-center py-16 max-w-md mx-auto">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+            <Bookmark className="w-10 h-10 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold mb-3 title-display">{t('watchlist.empty')}</h2>
+          <p className="text-muted-foreground mb-6 leading-relaxed">{t('watchlist.emptyDesc')}</p>
+          <Link to="/search">
+            <Button className="gap-2">
+              <TrendingUp className="w-4 h-4" />
+              {t('common.discoverTrending')}
+            </Button>
+          </Link>
         </div>
       )}
     </div>
