@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Search as SearchIcon, Filter, SlidersHorizontal, X, Sparkles } from 'lucide-react';
+import { Search as SearchIcon, Filter, SlidersHorizontal, X, Sparkles, TrendingUp } from 'lucide-react';
 import { 
   searchMulti, 
   getMovieGenres, 
@@ -563,20 +563,30 @@ export default function Search() {
           ))}
         </div>
       ) : (
-        <div className="empty-state">
-          <div className="w-24 h-24 rounded-full bg-muted/30 flex items-center justify-center mb-6">
-            <SearchIcon className="empty-state-icon w-12 h-12" />
+        <div className="text-center py-20 max-w-md mx-auto">
+          <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+            <SearchIcon className="w-12 h-12 text-primary" />
           </div>
-          <h3 className="empty-state-title">{t('search.noResultsTitle') || 'No results found'}</h3>
-          <p className="empty-state-description">
+          <h3 className="text-2xl font-bold mb-3 title-display">
             {debouncedQuery 
-              ? t('search.noResultsDescription') || `We couldn't find anything matching "${debouncedQuery}". Try adjusting your filters or search terms.`
-              : t('search.trySearching') || 'Start typing to search for movies, TV shows, or actors.'
+              ? t('search.noResultsTitle', 'No results found')
+              : t('search.startJourney', 'Your Journey Starts Here')
+            }
+          </h3>
+          <p className="text-muted-foreground mb-6 leading-relaxed">
+            {debouncedQuery 
+              ? t('search.noResultsDescription', `We couldn't find anything matching "${debouncedQuery}". Try adjusting your filters or search terms.`)
+              : t('search.trySearching', 'Search for movies, TV shows, or use the genre chips above to discover something new.')
             }
           </p>
           {(hasFilters || debouncedQuery) && (
-            <Button variant="default" onClick={() => { clearFilters(); clearSearch(); }} className="btn-primary-glow">
-              {t('search.resetAll') || 'Reset All Filters'}
+            <Button 
+              variant="default" 
+              onClick={() => { clearFilters(); clearSearch(); }} 
+              className="btn-primary-glow gap-2"
+            >
+              <TrendingUp className="w-4 h-4" />
+              {t('common.discoverTrending', 'Discover Trending')}
             </Button>
           )}
         </div>
