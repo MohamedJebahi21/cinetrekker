@@ -24,9 +24,9 @@ export function MediaSection({
   const { t } = useTranslation();
 
   return (
-    <section className="animate-fade-in">
+    <section className="animate-fade-in section-after-hero">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl md:text-2xl font-bold">{title}</h2>
+        <h2 className="section-title-responsive font-bold">{title}</h2>
         {showMoreLink && (
           <Link 
             to={showMoreLink}

@@ -62,7 +62,7 @@ export function HeroSection() {
   }
 
   return (
-    <section className="relative overflow-hidden -mt-16 min-h-[70vh] md:min-h-[80vh] flex items-center">
+    <section className="relative overflow-hidden -mt-16 min-h-[60vh] md:min-h-[80vh] flex items-center">
       {/* Optimized Backdrop Image */}
       {heroBackdropUrl && (
         <img
@@ -74,10 +74,11 @@ export function HeroSection() {
         />
       )}
       
-      {/* Gradient Overlays */}
-      <div className="absolute inset-0 backdrop-fade" />
-      <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/30" />
+      {/* Enhanced Gradient Overlays - Deeper bottom for content readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent" style={{ backgroundSize: '100% 100%' }} />
+      <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-transparent md:via-background/50" />
+      {/* Extra bottom gradient for "Because You Liked" section readability */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#050505] to-transparent" />
       
       {/* Trailer Overlay */}
       {showTrailer && trailer && (
@@ -103,32 +104,32 @@ export function HeroSection() {
         </div>
       )}
       
-      <div className="relative container mx-auto px-4 py-32 md:py-40 pt-24 md:pt-32 z-10">
+      <div className="relative container mx-auto px-4 py-24 md:py-40 pt-20 md:pt-32 z-10">
         <div className="max-w-2xl">
           {/* Featured Badge */}
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="w-5 h-5 text-primary" />
-            <span className="text-sm font-medium text-primary uppercase tracking-wider">
+          <div className="flex items-center gap-2 mb-3 md:mb-4">
+            <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+            <span className="text-xs md:text-sm font-medium text-primary uppercase tracking-wider">
               #1 {t('home.trending', 'Trending')} {t('home.today', 'Today')}
             </span>
           </div>
 
           {/* Hero Title */}
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 leading-tight heading-cinematic">
+          <h1 className="text-3xl md:text-6xl lg:text-7xl font-bold mb-3 md:mb-4 leading-tight heading-cinematic">
             {getMediaTitle(heroMedia)}
           </h1>
 
-          {/* Overview */}
+          {/* Overview - max 2 lines on mobile with ellipsis */}
           {heroMedia.overview && (
-            <p className="text-base md:text-lg text-muted-foreground max-w-xl leading-relaxed mb-6 line-clamp-3">
+            <p className="text-sm md:text-lg text-muted-foreground max-w-xl leading-relaxed mb-4 md:mb-6 line-clamp-2 md:line-clamp-3">
               {heroMedia.overview}
             </p>
           )}
 
-          {/* Rating & Meta */}
-          <div className="flex items-center gap-4 mb-8 text-sm">
+          {/* Rating & Meta - Compact on mobile */}
+          <div className="flex flex-wrap items-center gap-2 md:gap-4 mb-6 md:mb-8 text-xs md:text-sm">
             {heroMedia.vote_average > 0 && (
-              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/20 text-primary font-semibold">
+              <span className="flex items-center gap-1 md:gap-1.5 px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-primary/20 text-primary font-semibold">
                 ★ {heroMedia.vote_average.toFixed(1)}
               </span>
             )}
@@ -137,33 +138,34 @@ export function HeroSection() {
                 {new Date(heroMedia.release_date || heroMedia.first_air_date || '').getFullYear()}
               </span>
             )}
-            <span className="px-2 py-1 rounded bg-secondary text-secondary-foreground text-xs uppercase">
+            <span className="px-2 py-1 rounded bg-secondary text-secondary-foreground text-[10px] md:text-xs uppercase">
               {mediaType === 'movie' ? t('common.movie') : t('common.tvShow')}
             </span>
           </div>
           
-          {/* CTA Buttons */}
-          <div className="flex flex-wrap items-center gap-3">
+          {/* CTA Buttons - Side by side on mobile for vertical space savings */}
+          <div className="flex flex-row items-center gap-2 md:gap-3">
             {/* Watch Trailer Button */}
             {trailer && (
               <Button 
-                size="lg" 
+                size="default"
                 onClick={() => setShowTrailer(true)}
-                className="btn-primary-glow gap-2 min-h-[52px] text-base"
+                className="btn-primary-glow gap-2 h-11 md:h-12 px-4 md:px-6 text-sm md:text-base flex-1 md:flex-none"
                 aria-label={t('actions.watchTrailer', 'Watch Trailer')}
               >
-                <Play className="w-5 h-5 fill-current" />
-                {t('actions.watchTrailer', 'Watch Trailer')}
+                <Play className="w-4 h-4 md:w-5 md:h-5 fill-current" />
+                <span className="hidden xs:inline">{t('actions.watchTrailer', 'Watch Trailer')}</span>
+                <span className="xs:hidden">Trailer</span>
               </Button>
             )}
 
             {/* View Details Button */}
-            <Link to={`/${mediaType}/${heroMedia.id}`}>
+            <Link to={`/${mediaType}/${heroMedia.id}`} className="flex-1 md:flex-none">
               <Button 
-                size="lg" 
+                size="default"
                 variant={trailer ? "outline" : "default"}
                 className={cn(
-                  "gap-2 min-h-[52px] text-base",
+                  "gap-2 h-11 md:h-12 px-4 md:px-6 text-sm md:text-base w-full",
                   trailer ? "border-white/20 hover:bg-white/10" : "btn-primary-glow"
                 )}
                 aria-label={t('home.viewDetails', 'View Details')}
@@ -172,14 +174,14 @@ export function HeroSection() {
               </Button>
             </Link>
 
-            {/* Add to Watchlist Button */}
+            {/* Add to Watchlist Button - Icon only on mobile */}
             {user && (
               <Button 
-                size="lg" 
+                size="default"
                 variant="outline"
                 onClick={handleWatchlist}
                 className={cn(
-                  "gap-2 min-h-[52px] text-base border-white/20 transition-all",
+                  "gap-2 h-11 md:h-12 px-3 md:px-6 text-sm md:text-base border-white/20 transition-all action-bounce",
                   inWatchlist 
                     ? "bg-primary/20 border-primary/50 text-primary hover:bg-primary/30" 
                     : "hover:bg-white/10"
@@ -188,13 +190,13 @@ export function HeroSection() {
               >
                 {inWatchlist ? (
                   <>
-                    <BookmarkCheck className="w-5 h-5" />
-                    {t('actions.inWatchlist', 'In Watchlist')}
+                    <BookmarkCheck className="w-4 h-4 md:w-5 md:h-5" />
+                    <span className="hidden md:inline">{t('actions.inWatchlist', 'In Watchlist')}</span>
                   </>
                 ) : (
                   <>
-                    <Bookmark className="w-5 h-5" />
-                    {t('actions.addToWatchlist')}
+                    <Bookmark className="w-4 h-4 md:w-5 md:h-5" />
+                    <span className="hidden md:inline">{t('actions.addToWatchlist')}</span>
                   </>
                 )}
               </Button>

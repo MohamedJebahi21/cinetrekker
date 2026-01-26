@@ -94,21 +94,19 @@
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', system-ui, sans-serif;
     letter-spacing: -0.02em;
-    /* Subtle grain texture overlay */
-    background-image: 
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-    background-blend-mode: overlay;
     background-color: hsl(0 0% 2%);
   }
 
+  /* Subtle grain texture - 1.5% opacity with soft-light blend for OLED screens */
   body::before {
     content: '';
     position: fixed;
     inset: 0;
-    background: inherit;
-    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.015;
+    mix-blend-mode: soft-light;
     pointer-events: none;
-    z-index: -1;
+    z-index: 0;
   }
 
   /* RTL support for Arabic */
@@ -293,6 +291,7 @@
     @apply flex gap-3 overflow-x-auto pb-4 -mx-4 px-4;
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
   }
 
   .scroll-row::-webkit-scrollbar {
@@ -302,6 +301,11 @@
   .scroll-row > * {
     scroll-snap-align: start;
     flex-shrink: 0;
+  }
+
+  /* Section spacing after hero */
+  .section-after-hero {
+    @apply pt-8;
   }
 
   /* Empty state styling */
@@ -443,6 +447,14 @@
   padding-top: max(env(safe-area-inset-top, 0px), 1rem);
 }
 
+/* Full safe-area wrapper for app shell */
+.safe-area-insets {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
 /* Bottom navigation safe area for mobile */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .mobile-nav-safe {
@@ -459,4 +471,19 @@ img {
 .poster-image {
   object-fit: cover;
   object-position: center top;
+}
+
+/* Mobile-optimized typography for section titles */
+@media (max-width: 768px) {
+  .section-title-responsive {
+    @apply text-xl;
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+}
+
+@media (min-width: 769px) {
+  .section-title-responsive {
+    @apply text-2xl;
+    font-family: 'Playfair Display', Georgia, serif;
+  }
 }
