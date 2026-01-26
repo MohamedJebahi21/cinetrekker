@@ -8,7 +8,7 @@ export function Footer() {
   return (
     <footer className="border-t border-border/30 bg-background/50 mt-auto safe-area-bottom">
       <div className="container mx-auto px-4 py-12">
-        {/* Main Footer Grid */}
+        {/* Main Footer Grid - 4 columns */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
           {/* Brand Column */}
           <div className="col-span-2 md:col-span-1">
@@ -23,29 +23,35 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Company Column */}
+          {/* Discover Column */}
           <div>
             <h3 className="font-semibold text-sm uppercase tracking-wider text-foreground mb-4">
-              {t('footer.company', 'Company')}
+              {t('footer.discover', 'Discover')}
             </h3>
-            <nav className="flex flex-col gap-3" aria-label="Company links">
+            <nav className="flex flex-col gap-3" aria-label="Discover links">
               <Link 
-                to="/" 
+                to="/search?type=movie" 
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                {t('footer.about', 'About')}
+                {t('common.movies', 'Movies')}
               </Link>
               <Link 
-                to="/" 
+                to="/search?type=tv" 
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                {t('footer.contact', 'Contact')}
+                {t('common.tvShows', 'TV Shows')}
               </Link>
               <Link 
-                to="/" 
+                to="/calendar" 
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                {t('footer.careers', 'Careers')}
+                {t('footer.upcoming', 'Upcoming')}
+              </Link>
+              <Link 
+                to="/recommendations" 
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {t('nav.recommendations', 'Recommendations')}
               </Link>
             </nav>
           </div>
@@ -60,7 +66,13 @@ export function Footer() {
                 to="/" 
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                {t('footer.guidelines', 'Guidelines')}
+                {t('footer.about', 'About Us')}
+              </Link>
+              <Link 
+                to="/" 
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {t('footer.feedback', 'Feedback')}
               </Link>
               <a 
                 href="https://developer.themoviedb.org/docs" 

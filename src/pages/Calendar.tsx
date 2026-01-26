@@ -559,13 +559,19 @@ export default function Calendar() {
       {/* Empty State */}
       {!isLoading && showOnlyFollowed && calendarItems.length === 0 && (
         <div className="text-center py-16 mt-8 bg-card border border-border rounded-2xl shadow-sm">
-          <div className="p-4 rounded-full bg-muted inline-flex mb-4">
-            <CalendarIcon className="w-10 h-10 text-muted-foreground" />
+          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+            <CalendarIcon className="w-10 h-10 text-primary" />
           </div>
-          <h3 className="text-lg font-semibold mb-2 text-foreground">{t('calendar.noFollowedReleases')}</h3>
-          <p className="text-muted-foreground max-w-md mx-auto text-sm">
+          <h3 className="text-2xl font-bold mb-3 text-foreground title-display">{t('calendar.noFollowedReleases')}</h3>
+          <p className="text-muted-foreground max-w-md mx-auto text-sm mb-6 leading-relaxed">
             {t('calendar.noFollowedReleasesDesc')}
           </p>
+          <Link to="/search">
+            <Button className="gap-2">
+              <Film className="w-4 h-4" />
+              {t('common.discoverTrending')}
+            </Button>
+          </Link>
         </div>
       )}
     </div>

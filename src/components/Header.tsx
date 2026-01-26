@@ -53,7 +53,7 @@ export function Header() {
   return (
     <header className={cn(
       "glass-nav h-16 transition-all duration-300",
-      isScrolled && "shadow-lg"
+      isScrolled && "shadow-lg border-b border-white/10"
     )}>
       <div className="container mx-auto flex h-full items-center justify-between px-4 gap-4">
         {/* Logo */}
@@ -71,9 +71,9 @@ export function Header() {
           <SearchDropdown />
         </div>
 
-        {/* Desktop Navigation */}
+        {/* Desktop Navigation - All links including Calendar */}
         <nav className="hidden lg:flex items-center gap-1 flex-shrink-0">
-          {navLinks.slice(0, 5).map((link) => (
+          {navLinks.map((link) => (
             <Link
               key={link.path}
               to={link.path}

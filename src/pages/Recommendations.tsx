@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Sparkles, EyeOff } from 'lucide-react';
+import { Sparkles, EyeOff, TrendingUp } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useUserLists } from '@/contexts/UserListsContext';
-import { getSimilar, getMediaType } from '@/services/tmdb';
+import { getRecommendations, getSimilar } from '@/services/tmdb';
 import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
 import { Media } from '@/types/media';
 import { Button } from '@/components/ui/button';
@@ -15,26 +16,40 @@ export default function Recommendations() {
   // Get last 10 watched items
   const recentWatched = watched.slice(-10);
 
-  // Fetch similar titles for each watched item
+  // Fetch recommendations (collaborative filtering) with fallback to similar
   const { data: recommendations, isLoading } = useQuery({
     queryKey: ['recommendations', recentWatched.map(i => `${i.mediaType}-${i.mediaId}`), language],
     queryFn: async () => {
-      const allSimilar: Media[] = [];
+      const allRecommendations: Media[] = [];
       
       await Promise.all(
         recentWatched.map(async (item) => {
           try {
-            const similar = await getSimilar(item.mediaType, item.mediaId, language);
-            similar.results.forEach(media => {
-              allSimilar.push({ ...media, media_type: item.mediaType });
+            // First try recommendations endpoint (collaborative filtering)
+            const recs = await getRecommendations(item.mediaType, item.mediaId, language);
+            const recsResults = recs.results || [];
+            
+            recsResults.forEach(media => {
+              allRecommendations.push({ ...media, media_type: item.mediaType });
             });
+            
+            // If not enough recommendations, supplement with similar
+            if (recsResults.length < 10) {
+              const similar = await getSimilar(item.mediaType, item.mediaId, language);
+              const existingIds = new Set(recsResults.map(r => r.id));
+              (similar.results || []).forEach(media => {
+                if (!existingIds.has(media.id)) {
+                  allRecommendations.push({ ...media, media_type: item.mediaType });
+                }
+              });
+            }
           } catch {
             // Skip failed requests
           }
         })
       );
 
-      return allSimilar;
+      return allRecommendations;
     },
     enabled: recentWatched.length > 0,
   });
@@ -94,14 +109,32 @@ export default function Recommendations() {
           ))}
         </div>
       ) : watched.length === 0 ? (
-        <div className="text-center py-16">
-          <Sparkles className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
-          <h2 className="text-xl font-semibold mb-2">{t('recommendations.empty')}</h2>
-          <p className="text-muted-foreground">{t('recommendations.emptyDesc')}</p>
+        <div className="text-center py-16 max-w-md mx-auto">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+            <Sparkles className="w-10 h-10 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold mb-3">{t('recommendations.empty')}</h2>
+          <p className="text-muted-foreground mb-6">{t('recommendations.emptyDesc')}</p>
+          <Link to="/search">
+            <Button className="gap-2">
+              <TrendingUp className="w-4 h-4" />
+              {t('common.discoverTrending')}
+            </Button>
+          </Link>
         </div>
       ) : (
-        <div className="text-center py-16">
-          <p className="text-muted-foreground">{t('common.noResults')}</p>
+        <div className="text-center py-16 max-w-md mx-auto">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/20 flex items-center justify-center">
+            <Sparkles className="w-10 h-10 text-muted-foreground" />
+          </div>
+          <h2 className="text-xl font-semibold mb-3">{t('common.noResults')}</h2>
+          <p className="text-muted-foreground mb-6">{t('recommendations.watchMore')}</p>
+          <Link to="/">
+            <Button variant="outline" className="gap-2">
+              <TrendingUp className="w-4 h-4" />
+              {t('common.discoverTrending')}
+            </Button>
+          </Link>
         </div>
       )}
     </div>
