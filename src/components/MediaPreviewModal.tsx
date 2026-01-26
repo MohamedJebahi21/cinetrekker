@@ -94,9 +94,14 @@ export function MediaPreviewModal({ media, open, onOpenChange }: MediaPreviewMod
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl p-0 overflow-hidden bg-card border-white/10">
+      <DialogContent 
+        className="max-w-3xl p-0 overflow-hidden bg-card border-white/10"
+        aria-describedby="media-modal-description"
+      >
         <DialogTitle className="sr-only">{title}</DialogTitle>
-        
+        <p id="media-modal-description" className="sr-only">
+          {overview}
+        </p>
         {/* Backdrop / Trailer Section */}
         <div className="relative aspect-video bg-muted overflow-hidden">
           {trailer ? (

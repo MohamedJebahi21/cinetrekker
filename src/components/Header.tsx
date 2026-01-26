@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Search, Menu, X, Globe, LogIn, LogOut, User } from 'lucide-react';
+import { Menu, X, Globe, LogIn, LogOut, User } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { languages } from '@/i18n';
 import { useAuth } from '@/contexts/AuthContext';
+import { SearchDropdown } from '@/components/SearchDropdown';
 import { cn } from '@/lib/utils';
 
 export function Header() {
@@ -54,20 +55,25 @@ export function Header() {
       "glass-nav h-16 transition-all duration-300",
       isScrolled && "shadow-lg"
     )}>
-      <div className="container mx-auto flex h-full items-center justify-between px-4">
+      <div className="container mx-auto flex h-full items-center justify-between px-4 gap-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-3 group">
+        <Link to="/" className="flex items-center gap-3 group flex-shrink-0">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary transition-all duration-300 group-hover:shadow-[0_0_20px_hsl(358_94%_46%/0.5)]">
             <span className="text-xl font-bold text-primary-foreground">CT</span>
           </div>
-          <span className="text-xl font-bold text-foreground hidden sm:block">
+          <span className="text-xl font-bold text-foreground hidden lg:block">
             {t('common.appName')}
           </span>
         </Link>
 
+        {/* Search Dropdown - Desktop */}
+        <div className="hidden md:block flex-1 max-w-md">
+          <SearchDropdown />
+        </div>
+
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-1">
-          {navLinks.map((link) => (
+        <nav className="hidden lg:flex items-center gap-1 flex-shrink-0">
+          {navLinks.slice(0, 5).map((link) => (
             <Link
               key={link.path}
               to={link.path}
@@ -82,16 +88,16 @@ export function Header() {
         </nav>
 
         {/* Right Section */}
-        <div className="flex items-center gap-2">
-          {/* Search Icon (Mobile) */}
-          <Link to="/search" className="md:hidden p-2 text-muted-foreground hover:text-foreground transition-colors">
-            <Search className="h-5 w-5" />
-          </Link>
-
+        <div className="flex items-center gap-2 flex-shrink-0">
           {/* Language Switcher */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="gap-2 hover:bg-white/5">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="gap-2 hover:bg-white/5 min-w-[44px] min-h-[44px]"
+                aria-label="Change language"
+              >
                 <Globe className="h-4 w-4" />
                 <span className="hidden sm:inline">{currentLanguage.name}</span>
               </Button>
@@ -114,7 +120,12 @@ export function Header() {
             user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-2 hover:bg-white/5">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="gap-2 hover:bg-white/5 min-w-[44px] min-h-[44px]"
+                    aria-label="User menu"
+                  >
                     <User className="h-4 w-4" />
                     <span className="hidden sm:inline max-w-[100px] truncate">
                       {user.email?.split('@')[0]}
@@ -137,7 +148,12 @@ export function Header() {
               </DropdownMenu>
             ) : (
               <Link to="/auth">
-                <Button variant="default" size="sm" className="gap-2 btn-primary-glow">
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  className="gap-2 btn-primary-glow min-w-[44px] min-h-[44px]"
+                  aria-label={t('nav.signIn')}
+                >
                   <LogIn className="h-4 w-4" />
                   <span className="hidden sm:inline">{t('nav.signIn')}</span>
                 </Button>
@@ -149,8 +165,10 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden hover:bg-white/5"
+            className="lg:hidden hover:bg-white/5 min-w-[44px] min-h-[44px]"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={isMenuOpen}
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
@@ -159,14 +177,19 @@ export function Header() {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <nav className="md:hidden border-t border-white/5 bg-background/95 backdrop-blur-xl animate-fade-in">
+        <nav className="lg:hidden border-t border-white/5 bg-background/95 backdrop-blur-xl animate-fade-in">
           <div className="container mx-auto px-4 py-4 flex flex-col gap-2">
+            {/* Mobile Search */}
+            <div className="mb-2">
+              <SearchDropdown onNavigate={() => setIsMenuOpen(false)} />
+            </div>
+
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
                 className={cn(
-                  "px-4 py-3 rounded-lg text-sm font-medium transition-colors",
+                  "px-4 py-3 rounded-lg text-sm font-medium transition-colors min-h-[44px] flex items-center",
                   location.pathname === link.path
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
@@ -181,7 +204,7 @@ export function Header() {
             {!user ? (
               <Link
                 to="/auth"
-                className="px-4 py-3 rounded-lg text-sm font-medium bg-primary text-primary-foreground text-center mt-2"
+                className="px-4 py-3 rounded-lg text-sm font-medium bg-primary text-primary-foreground text-center mt-2 min-h-[44px] flex items-center justify-center"
                 onClick={() => setIsMenuOpen(false)}
               >
                 {t('nav.signIn')}
@@ -192,7 +215,7 @@ export function Header() {
                   handleSignOut();
                   setIsMenuOpen(false);
                 }}
-                className="px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 text-left mt-2"
+                className="px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 text-left mt-2 min-h-[44px] flex items-center"
               >
                 {t('nav.signOut')}
               </button>

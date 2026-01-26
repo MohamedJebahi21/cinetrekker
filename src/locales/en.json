@@ -235,7 +235,50 @@
   },
   "footer": {
     "attribution": "This product uses the TMDB API but is not endorsed or certified by TMDB.",
-    "allRightsReserved": "All rights reserved."
+    "allRightsReserved": "All rights reserved.",
+    "poweredBy": "Powered by TMDB",
+    "terms": "Terms of Service"
+  },
+  "onboarding": {
+    "step1Title": "Welcome to CineTrekker!",
+    "step1Desc": "Your personal hub for tracking movies and TV shows. Let's get you started.",
+    "step2Title": "Build Your Watchlist",
+    "step2Desc": "Click the bookmark icon on any title to save it to your watchlist for later.",
+    "step3Title": "Start Your Trek",
+    "step3Desc": "Use \"Random Trek\" to discover highly-rated titles, or browse trending content.",
+    "skip": "Skip",
+    "next": "Next",
+    "start": "Get Started"
+  },
+  "home": {
+    "trending": "Trending",
+    "trendingToday": "Today",
+    "trendingWeek": "This Week",
+    "popular": "Popular",
+    "topRated": "Top Rated",
+    "newEpisodes": "New Episodes",
+    "topMoviesWeek": "Top Movies This Week",
+    "topSeriesWeek": "Top Series This Week",
+    "recentMovies": "Recently Added Movies",
+    "recentEpisodes": "Recently Added Episodes",
+    "newEpisode": "New Episode",
+    "popularMovies": "Popular Movies",
+    "popularSeries": "Popular Series",
+    "didYouWatch": "Did You Watch?",
+    "didYouWatchPrompt": "New episode is out!",
+    "didYouWatchEmpty": "No new episodes to watch",
+    "didYouWatchEmptyDesc": "Episodes will appear here after they air",
+    "justReleased": "Just released",
+    "releasedToday": "Today",
+    "releasedHoursAgo": "{{hours}}h ago",
+    "becauseYouLiked": "Because You Liked {{title}}",
+    "featured": "Featured",
+    "viewDetails": "View Details",
+    "startTracking": "Start Tracking",
+    "hero": {
+      "title": "Track Your Entertainment Journey",
+      "subtitle": "Discover, track, and remember every movie and TV show you watch"
+    }
   },
   "rating": {
     "yourRating": "Your Rating",

@@ -17,17 +17,33 @@ export function Footer() {
             <span className="text-lg font-bold">{t('common.appName')}</span>
           </div>
 
-          {/* Links - Clean navigation */}
-          <nav className="flex items-center gap-6 text-sm text-muted-foreground">
-            <Link to="/" className="hover:text-foreground transition-colors">
+          {/* Trust Signal Links */}
+          <nav className="flex items-center gap-6 text-sm text-muted-foreground" aria-label="Footer navigation">
+            <Link 
+              to="/" 
+              className="hover:text-foreground transition-colors min-h-[44px] flex items-center"
+            >
               {t('nav.home')}
             </Link>
-            <Link to="/search" className="hover:text-foreground transition-colors">
+            <Link 
+              to="/search" 
+              className="hover:text-foreground transition-colors min-h-[44px] flex items-center"
+            >
               {t('nav.search')}
             </Link>
-            <Link to="/privacy" className="hover:text-foreground transition-colors">
+            <Link 
+              to="/privacy" 
+              className="hover:text-foreground transition-colors min-h-[44px] flex items-center"
+            >
               {t('nav.privacy')}
             </Link>
+            <a 
+              href="#terms" 
+              className="hover:text-foreground transition-colors min-h-[44px] flex items-center"
+              onClick={(e) => { e.preventDefault(); }}
+            >
+              {t('footer.terms', 'Terms of Service')}
+            </a>
           </nav>
 
           {/* TMDB Attribution */}
@@ -37,10 +53,11 @@ export function Footer() {
                 src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg" 
                 alt="TMDB Logo" 
                 className="h-4"
+                loading="lazy"
               />
             </div>
             <p className="text-xs text-muted-foreground text-center md:text-end max-w-sm">
-              {t('footer.attribution')}
+              {t('footer.poweredBy', 'Powered by TMDB')} — {t('footer.attribution')}
             </p>
           </div>
         </div>
