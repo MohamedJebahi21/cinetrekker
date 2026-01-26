@@ -284,6 +284,23 @@ export default function Search() {
     setModalOpen(true);
   };
 
+  // Popular genres for quick access
+  const POPULAR_GENRES = [
+    { id: '28', name: 'Action' },
+    { id: '35', name: 'Comedy' },
+    { id: '18', name: 'Drama' },
+    { id: '27', name: 'Horror' },
+    { id: '10749', name: 'Romance' },
+    { id: '878', name: 'Sci-Fi' },
+    { id: '53', name: 'Thriller' },
+    { id: '16', name: 'Animation' },
+  ];
+
+  const handleGenreChipClick = (genreId: string) => {
+    setGenreFilter(genreId);
+    setMoodFilter('');
+  };
+
   return (
     <div className="page-container pt-20">
       {/* Search Header */}
@@ -313,6 +330,31 @@ export default function Search() {
             </button>
           )}
         </div>
+
+        {/* Trending Searches / Popular Genres - shown when search is empty */}
+        {!query && (
+          <div className="mt-4">
+            <p className="text-sm text-muted-foreground mb-3 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              {t('search.popularGenres', 'Popular Genres')}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {POPULAR_GENRES.map((genre) => (
+                <button
+                  key={genre.id}
+                  onClick={() => handleGenreChipClick(genre.id)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${
+                    genreFilter === genre.id
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-card/50 text-muted-foreground border-border/50 hover:bg-card hover:text-foreground hover:border-border'
+                  }`}
+                >
+                  {genre.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         
         {/* Filter hint */}
         <p className="text-sm text-muted-foreground mt-3 flex items-center gap-2">

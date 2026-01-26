@@ -1,24 +1,19 @@
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Sparkles, Play, Bookmark, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { getTrending, getPopularMovies, getPopularTV, getBackdropUrl, getMediaTitle } from '@/services/tmdb';
+import { getTrending, getPopularMovies, getPopularTV } from '@/services/tmdb';
 import { MediaSection } from '@/components/MediaSection';
 import { MediaCarousel } from '@/components/MediaCarousel';
 import { NewEpisodesSection } from '@/components/NewEpisodesSection';
 import { WatchedShowsNewEpisodes } from '@/components/WatchedShowsNewEpisodes';
 import { RecentlyAddedMovies } from '@/components/RecentlyAddedMovies';
 import { RecentlyAddedEpisodes } from '@/components/RecentlyAddedEpisodes';
-import { RandomTrekButton } from '@/components/RandomTrekButton';
 import { BecauseYouLiked } from '@/components/BecauseYouLiked';
 import { OnboardingTooltip } from '@/components/OnboardingTooltip';
-import { Button } from '@/components/ui/button';
+import { HeroSection } from '@/components/HeroSection';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/contexts/AuthContext';
 
 export default function Index() {
   const { t, i18n } = useTranslation();
-  const { user } = useAuth();
   const language = i18n.language;
 
   const { data: trendingDay, isLoading: loadingDay } = useQuery({
@@ -51,86 +46,13 @@ export default function Index() {
     queryFn: () => getPopularTV(1, language),
   });
 
-  const heroMedia = trendingDay?.results?.[0];
-  const heroBackdropUrl = heroMedia?.backdrop_path 
-    ? getBackdropUrl(heroMedia.backdrop_path, 'w1280') // Optimized: use w1280 instead of original
-    : null;
-
   return (
     <div className="min-h-screen pt-16">
       {/* Onboarding for new users */}
       <OnboardingTooltip />
 
-      {/* Hero Section - Apple TV+ Style */}
-      <section className="relative overflow-hidden -mt-16 min-h-[70vh] md:min-h-[80vh] flex items-center">
-        {/* Optimized Backdrop Image */}
-        {heroBackdropUrl && (
-          <img
-            src={heroBackdropUrl}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-            loading="eager"
-            fetchPriority="high"
-          />
-        )}
-        
-        {/* Gradient Overlays */}
-        <div className="absolute inset-0 backdrop-fade" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/30" />
-        
-        <div className="relative container mx-auto px-4 py-32 md:py-40 pt-24 md:pt-32">
-          <div className="max-w-2xl">
-            {/* Featured Badge */}
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-5 h-5 text-primary" />
-              <span className="text-sm font-medium text-primary uppercase tracking-wider">
-                {t('home.featured', 'Featured')}
-              </span>
-            </div>
-
-            {/* Hero Title - Featured Media */}
-            {heroMedia && (
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 leading-tight heading-cinematic">
-                {getMediaTitle(heroMedia)}
-              </h1>
-            )}
-
-            <p className="text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed mb-8">
-              {t('home.hero.subtitle')}
-            </p>
-            
-            {/* Dynamic CTA based on auth state */}
-            <div className="flex flex-wrap items-center gap-4">
-              {heroMedia && (
-                <Link to={`/${heroMedia.media_type || 'movie'}/${heroMedia.id}`}>
-                  <Button size="lg" className="btn-primary-glow gap-2 min-h-[48px]" aria-label={t('home.viewDetails', 'View Details')}>
-                    <Play className="w-5 h-5" />
-                    {t('home.viewDetails', 'View Details')}
-                  </Button>
-                </Link>
-              )}
-
-              {user ? (
-                <RandomTrekButton variant="hero" />
-              ) : (
-                <Link to="/auth">
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    className="gap-2 border-white/20 hover:bg-white/10 min-h-[48px]"
-                    aria-label={t('home.startTracking', 'Start Tracking')}
-                  >
-                    <Bookmark className="w-5 h-5" />
-                    {t('home.startTracking', 'Start Tracking')}
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* High-Conversion Hero Section */}
+      <HeroSection />
 
       {/* Main Content */}
       <div className="page-container space-y-10">

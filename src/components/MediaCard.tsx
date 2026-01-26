@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Star, Bookmark, Check, Plus, Eye, Expand } from 'lucide-react';
+import { Star, Bookmark, Check, Plus, Expand, BookmarkCheck } from 'lucide-react';
 import { Media } from '@/types/media';
 import { getImageUrl, getMediaTitle, getMediaYear, getMediaType } from '@/services/tmdb';
 import { useUserLists } from '@/contexts/UserListsContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { MediaPreviewModal } from '@/components/MediaPreviewModal';
@@ -18,7 +19,8 @@ interface MediaCardProps {
 
 export function MediaCard({ media, showType = true }: MediaCardProps) {
   const { t } = useTranslation();
-  const { isInWatchlist, isWatched, addToWatchlist, removeFromWatchlist } = useUserLists();
+  const { user } = useAuth();
+  const { isInWatchlist, isWatched, addToWatchlist, removeFromWatchlist, addToWatched, removeFromWatched } = useUserLists();
   const [showPreview, setShowPreview] = useState(false);
   
   const title = getMediaTitle(media);
@@ -38,6 +40,16 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
       removeFromWatchlist(media.id, mediaType);
     } else {
       addToWatchlist(media.id, mediaType);
+    }
+  };
+
+  const handleWatchedClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (watched) {
+      removeFromWatched(media.id, mediaType);
+    } else {
+      addToWatched(media.id, mediaType);
     }
   };
 
@@ -91,8 +103,59 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
             </div>
           )}
 
-          {/* Hover Actions - Quick View & Watchlist */}
-          <div className="card-actions z-10">
+          {/* Quick Action Buttons - Mobile: always visible, Desktop: on hover */}
+          {user && (
+            <div className="absolute bottom-2 right-2 z-10 flex gap-1.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
+              {/* Watchlist Button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleWatchlistClick}
+                    className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 action-bounce",
+                      inWatchlist 
+                        ? "bg-primary text-primary-foreground" 
+                        : "bg-background/90 backdrop-blur-sm text-foreground hover:bg-background"
+                    )}
+                    aria-label={inWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
+                  >
+                    {inWatchlist ? (
+                      <BookmarkCheck className="w-4 h-4" />
+                    ) : (
+                      <Plus className="w-4 h-4" />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-popover text-popover-foreground">
+                  {inWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
+                </TooltipContent>
+              </Tooltip>
+
+              {/* Watched Button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleWatchedClick}
+                    className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 action-bounce",
+                      watched 
+                        ? "bg-success text-success-foreground" 
+                        : "bg-background/90 backdrop-blur-sm text-foreground hover:bg-background"
+                    )}
+                    aria-label={watched ? t('actions.removeFromWatched') : t('actions.markAsWatched')}
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-popover text-popover-foreground">
+                  {watched ? t('actions.removeFromWatched') : t('actions.markAsWatched')}
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          )}
+
+          {/* Hover Actions - Quick View (Desktop only) */}
+          <div className="hidden md:flex card-actions z-10">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -106,31 +169,6 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
               </TooltipTrigger>
               <TooltipContent side="top" className="bg-popover text-popover-foreground">
                 {t('actions.quickView')}
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={inWatchlist ? "default" : "secondary"}
-                  size="icon"
-                  className={cn(
-                    "h-9 w-9 backdrop-blur-sm",
-                    inWatchlist 
-                      ? "bg-primary hover:bg-primary/90" 
-                      : "bg-background/90 hover:bg-background"
-                  )}
-                  onClick={handleWatchlistClick}
-                >
-                  {inWatchlist ? (
-                    <Bookmark className="w-4 h-4 fill-current" />
-                  ) : (
-                    <Plus className="w-4 h-4" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="bg-popover text-popover-foreground">
-                {inWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
               </TooltipContent>
             </Tooltip>
           </div>
