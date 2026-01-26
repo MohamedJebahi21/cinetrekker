@@ -38,9 +38,9 @@ export function BecauseYouLiked() {
   }
 
   return (
-    <section className="animate-fade-in">
+    <section className="animate-fade-in section-after-hero">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl md:text-2xl font-bold">
+        <h2 className="section-title-responsive font-bold title-display">
           {t('home.becauseYouLiked', { title: lastViewed.title })}
         </h2>
         <Link to={`/${lastViewed.mediaType}/${lastViewed.id}`}>

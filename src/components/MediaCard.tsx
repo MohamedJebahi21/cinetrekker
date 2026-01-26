@@ -103,7 +103,7 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
             </div>
           )}
 
-          {/* Quick Action Buttons - Mobile: always visible, Desktop: on hover */}
+          {/* Quick Action Buttons - 32x32px circles with blur background */}
           {user && (
             <div className="absolute bottom-2 right-2 z-10 flex gap-1.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
               {/* Watchlist Button */}
@@ -112,17 +112,17 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
                   <button
                     onClick={handleWatchlistClick}
                     className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 action-bounce",
+                      "w-8 h-8 min-w-[32px] min-h-[32px] rounded-full flex items-center justify-center transition-all duration-200 action-bounce",
                       inWatchlist 
                         ? "bg-primary text-primary-foreground" 
-                        : "bg-background/90 backdrop-blur-sm text-foreground hover:bg-background"
+                        : "bg-background/80 backdrop-blur-md text-foreground hover:bg-background/90"
                     )}
                     aria-label={inWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
                   >
                     {inWatchlist ? (
-                      <BookmarkCheck className="w-4 h-4" />
+                      <BookmarkCheck className="w-3.5 h-3.5" />
                     ) : (
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-3.5 h-3.5" />
                     )}
                   </button>
                 </TooltipTrigger>
@@ -137,14 +137,14 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
                   <button
                     onClick={handleWatchedClick}
                     className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 action-bounce",
+                      "w-8 h-8 min-w-[32px] min-h-[32px] rounded-full flex items-center justify-center transition-all duration-200 action-bounce",
                       watched 
                         ? "bg-success text-success-foreground" 
-                        : "bg-background/90 backdrop-blur-sm text-foreground hover:bg-background"
+                        : "bg-background/80 backdrop-blur-md text-foreground hover:bg-background/90"
                     )}
                     aria-label={watched ? t('actions.removeFromWatched') : t('actions.markAsWatched')}
                   >
-                    <Check className="w-4 h-4" />
+                    <Check className="w-3.5 h-3.5" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="bg-popover text-popover-foreground">
