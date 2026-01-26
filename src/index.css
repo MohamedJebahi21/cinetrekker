@@ -416,3 +416,47 @@
     background-position: -200% 0;
   }
 }
+
+/* Phase 5: Haptic feedback bounce animation */
+@keyframes hapticBounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.9);
+  }
+  75% {
+    transform: scale(1.1);
+  }
+}
+
+.action-bounce:active {
+  animation: hapticBounce 0.3s ease-out;
+}
+
+/* Phase 5: Mobile safe-area support */
+.safe-area-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 1rem);
+}
+
+.safe-area-top {
+  padding-top: max(env(safe-area-inset-top, 0px), 1rem);
+}
+
+/* Bottom navigation safe area for mobile */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .mobile-nav-safe {
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Improved object-fit for all images to prevent distortion */
+img {
+  object-fit: cover;
+}
+
+/* Prevent image stretching on poster images */
+.poster-image {
+  object-fit: cover;
+  object-position: center top;
+}

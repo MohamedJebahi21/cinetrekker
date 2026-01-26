@@ -1,16 +1,17 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight } from 'lucide-react';
 import { Media } from '@/types/media';
-import { MediaCard, MediaCardSkeleton } from './MediaCard';
+import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
+import { Button } from '@/components/ui/button';
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
   CarouselPrevious,
+  CarouselNext,
 } from '@/components/ui/carousel';
-import { Button } from '@/components/ui/button';
 
 interface MediaCarouselProps {
   title: string;
@@ -28,9 +29,14 @@ export function MediaCarousel({
   emptyMessage,
 }: MediaCarouselProps) {
   const { t } = useTranslation();
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <section className="animate-fade-in">
+    <section 
+      className="animate-fade-in group/carousel"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl md:text-2xl font-bold">{title}</h2>
         {showMoreLink && (
@@ -69,8 +75,17 @@ export function MediaCarousel({
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="hidden md:flex -left-4 bg-background/80 backdrop-blur-sm border-border" />
-          <CarouselNext className="hidden md:flex -right-4 bg-background/80 backdrop-blur-sm border-border" />
+          {/* Navigation arrows - visible on hover (desktop only) */}
+          <CarouselPrevious 
+            className={`hidden md:flex -left-4 bg-background/90 backdrop-blur-sm border-border shadow-lg transition-opacity duration-200 ${
+              isHovered ? 'opacity-100' : 'opacity-0'
+            }`} 
+          />
+          <CarouselNext 
+            className={`hidden md:flex -right-4 bg-background/90 backdrop-blur-sm border-border shadow-lg transition-opacity duration-200 ${
+              isHovered ? 'opacity-100' : 'opacity-0'
+            }`} 
+          />
         </Carousel>
       ) : (
         <div className="text-center py-12 text-muted-foreground">

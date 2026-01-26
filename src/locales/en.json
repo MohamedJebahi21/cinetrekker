@@ -102,7 +102,8 @@
     "noResultsTitle": "No results found",
     "noResultsDescription": "We couldn't find anything matching your search. Try adjusting your filters or search terms.",
     "trySearching": "Start typing to search for movies, TV shows, or actors.",
-    "resetAll": "Reset All Filters"
+    "resetAll": "Reset All Filters",
+    "popularGenres": "Popular Genres"
   },
   "details": {
     "overview": "Overview",
@@ -132,7 +133,9 @@
     "addNote": "Add Note",
     "inWatchlist": "In Watchlist",
     "watched": "Watched",
-    "quickView": "Quick View"
+    "quickView": "Quick View",
+    "watchTrailer": "Watch Trailer",
+    "close": "Close"
   },
   "watchlist": {
     "title": "My Watchlist",
@@ -234,10 +237,21 @@
     "planToWatch": "Plan to Watch"
   },
   "footer": {
-    "attribution": "This product uses the TMDB API but is not endorsed or certified by TMDB.",
+    "attribution": "This product uses the TMDB API but is not endorsed or certified by TMDB. All movie and TV show data, including images and metadata, is provided by The Movie Database (TMDB).",
     "allRightsReserved": "All rights reserved.",
-    "poweredBy": "Powered by TMDB",
-    "terms": "Terms of Service"
+    "poweredBy": "Powered by",
+    "terms": "Terms of Service",
+    "tagline": "Your personal movie and TV show tracker. Discover, track, and share your cinematic journey.",
+    "company": "Company",
+    "about": "About",
+    "contact": "Contact",
+    "careers": "Careers",
+    "community": "Community",
+    "guidelines": "Guidelines",
+    "api": "API",
+    "support": "Support",
+    "legal": "Legal",
+    "cookies": "Cookie Policy"
   },
   "onboarding": {
     "step1Title": "Welcome to CineTrekker!",
@@ -252,6 +266,7 @@
   },
   "home": {
     "trending": "Trending",
+    "today": "Today",
     "trendingToday": "Today",
     "trendingWeek": "This Week",
     "popular": "Popular",
@@ -273,7 +288,7 @@
     "releasedHoursAgo": "{{hours}}h ago",
     "becauseYouLiked": "Because You Liked {{title}}",
     "featured": "Featured",
-    "viewDetails": "View Details",
+    "viewDetails": "More Info",
     "startTracking": "Start Tracking",
     "hero": {
       "title": "Track Your Entertainment Journey",
