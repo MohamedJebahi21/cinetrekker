@@ -32,12 +32,13 @@ export function Header() {
   }, []);
 
   const navLinks = [
-    { path: '/', label: t('nav.home') },
-    { path: '/search', label: t('nav.search') },
-    { path: '/watchlist', label: t('nav.watchlist') },
-    { path: '/watched', label: t('nav.watched') },
-    { path: '/recommendations', label: t('nav.recommendations') },
-    { path: '/calendar', label: t('nav.calendar') },
+    { path: '/', label: t('nav.home'), exact: true },
+    { path: '/search', label: t('nav.search'), exact: false },
+    { path: '/watchlist', label: t('nav.watchlist'), exact: false },
+    { path: '/watched', label: t('nav.watched'), exact: false },
+    { path: '/recommendations', label: t('nav.recommendations'), exact: false },
+    { path: '/stats', label: t('nav.stats'), exact: false },
+    { path: '/calendar', label: t('nav.calendar'), exact: false },
   ];
 
   const currentLanguage = languages.find(l => l.code === i18n.language) || languages[0];
@@ -66,25 +67,33 @@ export function Header() {
           </span>
         </Link>
 
-        {/* Search Dropdown - Desktop */}
-        <div className="hidden md:block flex-1 max-w-md">
+        {/* Search Dropdown - Desktop (Prominent & Sticky) */}
+        <div className="hidden md:block flex-1 max-w-2xl mx-8">
           <SearchDropdown />
         </div>
 
-        {/* Desktop Navigation - All links including Calendar */}
-        <nav className="hidden lg:flex items-center gap-1 flex-shrink-0">
-          {navLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={cn(
-                "nav-link text-sm font-medium",
-                location.pathname === link.path && "nav-link-active"
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
+        {/* Desktop Navigation - Primary Links */}
+        <nav className="hidden lg:flex items-center gap-1 flex-shrink-0" aria-label="Primary navigation">
+          {navLinks.slice(0, 5).map((link) => {
+            const isActive = link.exact 
+              ? location.pathname === link.path
+              : location.pathname.startsWith(link.path) && link.path !== '/';
+            return (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={cn(
+                  "px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                )}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Right Section */}
@@ -177,28 +186,37 @@ export function Header() {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <nav className="lg:hidden border-t border-white/5 bg-background/95 backdrop-blur-xl animate-fade-in">
+        <nav 
+          className="lg:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl animate-fade-in"
+          aria-label="Mobile navigation"
+        >
           <div className="container mx-auto px-4 py-4 flex flex-col gap-2">
             {/* Mobile Search */}
             <div className="mb-2">
               <SearchDropdown onNavigate={() => setIsMenuOpen(false)} />
             </div>
 
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={cn(
-                  "px-4 py-3 rounded-lg text-sm font-medium transition-colors min-h-[44px] flex items-center",
-                  location.pathname === link.path
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
-                )}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = link.exact
+                ? location.pathname === link.path
+                : location.pathname.startsWith(link.path) && link.path !== '/';
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={cn(
+                    "px-4 py-3 rounded-lg text-sm font-medium transition-colors min-h-[44px] flex items-center",
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  )}
+                  onClick={() => setIsMenuOpen(false)}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
             
             {/* Mobile Auth Button */}
             {!user ? (
