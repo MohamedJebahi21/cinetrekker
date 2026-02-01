@@ -53,11 +53,12 @@ export default function Index() {
   return (
     <div className="min-h-screen pt-16">
       <SEO title="CineTrekker — Track Your Movies & TV Shows" description="Discover trending movies and TV shows, track your watchlist, and get personalized recommendations." canonical="https://cinetrekker.lovable.app" />
-      <OnboardingModal />
       {/* Onboarding for new users */}
       <OnboardingTooltip />
       {/* High-Conversion Hero Section */}
       <HeroSection />
+      {/* Move OnboardingModal here, after Router context is available */}
+      <OnboardingModal />
       <div className="page-container space-y-10">
         {/* Personalized Recommendations */}
         {personalized && personalized.length > 0 && (
