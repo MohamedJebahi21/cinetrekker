@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { Analytics } from "@vercel/analytics/react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { UserListsProvider } from "@/contexts/UserListsContext";
 import { Header } from "@/components/Header";
@@ -102,10 +103,11 @@ const App = () => {
   
   try {
     return (
-      <TooltipProvider>
-        <AuthProvider>
-          <UserListsProvider>
-            <ErrorBoundary>
+      <>
+        <TooltipProvider>
+          <AuthProvider>
+            <UserListsProvider>
+              <ErrorBoundary>
               <Toaster />
               <Sonner position="bottom-right" />
               <SEO jsonLd={websiteJsonLd()} title="CineTrekker — Track Your Movies & TV Shows" description="Track movies and TV shows you love" canonical="https://cinetrekker.lovable.app" />
@@ -126,6 +128,10 @@ const App = () => {
           </UserListsProvider>
         </AuthProvider>
       </TooltipProvider>
+      
+      {/* Vercel Analytics */}
+      <Analytics />
+    </>
     );
   } catch (err) {
     console.error("❌ FATAL ERROR in App component:", err);
