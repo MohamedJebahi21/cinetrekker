@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Star, Bookmark, Check, Plus, Expand, BookmarkCheck } from 'lucide-react';
@@ -7,29 +7,38 @@ import { getImageUrl, getMediaTitle, getMediaYear, getMediaType } from '@/servic
 import { useUserLists } from '@/contexts/UserListsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { MediaPreviewModal } from '@/components/MediaPreviewModal';
 import { cn } from '@/lib/utils';
 
 interface MediaCardProps {
-  media: Media;
+  media: Media & { watchStatus?: string };
   showType?: boolean;
+  showStatus?: boolean;
   onAction?: () => void;
 }
 
-export function MediaCard({ media, showType = true }: MediaCardProps) {
+const STATUS_CONFIG = {
+  watching: { icon: '📺', label: 'Watching', color: 'bg-blue-500' },
+  completed: { icon: '✅', label: 'Completed', color: 'bg-green-500' },
+  dropped: { icon: '❌', label: 'Dropped', color: 'bg-red-500' },
+  plan_to_watch: { icon: '📋', label: 'Plan to Watch', color: 'bg-yellow-500' },
+};
+
+export const MediaCard = React.memo(function MediaCard({ media, showType = true, showStatus = false }: MediaCardProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { isInWatchlist, isWatched, addToWatchlist, removeFromWatchlist, addToWatched, removeFromWatched } = useUserLists();
   const [showPreview, setShowPreview] = useState(false);
   
-  const title = getMediaTitle(media);
-  const year = getMediaYear(media);
-  const mediaType = getMediaType(media);
-  const posterUrl = getImageUrl(media.poster_path, 'w342');
+  const title = useMemo(() => getMediaTitle(media), [media]);
+  const year = useMemo(() => getMediaYear(media), [media]);
+  const mediaType = useMemo(() => getMediaType(media), [media]);
+  const posterUrl = useMemo(() => getImageUrl(media.poster_path, 'w342'), [media.poster_path]);
   const inWatchlist = isInWatchlist(media.id, mediaType);
   const watched = isWatched(media.id, mediaType);
-  
+  const watchStatus = media.watchStatus;
   const rating = media.vote_average;
   const ratingClass = rating >= 7 ? 'rating-high' : rating >= 5 ? 'rating-medium' : 'rating-low';
 
@@ -63,8 +72,9 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
     <>
       <Link
         to={`/${mediaType}/${media.id}`}
-        className="group relative glass-card-hover overflow-hidden block"
+        className="group relative glass-card-hover overflow-hidden block focus:outline-none focus:ring-2 focus:ring-primary"
         aria-label={`${title} — open details`}
+        tabIndex={0}
       >
         {/* Poster with gradient overlay for text readability */}
         <div className="aspect-[2/3] relative overflow-hidden rounded-t-xl poster-overlay">
@@ -72,7 +82,7 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
             <img
               src={posterUrl}
               alt={title}
-              className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+              className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
               loading="lazy"
               decoding="async"
             />
@@ -89,6 +99,21 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
                 {mediaType === 'movie' ? t('common.movie') : t('common.tvShow')}
               </span>
             )}
+            {/* Watch Status Badge */}
+            {showStatus && watchStatus && STATUS_CONFIG[watchStatus as keyof typeof STATUS_CONFIG] && (
+              <Badge 
+                variant="secondary" 
+                className={cn(
+                  "text-xs font-semibold shadow-lg backdrop-blur-sm border-0 text-white",
+                  STATUS_CONFIG[watchStatus as keyof typeof STATUS_CONFIG].color
+                )}
+              >
+                <span className="mr-1">
+                  {STATUS_CONFIG[watchStatus as keyof typeof STATUS_CONFIG].icon}
+                </span>
+                {STATUS_CONFIG[watchStatus as keyof typeof STATUS_CONFIG].label}
+              </Badge>
+            )}
             
             {watched && (
               <span className="px-2 py-1 text-[10px] font-medium rounded bg-success/90 text-success-foreground flex items-center gap-1">
@@ -99,10 +124,12 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
 
           {/* Rating Badge */}
           {rating > 0 && (
-            <div className={cn("absolute bottom-2 left-2 rating-badge z-10", ratingClass)}>
-              <Star className="w-3 h-3 mr-1 fill-current" />
+            <span className={cn("absolute bottom-2 left-2 px-2 py-1 rounded text-xs font-bold shadow bg-black/80", rating >= 7 ? "text-green-400" : rating >= 5 ? "text-yellow-300" : "text-red-400")}
+              style={{ letterSpacing: '0.01em' }}
+            >
+              <Star className="w-3 h-3 mr-1 fill-current inline-block" />
               {rating.toFixed(1)}
-            </div>
+            </span>
           )}
 
           {/* Quick Action Buttons - 32x32px circles with blur background */}
@@ -178,7 +205,7 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
 
         {/* Info - Using Playfair Display for title */}
         <div className="p-3">
-          <h3 className="title-display font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors">
+          <h3 className="title-display font-semibold text-base md:text-lg line-clamp-2 group-hover:text-primary transition-colors">
             {title}
           </h3>
           {year && (
@@ -195,7 +222,7 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
       />
     </>
   );
-}
+});
 
 export const MediaCardSkeleton = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   (props, ref) => {

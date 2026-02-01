@@ -12,10 +12,13 @@ import { OnboardingTooltip } from '@/components/OnboardingTooltip';
 import { HeroSection } from '@/components/HeroSection';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SEO from '@/components/SEO';
+import { OnboardingModal } from '@/components/OnboardingModal';
+import { usePersonalizedRecommendations } from '@/hooks/usePersonalizedRecommendations';
 
 export default function Index() {
   const { t, i18n } = useTranslation();
   const language = i18n.language;
+  const { data: personalized, isLoading: loadingPersonalized } = usePersonalizedRecommendations(language);
 
   const { data: trendingDay, isLoading: loadingDay } = useQuery({
     queryKey: ['trending', 'day', language],
@@ -50,15 +53,23 @@ export default function Index() {
   return (
     <div className="min-h-screen pt-16">
       <SEO title="CineTrekker — Track Your Movies & TV Shows" description="Discover trending movies and TV shows, track your watchlist, and get personalized recommendations." canonical="https://cinetrekker.lovable.app" />
-      
+      <OnboardingModal />
       {/* Onboarding for new users */}
       <OnboardingTooltip />
-
       {/* High-Conversion Hero Section */}
       <HeroSection />
-
-      {/* Main Content */}
       <div className="page-container space-y-10">
+        {/* Personalized Recommendations */}
+        {personalized && personalized.length > 0 && (
+          <section>
+            <h2 className="section-title">For You</h2>
+            <div className="media-grid">
+              {personalized.slice(0, 12).map(media => (
+                <MediaCard key={media.id + (media.media_type || '')} media={media} />
+              ))}
+            </div>
+          </section>
+        )}
         {/* Phase 3: "Because You Liked" personalized row */}
         <BecauseYouLiked />
 

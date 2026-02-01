@@ -7,6 +7,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { lazy, Suspense } from 'react';
 import { AuthProvider } from "@/contexts/AuthContext";
 import { UserListsProvider } from "@/contexts/UserListsContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { Footer } from "@/components/Footer";
@@ -154,36 +155,35 @@ const App = () => {
   
   try {
     return (
-      <>
+      <ThemeProvider>
         <TooltipProvider>
           <AuthProvider>
             <UserListsProvider>
               <ErrorBoundary>
-              <Toaster />
-              <Sonner position="bottom-right" />
-              <SEO jsonLd={websiteJsonLd()} title="CineTrekker — Track Your Movies & TV Shows" description="Track movies and TV shows you love" canonical="https://cinetrekker.lovable.app" />
-              <BrowserRouter>
-                <GlobalLoader />
-                <NetworkMonitor />
-                <div className="flex min-h-screen flex-col">
-                  <Header />
-                  <main className="flex-1 pb-16 md:pb-0">
-                    <ErrorBoundary>
-                      <AnimatedRoutes />
-                    </ErrorBoundary>
-                  </main>
-                  <BottomNav />
-                  <Footer />
-                </div>
-              </BrowserRouter>
-            </ErrorBoundary>
-          </UserListsProvider>
-        </AuthProvider>
-      </TooltipProvider>
-      
-      {/* Vercel Analytics */}
-      <Analytics />
-    </>
+                <Toaster />
+                <Sonner position="bottom-right" />
+                <SEO jsonLd={websiteJsonLd()} title="CineTrekker — Track Your Movies & TV Shows" description="Track movies and TV shows you love" canonical="https://cinetrekker.lovable.app" />
+                <BrowserRouter>
+                  <GlobalLoader />
+                  <NetworkMonitor />
+                  <div className="flex min-h-screen flex-col">
+                    <Header />
+                    <main className="flex-1 pb-16 md:pb-0">
+                      <ErrorBoundary>
+                        <AnimatedRoutes />
+                      </ErrorBoundary>
+                    </main>
+                    <BottomNav />
+                    <Footer />
+                  </div>
+                </BrowserRouter>
+              </ErrorBoundary>
+            </UserListsProvider>
+          </AuthProvider>
+        </TooltipProvider>
+        {/* Vercel Analytics */}
+        <Analytics />
+      </ThemeProvider>
     );
   } catch (err) {
     console.error("❌ FATAL ERROR in App component:", err);

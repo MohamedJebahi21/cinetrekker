@@ -18,10 +18,6 @@ import { mediaToJsonLd } from '@/lib/schema';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
@@ -30,10 +26,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Textarea } from '@/components/ui/textarea';
-import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
+import { WatchedStatusDialog } from '@/components/WatchedStatusDialog';
 
 export default function Details() {
   const { id } = useParams<{ id: string }>();
@@ -45,9 +40,10 @@ export default function Details() {
   const mediaType: 'movie' | 'tv' = location.pathname.startsWith('/tv') ? 'tv' : 'movie';
 
   const { user } = useAuth();
-  const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [tempRating, setTempRating] = useState(5);
   const [tempNote, setTempNote] = useState('');
+  const [tempStatus, setTempStatus] = useState(watchedItem?.status || 'completed');
   const [episodesDialogOpen, setEpisodesDialogOpen] = useState(false);
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
 
@@ -138,17 +134,25 @@ export default function Details() {
     } else {
       setTempRating(watchedItem?.rating || 5);
       setTempNote(watchedItem?.note || '');
-      setRatingDialogOpen(true);
+      setTempStatus(watchedItem?.status || 'completed');
+      setStatusDialogOpen(true);
     }
   };
 
-  const handleSaveRating = () => {
+  const handleOpenStatusDialog = () => {
+    setTempRating(watchedItem?.rating || 5);
+    setTempNote(watchedItem?.note || '');
+    setTempStatus(watchedItem?.status || 'completed');
+    setStatusDialogOpen(true);
+  };
+
+  const handleSaveStatus = ({ rating, note, status }: { rating: number; note: string; status: string }) => {
     if (watched) {
-      updateWatchedItem(mediaId, mediaType, { rating: tempRating, note: tempNote });
+      updateWatchedItem(mediaId, mediaType, { rating, note, status });
     } else {
-      addToWatched(mediaId, mediaType, tempRating, tempNote);
+      addToWatched(mediaId, mediaType, rating, note, status);
     }
-    setRatingDialogOpen(false);
+    setStatusDialogOpen(false);
   };
 
   const handleFollowShow = () => {
@@ -501,11 +505,7 @@ export default function Details() {
                 <Button 
                   variant="outline" 
                   className="gap-2"
-                  onClick={() => {
-                    setTempRating(watchedItem?.rating || 5);
-                    setTempNote(watchedItem?.note || '');
-                    setRatingDialogOpen(true);
-                  }}
+                  onClick={handleOpenStatusDialog}
                   aria-label={watchedItem?.rating ? t('actions.updateRating') : t('actions.rateTitle')}
                 >
                   <MessageSquare className="w-4 h-4" />
@@ -514,45 +514,15 @@ export default function Details() {
               )}
             </div>
 
-            <Dialog open={ratingDialogOpen} onOpenChange={setRatingDialogOpen}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>{t('rating.rateThis', { type: mediaType === 'movie' ? t('common.movie') : t('common.tvShow') })}</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-6 py-4">
-                  <div>
-                    <label className="text-sm font-medium mb-4 block">
-                      {t('rating.yourRating')}: {tempRating}/10
-                    </label>
-                    <Slider
-                      value={[tempRating]}
-                      onValueChange={([value]) => setTempRating(value)}
-                      min={1}
-                      max={10}
-                      step={1}
-                      className="mt-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">{t('rating.note')}</label>
-                    <Textarea
-                      value={tempNote}
-                      onChange={(e) => setTempNote(e.target.value)}
-                      placeholder={t('rating.notePlaceholder')}
-                      rows={4}
-                    />
-                  </div>
-                  <div className="flex gap-3 justify-end">
-                    <Button variant="outline" onClick={() => setRatingDialogOpen(false)}>
-                      {t('common.cancel')}
-                    </Button>
-                    <Button onClick={handleSaveRating}>
-                      {t('common.save')}
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <WatchedStatusDialog
+              open={statusDialogOpen}
+              onOpenChange={setStatusDialogOpen}
+              onSave={handleSaveStatus}
+              initialRating={tempRating}
+              initialNote={tempNote}
+              initialStatus={tempStatus}
+              mediaTitle={title}
+            />
 
             {mediaType === 'tv' && !user && (
               <div className="glass-card p-4 text-sm text-muted-foreground">

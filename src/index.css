@@ -1,3 +1,28 @@
+/* Card grid and hover improvements */
+.media-grid {
+  @apply grid gap-4;
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (min-width: 640px) {
+  .media-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+}
+@media (min-width: 1024px) {
+  .media-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+.glass-card-hover {
+  @apply glass-card;
+  transition: transform 0.2s cubic-bezier(0.4,0,0.2,1), box-shadow 0.2s;
+}
+.glass-card-hover:hover {
+  transform: scale(1.04);
+  box-shadow: 0 4px 32px 0 rgba(0,0,0,0.18);
+  border-color: hsla(0,0%,100%,0.12);
+}
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;

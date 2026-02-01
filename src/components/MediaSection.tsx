@@ -14,7 +14,8 @@ interface MediaSectionProps {
   children?: ReactNode;
 }
 
-export function MediaSection({ 
+import React, { useMemo } from 'react';
+export const MediaSection = React.memo(function MediaSection({ 
   title, 
   items, 
   loading = false, 
@@ -22,11 +23,11 @@ export function MediaSection({
   emptyMessage,
 }: MediaSectionProps) {
   const { t } = useTranslation();
-
+  const memoizedItems = useMemo(() => items, [items]);
   return (
     <section className="animate-fade-in section-after-hero">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="section-title-responsive font-bold">{title}</h2>
+        <h2 className="section-title-responsive font-bold text-2xl md:text-3xl heading-cinematic">{title}</h2>
         {showMoreLink && (
           <Link 
             to={showMoreLink}
@@ -44,9 +45,9 @@ export function MediaSection({
             <MediaCardSkeleton key={i} />
           ))}
         </div>
-      ) : items.length > 0 ? (
+      ) : memoizedItems.length > 0 ? (
         <div className="media-grid">
-          {items.map((item) => (
+          {memoizedItems.map((item) => (
             <MediaCard key={`${item.id}-${item.media_type || 'unknown'}`} media={item} />
           ))}
         </div>
@@ -57,4 +58,4 @@ export function MediaSection({
       )}
     </section>
   );
-}
+});

@@ -2,6 +2,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Menu, X, Globe, LogIn, LogOut, User } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useTheme } from '@/contexts/ThemeContext';
+import { Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -17,6 +19,7 @@ import { cn } from '@/lib/utils';
 
 export function Header() {
   const { t, i18n } = useTranslation();
+  const { theme, toggle } = useTheme();
   const location = useLocation();
   const { user, signOut, loading } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -98,6 +101,16 @@ export function Header() {
 
         {/* Right Section */}
         <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Dark mode toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Toggle dark mode"
+            onClick={toggle}
+            className="min-w-[44px] min-h-[44px]"
+          >
+            {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </Button>
           {/* Language Switcher */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
