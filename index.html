@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     
     <!-- Primary SEO -->
-    <title>CineTrekker — Track Your Movies &amp; TV Shows</title>
-    <meta name="description" content="A wide, cinematic high-resolution collage of movie posters with a dark overlay. The text &#39;CineTrekker&#39; is prominently displayed in the center in elegant white &#39;Playfair Display&#39; typography. High-end, premium look.">
+    <title>CineTrekker — Discover & Track Movies & TV Shows | Trending Now</title>
+    <meta name="description" content="Track your favorite movies and TV shows. Discover trending content, manage your watchlist, and get personalized recommendations.">
+    <meta name="keywords" content="movies, TV shows, tracking, watchlist, recommendations, TMDB, streaming">
     <meta name="author" content="CineTrekker" />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://cinetrekker.lovable.app" />
@@ -14,16 +15,16 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://cinetrekker.lovable.app" />
-    
-    
+    <meta property="og:title" content="CineTrekker — Track Your Movies & TV Shows">
+    <meta property="og:description" content="Your personal hub for tracking movies and TV shows">
     <meta property="og:image" content="https://cinetrekker.lovable.app/og-image.png" />
     <meta property="og:site_name" content="CineTrekker" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://cinetrekker.lovable.app" />
-    
-    
+    <meta name="twitter:title" content="CineTrekker — Track Your Movies & TV Shows">
+    <meta name="twitter:description" content="Track movies and TV shows you love">
     <meta name="twitter:image" content="https://cinetrekker.lovable.app/og-image.png" />
 
     <!-- PWA & Mobile -->
@@ -36,20 +37,165 @@
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/favicon.png" />
-    <meta property="og:title" content="CineTrekker — Track Your Movies &amp; TV Shows">
-  <meta name="twitter:title" content="CineTrekker — Track Your Movies &amp; TV Shows">
-  <meta property="og:description" content="A wide, cinematic high-resolution collage of movie posters with a dark overlay. The text &#39;CineTrekker&#39; is prominently displayed in the center in elegant white &#39;Playfair Display&#39; typography. High-end, premium look.">
-  <meta name="twitter:description" content="A wide, cinematic high-resolution collage of movie posters with a dark overlay. The text &#39;CineTrekker&#39; is prominently displayed in the center in elegant white &#39;Playfair Display&#39; typography. High-end, premium look.">
-</head>
+
+    <!-- Preconnect to improve performance -->
+    <link rel="preconnect" href="https://api.themoviedb.org">
+    <link rel="preconnect" href="https://image.tmdb.org">
+    <link rel="preconnect" href="https://wzlcekvieglnidfempap.supabase.co">
+
+    <!-- Inline critical CSS for instant render -->
+    <style>
+      /* Reset & Base Styles */
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+      body { background: #050505; color: #fff; overflow-x: hidden; }
+      
+      /* App Shell */
+      .app-shell {
+        min-height: 100vh;
+        background: linear-gradient(180deg, #050505 0%, #0a0a0a 100%);
+      }
+      
+      /* Loading Header */
+      .loading-header {
+        height: 64px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        display: flex;
+        align-items: center;
+        padding: 0 1rem;
+        background: rgba(0,0,0,0.8);
+        backdrop-filter: blur(10px);
+        position: sticky;
+        top: 0;
+        z-index: 50;
+      }
+      
+      .loading-logo {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #E50914 0%, #c20812 100%);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 18px;
+        box-shadow: 0 0 20px rgba(229, 9, 20, 0.3);
+      }
+      
+      .loading-title {
+        margin-left: 12px;
+        font-weight: bold;
+        font-size: 1.25rem;
+        letter-spacing: -0.02em;
+      }
+      
+      /* Loading Content */
+      .loading-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+      }
+      
+      /* Skeleton Animation */
+      .skeleton {
+        background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 8px;
+      }
+      
+      @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+      
+      /* Grid Layout */
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+      
+      .card-skeleton {
+        aspect-ratio: 2/3;
+        border-radius: 12px;
+      }
+      
+      .text-skeleton {
+        height: 1.5rem;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+      }
+      
+      /* Responsive */
+      @media (min-width: 768px) {
+        .grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+        .loading-content { padding: 3rem 2rem; }
+      }
+      
+      @media (min-width: 1024px) {
+        .grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; }
+      }
+      
+      /* Fade out animation when React takes over */
+      .app-shell.loaded {
+        animation: fadeOut 0.3s ease-out forwards;
+      }
+      
+      @keyframes fadeOut {
+        to { opacity: 0; pointer-events: none; }
+      }
+    </style>
+  </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Pre-rendered loading shell - shows instantly while JS loads -->
+      <div class="app-shell">
+        <header class="loading-header">
+          <div class="loading-logo">CT</div>
+          <div class="loading-title">CineTrekker</div>
+        </header>
+        
+        <main class="loading-content">
+          <div class="text-skeleton skeleton" style="width: 240px; height: 2.5rem; margin-bottom: 0.75rem;"></div>
+          <div class="text-skeleton skeleton" style="width: 320px; height: 1.25rem;"></div>
+          
+          <div class="grid">
+            <div class="card-skeleton skeleton"></div>
+            <div class="card-skeleton skeleton"></div>
+            <div class="card-skeleton skeleton"></div>
+            <div class="card-skeleton skeleton"></div>
+            <div class="card-skeleton skeleton"></div>
+            <div class="card-skeleton skeleton"></div>
+            <div class="card-skeleton skeleton"></div>
+            <div class="card-skeleton skeleton"></div>
+            <div class="card-skeleton skeleton"></div>
+            <div class="card-skeleton skeleton"></div>
+            <div class="card-skeleton skeleton"></div>
+            <div class="card-skeleton skeleton"></div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- JS Required Fallback (only shows if JS is completely disabled) -->
     <noscript>
-      <div style="padding: 40px; text-align: center; font-family: system-ui;">
-        <h1>JavaScript Required</h1>
-        <p>Please enable JavaScript to use CineTrekker.</p>
+      <div style="padding: 40px; text-align: center; font-family: system-ui; background: #050505; color: white; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+        <div style="max-width: 500px;">
+          <h1 style="margin-bottom: 1rem; font-size: 2rem;">JavaScript Required</h1>
+          <p style="color: #999; line-height: 1.6; margin-bottom: 1.5rem;">
+            CineTrekker requires JavaScript to function properly. Please enable JavaScript in your browser settings to enjoy the full experience.
+          </p>
+          <p style="font-size: 14px; color: #666;">
+            While JavaScript is loading, you're seeing a preview of the interface.
+          </p>
+        </div>
       </div>
     </noscript>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

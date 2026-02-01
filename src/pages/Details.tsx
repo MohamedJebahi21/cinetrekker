@@ -246,11 +246,21 @@ export default function Details() {
     : combinedRecommendations.slice(0, 12).map(item => ({ ...item, _score: 0 }));
 
   const seasons = details.number_of_seasons ? Array.from({ length: details.number_of_seasons }, (_, i) => i + 1) : [];
-  const seoTitle = `${title}${year ? ` (${year})` : ''} - CineTrekker`;
+  
+  // SEO optimization
+  const seoTitle = `${title}${year ? ` (${year})` : ''}`;
   const seoDescription = (details.overview || '').slice(0, 160);
   const seoImage = getImageUrl(details.poster_path, 'w500');
   const seoCanonical = `https://cinetrekker.lovable.app/${mediaType}/${mediaId}`;
   const seoJsonLd = mediaToJsonLd({ ...details, media_type: mediaType } as Media);
+  const seoKeywords = [
+    title,
+    ...(details.genres?.map(g => g.name) || []),
+    mediaType === 'movie' ? 'movie' : 'TV show',
+    year?.toString(),
+    'streaming',
+    'watch online'
+  ].filter(Boolean).join(', ');
 
   return (
     <>
@@ -260,6 +270,7 @@ export default function Details() {
         image={seoImage}
         canonical={seoCanonical}
         jsonLd={seoJsonLd}
+        keywords={seoKeywords}
       />
       
       <div className="relative h-[50vh] md:h-[70vh] overflow-hidden -mt-16">

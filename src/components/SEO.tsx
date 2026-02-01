@@ -1,49 +1,75 @@
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
-interface SEOProps {
+export interface SEOProps {
   title?: string;
   description?: string;
   image?: string;
   url?: string;
   canonical?: string;
   jsonLd?: object | null;
+  keywords?: string;
 }
 
-export function SEO({ title, description, image, url, canonical, jsonLd }: SEOProps) {
+const DEFAULT_TITLE = 'CineTrekker — Discover & Track Movies & TV Shows | Trending Now';
+const DEFAULT_DESCRIPTION = 'Track your favorite movies and TV shows. Discover trending content, manage your watchlist, and get personalized recommendations.';
+const DEFAULT_IMAGE = 'https://cinetrekker.lovable.app/og-image.png';
+
+export function SEO({ 
+  title, 
+  description, 
+  image, 
+  url, 
+  canonical, 
+  jsonLd,
+  keywords 
+}: SEOProps) {
+  const location = useLocation();
+
   useEffect(() => {
-    if (title) document.title = title;
+    // Set page title with brand suffix
+    const fullTitle = title 
+      ? `${title} — CineTrekker` 
+      : DEFAULT_TITLE;
+    document.title = fullTitle;
 
-    const setMeta = (name: string, value?: string) => {
-      if (!value) return;
-      let el = document.querySelector(`meta[name="${name}"]`);
-      if (!el) {
-        el = document.createElement('meta');
-        el.setAttribute('name', name);
-        document.head.appendChild(el);
+    // Helper function to set meta tags
+    const setMeta = (name: string, content: string) => {
+      let element = document.querySelector(`meta[name="${name}"]`);
+      if (!element) {
+        element = document.createElement('meta');
+        element.setAttribute('name', name);
+        document.head.appendChild(element);
       }
-      el.setAttribute('content', value);
+      element.setAttribute('content', content);
     };
 
-    const setProp = (prop: string, value?: string) => {
-      if (!value) return;
-      let el = document.querySelector(`meta[property="${prop}"]`);
-      if (!el) {
-        el = document.createElement('meta');
-        el.setAttribute('property', prop);
-        document.head.appendChild(el);
+    const setProp = (property: string, content: string) => {
+      let element = document.querySelector(`meta[property="${property}"]`);
+      if (!element) {
+        element = document.createElement('meta');
+        element.setAttribute('property', property);
+        document.head.appendChild(element);
       }
-      el.setAttribute('content', value);
+      element.setAttribute('content', content);
     };
 
-    setMeta('description', description || '');
-    setProp('og:title', title || '');
-    setProp('og:description', description || '');
-    setProp('og:image', image || '');
+    // Set meta tags
+    setMeta('description', description || DEFAULT_DESCRIPTION);
+    if (keywords) setMeta('keywords', keywords);
+    
+    // Open Graph
+    setProp('og:title', fullTitle);
+    setProp('og:description', description || DEFAULT_DESCRIPTION);
+    setProp('og:image', image || DEFAULT_IMAGE);
     setProp('og:url', url || window.location.href);
-    setMeta('twitter:title', title || '');
-    setMeta('twitter:description', description || '');
-    setMeta('twitter:image', image || '');
+    
+    // Twitter Card
+    setMeta('twitter:title', fullTitle);
+    setMeta('twitter:description', description || DEFAULT_DESCRIPTION);
+    setMeta('twitter:image', image || DEFAULT_IMAGE);
 
+    // Canonical URL
     if (canonical) {
       let link: HTMLLinkElement | null = document.querySelector("link[rel='canonical']");
       if (!link) {
@@ -54,7 +80,7 @@ export function SEO({ title, description, image, url, canonical, jsonLd }: SEOPr
       link.setAttribute('href', canonical);
     }
 
-    // Inject JSON-LD
+    // JSON-LD Structured Data
     if (jsonLd) {
       const id = 'cinetrekker-jsonld';
       let script = document.getElementById(id) as HTMLScriptElement | null;
@@ -64,9 +90,9 @@ export function SEO({ title, description, image, url, canonical, jsonLd }: SEOPr
         script.id = id;
         document.head.appendChild(script);
       }
-      script.text = JSON.stringify(jsonLd);
+      script.textContent = JSON.stringify(jsonLd);
     }
-  }, [title, description, image, url, canonical, jsonLd]);
+  }, [title, description, image, url, canonical, jsonLd, keywords, location]);
 
   return null;
 }

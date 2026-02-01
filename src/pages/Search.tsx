@@ -298,8 +298,12 @@ export default function Search() {
   return (
     <div className="page-container pt-20">
       <SEO 
-        title={query ? `${query} - CineTrekker Search` : 'Search Movies & TV Shows - CineTrekker'}
-        description={query ? `Search results for "${query}"` : 'Search and discover movies and TV shows by genre, year, and mood.'}
+        title={query ? `Search: ${query}` : 'Search Movies & TV Shows'}
+        description={query 
+          ? `Search results for "${query}" - Find movies, TV shows, and actors on CineTrekker`
+          : 'Search and discover movies and TV shows by genre, year, rating, and mood. Filter by streaming services and find your next watch.'
+        }
+        keywords={query ? `${query}, movies, TV shows, search, streaming` : 'movie search, TV show search, genre filter, mood filter, streaming services'}
         canonical={`https://cinetrekker.lovable.app/search${window.location.search}`}
       />
       {/* Search Header */}
