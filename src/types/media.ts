@@ -102,6 +102,17 @@ export interface TMDBResponse<T> {
 export type MediaType = 'movie' | 'tv' | 'all';
 export type TimeWindow = 'day' | 'week';
 
+export interface PersonSearchResult {
+  id: number;
+  name: string;
+  profile_path: string | null;
+  popularity: number;
+  known_for_department?: string;
+  known_for?: Media[];
+  adult?: boolean;
+  media_type: 'person';
+}
+
 export interface UserMediaItem {
   id: string;
   mediaId: number;

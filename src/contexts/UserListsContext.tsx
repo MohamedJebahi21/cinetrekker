@@ -3,6 +3,17 @@ import { UserMediaItem, HiddenRecommendation } from '@/types/media';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { validateNote, validateRating } from '@/lib/validation';
+import { 
+  useWatchlistQuery, 
+  useAddToWatchlist as useAddToWatchlistMutation, 
+  useRemoveFromWatchlist as useRemoveFromWatchlistMutation 
+} from '@/hooks/useWatchlistQueries';
+import {
+  useWatchedQuery,
+  useAddToWatched as useAddToWatchedMutation,
+  useRemoveFromWatched as useRemoveFromWatchedMutation,
+  useUpdateWatched as useUpdateWatchedMutation
+} from '@/hooks/useWatchedQueries';
 interface UserListsContextType {
   watchlist: UserMediaItem[];
   watched: UserMediaItem[];
@@ -30,65 +41,41 @@ const STORAGE_KEYS = {
 
 export function UserListsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  
+  // Use TanStack Query hooks for watchlist and watched
+  const { data: watchlistData = [], isLoading: watchlistLoading } = useWatchlistQuery();
+  const { data: watchedData = [], isLoading: watchedLoading } = useWatchedQuery();
+  
+  const addToWatchlistMutation = useAddToWatchlistMutation();
+  const removeFromWatchlistMutation = useRemoveFromWatchlistMutation();
+  const addToWatchedMutation = useAddToWatchedMutation();
+  const removeFromWatchedMutation = useRemoveFromWatchedMutation();
+  const updateWatchedMutation = useUpdateWatchedMutation();
+  
   const [watchlist, setWatchlist] = useState<UserMediaItem[]>([]);
   const [watched, setWatched] = useState<UserMediaItem[]>([]);
   const [hiddenRecommendations, setHiddenRecommendations] = useState<HiddenRecommendation[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load data from Supabase when user logs in, or from localStorage when not logged in
+  // Sync query data with local state for backward compatibility
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      
+    setWatchlist(watchlistData);
+    setWatched(watchedData);
+    setLoading(watchlistLoading || watchedLoading);
+  }, [watchlistData, watchedData, watchlistLoading, watchedLoading]);
+
+  // Load hidden recommendations from localStorage
+  useEffect(() => {
+    const loadHidden = () => {
       if (user) {
-        // Fetch from Supabase
-        const [watchlistResult, watchedResult] = await Promise.all([
-          supabase.from('user_watchlist').select('*').eq('user_id', user.id),
-          supabase.from('user_watched').select('*').eq('user_id', user.id),
-        ]);
-
-        if (watchlistResult.data) {
-          setWatchlist(watchlistResult.data.map(item => ({
-            id: item.id,
-            mediaId: item.media_id,
-            mediaType: item.media_type as 'movie' | 'tv',
-            userId: item.user_id,
-            addedAt: item.added_at,
-          })));
-        }
-
-        if (watchedResult.data) {
-          setWatched(watchedResult.data.map(item => ({
-            id: item.id,
-            mediaId: item.media_id,
-            mediaType: item.media_type as 'movie' | 'tv',
-            userId: item.user_id,
-            rating: item.rating ?? undefined,
-            note: item.note ?? undefined,
-            status: (item.status as UserMediaItem['status']) ?? undefined,
-            addedAt: item.watched_at,
-            watchedAt: item.watched_at,
-          })));
-        }
-
-        // Load hidden recommendations from localStorage (user-specific key)
         const storedHidden = localStorage.getItem(`${STORAGE_KEYS.hidden}_${user.id}`);
         if (storedHidden) setHiddenRecommendations(JSON.parse(storedHidden));
       } else {
-        // Load from localStorage for non-authenticated users
-        const storedWatchlist = localStorage.getItem(STORAGE_KEYS.watchlist);
-        const storedWatched = localStorage.getItem(STORAGE_KEYS.watched);
         const storedHidden = localStorage.getItem(STORAGE_KEYS.hidden);
-
-        if (storedWatchlist) setWatchlist(JSON.parse(storedWatchlist));
-        if (storedWatched) setWatched(JSON.parse(storedWatched));
         if (storedHidden) setHiddenRecommendations(JSON.parse(storedHidden));
       }
-      
-      setLoading(false);
     };
-
-    loadData();
+    loadHidden();
   }, [user]);
 
   // Save hidden recommendations to localStorage
@@ -100,132 +87,26 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
     }
   }, [hiddenRecommendations, user]);
 
-  // For non-authenticated users, save to localStorage
-  useEffect(() => {
-    if (!user) {
-      localStorage.setItem(STORAGE_KEYS.watchlist, JSON.stringify(watchlist));
-    }
-  }, [watchlist, user]);
+  // Wrapper functions to maintain backward compatibility with existing code
+  const addToWatchlist = useCallback((mediaId: number, mediaType: 'movie' | 'tv') => {
+    addToWatchlistMutation.mutate({ mediaId, mediaType });
+  }, [addToWatchlistMutation]);
 
-  useEffect(() => {
-    if (!user) {
-      localStorage.setItem(STORAGE_KEYS.watched, JSON.stringify(watched));
-    }
-  }, [watched, user]);
+  const removeFromWatchlist = useCallback((mediaId: number, mediaType: 'movie' | 'tv') => {
+    removeFromWatchlistMutation.mutate({ mediaId, mediaType });
+  }, [removeFromWatchlistMutation]);
 
-  const addToWatchlist = useCallback(async (mediaId: number, mediaType: 'movie' | 'tv') => {
-    const newItem: UserMediaItem = {
-      id: `${mediaType}-${mediaId}`,
-      mediaId,
-      mediaType,
-      userId: user?.id || 'local',
-      addedAt: new Date().toISOString(),
-    };
+  const addToWatched = useCallback((mediaId: number, mediaType: 'movie' | 'tv', rating?: number, note?: string, status?: string) => {
+    addToWatchedMutation.mutate({ mediaId, mediaType, rating, note, status });
+  }, [addToWatchedMutation]);
 
-    // Optimistic update
-    setWatchlist(prev => [...prev.filter(item => !(item.mediaId === mediaId && item.mediaType === mediaType)), newItem]);
+  const removeFromWatched = useCallback((mediaId: number, mediaType: 'movie' | 'tv') => {
+    removeFromWatchedMutation.mutate({ mediaId, mediaType });
+  }, [removeFromWatchedMutation]);
 
-    if (user) {
-      await supabase.from('user_watchlist').upsert({
-        user_id: user.id,
-        media_id: mediaId,
-        media_type: mediaType,
-        added_at: newItem.addedAt,
-      }, { onConflict: 'user_id,media_id,media_type' });
-    }
-  }, [user]);
-
-  const removeFromWatchlist = useCallback(async (mediaId: number, mediaType: 'movie' | 'tv') => {
-    // Optimistic update
-    setWatchlist(prev => prev.filter(item => !(item.mediaId === mediaId && item.mediaType === mediaType)));
-
-    if (user) {
-      await supabase.from('user_watchlist')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('media_id', mediaId)
-        .eq('media_type', mediaType);
-    }
-  }, [user]);
-
-  const addToWatched = useCallback(async (mediaId: number, mediaType: 'movie' | 'tv', rating?: number, note?: string, status?: string) => {
-    // Validate user inputs
-    const validatedNote = validateNote(note);
-    const validatedRating = validateRating(rating);
-    
-    const newItem: UserMediaItem = {
-      id: `${mediaType}-${mediaId}`,
-      mediaId,
-      mediaType,
-      userId: user?.id || 'local',
-      rating: validatedRating,
-      note: validatedNote,
-      status: (status as UserMediaItem['status']) || 'completed',
-      addedAt: new Date().toISOString(),
-      watchedAt: new Date().toISOString(),
-    };
-
-    // Optimistic update
-    setWatched(prev => [...prev.filter(item => !(item.mediaId === mediaId && item.mediaType === mediaType)), newItem]);
-    // Remove from watchlist if present
-    removeFromWatchlist(mediaId, mediaType);
-
-    if (user) {
-      await supabase.from('user_watched').upsert({
-        user_id: user.id,
-        media_id: mediaId,
-        media_type: mediaType,
-        rating: validatedRating ?? null,
-        note: validatedNote ?? null,
-        status: status || 'completed',
-        watched_at: newItem.watchedAt,
-      }, { onConflict: 'user_id,media_id,media_type' });
-    }
-  }, [user, removeFromWatchlist]);
-
-  const removeFromWatched = useCallback(async (mediaId: number, mediaType: 'movie' | 'tv') => {
-    // Optimistic update
-    setWatched(prev => prev.filter(item => !(item.mediaId === mediaId && item.mediaType === mediaType)));
-
-    if (user) {
-      await supabase.from('user_watched')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('media_id', mediaId)
-        .eq('media_type', mediaType);
-    }
-  }, [user]);
-
-  const updateWatchedItem = useCallback(async (mediaId: number, mediaType: 'movie' | 'tv', updates: Partial<UserMediaItem>) => {
-    // Validate user inputs
-    const validatedUpdates = { ...updates };
-    if (updates.note !== undefined) {
-      validatedUpdates.note = validateNote(updates.note);
-    }
-    if (updates.rating !== undefined) {
-      validatedUpdates.rating = validateRating(updates.rating);
-    }
-    
-    // Optimistic update
-    setWatched(prev => prev.map(item => 
-      item.mediaId === mediaId && item.mediaType === mediaType
-        ? { ...item, ...validatedUpdates }
-        : item
-    ));
-
-    if (user) {
-      const dbUpdates: Record<string, unknown> = {};
-      if (validatedUpdates.rating !== undefined) dbUpdates.rating = validatedUpdates.rating;
-      if (validatedUpdates.note !== undefined) dbUpdates.note = validatedUpdates.note;
-      if (validatedUpdates.status !== undefined) dbUpdates.status = validatedUpdates.status;
-
-      await supabase.from('user_watched')
-        .update(dbUpdates)
-        .eq('user_id', user.id)
-        .eq('media_id', mediaId)
-        .eq('media_type', mediaType);
-    }
-  }, [user]);
+  const updateWatchedItem = useCallback((mediaId: number, mediaType: 'movie' | 'tv', updates: Partial<UserMediaItem>) => {
+    updateWatchedMutation.mutate({ mediaId, mediaType, updates });
+  }, [updateWatchedMutation]);
 
   const isInWatchlist = useCallback((mediaId: number, mediaType: 'movie' | 'tv') => {
     return watchlist.some(item => item.mediaId === mediaId && item.mediaType === mediaType);

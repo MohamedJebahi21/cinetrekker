@@ -7,6 +7,7 @@ import { getMovieDetails, getTVDetails, getMediaTitle, getMediaType } from '@/se
 import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
 import { Media } from '@/types/media';
 import { Button } from '@/components/ui/button';
+import SEO from '@/components/SEO';
 
 export default function Watchlist() {
   const { t, i18n } = useTranslation();
@@ -35,6 +36,12 @@ export default function Watchlist() {
   });
 
   return (
+    <>
+      <SEO 
+        title="My Watchlist — CineTrekker" 
+        description="Movies and TV shows you want to watch"
+        canonical="https://cinetrekker.lovable.app/watchlist"
+      />
     <div className="page-container pt-20">
       <h1 className="section-title">{t('watchlist.title')}</h1>
 
@@ -66,5 +73,6 @@ export default function Watchlist() {
         </div>
       )}
     </div>
+    </>
   );
 }

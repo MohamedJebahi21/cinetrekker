@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Search as SearchIcon, Filter, SlidersHorizontal, X, Sparkles, TrendingUp } from 'lucide-react';
+import SEO from '@/components/SEO';
 import { 
   searchMulti, 
   getMovieGenres, 
@@ -26,6 +27,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { MediaType, Genre } from '@/types/media';
+import { useDebounce } from '@/hooks/useDebounce';
 
 const LANGUAGES = [
   { code: 'en', name: 'English' },
@@ -92,7 +94,7 @@ export default function Search() {
   const initialStreaming = searchParams.get('streaming') || '';
   
   const [query, setQuery] = useState(initialQuery);
-  const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
+  const debouncedQuery = useDebounce(query, 300);
   const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaType>(initialType);
   const [genreFilter, setGenreFilter] = useState<string>(initialGenre);
   const [yearFilter, setYearFilter] = useState<string>(initialYear);
@@ -107,14 +109,6 @@ export default function Search() {
   const [modalOpen, setModalOpen] = useState(false);
   
   const language = i18n.language;
-
-  // Debounce search query
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(query);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [query]);
 
   // Update URL params when filters change
   useEffect(() => {
@@ -303,6 +297,11 @@ export default function Search() {
 
   return (
     <div className="page-container pt-20">
+      <SEO 
+        title={query ? `${query} - CineTrekker Search` : 'Search Movies & TV Shows - CineTrekker'}
+        description={query ? `Search results for "${query}"` : 'Search and discover movies and TV shows by genre, year, and mood.'}
+        canonical={`https://cinetrekker.lovable.app/search${window.location.search}`}
+      />
       {/* Search Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">

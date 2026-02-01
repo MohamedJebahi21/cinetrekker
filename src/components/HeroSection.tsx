@@ -106,6 +106,14 @@ export function HeroSection() {
       
       <div className="relative container mx-auto px-4 py-24 md:py-40 pt-20 md:pt-32 z-10">
         <div className="max-w-2xl">
+          {/* Main Page Heading */}
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">
+            {user ? t('home.welcome', 'Hey there!') : t('home.welcomeBack', 'Welcome to CineTrekker!')}
+          </h1>
+          <p className="text-base md:text-lg text-muted-foreground mb-4 md:mb-6">
+            {t('home.subtitle', 'Ready to dive in?')}
+          </p>
+
           {/* Featured Badge */}
           <div className="flex items-center gap-2 mb-3 md:mb-4">
             <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-primary" />
@@ -114,10 +122,10 @@ export function HeroSection() {
             </span>
           </div>
 
-          {/* Hero Title */}
-          <h1 className="text-3xl md:text-6xl lg:text-7xl font-bold mb-3 md:mb-4 leading-tight heading-cinematic">
+          {/* Trending Media Title */}
+          <h2 className="text-3xl md:text-6xl lg:text-7xl font-bold mb-3 md:mb-4 leading-tight heading-cinematic">
             {getMediaTitle(heroMedia)}
-          </h1>
+          </h2>
 
           {/* Overview - max 2 lines on mobile with ellipsis */}
           {heroMedia.overview && (

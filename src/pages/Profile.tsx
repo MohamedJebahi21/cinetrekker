@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import SEO from '@/components/SEO';
 
 export default function Profile() {
   const { t, i18n } = useTranslation();
@@ -41,6 +42,12 @@ export default function Profile() {
   ];
 
   return (
+    <>
+      <SEO 
+        title="My Profile — CineTrekker" 
+        description="View your watching statistics and preferences"
+        canonical="https://cinetrekker.lovable.app/profile"
+      />
     <div className="page-container pt-20 max-w-4xl">
       <h1 className="section-title">{t('profile.title')}</h1>
 
@@ -115,5 +122,6 @@ export default function Profile() {
         </Card>
       </section>
     </div>
+    </>
   );
 }

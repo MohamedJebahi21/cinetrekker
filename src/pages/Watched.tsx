@@ -7,6 +7,7 @@ import { Media } from '@/types/media';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import SEO from '@/components/SEO';
 
 export default function Watched() {
   const { t, i18n } = useTranslation();
@@ -42,6 +43,12 @@ export default function Watched() {
   });
 
   return (
+    <>
+      <SEO 
+        title="Watched History — CineTrekker" 
+        description="Movies and TV shows you've watched with ratings and notes"
+        canonical="https://cinetrekker.lovable.app/watched"
+      />
     <div className="page-container pt-20">
       <h1 className="section-title">{t('watched.title')}</h1>
 
@@ -128,5 +135,6 @@ export default function Watched() {
         </div>
       )}
     </div>
+    </>
   );
 }

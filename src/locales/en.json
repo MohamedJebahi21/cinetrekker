@@ -39,7 +39,8 @@
     "privacy": "Privacy",
     "signIn": "Sign In",
     "signOut": "Sign Out",
-    "calendar": "Calendar"
+    "calendar": "Calendar",
+    "stats": "Stats"
   },
   "calendar": {
     "title": "Release Calendar",
@@ -85,6 +86,9 @@
     "releasedToday": "Today",
     "releasedHoursAgo": "{{hours}}h ago",
     "becauseYouLiked": "Because You Liked {{title}}",
+    "welcome": "Hey there!",
+    "welcomeBack": "Welcome to CineTrekker!",
+    "subtitle": "Ready to dive in?",
     "hero": {
       "title": "Track Your Entertainment Journey",
       "subtitle": "Discover, track, and remember every movie and TV show you watch"
@@ -104,7 +108,9 @@
     "noResultsDescription": "We couldn't find anything matching your search. Try adjusting your filters or search terms.",
     "trySearching": "Start typing to search for movies, TV shows, or actors.",
     "resetAll": "Reset All Filters",
-    "popularGenres": "Popular Genres"
+    "popularGenres": "Popular Genres",
+    "noResults": "No results found for \"{{query}}\"",
+    "tryDifferent": "Try different keywords or check spelling"
   },
   "details": {
     "overview": "Overview",
@@ -129,14 +135,29 @@
     "addToWatchlist": "Add to Watchlist",
     "removeFromWatchlist": "Remove from Watchlist",
     "markAsWatched": "Mark as Watched",
+    "markAsUnwatched": "Mark as Unwatched",
     "removeFromWatched": "Remove from Watched",
+    "updateWatched": "Update Watched",
+    "updateRating": "Update Rating",
     "rateTitle": "Rate",
     "addNote": "Add Note",
     "inWatchlist": "In Watchlist",
     "watched": "Watched",
     "quickView": "Quick View",
     "watchTrailer": "Watch Trailer",
-    "close": "Close"
+    "close": "Close",
+    "success": "Success",
+    "error": "Error",
+    "watchlistAdded": "Added to watchlist",
+    "watchlistRemoved": "Removed from watchlist",
+    "watchlistAddError": "Failed to add to watchlist",
+    "watchlistRemoveError": "Failed to remove from watchlist",
+    "watchedAdded": "Marked as watched",
+    "watchedRemoved": "Removed from watched",
+    "watchedUpdated": "Watched item updated",
+    "watchedAddError": "Failed to mark as watched",
+    "watchedRemoveError": "Failed to remove from watched",
+    "watchedUpdateError": "Failed to update watched item"
   },
   "watchlist": {
     "title": "My Watchlist",
@@ -178,7 +199,10 @@
     "signInWith": "Sign in with {{provider}}",
     "orContinueWith": "Or continue with",
     "checkEmail": "Check your email for the login link",
-    "signInRequired": "Sign in to save your data"
+    "signInRequired": "Sign in to save your data",
+    "googleSignIn": "Continue with Google",
+    "completing": "Completing sign in...",
+    "oauthError": "Failed to complete sign in"
   },
   "episodes": {
     "new": "New",

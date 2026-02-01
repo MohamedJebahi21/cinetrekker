@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
@@ -17,15 +17,15 @@ interface MediaCarouselProps {
 }
 
 /**
- * Enhanced media carousel with scroll-snap support and manual navigation
+ * Enhanced MediaCarousel with scroll-snap support and manual navigation
  * Features:
- * - CSS scroll-snap for smooth native scrolling
- * - Manual left/right navigation with scroll detection
- * - Responsive sizing across breakpoints
- * - Touch-optimized smooth scrolling
- * - Disabled state for nav buttons at scroll boundaries
+ * - Native CSS scroll-snap for smooth, performant scrolling
+ * - Manual left/right navigation buttons with scroll detection
+ * - Responsive sizing across all breakpoints
+ * - Touch-optimized with smooth scrolling behavior
+ * - Disabled state for nav buttons when at scroll boundaries
  */
-export function MediaCarousel({
+export function MediaCarouselEnhanced({
   title,
   items,
   loading = false,
@@ -62,9 +62,14 @@ export function MediaCarousel({
     container.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleResize);
     
+    // Recheck when items change
+    const resizeObserver = new ResizeObserver(() => checkScroll());
+    resizeObserver.observe(container);
+    
     return () => {
       container.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
     };
   }, [items.length]);
 
@@ -72,7 +77,7 @@ export function MediaCarousel({
   const handleManualScroll = (direction: 'left' | 'right') => {
     const container = scrollContainerRef.current;
     if (!container) return;
-    const scrollDistance = 400;
+    const scrollDistance = 400; // Scroll approximately 2 cards
     const targetScroll = container.scrollLeft + (direction === 'left' ? -scrollDistance : scrollDistance);
     container.scrollTo({ left: targetScroll, behavior: 'smooth' });
   };
@@ -105,13 +110,13 @@ export function MediaCarousel({
         </div>
       ) : items.length > 0 ? (
         <div className="relative group/scroll">
-          {/* Manual scroll buttons - visible on hover (desktop only) */}
+          {/* Manual scroll buttons for desktop - visible on hover or always for mobile */}
           {showManualNav && (
             <>
               <button
                 onClick={() => handleManualScroll('left')}
                 disabled={!canScroll.left}
-                className="absolute -left-4 md:-left-6 top-1/3 z-10 hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="absolute -left-4 md:-left-6 top-1/3 z-10 hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 group-hover/scroll:opacity-100"
                 aria-label={t('common.previous') || 'Previous'}
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -119,7 +124,7 @@ export function MediaCarousel({
               <button
                 onClick={() => handleManualScroll('right')}
                 disabled={!canScroll.right}
-                className="absolute -right-4 md:-right-6 top-1/3 z-10 hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="absolute -right-4 md:-right-6 top-1/3 z-10 hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 group-hover/scroll:opacity-100"
                 aria-label={t('common.next') || 'Next'}
               >
                 <ChevronRight className="w-5 h-5" />
@@ -127,17 +132,28 @@ export function MediaCarousel({
             </>
           )}
 
-          {/* Scrollable container with CSS scroll-snap */}
+          {/* Scrollable container with scroll-snap */}
           <div
             ref={scrollContainerRef}
             className="flex gap-4 overflow-x-auto scroll-smooth overscroll-contain pb-2"
             style={{
               scrollSnapType: `x ${scrollSnap}`,
               WebkitOverflowScrolling: 'touch',
-              msOverflowStyle: 'none',
-              scrollbarWidth: 'none',
+              msOverflowStyle: 'none', // Hide scrollbar in IE/Edge
+              scrollbarWidth: 'none', // Hide scrollbar in Firefox
             }}
+            onScroll={checkScroll}
           >
+            {/* Hide scrollbar in Webkit browsers */}
+            <style>{`
+              div[style*="scroll-snap-type"] {
+                scrollbar-width: none;
+              }
+              div[style*="scroll-snap-type"]::-webkit-scrollbar {
+                display: none;
+              }
+            `}</style>
+
             {items.map((item) => (
               <div
                 key={`${item.id}-${item.media_type || 'unknown'}`}
@@ -157,3 +173,5 @@ export function MediaCarousel({
     </section>
   );
 }
+
+export default MediaCarouselEnhanced;

@@ -1,7 +1,9 @@
 // TMDB API Service - handles all TMDB API requests via edge function proxy
-import { Media, MediaDetails, TMDBResponse, TimeWindow, Genre } from '@/types/media';
+import { Media, MediaDetails, TMDBResponse, TimeWindow, Genre, PersonSearchResult } from '@/types/media';
 
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
+const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
 export const getImageUrl = (path: string | null, size: 'w92' | 'w154' | 'w185' | 'w342' | 'w500' | 'w780' | 'original' = 'w500') => {
   if (!path) return null;
@@ -17,6 +19,27 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 const fetchTMDB = async <T>(endpoint: string, language: string = 'en', extraParams: Record<string, string> = {}): Promise<T> => {
+  // Use direct TMDB API if key is available, otherwise fallback to Supabase proxy
+  if (TMDB_API_KEY) {
+    const params = new URLSearchParams({
+      api_key: TMDB_API_KEY,
+      language,
+      ...extraParams,
+    });
+
+    const response = await fetch(
+      `${TMDB_BASE_URL}${endpoint}?${params.toString()}`
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.status_message || `API error: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  // Fallback to Supabase proxy
   const params = new URLSearchParams({
     endpoint,
     language,
@@ -55,6 +78,10 @@ export const searchMovies = async (query: string, page: number = 1, language: st
 
 export const searchTV = async (query: string, page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
   return fetchTMDB(`/search/tv`, language, { query, page: page.toString() });
+};
+
+export const searchPeople = async (query: string, page: number = 1, language: string = 'en'): Promise<TMDBResponse<PersonSearchResult>> => {
+  return fetchTMDB(`/search/person`, language, { query, page: page.toString() });
 };
 
 export const getMovieDetails = async (id: number, language: string = 'en'): Promise<MediaDetails> => {

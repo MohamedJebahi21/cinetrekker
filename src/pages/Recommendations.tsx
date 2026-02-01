@@ -7,6 +7,7 @@ import { getRecommendations, getSimilar } from '@/services/tmdb';
 import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
 import { Media } from '@/types/media';
 import { Button } from '@/components/ui/button';
+import SEO from '@/components/SEO';
 
 export default function Recommendations() {
   const { t, i18n } = useTranslation();
@@ -72,6 +73,12 @@ export default function Recommendations() {
     .slice(0, 24) || [];
 
   return (
+    <>
+      <SEO 
+        title="Recommendations — CineTrekker" 
+        description="Personalized movie and TV show recommendations based on what you've watched"
+        canonical="https://cinetrekker.lovable.app/recommendations"
+      />
     <div className="page-container pt-20">
       <div className="mb-8">
         <h1 className="section-title flex items-center gap-3">
@@ -138,5 +145,6 @@ export default function Recommendations() {
         </div>
       )}
     </div>
+    </>
   );
 }

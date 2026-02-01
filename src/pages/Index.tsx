@@ -11,6 +11,7 @@ import { BecauseYouLiked } from '@/components/BecauseYouLiked';
 import { OnboardingTooltip } from '@/components/OnboardingTooltip';
 import { HeroSection } from '@/components/HeroSection';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import SEO from '@/components/SEO';
 
 export default function Index() {
   const { t, i18n } = useTranslation();
@@ -48,6 +49,8 @@ export default function Index() {
 
   return (
     <div className="min-h-screen pt-16">
+      <SEO title="CineTrekker — Track Your Movies & TV Shows" description="Discover trending movies and TV shows, track your watchlist, and get personalized recommendations." canonical="https://cinetrekker.lovable.app" />
+      
       {/* Onboarding for new users */}
       <OnboardingTooltip />
 
@@ -70,20 +73,24 @@ export default function Index() {
         <NewEpisodesSection />
 
         {/* Top Movies This Week - Horizontal scroll */}
-        <MediaCarousel
-          title={t('home.topMoviesWeek')}
-          items={trendingMoviesWeek?.results?.slice(0, 20) || []}
-          loading={loadingMoviesWeek}
-          showMoreLink="/search?type=movie"
-        />
+        <section aria-labelledby="top-movies-heading">
+          <MediaCarousel
+            title={t('home.topMoviesWeek')}
+            items={trendingMoviesWeek?.results?.slice(0, 20) || []}
+            loading={loadingMoviesWeek}
+            showMoreLink="/search?type=movie"
+          />
+        </section>
 
         {/* Top Series This Week - Horizontal scroll */}
-        <MediaCarousel
-          title={t('home.topSeriesWeek')}
-          items={trendingTVWeek?.results?.slice(0, 20) || []}
-          loading={loadingTVWeek}
-          showMoreLink="/search?type=tv"
-        />
+        <section aria-labelledby="top-series-heading">
+          <MediaCarousel
+            title={t('home.topSeriesWeek')}
+            items={trendingTVWeek?.results?.slice(0, 20) || []}
+            loading={loadingTVWeek}
+            showMoreLink="/search?type=tv"
+          />
+        </section>
 
         {/* Trending Section with Tabs */}
         <section>

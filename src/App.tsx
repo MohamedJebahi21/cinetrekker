@@ -1,12 +1,12 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { UserListsProvider } from "@/contexts/UserListsContext";
 import { Header } from "@/components/Header";
+import { BottomNav } from "@/components/BottomNav";
 import { Footer } from "@/components/Footer";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -21,18 +21,12 @@ import Recommendations from "./pages/Recommendations";
 import Profile from "./pages/Profile";
 import Privacy from "./pages/Privacy";
 import Auth from "./pages/Auth";
+import AuthCallback from "./pages/AuthCallback";
 import Calendar from "./pages/Calendar";
+import Stats from "./pages/Stats";
 import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 2,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+import SEO from '@/components/SEO';
+import { websiteJsonLd } from '@/lib/schema';
 
 // Page transition variants - subtle and fast
 const pageVariants = {
@@ -49,6 +43,7 @@ function NetworkMonitor() {
 
 function AnimatedRoutes() {
   const location = useLocation();
+  console.log("🛣️  AnimatedRoutes rendering for path:", location.pathname);
   
   return (
     <AnimatePresence mode="wait" initial={false}>
@@ -68,6 +63,7 @@ function AnimatedRoutes() {
           <Route path="/person/:id" element={<Person />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           
           {/* Protected routes */}
           <Route path="/profile" element={
@@ -85,6 +81,9 @@ function AnimatedRoutes() {
           <Route path="/calendar" element={
             <ProtectedRoute><Calendar /></ProtectedRoute>
           } />
+          <Route path="/stats" element={
+            <ProtectedRoute><Stats /></ProtectedRoute>
+          } />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -97,31 +96,48 @@ function AnimatedRoutes() {
  * Security: Route Protection
  * Protected routes require authentication and email verification.
  */
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <UserListsProvider>
-          <ErrorBoundary>
-            <Toaster />
-            <Sonner position="bottom-right" />
-            <BrowserRouter>
-              <NetworkMonitor />
-              <div className="flex min-h-screen flex-col">
-                <Header />
-                <main className="flex-1">
-                  <ErrorBoundary>
-                    <AnimatedRoutes />
-                  </ErrorBoundary>
-                </main>
-                <Footer />
-              </div>
-            </BrowserRouter>
-          </ErrorBoundary>
-        </UserListsProvider>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  console.log("📱 App component is rendering...");
+  console.log("🎨 Setting up providers...");
+  
+  try {
+    return (
+      <TooltipProvider>
+        <AuthProvider>
+          <UserListsProvider>
+            <ErrorBoundary>
+              <Toaster />
+              <Sonner position="bottom-right" />
+              <SEO jsonLd={websiteJsonLd()} title="CineTrekker — Track Your Movies & TV Shows" description="Track movies and TV shows you love" canonical="https://cinetrekker.lovable.app" />
+              <BrowserRouter>
+                <NetworkMonitor />
+                <div className="flex min-h-screen flex-col">
+                  <Header />
+                  <main className="flex-1 pb-16 md:pb-0">
+                    <ErrorBoundary>
+                      <AnimatedRoutes />
+                    </ErrorBoundary>
+                  </main>
+                  <BottomNav />
+                  <Footer />
+                </div>
+              </BrowserRouter>
+            </ErrorBoundary>
+          </UserListsProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    );
+  } catch (err) {
+    console.error("❌ FATAL ERROR in App component:", err);
+    return (
+      <div style={{ padding: '40px', fontFamily: 'system-ui' }}>
+        <h1 style={{ color: '#dc2626' }}>❌ App Component Error</h1>
+        <pre style={{ background: '#f3f4f6', padding: '16px', borderRadius: '8px', overflow: 'auto' }}>
+          {err instanceof Error ? err.stack : String(err)}
+        </pre>
+      </div>
+    );
+  }
+};
 
 export default App;

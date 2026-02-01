@@ -64,6 +64,7 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
       <Link
         to={`/${mediaType}/${media.id}`}
         className="group relative glass-card-hover overflow-hidden block"
+        aria-label={`${title} — open details`}
       >
         {/* Poster with gradient overlay for text readability */}
         <div className="aspect-[2/3] relative overflow-hidden rounded-t-xl poster-overlay">
@@ -73,6 +74,7 @@ export function MediaCard({ media, showType = true }: MediaCardProps) {
               alt={title}
               className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
               loading="lazy"
+              decoding="async"
             />
           ) : (
             <div className="w-full h-full skeleton-shimmer flex items-center justify-center">

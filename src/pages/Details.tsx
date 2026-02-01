@@ -1,7 +1,7 @@
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   Star, Clock, Calendar, Bookmark, Check, Plus, 
   MessageSquare, ChevronLeft, Heart, HeartOff, PlayCircle
@@ -13,6 +13,8 @@ import { useFollowedShows, useWatchedEpisodes } from '@/hooks/useFollowedShows';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLastViewed } from '@/hooks/useLastViewed';
 import { MediaSection } from '@/components/MediaSection';
+import SEO from '@/components/SEO';
+import { mediaToJsonLd } from '@/lib/schema';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -31,7 +33,6 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 export default function Details() {
@@ -213,17 +214,14 @@ export default function Details() {
   };
 
   // "You Might Also Like" - Primary: /recommendations, Fallback: /similar
-  // Use TMDB recommendations (collaborative filtering based on user viewing patterns) as primary source
   const recommendationsResults = details.recommendations?.results || [];
   const similarResults = details.similar?.results || [];
   
-  // Start with recommendations (collaborative filtering)
   let combinedRecommendations = recommendationsResults.map(item => ({
     ...item,
     media_type: mediaType,
   }));
   
-  // If recommendations < 10, supplement with similar items (content-based)
   if (combinedRecommendations.length < 10) {
     const existingIds = new Set(combinedRecommendations.map(r => r.id));
     const supplementalItems = similarResults
@@ -235,25 +233,35 @@ export default function Details() {
     combinedRecommendations = [...combinedRecommendations, ...supplementalItems];
   }
   
-  // Score and sort for relevance
   const scoredRecommendations = combinedRecommendations
     .map(item => ({
       ...item,
       _score: scoreSimilarity(item as Media & { original_language?: string }),
     }))
     .sort((a, b) => b._score - a._score)
-    .slice(0, 12); // Show up to 12 items for a full row
+    .slice(0, 12);
 
-  // Final recommendations - prioritize scored items but ensure we have content
   const recommendedItems = scoredRecommendations.length > 0
     ? scoredRecommendations
     : combinedRecommendations.slice(0, 12).map(item => ({ ...item, _score: 0 }));
 
   const seasons = details.number_of_seasons ? Array.from({ length: details.number_of_seasons }, (_, i) => i + 1) : [];
+  const seoTitle = `${title}${year ? ` (${year})` : ''} - CineTrekker`;
+  const seoDescription = (details.overview || '').slice(0, 160);
+  const seoImage = getImageUrl(details.poster_path, 'w500');
+  const seoCanonical = `https://cinetrekker.lovable.app/${mediaType}/${mediaId}`;
+  const seoJsonLd = mediaToJsonLd({ ...details, media_type: mediaType } as Media);
 
   return (
-    <div className="min-h-screen pt-16">
-      {/* Phase 4: Full-width, high-resolution backdrop with smooth fade */}
+    <>
+      <SEO 
+        title={seoTitle}
+        description={seoDescription}
+        image={seoImage}
+        canonical={seoCanonical}
+        jsonLd={seoJsonLd}
+      />
+      
       <div className="relative h-[50vh] md:h-[70vh] overflow-hidden -mt-16">
         {backdropUrl && (
           <img
@@ -262,23 +270,20 @@ export default function Details() {
             className="w-full h-full object-cover"
           />
         )}
-        {/* Smooth fade-to-black transition */}
         <div className="backdrop-fade absolute inset-0" />
         
-        {/* Back Button */}
         <Link 
           to="/" 
           className="absolute top-20 left-4 z-10 flex items-center gap-2 text-sm text-foreground/80 hover:text-foreground bg-background/50 backdrop-blur-sm px-3 py-2 rounded-lg transition-colors"
+          aria-label={t('nav.home')}
         >
           <ChevronLeft className="w-4 h-4" />
           {t('nav.home')}
         </Link>
       </div>
 
-      {/* Content */}
       <div className="page-container -mt-32 md:-mt-48 relative z-10">
         <div className="flex flex-col md:flex-row gap-8">
-          {/* Poster */}
           <div className="flex-shrink-0 mx-auto md:mx-0">
             {posterUrl ? (
               <img
@@ -293,7 +298,6 @@ export default function Details() {
             )}
           </div>
 
-          {/* Info */}
           <div className="flex-1 space-y-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -304,7 +308,6 @@ export default function Details() {
               </div>
               <h1 className="text-3xl md:text-4xl font-bold mb-4">{title}</h1>
 
-              {/* Meta Info */}
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 {rating > 0 && (
                   <div className={cn("rating-badge", ratingClass)}>
@@ -332,7 +335,6 @@ export default function Details() {
                 )}
               </div>
 
-              {/* Genres */}
               {details.genres && details.genres.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-4">
                   {details.genres.map((genre) => (
@@ -344,12 +346,12 @@ export default function Details() {
               )}
             </div>
 
-            {/* Actions */}
             <div className="flex flex-wrap gap-3">
               <Button
                 variant={inWatchlist ? "secondary" : "default"}
                 className="gap-2"
                 onClick={handleAddToWatchlist}
+                aria-label={inWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
               >
                 {inWatchlist ? (
                   <>
@@ -368,6 +370,7 @@ export default function Details() {
                 variant={watched ? "secondary" : "outline"}
                 className="gap-2"
                 onClick={handleMarkAsWatched}
+                aria-label={watched ? t('actions.updateWatched') : t('actions.markAsWatched')}
               >
                 {watched ? (
                   <>
@@ -382,12 +385,12 @@ export default function Details() {
                 )}
               </Button>
 
-              {/* Follow Show Button - TV only */}
               {mediaType === 'tv' && user && (
                 <Button
                   variant={following ? "secondary" : "outline"}
                   className="gap-2"
                   onClick={handleFollowShow}
+                  aria-label={following ? t('details.unfollowShow') : t('details.followShow')}
                 >
                   {following ? (
                     <>
@@ -403,11 +406,10 @@ export default function Details() {
                 </Button>
               )}
 
-              {/* Episodes Button - TV only */}
               {mediaType === 'tv' && seasons.length > 0 && user && (
                 <Dialog open={episodesDialogOpen} onOpenChange={setEpisodesDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="gap-2">
+                    <Button variant="outline" className="gap-2" aria-label={t('episodes.allEpisodes')}>
                       <PlayCircle className="w-4 h-4" />
                       {t('episodes.allEpisodes')}
                     </Button>
@@ -445,6 +447,7 @@ export default function Details() {
                                           episode.name,
                                           episode.air_date
                                         )}
+                                        aria-label={`${episodeWatched ? t('actions.markAsUnwatched') : t('actions.markAsWatched')} ${episode.name}`}
                                       />
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
@@ -492,6 +495,7 @@ export default function Details() {
                     setTempNote(watchedItem?.note || '');
                     setRatingDialogOpen(true);
                   }}
+                  aria-label={watchedItem?.rating ? t('actions.updateRating') : t('actions.rateTitle')}
                 >
                   <MessageSquare className="w-4 h-4" />
                   {watchedItem?.rating ? `${watchedItem.rating}/10` : t('actions.rateTitle')}
@@ -499,7 +503,6 @@ export default function Details() {
               )}
             </div>
 
-            {/* Rating Dialog - Always render so it can be opened from "Mark as Watched" button */}
             <Dialog open={ratingDialogOpen} onOpenChange={setRatingDialogOpen}>
               <DialogContent>
                 <DialogHeader>
@@ -540,7 +543,6 @@ export default function Details() {
               </DialogContent>
             </Dialog>
 
-            {/* Sign in prompt for TV shows */}
             {mediaType === 'tv' && !user && (
               <div className="glass-card p-4 text-sm text-muted-foreground">
                 <Link to="/auth" className="text-primary hover:underline">
@@ -550,13 +552,11 @@ export default function Details() {
               </div>
             )}
 
-            {/* Overview */}
             <div>
               <h2 className="text-lg font-semibold mb-2">{t('details.overview')}</h2>
               <p className="text-muted-foreground leading-relaxed">{overview}</p>
             </div>
 
-            {/* User Note */}
             {watchedItem?.note && (
               <div className="glass-card p-4">
                 <h3 className="text-sm font-medium mb-2">{t('rating.note')}</h3>
@@ -566,7 +566,6 @@ export default function Details() {
           </div>
         </div>
 
-        {/* Cast */}
         {details.credits?.cast && details.credits.cast.length > 0 && (
           <section className="mt-12">
             <h2 className="section-title">{t('details.cast')}</h2>
@@ -598,7 +597,6 @@ export default function Details() {
           </section>
         )}
 
-        {/* You Might Also Like - Single consolidated recommendation section */}
         {recommendedItems.length > 0 && (
           <section className="mt-12">
             <MediaSection
@@ -608,6 +606,6 @@ export default function Details() {
           </section>
         )}
       </div>
-    </div>
+    </>
   );
 }

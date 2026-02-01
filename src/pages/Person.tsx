@@ -5,6 +5,7 @@ import { ChevronLeft, Calendar, MapPin, Film, Tv } from 'lucide-react';
 import { getPersonDetails, getImageUrl } from '@/services/tmdb';
 import { MediaCard } from '@/components/MediaCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import SEO from '@/components/SEO';
 
 export default function Person() {
   const { id } = useParams<{ id: string }>();
@@ -58,7 +59,18 @@ export default function Person() {
   const birthYear = person.birthday ? new Date(person.birthday).getFullYear() : null;
   const deathYear = person.deathday ? new Date(person.deathday).getFullYear() : null;
 
+  const seoTitle = `${person.name} — CineTrekker`;
+  const seoDescription = person.biography ? person.biography.slice(0, 160) : `View ${person.name}'s filmography and biography`;
+  const seoImage = getImageUrl(person.profile_path, 'w500');
+
   return (
+    <>
+      <SEO 
+        title={seoTitle}
+        description={seoDescription}
+        image={seoImage}
+        canonical={`https://cinetrekker.lovable.app/person/${personId}`}
+      />
     <div className="min-h-screen pt-16">
       {/* Header */}
       <div className="page-container pt-6">
@@ -178,5 +190,6 @@ export default function Person() {
         )}
       </div>
     </div>
+    </>
   );
 }

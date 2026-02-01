@@ -25,6 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import SEO from '@/components/SEO';
 import {
   Select,
   SelectContent,
@@ -404,6 +405,12 @@ export default function Calendar() {
   };
 
   return (
+    <>
+      <SEO 
+        title="Release Calendar — CineTrekker" 
+        description="Upcoming movie and TV show releases this week"
+        canonical="https://cinetrekker.lovable.app/calendar"
+      />
     <div className="page-container pt-20 py-6">
       {/* Header */}
       <div className="flex flex-col gap-4 mb-6">
@@ -575,5 +582,6 @@ export default function Calendar() {
         </div>
       )}
     </div>
+    </>
   );
 }

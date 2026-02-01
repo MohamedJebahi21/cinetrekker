@@ -6,6 +6,21 @@ import { Search, X, Film, Tv, User, ArrowRight, Loader2 } from 'lucide-react';
 import { searchMulti, getImageUrl, getMediaTitle, getMediaYear, getMediaType } from '@/services/tmdb';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { useDebounce } from '@/hooks/useDebounce';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Skeleton for dropdown search results
+function SearchResultSkeleton() {
+  return (
+    <div className="flex items-center gap-3 px-4 py-2">
+      <Skeleton className="w-10 h-14 rounded flex-shrink-0" />
+      <div className="flex-1 space-y-2">
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-3 w-1/2" />
+      </div>
+    </div>
+  );
+}
 
 // Extended type for search results that includes person
 interface SearchResult {
@@ -30,20 +45,12 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const debouncedQuery = useDebounce(query, 300);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const language = i18n.language;
-
-  // Debounce search query (300ms)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(query);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [query]);
 
   // Keyboard shortcut: "/" to focus search
   useEffect(() => {
@@ -72,7 +79,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const { data: searchResults, isLoading } = useQuery({
+  const { data: searchResults, isLoading, isFetching } = useQuery({
     queryKey: ['search-dropdown', debouncedQuery, language],
     queryFn: () => searchMulti(debouncedQuery, 1, language),
     enabled: debouncedQuery.length >= 2,
@@ -119,7 +126,6 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
 
   const clearSearch = () => {
     setQuery('');
-    setDebouncedQuery('');
     setIsOpen(false);
     inputRef.current?.focus();
   };
@@ -203,9 +209,11 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
           role="listbox"
           className="absolute top-full left-0 right-0 mt-2 bg-popover/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in"
         >
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+          {isLoading || (isFetching && query !== debouncedQuery) ? (
+            <div className="py-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <SearchResultSkeleton key={i} />
+              ))}
             </div>
           ) : results.length > 0 ? (
             <>
@@ -272,8 +280,13 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
               </Link>
             </>
           ) : (
-            <div className="py-8 text-center text-muted-foreground text-sm">
-              {t('common.noResults')}
+            <div className="py-8 px-4 text-center">
+              <p className="text-sm text-muted-foreground mb-2">
+                {t('search.noResults', `No results found for "${debouncedQuery}"`)}
+              </p>
+              <p className="text-xs text-muted-foreground/60">
+                {t('search.tryDifferent', 'Try different keywords or check spelling')}
+              </p>
             </div>
           )}
         </div>

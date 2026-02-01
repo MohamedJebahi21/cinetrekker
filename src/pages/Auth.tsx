@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { validatePassword, PasswordValidationResult } from '@/lib/passwordValidation';
 import { supabase } from '@/integrations/supabase/client';
+import SEO from '@/components/SEO';
 
 /**
  * Security: Authentication Page
@@ -110,22 +111,30 @@ export default function Auth() {
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}${from}`,
-      },
-    });
-    
-    if (error) {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+      
+      if (error) throw error;
+      
+      // The redirect will happen automatically
+      // Keep loading state active during redirect
+    } catch (error: any) {
       toast({
         title: t('common.error'),
-        description: error.message,
+        description: error.message || 'Failed to sign in with Google',
         variant: 'destructive',
       });
       setLoading(false);
     }
-    // OAuth redirects, so we don't need to handle success here
   };
 
   const getStrengthColor = (strength: PasswordValidationResult['strength']) => {
@@ -147,9 +156,17 @@ export default function Auth() {
   };
 
   return (
+    <>
+      <SEO 
+        title="Sign In — CineTrekker" 
+        description="Sign in to CineTrekker to track your movies and TV shows"
+        canonical="https://cinetrekker.lovable.app/auth"
+      />
     <div className="page-container pt-20 flex items-center justify-center min-h-[70vh]">
-      <Card className="w-full max-w-md glass-card">
-        <Tabs defaultValue="signin" className="w-full">
+      <div className="w-full max-w-md">
+        <h1 className="text-3xl font-bold text-center mb-6">{t('nav.signIn')}</h1>
+        <Card className="glass-card">
+          <Tabs defaultValue="signin" className="w-full">
           <CardHeader className="space-y-4">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">{t('auth.signIn')}</TabsTrigger>
@@ -367,6 +384,8 @@ export default function Auth() {
           </TabsContent>
         </Tabs>
       </Card>
+      </div>
     </div>
+    </>
   );
 }

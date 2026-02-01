@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import SEO from '@/components/SEO';
 import { Shield } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -11,7 +12,13 @@ export default function Privacy() {
   });
 
   return (
-    <div className="page-container pt-20 max-w-3xl">
+    <>
+      <SEO 
+        title="Privacy Policy — CineTrekker" 
+        description="CineTrekker privacy policy and data handling practices"
+        canonical="https://cinetrekker.lovable.app/privacy"
+      />
+      <div className="page-container pt-20 max-w-3xl">
       <div className="flex items-center gap-3 mb-8">
         <Shield className="w-8 h-8 text-primary" />
         <div>
@@ -64,5 +71,6 @@ export default function Privacy() {
         </Card>
       </div>
     </div>
+    </>
   );
 }
