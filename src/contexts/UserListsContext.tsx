@@ -59,10 +59,27 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
 
   // Sync query data with local state for backward compatibility
   useEffect(() => {
-    setWatchlist(watchlistData);
-    setWatched(watchedData);
-    setLoading(watchlistLoading || watchedLoading);
-  }, [watchlistData, watchedData, watchlistLoading, watchedLoading]);
+    // shallow stable compare to avoid updating state when query returns new array references
+    const areSame = (a: UserMediaItem[], b: UserMediaItem[]) => {
+      if (a === b) return true;
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      for (let i = 0; i < a.length; i++) {
+        if (a[i].mediaId !== b[i].mediaId || a[i].mediaType !== b[i].mediaType) return false;
+      }
+      return true;
+    };
+
+    if (!areSame(watchlist, watchlistData)) {
+      setWatchlist(watchlistData);
+    }
+    if (!areSame(watched, watchedData)) {
+      setWatched(watchedData);
+    }
+
+    // only update loading when it actually changes
+    setLoading(Boolean(watchlistLoading || watchedLoading));
+  }, [watchlistData, watchedData, watchlistLoading, watchedLoading, watchlist, watched]);
 
   // Load hidden recommendations from localStorage
   useEffect(() => {

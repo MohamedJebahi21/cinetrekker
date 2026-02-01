@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getTrending, getPopularMovies, getPopularTV } from '@/services/tmdb';
 import { MediaSection } from '@/components/MediaSection';
 import { MediaCarousel } from '@/components/MediaCarousel';
+import { MediaCard } from '@/components/MediaCard';
 import { NewEpisodesSection } from '@/components/NewEpisodesSection';
 import { WatchedShowsNewEpisodes } from '@/components/WatchedShowsNewEpisodes';
 import { RecentlyAddedMovies } from '@/components/RecentlyAddedMovies';
@@ -57,8 +58,6 @@ export default function Index() {
       <OnboardingTooltip />
       {/* High-Conversion Hero Section */}
       <HeroSection />
-      {/* Move OnboardingModal here, after Router context is available */}
-      <OnboardingModal />
       <div className="page-container space-y-10">
         {/* Personalized Recommendations */}
         {personalized && personalized.length > 0 && (
@@ -155,6 +154,8 @@ export default function Index() {
           showMoreLink="/search?type=tv"
         />
       </div>
+      {/* OnboardingModal should be last in the tree to avoid Router context issues */}
+      <OnboardingModal />
     </div>
   );
 }

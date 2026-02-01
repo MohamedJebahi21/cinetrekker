@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+
 /* Card grid and hover improvements */
 .media-grid {
   @apply grid gap-4;
@@ -23,7 +25,6 @@
   box-shadow: 0 4px 32px 0 rgba(0,0,0,0.18);
   border-color: hsla(0,0%,100%,0.12);
 }
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
