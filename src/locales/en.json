@@ -27,7 +27,10 @@
     "yes": "Yes",
     "no": "No",
     "details": "Details",
-    "discoverTrending": "Discover Trending"
+    "discoverTrending": "Discover Trending",
+    "optional": "Optional",
+    "items": "items",
+    "clearFilter": "Show All"
   },
   "nav": {
     "home": "Home",
@@ -162,7 +165,8 @@
   "watchlist": {
     "title": "My Watchlist",
     "empty": "Your watchlist is empty",
-    "emptyDesc": "Start adding movies and TV shows you want to watch!"
+    "emptyDesc": "Start adding movies and TV shows you want to watch!",
+    "noItemsInFilter": "No items with this status"
   },
   "watched": {
     "title": "Watched",
@@ -320,6 +324,22 @@
       "title": "Track Your Entertainment Journey",
       "subtitle": "Discover, track, and remember every movie and TV show you watch"
     }
+  },
+  "status": {
+    "all": "All",
+    "watching": "Watching",
+    "completed": "Completed",
+    "dropped": "Dropped",
+    "plan_to_watch": "Plan to Watch"
+  },
+  "actions": {
+    "watchStatus": "Watch Status",
+    "rateAndReview": "Rate & Review",
+    "yourRating": "Your Rating",
+    "yourThoughts": "Your Thoughts",
+    "notePlaceholder": "Share your thoughts about this title...",
+    "markAsWatched": "Mark as Watched",
+    "updateWatched": "Update Status"
   },
   "rating": {
     "yourRating": "Your Rating",
