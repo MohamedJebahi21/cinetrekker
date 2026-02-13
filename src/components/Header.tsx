@@ -39,6 +39,7 @@ import { useUserLists } from '@/contexts/UserListsContext';
 import { SearchDropdown } from '@/components/SearchDropdown';
 import { cn } from '@/lib/utils';
 import GuestSyncBanner from '@/components/GuestSyncBanner';
+import { UserProfileDropdown } from '@/components/UserProfileDropdown';
 
 export function Header() {
   const { t, i18n } = useTranslation();
@@ -252,48 +253,10 @@ export function Header() {
           {/* User Menu / Auth */}
           {!loading && (
             user ? (
-              <DropdownMenu>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <DropdownMenuTrigger asChild>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          className="rounded-full hover:bg-white/5 min-w-[44px] min-h-[44px] w-[44px] h-[44px] p-0"
-                          aria-label="User menu"
-                        >
-                          {profilePhoto ? (
-                            <img 
-                              src={profilePhoto} 
-                              alt="Profile" 
-                              className="w-full h-full rounded-full object-cover"
-                            />
-                          ) : (
-                            <User className="h-5 w-5" />
-                          )}
-                        </Button>
-                      </DropdownMenuTrigger>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="bg-popover/95 backdrop-blur-xl border-border/50">
-                      <p>{displayName || user.email?.split('@')[0] || 'User'}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <DropdownMenuContent align="end" className="min-w-[160px] bg-popover/95 backdrop-blur-xl border-border/50">
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile" className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      {t('nav.profile')}
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
-                    <LogOut className="h-4 w-4 mr-2" />
-                    {t('nav.signOut')}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <UserProfileDropdown
+                profilePhoto={profilePhoto}
+                displayName={displayName}
+              />
             ) : (
               <Link to="/login">
                 <Button 
