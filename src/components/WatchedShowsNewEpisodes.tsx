@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserLists } from '@/contexts/UserListsContext';
 import { useWatchedEpisodes } from '@/hooks/useFollowedShows';
 import { getTVDetails, getImageUrl, getTVSeasonDetails, TVEpisode } from '@/services/tmdb';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
