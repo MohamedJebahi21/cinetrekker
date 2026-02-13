@@ -82,17 +82,26 @@ export const profileService = {
 
   // Subscribe to real-time profile updates
   subscribeToProfile(userId: string, callback: (profile: UserProfile) => void) {
-    const subscription = supabase
-      .from('profiles')
-      .on('*', (payload) => {
-        const newRecord = payload.new as Record<string, unknown> | null;
-        if (newRecord && (newRecord.user_id as string) === userId) {
-          callback(newRecord as UserProfile);
+    const channel = supabase
+      .channel(`profiles_user_${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          const newRecord = payload.new as Record<string, unknown> | null;
+          if (newRecord && (newRecord.user_id as string) === userId) {
+            callback(newRecord as UserProfile);
+          }
         }
-      })
+      )
       .subscribe();
 
-    return subscription;
+    return channel;
   },
 
   // Initialize profile for new user

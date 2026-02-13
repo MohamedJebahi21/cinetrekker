@@ -1,5 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+// Track actor match missing-data logging across renders (and StrictMode double-mount)
+let actorMatchesMissingLogged = false;
 import { useQuery } from '@tanstack/react-query';
 import { User, Film, Tv, Bookmark, Globe, Heart, PlayCircle, CalendarDays, Camera, Sparkles } from 'lucide-react';
 import { useUserLists } from '@/contexts/UserListsContext';
@@ -51,9 +54,12 @@ export default function Profile() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const missingActorDataLogged = useRef(false);
 
   // Load profile from Supabase (with localStorage fallback)
   useEffect(() => {
+    let subscription: { unsubscribe: () => Promise<void> | void } | null = null;
+
     const loadProfile = async () => {
       setIsLoadingProfile(true);
       try {
@@ -95,7 +101,7 @@ export default function Profile() {
           }
 
           // Subscribe to real-time updates
-          const subscription = profileService.subscribeToProfile(user.id, (updatedProfile) => {
+          subscription = profileService.subscribeToProfile(user.id, (updatedProfile) => {
             setProfilePhoto(updatedProfile.profile_photo || null);
             setDateOfBirth(updatedProfile.date_of_birth || '');
             setDisplayName(updatedProfile.display_name || '');
@@ -108,12 +114,6 @@ export default function Profile() {
               allowRecommendations: updatedProfile.allow_recommendations,
             });
           });
-
-          return () => {
-            if (subscription) {
-              subscription.unsubscribe();
-            }
-          };
         } else {
           // Guest user - load from localStorage only
           const stored = localStorage.getItem(profileKey);
@@ -168,6 +168,12 @@ export default function Profile() {
     };
 
     loadProfile();
+
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
   }, [user?.id, profileKey]);
 
   // Track unsaved changes (only after initial load)
@@ -281,6 +287,11 @@ export default function Profile() {
     }
   };
 
+  const handleLanguageChange = async (lang: string) => {
+    await i18n.changeLanguage(lang);
+    localStorage.setItem('language', lang);
+  };
+
   const genres = [
     { id: 28, name: 'Action' },
     { id: 12, name: 'Adventure' },
@@ -380,9 +391,15 @@ export default function Profile() {
 
   const { sameBirthday, sameAge } = useMemo(() => {
     if (!parsedDob || !popularPeopleDetails || popularPeopleDetails.length === 0) {
-      console.log('⚠️ Actor Matches: missing data', { hasDate: !!parsedDob, hasPeople: popularPeopleDetails?.length > 0 });
+      if (!missingActorDataLogged.current && !actorMatchesMissingLogged) {
+        console.log('⚠️ Actor Matches: missing data', { hasDate: !!parsedDob, hasPeople: popularPeopleDetails?.length > 0 });
+        missingActorDataLogged.current = true;
+        actorMatchesMissingLogged = true;
+      }
       return { sameBirthday: [], sameAge: [] };
     }
+    missingActorDataLogged.current = false;
+    actorMatchesMissingLogged = false;
     const month = parsedDob.getMonth();
     const day = parsedDob.getDate();
     console.log(`👤 User birthday: ${month + 1}/${day}, Age: ${userAge}`);
