@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Bookmark, Check, Share2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   inWatchlist?: boolean;
@@ -13,6 +14,7 @@ type Props = {
 
 export default function ActionButtons({ inWatchlist, watched, onAddToWatchlist, onMarkAsWatched, onShare }: Props) {
   const isMobile = useIsMobile();
+  const { t } = useTranslation();
 
   const mainClass = "bg-red-600 text-white hover:bg-red-700";
   const secondaryClass = "bg-background/10 border border-border text-foreground hover:bg-background/20";
@@ -23,10 +25,10 @@ export default function ActionButtons({ inWatchlist, watched, onAddToWatchlist, 
       <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 w-[92%]">
         <div className="rounded-xl backdrop-blur-md bg-black/60 p-3 flex items-center justify-between gap-3">
           <Button size="sm" onClick={onAddToWatchlist} className={`flex-1 ${mainClass}`}>
-            <Bookmark className="w-4 h-4 mr-2" />{inWatchlist ? 'In Watchlist' : 'Watchlist'}
+            <Bookmark className="w-4 h-4 mr-2" />{inWatchlist ? t('actions.inWatchlist') : t('actions.watchlist')}
           </Button>
           <Button size="sm" onClick={onMarkAsWatched} className={`flex-1 ${secondaryClass}`}>
-            <Check className="w-4 h-4 mr-2" />{watched ? 'Watched' : 'Mark'}
+            <Check className="w-4 h-4 mr-2" />{watched ? t('actions.watched') : t('actions.mark')}
           </Button>
           <Button size="sm" variant="ghost" onClick={onShare} className="px-3">
             <Share2 className="w-4 h-4" />
@@ -39,13 +41,13 @@ export default function ActionButtons({ inWatchlist, watched, onAddToWatchlist, 
   return (
     <div className="flex items-center gap-3">
       <Button onClick={onAddToWatchlist} className={`${mainClass} gap-2`}>
-        <Bookmark className="w-4 h-4" />{inWatchlist ? 'In Watchlist' : 'Add to Watchlist'}
+        <Bookmark className="w-4 h-4" />{inWatchlist ? t('actions.inWatchlist') : t('actions.addToWatchlist')}
       </Button>
       <Button onClick={onMarkAsWatched} className={`${secondaryClass} gap-2`}>
-        <Check className="w-4 h-4" />{watched ? 'Watched' : 'Mark as Watched'}
+        <Check className="w-4 h-4" />{watched ? t('actions.watched') : t('actions.markAsWatched')}
       </Button>
       <Button variant="ghost" onClick={onShare} className="gap-2">
-        <Share2 className="w-4 h-4" />Share
+        <Share2 className="w-4 h-4" />{t('actions.share')}
       </Button>
     </div>
   );

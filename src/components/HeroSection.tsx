@@ -206,7 +206,7 @@ export function HeroSection() {
                     ? "bg-primary/20 border-primary/50 text-primary hover:bg-primary/30" 
                     : "hover:bg-white/10"
                 )}
-                aria-label={inWatchlist ? t('actions.removeFromWatchlist') : 'Add to Watchlist'}
+                aria-label={inWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
               >
                 {inWatchlist ? (
                   <>
@@ -216,7 +216,7 @@ export function HeroSection() {
                 ) : (
                   <>
                     <Bookmark className="w-4 h-4 md:w-5 md:h-5" />
-                    <span className="hidden md:inline">Add to Watchlist</span>
+                    <span className="hidden md:inline">{t('actions.addToWatchlist')}</span>
                   </>
                 )}
               </Button>

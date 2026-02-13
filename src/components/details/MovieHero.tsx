@@ -3,6 +3,7 @@ import { Star, ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   title?: string;
@@ -17,6 +18,8 @@ type Props = {
 };
 
 export default function MovieHero({ title, year, posterUrl, backdropUrl, rating, isLoading, inWatchlist, onAddToWatchlist, onMarkAsWatched }: Props) {
+  const { t } = useTranslation();
+  
   if (isLoading) {
     return (
       <div className="relative h-[55vh] md:h-[72vh] overflow-hidden -mt-16">
@@ -62,9 +65,9 @@ export default function MovieHero({ title, year, posterUrl, backdropUrl, rating,
 
             <div className="flex flex-wrap items-center gap-3">
               <Button variant={inWatchlist ? 'secondary' : 'default'} onClick={onAddToWatchlist} className="gap-2">
-                {inWatchlist ? 'In Watchlist' : 'Add to Watchlist'}
+                {inWatchlist ? t('actions.inWatchlist') : t('actions.addToWatchlist')}
               </Button>
-              <Button variant="outline" onClick={onMarkAsWatched} className="gap-2">Mark as Watched</Button>
+              <Button variant="outline" onClick={onMarkAsWatched} className="gap-2">{t('actions.markAsWatched')}</Button>
             </div>
           </div>
         </div>

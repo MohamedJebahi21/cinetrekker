@@ -96,7 +96,10 @@
     "rateTitle": "Puanla",
     "addNote": "Not Ekle",
     "inWatchlist": "Listede",
-    "watched": "İzlendi"
+    "watched": "İzlendi",
+    "watchlist": "İzleme Listesi",
+    "mark": "İşaretle",
+    "share": "Paylaş"
   },
   "watchlist": {
     "title": "İzleme Listem",
@@ -202,6 +205,15 @@
     "rateThis": "Bu {{type}} puanlayın",
     "note": "Not",
     "notePlaceholder": "Bu içerik hakkındaki düşüncelerinizi ekleyin..."
-  }
-  ,"comingSoon": "Çıkışta"
+  },
+  "onboarding": {
+    "welcome": "CineTrekker'a Hoş Geldiniz!",
+    "description": "Film ve dizilerinizi takip edin, öneriler alın ve daha fazlasını yapın.",
+    "feature1": "Yer imi simgesiyle izleme listenize ekleyin",
+    "feature2": "İzlendi olarak işaretleyin ve puan verin",
+    "feature3": "Trendleri ve kişiselleştirilmiş önerileri keşfedin",
+    "skip": "Atla",
+    "start": "Başla"
+  },
+  "comingSoon": "Çıkışta"
 }

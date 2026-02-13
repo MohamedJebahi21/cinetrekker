@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 
 export function OnboardingModal() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   useEffect(() => {
     try {
@@ -20,17 +22,17 @@ export function OnboardingModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
-        <DialogTitle>Welcome to CineTrekker!</DialogTitle>
+        <DialogTitle>{t('onboarding.welcome')}</DialogTitle>
         <div className="space-y-4">
-          <p>Track your movies and TV shows, get recommendations, and more.</p>
+          <p>{t('onboarding.description')}</p>
           <ul className="list-disc pl-6 text-sm text-muted-foreground">
-            <li>Add to your watchlist with the bookmark icon</li>
-            <li>Mark as watched and leave ratings</li>
-            <li>Discover trending and personalized picks</li>
+            <li>{t('onboarding.feature1')}</li>
+            <li>{t('onboarding.feature2')}</li>
+            <li>{t('onboarding.feature3')}</li>
           </ul>
           <div className="flex gap-2 mt-4">
-            <Button onClick={handleClose} className="flex-1">Get Started</Button>
-            <Button variant="outline" onClick={handleClose} className="flex-1">Skip</Button>
+            <Button onClick={handleClose} className="flex-1">{t('onboarding.start')}</Button>
+            <Button variant="outline" onClick={handleClose} className="flex-1">{t('onboarding.skip')}</Button>
           </div>
         </div>
       </DialogContent>

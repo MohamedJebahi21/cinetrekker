@@ -159,6 +159,9 @@
     "addNote": "Add Note",
     "inWatchlist": "In Watchlist",
     "watched": "Watched",
+    "watchlist": "Watchlist",
+    "mark": "Mark",
+    "share": "Share",
     "quickView": "Quick View",
     "watchTrailer": "Watch Trailer",
     "close": "Close",
@@ -323,6 +326,11 @@
     "cookies": "Cookie Policy"
   },
   "onboarding": {
+    "welcome": "Welcome to CineTrekker!",
+    "description": "Track your movies and TV shows, get recommendations, and more.",
+    "feature1": "Add to your watchlist with the bookmark icon",
+    "feature2": "Mark as watched and leave ratings",
+    "feature3": "Discover trending and personalized picks",
     "step1Title": "Welcome to CineTrekker!",
     "step1Desc": "Your personal hub for tracking movies and TV shows. Let's get you started.",
     "step2Title": "Build Your Watchlist",

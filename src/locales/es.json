@@ -96,7 +96,10 @@
     "rateTitle": "Valorar",
     "addNote": "Añadir nota",
     "inWatchlist": "En mi lista",
-    "watched": "Visto"
+    "watched": "Visto",
+    "watchlist": "Mi lista",
+    "mark": "Marcar",
+    "share": "Compartir"
   },
   "watchlist": {
     "title": "Mi lista",

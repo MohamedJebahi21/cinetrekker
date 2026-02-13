@@ -215,7 +215,7 @@ export const MediaCard = React.memo(function MediaCard({ media, mediaType: media
                         ? "bg-primary text-primary-foreground hover:scale-110"
                         : "bg-background/80 backdrop-blur-md text-foreground hover:bg-[#E50914] hover:text-white hover:scale-110"
                     )}
-                    aria-label={inWatchlist ? t('actions.removeFromWatchlist') : 'Add to Watchlist'}
+                    aria-label={inWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
                   >
                     {inWatchlist ? (
                       <BookmarkCheck className="w-3.5 h-3.5" />
@@ -225,7 +225,7 @@ export const MediaCard = React.memo(function MediaCard({ media, mediaType: media
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="bg-popover text-popover-foreground">
-                  {inWatchlist ? t('actions.removeFromWatchlist') : 'Add to Watchlist'}
+                  {inWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
                 </TooltipContent>
               </Tooltip>
 

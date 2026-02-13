@@ -96,7 +96,10 @@
     "rateTitle": "Noter",
     "addNote": "Ajouter une note",
     "inWatchlist": "Dans ma liste",
-    "watched": "Vu"
+    "watched": "Vu",
+    "watchlist": "Ma liste",
+    "mark": "Marquer",
+    "share": "Partager"
   },
   "watchlist": {
     "title": "Ma liste à voir",
@@ -202,6 +205,15 @@
     "rateThis": "Noter ce {{type}}",
     "note": "Commentaire",
     "notePlaceholder": "Ajoutez vos impressions sur ce titre..."
-  }
-  ,"comingSoon": "Bientôt"
+  },
+  "onboarding": {
+    "welcome": "Bienvenue sur CineTrekker !",
+    "description": "Suivez vos films et séries, obtenez des recommandations, et plus encore.",
+    "feature1": "Ajoutez à votre liste avec l'icône de signet",
+    "feature2": "Marquez comme vu et laissez des notes",
+    "feature3": "Découvrez les tendances et les sélections personnalisées",
+    "skip": "Passer",
+    "start": "Commencer"
+  },
+  "comingSoon": "Bientôt"
 }

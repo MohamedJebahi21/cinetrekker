@@ -526,7 +526,7 @@ export default function Details() {
                 variant={optimisticInWatchlist ? "secondary" : "default"}
                 className="gap-2"
                 onClick={handleAddToWatchlist}
-                aria-label={optimisticInWatchlist ? t('actions.removeFromWatchlist') : 'Add to Watchlist'}
+                aria-label={optimisticInWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
               >
                 {optimisticInWatchlist ? (
                   <>
@@ -536,7 +536,7 @@ export default function Details() {
                 ) : (
                   <>
                     <Plus className="w-4 h-4" />
-                    Add to Watchlist
+                    {t('actions.addToWatchlist')}
                   </>
                 )}
               </Button>
