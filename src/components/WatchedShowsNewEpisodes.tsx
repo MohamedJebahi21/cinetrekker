@@ -256,7 +256,15 @@ export function WatchedShowsNewEpisodes() {
       );
     }
     
-    re  
+    return null;
+  };
+
+  return (
+    <section className="mb-8">
+      <div className="flex items-center gap-2 mb-4">
+        <Tv className="w-5 h-5 text-primary" />
+        <h2 className="section-title mb-0">{t('home.didYouWatch')}</h2>
+        
         {/* 🚀 Cache indicator & manual refresh button */}
         {cachedData && !forceRefresh && (
           <Badge variant="secondary" className="ml-auto text-xs">
@@ -275,14 +283,6 @@ export function WatchedShowsNewEpisodes() {
           <RefreshCw className={`w-4 h-4 ${loadingEpisodes && forceRefresh ? 'animate-spin' : ''}`} />
           <span className="text-xs">{t('common.refresh')}</span>
         </Button>
-      turn null;
-  };
-
-  return (
-    <section className="mb-8">
-      <div className="flex items-center gap-2 mb-4">
-        <Tv className="w-5 h-5 text-primary" />
-        <h2 className="section-title mb-0">{t('home.didYouWatch')}</h2>
       </div>
       
       <div className="media-grid">
