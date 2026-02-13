@@ -31,11 +31,8 @@ export function WatchedShowsNewEpisodes() {
 
   // Filter to only TV shows from the watched list
   const watchedTVShows = watched.filter(item => item.mediaType === 'tv');
-// Real-time fetch (fallback when cache is empty or force refresh)
-  const shouldFetchRealtime = !cachedData || forceRefresh;
 
-  const { data: newEpisodes = [], isLoading: loadingEpisodes } = useQuery({
-    queryKey: ['watched-shows-new-episodes', watchedTVShows.map(s => s.mediaId), language, forceRefresh
+  // 🚀 Try cache first (instant!)
   const { data: cachedData } = useQuery({
     queryKey: ['new-episodes-cache', user?.id],
     queryFn: async () => {
@@ -149,7 +146,10 @@ export function WatchedShowsNewEpisodes() {
         }
         
         // For upcoming, soonest first
-        returshouldFetchRealtime && watchedTVShows.length > 0 && !!user,
+        return dateA.getTime() - dateB.getTime();
+      };
+    },
+    enabled: shouldFetchRealtime && watchedTVShows.length > 0 && !!user,
     staleTime: 1000 * 60 * 60, // 🚀 OPTIMIZATION 3: Cache for 1 hour (was 30 min)
     gcTime: 1000 * 60 * 120, // Keep in cache for 2 hours
   });
