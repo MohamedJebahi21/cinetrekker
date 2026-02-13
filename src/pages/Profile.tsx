@@ -361,18 +361,23 @@ export default function Profile() {
             </>
           )}
           <div className="mt-3 flex flex-wrap gap-2">
-            <label className="inline-flex items-center">
-              <Input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handlePhotoChange}
-              />
-              <Button variant="outline" size="sm" className="gap-2">
-                <Camera className="w-4 h-4" />
-                {profilePhoto ? 'Change Photo' : 'Add Photo'}
-              </Button>
-            </label>
+            <Input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              id="profile-photo-input"
+              onChange={handlePhotoChange}
+            />
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2"
+              onClick={() => document.getElementById('profile-photo-input')?.click()}
+              type="button"
+            >
+              <Camera className="w-4 h-4" />
+              {profilePhoto ? 'Change Photo' : 'Add Photo'}
+            </Button>
             {profilePhoto && (
               <Button variant="ghost" size="sm" onClick={handlePhotoRemove}>
                 Remove
