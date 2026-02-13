@@ -1,34 +1,31 @@
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Bookmark, TrendingUp, Printer, Filter as FilterIcon } from 'lucide-react';
+import { Bookmark, Printer } from 'lucide-react';
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useUserLists } from '@/contexts/UserListsContext';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
-import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
 import { Media } from '@/types/media';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import SEO from '@/components/SEO';
 import { EmptyState } from '@/components/EmptyState';
-import { SortFilterControls, SortOption } from '@/components/SortFilterControls';
-import { sortMedia, filterMediaByRuntime, filterMediaByYear } from '@/lib/sortFilter';
+import { sortMedia } from '@/lib/sortFilter';
 import { RandomPicker } from '@/components/RandomPicker';
 import { ShareButton } from '@/components/ShareButton';
 import { ExportImportButton } from '@/components/ExportImportButton';
+import { MediaGrid } from '@/components/MediaGrid';
+import { WatchlistFilters } from '@/components/WatchlistFilters';
+import { WatchlistStats, WatchlistStatsLine } from '@/components/WatchlistStats';
 
 export default function Watchlist() {
   const { t, i18n } = useTranslation();
   const { watchlist, watched } = useUserLists();
   const language = i18n.language;
   const [statusFilter, setStatusFilter] = useState<'all' | 'watching' | 'plan_to_watch' | 'completed' | 'dropped'>('all');
-  const [sortBy, setSortBy] = useState<SortOption>('added-desc');
-  const [runtimeRange, setRuntimeRange] = useState<[number, number]>([0, 300]);
-  const [yearRange, setYearRange] = useState<{ min: number; max: number }>({
-    min: 1900,
-    max: new Date().getFullYear(),
-  });
+  const [sortBy, setSortBy] = useState('added-desc');
+  const [filterExpanded, setFilterExpanded] = useState(true);
 
   // Fetch details for all watchlist items
   const { data: mediaDetails, isLoading } = useQuery({
@@ -68,12 +65,6 @@ export default function Watchlist() {
     return true;
   });
 
-  // Apply runtime and year filters
-  if (filteredMedia) {
-    filteredMedia = filterMediaByRuntime(filteredMedia, runtimeRange[0], runtimeRange[1]);
-    filteredMedia = filterMediaByYear(filteredMedia, yearRange.min, yearRange.max);
-  }
-
   // Create added dates map for sorting
   const addedDates = new Map<string, Date>();
   watchlist.forEach((item) => {
@@ -83,12 +74,8 @@ export default function Watchlist() {
 
   // Apply sorting
   if (filteredMedia) {
-    filteredMedia = sortMedia(filteredMedia, sortBy, addedDates);
+    filteredMedia = sortMedia(filteredMedia, sortBy as any, addedDates);
   }
-
-  const activeFilters =
-    (runtimeRange[0] !== 0 || runtimeRange[1] !== 300 ? 1 : 0) +
-    (yearRange.min !== 1900 || yearRange.max !== new Date().getFullYear() ? 1 : 0);
 
   const statusCounts = {
     all: mediaDetails?.length || 0,
@@ -106,12 +93,23 @@ export default function Watchlist() {
         canonical="https://cinetrekker.vercel.app/watchlist"
       />
       <div className="page-container pt-20">
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-          <h1 className="section-title mb-0">{t('watchlist.title')}</h1>
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="flex items-center justify-between mb-8 flex-wrap gap-4"
+        >
+          <div>
+            <h1 className="section-title mb-2">{t('watchlist.title')}</h1>
+            <WatchlistStatsLine 
+              totalCount={statusCounts.all}
+              watchingCount={statusCounts.watching}
+              completedCount={statusCounts.completed}
+              planToWatchCount={statusCounts.plan_to_watch}
+            />
+          </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="secondary" className="text-lg px-3 py-1">
-              {watchlist.length} {t('common.items', 'items')}
-            </Badge>
             <RandomPicker source="watchlist" variant="outline" size="sm" label="Random" />
             <ShareButton
               title="My CineTrekker Watchlist"
@@ -128,97 +126,71 @@ export default function Watchlist() {
               </Link>
             </Button>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Sort and Filter Controls */}
+        {/* Stats Card */}
         {mediaDetails && mediaDetails.length > 0 && (
-          <div className="mb-6">
-            <SortFilterControls
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+            className="mb-8"
+          >
+            <WatchlistStats
+              totalCount={statusCounts.all}
+              watchingCount={statusCounts.watching}
+              completedCount={statusCounts.completed}
+              planToWatchCount={statusCounts.plan_to_watch}
+            />
+          </motion.div>
+        )}
+
+        {/* Filters */}
+        {mediaDetails && mediaDetails.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+            className="mb-8"
+          >
+            <WatchlistFilters
+              statusFilter={statusFilter}
               sortBy={sortBy}
+              onStatusChange={setStatusFilter}
               onSortChange={setSortBy}
-              runtimeRange={runtimeRange}
-              onRuntimeChange={setRuntimeRange}
-              minYear={yearRange.min}
-              maxYear={yearRange.max}
-              onYearRangeChange={(min, max) => setYearRange({ min, max })}
-              showRuntimeFilter
-              showYearFilter
-              activeFilters={activeFilters}
+              isExpanded={filterExpanded}
+              onToggleExpand={setFilterExpanded}
             />
-          </div>
+          </motion.div>
         )}
 
-        {/* Status Filter Tabs */}
-        {mediaDetails && mediaDetails.length > 0 && (
-          <div className="mb-6 space-y-3">
-            <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)} className="mb-3">
-            <TabsList className="w-full justify-start overflow-x-auto flex-nowrap">
-              <TabsTrigger value="all" className="gap-2">
-                {t('status.all', 'All')}
-                {statusCounts.all > 0 && (
-                  <Badge variant="secondary" className="ml-1">{statusCounts.all}</Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="watching" className="gap-2">
-                📺 {t('status.watching', 'Watching')}
-                {statusCounts.watching > 0 && (
-                  <Badge variant="secondary" className="ml-1">{statusCounts.watching}</Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="plan_to_watch" className="gap-2">
-                📋 {t('status.plan_to_watch', 'Plan to Watch')}
-                {statusCounts.plan_to_watch > 0 && (
-                  <Badge variant="secondary" className="ml-1">{statusCounts.plan_to_watch}</Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="completed" className="gap-2">
-                ✅ {t('status.completed', 'Completed')}
-                {statusCounts.completed > 0 && (
-                  <Badge variant="secondary" className="ml-1">{statusCounts.completed}</Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="dropped" className="gap-2">
-                ❌ {t('status.dropped', 'Dropped')}
-                {statusCounts.dropped > 0 && (
-                  <Badge variant="secondary" className="ml-1">{statusCounts.dropped}</Badge>
-                )}
-              </TabsTrigger>
-            </TabsList>
-            </Tabs>
-          </div>
-        )}
-
-      {isLoading ? (
-        <div className="media-grid">
-          {Array.from({ length: watchlist.length || 4 }).map((_, i) => (
-            <MediaCardSkeleton key={i} />
-          ))}
-        </div>
-      ) : filteredMedia && filteredMedia.length > 0 ? (
-        <div className="media-grid">
-          {filteredMedia.map((media) => (
-            <MediaCard 
-              key={`${media.id}-${media.media_type}`} 
-              media={media}
-              showStatus={true}
-            />
-          ))}
-        </div>
-      ) : mediaDetails && mediaDetails.length > 0 ? (
-        <div className="text-center py-16">
-          <FilterIcon className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
-          <h2 className="text-xl font-semibold mb-2">
-            {t('watchlist.noItemsInFilter', 'No items match your filters')}
-          </h2>
-          <Button variant="outline" onClick={() => {
-            setStatusFilter('all');
-            setRuntimeRange([0, 300]);
-            setYearRange({ min: 1900, max: new Date().getFullYear() });
-          }} className="mt-4">
-            {t('common.clearFilter', 'Clear Filters')}
-          </Button>
-        </div>
-      ) : (
+        {/* Content */}
+        {isLoading ? (
+          <MediaGrid items={[]} isLoading columns="normal" gap="md" />
+        ) : filteredMedia && filteredMedia.length > 0 ? (
+          <MediaGrid 
+            items={filteredMedia} 
+            columns="normal"
+            gap="md"
+          />
+        ) : mediaDetails && mediaDetails.length > 0 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-16"
+          >
+            <Bookmark className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
+            <h2 className="text-xl font-semibold mb-2">
+              {t('watchlist.noItemsInFilter', 'No items match your filters')}
+            </h2>
+            <Button variant="outline" onClick={() => {
+              setStatusFilter('all');
+              setSortBy('added-desc');
+            }} className="mt-4">
+              {t('common.clearFilter', 'Clear Filters')}
+            </Button>
+          </motion.div>
+        ) : (
           <EmptyState
             icon={Bookmark}
             title={t('watchlist.empty', 'Your watchlist is empty')}
@@ -226,8 +198,8 @@ export default function Watchlist() {
             actionLabel={t('common.discoverTrending', 'Discover Trending')}
             actionLink="/search?sort=popularity.desc"
           />
-      )}
-    </div>
+        )}
+      </div>
     </>
   );
 }

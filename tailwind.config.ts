@@ -73,6 +73,11 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      boxShadow: {
+        "glow": "0 0 20px rgba(229, 9, 20, 0.3)",
+        "card": "0 4px 12px rgba(0, 0, 0, 0.15)",
+        "hover": "0 12px 24px rgba(0, 0, 0, 0.2)",
+      },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         display: ['Bebas Neue', 'Inter', 'system-ui', 'sans-serif'],
@@ -94,6 +99,22 @@ export default {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
+        "fade-in": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        "scale-in": {
+          "0%": { transform: "scale(0.95)", opacity: "0" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        "slide-in-from-bottom": {
+          "0%": { transform: "translateY(10px)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        "slide-in-from-left": {
+          "0%": { transform: "translateX(-10px)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
+        },
         pulse: {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.5" },
@@ -102,13 +123,22 @@ export default {
           "0%": { transform: "scale(1)" },
           "100%": { transform: "scale(1.02)" },
         },
+        "glow": {
+          "0%, 100%": { boxShadow: "0 0 10px rgba(229, 9, 20, 0.1)" },
+          "50%": { boxShadow: "0 0 20px rgba(229, 9, 20, 0.3)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         shimmer: "shimmer 1.5s ease-in-out infinite",
+        "fade-in": "fade-in 0.3s ease-in",
+        "scale-in": "scale-in 0.2s ease-out",
+        "slide-in-from-bottom": "slide-in-from-bottom 0.3s ease-out",
+        "slide-in-from-left": "slide-in-from-left 0.3s ease-out",
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "scale-up": "scale-up 0.3s ease-out forwards",
+        "glow": "glow 2s ease-in-out infinite",
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
