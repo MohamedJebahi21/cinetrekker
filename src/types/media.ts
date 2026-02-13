@@ -16,6 +16,8 @@ export interface Media {
   genres?: Genre[];
   media_type?: 'movie' | 'tv';
   adult?: boolean;
+  runtime?: number;
+  episode_run_time?: number[];
 }
 
 export interface Movie extends Media {
@@ -90,6 +92,17 @@ export interface MediaDetails extends Media {
   networks?: TVNetwork[];
   next_episode_to_air?: TVEpisodeInfo | null;
   last_episode_to_air?: TVEpisodeInfo | null;
+  seasons?: Season[];
+}
+
+export interface Season {
+  id: number;
+  name?: string;
+  overview?: string;
+  episode_count: number;
+  season_number: number;
+  air_date?: string;
+  poster_path?: string | null;
 }
 
 export interface TMDBResponse<T> {

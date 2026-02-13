@@ -347,6 +347,7 @@ export default function Profile() {
     queryFn: async () => {
       if (!dateOfBirth) return [];
       try {
+        console.log('🔍 Fetching popular people for birthday match...');
         // Fetch more pages to get a larger pool of actors to search from
         const pages = await Promise.all([
           getPopularPeople(1, i18n.language),
@@ -354,14 +355,23 @@ export default function Profile() {
           getPopularPeople(3, i18n.language),
         ]);
         const people = pages.flatMap(p => p.results).slice(0, 60);
+        console.log(`📋 Fetched ${people.length} people from 3 pages`);
+        
         const details = await Promise.all(
-          people.map(p => getPersonDetails(p.id, i18n.language).catch(() => null))
+          people.map(p => getPersonDetails(p.id, i18n.language).catch((err) => {
+            console.warn(`Failed to fetch details for ${p.name}:`, err);
+            return null;
+          }))
         );
+        console.log(`✅ Got details for ${details.filter(Boolean).length} people`);
+        
         const filtered = details.filter(Boolean) as Awaited<ReturnType<typeof getPersonDetails>>[];
         // Only keep people who have birthday data
-        return filtered.filter(person => person?.birthday);
+        const withBirthday = filtered.filter(person => person?.birthday);
+        console.log(`🎂 ${withBirthday.length} people have birthday data`, withBirthday.map(p => ({name: p.name, birthday: p.birthday})));
+        return withBirthday;
       } catch (error) {
-        console.error('Error fetching popular people:', error);
+        console.error('❌ Error fetching popular people:', error);
         return [];
       }
     },
@@ -370,10 +380,12 @@ export default function Profile() {
 
   const { sameBirthday, sameAge } = useMemo(() => {
     if (!parsedDob || !popularPeopleDetails || popularPeopleDetails.length === 0) {
+      console.log('⚠️ Actor Matches: missing data', { hasDate: !!parsedDob, hasPeople: popularPeopleDetails?.length > 0 });
       return { sameBirthday: [], sameAge: [] };
     }
     const month = parsedDob.getMonth();
     const day = parsedDob.getDate();
+    console.log(`👤 User birthday: ${month + 1}/${day}, Age: ${userAge}`);
 
     const matchesBirthday = popularPeopleDetails
       .filter(person => {
@@ -385,11 +397,14 @@ export default function Profile() {
           const birthdayMonth = parseInt(parts[1], 10) - 1; // Convert to 0-indexed
           const birthdayDay = parseInt(parts[2], 10);
           if (isNaN(birthdayMonth) || isNaN(birthdayDay)) return false;
-          return birthdayMonth === month && birthdayDay === day;
+          const match = birthdayMonth === month && birthdayDay === day;
+          if (match) console.log(`🎯 Birthday match: ${person.name} (${parts[1]}/${parts[2]})`);
+          return match;
         } catch {
           return false;
         }
       });
+    console.log(`🎂 Found ${matchesBirthday.length} birthday matches`);
 
     const matchesAge = popularPeopleDetails
       .filter(person => {
@@ -412,11 +427,14 @@ export default function Profile() {
           if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
             age -= 1;
           }
-          return age === userAge;
+          const match = age === userAge;
+          if (match) console.log(`🎯 Age match: ${person.name} (age ${age})`);
+          return match;
         } catch {
           return false;
         }
       });
+    console.log(`🎂 Found ${matchesAge.length} age matches`);
 
     return { sameBirthday: matchesBirthday, sameAge: matchesAge };
   }, [parsedDob, popularPeopleDetails, userAge]);

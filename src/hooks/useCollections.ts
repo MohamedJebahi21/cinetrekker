@@ -21,7 +21,9 @@ export const useCollections = () => {
 
         if (error) {
           // If the Supabase instance doesn't have the table, disable future fetches to avoid noisy console errors
-          if ((error as any).code === 'PGRST205' || (error as any).message?.includes("Could not find the table")) {
+          const errorCode = (error as Record<string, unknown>).code as string | undefined;
+          const errorMessage = (error as Record<string, unknown>).message as string | undefined;
+          if (errorCode === 'PGRST205' || errorMessage?.includes("Could not find the table")) {
             try { localStorage.setItem(DISABLE_KEY, '1'); } catch (e) {}
             console.warn('Collections table missing in Supabase; disabling collections fetch.');
             return [];

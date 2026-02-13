@@ -1,6 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useUserLists } from '@/contexts/UserListsContext';
+import { Genre } from '@/types/media';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Flame, Clock, Star, TrendingUp, Calendar, Award, Film, Tv } from 'lucide-react';
@@ -63,7 +64,7 @@ export default function EnhancedStats() {
     const episodes = item.media_type === 'tv' ? (item.number_of_episodes || 1) : 1;
     const hours = (runtime * episodes) / 60;
 
-    item.genres?.forEach((genre: any) => {
+    item.genres?.forEach((genre: Genre) => {
       const existing = genreMap.get(genre.id) || { name: genre.name, count: 0, hours: 0 };
       genreMap.set(genre.id, {
         name: genre.name,

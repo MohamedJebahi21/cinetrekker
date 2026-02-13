@@ -55,8 +55,8 @@ export function MediaGrid({
   };
 
   if (isLoading) {
-    const skeletonColumns = columns === 'compact' ? 6 : columns === 'normal' ? 5 : 4;
-    return <MediaGridSkeleton count={12} columns={skeletonColumns as any} />;
+    const skeletonColumns = columns === 'compact' ? 6 : columns === 'normal' ? 5 : 4 as const;
+    return <MediaGridSkeleton count={12} columns={skeletonColumns} />;
   }
 
   if (items.length === 0) {

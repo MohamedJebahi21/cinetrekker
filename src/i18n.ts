@@ -29,7 +29,7 @@ const resources = {
   de: { translation: de },
 };
 
-const isDev = (typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV) || process.env.NODE_ENV !== 'production';
+const isDev = (typeof import.meta !== 'undefined' && (import.meta as Record<string, unknown>).env?.DEV) || process.env.NODE_ENV !== 'production';
 
 function lastSegmentTitleCase(key: string) {
   const seg = key.split('.').pop() || key;

@@ -59,16 +59,16 @@ export function sortMedia(media: Media[], sortBy: SortOption, addedDates?: Map<s
 
     case 'runtime-desc':
       sorted.sort((a, b) => {
-        const runtimeA = (a as any).runtime || ((a as any).episode_run_time && (a as any).episode_run_time[0]) || 0;
-        const runtimeB = (b as any).runtime || ((b as any).episode_run_time && (b as any).episode_run_time[0]) || 0;
+        const runtimeA = a.runtime || (a.episode_run_time ? a.episode_run_time[0] : 0) || 0;
+        const runtimeB = b.runtime || (b.episode_run_time ? b.episode_run_time[0] : 0) || 0;
         return runtimeB - runtimeA;
       });
       break;
 
     case 'runtime-asc':
       sorted.sort((a, b) => {
-        const runtimeA = (a as any).runtime || ((a as any).episode_run_time && (a as any).episode_run_time[0]) || 0;
-        const runtimeB = (b as any).runtime || ((b as any).episode_run_time && (b as any).episode_run_time[0]) || 0;
+        const runtimeA = a.runtime || (a.episode_run_time ? a.episode_run_time[0] : 0) || 0;
+        const runtimeB = b.runtime || (b.episode_run_time ? b.episode_run_time[0] : 0) || 0;
         return runtimeA - runtimeB;
       });
       break;
@@ -106,7 +106,7 @@ export function sortMedia(media: Media[], sortBy: SortOption, addedDates?: Map<s
 
 export function filterMediaByRuntime(media: Media[], minRuntime: number, maxRuntime: number): Media[] {
   return media.filter((item) => {
-    const runtime = (item as any).runtime || ((item as any).episode_run_time && (item as any).episode_run_time[0]) || 0;
+    const runtime = item.runtime || (item.episode_run_time ? item.episode_run_time[0] : 0) || 0;
     return runtime >= minRuntime && runtime <= maxRuntime;
   });
 }

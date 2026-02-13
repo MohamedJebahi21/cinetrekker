@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useUserLists } from '@/contexts/UserListsContext';
+import { UserMediaItem, MediaDetails } from '@/types/media';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 import { SEO } from '@/components/SEO';
 import { Card } from '@/components/ui/card';
@@ -21,16 +22,16 @@ export default function YearInReview() {
 
   // Filter items watched this year
   const thisYearMovies = watchedMovies.filter(item => {
-    const watchedDate = (item as any).watchedAt || (item as any).addedAt;
-    if (!watchedDate) return false;
-    const date = new Date(watchedDate);
+    const watchedDateStr = item.watchedAt || item.addedAt;
+    if (!watchedDateStr) return false;
+    const date = new Date(watchedDateStr);
     return date.getFullYear() === currentYear;
   });
 
   const thisYearTV = watchedTV.filter(item => {
-    const watchedDate = (item as any).watchedAt || (item as any).addedAt;
-    if (!watchedDate) return false;
-    const date = new Date(watchedDate);
+    const watchedDateStr = item.watchedAt || item.addedAt;
+    if (!watchedDateStr) return false;
+    const date = new Date(watchedDateStr);
     return date.getFullYear() === currentYear;
   });
 
@@ -60,12 +61,12 @@ export default function YearInReview() {
   });
 
   // Calculate statistics
-  const totalRuntime = (movieDetails || []).reduce((acc, movie) => acc + (movie.runtime || 0), 0) +
+  const totalRuntime = (movieDetails || []).reduce((acc, movie) => acc + (movie?.runtime || 0), 0) +
     (tvDetails || []).reduce((acc, show) => {
-      const avgEpisodeRuntime = show.episode_run_time?.[0] || 45;
-      const totalEpisodes = show.seasons
-        ?.filter((s: any) => s.season_number > 0)
-        .reduce((sum: number, s: any) => sum + s.episode_count, 0) || 0;
+      const avgEpisodeRuntime = show?.episode_run_time?.[0] || 45;
+      const totalEpisodes = (show?.seasons || [])
+        .filter((s) => s.season_number > 0)
+        .reduce((sum: number, s) => sum + s.episode_count, 0) || 0;
       return acc + (avgEpisodeRuntime * totalEpisodes);
     }, 0);
 
@@ -73,9 +74,9 @@ export default function YearInReview() {
   const totalDays = Math.round(totalHours / 24);
 
   // Genre breakdown
-  const genreCount: { [key: string]: number } = {};
-  [...(movieDetails || []), ...(tvDetails || [])].forEach((item: any) => {
-    item.genres?.forEach((genre: any) => {
+  const genreCount: Record<string, number> = {};
+  [...(movieDetails || []), ...(tvDetails || [])].forEach((item) => {
+    item?.genres?.forEach((genre) => {
       genreCount[genre.name] = (genreCount[genre.name] || 0) + 1;
     });
   });
@@ -90,7 +91,7 @@ export default function YearInReview() {
   // Top rated items
   const allItems = [...(movieDetails || []), ...(tvDetails || [])];
   const topRated = allItems
-    .sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0))
+    .sort((a, b) => (b?.vote_average || 0) - (a?.vote_average || 0))
     .slice(0, 5);
 
   // Monthly breakdown
@@ -100,9 +101,9 @@ export default function YearInReview() {
   }));
 
   [...thisYearMovies, ...thisYearTV].forEach(item => {
-    const watchedDate = (item as any).watchedAt || (item as any).addedAt;
-    if (watchedDate) {
-      const month = new Date(watchedDate).getMonth();
+    const watchedDateStr = item.watchedAt || item.addedAt;
+    if (watchedDateStr) {
+      const month = new Date(watchedDateStr).getMonth();
       monthlyData[month].count += 1;
     }
   });
@@ -235,7 +236,7 @@ export default function YearInReview() {
                 <Card className="p-6">
                   <h3 className="text-lg font-semibold mb-4">Your Top Rated Content</h3>
                   <div className="space-y-3">
-                    {topRated.map((item: any, index) => (
+                    {topRated.map((item, index) => (
                       <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg bg-accent/50">
                         <Badge className="w-8 h-8 rounded-full flex items-center justify-center">
                           {index + 1}

@@ -2,7 +2,7 @@ import i18n, { InitOptions } from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import en from '../locales/en.json';
 
-const isDev = (typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV) || process.env.NODE_ENV !== 'production';
+const isDev = (typeof import.meta !== 'undefined' && (import.meta as Record<string, unknown>).env?.DEV) || process.env.NODE_ENV !== 'production';
 
 function lastSegmentTitleCase(key: string) {
   const seg = key.split('.').pop() || key;
@@ -15,7 +15,7 @@ function lastSegmentTitleCase(key: string) {
 
 export const defaultI18nOptions: InitOptions = {
   resources: {
-    en: { translation: en as any },
+    en: { translation: en as Record<string, unknown> },
   },
   fallbackLng: 'en',
   debug: Boolean(isDev),

@@ -3,11 +3,18 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Play, Clock, Calendar } from 'lucide-react';
 import { useUserLists } from '@/contexts/UserListsContext';
+import { TVShow } from '@/types/media';
 import { getTVDetails } from '@/services/tmdb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useTranslation } from 'react-i18next';
+
+interface TVShowWithProgress extends TVShow {
+  currentEpisode: number;
+  currentSeason: number;
+  lastWatched: string;
+}
 
 export function ContinueWatching() {
   const { watched } = useUserLists();
@@ -28,16 +35,16 @@ export function ContinueWatching() {
             const details = await getTVDetails(item.mediaId, language);
             return {
               ...details,
-              currentEpisode: (item as any).currentEpisode || 1,
-              currentSeason: (item as any).currentSeason || 1,
+              currentEpisode: 1,
+              currentSeason: 1,
               lastWatched: item.addedAt,
-            };
+            } as TVShowWithProgress;
           } catch {
             return null;
           }
         })
       );
-      return results.filter(Boolean);
+      return results.filter((r): r is TVShowWithProgress => r !== null);
     },
     enabled: watchingShows.length > 0,
   });
@@ -54,11 +61,11 @@ export function ContinueWatching() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {showsDetails.map((show: any) => {
+        {showsDetails.map((show) => {
           const totalEpisodes =
             show.seasons
-              ?.filter((s: any) => s.season_number > 0)
-              .reduce((acc: number, s: any) => acc + s.episode_count, 0) || 0;
+              ?.filter((s) => s.season_number > 0)
+              .reduce((acc: number, s) => acc + (s.episode_count ?? 0), 0) || 0;
           
           const currentProgress = show.currentSeason * show.currentEpisode;
           const progressPercent = totalEpisodes > 0 ? (currentProgress / totalEpisodes) * 100 : 0;

@@ -3,6 +3,7 @@ import { Shuffle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useUserLists } from '@/contexts/UserListsContext';
+import { UserMediaItem } from '@/types/media';
 import { useToast } from '@/hooks/use-toast';
 
 interface RandomPickerProps {
@@ -27,7 +28,7 @@ export function RandomPicker({
   const { toast } = useToast();
 
   const handleRandomPick = () => {
-    let items: any[] = [];
+    let items: UserMediaItem[] = [];
 
     if (source === 'watchlist') {
       items = mediaType === 'all' ? watchlist : watchlist.filter((i) => i.mediaType === mediaType);

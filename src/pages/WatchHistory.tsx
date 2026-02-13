@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useUserLists } from '@/contexts/UserListsContext';
+import { UserMediaItem } from '@/types/media';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 import { SEO } from '@/components/SEO';
 import { Card } from '@/components/ui/card';
@@ -29,8 +30,10 @@ export default function WatchHistory() {
 
   // Apply sorting
   filtered.sort((a, b) => {
-    const aDate = (a as any).watchedAt || (a as any).addedAt || 0;
-    const bDate = (b as any).watchedAt || (b as any).addedAt || 0;
+    const aDateStr = a.watchedAt || a.addedAt;
+    const bDateStr = b.watchedAt || b.addedAt;
+    const aDate = new Date(aDateStr).getTime();
+    const bDate = new Date(bDateStr).getTime();
     
     if (sortBy === 'recent') return bDate - aDate;
     if (sortBy === 'oldest') return aDate - bDate;
@@ -52,18 +55,18 @@ export default function WatchHistory() {
   });
 
   // Group by month for timeline view
-  const groupByMonth = (items: typeof filtered) => {
-    const groups: { [key: string]: typeof filtered } = {};
+  const groupByMonth = (items: UserMediaItem[]) => {
+    const groups: Record<string, UserMediaItem[]> = {};
     
     items.forEach(item => {
-      const watchedDate = (item as any).watchedAt || (item as any).addedAt;
-      if (!watchedDate) {
+      const watchedDateStr = item.watchedAt || item.addedAt;
+      if (!watchedDateStr) {
         if (!groups['Unknown']) groups['Unknown'] = [];
         groups['Unknown'].push(item);
         return;
       }
       
-      const date = new Date(watchedDate);
+      const date = new Date(watchedDateStr);
       const monthKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
       
       if (!groups[monthKey]) groups[monthKey] = [];
@@ -96,7 +99,7 @@ export default function WatchHistory() {
           </div>
 
           <div className="flex gap-2">
-            <Select value={filter} onValueChange={(v: any) => setFilter(v)}>
+            <Select value={filter} onValueChange={(v) => setFilter(v as 'all' | 'movies' | 'tv')}>
               <SelectTrigger className="w-[140px]">
                 <SelectValue />
               </SelectTrigger>
@@ -107,7 +110,7 @@ export default function WatchHistory() {
               </SelectContent>
             </Select>
 
-            <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'recent' | 'oldest' | 'alpha')}>
               <SelectTrigger className="w-[140px]">
                 <SelectValue />
               </SelectTrigger>
@@ -150,7 +153,9 @@ export default function WatchHistory() {
                   <div className="ml-24 space-y-4">
                     {timelineGroups[month].map((item, idx) => {
                       const detail = details?.[filtered.indexOf(item)];
-                      const watchedDate = (item as any).watchedAt || (item as any).addedAt;
+                      const watchedDateStr = item.watchedAt || item.addedAt;
+                      const title = (detail?.title || detail?.name) as string | undefined;
+                      const vote = detail?.vote_average as number | undefined;
                       
                       return (
                         <Card key={`${item.mediaId}-${idx}`} className="p-4 hover:shadow-lg transition-shadow">
@@ -166,13 +171,13 @@ export default function WatchHistory() {
                               <div className="flex items-start justify-between gap-2">
                                 <div>
                                   <h3 className="font-semibold text-lg">
-                                    {(detail as any)?.title || (detail as any)?.name || 'Loading...'}
+                                    {title || 'Loading...'}
                                   </h3>
                                   <p className="text-sm text-muted-foreground">
                                     {item.mediaType === 'movie' ? '🎬 Movie' : '📺 TV Show'}
                                     {detail && ' · '}
-                                    {detail && (detail as any).vote_average && 
-                                      `⭐ ${(detail as any).vote_average.toFixed(1)}`
+                                    {detail && vote && 
+                                      `⭐ ${vote.toFixed(1)}`
                                     }
                                   </p>
                                 </div>
@@ -213,6 +218,7 @@ export default function WatchHistory() {
                   <div className="ml-24 space-y-4">
                     {timelineGroups['Unknown'].map((item, idx) => {
                       const detail = details?.[filtered.indexOf(item)];
+                      const title = (detail?.title || detail?.name) as string | undefined;
                       
                       return (
                         <Card key={`${item.mediaId}-${idx}`} className="p-4">
@@ -226,7 +232,7 @@ export default function WatchHistory() {
                             )}
                             <div>
                               <h3 className="font-semibold">
-                                {(detail as any)?.title || (detail as any)?.name || 'Loading...'}
+                                {title || 'Loading...'}
                               </h3>
                               <p className="text-sm text-muted-foreground">
                                 {item.mediaType === 'movie' ? '🎬 Movie' : '📺 TV Show'}

@@ -51,7 +51,8 @@ export function calculateAchievements(watched: UserMediaItem[], watchlist: UserM
   // Genre Explorer - watch 10 from same genre
   const genreCount = new Map<number, number>();
   watched.forEach((item) => {
-    (item as any).genreIds?.forEach((id: number) => {
+    const genreIds = (item as Record<string, unknown>).genreIds as number[] | undefined;
+    genreIds?.forEach((id: number) => {
       genreCount.set(id, (genreCount.get(id) || 0) + 1);
     });
   });

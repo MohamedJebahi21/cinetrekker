@@ -106,7 +106,7 @@ export default function AwardWinners() {
             ) : (
               <div className="media-grid">
                 {oscarMovies?.map(movie => (
-                  <MediaCard key={movie.id} media={movie} mediaType="movie" />
+                  <MediaCard key={movie.id} media={movie} />
                 ))}
               </div>
             )}
@@ -148,7 +148,7 @@ export default function AwardWinners() {
             ) : (
               <div className="media-grid">
                 {criticallyAcclaimed?.map(movie => (
-                  <MediaCard key={movie.id} media={movie} mediaType="movie" />
+                  <MediaCard key={movie.id} media={movie} />
                 ))}
               </div>
             )}

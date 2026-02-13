@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface UserProfile {
   id: string;
@@ -85,8 +85,9 @@ export const profileService = {
     const subscription = supabase
       .from('profiles')
       .on('*', (payload) => {
-        if (payload.new && (payload.new as any).user_id === userId) {
-          callback(payload.new as UserProfile);
+        const newRecord = payload.new as Record<string, unknown> | null;
+        if (newRecord && (newRecord.user_id as string) === userId) {
+          callback(newRecord as UserProfile);
         }
       })
       .subscribe();
