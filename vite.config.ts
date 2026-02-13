@@ -47,7 +47,7 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
-  plugins: [react(), cspPlugin()].filter(Boolean),
+  plugins: [react(), mode === 'production' ? cspPlugin() : null].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
