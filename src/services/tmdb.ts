@@ -34,35 +34,48 @@ const fetchTMDB = async <T>(endpoint: string, language: string = 'en', extraPara
     ...extraParams,
   });
 
-  const response = await fetch(
-    `${SUPABASE_URL}/functions/v1/tmdb-proxy?${params.toString()}`,
-    {
-      headers: {
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'apikey': SUPABASE_KEY,
-        'Content-Type': 'application/json',
-      },
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/functions/v1/tmdb-proxy?${params.toString()}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'apikey': SUPABASE_KEY,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    // Explicit 401 handling - Stop retries immediately
+    if (response.status === 401) {
+      console.error('🚫 401 Unauthorized: Invalid Supabase API key or expired session');
+      throw new Error('AUTHENTICATION_ERROR');
     }
-  );
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const statusText = response.status === 401 ? 'Unauthorized - Check Supabase credentials' 
-      : response.status === 404 ? 'Not Found - Invalid endpoint' 
-      : response.status >= 500 ? 'Server Error - TMDB or Supabase issue' 
-      : `HTTP ${response.status}`;
-    
-    console.error(`❌ TMDB Proxy Error [${response.status}]:`, {
-      endpoint,
-      status: response.status,
-      statusText,
-      error: errorData
-    });
-    
-    throw new Error(errorData.error || `TMDB API error: ${statusText}`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const statusText = response.status === 404 ? 'Not Found - Invalid endpoint' 
+        : response.status >= 500 ? 'Server Error - TMDB or Supabase issue' 
+        : `HTTP ${response.status}`;
+      
+      console.error(`❌ TMDB Proxy Error [${response.status}]:`, {
+        endpoint,
+        status: response.status,
+        statusText,
+        error: errorData
+      });
+      
+      throw new Error(errorData.error || `TMDB API error: ${statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    // Ensure authentication errors propagate with correct type
+    if (error instanceof Error && error.message === 'AUTHENTICATION_ERROR') {
+      throw error;
+    }
+    throw error;
   }
-
-  return response.json();
 };
 
 export const getTrending = async (mediaType: 'all' | 'movie' | 'tv' = 'all', timeWindow: TimeWindow = 'day', language: string = 'en'): Promise<TMDBResponse<Media>> => {

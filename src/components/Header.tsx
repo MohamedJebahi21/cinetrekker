@@ -56,7 +56,7 @@ export function Header() {
   // Track scroll for enhanced glass effect
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
+      setIsScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
@@ -143,7 +143,7 @@ export function Header() {
   return (
     <header role="banner" className={cn(
       "glass-nav h-16 transition-all duration-300",
-      isScrolled && "shadow-lg"
+      isScrolled && "scrolled"
     )}>
       {/* Skip to content for keyboard users / screen readers */}
       <a href="#main" className="skip-link sr-only focus:not-sr-only focus:z-50 focus:block p-2 bg-primary text-white rounded-md">Skip to content</a>

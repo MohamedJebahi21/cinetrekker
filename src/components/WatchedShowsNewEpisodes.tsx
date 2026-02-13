@@ -8,6 +8,7 @@ import { useWatchedEpisodes } from '@/hooks/useFollowedShows';
 import { getTVDetails, getImageUrl, getTVSeasonDetails, TVEpisode } from '@/services/tmdb';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getReleaseTimeInfo, hasBeenReleased } from '@/lib/timeUtils';
 import { differenceInHours, isSameDay } from 'date-fns';

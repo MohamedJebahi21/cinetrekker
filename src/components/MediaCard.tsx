@@ -20,8 +20,9 @@ import { useWatchedEpisodes } from '@/hooks/useFollowedShows';
 // Media preview modal removed — navigate to details page instead
 import { cn } from '@/lib/utils';
 
-interface MediaCardProps {
+export interface MediaCardProps {
   media: Media & { watchStatus?: string };
+  mediaType?: 'movie' | 'tv';
   showType?: boolean;
   showStatus?: boolean;
   onAction?: () => void;
@@ -66,7 +67,7 @@ function PosterImage({ posterPath, alt }: { posterPath: string | null; alt: stri
   );
 }
 
-export const MediaCard = React.memo(function MediaCard({ media, showType = true, showStatus = false }: MediaCardProps) {
+export const MediaCard = React.memo(function MediaCard({ media, mediaType: mediaTypeProp, showType = true, showStatus = false }: MediaCardProps) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { isInWatchlist, isWatched, addToWatchlist, removeFromWatchlist, addToWatched, removeFromWatched } = useUserLists();
@@ -76,7 +77,7 @@ export const MediaCard = React.memo(function MediaCard({ media, showType = true,
   
   const title = useMemo(() => getMediaTitle(media), [media]);
   const year = useMemo(() => getMediaYear(media), [media]);
-  const mediaType = useMemo(() => getMediaType(media), [media]);
+  const mediaType = useMemo(() => mediaTypeProp ?? getMediaType(media), [mediaTypeProp, media]);
   const posterUrl = useMemo(() => getImageUrl(media.poster_path, 'w342'), [media.poster_path]);
   const inWatchlist = user ? isInWatchlist(media.id, mediaType) : localInWatchlist;
   const watched = isWatched(media.id, mediaType);

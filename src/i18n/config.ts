@@ -29,7 +29,17 @@ export const defaultI18nOptions: InitOptions = {
       // eslint-disable-next-line no-console
       console.warn(`[i18n] Missing translation key: ${key}`);
     }
-    return lastSegmentTitleCase(key);
+    
+    // Enhanced fallback with better user-friendly strings
+    const fallbackMap: Record<string, string> = {
+      'home.topThisWeek': 'Top This Week',
+      'home.topMoviesWeek': 'Top Movies This Week',
+      'home.topSeriesWeek': 'Top TV Shows This Week',
+      'home.trendingToday': 'Trending Today',
+      'home.trendingWeek': 'Trending This Week',
+    };
+    
+    return fallbackMap[key] || lastSegmentTitleCase(key);
   },
   returnEmptyString: false,
   returnObjects: true,

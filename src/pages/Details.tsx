@@ -19,7 +19,7 @@ import { MediaSection } from '@/components/MediaSection';
 import { ApiError } from '@/components/ErrorBoundary';
 import SEO from '@/components/SEO';
 import useDocumentTitle from '@/hooks/useDocumentTitle';
-import { mediaToJsonLd } from '@/lib/schema';
+import MovieSchema from '@/components/MovieSchema';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -355,7 +355,6 @@ export default function Details() {
   const seoDescription = (details.overview || '').slice(0, 160);
   const seoImage = getImageUrl(details.poster_path, 'w500');
   const seoCanonical = `https://cinetrekker.vercel.app/${mediaType}/${mediaId}`;
-  const seoJsonLd = mediaToJsonLd({ ...details, media_type: mediaType } as Media);
   const seoKeywords = [
     title,
     ...(details.genres?.map(g => g.name) || []),
@@ -427,9 +426,15 @@ export default function Details() {
         description={seoDescription}
         image={seoImage}
         canonical={seoCanonical}
-        jsonLd={seoJsonLd}
         keywords={seoKeywords}
       />
+      {mediaType === 'movie' && (
+        <MovieSchema
+          title={title}
+          description={overview}
+          image={posterUrl}
+        />
+      )}
       
       <div className="relative h-[50vh] md:h-[70vh] overflow-hidden -mt-16">
         {backdropUrl && (

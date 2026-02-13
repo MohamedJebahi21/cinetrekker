@@ -6,9 +6,6 @@ const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:8080',
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://localhost:8080',
 ];
 
 function getCorsHeaders(req: Request): Record<string, string> {
@@ -20,6 +17,7 @@ function getCorsHeaders(req: Request): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': isAllowed ? origin : ALLOWED_ORIGINS[0],
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   };
 }
 

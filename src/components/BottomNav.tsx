@@ -86,12 +86,15 @@ export function BottomNav({ showOnMobile = true, watchlistCount, watchedCount }:
                 className={cn(
                   'flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-xl transition-all duration-200 interactive-element',
                   active
-                    ? 'bg-primary/10 text-primary'
+                    ? 'bg-primary/10 text-primary shadow-glow'
                     : 'text-muted-foreground hover:bg-surface-dark-3 hover:text-foreground'
                 )}
               >
                 <div className="relative">
-                  <Icon className={cn('h-5 w-5', active && 'fill-current')} />
+                  <Icon className={cn(
+                    'h-5 w-5 transition-transform duration-200',
+                    active && 'fill-current scale-110'
+                  )} />
                   {badge && (
                     <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-[10px] rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-glow">
                       {typeof badge === 'number' && badge > 99 ? '99+' : badge}
