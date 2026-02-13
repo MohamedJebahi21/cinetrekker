@@ -8,9 +8,15 @@ import { SpeedInsightsWrapper } from '@/components/SpeedInsightsWrapper';
 import "./index.css";
 import "./i18n";
 
+// Install chunk error recovery handlers
+import { installChunkErrorHandlers } from '@/lib/chunkErrorRecovery';
+
 // Diagnostic logging for browser console
 console.log("🚀 Main.tsx is loading...");
 console.log("Root element check:", document.getElementById("root"));
+
+// Install chunk error handlers BEFORE React renders
+installChunkErrorHandlers();
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
