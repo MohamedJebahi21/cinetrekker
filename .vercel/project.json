@@ -1,0 +1,16 @@
+{
+  "projectId": "prj_DV1dX6XUFFalHKfMYJdGGBv6Fn8Y",
+  "orgId": "team_sIJVWlP6M7g3Dkb9AtsumUFs",
+  "projectName": "cinetrekker",
+  "settings": {
+    "createdAt": 1769975599168,
+    "framework": "vite",
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": null,
+    "outputDirectory": null,
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
+}

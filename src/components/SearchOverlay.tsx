@@ -1,0 +1,167 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
+import { searchMulti, getImageUrl } from '@/services/tmdb';
+import { useDebounce } from '@/hooks/useDebounce';
+import { X, Search, Film, Tv, User, ArrowRight } from 'lucide-react';
+
+export default function SearchOverlay() {
+  const { t, i18n } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const debounced = useDebounce(query, 300);
+  const navigate = useNavigate();
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const language = i18n.language;
+
+  useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener('open-search-overlay', onOpen as EventListener);
+
+    const onAppEscape = () => setOpen(false);
+    window.addEventListener('app:escape', onAppEscape as EventListener);
+
+    const onKey = (e: KeyboardEvent) => {
+      // Ctrl+/ or Meta+/
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault();
+        setOpen((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+
+    return () => {
+      window.removeEventListener('open-search-overlay', onOpen as EventListener);
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('app:escape', onAppEscape as EventListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (open) setTimeout(() => inputRef.current?.focus(), 0);
+    else setQuery('');
+  }, [open]);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['search-overlay', debounced, language],
+    queryFn: () => searchMulti(debounced, 1, language),
+    enabled: debounced.length >= 2,
+    staleTime: 30_000,
+  });
+
+  const results = (data?.results || []).slice(0, 10);
+
+  const getItemRoute = (item: any) => {
+    if (item.media_type === 'person') return `/person/${item.id}`;
+    return `/${item.media_type}/${item.id}`;
+  };
+
+  const RECENTS_KEY = 'cinetrekker_recent_searches';
+  const addToRecents = (q: string) => {
+    if (!q || !q.trim()) return;
+    try {
+      const trimmed = q.trim();
+      const stored = localStorage.getItem(RECENTS_KEY);
+      const prev: string[] = stored ? JSON.parse(stored) : [];
+      const next = [trimmed, ...prev.filter(x => x !== trimmed)].slice(0, 10);
+      localStorage.setItem(RECENTS_KEY, JSON.stringify(next));
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  return (
+    <>
+      {open && (
+        <div className="fixed inset-0 z-[100] flex items-start md:items-center justify-center p-4">
+          <div className="w-full max-w-3xl bg-popover/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl">
+            <div className="flex items-center gap-2 p-3">
+              <Search className="w-5 h-5 text-muted-foreground ml-2" />
+              <input
+                ref={inputRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t('search.placeholder')}
+                className="flex-1 bg-transparent outline-none text-foreground px-2 py-2 text-sm"
+                aria-label={t('search.placeholder')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') setOpen(false);
+                  if (e.key === 'Enter') {
+                    const q = query.trim();
+                    if (q.length >= 2) addToRecents(q);
+                    if (results.length > 0) {
+                      navigate(getItemRoute(results[0]));
+                    } else if (q.length > 0) {
+                      navigate(`/search?q=${encodeURIComponent(q)}`);
+                    }
+                    setOpen(false);
+                  }
+                }}
+              />
+              <button onClick={() => setOpen(false)} aria-label="Close search" className="p-2 rounded-md hover:bg-muted/30 ml-2 min-w-[44px] min-h-[44px]">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="max-h-96 overflow-auto">
+              {isLoading ? (
+                <div className="py-2">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 px-4 py-2">
+                      <div className="w-12 h-16 rounded poster-skeleton flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 skeleton-shimmer rounded w-3/4" />
+                        <div className="h-3 skeleton-shimmer rounded w-1/2" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : results.length > 0 ? (
+                <ul>
+                  {results.map((item: any) => (
+                    <li key={`${item.media_type}-${item.id}`}>
+                      <button
+                        onClick={() => {
+                          navigate(getItemRoute(item));
+                          setOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-accent/30 transition-colors"
+                      >
+                        <div className="w-12 h-16 rounded overflow-hidden bg-muted flex-shrink-0">
+                          {getImageUrl(item.poster_path || item.profile_path, 'w154') ? (
+                            <img
+                              src={getImageUrl(item.poster_path || item.profile_path, 'w342')!}
+                              srcSet={`${getImageUrl(item.poster_path || item.profile_path, 'w185')!} 185w, ${getImageUrl(item.poster_path || item.profile_path, 'w342')!} 342w`}
+                              sizes="(max-width: 640px) 185px, 342px"
+                              width={185}
+                              height={278}
+                              alt=""
+                              className="w-full h-full object-cover bg-muted"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                              {item.media_type === 'person' ? <User /> : (item.media_type === 'movie' ? <Film /> : <Tv />)}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate">{item.title || item.name}</div>
+                          <div className="text-xs text-muted-foreground mt-1">{item.media_type}{item.release_date ? ` • ${new Date(item.release_date).getFullYear()}` : ''}</div>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="p-4 text-sm text-muted-foreground">{debounced.length >= 2 ? t('search.noResults', `No results for "${debounced}"`) : t('search.prompt', 'Type at least 2 characters')}</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+

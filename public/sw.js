@@ -1,0 +1,62 @@
+/* Basic service worker for offline watchlist caching */
+const CACHE_NAME = 'cinetrekker-v1';
+const ASSETS_TO_CACHE = [
+  '/',
+  '/index.html',
+  '/placeholder.svg',
+  '/manifest.json',
+];
+
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => Promise.all(
+      keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+    ))
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  // For API calls, try network first then cache fallback
+  if (request.url.includes('/api/') || request.url.includes('themoviedb.org')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const cloned = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, cloned));
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // For navigation and static assets, cache-first
+  event.respondWith(
+    caches.match(request).then((cached) => cached || fetch(request))
+  );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+
+  // Simple sync trigger: client can postMessage { type: 'SYNC_NOW' }
+  if (event.data && event.data.type === 'SYNC_NOW') {
+    // Attempt to notify all clients that a sync should be performed
+    self.clients.matchAll().then(clients => {
+      clients.forEach(client => {
+        client.postMessage({ type: 'SYNC_STARTED' });
+      });
+    });
+    // No background sync implemented here; the app will flush queued mutations when online.
+  }
+});

@@ -1,0 +1,183 @@
+{
+  "common": {
+    "appName": "CineTrekker",
+    "loading": "جارٍ التحميل...",
+    "error": "حدث خطأ",
+    "retry": "إعادة المحاولة",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "search": "بحث",
+    "noResults": "لا توجد نتائج",
+    "seeAll": "عرض الكل",
+    "movie": "فيلم",
+    "tvShow": "مسلسل",
+    "movies": "أفلام",
+    "tvShows": "مسلسلات",
+    "all": "الكل"
+  },
+  "nav": {
+    "home": "الرئيسية",
+    "search": "بحث",
+    "watchlist": "قائمة المشاهدة",
+    "watched": "تمت المشاهدة",
+    "recommendations": "التوصيات",
+    "profile": "الملف الشخصي",
+    "privacy": "الخصوصية",
+    "signIn": "تسجيل الدخول",
+    "signOut": "تسجيل الخروج"
+  },
+  "home": {
+    "trending": "الرائج",
+    "trendingToday": "الرائج اليوم",
+    "trendingWeek": "الرائج هذا الأسبوع",
+    "popular": "الأكثر شعبية",
+    "topRated": "الأعلى تقييماً",
+    "topRatedMovies": "أفضل الأفلام",
+    "topRatedSeries": "أفضل المسلسلات",
+    "hero": {
+      "title": "تتبع رحلتك الترفيهية",
+      "subtitle": "اكتشف وتتبع وتذكر كل فيلم ومسلسل تشاهده"
+    }
+  },
+  "search": {
+    "placeholder": "ابحث عن الأفلام والمسلسلات...",
+    "searchResults": "نتائج البحث",
+    "resultsFor": "نتائج \"{{query}}\""
+  },
+  "details": {
+    "overview": "نظرة عامة",
+    "cast": "طاقم العمل",
+    "similar": "عناوين مشابهة",
+    "recommendations": "قد يعجبك أيضاً",
+    "rating": "التقييم",
+    "releaseDate": "تاريخ الإصدار",
+    "firstAirDate": "تاريخ العرض الأول",
+    "runtime": "المدة",
+    "episodes": "حلقات",
+    "seasons": "مواسم",
+    "genres": "الأنواع",
+    "status": "الحالة",
+    "minutes": "دقيقة",
+    "noOverview": "لا يوجد وصف متاح"
+  },
+  "actions": {
+    "addToWatchlist": "أضف لقائمة المشاهدة",
+    "removeFromWatchlist": "إزالة من قائمة المشاهدة",
+    "markAsWatched": "تحديد كمُشاهَد",
+    "removeFromWatched": "إزالة من المُشاهَد",
+    "rateTitle": "تقييم",
+    "addNote": "إضافة ملاحظة",
+    "inWatchlist": "في قائمة المشاهدة",
+    "watched": "تمت المشاهدة"
+  },
+  "watchlist": {
+    "title": "قائمة المشاهدة",
+    "empty": "قائمة المشاهدة فارغة",
+    "emptyDesc": "ابدأ بإضافة الأفلام والمسلسلات التي تريد مشاهدتها!"
+  },
+  "watched": {
+    "title": "تمت المشاهدة",
+    "empty": "لم تشاهد أي شيء بعد",
+    "emptyDesc": "حدد الأفلام والمسلسلات كمُشاهَدة لتتبع سجل المشاهدة"
+  },
+  "recommendations": {
+    "title": "التوصيات",
+    "subtitle": "بناءً على ما شاهدته",
+    "empty": "لا توجد توصيات حتى الآن",
+    "emptyDesc": "شاهد المزيد من العناوين للحصول على توصيات مخصصة",
+    "hideTitle": "إخفاء من التوصيات"
+  },
+  "profile": {
+    "title": "الملف الشخصي",
+    "stats": "إحصائياتك",
+    "moviesWatched": "أفلام مُشاهَدة",
+    "showsWatched": "مسلسلات مُشاهَدة",
+    "totalWatchlist": "في قائمة المشاهدة",
+    "showsFollowed": "مسلسلات متابعة",
+    "episodesWatched": "حلقات مشاهدة",
+    "settings": "الإعدادات",
+    "language": "اللغة",
+    "profileCompletion": "اكتمال الملف الشخصي",
+    "profileDetails": "تفاصيل الملف الشخصي",
+    "displayName": "اسم العرض",
+    "displayNamePlaceholder": "كيف يجب أن نناديك؟",
+    "dateOfBirth": "تاريخ الميلاد",
+    "currentAge": "العمر الحالي",
+    "about": "عني",
+    "bio": "السيرة الذاتية",
+    "bioPlaceholder": "أخبرنا عن رحلتك السينمائية...",
+    "characters": "حرف",
+    "favoriteGenres": "الأنواع المفضلة",
+    "privacySettings": "إعدادات الخصوصية",
+    "publicProfile": "ملف عام",
+    "publicProfileDesc": "السماح للآخرين بعرض ملفك الشخصي",
+    "showWatchlist": "عرض قائمة المشاهدة",
+    "showWatchlistDesc": "عرض قائمة مشاهدتك على ملفك الشخصي",
+    "showStats": "عرض الإحصائيات",
+    "showStatsDesc": "عرض إحصائيات المشاهدة الخاصة بك"
+  },
+  "auth": {
+    "signIn": "تسجيل الدخول",
+    "signUp": "إنشاء حساب",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "noAccount": "ليس لديك حساب؟",
+    "hasAccount": "لديك حساب بالفعل؟",
+    "signInWith": "تسجيل الدخول بـ {{provider}}",
+    "orContinueWith": "أو تابع بـ",
+    "checkEmail": "تحقق من بريدك الإلكتروني لرابط الدخول"
+  },
+  "privacy": {
+    "title": "سياسة الخصوصية",
+    "lastUpdated": "آخر تحديث: {{date}}",
+    "dataCollected": "البيانات التي نجمعها",
+    "dataCollectedDesc": "نجمع المعلومات التالية عند استخدامك لـ CineTrekker:",
+    "dataList": {
+      "email": "عنوان البريد الإلكتروني (للمصادقة)",
+      "watchlist": "قائمة المشاهدة والعناوين المُشاهَدة",
+      "ratings": "تقييماتك وملاحظاتك للعناوين",
+      "preferences": "تفضيلات اللغة"
+    },
+    "dataUsage": "كيف نستخدم بياناتك",
+    "dataUsageDesc": "تُستخدم بياناتك فقط لتوفير تجربة مخصصة لك، بما في ذلك التوصيات بناءً على سجل المشاهدة.",
+    "dataSharing": "مشاركة البيانات",
+    "dataSharingDesc": "لا نبيع أو نشارك بياناتك الشخصية مع أطراف ثالثة.",
+    "contact": "اتصل بنا",
+    "contactDesc": "لأي استفسارات تتعلق بالخصوصية، يرجى الاتصال بنا."
+  },
+  "filters": {
+    "type": "النوع",
+    "genre": "التصنيف",
+    "year": "السنة",
+    "sort": "ترتيب حسب",
+    "sortOptions": {
+      "popularity": "الشعبية",
+      "rating": "التقييم",
+      "newest": "الأحدث",
+      "title": "العنوان"
+    }
+  },
+  "status": {
+    "watching": "أشاهد حالياً",
+    "completed": "مكتمل",
+    "dropped": "متوقف",
+    "planToWatch": "أخطط للمشاهدة"
+  },
+  "footer": {
+    "attribution": "هذا المنتج يستخدم واجهة TMDB البرمجية ولكنه غير معتمد أو مصدق من TMDB.",
+    "allRightsReserved": "جميع الحقوق محفوظة.",
+    "terms": "شروط الخدمة",
+    "cookies": "سياسة ملفات تعريف الارتباط"
+  },
+  "rating": {
+    "yourRating": "تقييمك",
+    "averageRating": "متوسط التقييم",
+    "rateThis": "قيّم هذا {{type}}",
+    "note": "ملاحظة",
+    "notePlaceholder": "أضف أفكارك حول هذا العنوان..."
+  },
+  "comingSoon": "قريبًا"
+}
