@@ -145,8 +145,6 @@ export function Header() {
       "glass-nav h-16 transition-all duration-300",
       isScrolled && "scrolled"
     )}>
-      {/* Skip to content for keyboard users / screen readers */}
-      <a href="#main" className="skip-link sr-only focus:not-sr-only focus:z-50 focus:block p-2 bg-primary text-white rounded-md">Skip to content</a>
       <div className="container mx-auto flex h-full items-center justify-between px-4 gap-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 group flex-shrink-0">
