@@ -75,11 +75,14 @@
   },
   "home": {
     "trending": "Trending",
+    "today": "Today",
     "trendingToday": "Today",
     "trendingWeek": "This Week",
     "topThisWeek": "Top This Week",
     "popular": "Popular",
     "topRated": "Top Rated",
+    "topRatedMovies": "Top Rated Movies",
+    "topRatedSeries": "Top Rated Series",
     "newEpisodes": "New Episodes",
     "topMoviesWeek": "Top Movies This Week",
     "topSeriesWeek": "Top Series This Week",
@@ -99,6 +102,9 @@
     "welcome": "Hey there!",
     "welcomeBack": "Welcome to CineTrekker!",
     "subtitle": "Ready to dive in?",
+    "featured": "Featured",
+    "viewDetails": "More Info",
+    "startTracking": "Start Tracking",
     "hero": {
       "title": "Track Your Entertainment Journey",
       "subtitle": "Discover, track, and remember every movie and TV show you watch"
@@ -326,39 +332,6 @@
     "skip": "Skip",
     "next": "Next",
     "start": "Get Started"
-  },
-  "home": {
-    "trending": "Trending",
-    "today": "Today",
-    "trendingToday": "Today",
-    "trendingWeek": "This Week",
-    "popular": "Popular",
-    "topRated": "Top Rated",
-    "newEpisodes": "New Episodes",
-    "topMoviesWeek": "Top Movies This Week",
-    "topSeriesWeek": "Top Series This Week",
-    "topRatedMovies": "Top Rated Movies",
-    "topRatedSeries": "Top Rated Series",
-    "recentMovies": "Recently Added Movies",
-    "recentEpisodes": "Recently Added Episodes",
-    "newEpisode": "New Episode",
-    "popularMovies": "Popular Movies",
-    "popularSeries": "Popular Series",
-    "didYouWatch": "Did You Watch?",
-    "didYouWatchPrompt": "New episode is out!",
-    "didYouWatchEmpty": "No new episodes to watch",
-    "didYouWatchEmptyDesc": "Episodes will appear here after they air",
-    "justReleased": "Just released",
-    "releasedToday": "Today",
-    "releasedHoursAgo": "{{hours}}h ago",
-    "becauseYouLiked": "Because You Liked {{title}}",
-    "featured": "Featured",
-    "viewDetails": "More Info",
-    "startTracking": "Start Tracking",
-    "hero": {
-      "title": "Track Your Entertainment Journey",
-      "subtitle": "Discover, track, and remember every movie and TV show you watch"
-    }
   },
   "comingSoon": "Coming Soon"
 }

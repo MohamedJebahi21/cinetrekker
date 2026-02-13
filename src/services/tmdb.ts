@@ -38,6 +38,7 @@ const fetchTMDB = async <T>(endpoint: string, language: string = 'en', extraPara
     `${SUPABASE_URL}/functions/v1/tmdb-proxy?${params.toString()}`,
     {
       headers: {
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
         'apikey': SUPABASE_KEY,
         'Content-Type': 'application/json',
       },
@@ -46,7 +47,19 @@ const fetchTMDB = async <T>(endpoint: string, language: string = 'en', extraPara
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `TMDB API error: ${response.status}`);
+    const statusText = response.status === 401 ? 'Unauthorized - Check Supabase credentials' 
+      : response.status === 404 ? 'Not Found - Invalid endpoint' 
+      : response.status >= 500 ? 'Server Error - TMDB or Supabase issue' 
+      : `HTTP ${response.status}`;
+    
+    console.error(`❌ TMDB Proxy Error [${response.status}]:`, {
+      endpoint,
+      status: response.status,
+      statusText,
+      error: errorData
+    });
+    
+    throw new Error(errorData.error || `TMDB API error: ${statusText}`);
   }
 
   return response.json();
