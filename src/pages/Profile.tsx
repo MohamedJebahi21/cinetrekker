@@ -439,6 +439,11 @@ export default function Profile() {
     return { sameBirthday: matchesBirthday, sameAge: matchesAge };
   }, [parsedDob, popularPeopleDetails, userAge]);
 
+  // Compute watch statistics from user lists
+  const moviesWatched = watched.filter((item) => item.mediaType === 'movie').length;
+  const showsWatched = watched.filter((item) => item.mediaType === 'tv').length;
+  const totalWatchlist = watchlist.length;
+
   const stats = [
     { label: t('profile.moviesWatched'), value: moviesWatched, icon: Film },
     { label: t('profile.showsWatched'), value: showsWatched, icon: Tv },
