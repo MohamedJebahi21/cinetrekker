@@ -8,7 +8,6 @@ import { useFollowedShows, useWatchedEpisodes } from '@/hooks/useFollowedShows';
 import { languages } from '@/i18n';
 import { Link } from 'react-router-dom';
 import { getImageUrl, getPersonDetails, getPopularPeople } from '@/services/tmdb';
-import { supabase } from '@/integrations/supabase/client';
 import {
   Select,
   SelectContent,
@@ -135,43 +134,27 @@ export default function Profile() {
 
     // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
-      alert('Image must be smaller than 2MB');
+      toast({
+        title: "Image too large",
+        description: "Please select an image smaller than 2MB.",
+        variant: "destructive",
+      });
       return;
     }
 
-    if (user) {
-      // Upload to Supabase Storage for authenticated users
-      try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-        const { data, error } = await supabase.storage
-          .from('profile-photos')
-          .upload(fileName, file, { upsert: true });
-
-        if (error) {
-          console.error('Upload error:', error);
-          alert('Failed to upload image. Please try again.');
-          return;
-        }
-
-        const { data: urlData } = supabase.storage
-          .from('profile-photos')
-          .getPublicUrl(fileName);
-
-        setProfilePhoto(urlData.publicUrl);
-      } catch (err) {
-        console.error('Upload error:', err);
-        alert('Failed to upload image. Please try again.');
-      }
-    } else {
-      // Guest users: use base64 (with size check)
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = typeof reader.result === 'string' ? reader.result : null;
-        setProfilePhoto(result);
-      };
-      reader.readAsDataURL(file);
-    }
+    // Use base64 for all users (stored in localStorage)
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : null;
+      setProfilePhoto(result);
+      setHasUnsavedChanges(true);
+      
+      toast({
+        title: "Photo selected",
+        description: "Click 'Save Changes' to update your profile photo.",
+      });
+    };
+    reader.readAsDataURL(file);
   };
 
   const handlePhotoRemove = () => {
