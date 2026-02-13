@@ -64,8 +64,8 @@ export function BottomNav({ showOnMobile = true, watchlistCount, watchedCount }:
   return (
     <>
       {/* Mobile Bottom Nav (only visible on small screens) */}
-      <nav className="fixed bottom-0 left-0 right-0 border-t border-border bg-background/95 backdrop-blur-sm md:hidden z-40">
-        <div className="flex items-center justify-between h-16 px-3 gap-3">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden border-t border-white/5 bg-gradient-to-t from-surface-dark-1 to-surface-dark-2 backdrop-blur-xl shadow-glow bg-opacity-95">
+        <div className="flex items-center justify-between h-20 px-2 gap-2">
           {PRIMARY_NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
@@ -84,21 +84,21 @@ export function BottomNav({ showOnMobile = true, watchlistCount, watchedCount }:
                 aria-label={item.label}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-1 p-3 rounded-lg transition-all duration-200 flex-1 relative active:scale-95',
-                  active ? 'text-primary' : 'text-muted-foreground active:text-foreground focus-visible:text-foreground'
+                  'flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-xl transition-all duration-200 interactive-element',
+                  active
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-surface-dark-3 hover:text-foreground'
                 )}
               >
                 <div className="relative">
-                  <Icon className={cn('h-6 w-6', active && 'fill-current')} />
+                  <Icon className={cn('h-5 w-5', active && 'fill-current')} />
                   {badge && (
-                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                    <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-[10px] rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-glow">
                       {typeof badge === 'number' && badge > 99 ? '99+' : badge}
                     </span>
                   )}
                 </div>
-                <span className={cn('text-xs font-medium leading-none', active && 'text-primary')}>
-                  {item.label}
-                </span>
+                <span className="text-[10px] font-semibold leading-none">{item.label}</span>
               </button>
             );
           })}
@@ -109,13 +109,13 @@ export function BottomNav({ showOnMobile = true, watchlistCount, watchedCount }:
               <button
                 aria-label="More"
                 aria-haspopup="menu"
-                className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg transition-all duration-200 flex-1 text-muted-foreground active:text-foreground focus-visible:text-foreground active:scale-95"
+                className="flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-xl transition-all duration-200 interactive-element text-muted-foreground hover:bg-surface-dark-3 hover:text-foreground"
               >
-                <MoreHorizontal className="h-6 w-6" />
-                <span className="text-xs font-medium leading-none">More</span>
+                <MoreHorizontal className="h-5 w-5" />
+                <span className="text-[10px] font-semibold leading-none">More</span>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" side="top" className="w-48 mb-16">
+            <DropdownMenuContent align="end" side="top" className="w-48 mb-20">
               {SECONDARY_NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.path);
@@ -136,7 +136,7 @@ export function BottomNav({ showOnMobile = true, watchlistCount, watchedCount }:
       </nav>
 
       {/* Spacer to prevent content overlap */}
-      <div className="h-16 md:hidden" />
+      <div className="h-20 md:hidden" />
     </>
   );
 }

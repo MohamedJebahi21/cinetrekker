@@ -67,6 +67,13 @@ export default {
           medium: "hsl(var(--rating-medium))",
           low: "hsl(var(--rating-low))",
         },
+        surface: {
+          "dark-1": "#0f0f0f",
+          "dark-2": "#1a1a1a",
+          "dark-3": "#2d2d2d",
+          "light-1": "#e5e5e5",
+          "light-2": "#b3b3b3",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -75,7 +82,9 @@ export default {
       },
       boxShadow: {
         "glow": "0 0 20px rgba(229, 9, 20, 0.3)",
-        "card": "0 4px 12px rgba(0, 0, 0, 0.15)",
+        "glow-lg": "0 0 40px rgba(229, 9, 20, 0.2)",
+        "card": "0 4px 16px rgba(0, 0, 0, 0.4)",
+        "card-hover": "0 12px 32px rgba(229, 9, 20, 0.15)",
         "hover": "0 12px 24px rgba(0, 0, 0, 0.2)",
       },
       fontFamily: {

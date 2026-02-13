@@ -143,12 +143,12 @@ export const MediaCard = React.memo(function MediaCard({ media, showType = true,
     <>
       <Link
         to={`/${mediaType}/${media.id}`}
-        className="group relative glass-card-hover overflow-hidden block focus:outline-none focus:ring-2 focus:ring-primary"
+        className="group relative glass-card-hover overflow-hidden block focus-ring rounded-xl border border-white/5 shadow-card hover:shadow-card-hover hover:border-primary/20 hover:scale-[1.03] hover:-translate-y-1 transition-all duration-300"
         aria-label={`${title} — open details`}
         tabIndex={0}
       >
         {/* Poster with gradient overlay for text readability */}
-        <div className="aspect-[2/3] relative overflow-hidden rounded-t-xl poster-overlay">
+        <div className="aspect-[2/3] relative overflow-hidden rounded-t-xl bg-surface-dark-3">
           {posterUrl ? (
             <PosterImage posterPath={media.poster_path} alt={title} />
           ) : (
@@ -156,6 +156,9 @@ export const MediaCard = React.memo(function MediaCard({ media, showType = true,
               <span className="text-muted-foreground text-xs">{t('common.noResults')}</span>
             </div>
           )}
+
+          {/* Enhanced gradient overlay - darker on hover */}
+          <div className="absolute inset-0 bg-gradient-to-t from-surface-dark-2 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
           {/* Status Badges - positioned above gradient */}
           <div className="absolute top-2 left-2 right-2 flex justify-between items-start z-10">

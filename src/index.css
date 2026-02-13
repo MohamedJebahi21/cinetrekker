@@ -520,6 +520,38 @@
     color: hsl(358 94% 46%);
   }
 
+  /* Enhanced card elevation and typography system */
+  .card-elevated {
+    @apply shadow-card hover:shadow-card-hover transition-all duration-300;
+  }
+
+  .text-display-lg {
+    @apply text-3xl md:text-4xl font-bold tracking-tight;
+  }
+
+  .text-display-md {
+    @apply text-2xl md:text-3xl font-bold;
+  }
+
+  .text-body {
+    @apply text-sm md:text-base text-surface-light-2;
+  }
+
+  /* Interactive elements with haptic feedback */
+  .interactive-element {
+    @apply transition-all duration-200 active:scale-95;
+  }
+
+  /* Modern glass effect with border */
+  .glass-modern {
+    @apply bg-surface-dark-2/50 backdrop-blur-xl border border-white/5 rounded-xl;
+  }
+
+  /* Accessible focus ring */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-dark-1;
+  }
+
   /* Responsive media grid - Mobile-first with optimal touch targets */
   .media-grid {
     @apply grid gap-4;
