@@ -12,12 +12,13 @@ const cspPlugin = (): Plugin => {
     "img-src 'self' blob: data: https://image.tmdb.org https://www.themoviedb.org",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' data: https://fonts.gstatic.com https://r2cdn.perplexity.ai",
-    "connect-src 'self' https://api.themoviedb.org https://va.vercel-scripts.com https://*.supabase.co wss://*.supabase.co",
-    "media-src 'self' blob:",
+    "connect-src 'self' https://wzlcekvieglnidfempap.supabase.co https://*.supabase.co wss://*.supabase.co https://api.themoviedb.org https://va.vercel-scripts.com",
+    "media-src 'self' blob: https:",
     "frame-src 'self' https://www.youtube.com https://player.vimeo.com https://vercel.live",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
+    "upgrade-insecure-requests",
   ].join('; ');
 
   return {
@@ -32,6 +33,11 @@ const cspPlugin = (): Plugin => {
       // set CSP header on all responses during dev
       server.middlewares.use((req, res, next) => {
         res.setHeader('Content-Security-Policy', policy);
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('X-Frame-Options', 'DENY');
+        res.setHeader('X-XSS-Protection', '1; mode=block');
+        res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+        res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
         next();
       });
     },
