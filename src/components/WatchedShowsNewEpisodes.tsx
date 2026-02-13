@@ -37,44 +37,67 @@ export function WatchedShowsNewEpisodes() {
       const sevenDaysAgo = new Date(today);
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-      for (const show of watchedTVShows) {
-        try {
-          const details = await getTVDetails(show.mediaId, language);
-          
-          // Skip shows that are not in production or have ended
-          if (details.status === 'Ended' || details.status === 'Canceled') {
-            continue;
-          }
+      // 🚀 OPTIMIZATION 1: Limit to most recently watched shows (last 20)
+      const recentShows = watchedTVShows
+        .sort((a, b) => {
+          const dateA = new Date(a.watchedAt || a.addedAt || 0);
+          const dateB = new Date(b.watchedAt || b.addedAt || 0);
+          return dateB.getTime() - dateA.getTime();
+        })
+        .slice(0, 20);
 
-          const currentSeason = details.number_of_seasons || 1;
-          
-          // Check current season for recent episodes
+      // 🚀 OPTIMIZATION 2: Batch fetch in parallel (chunks of 5)
+      const batchSize = 5;
+      for (let i = 0; i < recentShows.length; i += batchSize) {
+        const batch = recentShows.slice(i, i + batchSize);
+        
+        const batchPromises = batch.map(async (show) => {
           try {
-            const seasonDetails = await getTVSeasonDetails(show.mediaId, currentSeason, language);
+            const details = await getTVDetails(show.mediaId, language);
             
-            for (const episode of seasonDetails.episodes || []) {
-              if (episode.air_date) {
-                const airDate = new Date(episode.air_date);
-                // Include episodes from last 7 days or upcoming in next 7 days
-                const sevenDaysFromNow = new Date(today);
-                sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-                
-                if (airDate >= sevenDaysAgo && airDate <= sevenDaysFromNow) {
-                  allNewEpisodes.push({
-                    ...episode,
-                    showId: show.mediaId,
-                    showName: details.name || details.title || 'Unknown Show',
-                    showPosterPath: details.poster_path,
-                  });
+            // Skip shows that are not in production or have ended
+            if (details.status === 'Ended' || details.status === 'Canceled') {
+              return [];
+            }
+
+            const currentSeason = details.number_of_seasons || 1;
+            
+            // Check current season for recent episodes
+            try {
+              const seasonDetails = await getTVSeasonDetails(show.mediaId, currentSeason, language);
+              
+              const recentEpisodes: NewEpisodeFromWatched[] = [];
+              for (const episode of seasonDetails.episodes || []) {
+                if (episode.air_date) {
+                  const airDate = new Date(episode.air_date);
+                  // Include episodes from last 7 days or upcoming in next 7 days
+                  const sevenDaysFromNow = new Date(today);
+                  sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+                  
+                  if (airDate >= sevenDaysAgo && airDate <= sevenDaysFromNow) {
+                    recentEpisodes.push({
+                      ...episode,
+                      showId: show.mediaId,
+                      showName: details.name || details.title || 'Unknown Show',
+                      showPosterPath: details.poster_path,
+                    });
+                  }
                 }
               }
+              return recentEpisodes;
+            } catch {
+              // Season might not exist yet
+              return [];
             }
           } catch {
-            // Season might not exist yet
+            // Show fetch failed
+            return [];
           }
-        } catch {
-          // Show fetch failed
-        }
+        });
+        
+        // Wait for batch to complete before starting next batch
+        const batchResults = await Promise.all(batchPromises);
+        allNewEpisodes.push(...batchResults.flat());
       }
 
       // Sort by air date, newest first (released episodes first, then upcoming)
@@ -100,7 +123,8 @@ export function WatchedShowsNewEpisodes() {
       });
     },
     enabled: watchedTVShows.length > 0 && !!user,
-    staleTime: 1000 * 60 * 30, // Cache for 30 minutes
+    staleTime: 1000 * 60 * 60, // 🚀 OPTIMIZATION 3: Cache for 1 hour (was 30 min)
+    gcTime: 1000 * 60 * 120, // Keep in cache for 2 hours
   });
 
   // Filter out episodes that have already been marked as watched
