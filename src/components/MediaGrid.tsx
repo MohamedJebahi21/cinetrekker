@@ -1,8 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Media } from '@/types/media';
-import { MediaCard } from '@/components/MediaCard';
-import { MediaGridSkeleton } from '@/components/ui/SkeletonLoader';
+import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
 
 interface MediaGridProps {
   items: (Media & { watchStatus?: string })[];
@@ -10,6 +9,8 @@ interface MediaGridProps {
   columns?: 'compact' | 'normal' | 'wide';
   className?: string;
   gap?: 'sm' | 'md' | 'lg';
+  /** Number of skeleton items to show while loading */
+  skeletonCount?: number;
 }
 
 const gridColsMap = {
@@ -30,6 +31,7 @@ export function MediaGrid({
   columns = 'normal',
   className = '',
   gap = 'md',
+  skeletonCount = 12,
 }: MediaGridProps) {
   const containerVariants = {
     initial: { opacity: 0 },
@@ -54,9 +56,22 @@ export function MediaGrid({
     },
   };
 
+  // Loading state with staggered skeletons
   if (isLoading) {
-    const skeletonColumns = columns === 'compact' ? 6 : columns === 'normal' ? 5 : 4 as const;
-    return <MediaGridSkeleton count={12} columns={skeletonColumns} />;
+    return (
+      <motion.div
+        className={`grid ${gridColsMap[columns]} ${gapMap[gap]} ${className}`}
+        variants={containerVariants}
+        initial="initial"
+        animate="animate"
+      >
+        {Array.from({ length: skeletonCount }).map((_, i) => (
+          <motion.div key={i} variants={itemVariants}>
+            <MediaCardSkeleton delay={i * 50} />
+          </motion.div>
+        ))}
+      </motion.div>
+    );
   }
 
   if (items.length === 0) {

@@ -5,6 +5,7 @@ import { getTrending, getPopularMovies, getPopularTV, getTopRatedMovies, getTopR
 import { MediaSection } from '@/components/MediaSection';
 import { MediaCarousel } from '@/components/MediaCarousel';
 import { MediaCard } from '@/components/MediaCard';
+import { MediaGrid } from '@/components/MediaGrid';
 import { WatchedShowsNewEpisodes } from '@/components/WatchedShowsNewEpisodes';
 import { RecentlyAddedMovies } from '@/components/RecentlyAddedMovies';
 import { BecauseYouLiked } from '@/components/BecauseYouLiked';
@@ -13,7 +14,6 @@ import { ContinueWatching } from '@/components/ContinueWatching';
 import { OnboardingTooltip } from '@/components/OnboardingTooltip';
 import { HeroSection } from '@/components/HeroSection';
 import { YearFilter } from '@/components/YearFilter';
-import MovieSkeleton from '@/components/ui/MovieSkeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SEO from '@/components/SEO';
 
@@ -92,16 +92,6 @@ export default function Index() {
 
       {/* AI Movie Scout removed per request */}
 
-      {/* Loading skeleton grid while main lists are fetching */}
-      {(loadingDay || loadingWeek || loadingMoviesWeek || loadingTVWeek || loadingPopularMovies || loadingPopularTV) && (
-        <div className="page-container my-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <MovieSkeleton key={i} />
-            ))}
-          </div>
-        </div>
-      )}
       <div className="page-container space-y-8">
         {/* Personalized Recommendations removed */}
         {/* Year Filter */}
@@ -111,11 +101,15 @@ export default function Index() {
             selectedYear={selectedYear} 
             onYearChange={setSelectedYear}
           />
-          {selectedYear && yearFilteredMovies && (
-            <div className="media-grid mt-6">
-              {yearFilteredMovies.slice(0, 12).map(movie => (
-                <MediaCard key={movie.id} media={movie} />
-              ))}
+          {selectedYear && (
+            <div className="mt-6">
+              <MediaGrid
+                items={yearFilteredMovies || []}
+                isLoading={loadingYearFiltered}
+                columns="normal"
+                gap="md"
+                skeletonCount={12}
+              />
             </div>
           )}
         </section>

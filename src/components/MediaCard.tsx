@@ -283,17 +283,55 @@ export const MediaCard = React.memo(function MediaCard({ media, showType = true,
   );
 });
 
-export const MediaCardSkeleton = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  (props, ref) => {
-    return (
-      <div ref={ref} className="glass-card overflow-hidden rounded-xl" {...props}>
-        <div className="poster-skeleton" />
-        <div className="p-3 space-y-2">
-          <div className="h-4 skeleton-shimmer rounded" />
-          <div className="h-3 skeleton-shimmer rounded w-1/2" />
+export const MediaCardSkeleton = React.forwardRef<
+  HTMLDivElement,
+  { delay?: number; className?: string }
+>(({ delay = 0, className }, ref) => {
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        'glass-card overflow-hidden rounded-xl',
+        'border border-border/50',
+        className
+      )}
+      aria-busy="true"
+      aria-live="polite"
+      role="status"
+    >
+      {/* Poster placeholder with aspect ratio */}
+      <div className="poster-skeleton" style={{ animationDelay: `${delay}ms` }} />
+
+      {/* Content area */}
+      <div className="p-3 space-y-2">
+        {/* Title placeholder */}
+        <div
+          className="h-4 skeleton-shimmer rounded"
+          style={{ animationDelay: `${delay + 100}ms` }}
+        />
+
+        {/* Metadata placeholder */}
+        <div
+          className="h-3 skeleton-shimmer rounded w-1/2"
+          style={{ animationDelay: `${delay + 200}ms` }}
+        />
+
+        {/* Tags/badges placeholder */}
+        <div className="flex gap-2 mt-2">
+          <div
+            className="h-6 w-12 skeleton-shimmer rounded-full"
+            style={{ animationDelay: `${delay + 300}ms` }}
+          />
+          <div
+            className="h-6 w-16 skeleton-shimmer rounded-full"
+            style={{ animationDelay: `${delay + 350}ms` }}
+          />
         </div>
       </div>
-    );
-  }
-);
-MediaCardSkeleton.displayName = "MediaCardSkeleton";
+
+      {/* Screen reader announcement */}
+      <span className="sr-only">Loading media content...</span>
+    </div>
+  );
+});
+MediaCardSkeleton.displayName = 'MediaCardSkeleton';
