@@ -7,8 +7,8 @@ import type { Plugin } from 'vite';
 const cspPlugin = (): Plugin => {
   const policy = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com",
-    "script-src-elem 'self' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' 'sha256-L0E2mSS27KxsHfOa0MiC8gBkUaCQNYpiRGh6VJxueVc=' https://vercel.live https://va.vercel-scripts.com",
+    "script-src-elem 'self' 'unsafe-inline' 'sha256-L0E2mSS27KxsHfOa0MiC8gBkUaCQNYpiRGh6VJxueVc=' https://vercel.live https://va.vercel-scripts.com",
     "img-src 'self' blob: data: https://image.tmdb.org https://www.themoviedb.org",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' data: https://fonts.gstatic.com https://r2cdn.perplexity.ai",
@@ -53,7 +53,7 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
-  plugins: [react(), mode === 'production' ? cspPlugin() : null].filter(Boolean),
+  plugins: [react(), cspPlugin()].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
