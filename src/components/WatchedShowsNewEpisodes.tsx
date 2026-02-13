@@ -147,7 +147,7 @@ export function WatchedShowsNewEpisodes() {
         
         // For upcoming, soonest first
         return dateA.getTime() - dateB.getTime();
-      };
+      });
     },
     enabled: shouldFetchRealtime && watchedTVShows.length > 0 && !!user,
     staleTime: 1000 * 60 * 60, // 🚀 OPTIMIZATION 3: Cache for 1 hour (was 30 min)
@@ -159,19 +159,13 @@ export function WatchedShowsNewEpisodes() {
 
   // Filter out episodes that have already been marked as watched
   // AND filter to only show released episodes (time-aware)
-  const releasedUnwatchedEpisodes = episodesToShowON 3: Cache for 1 hour (was 30 min)
-    gcTime: 1000 * 60 * 120, // Keep in cache for 2 hours
-  });
-
-  // Filter out episodes that have already been marked as watched
-  // AND filter to only show released episodes (time-aware)
-  const releasedUnwatchedEpisodes = newEpisodes.filter(ep => {
+  const releasedUnwatchedEpisodes = episodesToShow.filter(ep => {
     const alreadyWatched = isEpisodeWatched(ep.showId, ep.season_number, ep.episode_number);
-  const isLoadingData = loadingLists || (loadingEpisodes && !cachedData);
-  
-  if (isLoadingDatad(ep.air_date);
+    const isReleased = hasBeenReleased(ep.air_date);
     return !alreadyWatched && isReleased;
   });
+
+  const isLoadingData = loadingLists || (loadingEpisodes && !cachedData);
 
   if (!user) return null;
   
