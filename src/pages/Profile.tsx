@@ -248,47 +248,77 @@ export default function Profile() {
     queryKey: ['people-birthday-match', dateOfBirth, i18n.language],
     queryFn: async () => {
       if (!dateOfBirth) return [];
-      const pages = await Promise.all([
-        getPopularPeople(1, i18n.language),
-        getPopularPeople(2, i18n.language),
-      ]);
-      const people = pages.flatMap(p => p.results).slice(0, 30);
-      const details = await Promise.all(
-        people.map(p => getPersonDetails(p.id, i18n.language).catch(() => null))
-      );
-      return details.filter(Boolean) as Awaited<ReturnType<typeof getPersonDetails>>[];
+      try {
+        // Fetch more pages to get a larger pool of actors to search from
+        const pages = await Promise.all([
+          getPopularPeople(1, i18n.language),
+          getPopularPeople(2, i18n.language),
+          getPopularPeople(3, i18n.language),
+        ]);
+        const people = pages.flatMap(p => p.results).slice(0, 60);
+        const details = await Promise.all(
+          people.map(p => getPersonDetails(p.id, i18n.language).catch(() => null))
+        );
+        const filtered = details.filter(Boolean) as Awaited<ReturnType<typeof getPersonDetails>>[];
+        // Only keep people who have birthday data
+        return filtered.filter(person => person?.birthday);
+      } catch (error) {
+        console.error('Error fetching popular people:', error);
+        return [];
+      }
     },
     enabled: Boolean(dateOfBirth),
   });
 
   const { sameBirthday, sameAge } = useMemo(() => {
-    if (!parsedDob) return { sameBirthday: [], sameAge: [] };
+    if (!parsedDob || !popularPeopleDetails || popularPeopleDetails.length === 0) {
+      return { sameBirthday: [], sameAge: [] };
+    }
     const month = parsedDob.getMonth();
     const day = parsedDob.getDate();
 
-    const matchesBirthday = popularPeopleDetails.filter(person => {
-      if (!person.birthday) return false;
-      // Parse birthday the same way to avoid timezone issues
-      const [year, birthdayMonth, birthdayDay] = person.birthday.split('-').map(Number);
-      if (!year || !birthdayMonth || !birthdayDay) return false;
-      return birthdayMonth - 1 === month && birthdayDay === day;
-    });
+    const matchesBirthday = popularPeopleDetails
+      .filter(person => {
+        if (!person?.birthday) return false;
+        try {
+          // Parse birthday string (format: YYYY-MM-DD)
+          const parts = person.birthday.split('-');
+          if (parts.length !== 3) return false;
+          const birthdayMonth = parseInt(parts[1], 10) - 1; // Convert to 0-indexed
+          const birthdayDay = parseInt(parts[2], 10);
+          if (isNaN(birthdayMonth) || isNaN(birthdayDay)) return false;
+          return birthdayMonth === month && birthdayDay === day;
+        } catch {
+          return false;
+        }
+      });
 
-    const matchesAge = popularPeopleDetails.filter(person => {
-      if (!person.birthday || userAge === null) return false;
-      // Parse birthday the same way to avoid timezone issues
-      const [year, birthdayMonth, birthdayDay] = person.birthday.split('-').map(Number);
-      if (!year || !birthdayMonth || !birthdayDay) return false;
-      const birth = new Date(year, birthdayMonth - 1, birthdayDay, 12, 0, 0);
-      if (Number.isNaN(birth.getTime())) return false;
-      const today = new Date();
-      let age = today.getFullYear() - birth.getFullYear();
-      const m = today.getMonth() - birth.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-        age -= 1;
-      }
-      return age === userAge;
-    });
+    const matchesAge = popularPeopleDetails
+      .filter(person => {
+        if (!person?.birthday || userAge === null) return false;
+        try {
+          // Parse birthday string (format: YYYY-MM-DD)
+          const parts = person.birthday.split('-');
+          if (parts.length !== 3) return false;
+          const year = parseInt(parts[0], 10);
+          const birthdayMonth = parseInt(parts[1], 10) - 1; // Convert to 0-indexed
+          const birthdayDay = parseInt(parts[2], 10);
+          if (isNaN(year) || isNaN(birthdayMonth) || isNaN(birthdayDay)) return false;
+          
+          const birth = new Date(year, birthdayMonth, birthdayDay, 12, 0, 0);
+          if (Number.isNaN(birth.getTime())) return false;
+          
+          const today = new Date();
+          let age = today.getFullYear() - birth.getFullYear();
+          const m = today.getMonth() - birth.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+            age -= 1;
+          }
+          return age === userAge;
+        } catch {
+          return false;
+        }
+      });
 
     return { sameBirthday: matchesBirthday, sameAge: matchesAge };
   }, [parsedDob, popularPeopleDetails, userAge]);
