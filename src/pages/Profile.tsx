@@ -8,6 +8,7 @@ import { useFollowedShows, useWatchedEpisodes } from '@/hooks/useFollowedShows';
 import { languages } from '@/i18n';
 import { Link } from 'react-router-dom';
 import { getImageUrl, getPersonDetails, getPopularPeople } from '@/services/tmdb';
+import { profileService, type UserProfile } from '@/services/profile';
 import {
   Select,
   SelectContent,
@@ -49,46 +50,125 @@ export default function Profile() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
-  const moviesWatched = watched.filter(w => w.mediaType === 'movie').length;
-  const showsWatched = watched.filter(w => w.mediaType === 'tv').length;
-  const totalWatchlist = watchlist.length;
-
-  const handleLanguageChange = (code: string) => {
-    i18n.changeLanguage(code);
-  };
-
+  // Load profile from Supabase (with localStorage fallback)
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(profileKey);
-      if (!stored) {
+    const loadProfile = async () => {
+      setIsLoadingProfile(true);
+      try {
+        if (user?.id) {
+          // Load from Supabase
+          const profile = await profileService.getProfile(user.id);
+          
+          if (profile) {
+            setProfilePhoto(profile.profile_photo || null);
+            setDateOfBirth(profile.date_of_birth || '');
+            setDisplayName(profile.display_name || '');
+            setBio(profile.bio || '');
+            setFavoriteGenres(profile.favorite_genres || []);
+            setSettings({
+              publicProfile: profile.is_public,
+              showWatchlist: profile.show_watchlist,
+              showStats: profile.show_stats,
+              allowRecommendations: profile.allow_recommendations,
+            });
+          } else {
+            // Fallback to localStorage if not in Supabase yet
+            const stored = localStorage.getItem(profileKey);
+            if (stored) {
+              const parsed = JSON.parse(stored) as { 
+                photo?: string; 
+                dob?: string;
+                displayName?: string;
+                bio?: string;
+                favoriteGenres?: number[];
+                settings?: typeof settings;
+              };
+              setProfilePhoto(parsed.photo || null);
+              setDateOfBirth(parsed.dob || '');
+              setDisplayName(parsed.displayName || '');
+              setBio(parsed.bio || '');
+              setFavoriteGenres(parsed.favoriteGenres || []);
+              setSettings(parsed.settings || settings);
+            }
+          }
+
+          // Subscribe to real-time updates
+          const subscription = profileService.subscribeToProfile(user.id, (updatedProfile) => {
+            setProfilePhoto(updatedProfile.profile_photo || null);
+            setDateOfBirth(updatedProfile.date_of_birth || '');
+            setDisplayName(updatedProfile.display_name || '');
+            setBio(updatedProfile.bio || '');
+            setFavoriteGenres(updatedProfile.favorite_genres || []);
+            setSettings({
+              publicProfile: updatedProfile.is_public,
+              showWatchlist: updatedProfile.show_watchlist,
+              showStats: updatedProfile.show_stats,
+              allowRecommendations: updatedProfile.allow_recommendations,
+            });
+          });
+
+          return () => {
+            if (subscription) {
+              subscription.unsubscribe();
+            }
+          };
+        } else {
+          // Guest user - load from localStorage only
+          const stored = localStorage.getItem(profileKey);
+          if (!stored) {
+            setInitialLoadComplete(true);
+            setIsLoadingProfile(false);
+            return;
+          }
+          const parsed = JSON.parse(stored) as { 
+            photo?: string; 
+            dob?: string;
+            displayName?: string;
+            bio?: string;
+            favoriteGenres?: number[];
+            settings?: typeof settings;
+          };
+          setProfilePhoto(parsed.photo || null);
+          setDateOfBirth(parsed.dob || '');
+          setDisplayName(parsed.displayName || '');
+          setBio(parsed.bio || '');
+          setFavoriteGenres(parsed.favoriteGenres || []);
+          setSettings(parsed.settings || settings);
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        // Fallback to localStorage
+        const stored = localStorage.getItem(profileKey);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored) as { 
+              photo?: string; 
+              dob?: string;
+              displayName?: string;
+              bio?: string;
+              favoriteGenres?: number[];
+              settings?: typeof settings;
+            };
+            setProfilePhoto(parsed.photo || null);
+            setDateOfBirth(parsed.dob || '');
+            setDisplayName(parsed.displayName || '');
+            setBio(parsed.bio || '');
+            setFavoriteGenres(parsed.favoriteGenres || []);
+            setSettings(parsed.settings || settings);
+          } catch {
+            // Ignore JSON parse errors
+          }
+        }
+      } finally {
         setInitialLoadComplete(true);
-        return;
+        setIsLoadingProfile(false);
       }
-      const parsed = JSON.parse(stored) as { 
-        photo?: string; 
-        dob?: string;
-        displayName?: string;
-        bio?: string;
-        favoriteGenres?: number[];
-        settings?: typeof settings;
-      };
-      setProfilePhoto(parsed.photo || null);
-      setDateOfBirth(parsed.dob || '');
-      setDisplayName(parsed.displayName || '');
-      setBio(parsed.bio || '');
-      setFavoriteGenres(parsed.favoriteGenres || []);
-      setSettings(parsed.settings || settings);
-      setInitialLoadComplete(true);
-    } catch {
-      setProfilePhoto(null);
-      setDateOfBirth('');
-      setDisplayName('');
-      setBio('');
-      setFavoriteGenres([]);
-      setInitialLoadComplete(true);
-    }
-  }, [profileKey]);
+    };
+
+    loadProfile();
+  }, [user?.id, profileKey]);
 
   // Track unsaved changes (only after initial load)
   useEffect(() => {
@@ -100,6 +180,7 @@ export default function Profile() {
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
+      // Save to localStorage (offline support)
       localStorage.setItem(profileKey, JSON.stringify({ 
         photo: profilePhoto, 
         dob: dateOfBirth,
@@ -108,6 +189,22 @@ export default function Profile() {
         favoriteGenres,
         settings
       }));
+
+      // Save to Supabase if user is authenticated
+      if (user?.id) {
+        await profileService.saveProfile(user.id, {
+          display_name: displayName || null,
+          bio: bio || null,
+          date_of_birth: dateOfBirth || null,
+          profile_photo: profilePhoto || null,
+          favorite_genres: favoriteGenres,
+          is_public: settings.publicProfile,
+          show_watchlist: settings.showWatchlist,
+          show_stats: settings.showStats,
+          allow_recommendations: settings.allowRecommendations,
+        });
+      }
+
       setHasUnsavedChanges(false);
       
       // Dispatch custom event to notify other components
@@ -115,12 +212,13 @@ export default function Profile() {
       
       toast({
         title: "Profile saved!",
-        description: "Your profile changes have been saved successfully.",
+        description: "Your profile changes have been saved and synced across your devices.",
       });
     } catch (error) {
+      console.error('Error saving profile:', error);
       toast({
         title: "Error saving profile",
-        description: "Failed to save profile. Please try again.",
+        description: "Profile saved locally, but syncing to server failed. Changes will sync when connection is restored.",
         variant: "destructive",
       });
     } finally {
@@ -343,6 +441,14 @@ export default function Profile() {
     <div className="page-container pt-20 max-w-4xl">
       <h1 className="section-title">{t('profile.title')}</h1>
 
+      {isLoadingProfile && (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      )}
+
+      {!isLoadingProfile && (
+      <>
       {/* Profile Completion Progress */}
       {profileCompletion < 100 && (
         <Card className="glass-card mb-6">
@@ -770,6 +876,8 @@ export default function Profile() {
           </div>
         )}
       </section>
+      </>
+      )}
     </div>
     </>
   );
