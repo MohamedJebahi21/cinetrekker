@@ -15,6 +15,8 @@ import { getWatchlistIds, addToLocalWatchlist, removeFromLocalWatchlist, toggleL
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { TVWatchStatusModal } from '@/components/TVWatchStatusModal';
+import { useWatchedEpisodes } from '@/hooks/useFollowedShows';
 // Media preview modal removed — navigate to details page instead
 import { cn } from '@/lib/utils';
 
@@ -65,10 +67,12 @@ function PosterImage({ posterPath, alt }: { posterPath: string | null; alt: stri
 }
 
 export const MediaCard = React.memo(function MediaCard({ media, showType = true, showStatus = false }: MediaCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { isInWatchlist, isWatched, addToWatchlist, removeFromWatchlist, addToWatched, removeFromWatched } = useUserLists();
+  const { markEpisodeWatched } = useWatchedEpisodes();
   const [localInWatchlist, setLocalInWatchlist] = useState<boolean>(() => isInLocalWatchlist(media.id));
+  const [watchStatusModalOpen, setWatchStatusModalOpen] = useState(false);
   
   const title = useMemo(() => getMediaTitle(media), [media]);
   const year = useMemo(() => getMediaYear(media), [media]);
@@ -106,9 +110,32 @@ export const MediaCard = React.memo(function MediaCard({ media, showType = true,
     if (watched) {
       removeFromWatched(media.id, mediaType);
     } else {
-      addToWatched(media.id, mediaType);
+      // For TV shows, open modal to choose watch type
+      if (mediaType === 'tv' && user) {
+        setWatchStatusModalOpen(true);
+      } else {
+        // For movies or guests, just mark as watched
+        addToWatched(media.id, mediaType);
+      }
     }
   };
+
+  const handleWatchAllSeries = () => {
+    addToWatched(media.id, mediaType);
+  };
+
+  const handleSelectEpisodes = (episodes: Array<{ season: number; episode: number }>) => {
+    // Mark selected episodes as watched
+    for (const ep of episodes) {
+      markEpisodeWatched({
+        showId: media.id,
+        seasonNumber: ep.season,
+        episodeNumber: ep.episode,
+        episodeName: undefined,
+        airDate: undefined,
+      });
+    }
+  }
 
   // Quick view removed — card links to details page via the surrounding <Link>
 
@@ -236,6 +263,19 @@ export const MediaCard = React.memo(function MediaCard({ media, showType = true,
       </Link>
 
       {/* Media preview removed */}
+      
+      {/* TV Watch Status Modal - only for TV shows when user is authenticated */}
+      {mediaType === 'tv' && user && (
+        <TVWatchStatusModal
+          open={watchStatusModalOpen}
+          onOpenChange={setWatchStatusModalOpen}
+          showId={media.id}
+          showName={title}
+          onWatchAll={handleWatchAllSeries}
+          onSelectEpisodes={handleSelectEpisodes}
+          language={i18n.language}
+        />
+      )}
     </>
   );
 });

@@ -30,7 +30,11 @@
     "discoverTrending": "Discover Trending",
     "optional": "Optional",
     "items": "items",
-    "clearFilter": "Show All"
+    "clearFilter": "Show All",
+    "confirm": "Confirm",
+    "back": "Back",
+    "episode_one": "{{count}} episode",
+    "episode_other": "{{count}} episodes"
   },
   "nav": {
     "home": "Home",
@@ -235,6 +239,14 @@
     "episode": "Episode",
     "allEpisodes": "All Episodes",
     "watchedEpisodes": "Watched Episodes"
+  },
+  "tv": {
+    "watchStatusChoice": "How would you like to mark this show?",
+    "selectEpisodes": "Select Episodes",
+    "watchAll": "Mark Entire Series as Watched",
+    "watchAllDesc": "Mark all episodes as watched",
+    "selectEpisodesDesc": "Choose specific episodes to mark as watched",
+    "season": "Season {{number}}"
   },
   "privacy": {
     "title": "Privacy Policy",
