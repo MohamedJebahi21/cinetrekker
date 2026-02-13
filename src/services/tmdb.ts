@@ -1,9 +1,10 @@
 // TMDB API Service - handles all TMDB API requests via edge function proxy
+// SECURITY: All requests routed through Supabase Edge Function - API key NEVER exposed to client
 import { Media, MediaDetails, TMDBResponse, TimeWindow, Genre, PersonSearchResult } from '@/types/media';
 
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
-const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
-const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 export const getImageUrl = (path: string | null, size: 'w92' | 'w154' | 'w185' | 'w342' | 'w500' | 'w780' | 'original' = 'w500') => {
   if (!path) return null;
@@ -15,46 +16,23 @@ export const getBackdropUrl = (path: string | null, size: 'w300' | 'w780' | 'w12
   return `${TMDB_IMAGE_BASE}/${size}${path}`;
 };
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-const HAS_DIRECT_KEY = Boolean(TMDB_API_KEY);
-const HAS_PROXY = Boolean(SUPABASE_URL && SUPABASE_KEY);
-
+/**
+ * Secure TMDB API fetch via Supabase Edge Function proxy
+ * SECURITY: API key stored server-side only, never exposed to client
+ * @param endpoint - TMDB API endpoint (e.g., '/movie/popular')
+ * @param language - Language code (default: 'en')
+ * @param extraParams - Additional query parameters
+ */
 const fetchTMDB = async <T>(endpoint: string, language: string = 'en', extraParams: Record<string, string> = {}): Promise<T> => {
-  if (!HAS_DIRECT_KEY && !HAS_PROXY) {
-    throw new Error('TMDB configuration missing. Set VITE_TMDB_API_KEY or Supabase proxy env vars.');
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    throw new Error('⚠️ TMDB proxy not configured. Check VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in .env');
   }
 
-  // Use direct TMDB API if key is available, otherwise fallback to Supabase proxy
-  if (HAS_DIRECT_KEY) {
-    const params = new URLSearchParams({
-      api_key: TMDB_API_KEY,
-      language,
-      ...extraParams,
-    });
-
-    const response = await fetch(
-      `${TMDB_BASE_URL}${endpoint}?${params.toString()}`
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.status_message || `API error: ${response.status}`);
-    }
-
-    return response.json();
-  }
-
-  // Fallback to Supabase proxy
   const params = new URLSearchParams({
     endpoint,
     language,
     ...extraParams,
   });
-
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    throw new Error('Supabase proxy is not configured.');
-  }
 
   const response = await fetch(
     `${SUPABASE_URL}/functions/v1/tmdb-proxy?${params.toString()}`,
@@ -68,7 +46,7 @@ const fetchTMDB = async <T>(endpoint: string, language: string = 'en', extraPara
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `API error: ${response.status}`);
+    throw new Error(errorData.error || `TMDB API error: ${response.status}`);
   }
 
   return response.json();
