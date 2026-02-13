@@ -18,7 +18,9 @@
     "all": "Tout",
     "yes": "Oui",
     "no": "Non",
-    "details": "Détails"
+    "details": "Détails",
+    "updated": "Mis à jour",
+    "refresh": "Actualiser"
   },
   "nav": {
     "home": "Accueil",

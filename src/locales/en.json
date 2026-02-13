@@ -35,6 +35,8 @@
     "back": "Back",
     "previous": "Previous",
     "next": "Next",
+    "updated": "Updated",
+    "refresh": "Refresh",
     "episode_one": "{{count}} episode",
     "episode_other": "{{count}} episodes"
   },

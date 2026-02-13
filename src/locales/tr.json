@@ -18,7 +18,9 @@
     "all": "Tümü",
     "yes": "Evet",
     "no": "Hayır",
-    "details": "Detaylar"
+    "details": "Detaylar",
+    "updated": "Güncellendi",
+    "refresh": "Yenile"
   },
   "nav": {
     "home": "Ana Sayfa",

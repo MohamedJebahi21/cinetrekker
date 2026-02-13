@@ -1,17 +1,19 @@
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Tv, Check, Clock, CalendarClock } from 'lucide-react';
+import { Tv, Check, Clock, CalendarClock, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserLists } from '@/contexts/UserListsContext';
 import { useWatchedEpisodes } from '@/hooks/useFollowedShows';
 import { getTVDetails, getImageUrl, getTVSeasonDetails, TVEpisode } from '@/services/tmdb';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getReleaseTimeInfo, hasBeenReleased } from '@/lib/timeUtils';
 import { differenceInHours, isSameDay } from 'date-fns';
+import { useState } from 'react';
 
 interface NewEpisodeFromWatched extends TVEpisode {
   showId: number;
@@ -25,9 +27,46 @@ export function WatchedShowsNewEpisodes() {
   const { watched, loading: loadingLists } = useUserLists();
   const { isEpisodeWatched, markEpisodeWatched } = useWatchedEpisodes();
   const language = i18n.language;
+  const [forceRefresh, setForceRefresh] = useState(false);
 
   // Filter to only TV shows from the watched list
   const watchedTVShows = watched.filter(item => item.mediaType === 'tv');
+// Real-time fetch (fallback when cache is empty or force refresh)
+  const shouldFetchRealtime = !cachedData || forceRefresh;
+
+  const { data: newEpisodes = [], isLoading: loadingEpisodes } = useQuery({
+    queryKey: ['watched-shows-new-episodes', watchedTVShows.map(s => s.mediaId), language, forceRefresh
+  const { data: cachedData } = useQuery({
+    queryKey: ['new-episodes-cache', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('new_episodes_cache')
+        .select('episodes, updated_at')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error || !data) return null;
+
+      // Check if cache is fresh (< 24 hours old)
+      const cacheAge = Date.now() - new Date(data.updated_at).getTime();
+      const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+      
+      if (cacheAge > maxAge) return null; // Cache is stale
+
+      return {
+        episodes: data.episodes as NewEpisodeFromWatched[],
+        isCached: true,
+        updatedAt: data.updated_at,
+      };
+    },
+    enabled: !!user?.id && !forceRefresh,
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
+
+  // Real-time fetch (fallback when cache is empty or force refresh)
+  const shouldFetchRealtime = !cachedData || forceRefresh;
 
   const { data: newEpisodes = [], isLoading: loadingEpisodes } = useQuery({
     queryKey: ['watched-shows-new-episodes', watchedTVShows.map(s => s.mediaId), language],
@@ -110,11 +149,17 @@ export function WatchedShowsNewEpisodes() {
         }
         
         // For upcoming, soonest first
-        return dateA.getTime() - dateB.getTime();
-      });
-    },
-    enabled: watchedTVShows.length > 0 && !!user,
+        returshouldFetchRealtime && watchedTVShows.length > 0 && !!user,
     staleTime: 1000 * 60 * 60, // 🚀 OPTIMIZATION 3: Cache for 1 hour (was 30 min)
+    gcTime: 1000 * 60 * 120, // Keep in cache for 2 hours
+  });
+
+  // Use cached data if available, otherwise use real-time data
+  const episodesToShow = cachedData?.episodes || newEpisodes;
+
+  // Filter out episodes that have already been marked as watched
+  // AND filter to only show released episodes (time-aware)
+  const releasedUnwatchedEpisodes = episodesToShowON 3: Cache for 1 hour (was 30 min)
     gcTime: 1000 * 60 * 120, // Keep in cache for 2 hours
   });
 
@@ -122,7 +167,9 @@ export function WatchedShowsNewEpisodes() {
   // AND filter to only show released episodes (time-aware)
   const releasedUnwatchedEpisodes = newEpisodes.filter(ep => {
     const alreadyWatched = isEpisodeWatched(ep.showId, ep.season_number, ep.episode_number);
-    const isReleased = hasBeenReleased(ep.air_date);
+  const isLoadingData = loadingLists || (loadingEpisodes && !cachedData);
+  
+  if (isLoadingDatad(ep.air_date);
     return !alreadyWatched && isReleased;
   });
 
@@ -215,7 +262,26 @@ export function WatchedShowsNewEpisodes() {
       );
     }
     
-    return null;
+    re  
+        {/* 🚀 Cache indicator & manual refresh button */}
+        {cachedData && !forceRefresh && (
+          <Badge variant="secondary" className="ml-auto text-xs">
+            <Clock className="w-3 h-3 mr-1" />
+            {t('common.updated')} {new Date(cachedData.updatedAt).toLocaleDateString()}
+          </Badge>
+        )}
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          className="ml-auto gap-1.5"
+          onClick={() => setForceRefresh(true)}
+          disabled={loadingEpisodes && forceRefresh}
+        >
+          <RefreshCw className={`w-4 h-4 ${loadingEpisodes && forceRefresh ? 'animate-spin' : ''}`} />
+          <span className="text-xs">{t('common.refresh')}</span>
+        </Button>
+      turn null;
   };
 
   return (
