@@ -52,8 +52,21 @@ export function WatchedShowsNewEpisodes() {
       
       if (cacheAge > maxAge) return null; // Cache is stale
 
+      // Transform snake_case to camelCase for consistency
+      const transformedEpisodes = (data.episodes || []).map((ep: any) => ({
+        ...ep,
+        showId: ep.show_id,
+        showName: ep.show_name,
+        showPosterPath: ep.show_poster_path,
+        episodeName: ep.episode_name,
+        seasonNumber: ep.season_number,
+        episodeNumber: ep.episode_number,
+        airDate: ep.air_date,
+        episodeId: ep.episode_id,
+      }));
+
       return {
-        episodes: data.episodes as NewEpisodeFromWatched[],
+        episodes: transformedEpisodes as NewEpisodeFromWatched[],
         isCached: true,
         updatedAt: data.updated_at,
       };
