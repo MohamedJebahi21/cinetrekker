@@ -3,21 +3,31 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 // Allowed origins for CORS - restrict to known domains
 const ALLOWED_ORIGINS = [
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://localhost:8080',
+  'https://cinetrekker.vercel.app',      // Production
+  'https://www.cinetrekker.vercel.app',  // Production with www (if used)
+  'http://localhost:5173',                // Vite dev (default)
+  'http://localhost:5174',                // Vite dev (alternate)
+  'http://localhost:8080',                // Custom dev port
+  'http://localhost:4173',                // Vite preview
 ];
+
+// Regex pattern for Vercel preview deployments
+const VERCEL_PREVIEW_PATTERN = /^https:\/\/cinetrekker-[a-z0-9-]+\.vercel\.app$/;
 
 function getCorsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get('origin') || '';
   
-  // Check if origin is in allowed list
-  const isAllowed = ALLOWED_ORIGINS.includes(origin);
+  // Check if origin is in allowed list or matches preview pattern
+  const isAllowed = ALLOWED_ORIGINS.includes(origin) || VERCEL_PREVIEW_PATTERN.test(origin);
+  
+  // Fallback to production domain instead of localhost
+  const allowedOrigin = isAllowed ? origin : ALLOWED_ORIGINS[0];
   
   return {
-    'Access-Control-Allow-Origin': isAllowed ? origin : ALLOWED_ORIGINS[0],
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-requested-with',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Max-Age': '86400', // Cache preflight for 24 hours
   };
 }
 
@@ -31,13 +41,21 @@ serve(async (req) => {
   
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      status: 204, // No Content
+      headers: corsHeaders 
+    });
   }
 
   try {
+    // Log origin for debugging
+    const origin = req.headers.get('origin') || 'unknown';
+    console.log(`[TMDB Proxy] Request from origin: ${origin}`);
+    
     const TMDB_API_KEY = Deno.env.get('TMDB_API_KEY');
     
     if (!TMDB_API_KEY) {
+      console.error('[TMDB Proxy] TMDB_API_KEY not found in environment');
       throw new Error('TMDB_API_KEY is not configured');
     }
 
@@ -47,6 +65,8 @@ serve(async (req) => {
     if (!endpoint) {
       throw new Error('Missing endpoint parameter');
     }
+    
+    console.log(`[TMDB Proxy] Forwarding request to endpoint: ${endpoint}`);
 
     // Build TMDB URL - forward ALL query parameters except 'endpoint'
     const tmdbParams = new URLSearchParams();
@@ -75,7 +95,7 @@ serve(async (req) => {
     }
 
     const tmdbUrl = `${TMDB_BASE_URL}${endpoint}?${tmdbParams.toString()}`;
-    console.log(`Fetching TMDB: ${tmdbUrl}`);
+    console.log(`[TMDB Proxy] Fetching TMDB: ${endpoint}`);
 
     const response = await fetch(tmdbUrl, {
       headers: isV4Token
