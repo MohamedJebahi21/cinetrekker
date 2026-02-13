@@ -226,8 +226,11 @@ export default function Profile() {
 
   const parsedDob = useMemo(() => {
     if (!dateOfBirth) return null;
-    const safe = new Date(`${dateOfBirth}T00:00:00`);
-    return Number.isNaN(safe.getTime()) ? null : safe;
+    // Parse as local date string (YYYY-MM-DD) to avoid timezone issues
+    const [year, month, day] = dateOfBirth.split('-').map(Number);
+    if (!year || !month || !day) return null;
+    const date = new Date(year, month - 1, day, 12, 0, 0); // Use noon to avoid DST issues
+    return Number.isNaN(date.getTime()) ? null : date;
   }, [dateOfBirth]);
 
   const userAge = useMemo(() => {
@@ -265,13 +268,18 @@ export default function Profile() {
 
     const matchesBirthday = popularPeopleDetails.filter(person => {
       if (!person.birthday) return false;
-      const birth = new Date(`${person.birthday}T00:00:00`);
-      return birth.getMonth() === month && birth.getDate() === day;
+      // Parse birthday the same way to avoid timezone issues
+      const [year, birthdayMonth, birthdayDay] = person.birthday.split('-').map(Number);
+      if (!year || !birthdayMonth || !birthdayDay) return false;
+      return birthdayMonth - 1 === month && birthdayDay === day;
     });
 
     const matchesAge = popularPeopleDetails.filter(person => {
       if (!person.birthday || userAge === null) return false;
-      const birth = new Date(`${person.birthday}T00:00:00`);
+      // Parse birthday the same way to avoid timezone issues
+      const [year, birthdayMonth, birthdayDay] = person.birthday.split('-').map(Number);
+      if (!year || !birthdayMonth || !birthdayDay) return false;
+      const birth = new Date(year, birthdayMonth - 1, birthdayDay, 12, 0, 0);
       if (Number.isNaN(birth.getTime())) return false;
       const today = new Date();
       let age = today.getFullYear() - birth.getFullYear();
