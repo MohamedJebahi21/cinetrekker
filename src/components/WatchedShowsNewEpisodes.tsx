@@ -37,19 +37,10 @@ export function WatchedShowsNewEpisodes() {
       const sevenDaysAgo = new Date(today);
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-      // 🚀 OPTIMIZATION 1: Limit to most recently watched shows (last 20)
-      const recentShows = watchedTVShows
-        .sort((a, b) => {
-          const dateA = new Date(a.watchedAt || a.addedAt || 0);
-          const dateB = new Date(b.watchedAt || b.addedAt || 0);
-          return dateB.getTime() - dateA.getTime();
-        })
-        .slice(0, 20);
-
-      // 🚀 OPTIMIZATION 2: Batch fetch in parallel (chunks of 5)
+      // 🚀 OPTIMIZATION: Batch fetch in parallel (chunks of 5) instead of sequential
       const batchSize = 5;
-      for (let i = 0; i < recentShows.length; i += batchSize) {
-        const batch = recentShows.slice(i, i + batchSize);
+      for (let i = 0; i < watchedTVShows.length; i += batchSize) {
+        const batch = watchedTVShows.slice(i, i + batchSize);
         
         const batchPromises = batch.map(async (show) => {
           try {
