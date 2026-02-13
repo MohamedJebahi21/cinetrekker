@@ -12,7 +12,7 @@ const cspPlugin = (): Plugin => {
     "img-src 'self' blob: data: https://image.tmdb.org https://www.themoviedb.org",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' data: https://fonts.gstatic.com https://r2cdn.perplexity.ai",
-    "connect-src 'self' https://wzlcekvieglnidfempap.supabase.co https://*.supabase.co wss://*.supabase.co https://api.themoviedb.org https://va.vercel-scripts.com",
+    "connect-src 'self' https://wzlcekvieglnidfempap.supabase.co https://nvssyuxghwlubxklvgrn.supabase.co https://*.supabase.co wss://*.supabase.co wss://wzlcekvieglnidfempap.supabase.co wss://nvssyuxghwlubxklvgrn.supabase.co https://api.themoviedb.org https://va.vercel-scripts.com",
     "media-src 'self' blob: https:",
     "frame-src 'self' https://www.youtube.com https://player.vimeo.com https://vercel.live",
     "object-src 'none'",

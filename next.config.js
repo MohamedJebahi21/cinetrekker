@@ -14,7 +14,7 @@ const nextConfig = {
       "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com",
       "script-src-elem 'self' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com",
       "img-src 'self' blob: data: https://image.tmdb.org https://www.themoviedb.org",
-      "connect-src 'self' https://api.themoviedb.org https://va.vercel-scripts.com",
+      "connect-src 'self' https://wzlcekvieglnidfempap.supabase.co https://nvssyuxghwlubxklvgrn.supabase.co https://*.supabase.co wss://*.supabase.co wss://wzlcekvieglnidfempap.supabase.co wss://nvssyuxghwlubxklvgrn.supabase.co https://api.themoviedb.org https://va.vercel-scripts.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' data: https://fonts.gstatic.com https://r2cdn.perplexity.ai",
     ].join('; ');
