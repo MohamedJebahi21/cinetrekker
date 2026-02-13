@@ -59,13 +59,26 @@ export default function Profile() {
   // Load profile from Supabase (with localStorage fallback)
   useEffect(() => {
     let subscription: { unsubscribe: () => Promise<void> | void } | null = null;
+    let isMounted = true;
 
     const loadProfile = async () => {
+      if (!isMounted) return;
+      
       setIsLoadingProfile(true);
+      
       try {
         if (user?.id) {
-          // Load from Supabase
-          const profile = await profileService.getProfile(user.id);
+          console.log('📥 Loading profile from Supabase for user:', user.id);
+          
+          // Add timeout to prevent infinite loading
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Profile load timeout')), 10000)
+          );
+          
+          const loadPromise = profileService.getProfile(user.id);
+          const profile = await Promise.race([loadPromise, timeoutPromise]) as UserProfile | null;
+          
+          if (!isMounted) return;
           
           if (profile) {
             setProfilePhoto(profile.profile_photo || null);
@@ -100,22 +113,28 @@ export default function Profile() {
             }
           }
 
-          // Subscribe to real-time updates
-          subscription = profileService.subscribeToProfile(user.id, (updatedProfile) => {
-            setProfilePhoto(updatedProfile.profile_photo || null);
-            setDateOfBirth(updatedProfile.date_of_birth || '');
-            setDisplayName(updatedProfile.display_name || '');
-            setBio(updatedProfile.bio || '');
-            setFavoriteGenres(updatedProfile.favorite_genres || []);
-            setSettings({
-              publicProfile: updatedProfile.is_public,
-              showWatchlist: updatedProfile.show_watchlist,
-              showStats: updatedProfile.show_stats,
-              allowRecommendations: updatedProfile.allow_recommendations,
+          // Subscribe to real-time updates (only if component is still mounted)
+          if (isMounted) {
+            subscription = profileService.subscribeToProfile(user.id, (updatedProfile) => {
+              if (!isMounted) return;
+              
+              console.log('🔄 Profile updated in real-time:', updatedProfile);
+              setProfilePhoto(updatedProfile.profile_photo || null);
+              setDateOfBirth(updatedProfile.date_of_birth || '');
+              setDisplayName(updatedProfile.display_name || '');
+              setBio(updatedProfile.bio || '');
+              setFavoriteGenres(updatedProfile.favorite_genres || []);
+              setSettings({
+                publicProfile: updatedProfile.is_public,
+                showWatchlist: updatedProfile.show_watchlist,
+                showStats: updatedProfile.show_stats,
+                allowRecommendations: updatedProfile.allow_recommendations,
+              });
             });
-          });
+          }
         } else {
           // Guest user - load from localStorage only
+          console.log('👤 Guest user detected, loading from localStorage');
           const stored = localStorage.getItem(profileKey);
           if (!stored) {
             setInitialLoadComplete(true);
@@ -138,10 +157,20 @@ export default function Profile() {
           setSettings(parsed.settings || settings);
         }
       } catch (error) {
-        console.error('Error loading profile:', error);
+        console.error('❌ Error loading profile:', error);
+        
+        // Show user-friendly error
+        if (isMounted) {
+          toast({
+            title: "Profile Loading Error",
+            description: "Failed to load profile from server. Using cached data.",
+            variant: "destructive",
+          });
+        }
+        
         // Fallback to localStorage
         const stored = localStorage.getItem(profileKey);
-        if (stored) {
+        if (stored && isMounted) {
           try {
             const parsed = JSON.parse(stored) as { 
               photo?: string; 
@@ -157,24 +186,28 @@ export default function Profile() {
             setBio(parsed.bio || '');
             setFavoriteGenres(parsed.favoriteGenres || []);
             setSettings(parsed.settings || settings);
-          } catch {
-            // Ignore JSON parse errors
+          } catch (parseError) {
+            console.error('❌ Failed to parse localStorage profile:', parseError);
           }
         }
       } finally {
-        setInitialLoadComplete(true);
-        setIsLoadingProfile(false);
+        if (isMounted) {
+          setInitialLoadComplete(true);
+          setIsLoadingProfile(false);
+        }
       }
     };
 
     loadProfile();
 
+    // Cleanup function
     return () => {
+      isMounted = false;
       if (subscription) {
         subscription.unsubscribe();
       }
     };
-  }, [user?.id, profileKey]);
+  }, [user?.id, profileKey, toast]);
 
   // Track unsaved changes (only after initial load)
   useEffect(() => {
