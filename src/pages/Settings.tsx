@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Settings as SettingsIcon, Globe, Lock, Bell, Eye, Bookmark, TrendingUp } from 'lucide-react';
+import { Settings as SettingsIcon, Globe, Lock, Bell, Eye, Bookmark, TrendingUp, Check } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { profileService } from '@/services/profile';
 import { languages } from '@/i18n';
@@ -211,198 +211,258 @@ export default function Settings() {
         description="Manage your account settings and preferences"
         canonical="https://cinetrekker.vercel.app/settings"
       />
-      <div className="page-container pt-20 max-w-4xl">
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="space-y-6"
-        >
-          {/* Header */}
-          <motion.div variants={itemVariants} className="flex items-center gap-3 mb-6">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 backdrop-blur-sm">
-              <SettingsIcon className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold">{t('nav.settings', 'Settings')}</h1>
-              <p className="text-muted-foreground">Manage your preferences and privacy</p>
-            </div>
-          </motion.div>
+      <motion.div 
+        className="page-container pt-20 pb-24 max-w-4xl"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {/* Premium Header */}
+        <motion.section variants={itemVariants} className="mb-8">
+          <Card className="relative overflow-hidden border-neutral-800/50 bg-gradient-to-br from-neutral-900/90 via-neutral-900/70 to-neutral-800/90 backdrop-blur-md shadow-2xl">
+            {/* Gradient Background Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-red-900/10 via-transparent to-blue-900/10 pointer-events-none" />
+            
+            <CardContent className="pt-8 pb-6 relative z-10">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-red-500/20 to-purple-500/20 flex items-center justify-center backdrop-blur-sm">
+                  <SettingsIcon className="w-7 h-7 text-red-400" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold">{t('nav.settings', 'Settings')}</h1>
+                  <p className="text-neutral-400">Manage your preferences and privacy</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.section>
 
-          {isLoadingSettings && (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          )}
+        {isLoadingSettings && (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        )}
 
-          {!isLoadingSettings && (
-            <>
-              {/* Language Settings */}
-              <motion.div variants={itemVariants}>
-                <Card className="glass-card border-border/50">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Globe className="w-5 h-5 text-primary" />
-                      {t('settings.language', 'Language')}
-                    </CardTitle>
-                    <CardDescription>
-                      {t('settings.languageDesc', 'Choose your preferred language')}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center gap-4">
-                      <Label htmlFor="language" className="min-w-[100px]">
-                        {t('settings.selectLanguage', 'Language')}
+        {!isLoadingSettings && (
+          <>
+            {/* Language Settings */}
+            <motion.div variants={itemVariants} className="mb-6">
+              <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center">
+                      <Globe className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <span>{t('settings.language', 'Language')}</span>
+                  </CardTitle>
+                  <CardDescription>
+                    {t('settings.languageDesc', 'Choose your preferred language')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-4">
+                    <Label htmlFor="language" className="text-neutral-300 min-w-[100px]">
+                      {t('settings.selectLanguage', 'Language')}
+                    </Label>
+                    <Select value={currentLanguage.code} onValueChange={handleLanguageChange}>
+                      <SelectTrigger 
+                        id="language" 
+                        className="flex-1 max-w-xs bg-black/40 border-neutral-700 focus:border-red-500 focus:ring-red-500/20"
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-neutral-900 border-neutral-800">
+                        {languages.map((lang) => (
+                          <SelectItem 
+                            key={lang.code} 
+                            value={lang.code}
+                            className="focus:bg-neutral-800 focus:text-white"
+                          >
+                            {lang.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Privacy Settings */}
+            <motion.div variants={itemVariants} className="mb-6">
+              <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                      <Lock className="w-5 h-5 text-purple-400" />
+                    </div>
+                    <span>{t('profile.privacySettings', 'Privacy Settings')}</span>
+                  </CardTitle>
+                  <CardDescription>
+                    {t('settings.privacyDesc', 'Control what others can see on your profile')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Public Profile Toggle */}
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-black/20 border border-neutral-800/50 hover:border-neutral-700/70 transition-colors">
+                    <div className="space-y-1 flex-1">
+                      <Label htmlFor="publicProfile" className="cursor-pointer flex items-center gap-2 text-neutral-200 font-medium">
+                        <Eye className="w-4 h-4 text-neutral-500" />
+                        {t('profile.publicProfile', 'Public Profile')}
                       </Label>
-                      <Select value={currentLanguage.code} onValueChange={handleLanguageChange}>
-                        <SelectTrigger id="language" className="flex-1 max-w-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {languages.map((lang) => (
-                            <SelectItem key={lang.code} value={lang.code}>
-                              {lang.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <p className="text-sm text-neutral-500">
+                        {t('profile.publicProfileDesc', 'Allow others to view your profile')}
+                      </p>
                     </div>
-                  </CardContent>
-                </Card>
+                    <Switch
+                      id="publicProfile"
+                      checked={settings.publicProfile}
+                      onCheckedChange={(checked) => 
+                        setSettings(prev => ({ ...prev, publicProfile: checked }))
+                      }
+                      className={cn(
+                        "data-[state=checked]:bg-red-600",
+                        settings.publicProfile && "shadow-lg shadow-red-500/30"
+                      )}
+                    />
+                  </div>
+
+                  {/* Show Watchlist Toggle */}
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-black/20 border border-neutral-800/50 hover:border-neutral-700/70 transition-colors">
+                    <div className="space-y-1 flex-1">
+                      <Label htmlFor="showWatchlist" className="cursor-pointer flex items-center gap-2 text-neutral-200 font-medium">
+                        <Bookmark className="w-4 h-4 text-neutral-500" />
+                        {t('profile.showWatchlist', 'Show Watchlist')}
+                      </Label>
+                      <p className="text-sm text-neutral-500">
+                        {t('profile.showWatchlistDesc', 'Display your watchlist on your profile')}
+                      </p>
+                    </div>
+                    <Switch
+                      id="showWatchlist"
+                      checked={settings.showWatchlist}
+                      onCheckedChange={(checked) => 
+                        setSettings(prev => ({ ...prev, showWatchlist: checked }))
+                      }
+                      className={cn(
+                        "data-[state=checked]:bg-red-600",
+                        settings.showWatchlist && "shadow-lg shadow-red-500/30"
+                      )}
+                    />
+                  </div>
+
+                  {/* Show Stats Toggle */}
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-black/20 border border-neutral-800/50 hover:border-neutral-700/70 transition-colors">
+                    <div className="space-y-1 flex-1">
+                      <Label htmlFor="showStats" className="cursor-pointer flex items-center gap-2 text-neutral-200 font-medium">
+                        <TrendingUp className="w-4 h-4 text-neutral-500" />
+                        {t('profile.showStats', 'Show Statistics')}
+                      </Label>
+                      <p className="text-sm text-neutral-500">
+                        {t('profile.showStatsDesc', 'Display your watching statistics')}
+                      </p>
+                    </div>
+                    <Switch
+                      id="showStats"
+                      checked={settings.showStats}
+                      onCheckedChange={(checked) => 
+                        setSettings(prev => ({ ...prev, showStats: checked }))
+                      }
+                      className={cn(
+                        "data-[state=checked]:bg-red-600",
+                        settings.showStats && "shadow-lg shadow-red-500/30"
+                      )}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Recommendations Settings */}
+            <motion.div variants={itemVariants}>
+              <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center">
+                      <Bell className="w-5 h-5 text-green-400" />
+                    </div>
+                    <span>{t('settings.preferences', 'Preferences')}</span>
+                  </CardTitle>
+                  <CardDescription>
+                    {t('settings.preferencesDesc', 'Customize your experience')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-black/20 border border-neutral-800/50 hover:border-neutral-700/70 transition-colors">
+                    <div className="space-y-1 flex-1">
+                      <Label htmlFor="allowRecommendations" className="cursor-pointer text-neutral-200 font-medium">
+                        {t('settings.allowRecommendations', 'Allow Recommendations')}
+                      </Label>
+                      <p className="text-sm text-neutral-500">
+                        {t('settings.allowRecommendationsDesc', 'Get personalized movie and show recommendations')}
+                      </p>
+                    </div>
+                    <Switch
+                      id="allowRecommendations"
+                      checked={settings.allowRecommendations}
+                      onCheckedChange={(checked) => 
+                        setSettings(prev => ({ ...prev, allowRecommendations: checked }))
+                      }
+                      className={cn(
+                        "data-[state=checked]:bg-red-600",
+                        settings.allowRecommendations && "shadow-lg shadow-red-500/30"
+                      )}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Sticky Save Bar */}
+            {hasUnsavedChanges && (
+              <motion.div
+                initial={{ y: 100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 100, opacity: 0 }}
+                className="fixed bottom-0 left-0 right-0 z-50 border-t border-neutral-800 bg-neutral-900/95 backdrop-blur-md shadow-2xl"
+              >
+                <div className="page-container py-4 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+                    <p className="text-sm font-medium">{t('settings.unsavedChanges')}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="ghost"
+                      onClick={() => window.location.reload()}
+                      className="hover:bg-neutral-800"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleSaveSettings}
+                      disabled={isSaving}
+                      className="gap-2 bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/20"
+                    >
+                      {isSaving ? (
+                        <>
+                          <span className="animate-spin">⏳</span>
+                          {t('common.saving', 'Saving...')}
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4" />
+                          {t('settings.saveChanges')}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </motion.div>
-
-              {/* Privacy Settings */}
-              <motion.div variants={itemVariants}>
-                <Card className="glass-card border-border/50">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Lock className="w-5 h-5 text-primary" />
-                      {t('profile.privacySettings', 'Privacy Settings')}
-                    </CardTitle>
-                    <CardDescription>
-                      {t('settings.privacyDesc', 'Control what others can see on your profile')}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="publicProfile" className="cursor-pointer flex items-center gap-2">
-                          <Eye className="w-4 h-4 text-muted-foreground" />
-                          {t('profile.publicProfile', 'Public Profile')}
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          {t('profile.publicProfileDesc', 'Allow others to view your profile')}
-                        </p>
-                      </div>
-                      <Switch
-                        id="publicProfile"
-                        checked={settings.publicProfile}
-                        onCheckedChange={(checked) => 
-                          setSettings(prev => ({ ...prev, publicProfile: checked }))
-                        }
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="showWatchlist" className="cursor-pointer flex items-center gap-2">
-                          <Bookmark className="w-4 h-4 text-muted-foreground" />
-                          {t('profile.showWatchlist', 'Show Watchlist')}
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          {t('profile.showWatchlistDesc', 'Display your watchlist on your profile')}
-                        </p>
-                      </div>
-                      <Switch
-                        id="showWatchlist"
-                        checked={settings.showWatchlist}
-                        onCheckedChange={(checked) => 
-                          setSettings(prev => ({ ...prev, showWatchlist: checked }))
-                        }
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="showStats" className="cursor-pointer flex items-center gap-2">
-                          <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                          {t('profile.showStats', 'Show Statistics')}
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          {t('profile.showStatsDesc', 'Display your watching statistics')}
-                        </p>
-                      </div>
-                      <Switch
-                        id="showStats"
-                        checked={settings.showStats}
-                        onCheckedChange={(checked) => 
-                          setSettings(prev => ({ ...prev, showStats: checked }))
-                        }
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {/* Recommendations Settings */}
-              <motion.div variants={itemVariants}>
-                <Card className="glass-card border-border/50">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Bell className="w-5 h-5 text-primary" />
-                      {t('settings.preferences', 'Preferences')}
-                    </CardTitle>
-                    <CardDescription>
-                      {t('settings.preferencesDesc', 'Customize your experience')}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="allowRecommendations" className="cursor-pointer">
-                          {t('settings.allowRecommendations', 'Allow Recommendations')}
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          {t('settings.allowRecommendationsDesc', 'Get personalized movie and show recommendations')}
-                        </p>
-                      </div>
-                      <Switch
-                        id="allowRecommendations"
-                        checked={settings.allowRecommendations}
-                        onCheckedChange={(checked) => 
-                          setSettings(prev => ({ ...prev, allowRecommendations: checked }))
-                        }
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {/* Save Button */}
-              <motion.div variants={itemVariants} className="flex justify-end gap-3">
-                <Button 
-                  onClick={handleSaveSettings}
-                  disabled={isSaving || !hasUnsavedChanges}
-                  className="gap-2"
-                  size="lg"
-                >
-                  {isSaving ? (
-                    <>
-                      <span className="animate-spin">⏳</span>
-                      {t('common.saving', 'Saving...')}
-                    </>
-                  ) : (
-                    <>
-                      <SettingsIcon className="w-4 h-4" />
-                      {t('common.saveChanges', 'Save Changes')}
-                    </>
-                  )}
-                </Button>
-              </motion.div>
-            </>
-          )}
-        </motion.div>
-      </div>
+            )}
+          </>
+        )}
+      </motion.div>
     </>
   );
 }

@@ -5,7 +5,24 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Track actor match missing-data logging across renders (and StrictMode double-mount)
 let actorMatchesMissingLogged = false;
 import { useQuery } from '@tanstack/react-query';
-import { User, Film, Tv, Bookmark, Heart, PlayCircle, CalendarDays, Camera, Sparkles, Search } from 'lucide-react';
+import { 
+  User, 
+  Film, 
+  Tv, 
+  Bookmark, 
+  Heart, 
+  PlayCircle, 
+  CalendarDays, 
+  Camera, 
+  Sparkles, 
+  Search,
+  Star,
+  Clock,
+  Clapperboard,
+  Plus,
+  TrendingUp,
+  Check
+} from 'lucide-react';
 import { useUserLists } from '@/contexts/UserListsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFollowedShows, useWatchedEpisodes } from '@/hooks/useFollowedShows';
@@ -488,9 +505,12 @@ export default function Profile() {
         description="View your watching statistics and preferences"
         canonical="https://cinetrekker.vercel.app/profile"
       />
-    <div className="page-container pt-20 max-w-4xl">
-      <h1 className="section-title">{t('profile.title')}</h1>
-
+    <motion.div 
+      className="page-container pt-20 pb-24 max-w-7xl"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {isLoadingProfile && (
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -499,79 +519,192 @@ export default function Profile() {
 
       {!isLoadingProfile && (
       <>
-      {/* Profile Completion Progress */}
-      {profileCompletion < 100 && (
-        <Card className="glass-card mb-6">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">{t('profile.profileCompletion', 'Profile Completion')}</span>
-              <span className="text-sm text-muted-foreground">{Math.round(profileCompletion)}%</span>
+      {/* Premium Profile Hero */}
+      <motion.section variants={itemVariants} className="mb-8">
+        <Card className="relative overflow-hidden border-neutral-800/50 bg-gradient-to-br from-neutral-900/90 via-neutral-900/70 to-neutral-800/90 backdrop-blur-md shadow-2xl">
+          {/* Gradient Background Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-red-900/10 via-transparent to-purple-900/10 pointer-events-none" />
+          
+          <CardContent className="pt-8 pb-6 relative z-10">
+            <div className="flex items-start gap-6 flex-col sm:flex-row">
+              {/* Avatar with Gradient Ring */}
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-br from-red-500 via-purple-500 to-blue-500 rounded-full blur-md opacity-60 group-hover:opacity-80 transition-opacity" />
+                <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-neutral-800 flex items-center justify-center overflow-hidden border-4 border-neutral-900/50">
+                  {profilePhoto ? (
+                    <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-12 h-12 sm:w-14 sm:h-14 text-neutral-500" />
+                  )}
+                </div>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  id="profile-photo-input"
+                  onChange={handlePhotoChange}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-neutral-800/90 border border-neutral-700 hover:bg-neutral-700 hover:scale-110 transition-all shadow-lg"
+                  onClick={() => document.getElementById('profile-photo-input')?.click()}
+                  type="button"
+                >
+                  <Camera className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {/* User Info */}
+              <div className="flex-1">
+                {user ? (
+                  <>
+                    <h1 className="text-2xl sm:text-3xl font-bold mb-1">
+                      {displayName || user.email?.split('@')[0]}
+                    </h1>
+                    <p className="text-neutral-400 mb-3">{user.email}</p>
+                  </>
+                ) : (
+                  <>
+                    <h1 className="text-2xl sm:text-3xl font-bold mb-1">{t('common.appName')} {t('nav.profile')}</h1>
+                    <Link to="/login">
+                      <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80">
+                        {t('auth.signInRequired')}
+                      </Button>
+                    </Link>
+                  </>
+                )}
+                {profileCompletion < 100 && (
+                  <div className="mt-4 max-w-md">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-neutral-400">{t('profile.profileCompletion', 'Profile Completion')}</span>
+                      <span className="text-xs text-neutral-500">{Math.round(profileCompletion)}%</span>
+                    </div>
+                    <Progress value={profileCompletion} className="h-1.5" />
+                  </div>
+                )}
+              </div>
             </div>
-            <Progress value={profileCompletion} className="h-2" />
           </CardContent>
         </Card>
-      )}
+      </motion.section>
 
-      {/* User Avatar */}
-      <div className="flex items-center gap-4 mb-8">
-        <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center overflow-hidden">
-          {profilePhoto ? (
-            <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
-          ) : (
-            <User className="w-10 h-10 text-primary-foreground" />
-          )}
+      {/* Stats Bento Grid */}
+      <motion.section variants={itemVariants} className="mb-8">
+        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-red-500" />
+          {t('profile.overview')}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Movies Watched */}
+          <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm hover:bg-neutral-900/70 transition-colors group">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Film className="w-6 h-6 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold">{moviesWatched}</p>
+                  <p className="text-sm text-neutral-400">{t('profile.moviesWatched')}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Total Ratings */}
+          <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm hover:bg-neutral-900/70 transition-colors group">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500/20 to-orange-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Star className="w-6 h-6 text-red-500 fill-current" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold">{watched.length}</p>
+                  <p className="text-sm text-neutral-400">{t('profile.totalRatings')}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Watch Time */}
+          <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm hover:bg-neutral-900/70 transition-colors group">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-teal-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Clock className="w-6 h-6 text-green-400" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold">{showsWatched}</p>
+                  <p className="text-sm text-neutral-400">{t('profile.watchTime')}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        <div>
-          {user ? (
-            <>
-              <h2 className="text-xl font-semibold">{user.email?.split('@')[0]}</h2>
-              <p className="text-muted-foreground">{user.email}</p>
-            </>
-          ) : (
-            <>
-              <h2 className="text-xl font-semibold">{t('common.appName')} {t('nav.profile')}</h2>
-              <Link to="/login">
-                <Button variant="link" className="p-0 h-auto text-primary">
-                  {t('auth.signInRequired')}
-                </Button>
-              </Link>
-            </>
-          )}
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              id="profile-photo-input"
-              onChange={handlePhotoChange}
-            />
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="gap-2"
-              onClick={() => document.getElementById('profile-photo-input')?.click()}
-              type="button"
-            >
-              <Camera className="w-4 h-4" />
-              {profilePhoto ? 'Change Photo' : 'Add Photo'}
-            </Button>
-            {profilePhoto && (
-              <Button variant="ghost" size="sm" onClick={handlePhotoRemove}>
-                Remove
+      </motion.section>
+
+      {/* Favorites Section */}
+      <motion.section variants={itemVariants} className="mb-8">
+        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <Heart className="w-5 h-5 text-red-500 fill-current" />
+          {t('profile.myFavorites')}
+        </h2>
+        <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm">
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {/* Empty Poster Slots */}
+              {[...Array(4)].map((_, i) => (
+                <div
+                  key={i}
+                  className="aspect-[2/3] rounded-lg border-2 border-dashed border-neutral-700 bg-neutral-800/30 flex flex-col items-center justify-center gap-2 hover:border-red-500/50 hover:bg-neutral-800/50 transition-all cursor-pointer group"
+                >
+                  <Plus className="w-8 h-8 text-neutral-600 group-hover:text-red-500 transition-colors" />
+                  <span className="text-xs text-neutral-500 group-hover:text-neutral-400 transition-colors">
+                    {t('profile.addFavorites')}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="text-sm text-neutral-500 mt-4 text-center">
+              {t('profile.noFavoritesYet')} <span className="text-neutral-400">{t('profile.noFavoritesDesc')}</span>
+            </p>
+          </CardContent>
+        </Card>
+      </motion.section>
+
+      {/* Recent Activity Empty State */}
+      <motion.section variants={itemVariants} className="mb-8">
+        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <PlayCircle className="w-5 h-5 text-red-500" />
+          {t('profile.recentActivity')}
+        </h2>
+        <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm">
+          <CardContent className="pt-12 pb-12 flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 rounded-full bg-neutral-800/50 flex items-center justify-center mb-4">
+              <Clapperboard className="w-8 h-8 text-neutral-600" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">{t('profile.noRecentActivity')}</h3>
+            <p className="text-neutral-400 mb-6 max-w-md">
+              {t('profile.noActivityDesc')}
+            </p>
+            <Link to="/trending">
+              <Button className="gap-2 bg-red-600 hover:bg-red-700">
+                <TrendingUp className="w-4 h-4" />
+                {t('profile.browseTrending')}
               </Button>
-            )}
-          </div>
-        </div>
-      </div>
+            </Link>
+          </CardContent>
+        </Card>
+      </motion.section>
 
       {/* Profile Details */}
-      <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">{t('profile.profileDetails', 'Profile Details')}</h2>
-        <Card className="glass-card">
-          <CardContent className="pt-6">
-            <div className="grid gap-4 sm:grid-cols-2">
+      <motion.section variants={itemVariants} className="mb-8">
+        <h2 className="text-xl font-bold mb-4">{t('profile.profileDetails', 'Profile Details')}</h2>
+        <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm">
+          <CardContent className="pt-6 space-y-6">
+            <div className="grid gap-6 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="displayName" className="flex items-center gap-2">
+                <Label htmlFor="displayName" className="flex items-center gap-2 text-neutral-300">
                   <User className="w-4 h-4" />
                   {t('profile.displayName', 'Display Name')}
                 </Label>
@@ -582,10 +715,11 @@ export default function Profile() {
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder={t('profile.displayNamePlaceholder', 'How should we call you?')}
                   maxLength={50}
+                  className="bg-black/40 border-neutral-700 focus:border-red-500 focus:ring-red-500/20 transition-colors"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="dob" className="flex items-center gap-2">
+                <Label htmlFor="dob" className="flex items-center gap-2 text-neutral-300">
                   <CalendarDays className="w-4 h-4" />
                   {t('profile.dateOfBirth', 'Date of Birth')}
                 </Label>
@@ -595,169 +729,100 @@ export default function Profile() {
                   value={dateOfBirth}
                   onChange={handleDobChange}
                   max={new Date().toISOString().split('T')[0]}
-                  className={dobError ? 'border-destructive' : ''}
+                  className={cn(
+                    "bg-black/40 border-neutral-700 focus:border-red-500 focus:ring-red-500/20 transition-colors",
+                    dobError && "border-destructive focus:border-destructive"
+                  )}
                 />
                 {dobError && <p className="text-xs text-destructive">{dobError}</p>}
                 {userAge !== null && !dobError && (
-                  <p className="text-xs text-muted-foreground">{t('profile.currentAge', 'Current age')}: {userAge}</p>
+                  <p className="text-xs text-neutral-500">{t('profile.currentAge', 'Current age')}: {userAge}</p>
                 )}
               </div>
             </div>
             
-            {/* Save Button */}
-            <div className="mt-6 flex justify-end gap-2">
-              <Button 
-                onClick={handleSaveProfile}
-                disabled={isSaving || !hasUnsavedChanges}
-                className="gap-2"
-              >
-                {isSaving ? (
-                  <>
-                    <span className="animate-spin">⏳</span>
-                    Saving...
-                  </>
-                ) : (
-                  'Save Changes'
-                )}
-              </Button>
+            <div className="space-y-2">
+              <Label htmlFor="bio" className="text-neutral-300">{t('profile.bio', 'Bio')}</Label>
+              <textarea
+                id="bio"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder={t('profile.bioPlaceholder', 'Tell us about your cinematic journey...')}
+                className="w-full p-3 rounded-md border border-neutral-700 bg-black/40 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-colors min-h-[100px] resize-y"
+                maxLength={500}
+              />
+              <p className="text-xs text-neutral-500">
+                {bio.length}/500 {t('profile.characters', 'characters')}
+              </p>
             </div>
           </CardContent>
         </Card>
-      </section>
-
-      {/* About Section */}
-      <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">{t('profile.about', 'About')}</h2>
-        <Card className="glass-card">
-          <CardContent className="pt-6">
-            <Label htmlFor="bio">{t('profile.bio', 'Bio')}</Label>
-            <textarea
-              id="bio"
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder={t('profile.bioPlaceholder', 'Tell us about your cinematic journey...')}
-              className="w-full mt-2 p-3 rounded-md border border-border bg-background min-h-[100px] resize-y"
-              maxLength={500}
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              {bio.length}/500 {t('profile.characters', 'characters')}
-            </p>
-            
-            {/* Save Button */}
-            <div className="mt-6 flex justify-end gap-2">
-              <Button 
-                onClick={handleSaveProfile}
-                disabled={isSaving || !hasUnsavedChanges}
-                className="gap-2"
-              >
-                {isSaving ? (
-                  <>
-                    <span className="animate-spin">⏳</span>
-                    Saving...
-                  </>
-                ) : (
-                  'Save Changes'
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
+      </motion.section>
 
       {/* Favorite Genres */}
-      <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">{t('profile.favoriteGenres', 'Favorite Genres')}</h2>
-        <Card className="glass-card">
+      <motion.section variants={itemVariants} className="mb-8">
+        <h2 className="text-xl font-bold mb-4">{t('profile.favoriteGenres', 'Favorite Genres')}</h2>
+        <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm">
           <CardContent className="pt-6">
             <div className="flex flex-wrap gap-2">
               {genres.map(genre => (
                 <Badge
                   key={genre.id}
                   variant={favoriteGenres.includes(genre.id) ? 'default' : 'outline'}
-                  className="cursor-pointer transition-all hover:scale-105"
+                  className={cn(
+                    "cursor-pointer transition-all hover:scale-105 px-3 py-1.5",
+                    favoriteGenres.includes(genre.id) 
+                      ? "bg-red-600 hover:bg-red-700 border-red-600" 
+                      : "border-neutral-700 hover:border-red-500/50 hover:bg-neutral-800"
+                  )}
                   onClick={() => toggleGenre(genre.id)}
                 >
                   {genre.name}
                 </Badge>
               ))}
             </div>
-            
-            {/* Save Button */}
-            <div className="mt-6 flex justify-end gap-2">
-              <Button 
-                onClick={handleSaveProfile}
-                disabled={isSaving || !hasUnsavedChanges}
-                className="gap-2"
-              >
-                {isSaving ? (
-                  <>
-                    <span className="animate-spin">⏳</span>
-                    Saving...
-                  </>
-                ) : (
-                  'Save Changes'
-                )}
-              </Button>
-            </div>
           </CardContent>
         </Card>
-      </section>
-
-      {/* Stats */}
-      <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">{t('profile.stats')}</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          {stats.map((stat) => (
-            <Card key={stat.label} className="glass-card">
-              <CardContent className="pt-6">
-                <div className="flex flex-col items-center gap-2 text-center">
-                  <div className="p-3 rounded-lg bg-primary/10">
-                    <stat.icon className="w-6 h-6 text-primary" />
-                  </div>
-                  <p className="text-2xl font-bold">{stat.value}</p>
-                  <p className="text-xs text-muted-foreground">{stat.label}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
+      </motion.section>
 
       {/* Actor Matches */}
-      <section className="mt-8">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Sparkles className="w-4 h-4" />
-          Actor Matches
+      <motion.section variants={itemVariants}>
+        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-yellow-500" />
+          {t('profile.actorMatches')}
         </h2>
         {!dateOfBirth ? (
-          <Card className="glass-card">
+          <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm">
             <CardContent className="pt-6">
-              <p className="text-muted-foreground">
+              <p className="text-neutral-400">
                 Add your date of birth to see actors who share your birthday or age.
               </p>
             </CardContent>
           </Card>
         ) : (
           <div className="grid gap-6 md:grid-cols-2">
-            <Card className="glass-card">
+            <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm">
               <CardContent className="pt-6">
-                <h3 className="font-semibold mb-3">Same Birthday</h3>
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <CalendarDays className="w-4 h-4 text-red-500" />
+                  {t('profile.sameBirthday')}
+                </h3>
                 {loadingPeople ? (
                   <div className="grid grid-cols-2 gap-3">
                     {[...Array(6)].map((_, i) => (
-                      <div key={i} className="rounded-lg overflow-hidden bg-muted/40 animate-pulse">
-                        <div className="w-full h-32 bg-muted" />
-                        <div className="h-8 bg-muted mt-2 mx-2 mb-2 rounded" />
+                      <div key={i} className="rounded-lg overflow-hidden bg-neutral-800/40 animate-pulse">
+                        <div className="w-full h-32 bg-neutral-800" />
+                        <div className="h-8 bg-neutral-800 mt-2 mx-2 mb-2 rounded" />
                       </div>
                     ))}
                   </div>
                 ) : sameBirthday.length === 0 ? (
-                  <p className="text-muted-foreground text-sm">No matches found in popular actors.</p>
+                  <p className="text-neutral-500 text-sm">No matches found in popular actors.</p>
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
                     {sameBirthday.slice(0, 6).map((person) => (
                       <Link key={person.id} to={`/person/${person.id}`} className="group">
-                        <div className="rounded-lg overflow-hidden bg-muted/40">
+                        <div className="rounded-lg overflow-hidden bg-neutral-800/40 border border-neutral-700 hover:border-red-500/50 transition-colors">
                           {person.profile_path ? (
                             <img
                               src={getImageUrl(person.profile_path, 'w185') || ''}
@@ -765,12 +830,12 @@ export default function Profile() {
                               className="w-full h-32 object-cover group-hover:scale-105 transition-transform"
                             />
                           ) : (
-                            <div className="w-full h-32 flex items-center justify-center bg-muted">
-                              <User className="w-6 h-6 text-muted-foreground" />
+                            <div className="w-full h-32 flex items-center justify-center bg-neutral-800">
+                              <User className="w-6 h-6 text-neutral-600" />
                             </div>
                           )}
                         </div>
-                        <p className="text-xs mt-2 line-clamp-2">{person.name}</p>
+                        <p className="text-xs mt-2 line-clamp-2 text-neutral-300">{person.name}</p>
                       </Link>
                     ))}
                   </div>
@@ -778,25 +843,28 @@ export default function Profile() {
               </CardContent>
             </Card>
 
-            <Card className="glass-card">
+            <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm">
               <CardContent className="pt-6">
-                <h3 className="font-semibold mb-3">Same Age</h3>
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <User className="w-4 h-4 text-red-500" />
+                  {t('profile.sameAge')}
+                </h3>
                 {loadingPeople ? (
                   <div className="grid grid-cols-2 gap-3">
                     {[...Array(6)].map((_, i) => (
-                      <div key={i} className="rounded-lg overflow-hidden bg-muted/40 animate-pulse">
-                        <div className="w-full h-32 bg-muted" />
-                        <div className="h-8 bg-muted mt-2 mx-2 mb-2 rounded" />
+                      <div key={i} className="rounded-lg overflow-hidden bg-neutral-800/40 animate-pulse">
+                        <div className="w-full h-32 bg-neutral-800" />
+                        <div className="h-8 bg-neutral-800 mt-2 mx-2 mb-2 rounded" />
                       </div>
                     ))}
                   </div>
                 ) : sameAge.length === 0 ? (
-                  <p className="text-muted-foreground text-sm">No matches found in popular actors.</p>
+                  <p className="text-neutral-500 text-sm">No matches found in popular actors.</p>
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
                     {sameAge.slice(0, 6).map((person) => (
                       <Link key={person.id} to={`/person/${person.id}`} className="group">
-                        <div className="rounded-lg overflow-hidden bg-muted/40">
+                        <div className="rounded-lg overflow-hidden bg-neutral-800/40 border border-neutral-700 hover:border-red-500/50 transition-colors">
                           {person.profile_path ? (
                             <img
                               src={getImageUrl(person.profile_path, 'w185') || ''}
@@ -804,12 +872,12 @@ export default function Profile() {
                               className="w-full h-32 object-cover group-hover:scale-105 transition-transform"
                             />
                           ) : (
-                            <div className="w-full h-32 flex items-center justify-center bg-muted">
-                              <User className="w-6 h-6 text-muted-foreground" />
+                            <div className="w-full h-32 flex items-center justify-center bg-neutral-800">
+                              <User className="w-6 h-6 text-neutral-600" />
                             </div>
                           )}
                         </div>
-                        <p className="text-xs mt-2 line-clamp-2">{person.name}</p>
+                        <p className="text-xs mt-2 line-clamp-2 text-neutral-300">{person.name}</p>
                       </Link>
                     ))}
                   </div>
@@ -818,10 +886,53 @@ export default function Profile() {
             </Card>
           </div>
         )}
-      </section>
+      </motion.section>
+
+      {/* Sticky Save Bar */}
+      {hasUnsavedChanges && (
+        <motion.div
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 100, opacity: 0 }}
+          className="fixed bottom-0 left-0 right-0 z-50 border-t border-neutral-800 bg-neutral-900/95 backdrop-blur-md shadow-2xl"
+        >
+          <div className="page-container py-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+              <p className="text-sm font-medium">{t('settings.unsavedChanges')}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                onClick={() => window.location.reload()}
+                className="hover:bg-neutral-800"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveProfile}
+                disabled={isSaving}
+                className="gap-2 bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/20"
+              >
+                {isSaving ? (
+                  <>
+                    <span className="animate-spin">⏳</span>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    {t('settings.saveChanges')}
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+      )}
       </>
       )}
-    </div>
+    </motion.div>
     </>
   );
 }
