@@ -16,19 +16,19 @@ export default function Following() {
 
   // Fetch details for all followed shows
   const { data: showDetails, isLoading } = useQuery({
-    queryKey: ['followed-shows-details', followedShows.map(s => s.id), language],
+    queryKey: ['followed-shows-details', followedShows.map(s => s.show_id), language],
     queryFn: async () => {
       const results = await Promise.all(
         followedShows.map(async (show) => {
           try {
-            const details = await getTVDetails(show.id, language);
+            const details = await getTVDetails(show.show_id, language);
             return { 
               ...details, 
               media_type: 'tv',
-              followedAt: show.followedAt,
+              followedAt: show.followed_at,
             } as Media & { followedAt?: string };
           } catch (error) {
-            console.error(`Failed to fetch details for show ${show.id}:`, error);
+            console.error(`Failed to fetch details for show ${show.show_id}:`, error);
             return null;
           }
         })
