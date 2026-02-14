@@ -2,17 +2,12 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Bookmark,
-  List,
-  Star,
   Users,
-  Settings,
   LogOut,
   User as UserIcon,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useUserLists } from '@/contexts/UserListsContext';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -76,7 +71,6 @@ export function UserProfileDropdown({
 }: UserProfileDropdownProps) {
   const { t } = useTranslation();
   const { user, signOut } = useAuth();
-  const { watchlist } = useUserLists();
   const [isOpen, setIsOpen] = React.useState(false);
 
   const userEmail = user?.email || '';
@@ -87,41 +81,12 @@ export function UserProfileDropdown({
     await signOut();
   };
 
-  // Activity section items
-  const activityItems = [
-    {
-      icon: Bookmark,
-      label: t('nav.watchlist', 'Watchlist'),
-      path: '/watchlist',
-      badge: watchlist.length > 0 ? watchlist.length : undefined,
-    },
-    {
-      icon: List,
-      label: t('profile.lists', 'Lists'),
-      path: '/collections',
-    },
-    {
-      icon: Star,
-      label: t('profile.ratings', 'Ratings'),
-      path: '/stats',
-    },
-  ];
-
   // Social section items
   const socialItems = [
     {
       icon: Users,
       label: t('profile.following', 'Following'),
       path: '/following',
-    },
-  ];
-
-  // Account section items
-  const accountItems = [
-    {
-      icon: Settings,
-      label: t('nav.settings', 'Settings'),
-      path: '/profile',
     },
   ];
 
@@ -215,47 +180,6 @@ export function UserProfileDropdown({
                 </Link>
               </motion.div>
 
-              {/* Activity Section */}
-              <motion.div className="py-2">
-                <div className="px-4 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  {t('profile.activity', 'Activity')}
-                </div>
-                {activityItems.map((item, idx) => {
-                  const Icon = item.icon;
-                  return (
-                    <motion.div
-                      key={item.path}
-                      variants={itemVariants}
-                      custom={idx + 1}
-                      initial="hidden"
-                      animate="visible"
-                    >
-                      <DropdownMenuItem asChild>
-                        <Link
-                          to={item.path}
-                          className={cn(
-                            'flex items-center gap-3 px-4 py-2 text-sm cursor-pointer group',
-                            'transition-colors duration-150',
-                            'hover:bg-accent hover:text-accent-foreground'
-                          )}
-                          onClick={() => setIsOpen(false)}
-                        >
-                          <Icon className="w-4 h-4 flex-shrink-0 group-hover:scale-110 transition-transform" />
-                          <span className="flex-1">{item.label}</span>
-                          {item.badge && (
-                            <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-semibold bg-primary/20 text-primary">
-                              {item.badge > 99 ? '99+' : item.badge}
-                            </span>
-                          )}
-                        </Link>
-                      </DropdownMenuItem>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
-
-              <DropdownMenuSeparator className="my-0 bg-border/30" />
-
               {/* Social Section */}
               <motion.div className="py-2">
                 <div className="px-4 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -267,43 +191,7 @@ export function UserProfileDropdown({
                     <motion.div
                       key={item.path}
                       variants={itemVariants}
-                      custom={idx + activityItems.length + 1}
-                      initial="hidden"
-                      animate="visible"
-                    >
-                      <DropdownMenuItem asChild>
-                        <Link
-                          to={item.path}
-                          className={cn(
-                            'flex items-center gap-3 px-4 py-2 text-sm cursor-pointer group',
-                            'transition-colors duration-150',
-                            'hover:bg-accent hover:text-accent-foreground'
-                          )}
-                          onClick={() => setIsOpen(false)}
-                        >
-                          <Icon className="w-4 h-4 flex-shrink-0 group-hover:scale-110 transition-transform" />
-                          <span>{item.label}</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
-
-              <DropdownMenuSeparator className="my-0 bg-border/30" />
-
-              {/* Account Section */}
-              <motion.div className="py-2">
-                <div className="px-4 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  {t('profile.account', 'Account')}
-                </div>
-                {accountItems.map((item, idx) => {
-                  const Icon = item.icon;
-                  return (
-                    <motion.div
-                      key={item.path}
-                      variants={itemVariants}
-                      custom={idx + activityItems.length + socialItems.length + 1}
+                      custom={idx + 1}
                       initial="hidden"
                       animate="visible"
                     >
@@ -331,7 +219,7 @@ export function UserProfileDropdown({
               {/* Logout Section */}
               <motion.div
                 variants={itemVariants}
-                custom={activityItems.length + socialItems.length + accountItems.length + 1}
+                custom={socialItems.length + 1}
                 initial="hidden"
                 animate="visible"
                 className="py-2"

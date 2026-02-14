@@ -250,6 +250,29 @@ export function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* Settings Button */}
+          {user && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    asChild
+                    className="hover:bg-white/5 min-w-[44px] min-h-[44px]"
+                  >
+                    <Link to="/profile" aria-label={t('nav.settings', 'Settings')}>
+                      <Settings className="h-5 w-5" />
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="bg-popover/95 backdrop-blur-xl border-border/50">
+                  <p>{t('nav.settings', 'Settings')}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
           {/* User Menu / Auth */}
           {!loading && (
             user ? (
