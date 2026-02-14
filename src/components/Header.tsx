@@ -261,7 +261,7 @@ export function Header() {
                     asChild
                     className="hover:bg-white/5 min-w-[44px] min-h-[44px]"
                   >
-                    <Link to="/profile" aria-label={t('nav.settings', 'Settings')}>
+                    <Link to="/settings" aria-label={t('nav.settings', 'Settings')}>
                       <Settings className="h-5 w-5" />
                     </Link>
                   </Button>
