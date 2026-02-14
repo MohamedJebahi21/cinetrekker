@@ -1,10 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Track actor match missing-data logging across renders (and StrictMode double-mount)
 let actorMatchesMissingLogged = false;
 import { useQuery } from '@tanstack/react-query';
-import { User, Film, Tv, Bookmark, Globe, Heart, PlayCircle, CalendarDays, Camera, Sparkles } from 'lucide-react';
+import { User, Film, Tv, Bookmark, Globe, Heart, PlayCircle, CalendarDays, Camera, Sparkles, Search } from 'lucide-react';
 import { useUserLists } from '@/contexts/UserListsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFollowedShows, useWatchedEpisodes } from '@/hooks/useFollowedShows';
@@ -12,6 +13,8 @@ import { languages } from '@/i18n';
 import { Link } from 'react-router-dom';
 import { getImageUrl, getPersonDetails, getPopularPeople } from '@/services/tmdb';
 import { profileService, type UserProfile } from '@/services/profile';
+import { cn } from '@/lib/utils';
+import { StatCard } from '@/components/StatCard';
 import {
   Select,
   SelectContent,
@@ -21,13 +24,29 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import SEO from '@/components/SEO';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: 'easeOut' },
+  },
+};
 
 export default function Profile() {
   const { t, i18n } = useTranslation();
