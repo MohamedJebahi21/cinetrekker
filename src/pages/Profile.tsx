@@ -5,29 +5,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Track actor match missing-data logging across renders (and StrictMode double-mount)
 let actorMatchesMissingLogged = false;
 import { useQuery } from '@tanstack/react-query';
-import { User, Film, Tv, Bookmark, Globe, Heart, PlayCircle, CalendarDays, Camera, Sparkles, Search } from 'lucide-react';
+import { User, Film, Tv, Bookmark, Heart, PlayCircle, CalendarDays, Camera, Sparkles, Search } from 'lucide-react';
 import { useUserLists } from '@/contexts/UserListsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFollowedShows, useWatchedEpisodes } from '@/hooks/useFollowedShows';
-import { languages } from '@/i18n';
 import { Link } from 'react-router-dom';
 import { getImageUrl, getPersonDetails, getPopularPeople } from '@/services/tmdb';
 import { profileService, type UserProfile } from '@/services/profile';
 import { cn } from '@/lib/utils';
 import { StatCard } from '@/components/StatCard';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import SEO from '@/components/SEO';
@@ -64,12 +55,6 @@ export default function Profile() {
   const [bio, setBio] = useState<string>('');
   const [dobError, setDobError] = useState<string>('');
   const [favoriteGenres, setFavoriteGenres] = useState<number[]>([]);
-  const [settings, setSettings] = useState({
-    publicProfile: false,
-    showWatchlist: true,
-    showStats: true,
-    allowRecommendations: true,
-  });
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
@@ -106,12 +91,6 @@ export default function Profile() {
             setDisplayName(profile.display_name || '');
             setBio(profile.bio || '');
             setFavoriteGenres(profile.favorite_genres || []);
-            setSettings({
-              publicProfile: profile.is_public,
-              showWatchlist: profile.show_watchlist,
-              showStats: profile.show_stats,
-              allowRecommendations: profile.allow_recommendations,
-            });
           } else {
             // Fallback to localStorage if not in Supabase yet
             const stored = localStorage.getItem(profileKey);
@@ -122,14 +101,12 @@ export default function Profile() {
                 displayName?: string;
                 bio?: string;
                 favoriteGenres?: number[];
-                settings?: typeof settings;
               };
               setProfilePhoto(parsed.photo || null);
               setDateOfBirth(parsed.dob || '');
               setDisplayName(parsed.displayName || '');
               setBio(parsed.bio || '');
               setFavoriteGenres(parsed.favoriteGenres || []);
-              setSettings(parsed.settings || settings);
             }
           }
 
@@ -144,12 +121,6 @@ export default function Profile() {
               setDisplayName(updatedProfile.display_name || '');
               setBio(updatedProfile.bio || '');
               setFavoriteGenres(updatedProfile.favorite_genres || []);
-              setSettings({
-                publicProfile: updatedProfile.is_public,
-                showWatchlist: updatedProfile.show_watchlist,
-                showStats: updatedProfile.show_stats,
-                allowRecommendations: updatedProfile.allow_recommendations,
-              });
             });
           }
         } else {
@@ -167,14 +138,12 @@ export default function Profile() {
             displayName?: string;
             bio?: string;
             favoriteGenres?: number[];
-            settings?: typeof settings;
           };
           setProfilePhoto(parsed.photo || null);
           setDateOfBirth(parsed.dob || '');
           setDisplayName(parsed.displayName || '');
           setBio(parsed.bio || '');
           setFavoriteGenres(parsed.favoriteGenres || []);
-          setSettings(parsed.settings || settings);
         }
       } catch (error) {
         console.error('❌ Error loading profile:', error);
@@ -198,14 +167,12 @@ export default function Profile() {
               displayName?: string;
               bio?: string;
               favoriteGenres?: number[];
-              settings?: typeof settings;
             };
             setProfilePhoto(parsed.photo || null);
             setDateOfBirth(parsed.dob || '');
             setDisplayName(parsed.displayName || '');
             setBio(parsed.bio || '');
             setFavoriteGenres(parsed.favoriteGenres || []);
-            setSettings(parsed.settings || settings);
           } catch (parseError) {
             console.error('❌ Failed to parse localStorage profile:', parseError);
           }
@@ -234,7 +201,7 @@ export default function Profile() {
     if (initialLoadComplete) {
       setHasUnsavedChanges(true);
     }
-  }, [profilePhoto, dateOfBirth, displayName, bio, favoriteGenres, settings, initialLoadComplete]);
+  }, [profilePhoto, dateOfBirth, displayName, bio, favoriteGenres, initialLoadComplete]);
 
   const handleSaveProfile = async () => {
     setIsSaving(true);
@@ -246,7 +213,6 @@ export default function Profile() {
         displayName,
         bio,
         favoriteGenres,
-        settings
       }));
 
       // Save to Supabase if user is authenticated
@@ -257,10 +223,6 @@ export default function Profile() {
           date_of_birth: dateOfBirth || null,
           profile_photo: profilePhoto || null,
           favorite_genres: favoriteGenres,
-          is_public: settings.publicProfile,
-          show_watchlist: settings.showWatchlist,
-          show_stats: settings.showStats,
-          allow_recommendations: settings.allowRecommendations,
         });
       }
 
@@ -338,11 +300,6 @@ export default function Profile() {
     } else {
       setDobError('');
     }
-  };
-
-  const handleLanguageChange = async (lang: string) => {
-    await i18n.changeLanguage(lang);
-    localStorage.setItem('language', lang);
   };
 
   const genres = [
@@ -764,113 +721,6 @@ export default function Profile() {
             </Card>
           ))}
         </div>
-      </section>
-
-      {/* Privacy Settings */}
-      <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">{t('profile.privacySettings', 'Privacy Settings')}</h2>
-        <Card className="glass-card">
-          <CardContent className="pt-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="publicProfile" className="cursor-pointer">
-                  {t('profile.publicProfile', 'Public Profile')}
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  {t('profile.publicProfileDesc', 'Allow others to view your profile')}
-                </p>
-              </div>
-              <Switch
-                id="publicProfile"
-                checked={settings.publicProfile}
-                onCheckedChange={(checked) => 
-                  setSettings(prev => ({ ...prev, publicProfile: checked }))
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="showWatchlist" className="cursor-pointer">
-                  {t('profile.showWatchlist', 'Show Watchlist')}
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  {t('profile.showWatchlistDesc', 'Display your watchlist on your profile')}
-                </p>
-              </div>
-              <Switch
-                id="showWatchlist"
-                checked={settings.showWatchlist}
-                onCheckedChange={(checked) => 
-                  setSettings(prev => ({ ...prev, showWatchlist: checked }))
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="showStats" className="cursor-pointer">
-                  {t('profile.showStats', 'Show Statistics')}
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  {t('profile.showStatsDesc', 'Display your watching statistics')}
-                </p>
-              </div>
-              <Switch
-                id="showStats"
-                checked={settings.showStats}
-                onCheckedChange={(checked) => 
-                  setSettings(prev => ({ ...prev, showStats: checked }))
-                }
-              />
-            </div>
-            
-            {/* Save Button */}
-            <div className="mt-6 flex justify-end gap-2">
-              <Button 
-                onClick={handleSaveProfile}
-                disabled={isSaving || !hasUnsavedChanges}
-                className="gap-2"
-              >
-                {isSaving ? (
-                  <>
-                    <span className="animate-spin">⏳</span>
-                    Saving...
-                  </>
-                ) : (
-                  'Save Changes'
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* Settings */}
-      <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">{t('profile.settings')}</h2>
-        <Card className="glass-card">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Globe className="w-5 h-5 text-muted-foreground" />
-                <span>{t('profile.language')}</span>
-              </div>
-              <Select value={i18n.language} onValueChange={handleLanguageChange}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {languages.map((lang) => (
-                    <SelectItem key={lang.code} value={lang.code}>
-                      {lang.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
       </section>
 
       {/* Actor Matches */}
