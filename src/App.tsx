@@ -38,6 +38,7 @@ const Details = lazy(() => import("./pages/Details"));
 const Person = lazy(() => import("./pages/Person"));
 const Watchlist = lazy(() => import("./pages/Watchlist"));
 const Watched = lazy(() => import("./pages/Watched"));
+const Following = lazy(() => import("./pages/Following"));
 const Recommendations = lazy(() => import("./pages/Recommendations"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Privacy = lazy(() => import("./pages/Privacy"));
@@ -160,6 +161,13 @@ function AnimatedRoutes() {
             <ProtectedRoute>
               <Suspense fallback={<PageSkeleton />}>
                 <Watched />
+              </Suspense>
+            </ProtectedRoute>
+          } />
+          <Route path="/following" element={
+            <ProtectedRoute>
+              <Suspense fallback={<PageSkeleton />}>
+                <Following />
               </Suspense>
             </ProtectedRoute>
           } />
