@@ -22,8 +22,9 @@
         }
       })();
     </script>
+
     <script src="/loading.js"></script>
-    <!-- Primary SEO Tags -->
+
     <title>CineTrekker | Track Movies & TV Shows - Your Personal Watchlist</title>
     <meta name="description" content="Discover, track, and organize your favorite movies and TV shows with CineTrekker. Create watchlists, mark watched, and explore filming locations.">
     <meta name="keywords" content="movie tracker, TV show tracker, watchlist, filming locations, cinema, movies, TV series, film tracking, TMDB">
@@ -31,45 +32,40 @@
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://cinetrekker.vercel.app/" />
     
-    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://cinetrekker.vercel.app/" />
     <meta property="og:title" content="CineTrekker | Track Movies & TV Shows">
     <meta property="og:description" content="Your personal hub for tracking movies, TV shows, and exploring real-world filming locations.">
-    <meta property="og:image" content="https://cinetrekker.vercel.app/og-image.png" />
+    <meta property="og:image" content="https://cinetrekker.vercel.app/ct-icon.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:site_name" content="CineTrekker" />
     <meta property="og:locale" content="en_US" />
 
-    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://cinetrekker.vercel.app/" />
     <meta name="twitter:title" content="CineTrekker | Track Movies & TV Shows">
     <meta name="twitter:description" content="Discover movies, track your watchlist, and explore filming locations.">
-    <meta name="twitter:image" content="https://cinetrekker.vercel.app/og-image.png" />
+    <meta name="twitter:image" content="https://cinetrekker.vercel.app/ct-icon.png" />
     <meta name="twitter:image:alt" content="CineTrekker - Movie Tracking App" />
 
-    <!-- PWA / Mobile -->
     <meta name="theme-color" content="#E50914" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="CineTrekker" />
     
-    <!-- Icons -->
+    <link rel="manifest" href="/manifest.json" />
     <link rel="icon" type="image/png" href="/ct-icon.png?v=4" />
     <link rel="apple-touch-icon" href="/ct-icon.png?v=4" />
 
-    <!-- Preconnect for Performance -->
     <link rel="preconnect" href="https://api.themoviedb.org">
     <link rel="preconnect" href="https://image.tmdb.org">
     <link rel="preconnect" href="https://wzlcekvieglnidfempap.supabase.co">
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
 
-    <!-- Structured Data -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -92,7 +88,6 @@
     }
     </script>
 
-    <!-- Critical CSS (inline for performance) -->
     <style>
       /* Reset & Base Styles */
       *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -225,7 +220,6 @@
 
   <body>
     <div id="root">
-      <!-- App Shell Loading State -->
       <div class="app-shell" id="app-shell">
         <header class="loading-header">
           <div class="loading-logo" aria-hidden="true">CT</div>
