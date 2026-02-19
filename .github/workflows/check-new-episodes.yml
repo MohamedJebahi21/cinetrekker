@@ -12,10 +12,14 @@ jobs:
     
     steps:
       - name: Call Supabase Edge Function
+        # THIS ENV BLOCK IS THE FIX: It maps secrets to variables curl can read
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           response=$(curl -X POST \
-            "${{ secrets.SUPABASE_URL }}/functions/v1/check-new-episodes" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            "${SUPABASE_URL}/functions/v1/check-new-episodes" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
             -H "Content-Type: application/json" \
             -w "\n%{http_code}" \
             -s)
