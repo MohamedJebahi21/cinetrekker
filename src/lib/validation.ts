@@ -16,8 +16,22 @@ export const showNameSchema = z
 export const displayNameSchema = z
   .string()
   .max(100, 'Display name must be less than 100 characters')
+  .regex(/^[a-zA-Z0-9\s_-]*$/, 'Only letters, numbers, spaces, underscores and hyphens allowed')
   .optional()
   .transform((val) => val?.trim() || undefined);
+
+export const bioSchema = z
+  .string()
+  .max(500, 'Bio must be 500 characters or less')
+  .regex(/^[^<>]*$/, 'Bio cannot contain HTML tags')
+  .optional()
+  .transform((val) => val?.trim() || undefined);
+
+export const searchQuerySchema = z
+  .string()
+  .min(1, 'Search query required')
+  .max(200, 'Search query too long')
+  .regex(/^[a-zA-Z0-9\s\-'.,:!?()&]*$/, 'Invalid characters in search');
 
 export const episodeNameSchema = z
   .string()
@@ -61,7 +75,28 @@ export function validateDisplayName(name: string | undefined): string | undefine
     return result.data;
   }
   console.warn('Display name validation failed:', result.error.message);
-  return name?.slice(0, 100).trim();
+  // Sanitize on failure - remove special chars and limit length
+  return name?.replace(/[^a-zA-Z0-9\s_-]/g, '').slice(0, 100).trim();
+}
+
+export function validateBio(bio: string | undefined): string | undefined {
+  const result = bioSchema.safeParse(bio);
+  if (result.success) {
+    return result.data;
+  }
+  console.warn('Bio validation failed:', result.error.message);
+  // Sanitize on failure - remove HTML tags and limit length
+  return bio?.replace(/[<>]/g, '').slice(0, 500).trim();
+}
+
+export function validateSearchQuery(query: string): string {
+  const result = searchQuerySchema.safeParse(query);
+  if (result.success) {
+    return result.data;
+  }
+  console.warn('Search query validation failed:', result.error.message);
+  // Sanitize on failure - remove special chars and limit length
+  return query.replace(/[^a-zA-Z0-9\s\-'.,:!?()&]/g, '').slice(0, 200).trim();
 }
 
 export function validateEpisodeName(name: string | undefined): string | undefined {

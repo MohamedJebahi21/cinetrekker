@@ -29,6 +29,7 @@ import { useFollowedShows, useWatchedEpisodes } from '@/hooks/useFollowedShows';
 import { Link } from 'react-router-dom';
 import { getImageUrl, getPersonDetails, getPopularPeople } from '@/services/tmdb';
 import { profileService, type UserProfile } from '@/services/profile';
+import { validateNote, validateDisplayName, validateBio } from '@/lib/validation';
 import { cn } from '@/lib/utils';
 import { StatCard } from '@/components/StatCard';
 import { Card, CardContent } from '@/components/ui/card';
@@ -223,20 +224,32 @@ export default function Profile() {
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
+      // Validate inputs before saving
+      const validatedDisplayName = validateDisplayName(displayName);
+      const validatedBio = validateBio(bio);
+      
+      // Update state with validated values
+      if (validatedDisplayName !== displayName) {
+        setDisplayName(validatedDisplayName || '');
+      }
+      if (validatedBio !== bio) {
+        setBio(validatedBio || '');
+      }
+      
       // Save to localStorage (offline support)
       localStorage.setItem(profileKey, JSON.stringify({ 
         photo: profilePhoto, 
         dob: dateOfBirth,
-        displayName,
-        bio,
+        displayName: validatedDisplayName,
+        bio: validatedBio,
         favoriteGenres,
       }));
 
       // Save to Supabase if user is authenticated
       if (user?.id) {
         await profileService.saveProfile(user.id, {
-          display_name: displayName || null,
-          bio: bio || null,
+          display_name: validatedDisplayName || null,
+          bio: validatedBio || null,
           date_of_birth: dateOfBirth || null,
           profile_photo: profilePhoto || null,
           favorite_genres: favoriteGenres,
@@ -267,6 +280,17 @@ export default function Profile() {
   const handlePhotoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // Validate MIME type
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Only JPEG, PNG, and WebP images are allowed.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {

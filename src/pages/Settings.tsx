@@ -49,6 +49,22 @@ export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // Auth guard - require authentication
+  if (!user) {
+    return (
+      <div className="page-container pt-20">
+        <Card className="max-w-md mx-auto mt-8">
+          <CardHeader>
+            <CardTitle>Authentication Required</CardTitle>
+            <CardDescription>
+              Please sign in to access settings
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
   const profileKey = useMemo(() => `cinetrekker_profile_${user?.id || 'guest'}`, [user?.id]);
   
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);

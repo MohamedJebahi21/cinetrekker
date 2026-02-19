@@ -58,10 +58,11 @@ export interface PasswordValidationResult {
 export function validatePassword(password: string): PasswordValidationResult {
   const errors: string[] = [];
   let strengthScore = 0;
+  let failedChecks = 0;
 
   // Check minimum length
   if (password.length < PASSWORD_PATTERNS.minLength) {
-    errors.push(`Password must be at least ${PASSWORD_PATTERNS.minLength} characters`);
+    failedChecks++;
   } else {
     strengthScore++;
     // Bonus for longer passwords
@@ -71,30 +72,37 @@ export function validatePassword(password: string): PasswordValidationResult {
 
   // Check for uppercase
   if (!PASSWORD_PATTERNS.hasUppercase.test(password)) {
-    errors.push('Password must contain at least one uppercase letter');
+    failedChecks++;
   } else {
     strengthScore++;
   }
 
   // Check for lowercase
   if (!PASSWORD_PATTERNS.hasLowercase.test(password)) {
-    errors.push('Password must contain at least one lowercase letter');
+    failedChecks++;
   } else {
     strengthScore++;
   }
 
   // Check for number
   if (!PASSWORD_PATTERNS.hasNumber.test(password)) {
-    errors.push('Password must contain at least one number');
+    failedChecks++;
   } else {
     strengthScore++;
   }
 
   // Check for special character
   if (!PASSWORD_PATTERNS.hasSpecial.test(password)) {
-    errors.push('Password must contain at least one special character (!@#$%^&*...)');
+    failedChecks++;
   } else {
     strengthScore++;
+  }
+
+  // Generic error messages to prevent enumeration attacks
+  if (failedChecks > 2) {
+    errors.push('Password does not meet minimum security requirements');
+  } else if (failedChecks > 0) {
+    errors.push('Password strength insufficient. Use a mix of uppercase, lowercase, numbers, and special characters');
   }
 
   // Check against common passwords (case-insensitive)

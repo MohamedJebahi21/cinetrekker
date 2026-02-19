@@ -15,7 +15,7 @@ export const useCollections = () => {
       try {
         const { data, error } = await supabase
           .from('collections')
-          .select('*')
+          .select('id, name, description, created_at, updated_at, user_id, items')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 

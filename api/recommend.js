@@ -18,12 +18,12 @@ module.exports = async (req, res) => {
   const TMDB_KEY = process.env.TMDB_API_KEY;
 
   if (!OPENAI_KEY) {
-    // Signal to client that no backend AI key is available so it can fallback to static file
-    return res.status(404).json({ error: 'No AI backend configured' });
+    // Generic error to prevent enumeration of which services are configured
+    return res.status(503).json({ error: 'Service temporarily unavailable' });
   }
 
   if (!TMDB_KEY) {
-    return res.status(500).json({ error: 'TMDB API key not configured on server' });
+    return res.status(503).json({ error: 'Service temporarily unavailable' });
   }
 
   try {

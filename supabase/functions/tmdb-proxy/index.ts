@@ -1,13 +1,18 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
+// Environment-based CORS configuration
+const isDev = Deno.env.get('ENVIRONMENT') !== 'production';
+
 const ALLOWED_ORIGINS = [
   'https://cinetrekker.vercel.app',
   'https://www.cinetrekker.vercel.app',
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://localhost:8080',
-  'http://localhost:4173',
+  ...(isDev ? [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:8080',
+    'http://localhost:4173',
+  ] : [])
 ];
 
 const VERCEL_PREVIEW_PATTERN = /^https:\/\/cinetrekker-[a-z0-9-]+\.vercel\.app$/;

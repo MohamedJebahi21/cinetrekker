@@ -12,7 +12,15 @@ dist
 dist-ssr
 *.local
 
-# Supabase Edge Functions secrets
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# Supabase
+.supabase
 supabase/functions/.env
 
 # Editor directories and files
@@ -22,6 +30,6 @@ supabase/functions/.env
 .DS_Store
 *.suo
 *.ntvs*
-*.njsproj
+*.njsproj*
 *.sln
 *.sw?
