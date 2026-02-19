@@ -8,6 +8,15 @@ const fetch = globalThis.fetch;
 
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 
+// Validate required environment variables on module load
+const REQUIRED_ENV_VARS = ['OPENAI_API_KEY', 'TMDB_API_KEY'];
+const missingVars = REQUIRED_ENV_VARS.filter(key => !process.env[key]);
+
+if (missingVars.length > 0 && process.env.NODE_ENV === 'production') {
+  console.error(`❌ Missing required environment variables: ${missingVars.join(', ')}`);
+  console.error('Configure these in Vercel Dashboard → Settings → Environment Variables');
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
@@ -17,12 +26,8 @@ module.exports = async (req, res) => {
   const OPENAI_KEY = process.env.OPENAI_API_KEY;
   const TMDB_KEY = process.env.TMDB_API_KEY;
 
-  if (!OPENAI_KEY) {
-    // Generic error to prevent enumeration of which services are configured
-    return res.status(503).json({ error: 'Service temporarily unavailable' });
-  }
-
-  if (!TMDB_KEY) {
+  // Generic error to prevent enumeration of which services are configured
+  if (!OPENAI_KEY || !TMDB_KEY) {
     return res.status(503).json({ error: 'Service temporarily unavailable' });
   }
 

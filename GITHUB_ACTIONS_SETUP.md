@@ -14,14 +14,14 @@ The workflow file (`.github/workflows/check-new-episodes.yml`) is already commit
 
 1. Go to your repository on GitHub:
    ```
-   https://github.com/MohamedJebahi21/cinetrekker/settings/secrets/actions
+   https://github.com/YOUR_USERNAME/YOUR_REPO/settings/secrets/actions
    ```
 
 2. Click **"New repository secret"**
 
 3. Add **SUPABASE_URL**:
    - Name: `SUPABASE_URL`
-   - Value: `https://wzlcekvieglnidfempap.supabase.co`
+   - Value: `https://YOUR_PROJECT.supabase.co` (from Supabase Dashboard → Settings → API)
    - Click **Add secret**
 
 4. Add **SUPABASE_ANON_KEY**:

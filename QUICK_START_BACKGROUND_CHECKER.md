@@ -79,9 +79,9 @@ USING (auth.role() = 'service_role');
 **Option A: GitHub Actions (Free & Automated)**
 
 1. Your GitHub repo already has the workflow file!
-2. Go to: https://github.com/MohamedJebahi21/cinetrekker/settings/secrets/actions
+2. Go to: https://github.com/YOUR_USERNAME/YOUR_REPO/settings/secrets/actions
 3. Add these secrets:
-   - `SUPABASE_URL`: `https://wzlcekvieglnidfempap.supabase.co`
+   - `SUPABASE_URL`: `https://YOUR_PROJECT.supabase.co` (from Supabase Dashboard)
    - `SUPABASE_ANON_KEY`: (from Supabase Dashboard → Settings → API)
 4. Done! It will run automatically every day at 3 AM UTC
 
@@ -96,7 +96,7 @@ USING (auth.role() = 'service_role');
 1. Go to [cron-job.org](https://cron-job.org)
 2. Create account (free)
 3. Add new cron job:
-   - **URL**: `https://wzlcekvieglnidfempap.supabase.co/functions/v1/check-new-episodes`
+   - **URL**: `https://YOUR_PROJECT.supabase.co/functions/v1/check-new-episodes`
    - **Schedule**: Daily at 3:00 AM
    - **Method**: POST
    - **Headers**: 

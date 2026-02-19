@@ -2,7 +2,9 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 // Environment-based CORS configuration
-const isDev = Deno.env.get('ENVIRONMENT') !== 'production';
+// Only allow localhost if NOT in production AND NOT deployed
+const isDev = Deno.env.get('ENVIRONMENT') !== 'production' && 
+              Deno.env.get('DENO_DEPLOYMENT_ID') === undefined;
 
 const ALLOWED_ORIGINS = [
   'https://cinetrekker.vercel.app',
