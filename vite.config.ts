@@ -7,18 +7,19 @@ import type { Plugin } from 'vite';
 const cspPlugin = (): Plugin => {
   const policy = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' 'sha256-L0E2mSS27KxsHfOa0MiC8gBkUaCQNYpiRGh6VJxueVc=' https://vercel.live https://va.vercel-scripts.com",
-    "script-src-elem 'self' 'unsafe-inline' 'sha256-L0E2mSS27KxsHfOa0MiC8gBkUaCQNYpiRGh6VJxueVc=' https://vercel.live https://va.vercel-scripts.com",
-    "img-src 'self' blob: data: https://image.tmdb.org https://www.themoviedb.org https://*.supabase.co",
+    "script-src 'self' 'wasm-unsafe-eval' https://vercel.live https://va.vercel-scripts.com",
+    "script-src-elem 'self' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' data: https://fonts.gstatic.com https://r2cdn.perplexity.ai",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.themoviedb.org https://va.vercel-scripts.com",
+    "img-src 'self' blob: data: https: https://image.tmdb.org https://www.themoviedb.org https://*.supabase.co",
     "media-src 'self' blob: https:",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.themoviedb.org https://vercel.live https://va.vercel-scripts.com wss://*.vercel.com",
     "frame-src 'self' https://www.youtube.com https://player.vimeo.com https://vercel.live",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
     "upgrade-insecure-requests",
+    "block-all-mixed-content",
   ].join('; ');
 
   return {
@@ -37,7 +38,8 @@ const cspPlugin = (): Plugin => {
         res.setHeader('X-Frame-Options', 'DENY');
         res.setHeader('X-XSS-Protection', '1; mode=block');
         res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-        res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+        res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()');
+        res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
         next();
       });
     },

@@ -114,19 +114,165 @@ In Supabase Dashboard → Authentication → Settings → Security:
 1. Enable "Leaked Password Protection"
 2. This checks passwords against HaveIBeenPwned database
 
-## Security Recommendations
+## XSS Protection & Content Sanitization
 
-1. **Use Google OAuth** - Preferred for end users
-2. **Keep dependencies updated** - Run `npm audit` regularly
-3. **Monitor auth logs** - Check for suspicious login patterns
-4. **Enable 2FA** - When Supabase supports it for your plan
+### Defense-in-Depth XSS Prevention
+
+**Files:** `src/lib/sanitize.ts`, `src/pages/Profile.tsx`
+
+React automatically escapes all string content by default, preventing most XSS attacks. Additionally:
+
+1. **DOMPurify Integration**
+   - Package: `isomorphic-dompurify`
+   - Provides defense-in-depth sanitization for user-generated content
+   - Strips malicious HTML while preserving safe formatting
+
+2. **Sanitization Utilities**
+   - `sanitizeHTML()` - Allows safe HTML tags (b, i, em, strong, u, p, br)
+   - `stripHTML()` - Removes all HTML tags (for text-only fields like bios)
+   - `sanitizeURL()` - Prevents javascript: and data: URI attacks
+   - `sanitizeEmail()` - Validates and sanitizes email addresses
+   - `sanitizeDisplayName()` - Sanitizes user display names
+   - `sanitizeSearchQuery()` - Prevents injection in search queries
+   - `sanitizeJSON()` - Recursively sanitizes parsed JSON objects
+
+3. **User-Generated Content Handling**
+   - User bios: `stripHTML()` removes all HTML
+   - User notes: Limited to 5000 characters via Zod schema
+   - Search queries: Limited to 200 characters via custom validation
+   - Display names: Limited to 100 characters, HTML stripped
+
+4. **TMDB Data Handling**
+   - Movie titles, descriptions: Rendered as plain text (auto-escaped by React)
+   - No user-facing content from TMDB is parsed as HTML
+   - All TMDB API responses are validated against TypeScript types
+
+### Content Security Policy (CSP)
+
+**Files:** `vite.config.ts`, `/vercel.json`
+
+Comprehensive CSP prevents inline script execution and limits resource loading:
+
+```
+default-src 'self'
+script-src 'self' 'wasm-unsafe-eval' https://vercel.live https://va.vercel-scripts.com
+style-src 'self' 'unsafe-inline' https://fonts.googleapis.com
+font-src 'self' data: https://fonts.gstatic.com
+img-src 'self' data: blob: https: https://image.tmdb.org https://www.themoviedb.org
+connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.themoviedb.org https://vercel.live
+frame-src 'self' https://www.youtube.com https://player.vimeo.com https://vercel.live
+object-src 'none'
+base-uri 'self'
+form-action 'self'
+upgrade-insecure-requests
+block-all-mixed-content
+```
+
+## Infrastructure Hardening
+
+### Production Security Headers (Vercel)
+
+**File:** `/vercel.json`
+
+All responses include security headers enforcing industry best practices:
+
+| Header | Value | Purpose |
+|--------|-------|---------|
+| **X-Content-Type-Options** | `nosniff` | Prevents MIME type sniffing attacks |
+| **X-Frame-Options** | `DENY` | Blocks framing (prevents clickjacking) |
+| **Strict-Transport-Security** | `max-age=31536000; includeSubDomains; preload` | Forces HTTPS for 1 year (365 days) |
+| **X-XSS-Protection** | `1; mode=block` | Legacy XSS filter (modern browsers use CSP) |
+| **Referrer-Policy** | `strict-origin-when-cross-origin` | Limits referrer data to trusted origins |
+| **Permissions-Policy** | `geolocation=(), camera=(), microphone=(), ...` | Disables unnecessary device permissions |
+
+### Development Server Headers
+
+**File:** `vite.config.ts`
+
+Development server applies the same security headers as production to catch issues early:
+- Same CSP policy as vercel.json
+- All production headers enabled
+- HTTP middleware enforces headers on every response
+
+### API Endpoint Hardening
+
+**File:** `/vercel.json` (API routes section)
+
+API endpoints receive additional hardening:
+- `Cache-Control: no-store, no-cache, must-revalidate` - Prevents caching sensitive data
+- Same security headers as general routes
+- Stricter CORS validation in Supabase Edge Functions
+
+### Static Asset Caching
+
+**File:** `/vercel.json` (static routes section)
+
+Cache-friendly static assets (images, fonts, CSS):
+- `Cache-Control: public, max-age=31536000, immutable`
+- Browser caches for 1 year after first load
+- Only cache verified static files
+
+## Rate Limiting
+
+### Client-Side Rate Limiting
+
+**File:** `src/lib/reviewRateLimiter.ts`
+
+Prevents abuse and improves UX by throttling user actions:
+
+| Action | Rate Limit | Purpose |
+|--------|-----------|---------|
+| Review Submission | 5 per minute | Prevents spam reviews |
+| Profile Updates | 10 per minute | Prevents profile flooding |
+| Search Queries | 30 per minute | Prevents query spam |
+
+**Implementation:**
+- Token bucket algorithm with configurable intervals
+- Client-side only (server has additional protection)
+- Prevents rapid-fire requests from frustrating users
+- Syncs across browser tabs via `storageListener`
+
+### Server-Side Rate Limiting (Recommended)
+
+For production, implement server-side rate limiting:
+- Supabase Edge Functions with Deno rate_limit middleware
+- API Gateway throttling on Vercel
+- IP-based rate limiting for anonymous users
+
+## Environment Variable Security
+
+### Client-Side Variables (Public)
+
+**File:** `src/lib/envValidation.ts`
+
+Client-side environment variables (prefixed with `VITE_`):
+- `VITE_SUPABASE_URL` - Public Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` - Public anonymous key (read-only via RLS)
+
+These are intentionally public and visible in the browser. They do not grant privileged access.
+
+### Server-Side Variables (Private)
+
+Stored in Vercel Environment Variables (never exposed to browser):
+- `OPENAI_API_KEY` - For backend AI recommendations
+- `TMDB_API_KEY` - For backend TMDB queries
+- `SUPABASE_SERVICE_ROLE_KEY` - For admin operations (Vercel Edge Functions only)
+
+### Validation Pipeline
+
+1. **Build Time:** Environment variables validated by `envValidation.ts`
+2. **Module Load:** Client app validates required vars on startup
+3. **Runtime:** Missing vars throw helpful error messages with setup instructions
+4. **Production:** Vercel Dashboard enforces required env vars before deployment
 
 ## Changelog
 
-- **2024-01-21:** Initial security hardening
-  - Added strong password validation
-  - Implemented protected routes with email verification
-  - Added Google OAuth
-  - Disabled auto-confirm email
-  - Disabled anonymous signups
-  - Documented RLS policies
+- **2026-02-19:** Infrastructure hardening iteration 2
+  - Created `/vercel.json` with comprehensive security headers
+  - Enhanced CSP policy in vite.config.ts with block-all-mixed-content
+  - Added HSTS (Strict-Transport-Security) header with preload flag
+  - Installed DOMPurify for defense-in-depth XSS protection
+  - Created `src/lib/sanitize.ts` with 10+ sanitization utilities
+  - Documented infrastructure hardening in this file
+  - Added Permissions-Policy for device restrictions
+  - Structured API and static asset caching strategies

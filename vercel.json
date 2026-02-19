@@ -1,4 +1,10 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "env": {
+    "VITE_SUPABASE_URL": "@vite_supabase_url",
+    "VITE_SUPABASE_ANON_KEY": "@vite_supabase_anon_key"
+  },
   "rewrites": [
     {
       "source": "/assets/(.*)",
@@ -14,9 +20,38 @@
       "source": "/(.*)",
       "headers": [
         {
-          "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' 'unsafe-hashes' https://vercel.live https://*.vercel-scripts.com https://*.vercel.com; script-src-elem 'self' 'unsafe-inline' https://vercel.live https://*.vercel-scripts.com https://*.vercel.com; img-src 'self' blob: data: https://image.tmdb.org https://www.themoviedb.org; style-src 'self' 'unsafe-inline' 'unsafe-hashes' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com https://r2cdn.perplexity.ai; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.themoviedb.org https://*.vercel-scripts.com https://vitals.vercel-insights.com; media-src 'self' blob:; frame-src 'self' https://www.youtube.com https://player.vimeo.com https://vercel.live https://*.vercel.com; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
         },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains; preload"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://vercel.live https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https: https://image.tmdb.org https://www.themoviedb.org; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.themoviedb.org https://vercel.live https://va.vercel-scripts.com wss://*.vercel.com; media-src 'self' blob: https:; frame-src 'self' https://www.youtube.com https://player.vimeo.com https://vercel.live; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests; block-all-mixed-content"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
         {
           "key": "X-Content-Type-Options",
           "value": "nosniff"
@@ -26,12 +61,17 @@
           "value": "DENY"
         },
         {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        },
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate, proxy-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/static/(.*)",
+      "headers": [
         {
-          "key": "Permissions-Policy",
-          "value": "camera=(), microphone=(), geolocation=()"
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
         }
       ]
     }
