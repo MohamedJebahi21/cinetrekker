@@ -18,7 +18,6 @@ const cspPlugin = (): Plugin => {
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "frame-ancestors 'none'", // Prevent clickjacking
     "upgrade-insecure-requests",
   ].join('; ');
 
