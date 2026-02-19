@@ -12,13 +12,13 @@ jobs:
     
     steps:
       - name: Call Supabase Edge Function
-        # THIS ENV BLOCK IS THE FIX: It maps secrets to variables curl can read
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
+          # We use /dynamic-worker because that is your function's URL Slug
           response=$(curl -X POST \
-            "${SUPABASE_URL}/functions/v1/check-new-episodes" \
+            "${SUPABASE_URL}/functions/v1/dynamic-worker" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
             -H "Content-Type: application/json" \
             -w "\n%{http_code}" \
