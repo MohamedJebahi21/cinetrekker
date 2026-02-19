@@ -10,7 +10,7 @@ export default function SearchOverlay() {
   const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const debounced = useDebounce(query, 300);
+  const debounced = useDebounce(query, 500); // 500ms debounce for bot protection
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const language = i18n.language;

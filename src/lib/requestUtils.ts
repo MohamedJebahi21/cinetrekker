@@ -42,10 +42,10 @@ import { useState, useEffect } from 'react';
 /**
  * Debounce hook for search queries
  * @param value The value to debounce
- * @param delay The debounce delay in milliseconds (default 300ms)
+ * @param delay The debounce delay in milliseconds (default 500ms for bot protection)
  * @returns The debounced value
  */
-export function useDebounce<T>(value: T, delay: number = 300): T {
+export function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
   useEffect(() => {

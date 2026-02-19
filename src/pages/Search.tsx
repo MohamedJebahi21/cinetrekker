@@ -84,7 +84,7 @@ export default function Search() {
   const initialStreaming = searchParams.get('streaming') || '';
   
   const [query, setQuery] = useState(initialQuery);
-  const debouncedQuery = useDebounce(query, 300);
+  const debouncedQuery = useDebounce(query, 500); // Debounce search to prevent spam
   const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaType>(initialType);
   const [genreFilter, setGenreFilter] = useState<string>(initialGenre);
   const [yearFilter, setYearFilter] = useState<string>(initialYear);

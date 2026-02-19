@@ -11,6 +11,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { validatePassword, PasswordValidationResult } from '@/lib/passwordValidation';
+import { sanitizeAuthError, logAuthFailure } from '@/lib/authErrorHandler'; // NEW
 import { supabase } from '@/integrations/supabase/client';
 import SEO from '@/components/SEO';
 
@@ -68,30 +69,48 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
     e.preventDefault();
     setLoading(true);
     
-    const { error } = await signIn(email, password);
-    
-    if (error) {
+    try {
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        // Sanitize error message to prevent account enumeration
+        const sanitized = sanitizeAuthError(error);
+        
+        // Log security event (never shown to user)
+        logAuthFailure(email, sanitized.type);
+        
+        // Show generic message to user
+        toast({
+          title: t('common.error'),
+          description: sanitized.userMessage, // ✅ Generic message
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: t('auth.signIn'),
+          description: 'Welcome back!',
+        });
+        navigate(from, { replace: true });
+      }
+    } catch (unexpectedError) {
+      console.error('[Auth] Unexpected sign-in error:', unexpectedError);
       toast({
         title: t('common.error'),
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
-    } else {
-      toast({
-        title: t('auth.signIn'),
-        description: 'Welcome back!',
-      });
-      navigate(from, { replace: true });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate password before attempting signup
+    // Validate password BEFORE submission (client-side, ok to show)
     const validation = validatePassword(password);
     if (!validation.isValid) {
+      // Password validation is CLIENT-SIDE, ok to show detailed errors
       toast({
         title: 'Password Requirements Not Met',
         description: validation.errors[0],
@@ -102,22 +121,39 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
 
     setLoading(true);
     
-    const { error } = await signUp(email, password);
-    
-    if (error) {
+    try {
+      const { error } = await signUp(email, password);
+      
+      if (error) {
+        // Sanitize error message to prevent account enumeration
+        const sanitized = sanitizeAuthError(error);
+        
+        // Log security event
+        logAuthFailure(email, sanitized.type);
+        
+        // Show generic message to user
+        toast({
+          title: t('common.error'),
+          description: sanitized.userMessage, // ✅ Generic message
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: t('auth.signUp'),
+          description: t('auth.welcome', 'Your account is ready. Welcome aboard!'),
+        });
+        navigate(from, { replace: true });
+      }
+    } catch (unexpectedError) {
+      console.error('[Auth] Unexpected sign-up error:', unexpectedError);
       toast({
         title: t('common.error'),
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
-    } else {
-      toast({
-        title: t('auth.signUp'),
-        description: t('auth.welcome', 'Your account is ready. Welcome aboard!'),
-      });
-      navigate(from, { replace: true });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleGoogleSignIn = async () => {
@@ -134,14 +170,21 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
         },
       });
       
-      if (error) throw error;
-      
-      // The redirect will happen automatically
-      // Keep loading state active during redirect
-    } catch (error: any) {
+      if (error) {
+        const sanitized = sanitizeAuthError(error);
+        toast({
+          title: t('common.error'),
+          description: sanitized.userMessage, // ✅ Generic message
+          variant: 'destructive',
+        });
+        setLoading(false);
+      }
+      // OAuth redirect will happen automatically if no error
+    } catch (unexpectedError) {
+      console.error('[Auth] OAuth error:', unexpectedError);
       toast({
         title: t('common.error'),
-        description: error.message || 'Failed to sign in with Google',
+        description: 'Sign-in failed. Please try again.',
         variant: 'destructive',
       });
       setLoading(false);

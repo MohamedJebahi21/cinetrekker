@@ -13,12 +13,13 @@ const canceller = new RequestCanceller();
 type SearchType = 'all' | 'movie' | 'tv' | 'person';
 
 interface UseSearchOptions {
-  debounceMs?: number;
+  debounceMs?: number; // Recommended: 500ms for production (bot protection)
   enabled?: boolean;
 }
 
 /**
  * Hook for searching with debounce and request cancellation
+ * Default debounce: 500ms (increased from 300ms for better bot protection)
  */
 export function useSearch(
   query: string,
@@ -27,7 +28,7 @@ export function useSearch(
   language: string = 'en',
   options: UseSearchOptions = {}
 ) {
-  const { debounceMs = 300, enabled = true } = options;
+  const { debounceMs = 500, enabled = true } = options;
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [debouncedQuery, setDebouncedQuery] = useState(query);
 
