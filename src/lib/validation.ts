@@ -50,6 +50,26 @@ export const ratingSchema = z
   .max(10, 'Rating must be at most 10')
   .optional();
 
+// Review/Rating schema for user-generated content
+export const reviewSchema = z.object({
+  rating: z
+    .number()
+    .int('Rating must be a whole number')
+    .min(1, 'Rating must be at least 1')
+    .max(10, 'Rating must be at most 10'),
+  
+  comment: z
+    .string()
+    .max(500, 'Review must be 500 characters or less')
+    .regex(/^[^<>]*$/, 'Review cannot contain HTML tags')
+    .transform((val) => val.trim())
+    .optional(),
+  
+  spoilerWarning: z.boolean().optional().default(false),
+});
+
+export type ReviewInput = z.infer<typeof reviewSchema>;
+
 // Validation functions
 export function validateNote(note: string | undefined): string | undefined {
   const result = userNoteSchema.safeParse(note);
@@ -116,4 +136,46 @@ export function validateRating(rating: number | undefined): number | undefined {
   console.warn('Rating validation failed:', result.error.message);
   if (rating === undefined) return undefined;
   return Math.max(0, Math.min(10, Math.round(rating)));
+}
+
+/**
+ * Validates a user review/rating
+ * @throws {Error} If validation fails
+ */
+export function validateReview(input: unknown): ReviewInput {
+  const result = reviewSchema.safeParse(input);
+  if (!result.success) {
+    console.warn('Review validation failed:', result.error.message);
+    throw new Error(result.error.errors[0].message);
+  }
+  return result.data;
+}
+
+/**
+ * Enhanced bio sanitization with HTML tag stripping
+ * Provides defense-in-depth even though React auto-escapes
+ */
+export function sanitizeBio(bio: string | undefined): string | undefined {
+  if (!bio) return undefined;
+  
+  const result = bioSchema.safeParse(bio);
+  
+  if (!result.success) {
+    console.warn('Bio validation failed:', result.error.message);
+    // Fallback: aggressively strip HTML and limit length
+    return bio.replace(/[<>]/g, '').slice(0, 500).trim();
+  }
+  
+  // Additional sanitization: remove any potential HTML entities
+  const sanitized = result.data;
+  if (!sanitized) return undefined;
+  
+  // Strip common HTML entities and tags
+  return sanitized
+    .replace(/&lt;/g, '')
+    .replace(/&gt;/g, '')
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&amp;/g, '&')
+    .trim();
 }

@@ -29,7 +29,8 @@ import { useFollowedShows, useWatchedEpisodes } from '@/hooks/useFollowedShows';
 import { Link } from 'react-router-dom';
 import { getImageUrl, getPersonDetails, getPopularPeople } from '@/services/tmdb';
 import { profileService, type UserProfile } from '@/services/profile';
-import { validateNote, validateDisplayName, validateBio } from '@/lib/validation';
+import { validateNote, validateDisplayName, sanitizeBio } from '@/lib/validation';
+import { profileUpdateRateLimiter } from '@/lib/reviewRateLimiter';
 import { cn } from '@/lib/utils';
 import { StatCard } from '@/components/StatCard';
 import { Card, CardContent } from '@/components/ui/card';
@@ -224,16 +225,30 @@ export default function Profile() {
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
-      // Validate inputs before saving
+      // Rate limiting check
+      if (user?.id) {
+        const rateLimitCheck = profileUpdateRateLimiter.canUpdateProfile(user.id);
+        if (!rateLimitCheck.allowed) {
+          toast({
+            title: "Too many updates",
+            description: `Please wait ${rateLimitCheck.retryAfter} seconds before updating again.`,
+            variant: "destructive",
+          });
+          setIsSaving(false);
+          return;
+        }
+      }
+      
+      // Validate and sanitize inputs before saving
       const validatedDisplayName = validateDisplayName(displayName);
-      const validatedBio = validateBio(bio);
+      const sanitizedBio = sanitizeBio(bio);
       
       // Update state with validated values
       if (validatedDisplayName !== displayName) {
         setDisplayName(validatedDisplayName || '');
       }
-      if (validatedBio !== bio) {
-        setBio(validatedBio || '');
+      if (sanitizedBio !== bio) {
+        setBio(sanitizedBio || '');
       }
       
       // Save to localStorage (offline support)
@@ -241,7 +256,7 @@ export default function Profile() {
         photo: profilePhoto, 
         dob: dateOfBirth,
         displayName: validatedDisplayName,
-        bio: validatedBio,
+        bio: sanitizedBio,
         favoriteGenres,
       }));
 
@@ -249,7 +264,7 @@ export default function Profile() {
       if (user?.id) {
         await profileService.saveProfile(user.id, {
           display_name: validatedDisplayName || null,
-          bio: validatedBio || null,
+          bio: sanitizedBio || null,
           date_of_birth: dateOfBirth || null,
           profile_photo: profilePhoto || null,
           favorite_genres: favoriteGenres,
