@@ -42,6 +42,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import SEO from '@/components/SEO';
 import { StickySaveBar } from '@/components/StickySaveBar';
+import { EmptyState } from '@/components/EmptyState';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -748,23 +749,16 @@ export default function Profile() {
         </h2>
         <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm">
           <CardContent className="pt-6">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {/* Empty Poster Slots */}
-              {[...Array(4)].map((_, i) => (
-                <div
-                  key={i}
-                  className="aspect-[2/3] rounded-lg border-2 border-dashed border-neutral-700 bg-neutral-800/30 flex flex-col items-center justify-center gap-2 hover:border-red-500/50 hover:bg-neutral-800/50 transition-all cursor-pointer group"
-                >
-                  <Plus className="w-8 h-8 text-neutral-600 group-hover:text-red-500 transition-colors" />
-                  <span className="text-xs text-neutral-500 group-hover:text-neutral-400 transition-colors">
-                    {t('profile.addFavorites')}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <p className="text-sm text-neutral-500 mt-4 text-center">
-              {t('profile.noFavoritesYet')} <span className="text-neutral-400">{t('profile.noFavoritesDesc')}</span>
-            </p>
+            <EmptyState
+              icon={Heart}
+              title={t('profile.noFavoritesYet')}
+              description={t('profile.noFavoritesDesc')}
+              actionLabel={t('profile.addFavorites')}
+              actionLink="/search"
+              variant="muted"
+              containerSize="md"
+              className="py-8"
+            />
           </CardContent>
         </Card>
       </motion.section>
@@ -776,20 +770,18 @@ export default function Profile() {
           {t('profile.recentActivity')}
         </h2>
         <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm">
-          <CardContent className="pt-12 pb-12 flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 rounded-full bg-neutral-800/50 flex items-center justify-center mb-4">
-              <Clapperboard className="w-8 h-8 text-neutral-600" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">{t('profile.noRecentActivity')}</h3>
-            <p className="text-neutral-400 mb-6 max-w-md">
-              {t('profile.noActivityDesc')}
-            </p>
-            <Link to="/trending">
-              <Button className="gap-2 bg-red-600 hover:bg-red-700">
-                <TrendingUp className="w-4 h-4" />
-                {t('profile.browseTrending')}
-              </Button>
-            </Link>
+          <CardContent className="pt-6">
+            <EmptyState
+              icon={Clapperboard}
+              title={t('profile.noRecentActivity')}
+              description={t('profile.noActivityDesc')}
+              actionLabel={t('profile.browseTrending')}
+              actionLink="/trending"
+              actionIcon={TrendingUp}
+              variant="default"
+              containerSize="md"
+              className="py-8"
+            />
           </CardContent>
         </Card>
       </motion.section>
