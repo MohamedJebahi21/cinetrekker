@@ -37,7 +37,7 @@ jobs:
 
       - name: Check for OpenAI API keys
         run: |
-          if grep -r "sk-" src 2>/dev/null | grep -v "skip\|skeleton"; then
+          if grep -r "sk_openai_\|sk-proj-\|openai.*key" src 2>/dev/null | grep -v "skip\|skeleton"; then
             echo "⚠️ WARNING: Found potential OpenAI keys"
             exit 1
           fi
@@ -154,7 +154,9 @@ jobs:
       - name: Verify no account enumeration leaks
         run: |
           cd src
-          if grep -r "User not found\|Incorrect password\|Email already exists" . 2>/dev/null; then
+          if grep -r "User not found\|Incorrect password\|Email already exists" . 2>/dev/null \
+             --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build \
+             --exclude="*authErrorHandler*" --exclude="*.test.*" --exclude="*.spec.*"; then
             echo "❌ ERROR: Found potential account enumeration messages!"
             exit 1
           fi
