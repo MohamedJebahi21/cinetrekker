@@ -6,6 +6,7 @@ import X from 'lucide-react/dist/esm/icons/x';
 import LogIn from 'lucide-react/dist/esm/icons/log-in';
 import LogOut from 'lucide-react/dist/esm/icons/log-out';
 import User from 'lucide-react/dist/esm/icons/user';
+import Settings from 'lucide-react/dist/esm/icons/settings';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -155,16 +156,40 @@ export function UnifiedNav() {
           )}
         </nav>
 
-        <button
-          ref={toggleButtonRef}
-          type="button"
-          className="md:hidden inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-foreground hover:bg-accent transition-colors"
-          onClick={() => setIsMenuOpen((prev) => !prev)}
-          aria-label={isMenuOpen ? t('nav.closeMenu', 'Close menu') : t('nav.openMenu', 'Open menu')}
-          aria-expanded={isMenuOpen}
-        >
-          {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="md:hidden flex items-center gap-1">
+          <Link
+            to="/profile"
+            className={cn(
+              'inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent',
+              pathname.startsWith('/profile') && 'bg-primary text-primary-foreground'
+            )}
+            aria-label={t('nav.profile', 'Profile')}
+          >
+            <User className="h-5 w-5" />
+          </Link>
+
+          <Link
+            to="/settings"
+            className={cn(
+              'inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent',
+              pathname.startsWith('/settings') && 'bg-primary text-primary-foreground'
+            )}
+            aria-label={t('nav.settings', 'Settings')}
+          >
+            <Settings className="h-5 w-5" />
+          </Link>
+
+          <button
+            ref={toggleButtonRef}
+            type="button"
+            className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground hover:bg-accent transition-colors"
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            aria-label={isMenuOpen ? t('nav.closeMenu', 'Close menu') : t('nav.openMenu', 'Open menu')}
+            aria-expanded={isMenuOpen}
+          >
+            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       <div
@@ -199,12 +224,6 @@ export function UnifiedNav() {
           {!loading && (
             user ? (
               <>
-                <Link
-                  to="/profile"
-                  className="px-4 py-3 rounded-lg text-sm font-medium min-h-[44px] flex items-center text-muted-foreground hover:bg-accent hover:text-foreground"
-                >
-                  {t('nav.profile', 'Profile')}
-                </Link>
                 <button
                   type="button"
                   onClick={() => {
