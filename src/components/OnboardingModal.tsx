@@ -21,7 +21,7 @@ export function OnboardingModal() {
   };
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent>
+      <DialogContent className="top-4 md:top-auto">
         <DialogTitle>{t('onboarding.welcome')}</DialogTitle>
         <div className="space-y-4">
           <p>{t('onboarding.description')}</p>
