@@ -23,7 +23,7 @@ import {
   TrendingUp,
   Check
 } from 'lucide-react';
-import { useUserLists } from '@/contexts/UserListsContext';
+import { useUserLists, type UserListsContextType } from '@/contexts/UserListsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFollowedShows, useWatchedEpisodes } from '@/hooks/useFollowedShows';
 import { Link } from 'react-router-dom';
@@ -264,7 +264,7 @@ export default function Profile() {
     }
   }, [profilePhoto, dateOfBirth, displayName, bio, favoriteGenres]);
 
-  const handleSaveProfile = async () => {
+  const handleSaveProfile = async (): Promise<void> => {
     setIsSaving(true);
     try {
       // Rate limiting check
@@ -343,7 +343,7 @@ export default function Profile() {
     }
   };
 
-  const handleCancelChanges = () => {
+  const handleCancelChanges = (): void => {
     // Reload the page to discard changes
     window.location.reload();
   };
@@ -428,7 +428,7 @@ export default function Profile() {
     }
   };
 
-  const genres = [
+  const genres: Array<{ id: number; name: string }> = [
     { id: 28, name: 'Action' },
     { id: 12, name: 'Adventure' },
     { id: 16, name: 'Animation' },

@@ -6,7 +6,7 @@ import Bookmark from 'lucide-react/dist/esm/icons/bookmark';
 import Check from 'lucide-react/dist/esm/icons/check';
 import Plus from 'lucide-react/dist/esm/icons/plus';
 import BookmarkCheck from 'lucide-react/dist/esm/icons/bookmark-check';
-import { Media } from '@/types/media';
+import { Media, type UserMediaItem } from '@/types/media';
 import { getImageUrl, getMediaTitle, getMediaYear, getMediaType } from '@/services/tmdb';
 import { useInView } from '@/hooks/useInView';
 import { useUserLists } from '@/contexts/UserListsContext';
@@ -29,7 +29,13 @@ export interface MediaCardProps {
   onAction?: () => void;
 }
 
-const STATUS_CONFIG = {
+export interface WatchStatusConfig {
+  icon: string;
+  label: string;
+  color: string;
+}
+
+const STATUS_CONFIG: Record<string, WatchStatusConfig> = {
   watching: { icon: '📺', label: 'Watching', color: 'bg-blue-500' },
   completed: { icon: '✅', label: 'Completed', color: 'bg-green-500' },
   dropped: { icon: '❌', label: 'Dropped', color: 'bg-red-500' },
@@ -160,7 +166,7 @@ export const MediaCard = React.memo(function MediaCard({ media, mediaType: media
     addToWatched(media.id, mediaType);
   };
 
-  const handleSelectEpisodes = (episodes: Array<{ season: number; episode: number }>) => {
+  const handleSelectEpisodes = (episodes: Array<{ season: number; episode: number }>): void => {
     // Mark selected episodes as watched
     for (const ep of episodes) {
       markEpisodeWatched({
@@ -171,7 +177,7 @@ export const MediaCard = React.memo(function MediaCard({ media, mediaType: media
         airDate: undefined,
       });
     }
-  }
+  };
 
   // Quick view removed — card links to details page via the surrounding <Link>
 

@@ -34,6 +34,8 @@ interface UserListsContextType {
   loading: boolean;
 }
 
+export type { UserListsContextType };
+
 const UserListsContext = createContext<UserListsContextType | undefined>(undefined);
 
 export const STORAGE_KEYS = {
@@ -374,7 +376,7 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useUserLists() {
+export function useUserLists(): UserListsContextType {
   const context = useContext(UserListsContext);
   if (context === undefined) {
     throw new Error('useUserLists must be used within a UserListsProvider');
