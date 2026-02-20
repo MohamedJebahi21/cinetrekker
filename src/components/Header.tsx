@@ -143,7 +143,7 @@ export function Header() {
 
   return (
     <header role="banner" className={cn(
-      "glass-nav h-16 transition-all duration-300",
+      "glass-nav h-16 pt-[env(safe-area-inset-top)] md:pt-0 transition-all duration-300",
       isScrolled && "scrolled"
     )}>
       <div className="container mx-auto flex h-full items-center justify-between px-4 gap-4">
