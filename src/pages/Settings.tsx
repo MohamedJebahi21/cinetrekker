@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { profileService } from '@/services/profile';
 import { languages } from '@/i18n';
 import { cn } from '@/lib/utils';
+import { StickySaveBar } from '@/components/StickySaveBar';
 import {
   Select,
   SelectContent,
@@ -71,6 +72,23 @@ export default function Settings() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  
+  // Helper function to detect actual changes
+  const hasSettingsChanged = () => {
+    return (
+      initialStateRef.publicProfile !== settings.publicProfile ||
+      initialStateRef.showWatchlist !== settings.showWatchlist ||
+      initialStateRef.showStats !== settings.showStats ||
+      initialStateRef.allowRecommendations !== settings.allowRecommendations
+    );
+  };
+  
+  const initialStateRef = {
+    publicProfile: DEFAULT_SETTINGS.publicProfile,
+    showWatchlist: DEFAULT_SETTINGS.showWatchlist,
+    showStats: DEFAULT_SETTINGS.showStats,
+    allowRecommendations: DEFAULT_SETTINGS.allowRecommendations,
+  };
 
   // Load settings from Supabase (with localStorage fallback)
   useEffect(() => {
@@ -161,10 +179,10 @@ export default function Settings() {
     };
   }, [user?.id, profileKey, toast]);
 
-  // Track unsaved changes
+  // Track unsaved changes - only when actual changes are made
   useEffect(() => {
     if (!isLoadingSettings) {
-      setHasUnsavedChanges(true);
+      setHasUnsavedChanges(hasSettingsChanged());
     }
   }, [settings.publicProfile, settings.showWatchlist, settings.showStats, settings.allowRecommendations, isLoadingSettings]);
 
@@ -208,6 +226,11 @@ export default function Settings() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleCancelChanges = () => {
+    // Reload the page to discard changes
+    window.location.reload();
   };
 
   const handleLanguageChange = (langCode: string) => {
@@ -435,47 +458,14 @@ export default function Settings() {
             </motion.div>
 
             {/* Sticky Save Bar */}
-            {hasUnsavedChanges && (
-              <motion.div
-                initial={{ y: 100, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 100, opacity: 0 }}
-                className="fixed bottom-0 left-0 right-0 z-50 border-t border-neutral-800 bg-neutral-900/95 backdrop-blur-md shadow-2xl"
-              >
-                <div className="page-container py-4 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
-                    <p className="text-sm font-medium">{t('settings.unsavedChanges')}</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Button
-                      variant="ghost"
-                      onClick={() => window.location.reload()}
-                      className="hover:bg-neutral-800"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleSaveSettings}
-                      disabled={isSaving}
-                      className="gap-2 bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/20"
-                    >
-                      {isSaving ? (
-                        <>
-                          <span className="animate-spin">⏳</span>
-                          {t('common.saving', 'Saving...')}
-                        </>
-                      ) : (
-                        <>
-                          <Check className="w-4 h-4" />
-                          {t('settings.saveChanges')}
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
+            <StickySaveBar
+              isVisible={hasUnsavedChanges}
+              isSaving={isSaving}
+              onSave={handleSaveSettings}
+              onCancel={handleCancelChanges}
+              saveLabel={t('settings.saveChanges') || 'Save Changes'}
+              cancelLabel="Cancel"
+            />
           </>
         )}
       </motion.div>

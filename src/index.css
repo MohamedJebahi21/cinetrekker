@@ -958,6 +958,34 @@ a:focus-visible {
   outline-offset: 2px;
   box-shadow: 0 0 0 3px hsla(var(--primary) / 0.12);
 }
+
+/* ===========================
+   Glassmorphic Stat Cards
+   =========================== */
+
+/* Base glassmorphic stat card styling */
+.glass-stat-card {
+  background: hsl(var(--glass-bg));
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid hsl(var(--glass-border));
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-stat-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: hsla(var(--primary) / 0.3);
+  box-shadow: 0 12px 32px hsla(var(--primary) / 0.15),
+              0 0 32px hsla(var(--primary) / 0.1);
+}
+
+.glass-stat-card:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px hsla(var(--primary) / 0.2);
+}
+
 /* ===========================
    Premium UI Utilities
    =========================== */
@@ -1031,6 +1059,11 @@ a:focus-visible {
   animation: slideUpFade 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Safe area inset for notched devices (iPhoneX, etc.) */
+.safe-area-inset-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
 @keyframes slideUpFade {
   from {
     transform: translateY(100%);
@@ -1038,6 +1071,92 @@ a:focus-visible {
   }
   to {
     transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Sticky footer animations and styling */
+.sticky-footer {
+  animation: slideUpFade 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sticky-footer--visible {
+  animation: slideUpFade 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sticky-footer--hidden {
+  animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Enhanced backdrop filter for better mobile readability */
+@supports (backdrop-filter: blur(1px)) {
+  .sticky-footer {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .sticky-footer {
+    background-color: rgba(12, 10, 9, 0.95);
+  }
+}
+
+/* Ensure footer buttons have proper touch targets */
+.sticky-footer button {
+  min-height: 36px;
+  min-width: 80px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sticky-footer button:active {
+  transform: scale(0.98);
+}
+
+/* Pulse animation for unsaved changes indicator */
+@keyframes pulse-indicator {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.sticky-footer-indicator {
+  animation: pulse-indicator 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Reduced motion adjustments for sticky footer */
+@media (prefers-reduced-motion: reduce) {
+  .sticky-footer,
+  .sticky-footer--visible,
+  .sticky-footer--hidden {
+    animation: none;
+  }
+  
+  .sticky-footer button {
+    transition: none;
+  }
+  
+  .sticky-footer button:active {
+    transform: none;
+  }
+  
+  .sticky-footer-indicator {
+    animation: none;
     opacity: 1;
   }
 }

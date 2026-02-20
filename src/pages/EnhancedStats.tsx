@@ -5,6 +5,7 @@ import { Genre } from '@/types/media';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Flame, Clock, Star, TrendingUp, Calendar, Award, Film, Tv } from 'lucide-react';
+import { GlassStatCard } from '@/components/GlassStatCard';
 import { useTranslation } from 'react-i18next';
 import SEO from '@/components/SEO';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
@@ -134,53 +135,45 @@ export default function EnhancedStats() {
 
         {/* Overview Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Watched</CardTitle>
-              <Film className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{watched.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {totalMovies} movies, {totalTV} shows
-              </p>
-            </CardContent>
-          </Card>
+          <GlassStatCard
+            icon={Film}
+            label="Total Watched"
+            value={watched.length}
+            description={`${totalMovies} movies, ${totalTV} shows`}
+            variant="primary"
+            size="md"
+            delay={0}
+          />
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Hours Watched</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{Math.round(totalHours)}h</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {Math.round(totalHours / 24)} days total
-              </p>
-            </CardContent>
-          </Card>
+          <GlassStatCard
+            icon={Clock}
+            label="Hours Watched"
+            value={`${Math.round(totalHours)}h`}
+            description={`${Math.round(totalHours / 24)} days total`}
+            variant="success"
+            size="md"
+            delay={0.1}
+          />
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
-              <Star className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{avgRating.toFixed(1)}</div>
-              <p className="text-xs text-muted-foreground mt-1">out of 10</p>
-            </CardContent>
-          </Card>
+          <GlassStatCard
+            icon={Star}
+            label="Average Rating"
+            value={avgRating.toFixed(1)}
+            description="out of 10"
+            variant="warning"
+            size="md"
+            delay={0.2}
+          />
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Current Streak</CardTitle>
-              <Flame className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{currentStreak} days</div>
-              <p className="text-xs text-muted-foreground mt-1">Longest: {longestStreak} days</p>
-            </CardContent>
-          </Card>
+          <GlassStatCard
+            icon={Flame}
+            label="Current Streak"
+            value={`${currentStreak} days`}
+            description={`Longest: ${longestStreak} days`}
+            variant="danger"
+            size="md"
+            delay={0.3}
+          />
         </div>
 
         {/* Genre Breakdown */}

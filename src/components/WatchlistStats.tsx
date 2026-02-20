@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Bookmark, Eye, Clock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { GlassStatCard } from '@/components/GlassStatCard';
 
 interface WatchlistStatsProps {
   totalCount: number;
@@ -11,30 +12,6 @@ interface WatchlistStatsProps {
   planToWatchCount?: number;
   totalHours?: number;
   compact?: boolean;
-}
-
-interface StatItemProps {
-  icon: React.ReactNode;
-  label: string;
-  value: number | string;
-  color?: string;
-}
-
-function StatItem({ icon, label, value, color = 'text-muted-foreground' }: StatItemProps) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="flex flex-col items-center gap-2"
-    >
-      <div className={`${color}`}>{icon}</div>
-      <div className="text-center">
-        <p className="text-2xl font-bold">{value}</p>
-        <p className="text-xs text-muted-foreground">{label}</p>
-      </div>
-    </motion.div>
-  );
 }
 
 export function WatchlistStats({
@@ -78,56 +55,72 @@ export function WatchlistStats({
     animate: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
+        staggerChildren: 0.08,
+        delayChildren: 0.1,
       },
     },
   };
 
   return (
-    <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-border/50">
-      <CardContent className="pt-6">
-        <motion.div
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"
-          variants={containerVariants}
-          initial="initial"
-          animate="animate"
-        >
-          <StatItem
-            icon={<Bookmark className="w-6 h-6" />}
-            label={t('stats.total') || 'Total'}
-            value={totalCount}
-            color="text-primary"
-          />
-          <StatItem
-            icon={<Eye className="w-6 h-6" />}
-            label={t('stats.watching') || 'Watching'}
-            value={watchingCount}
-            color="text-blue-500"
-          />
-          <StatItem
-            icon={<Bookmark className="w-6 h-6" />}
-            label={t('stats.completed') || 'Completed'}
-            value={completedCount}
-            color="text-green-500"
-          />
-          <StatItem
-            icon={<Clock className="w-6 h-6" />}
-            label={t('stats.planToWatch') || 'Plan to Watch'}
-            value={planToWatchCount}
-            color="text-yellow-500"
-          />
-          {totalHours > 0 && (
-            <StatItem
-              icon={<Clock className="w-6 h-6" />}
-              label={t('stats.totalHours') || 'Hours'}
-              value={totalHours}
-              color="text-orange-500"
-            />
-          )}
-        </motion.div>
-      </CardContent>
-    </Card>
+    <motion.div
+      className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4"
+      variants={containerVariants}
+      initial="initial"
+      animate="animate"
+    >
+      <GlassStatCard
+        icon={Bookmark}
+        label={t('stats.total') || 'Total'}
+        value={totalCount}
+        variant="primary"
+        size="md"
+        delay={0}
+      />
+      
+      {watchingCount > 0 && (
+        <GlassStatCard
+          icon={Eye}
+          label={t('stats.watching') || 'Watching'}
+          value={watchingCount}
+          variant="primary"
+          size="md"
+          delay={0.08}
+        />
+      )}
+      
+      {completedCount > 0 && (
+        <GlassStatCard
+          icon={Bookmark}
+          label={t('stats.completed') || 'Completed'}
+          value={completedCount}
+          variant="success"
+          size="md"
+          delay={0.16}
+        />
+      )}
+      
+      {planToWatchCount > 0 && (
+        <GlassStatCard
+          icon={Clock}
+          label={t('stats.planToWatch') || 'Plan to Watch'}
+          value={planToWatchCount}
+          variant="warning"
+          size="md"
+          delay={0.24}
+        />
+      )}
+      
+      {totalHours > 0 && (
+        <GlassStatCard
+          icon={Clock}
+          label={t('stats.totalHours') || 'Hours'}
+          value={totalHours}
+          variant="danger"
+          size="md"
+          delay={0.32}
+        />
+      )}
+    </motion.div>
   );
 }
 

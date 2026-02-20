@@ -41,6 +41,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import SEO from '@/components/SEO';
+import { StickySaveBar } from '@/components/StickySaveBar';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -79,6 +80,35 @@ export default function Profile() {
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const missingActorDataLogged = useRef(false);
+  
+  // Store initial state for change detection
+  const initialStateRef = useRef({
+    profilePhoto: '',
+    dateOfBirth: '',
+    displayName: '',
+    bio: '',
+    favoriteGenres: [] as number[],
+  });
+
+  // Helper function to detect actual changes
+  const hasChanges = () => {
+    const initial = initialStateRef.current;
+    const current = {
+      profilePhoto: profilePhoto || '',
+      dateOfBirth: dateOfBirth || '',
+      displayName: displayName || '',
+      bio: bio || '',
+      favoriteGenres: favoriteGenres,
+    };
+    
+    return (
+      initial.profilePhoto !== current.profilePhoto ||
+      initial.dateOfBirth !== current.dateOfBirth ||
+      initial.displayName !== current.displayName ||
+      initial.bio !== current.bio ||
+      JSON.stringify(initial.favoriteGenres) !== JSON.stringify(current.favoriteGenres)
+    );
+  };
 
   // Load profile from Supabase (with localStorage fallback)
   useEffect(() => {
@@ -214,9 +244,25 @@ export default function Profile() {
   // Track unsaved changes (only after initial load)
   useEffect(() => {
     if (initialLoadComplete) {
-      setHasUnsavedChanges(true);
+      // Initialize the initial state when profile finishes loading
+      initialStateRef.current = {
+        profilePhoto: profilePhoto || '',
+        dateOfBirth: dateOfBirth || '',
+        displayName: displayName || '',
+        bio: bio || '',
+        favoriteGenres: [...favoriteGenres],
+      };
+      // Check if there are actual changes
+      setHasUnsavedChanges(hasChanges());
     }
-  }, [profilePhoto, dateOfBirth, displayName, bio, favoriteGenres, initialLoadComplete]);
+  }, [initialLoadComplete]);
+
+  // Detect changes after initial load
+  useEffect(() => {
+    if (initialLoadComplete) {
+      setHasUnsavedChanges(hasChanges());
+    }
+  }, [profilePhoto, dateOfBirth, displayName, bio, favoriteGenres]);
 
   const handleSaveProfile = async () => {
     setIsSaving(true);
@@ -269,6 +315,15 @@ export default function Profile() {
 
       setHasUnsavedChanges(false);
       
+      // Update initial state to current state
+      initialStateRef.current = {
+        profilePhoto: profilePhoto || '',
+        dateOfBirth: dateOfBirth || '',
+        displayName: validatedDisplayName || '',
+        bio: sanitizedBio || '',
+        favoriteGenres: [...favoriteGenres],
+      };
+      
       // Dispatch custom event to notify other components
       window.dispatchEvent(new CustomEvent('profileUpdated'));
       
@@ -286,6 +341,11 @@ export default function Profile() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleCancelChanges = () => {
+    // Reload the page to discard changes
+    window.location.reload();
   };
 
   const handlePhotoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -925,48 +985,15 @@ export default function Profile() {
         )}
       </motion.section>
 
-      {/* Sticky Save Bar */}
-      {hasUnsavedChanges && (
-        <motion.div
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
-          className="fixed bottom-0 left-0 right-0 z-50 border-t border-neutral-800 bg-neutral-900/95 backdrop-blur-md shadow-2xl"
-        >
-          <div className="page-container py-4 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
-              <p className="text-sm font-medium">{t('settings.unsavedChanges')}</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                onClick={() => window.location.reload()}
-                className="hover:bg-neutral-800"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSaveProfile}
-                disabled={isSaving}
-                className="gap-2 bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/20"
-              >
-                {isSaving ? (
-                  <>
-                    <span className="animate-spin">⏳</span>
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Check className="w-4 h-4" />
-                    {t('settings.saveChanges')}
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </motion.div>
-      )}
+      {/* Sticky Save Bar with glass morphism */}
+      <StickySaveBar
+        isVisible={hasUnsavedChanges}
+        isSaving={isSaving}
+        onSave={handleSaveProfile}
+        onCancel={handleCancelChanges}
+        saveLabel={t('settings.saveChanges') || 'Save Changes'}
+        cancelLabel="Cancel"
+      />
       </>
       )}
     </motion.div>
