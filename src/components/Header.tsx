@@ -143,10 +143,10 @@ export function Header() {
 
   return (
     <header role="banner" className={cn(
-      "glass-nav h-16 pt-[env(safe-area-inset-top)] md:pt-0 transition-all duration-300",
+      "glass-nav transition-all duration-300",
       isScrolled && "scrolled"
     )}>
-      <div className="container mx-auto flex h-full items-center justify-between px-4 gap-4">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4 gap-4 pt-[env(safe-area-inset-top)] md:pt-0">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 group flex-shrink-0">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary transition-all duration-300 group-hover:shadow-[0_0_20px_hsl(358_94%_46%/0.5)]">
