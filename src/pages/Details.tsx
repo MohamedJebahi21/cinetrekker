@@ -40,8 +40,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { WatchedStatusDialog } from '@/components/WatchedStatusDialog';
 import TrailerModal from '@/components/TrailerModal';
-import { MediaPoster } from '@/features/media/MediaPoster';
-import { AsyncSection } from '@/components/state/AsyncSection';
 
 export default function Details() {
   const { id } = useParams<{ id: string }>();
@@ -462,8 +460,6 @@ export default function Details() {
             src={backdropUrl}
             alt={title}
             className="w-full h-full object-cover"
-            loading="eager"
-            decoding="async"
           />
         )}
         <div className="backdrop-fade absolute inset-0" />
@@ -480,8 +476,18 @@ export default function Details() {
 
       <div className="page-container -mt-32 md:-mt-48 relative z-10">
         <div className="flex flex-col md:flex-row gap-8">
-          <div className="flex-shrink-0 mx-auto md:mx-0 w-48 md:w-64">
-            <MediaPoster src={posterUrl} alt={title} className="shadow-2xl" />
+          <div className="flex-shrink-0 mx-auto md:mx-0">
+            {posterUrl ? (
+              <img
+                src={posterUrl}
+                alt={title}
+                className="w-48 md:w-64 rounded-xl shadow-2xl"
+              />
+            ) : (
+              <div className="w-48 md:w-64 aspect-[2/3] bg-muted rounded-xl flex items-center justify-center">
+                <span className="text-muted-foreground">{t('common.noResults')}</span>
+              </div>
+            )}
           </div>
 
           <div className="flex-1 space-y-6">
@@ -614,15 +620,9 @@ export default function Details() {
                             </span>
                           </AccordionTrigger>
                           <AccordionContent>
-                            <AsyncSection
-                              isLoading={selectedSeason === seasonNum && !seasonDetails?.episodes}
-                              isError={false}
-                              isEmpty={selectedSeason === seasonNum && Boolean(seasonDetails?.episodes) && seasonDetails.episodes.length === 0}
-                              loadingFallback={<div className="text-center py-4 text-muted-foreground">{t('common.loading')}</div>}
-                              emptyFallback={<div className="text-center py-4 text-muted-foreground">{t('common.noResults')}</div>}
-                            >
+                            {selectedSeason === seasonNum && seasonDetails?.episodes ? (
                               <div className="space-y-2">
-                                {selectedSeason === seasonNum && seasonDetails?.episodes?.map((episode) => {
+                                {seasonDetails.episodes.map((episode) => {
                                   const episodeWatched = isEpisodeWatched(mediaId, seasonNum, episode.episode_number);
                                   return (
                                     <div 
@@ -666,7 +666,11 @@ export default function Details() {
                                   );
                                 })}
                               </div>
-                            </AsyncSection>
+                            ) : (
+                              <div className="text-center py-4 text-muted-foreground">
+                                {t('common.loading')}
+                              </div>
+                            )}
                           </AccordionContent>
                         </AccordionItem>
                       ))}
@@ -753,8 +757,6 @@ export default function Details() {
                       src={getImageUrl(person.profile_path, 'w185') || ''}
                       alt={person.name}
                       className="w-24 h-24 rounded-full object-cover mx-auto mb-2 transition-transform md:group-hover:scale-105 md:group-hover:ring-2 md:group-hover:ring-primary active:scale-105 focus-visible:scale-105"
-                      loading="lazy"
-                      decoding="async"
                     />
                   ) : (
                     <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-2 transition-transform md:group-hover:scale-105 md:group-hover:ring-2 md:group-hover:ring-primary active:scale-105 focus-visible:scale-105">

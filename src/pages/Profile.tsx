@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Track actor match missing-data logging across renders (and StrictMode double-mount)
@@ -41,9 +41,6 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import SEO from '@/components/SEO';
-import { ProfileStatsGrid } from '@/features/profile/ProfileStatsGrid';
-import { ProfileDetailsForm } from '@/features/profile/ProfileDetailsForm';
-const ActorMatchesSection = lazy(() => import('@/features/profile/ActorMatchesSection').then((module) => ({ default: module.ActorMatchesSection })));
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -349,7 +346,8 @@ export default function Profile() {
     setProfilePhoto(null);
   };
 
-  const handleDobChange = (value: string) => {
+  const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
     setDateOfBirth(value);
 
     if (!value) {
@@ -589,7 +587,6 @@ export default function Profile() {
                   className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-neutral-800/90 border border-neutral-700 hover:bg-neutral-700 hover:scale-110 transition-all shadow-lg"
                   onClick={() => document.getElementById('profile-photo-input')?.click()}
                   type="button"
-                  aria-label={t('profile.changePhoto', 'Change profile photo')}
                 >
                   <Camera className="w-4 h-4" />
                 </Button>
@@ -630,16 +627,58 @@ export default function Profile() {
       </motion.section>
 
       {/* Stats Bento Grid */}
-      <motion.div variants={itemVariants}>
-        <ProfileStatsGrid
-          title={t('profile.overview')}
-          items={[
-            { label: t('profile.moviesWatched'), value: moviesWatched, icon: Film, iconClassName: 'h-6 w-6 text-blue-400' },
-            { label: t('profile.totalRatings'), value: watched.length, icon: Star, iconClassName: 'h-6 w-6 text-red-500 fill-current' },
-            { label: t('profile.watchTime'), value: showsWatched, icon: Clock, iconClassName: 'h-6 w-6 text-green-400' },
-          ]}
-        />
-      </motion.div>
+      <motion.section variants={itemVariants} className="mb-8">
+        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-red-500" />
+          {t('profile.overview')}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Movies Watched */}
+          <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm hover:bg-neutral-900/70 transition-colors group">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Film className="w-6 h-6 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold">{moviesWatched}</p>
+                  <p className="text-sm text-neutral-400">{t('profile.moviesWatched')}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Total Ratings */}
+          <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm hover:bg-neutral-900/70 transition-colors group">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500/20 to-orange-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Star className="w-6 h-6 text-red-500 fill-current" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold">{watched.length}</p>
+                  <p className="text-sm text-neutral-400">{t('profile.totalRatings')}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Watch Time */}
+          <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm hover:bg-neutral-900/70 transition-colors group">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-teal-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Clock className="w-6 h-6 text-green-400" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold">{showsWatched}</p>
+                  <p className="text-sm text-neutral-400">{t('profile.watchTime')}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </motion.section>
 
       {/* Favorites Section */}
       <motion.section variants={itemVariants} className="mb-8">
@@ -696,27 +735,66 @@ export default function Profile() {
       </motion.section>
 
       {/* Profile Details */}
-      <motion.div variants={itemVariants}>
-        <ProfileDetailsForm
-          title={t('profile.profileDetails', 'Profile Details')}
-          displayNameLabel={t('profile.displayName', 'Display Name')}
-          displayNamePlaceholder={t('profile.displayNamePlaceholder', 'How should we call you?')}
-          dateOfBirthLabel={t('profile.dateOfBirth', 'Date of Birth')}
-          bioLabel={t('profile.bio', 'Bio')}
-          bioPlaceholder={t('profile.bioPlaceholder', 'Tell us about your cinematic journey...')}
-          charactersLabel={t('profile.characters', 'characters')}
-          currentAgeLabel={t('profile.currentAge', 'Current age')}
-          displayName={displayName}
-          dateOfBirth={dateOfBirth}
-          bio={bio}
-          dobError={dobError}
-          userAge={userAge}
-          maxDate={new Date().toISOString().split('T')[0]}
-          onDisplayNameChange={setDisplayName}
-          onDateOfBirthChange={handleDobChange}
-          onBioChange={setBio}
-        />
-      </motion.div>
+      <motion.section variants={itemVariants} className="mb-8">
+        <h2 className="text-xl font-bold mb-4">{t('profile.profileDetails', 'Profile Details')}</h2>
+        <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm">
+          <CardContent className="pt-6 space-y-6">
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="displayName" className="flex items-center gap-2 text-neutral-300">
+                  <User className="w-4 h-4" />
+                  {t('profile.displayName', 'Display Name')}
+                </Label>
+                <Input
+                  id="displayName"
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder={t('profile.displayNamePlaceholder', 'How should we call you?')}
+                  maxLength={50}
+                  className="bg-black/40 border-neutral-700 focus:border-red-500 focus:ring-red-500/20 transition-colors"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dob" className="flex items-center gap-2 text-neutral-300">
+                  <CalendarDays className="w-4 h-4" />
+                  {t('profile.dateOfBirth', 'Date of Birth')}
+                </Label>
+                <Input
+                  id="dob"
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={handleDobChange}
+                  max={new Date().toISOString().split('T')[0]}
+                  className={cn(
+                    "bg-black/40 border-neutral-700 focus:border-red-500 focus:ring-red-500/20 transition-colors",
+                    dobError && "border-destructive focus:border-destructive"
+                  )}
+                />
+                {dobError && <p className="text-xs text-destructive">{dobError}</p>}
+                {userAge !== null && !dobError && (
+                  <p className="text-xs text-neutral-500">{t('profile.currentAge', 'Current age')}: {userAge}</p>
+                )}
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="bio" className="text-neutral-300">{t('profile.bio', 'Bio')}</Label>
+              <textarea
+                id="bio"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder={t('profile.bioPlaceholder', 'Tell us about your cinematic journey...')}
+                className="w-full p-3 rounded-md border border-neutral-700 bg-black/40 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-colors min-h-[100px] resize-y"
+                maxLength={500}
+              />
+              <p className="text-xs text-neutral-500">
+                {bio.length}/500 {t('profile.characters', 'characters')}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.section>
 
       {/* Favorite Genres */}
       <motion.section variants={itemVariants} className="mb-8">
@@ -745,34 +823,107 @@ export default function Profile() {
       </motion.section>
 
       {/* Actor Matches */}
-      <motion.div variants={itemVariants}>
-        <Suspense
-          fallback={
+      <motion.section variants={itemVariants}>
+        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-yellow-500" />
+          {t('profile.actorMatches')}
+        </h2>
+        {!dateOfBirth ? (
+          <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm">
+            <CardContent className="pt-6">
+              <p className="text-neutral-400">
+                Add your date of birth to see actors who share your birthday or age.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2">
             <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm">
               <CardContent className="pt-6">
-                <div className="h-6 w-48 animate-pulse rounded bg-neutral-800" />
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  {Array.from({ length: 4 }).map((_, index) => (
-                    <div key={index} className="h-40 animate-pulse rounded bg-neutral-800" />
-                  ))}
-                </div>
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <CalendarDays className="w-4 h-4 text-red-500" />
+                  {t('profile.sameBirthday')}
+                </h3>
+                {loadingPeople ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} className="rounded-lg overflow-hidden bg-neutral-800/40 animate-pulse">
+                        <div className="w-full h-32 bg-neutral-800" />
+                        <div className="h-8 bg-neutral-800 mt-2 mx-2 mb-2 rounded" />
+                      </div>
+                    ))}
+                  </div>
+                ) : sameBirthday.length === 0 ? (
+                  <p className="text-neutral-500 text-sm">No matches found in popular actors.</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    {sameBirthday.slice(0, 6).map((person) => (
+                      <Link key={person.id} to={`/person/${person.id}`} className="group">
+                        <div className="rounded-lg overflow-hidden bg-neutral-800/40 border border-neutral-700 hover:border-red-500/50 transition-colors">
+                          {person.profile_path ? (
+                            <img
+                              src={getImageUrl(person.profile_path, 'w185') || ''}
+                              alt={person.name}
+                              className="w-full h-32 object-cover group-hover:scale-105 transition-transform"
+                            />
+                          ) : (
+                            <div className="w-full h-32 flex items-center justify-center bg-neutral-800">
+                              <User className="w-6 h-6 text-neutral-600" />
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-xs mt-2 line-clamp-2 text-neutral-300">{person.name}</p>
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
-          }
-        >
-          <ActorMatchesSection
-            title={t('profile.actorMatches')}
-            sameBirthdayTitle={t('profile.sameBirthday')}
-            sameAgeTitle={t('profile.sameAge')}
-            noDateMessage={t('profile.actorMatchesHint', 'Add your date of birth to see actors who share your birthday or age.')}
-            noMatchesMessage={t('profile.actorMatchesEmpty', 'No matches found in popular actors.')}
-            loading={loadingPeople}
-            hasDateOfBirth={Boolean(dateOfBirth)}
-            sameBirthday={sameBirthday}
-            sameAge={sameAge}
-          />
-        </Suspense>
-      </motion.div>
+
+            <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm">
+              <CardContent className="pt-6">
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <User className="w-4 h-4 text-red-500" />
+                  {t('profile.sameAge')}
+                </h3>
+                {loadingPeople ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} className="rounded-lg overflow-hidden bg-neutral-800/40 animate-pulse">
+                        <div className="w-full h-32 bg-neutral-800" />
+                        <div className="h-8 bg-neutral-800 mt-2 mx-2 mb-2 rounded" />
+                      </div>
+                    ))}
+                  </div>
+                ) : sameAge.length === 0 ? (
+                  <p className="text-neutral-500 text-sm">No matches found in popular actors.</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    {sameAge.slice(0, 6).map((person) => (
+                      <Link key={person.id} to={`/person/${person.id}`} className="group">
+                        <div className="rounded-lg overflow-hidden bg-neutral-800/40 border border-neutral-700 hover:border-red-500/50 transition-colors">
+                          {person.profile_path ? (
+                            <img
+                              src={getImageUrl(person.profile_path, 'w185') || ''}
+                              alt={person.name}
+                              className="w-full h-32 object-cover group-hover:scale-105 transition-transform"
+                            />
+                          ) : (
+                            <div className="w-full h-32 flex items-center justify-center bg-neutral-800">
+                              <User className="w-6 h-6 text-neutral-600" />
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-xs mt-2 line-clamp-2 text-neutral-300">{person.name}</p>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </motion.section>
 
       {/* Sticky Save Bar */}
       {hasUnsavedChanges && (
@@ -792,7 +943,6 @@ export default function Profile() {
                 variant="ghost"
                 onClick={() => window.location.reload()}
                 className="hover:bg-neutral-800"
-                aria-label={t('common.cancel', 'Cancel')}
               >
                 Cancel
               </Button>
@@ -800,7 +950,6 @@ export default function Profile() {
                 onClick={handleSaveProfile}
                 disabled={isSaving}
                 className="gap-2 bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/20"
-                aria-label={t('settings.saveChanges')}
               >
                 {isSaving ? (
                   <>
