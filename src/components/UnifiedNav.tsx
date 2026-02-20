@@ -5,9 +5,7 @@ import Menu from 'lucide-react/dist/esm/icons/menu';
 import X from 'lucide-react/dist/esm/icons/x';
 import LogIn from 'lucide-react/dist/esm/icons/log-in';
 import LogOut from 'lucide-react/dist/esm/icons/log-out';
-import User from 'lucide-react/dist/esm/icons/user';
 import Settings from 'lucide-react/dist/esm/icons/settings';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { SearchDropdown } from '@/components/SearchDropdown';
@@ -35,8 +33,24 @@ export function UnifiedNav() {
   const { user, signOut, loading } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const toggleButtonRef = useRef<HTMLButtonElement>(null);
+  const desktopMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const mobileToggleButtonRef = useRef<HTMLButtonElement>(null);
+  const desktopToggleButtonRef = useRef<HTMLButtonElement>(null);
+
+  const profileImageUrl = useMemo(() => {
+    const metadata = user?.user_metadata as Record<string, unknown> | undefined;
+    const candidates = [metadata?.avatar_url, metadata?.picture, metadata?.photo_url];
+    return candidates.find((value): value is string => typeof value === 'string' && value.trim().length > 0) ?? null;
+  }, [user]);
+
+  const profileInitial = useMemo(() => {
+    const metadata = user?.user_metadata as Record<string, unknown> | undefined;
+    const rawName = [metadata?.full_name, metadata?.name, metadata?.preferred_username, user?.email].find(
+      (value): value is string => typeof value === 'string' && value.trim().length > 0
+    );
+    return rawName?.trim().charAt(0).toUpperCase() ?? 'P';
+  }, [user]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -51,10 +65,12 @@ export function UnifiedNav() {
       if (!isMenuOpen) return;
 
       const target = event.target as Node;
-      const clickedInsideMenu = menuRef.current?.contains(target);
-      const clickedToggle = toggleButtonRef.current?.contains(target);
+      const clickedInsideDesktopMenu = desktopMenuRef.current?.contains(target);
+      const clickedInsideMobileMenu = mobileMenuRef.current?.contains(target);
+      const clickedMobileToggle = mobileToggleButtonRef.current?.contains(target);
+      const clickedDesktopToggle = desktopToggleButtonRef.current?.contains(target);
 
-      if (!clickedInsideMenu && !clickedToggle) {
+      if (!clickedInsideDesktopMenu && !clickedInsideMobileMenu && !clickedMobileToggle && !clickedDesktopToggle) {
         setIsMenuOpen(false);
       }
     };
@@ -101,62 +117,7 @@ export function UnifiedNav() {
           <SearchDropdown />
         </div>
 
-        <nav className="hidden md:flex items-center gap-1" aria-label={t('nav.main', 'Main navigation')}>
-          {NAV_ITEMS.map((item) => {
-            const isActive = activePath === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  'px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                  isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                )}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                {t(item.key, item.fallback)}
-              </Link>
-            );
-          })}
-
-          {!loading && (
-            user ? (
-              <>
-                <Link
-                  to="/profile"
-                  className={cn(
-                    'px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2',
-                    pathname.startsWith('/profile') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                  )}
-                  aria-current={pathname.startsWith('/profile') ? 'page' : undefined}
-                >
-                  <User className="h-4 w-4" />
-                  {t('nav.profile', 'Profile')}
-                </Link>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => signOut()}
-                  className="gap-2"
-                  aria-label={t('nav.signOut', 'Sign Out')}
-                >
-                  <LogOut className="h-4 w-4" />
-                  {t('nav.signOut', 'Sign Out')}
-                </Button>
-              </>
-            ) : (
-              <Link to="/login">
-                <Button type="button" variant="default" size="sm" className="gap-2" aria-label={t('nav.signIn', 'Sign In')}>
-                  <LogIn className="h-4 w-4" />
-                  {t('nav.signIn', 'Sign In')}
-                </Button>
-              </Link>
-            )
-          )}
-        </nav>
-
-        <div className="md:hidden flex items-center gap-1">
+        <div className="hidden md:flex items-center gap-1">
           <Link
             to="/profile"
             className={cn(
@@ -165,7 +126,19 @@ export function UnifiedNav() {
             )}
             aria-label={t('nav.profile', 'Profile')}
           >
-            <User className="h-5 w-5" />
+            {profileImageUrl ? (
+              <img
+                src={profileImageUrl}
+                alt={t('nav.profile', 'Profile')}
+                className="h-8 w-8 rounded-full object-cover"
+                loading="lazy"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <span className="h-8 w-8 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center">
+                {profileInitial}
+              </span>
+            )}
           </Link>
 
           <Link
@@ -180,7 +153,54 @@ export function UnifiedNav() {
           </Link>
 
           <button
-            ref={toggleButtonRef}
+            ref={desktopToggleButtonRef}
+            type="button"
+            className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground hover:bg-accent transition-colors"
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            aria-label={isMenuOpen ? t('nav.closeMenu', 'Close menu') : t('nav.openMenu', 'Open menu')}
+            aria-expanded={isMenuOpen}
+          >
+            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+
+        <div className="md:hidden flex items-center gap-1">
+          <Link
+            to="/profile"
+            className={cn(
+              'inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent',
+              pathname.startsWith('/profile') && 'bg-primary text-primary-foreground'
+            )}
+            aria-label={t('nav.profile', 'Profile')}
+          >
+            {profileImageUrl ? (
+              <img
+                src={profileImageUrl}
+                alt={t('nav.profile', 'Profile')}
+                className="h-8 w-8 rounded-full object-cover"
+                loading="lazy"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <span className="h-8 w-8 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center">
+                {profileInitial}
+              </span>
+            )}
+          </Link>
+
+          <Link
+            to="/settings"
+            className={cn(
+              'inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent',
+              pathname.startsWith('/settings') && 'bg-primary text-primary-foreground'
+            )}
+            aria-label={t('nav.settings', 'Settings')}
+          >
+            <Settings className="h-5 w-5" />
+          </Link>
+
+          <button
+            ref={mobileToggleButtonRef}
             type="button"
             className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground hover:bg-accent transition-colors"
             onClick={() => setIsMenuOpen((prev) => !prev)}
@@ -193,7 +213,57 @@ export function UnifiedNav() {
       </div>
 
       <div
-        ref={menuRef}
+        ref={desktopMenuRef}
+        className={cn(
+          'hidden md:block absolute right-4 top-16 z-50 w-80 rounded-xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl overflow-hidden transition-all duration-300 ease-out',
+          isMenuOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'
+        )}
+      >
+        <nav className="p-3 flex flex-col gap-1" aria-label={t('nav.main', 'Main navigation')}>
+          {NAV_ITEMS.map((item) => {
+            const isActive = item.exact ? pathname === item.path : pathname.startsWith(item.path);
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  'px-4 py-3 rounded-lg text-sm font-medium transition-colors min-h-[48px] flex items-center',
+                  isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                )}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                {t(item.key, item.fallback)}
+              </Link>
+            );
+          })}
+
+          {!loading && (
+            user ? (
+              <button
+                type="button"
+                onClick={() => {
+                  signOut();
+                  setIsMenuOpen(false);
+                }}
+                className="px-4 py-3 rounded-lg text-sm font-medium text-left text-destructive hover:bg-destructive/10 min-h-[48px]"
+              >
+                {t('nav.signOut', 'Sign Out')}
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="px-4 py-3 rounded-lg text-sm font-medium min-h-[48px] flex items-center justify-center bg-primary text-primary-foreground"
+              >
+                <LogIn className="h-4 w-4 mr-2" />
+                {t('nav.signIn', 'Sign In')}
+              </Link>
+            )
+          )}
+        </nav>
+      </div>
+
+      <div
+        ref={mobileMenuRef}
         className={cn(
           'md:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl overflow-hidden transition-all duration-300 ease-out',
           isMenuOpen ? 'max-h-[520px] opacity-100' : 'max-h-0 opacity-0'
