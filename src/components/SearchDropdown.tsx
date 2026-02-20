@@ -207,7 +207,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
         <div
           id="search-dropdown-results"
           role="listbox"
-          className="absolute top-full left-0 right-0 mt-2 bg-popover/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in"
+          className="absolute top-full left-0 right-0 mt-2 bg-popover/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl overflow-y-auto max-h-screen z-50 animate-fade-in"
         >
           {isLoading || (isFetching && query !== debouncedQuery) ? (
             <div className="py-2">

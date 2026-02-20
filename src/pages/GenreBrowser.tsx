@@ -49,7 +49,7 @@ export default function GenreBrowser() {
         description="Explore movies and TV shows by genre"
         canonical="https://cinetrekker.vercel.app/genres"
       />
-      <div className="page-container pt-20">
+      <div className="page-container pt-20 pb-24 md:pb-0">
         <h1 className="section-title">Browse by Genre</h1>
 
         <Tabs value={mediaType} onValueChange={(v) => setSearchParams({ type: v, genre: selectedGenre || '' })}>

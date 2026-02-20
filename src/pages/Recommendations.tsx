@@ -79,7 +79,7 @@ export default function Recommendations() {
         description="Personalized movie and TV show recommendations based on what you've watched"
         canonical="https://cinetrekker.vercel.app/recommendations"
       />
-    <div className="page-container pt-20">
+    <div className="page-container pt-20 pb-24 md:pb-0">
       <div className="mb-8">
         <h1 className="section-title flex items-center gap-3">
           <Sparkles className="w-8 h-8 text-primary" />

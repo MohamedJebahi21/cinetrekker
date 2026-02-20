@@ -151,7 +151,7 @@ export default function Details() {
   if (isLoading) {
     return (
       <div className="min-h-screen pt-16">
-        <div className="page-container grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+        <div className="page-container grid grid-cols-1 md:grid-cols-3 gap-8 items-start pb-24 md:pb-0">
           <div className="md:col-span-1">
             <div className="poster-skeleton" />
           </div>

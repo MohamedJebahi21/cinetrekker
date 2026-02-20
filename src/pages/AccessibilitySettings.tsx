@@ -85,7 +85,7 @@ export default function AccessibilitySettings() {
         description="Customize your viewing experience with accessibility options"
       />
       
-      <div className="page-container pt-20 pb-12">
+      <div className="page-container pt-20 pb-24 md:pb-0">
         <div className="flex items-center gap-3 mb-6">
           <Settings className="h-8 w-8 text-primary" />
           <div>

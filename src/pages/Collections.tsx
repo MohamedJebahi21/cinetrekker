@@ -98,7 +98,7 @@ export default function Collections() {
         description="Curated collections and watch orders for franchise marathons"
         canonical="https://cinetrekker.vercel.app/collections"
       />
-      <div className="page-container pt-20">
+      <div className="page-container pt-20 pb-24 md:pb-0">
         <h1 className="section-title">Collections & Marathons</h1>
         <p className="text-muted-foreground mb-8">
           Pre-made watch orders and curated collections for the ultimate viewing experience

@@ -21,7 +21,7 @@ const NotFound = () => {
       />
 
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="page-container text-center py-24">
+        <div className="page-container text-center py-24 pb-24 md:pb-0">
           <div className="inline-flex items-center justify-center w-28 h-28 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 mb-6 shadow-glow">
             <Film className="w-12 h-12 text-primary" />
           </div>

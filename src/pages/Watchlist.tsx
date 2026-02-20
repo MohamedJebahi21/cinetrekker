@@ -92,7 +92,7 @@ export default function Watchlist() {
         description="Movies and TV shows you want to watch"
         canonical="https://cinetrekker.vercel.app/watchlist"
       />
-      <div className="page-container pt-20">
+      <div className="page-container pt-20 pb-24 md:pb-0">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}

@@ -62,7 +62,7 @@ export default function Following() {
         description="TV shows you're currently following"
         canonical="https://cinetrekker.vercel.app/following"
       />
-      <div className="page-container pt-20">
+      <div className="page-container pt-20 pb-24 md:pb-0">
         <div className="mb-8">
           <h1 className="section-title flex items-center gap-3">
             <Heart className="w-8 h-8 text-primary" />

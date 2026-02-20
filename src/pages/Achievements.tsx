@@ -35,7 +35,7 @@ export default function Achievements() {
         description="Track your watching achievements and milestones"
         canonical="https://cinetrekker.vercel.app/achievements"
       />
-      <div className="page-container pt-20">
+      <div className="page-container pt-20 pb-24 md:pb-0">
         <div className="flex items-center gap-3 mb-6">
           <Trophy className="h-8 w-8" />
           <h1 className="section-title mb-0">Achievements</h1>

@@ -3,7 +3,7 @@ import SEO from '@/components/SEO';
 
 export default function Feedback() {
   return (
-    <div className="page-container pt-20">
+    <div className="page-container pt-20 pb-24 md:pb-0">
       <SEO title="Feedback — CineTrekker" description="Send feedback to CineTrekker" />
       <div className="max-w-3xl mx-auto py-12">
         <h1 className="section-title">Feedback</h1>

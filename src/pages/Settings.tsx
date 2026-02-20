@@ -53,7 +53,7 @@ export default function Settings() {
   // Auth guard - require authentication
   if (!user) {
     return (
-      <div className="page-container pt-20">
+      <div className="page-container pt-20 pb-24 md:pb-0">
         <Card className="max-w-md mx-auto mt-8">
           <CardHeader>
             <CardTitle>Authentication Required</CardTitle>
@@ -251,7 +251,7 @@ export default function Settings() {
         canonical="https://cinetrekker.vercel.app/settings"
       />
       <motion.div 
-        className="page-container pt-20 pb-24 max-w-4xl"
+        className="page-container pt-20 pb-24 md:pb-0 max-w-4xl"
         variants={containerVariants}
         initial="hidden"
         animate="visible"

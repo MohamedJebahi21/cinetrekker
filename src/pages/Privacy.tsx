@@ -18,7 +18,7 @@ export default function Privacy() {
         description="CineTrekker privacy policy and data handling practices"
         canonical="https://cinetrekker.vercel.app/privacy"
       />
-      <div className="page-container pt-20 max-w-3xl">
+      <div className="page-container pt-20 max-w-3xl pb-24 md:pb-0">
       <div className="flex items-center gap-3 mb-8">
         <Shield className="w-8 h-8 text-primary" />
         <div>

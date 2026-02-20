@@ -411,7 +411,7 @@ export default function Calendar() {
         description="Upcoming movie and TV show releases this week"
         canonical="https://cinetrekker.vercel.app/calendar"
       />
-    <div className="page-container pt-20 py-6">
+    <div className="page-container pt-20 py-6 pb-24 md:pb-0">
       {/* Header */}
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex items-center gap-3">

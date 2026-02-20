@@ -604,7 +604,7 @@ export default function Profile() {
         canonical="https://cinetrekker.vercel.app/profile"
       />
     <motion.div 
-      className="page-container pt-20 pb-24 max-w-7xl"
+      className="page-container pt-20 pb-24 md:pb-0 max-w-7xl"
       variants={containerVariants}
       initial="hidden"
       animate="visible"

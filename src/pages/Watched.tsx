@@ -49,7 +49,7 @@ export default function Watched() {
         description="Movies and TV shows you've watched with ratings and notes"
         canonical="https://cinetrekker.vercel.app/watched"
       />
-    <div className="page-container pt-20">
+    <div className="page-container pt-20 pb-24 md:pb-0">
       <h1 className="section-title">{t('watched.title')}</h1>
 
       {isLoading ? (

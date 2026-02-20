@@ -130,7 +130,7 @@ export default function EnhancedStats() {
         description="View detailed statistics about your watching habits"
         canonical="https://cinetrekker.vercel.app/stats"
       />
-      <div className="page-container pt-20">
+      <div className="page-container pt-20 pb-24 md:pb-0">
         <h1 className="section-title">Your Stats</h1>
 
         {/* Overview Cards */}

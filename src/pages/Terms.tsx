@@ -3,7 +3,7 @@ import SEO from '@/components/SEO';
 
 export default function Terms() {
   return (
-    <div className="page-container pt-20">
+    <div className="page-container pt-20 pb-24 md:pb-0">
       <SEO title="Terms of Service — CineTrekker" description="Terms of Service" />
       <div className="max-w-3xl mx-auto py-12">
         <h1 className="section-title">Terms of Service</h1>

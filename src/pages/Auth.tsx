@@ -241,7 +241,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
         description="Sign in to CineTrekker to track your movies and TV shows"
         canonical={`https://cinetrekker.vercel.app${canonicalPath}`}
       />
-    <div className="page-container pt-20 flex items-center justify-center min-h-[70vh]">
+    <div className="page-container pt-20 flex items-center justify-center min-h-[70vh] pb-24 md:pb-0">
       <div className="w-full max-w-md">
         <h1 className="text-3xl font-bold text-center mb-6">{t('nav.signIn')}</h1>
         <Card className="glass-card">

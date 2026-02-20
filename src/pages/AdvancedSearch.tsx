@@ -130,7 +130,7 @@ export default function AdvancedSearch() {
         description="Search movies and TV shows with advanced filters"
         canonical="https://cinetrekker.vercel.app/advanced-search"
       />
-      <div className="page-container pt-20">
+      <div className="page-container pt-20 pb-24 md:pb-0">
         <h1 className="section-title">Advanced Search</h1>
 
         {/* Search Bar */}

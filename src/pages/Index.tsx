@@ -92,7 +92,7 @@ export default function Index() {
 
       {/* AI Movie Scout removed per request */}
 
-      <div className="page-container space-y-8">
+      <div className="page-container space-y-8 pb-24 md:pb-0">
         {/* Personalized Recommendations removed */}
         {/* Year Filter */}
         <section>

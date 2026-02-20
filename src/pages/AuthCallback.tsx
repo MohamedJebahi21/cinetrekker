@@ -63,7 +63,7 @@ export default function AuthCallback() {
   }, [navigate, searchParams, t]);
 
   return (
-    <div className="page-container pt-20 flex flex-col items-center justify-center min-h-[70vh]">
+    <div className="page-container pt-20 flex flex-col items-center justify-center min-h-[70vh] pb-24 md:pb-0">
       <Skeleton className="backdrop-skeleton w-48 mb-4" />
       <p className="text-muted-foreground">{t('auth.completing', 'Completing sign in...')}</p>
     </div>

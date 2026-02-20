@@ -50,7 +50,7 @@ export default function DecadeExplorer() {
         description="Discover movies and TV shows from different eras"
         canonical="https://cinetrekker.vercel.app/decades"
       />
-      <div className="page-container pt-20">
+      <div className="page-container pt-20 pb-24 md:pb-0">
         <div className="flex items-center gap-2 mb-6">
           <Calendar className="h-8 w-8" />
           <h1 className="section-title mb-0">Explore by Decade</h1>
