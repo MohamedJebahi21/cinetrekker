@@ -154,9 +154,11 @@ jobs:
       - name: Verify no account enumeration leaks
         run: |
           cd src
-          if grep -r "User not found\|Incorrect password\|Email already exists" . 2>/dev/null \
-             --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build \
-             --exclude="*authErrorHandler*" --exclude="*.test.*" --exclude="*.spec.*"; then
+          # Find all TypeScript files, excluding authErrorHandler, test files, and build dirs
+          if find . -type f \( -name "*.ts" -o -name "*.tsx" \) \
+             ! -path "*node_modules*" ! -path "*dist*" ! -path "*build*" \
+             ! -name "*authErrorHandler*" ! -name "*.test.*" ! -name "*.spec.*" \
+             -exec grep -l "User not found\|Incorrect password\|Email already exists" {} \; 2>/dev/null; then
             echo "❌ ERROR: Found potential account enumeration messages!"
             exit 1
           fi
