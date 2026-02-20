@@ -133,5 +133,4 @@ if (isDevelopment()) {
   console.log('🔧 Environment Configuration:');
   console.log(`  - Mode: ${import.meta.env.MODE}`);
   console.log(`  - Supabase URL: ${ENV.VITE_SUPABASE_URL.replace(/https:\/\/([^.]+)\..*/, 'https://$1.supabase.co')}`);
-  console.log(`  - Anon Key: ${ENV.VITE_SUPABASE_ANON_KEY.slice(0, 20)}...`);
 }

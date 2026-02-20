@@ -1,5 +1,22 @@
 import { supabase } from '@/integrations/supabase/client';
 
+const ALLOWED_PROFILE_PHOTO_DATA_URL = /^data:image\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+const MAX_PROFILE_PHOTO_DATA_URL_LENGTH = 3_000_000;
+
+function validateProfilePhotoDataUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
+
+  if (value.length > MAX_PROFILE_PHOTO_DATA_URL_LENGTH) {
+    throw new Error('Profile photo is too large');
+  }
+
+  if (!ALLOWED_PROFILE_PHOTO_DATA_URL.test(value)) {
+    throw new Error('Invalid profile photo format');
+  }
+
+  return value;
+}
+
 export interface UserProfile {
   id: string;
   user_id: string;
@@ -47,9 +64,12 @@ export const profileService = {
       // First check if profile exists
       const existing = await this.getProfile(userId);
 
+      const validatedProfilePhoto = validateProfilePhotoDataUrl(profile.profile_photo);
+
       const profileData = {
         user_id: userId,
         ...profile,
+        profile_photo: validatedProfilePhoto,
         updated_at: new Date().toISOString(),
       };
 

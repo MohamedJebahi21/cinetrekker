@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Media } from '@/types/media';
 import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
 
@@ -14,15 +15,15 @@ interface MediaGridProps {
 }
 
 const gridColsMap = {
-  compact: 'grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7',
-  normal: 'grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-6',
-  wide: 'grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5',
+  compact: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4',
+  normal: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4',
+  wide: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4',
 };
 
 const gapMap = {
-  sm: 'gap-2 xs:gap-2.5 sm:gap-3 md:gap-3.5',
-  md: 'gap-3 xs:gap-3.5 sm:gap-4 md:gap-5 lg:gap-6',
-  lg: 'gap-4 xs:gap-4.5 sm:gap-5 md:gap-6 lg:gap-7',
+  sm: 'gap-3 lg:gap-4',
+  md: 'gap-3 lg:gap-4',
+  lg: 'gap-3 lg:gap-4',
 };
 
 export function MediaGrid({
@@ -33,6 +34,8 @@ export function MediaGrid({
   gap = 'md',
   skeletonCount = 12,
 }: MediaGridProps) {
+  const { t } = useTranslation();
+
   const containerVariants = {
     initial: { opacity: 0 },
     animate: {
@@ -77,7 +80,7 @@ export function MediaGrid({
   if (items.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground text-lg">No items found</p>
+        <p className="text-muted-foreground text-lg">{t('common.noResults', 'No results found')}</p>
       </div>
     );
   }
@@ -114,6 +117,7 @@ export function InfiniteMediaGrid({
   onLoadMore,
   ...props
 }: InfiniteMediaGridProps) {
+  const { t } = useTranslation();
   const observerTarget = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -140,7 +144,7 @@ export function InfiniteMediaGrid({
       <MediaGrid items={items} {...props} />
       {hasMore && (
         <div ref={observerTarget} className="h-20 flex items-center justify-center">
-          <div className="animate-pulse text-muted-foreground">Loading more...</div>
+          <div className="animate-pulse text-muted-foreground">{t('common.loading', 'Loading...')}</div>
         </div>
       )}
     </>

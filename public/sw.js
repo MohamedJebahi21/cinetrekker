@@ -24,23 +24,40 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  // For API calls, try network first then cache fallback
-  if (request.url.includes('/api/') || request.url.includes('themoviedb.org')) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const cloned = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, cloned));
-          return response;
-        })
-        .catch(() => caches.match(request))
-    );
+  const url = new URL(request.url);
+
+  // Never cache API or third-party data requests
+  if (url.pathname.startsWith('/api/') || request.url.includes('themoviedb.org')) {
     return;
   }
 
-  // For navigation and static assets, cache-first
+  // Never cache authenticated requests
+  if (request.headers.get('authorization')) {
+    return;
+  }
+
+  const isStaticAsset = request.method === 'GET' &&
+    /\.(?:js|css|png|jpg|jpeg|webp|svg|ico|woff2?)$/i.test(url.pathname);
+
+  if (!isStaticAsset && request.mode !== 'navigate') {
+    return;
+  }
+
+  // Cache-first for navigations and static assets only
   event.respondWith(
-    caches.match(request).then((cached) => cached || fetch(request))
+    caches.match(request).then((cached) => {
+      if (cached) return cached;
+
+      return fetch(request).then((response) => {
+        if (!response || response.status !== 200 || response.type !== 'basic') {
+          return response;
+        }
+
+        const cloned = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(request, cloned));
+        return response;
+      });
+    })
   );
 });
 

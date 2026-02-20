@@ -84,7 +84,8 @@ export default function Search() {
   const initialStreaming = searchParams.get('streaming') || '';
   
   const [query, setQuery] = useState(initialQuery);
-  const debouncedQuery = useDebounce(query, 500); // Debounce search to prevent spam
+  const debouncedQuery = useDebounce(query, 300);
+  const normalizedQuery = useMemo(() => debouncedQuery.normalize('NFKC').trim(), [debouncedQuery]);
   const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaType>(initialType);
   const [genreFilter, setGenreFilter] = useState<string>(initialGenre);
   const [yearFilter, setYearFilter] = useState<string>(initialYear);
@@ -100,7 +101,7 @@ export default function Search() {
   // Update URL params when filters change
   useEffect(() => {
     const params: Record<string, string> = {};
-    if (debouncedQuery) params.q = debouncedQuery;
+    if (normalizedQuery) params.q = normalizedQuery;
     if (mediaTypeFilter !== 'all') params.type = mediaTypeFilter;
     if (genreFilter) params.genre = genreFilter;
     if (yearFilter) params.year = yearFilter;
@@ -109,7 +110,7 @@ export default function Search() {
     if (runtimeFilter) params.runtime = runtimeFilter;
     if (streamingFilter) params.streaming = streamingFilter;
     setSearchParams(params);
-  }, [debouncedQuery, mediaTypeFilter, genreFilter, yearFilter, languageFilter, sortBy, runtimeFilter, streamingFilter, setSearchParams]);
+  }, [normalizedQuery, mediaTypeFilter, genreFilter, yearFilter, languageFilter, sortBy, runtimeFilter, streamingFilter, setSearchParams]);
 
   const { data: movieGenres } = useQuery({
     queryKey: ['genres', 'movie', language],
@@ -138,18 +139,19 @@ export default function Search() {
   // Determine if we should use text search or discover API
   const hasFilters = mediaTypeFilter !== 'all' || !!genreFilter || !!yearFilter || !!languageFilter || !!runtimeFilter || !!streamingFilter;
   const useDiscoverMode = !debouncedQuery && hasFilters;
-  const useSearchMode = debouncedQuery.length > 0;
+  const useSearchMode = normalizedQuery.length > 0;
   const showTrending = !useDiscoverMode && !useSearchMode;
 
   // Text search query
-  const { data: searchResults, isLoading: isSearching } = useQuery({
-    queryKey: ['search', debouncedQuery, language],
-    queryFn: () => searchMulti(debouncedQuery, 1, language),
+  const { data: searchResults, isLoading: isSearching, isError: isSearchError, error: searchError } = useQuery({
+    queryKey: ['search', normalizedQuery, language],
+    queryFn: () => searchMulti(normalizedQuery, 1, language),
     enabled: Boolean(useSearchMode),
+    retry: 1,
   });
 
   // Discover movies query
-  const { data: discoverMoviesResults, isLoading: isDiscoveringMovies } = useQuery({
+  const { data: discoverMoviesResults, isLoading: isDiscoveringMovies, isError: isDiscoverMoviesError, error: discoverMoviesError } = useQuery({
     queryKey: ['discover', 'movie', effectiveGenres, yearFilter, languageFilter, sortBy, runtimeConfig?.gte, runtimeConfig?.lte, streamingFilter, language],
     queryFn: () => discoverMovies({
       with_genres: effectiveGenres,
@@ -165,7 +167,7 @@ export default function Search() {
   });
 
   // Discover TV query
-  const { data: discoverTVResults, isLoading: isDiscoveringTV } = useQuery({
+  const { data: discoverTVResults, isLoading: isDiscoveringTV, isError: isDiscoverTVError, error: discoverTVError } = useQuery({
     queryKey: ['discover', 'tv', effectiveGenres, yearFilter, languageFilter, sortBy, runtimeConfig?.gte, runtimeConfig?.lte, streamingFilter, language],
     queryFn: () => discoverTV({
       with_genres: effectiveGenres,
@@ -181,13 +183,15 @@ export default function Search() {
   });
 
   // Trending for default view
-  const { data: trendingResults, isLoading: isTrendingLoading } = useQuery({
+  const { data: trendingResults, isLoading: isTrendingLoading, isError: isTrendingError, error: trendingError } = useQuery({
     queryKey: ['trending', 'all', 'week', language],
     queryFn: () => getTrending('all', 'week', language),
     enabled: Boolean(showTrending),
   });
 
   const isLoading = isSearching || isDiscoveringMovies || isDiscoveringTV || isTrendingLoading;
+  const isError = isSearchError || isDiscoverMoviesError || isDiscoverTVError || isTrendingError;
+  const activeError = (searchError || discoverMoviesError || discoverTVError || trendingError) as Error | null;
 
   // Combine and filter results
   const results = useMemo(() => {
@@ -447,7 +451,7 @@ export default function Search() {
         canonical={`https://cinetrekker.vercel.app/search${window.location.search}`}
       />
       {/* Search Header */}
-      <div className="mb-8">
+      <div className="mb-8 sticky top-16 z-20 bg-background/90 backdrop-blur-sm py-2">
         <div className="flex items-center justify-between mb-4">
           <h1 className="section-title mb-0">{t('nav.search')}</h1>
           <RandomTrekButton />
@@ -546,8 +550,10 @@ export default function Search() {
         <p className="text-sm text-muted-foreground">
           {isLoading ? (
             <>{t('common.loading')}</>
-          ) : debouncedQuery ? (
-            <>{t('search.resultsFor', { query: debouncedQuery })} ({results.length})</>
+          ) : isError ? (
+            <>{activeError?.message || t('common.error')}</>
+          ) : normalizedQuery ? (
+            <>{t('search.resultsFor', { query: normalizedQuery })} ({results.length})</>
           ) : hasFilters ? (
             <>{t('search.filterResults')} ({results.length})</>
           ) : (
@@ -563,6 +569,15 @@ export default function Search() {
             <SkeletonCard key={i} />
           ))}
         </div>
+      ) : isError ? (
+        <div className="text-center py-20 max-w-md mx-auto">
+          <h3 className="text-2xl font-bold mb-3 title-display">
+            {t('common.error')}
+          </h3>
+          <p className="text-muted-foreground mb-6 leading-relaxed">
+            {activeError?.message || t('search.noResultsDescription', 'Something went wrong while searching.')}
+          </p>
+        </div>
       ) : results.length > 0 ? (
         <div className="media-grid">
           {results.map((item) => (
@@ -575,18 +590,18 @@ export default function Search() {
             <SearchIcon className="w-12 h-12 text-primary" />
           </div>
           <h3 className="text-2xl font-bold mb-3 title-display">
-            {debouncedQuery 
+            {normalizedQuery 
               ? t('search.noResultsTitle', 'No results found')
               : t('search.startJourney', 'Your Journey Starts Here')
             }
           </h3>
           <p className="text-muted-foreground mb-6 leading-relaxed">
-            {debouncedQuery 
-              ? t('search.noResultsDescription', `We couldn't find anything matching "${debouncedQuery}". Try adjusting your filters or search terms.`)
+            {normalizedQuery 
+              ? t('search.noResultsDescription', `We couldn't find anything matching "${normalizedQuery}". Try adjusting your filters or search terms.`)
               : t('search.trySearching', 'Search for movies, TV shows, or use the genre chips above to discover something new.')
             }
           </p>
-          {(hasFilters || debouncedQuery) && (
+          {(hasFilters || normalizedQuery) && (
             <Button 
               variant="default" 
               onClick={() => { clearFilters(); clearSearch(); }} 

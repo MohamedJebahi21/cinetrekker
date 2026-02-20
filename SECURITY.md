@@ -27,7 +27,6 @@ Since Supabase's Leaked Password Protection is a paid feature, we implement robu
 
 - New users must verify their email before accessing protected routes
 - Verification email sent automatically on signup
- - No email verification is required for access
 
 ### 3. Protected Routes
 

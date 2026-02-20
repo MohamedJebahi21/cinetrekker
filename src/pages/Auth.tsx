@@ -11,7 +11,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { validatePassword, PasswordValidationResult } from '@/lib/passwordValidation';
-import { sanitizeAuthError, logAuthFailure } from '@/lib/authErrorHandler'; // NEW
+import { sanitizeAuthError, logAuthFailure, checkAuthRateLimit, clearAuthRateLimit } from '@/lib/authErrorHandler';
 import { supabase } from '@/integrations/supabase/client';
 import SEO from '@/components/SEO';
 
@@ -21,7 +21,7 @@ import SEO from '@/components/SEO';
  * Features:
  * - Strong password validation with real-time feedback
  * - Google OAuth as preferred sign-in method (inherits Google's security)
- * - Immediate login after signup (no email verification)
+ * - Email verification required before protected-route access
  * - Redirect to original destination after login
  */
 export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' | 'signup' }) {
@@ -43,7 +43,8 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (user) {
+    const isVerified = Boolean(user?.email_confirmed_at);
+    if (user && isVerified) {
       navigate(from, { replace: true });
     }
   }, [user, navigate, from]);
@@ -67,6 +68,17 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const rateLimitInfo = checkAuthRateLimit(email.trim().toLowerCase());
+    if (rateLimitInfo.isLimited) {
+      toast({
+        title: t('common.error'),
+        description: 'Too many sign-in attempts. Please wait a minute and try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setLoading(true);
     
     try {
@@ -86,6 +98,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
           variant: 'destructive',
         });
       } else {
+        clearAuthRateLimit(email.trim().toLowerCase());
         toast({
           title: t('auth.signIn'),
           description: 'Welcome back!',
@@ -106,6 +119,16 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const rateLimitInfo = checkAuthRateLimit(email.trim().toLowerCase());
+    if (rateLimitInfo.isLimited) {
+      toast({
+        title: t('common.error'),
+        description: 'Too many sign-up attempts. Please wait a minute and try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
     
     // Validate password BEFORE submission (client-side, ok to show)
     const validation = validatePassword(password);
@@ -139,10 +162,10 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
         });
       } else {
         toast({
-          title: t('auth.signUp'),
-          description: t('auth.welcome', 'Your account is ready. Welcome aboard!'),
+          title: t('auth.signUp', 'Sign Up'),
+          description: 'Check your email to verify your account before signing in.',
         });
-        navigate(from, { replace: true });
+        setActiveTab('signin');
       }
     } catch (unexpectedError) {
       console.error('[Auth] Unexpected sign-up error:', unexpectedError);

@@ -16,7 +16,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLastViewed } from '@/hooks/useLastViewed';
 import { addToRecentlyViewed } from '@/lib/recentlyViewed';
 import { MediaSection } from '@/components/MediaSection';
-import { ApiError } from '@/components/ErrorBoundary';
+import { MovieRouteError } from '@/components/details/MovieRouteError';
+import { MovieRouteNotFound } from '@/components/details/MovieRouteNotFound';
 import SEO from '@/components/SEO';
 import useDocumentTitle from '@/hooks/useDocumentTitle';
 import MovieSchema from '@/components/MovieSchema';
@@ -39,6 +40,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { WatchedStatusDialog } from '@/components/WatchedStatusDialog';
 import TrailerModal from '@/components/TrailerModal';
+import { MediaPoster } from '@/features/media/MediaPoster';
+import { AsyncSection } from '@/components/state/AsyncSection';
 
 export default function Details() {
   const { id } = useParams<{ id: string }>();
@@ -72,6 +75,8 @@ export default function Details() {
   // optimistic UI for watchlist toggle
   const [optimisticInWatchlist, setOptimisticInWatchlist] = useState<boolean>(inWatchlist);
   useEffect(() => setOptimisticInWatchlist(inWatchlist), [inWatchlist]);
+  const [optimisticWatched, setOptimisticWatched] = useState<boolean>(watched);
+  useEffect(() => setOptimisticWatched(watched), [watched]);
 
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [tempRating, setTempRating] = useState<number>(watchedItem?.rating || 5);
@@ -142,7 +147,7 @@ export default function Details() {
   const _title = details ? (details.title || details.name || '') : '';
   const _releaseDate = details ? (details.release_date || details.first_air_date) : null;
   const _year = _releaseDate ? new Date(_releaseDate).getFullYear() : null;
-  const seoTitle = _title ? `${_title}${_year ? ` (${_year})` : ''}` : undefined;
+  const seoTitle = _title || undefined;
   useDocumentTitle(seoTitle);
 
   if (isLoading) {
@@ -171,23 +176,17 @@ export default function Details() {
   }
 
   if (!isValidId) {
-    return (
-      <div className="page-container text-center py-16">
-        <ApiError message={t('details.invalidId', 'Invalid title id.')} />
-      </div>
-    );
+    return <MovieRouteNotFound title={t('search.noResultsTitle', 'No results found')} description={t('details.invalidId', 'Invalid title id.')} homeLabel={t('nav.home')} />;
   }
 
   if (isError || !details) {
     console.error('Details page error:', error);
-    return (
-      <div className="page-container text-center py-16">
-        <ApiError
-          message={(error as Error)?.message || t('common.error')}
-          onRetry={() => refetch()}
-        />
-      </div>
-    );
+    const errorMessage = (error as Error)?.message || '';
+    const isNotFoundError = /not found|404/i.test(errorMessage);
+    if (isNotFoundError) {
+      return <MovieRouteNotFound title={t('search.noResultsTitle', 'No results found')} description={t('details.invalidId', 'This TMDB ID is invalid or unavailable.')} homeLabel={t('nav.home')} />;
+    }
+    return <MovieRouteError message={(error as Error)?.message || t('common.error')} onRetry={() => refetch()} />;
   }
 
   const title = details.title || details.name || '';
@@ -203,24 +202,45 @@ export default function Details() {
   
   const following = user ? isFollowing(mediaId) : false;
 
-  const handleAddToWatchlist = () => {
-    // immediate UI feedback
-    setOptimisticInWatchlist(prev => !prev);
-    if (inWatchlist) {
-      removeFromWatchlist(mediaId, mediaType);
-    } else {
-      addToWatchlist(mediaId, mediaType);
+  const handleAddToWatchlist = async () => {
+    const nextState = !optimisticInWatchlist;
+    setOptimisticInWatchlist(nextState);
+    try {
+      if (nextState) {
+        await addToWatchlist(mediaId, mediaType);
+      } else {
+        await removeFromWatchlist(mediaId, mediaType);
+      }
+    } catch {
+      setOptimisticInWatchlist(!nextState);
     }
   };
 
-  const handleMarkAsWatched = () => {
-    if (watched) {
-      removeFromWatched(mediaId, mediaType);
+  const handleMarkAsWatched = async () => {
+    if (optimisticWatched) {
+      setOptimisticWatched(false);
+      try {
+        await removeFromWatched(mediaId, mediaType);
+      } catch {
+        setOptimisticWatched(true);
+      }
     } else {
       setTempRating(watchedItem?.rating || 5);
       setTempNote(watchedItem?.note || '');
       setTempStatus(watchedItem?.status || 'completed');
-      setStatusDialogOpen(true);
+      if (mediaType === 'tv' && user) {
+        setStatusDialogOpen(true);
+      } else {
+        setOptimisticWatched(true);
+        const nextRating = watchedItem?.rating || 5;
+        const nextNote = watchedItem?.note || '';
+        const nextStatus = watchedItem?.status || 'completed';
+        try {
+          await addToWatched(mediaId, mediaType, nextRating, nextNote, nextStatus);
+        } catch {
+          setOptimisticWatched(false);
+        }
+      }
     }
   };
 
@@ -442,6 +462,8 @@ export default function Details() {
             src={backdropUrl}
             alt={title}
             className="w-full h-full object-cover"
+            loading="eager"
+            decoding="async"
           />
         )}
         <div className="backdrop-fade absolute inset-0" />
@@ -458,18 +480,8 @@ export default function Details() {
 
       <div className="page-container -mt-32 md:-mt-48 relative z-10">
         <div className="flex flex-col md:flex-row gap-8">
-          <div className="flex-shrink-0 mx-auto md:mx-0">
-            {posterUrl ? (
-              <img
-                src={posterUrl}
-                alt={title}
-                className="w-48 md:w-64 rounded-xl shadow-2xl"
-              />
-            ) : (
-              <div className="w-48 md:w-64 aspect-[2/3] bg-muted rounded-xl flex items-center justify-center">
-                <span className="text-muted-foreground">{t('common.noResults')}</span>
-              </div>
-            )}
+          <div className="flex-shrink-0 mx-auto md:mx-0 w-48 md:w-64">
+            <MediaPoster src={posterUrl} alt={title} className="shadow-2xl" />
           </div>
 
           <div className="flex-1 space-y-6">
@@ -545,9 +557,9 @@ export default function Details() {
                 variant={watched ? "secondary" : "outline"}
                 className="gap-2"
                 onClick={handleMarkAsWatched}
-                aria-label={watched ? t('actions.updateWatched') : t('actions.markAsWatched')}
+                aria-label={optimisticWatched ? t('actions.updateWatched') : t('actions.markAsWatched')}
               >
-                {watched ? (
+                {optimisticWatched ? (
                   <>
                     <Check className="w-4 h-4" />
                     {t('actions.watched')}
@@ -602,9 +614,15 @@ export default function Details() {
                             </span>
                           </AccordionTrigger>
                           <AccordionContent>
-                            {selectedSeason === seasonNum && seasonDetails?.episodes ? (
+                            <AsyncSection
+                              isLoading={selectedSeason === seasonNum && !seasonDetails?.episodes}
+                              isError={false}
+                              isEmpty={selectedSeason === seasonNum && Boolean(seasonDetails?.episodes) && seasonDetails.episodes.length === 0}
+                              loadingFallback={<div className="text-center py-4 text-muted-foreground">{t('common.loading')}</div>}
+                              emptyFallback={<div className="text-center py-4 text-muted-foreground">{t('common.noResults')}</div>}
+                            >
                               <div className="space-y-2">
-                                {seasonDetails.episodes.map((episode) => {
+                                {selectedSeason === seasonNum && seasonDetails?.episodes?.map((episode) => {
                                   const episodeWatched = isEpisodeWatched(mediaId, seasonNum, episode.episode_number);
                                   return (
                                     <div 
@@ -648,11 +666,7 @@ export default function Details() {
                                   );
                                 })}
                               </div>
-                            ) : (
-                              <div className="text-center py-4 text-muted-foreground">
-                                {t('common.loading')}
-                              </div>
-                            )}
+                            </AsyncSection>
                           </AccordionContent>
                         </AccordionItem>
                       ))}
@@ -667,7 +681,7 @@ export default function Details() {
                 {t('details.watchTrailer', 'Watch Trailer')}
               </Button>
 
-              {watched && (
+              {optimisticWatched && (
                 <Button 
                   variant="outline" 
                   className="gap-2"
@@ -739,6 +753,8 @@ export default function Details() {
                       src={getImageUrl(person.profile_path, 'w185') || ''}
                       alt={person.name}
                       className="w-24 h-24 rounded-full object-cover mx-auto mb-2 transition-transform md:group-hover:scale-105 md:group-hover:ring-2 md:group-hover:ring-primary active:scale-105 focus-visible:scale-105"
+                      loading="lazy"
+                      decoding="async"
                     />
                   ) : (
                     <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-2 transition-transform md:group-hover:scale-105 md:group-hover:ring-2 md:group-hover:ring-primary active:scale-105 focus-visible:scale-105">

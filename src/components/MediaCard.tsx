@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { TVWatchStatusModal } from '@/components/TVWatchStatusModal';
 import { useWatchedEpisodes } from '@/hooks/useFollowedShows';
+import { useEffect } from 'react';
 // Media preview modal removed — navigate to details page instead
 import { cn } from '@/lib/utils';
 
@@ -37,26 +38,34 @@ const STATUS_CONFIG = {
 
 function PosterImage({ posterPath, alt }: { posterPath: string | null; alt: string }) {
   const [ref, inView] = useInView<HTMLDivElement>({ rootMargin: '300px' });
+  const [loaded, setLoaded] = useState(false);
 
   // build responsive URLs: use w342 for mobile and w500 for desktop
   const small = posterPath ? getImageUrl(posterPath, 'w342') : null;
   const medium = posterPath ? getImageUrl(posterPath, 'w500') : null;
 
   return (
-    <div ref={ref} className="w-full h-full">
+    <div ref={ref} className="w-full h-full aspect-[2/3] relative overflow-hidden bg-muted">
       {inView ? (
         medium ? (
-          <img
-            src={medium}
-            srcSet={`${small ? `${small} 342w, ` : ''}${medium} 500w`}
-            sizes="(max-width: 640px) 342px, 500px"
-            width={500}
-            height={750}
-            alt={alt}
-            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105 bg-[#1a1a1a]"
-            loading="lazy"
-            decoding="async"
-          />
+          <>
+            {!loaded && <div className="absolute inset-0 bg-muted animate-pulse" />}
+            <img
+              src={medium}
+              srcSet={`${small ? `${small} 342w, ` : ''}${medium} 500w`}
+              sizes="(max-width: 640px) 342px, 500px"
+              width={500}
+              height={750}
+              alt={alt}
+              className={cn(
+                "w-full h-full object-cover transition-all duration-500 ease-out group-hover:scale-105 bg-[#1a1a1a]",
+                loaded ? "opacity-100 blur-0" : "opacity-60 blur-sm"
+              )}
+              loading="lazy"
+              decoding="async"
+              onLoad={() => setLoaded(true)}
+            />
+          </>
         ) : (
           <div className="w-full h-full skeleton-shimmer" />
         )
@@ -73,6 +82,8 @@ export const MediaCard = React.memo(function MediaCard({ media, mediaType: media
   const { isInWatchlist, isWatched, addToWatchlist, removeFromWatchlist, addToWatched, removeFromWatched } = useUserLists();
   const { markEpisodeWatched } = useWatchedEpisodes();
   const [localInWatchlist, setLocalInWatchlist] = useState<boolean>(() => isInLocalWatchlist(media.id));
+  const [optimisticInWatchlist, setOptimisticInWatchlist] = useState(false);
+  const [optimisticWatched, setOptimisticWatched] = useState(false);
   const [watchStatusModalOpen, setWatchStatusModalOpen] = useState(false);
   
   const title = useMemo(() => getMediaTitle(media), [media]);
@@ -85,38 +96,62 @@ export const MediaCard = React.memo(function MediaCard({ media, mediaType: media
   const rating = media.vote_average;
   const ratingClass = rating >= 7 ? 'rating-high' : rating >= 5 ? 'rating-medium' : 'rating-low';
 
-  const handleWatchlistClick = (e: React.MouseEvent) => {
+  useEffect(() => {
+    setOptimisticInWatchlist(inWatchlist);
+  }, [inWatchlist]);
+
+  useEffect(() => {
+    setOptimisticWatched(watched);
+  }, [watched]);
+
+  const handleWatchlistClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (user) {
-      if (inWatchlist) {
-        removeFromWatchlist(media.id, mediaType);
-      } else {
-        addToWatchlist(media.id, mediaType);
-        // tiny haptic feedback on supported mobile devices
-        try { if (typeof navigator !== 'undefined' && 'vibrate' in navigator) (navigator as any).vibrate?.(10); } catch (e) {}
+      const nextState = !optimisticInWatchlist;
+      setOptimisticInWatchlist(nextState);
+      try {
+        if (nextState) {
+          await addToWatchlist(media.id, mediaType);
+          try { if (typeof navigator !== 'undefined' && 'vibrate' in navigator) (navigator as any).vibrate?.(10); } catch (e) {}
+        } else {
+          await removeFromWatchlist(media.id, mediaType);
+        }
+      } catch {
+        setOptimisticInWatchlist(!nextState);
       }
     } else {
       const newState = toggleLocalWatchlist(media.id);
       setLocalInWatchlist(newState);
+      setOptimisticInWatchlist(newState);
       if (newState) {
         try { if (typeof navigator !== 'undefined' && 'vibrate' in navigator) (navigator as any).vibrate?.(10); } catch (e) {}
       }
     }
   };
 
-  const handleWatchedClick = (e: React.MouseEvent) => {
+  const handleWatchedClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (watched) {
-      removeFromWatched(media.id, mediaType);
+    if (optimisticWatched) {
+      setOptimisticWatched(false);
+      try {
+        await removeFromWatched(media.id, mediaType);
+      } catch {
+        setOptimisticWatched(true);
+      }
     } else {
       // For TV shows, open modal to choose watch type
       if (mediaType === 'tv' && user) {
         setWatchStatusModalOpen(true);
       } else {
         // For movies or guests, just mark as watched
-        addToWatched(media.id, mediaType);
+        setOptimisticWatched(true);
+        try {
+          await addToWatched(media.id, mediaType);
+        } catch {
+          setOptimisticWatched(false);
+        }
       }
     }
   };
@@ -184,7 +219,7 @@ export const MediaCard = React.memo(function MediaCard({ media, mediaType: media
               </Badge>
             )}
             
-            {watched && (
+            {optimisticWatched && (
               <span className="px-2 py-1 text-[10px] font-medium rounded bg-success/90 text-success-foreground flex items-center gap-1">
                 <Check className="w-3 h-3" />
               </span>
@@ -210,14 +245,14 @@ export const MediaCard = React.memo(function MediaCard({ media, mediaType: media
                   <button
                     onClick={handleWatchlistClick}
                     className={cn(
-                      "w-8 h-8 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center transform transition-all duration-200 ease-in-out",
-                      inWatchlist
+                      "w-8 h-8 min-w-[48px] min-h-[48px] rounded-full flex items-center justify-center transform transition-all duration-200 ease-in-out",
+                      optimisticInWatchlist
                         ? "bg-primary text-primary-foreground hover:scale-110"
                         : "bg-background/80 backdrop-blur-md text-foreground hover:bg-[#E50914] hover:text-white hover:scale-110"
                     )}
-                    aria-label={inWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
+                    aria-label={optimisticInWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
                   >
-                    {inWatchlist ? (
+                    {optimisticInWatchlist ? (
                       <BookmarkCheck className="w-3.5 h-3.5" />
                     ) : (
                       <Plus className="w-3.5 h-3.5" />
@@ -225,7 +260,7 @@ export const MediaCard = React.memo(function MediaCard({ media, mediaType: media
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="bg-popover text-popover-foreground">
-                  {inWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
+                  {optimisticInWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
                 </TooltipContent>
               </Tooltip>
 
@@ -235,18 +270,18 @@ export const MediaCard = React.memo(function MediaCard({ media, mediaType: media
                   <button
                     onClick={handleWatchedClick}
                     className={cn(
-                      "w-8 h-8 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center transform transition-all duration-200 ease-in-out",
-                      watched
+                      "w-8 h-8 min-w-[48px] min-h-[48px] rounded-full flex items-center justify-center transform transition-all duration-200 ease-in-out",
+                      optimisticWatched
                         ? "bg-success text-success-foreground hover:scale-110"
                         : "bg-background/80 backdrop-blur-md text-foreground hover:bg-success hover:text-success-foreground hover:scale-110"
                     )}
-                    aria-label={watched ? t('actions.removeFromWatched') : t('actions.markAsWatched')}
+                    aria-label={optimisticWatched ? t('actions.removeFromWatched') : t('actions.markAsWatched')}
                   >
                     <Check className="w-3.5 h-3.5" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="bg-popover text-popover-foreground">
-                  {watched ? t('actions.removeFromWatched') : t('actions.markAsWatched')}
+                  {optimisticWatched ? t('actions.removeFromWatched') : t('actions.markAsWatched')}
                 </TooltipContent>
               </Tooltip>
             </div>

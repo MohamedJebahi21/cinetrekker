@@ -7,6 +7,59 @@
 const fetch = globalThis.fetch;
 
 const TMDB_BASE = 'https://api.themoviedb.org/3';
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const MAX_REQUESTS_PER_WINDOW = 10;
+const MAX_PROMPT_LENGTH = 500;
+const MAX_LIMIT = 20;
+const MIN_LIMIT = 1;
+
+const requestStore = new Map();
+
+function getClientIP(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string' && forwarded.length > 0) {
+    return forwarded.split(',')[0].trim();
+  }
+
+  const realIp = req.headers['x-real-ip'];
+  if (typeof realIp === 'string' && realIp.length > 0) {
+    return realIp;
+  }
+
+  return req.socket?.remoteAddress || 'unknown';
+}
+
+function isRateLimited(key) {
+  const now = Date.now();
+  const entry = requestStore.get(key);
+
+  if (!entry || now > entry.resetAt) {
+    requestStore.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return { limited: false, retryAfter: 0 };
+  }
+
+  entry.count += 1;
+  if (entry.count > MAX_REQUESTS_PER_WINDOW) {
+    const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
+    return { limited: true, retryAfter };
+  }
+
+  return { limited: false, retryAfter: 0 };
+}
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+
+  const allowedOrigins = new Set([
+    'https://cinetrekker.vercel.app',
+    'https://www.cinetrekker.vercel.app',
+  ]);
+
+  const isPreview = /^https:\/\/cinetrekker-[a-z0-9-]+\.vercel\.app$/.test(origin);
+  const isLocal = process.env.NODE_ENV !== 'production' && /^http:\/\/localhost:(5173|5174|8080|4173)$/.test(origin);
+
+  return allowedOrigins.has(origin) || isPreview || isLocal;
+}
 
 // Validate required environment variables on module load
 const REQUIRED_ENV_VARS = ['OPENAI_API_KEY', 'TMDB_API_KEY'];
@@ -20,8 +73,30 @@ if (missingVars.length > 0 && process.env.NODE_ENV === 'production') {
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
+  const origin = req.headers.origin;
+  if (!isAllowedOrigin(origin)) {
+    return res.status(403).json({ error: 'Forbidden origin' });
+  }
+
+  const ip = getClientIP(req);
+  const limitCheck = isRateLimited(`recommend:${ip}`);
+  if (limitCheck.limited) {
+    res.setHeader('Retry-After', String(limitCheck.retryAfter));
+    return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+  }
+
   const { prompt, language = 'en', limit = 12 } = req.body || {};
   if (!prompt || typeof prompt !== 'string') return res.status(400).json({ error: 'Missing prompt' });
+
+  const normalizedPrompt = prompt.trim();
+  if (!normalizedPrompt) return res.status(400).json({ error: 'Missing prompt' });
+  if (normalizedPrompt.length > MAX_PROMPT_LENGTH) {
+    return res.status(400).json({ error: `Prompt exceeds ${MAX_PROMPT_LENGTH} characters` });
+  }
+
+  const normalizedLimit = Number.isFinite(Number(limit))
+    ? Math.max(MIN_LIMIT, Math.min(MAX_LIMIT, Number(limit)))
+    : 12;
 
   const OPENAI_KEY = process.env.OPENAI_API_KEY;
   const TMDB_KEY = process.env.TMDB_API_KEY;
@@ -32,7 +107,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const system = `You are a helpful film expert. Given a short user prompt, return a strict JSON object with two keys: \"summary\" (a short 1-2 sentence summary as a film critic, no more than ~140 characters) and \"suggestions\" (an array of up to ${limit} items). Each suggestion must be an object with keys: \"title\" (string), optionally \"year\" (number), and \"media_type\" which must be either \"movie\" or \"tv\". Do NOT include adult content. Output MUST be valid JSON and contain only the JSON object.`;
+    const system = `You are a helpful film expert. Given a short user prompt, return a strict JSON object with two keys: \"summary\" (a short 1-2 sentence summary as a film critic, no more than ~140 characters) and \"suggestions\" (an array of up to ${normalizedLimit} items). Each suggestion must be an object with keys: \"title\" (string), optionally \"year\" (number), and \"media_type\" which must be either \"movie\" or \"tv\". Do NOT include adult content. Output MUST be valid JSON and contain only the JSON object.`;
 
     const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -44,7 +119,7 @@ module.exports = async (req, res) => {
         model: 'gpt-3.5-turbo',
         messages: [
           { role: 'system', content: system },
-          { role: 'user', content: prompt },
+          { role: 'user', content: normalizedPrompt },
         ],
         max_tokens: 600,
         temperature: 0.8,
@@ -84,7 +159,7 @@ module.exports = async (req, res) => {
     }
 
     // Limit and sanitize suggestions
-    const suggestions = (parsed.suggestions || []).slice(0, limit).filter(Boolean).map(s => ({
+    const suggestions = (parsed.suggestions || []).slice(0, normalizedLimit).filter(Boolean).map(s => ({
       title: (s.title || s.name || '').toString(),
       year: s.year || s.y || null,
       media_type: (s.media_type === 'tv' || s.media_type === 'movie') ? s.media_type : (s.type === 'tv' ? 'tv' : 'movie'),
@@ -103,7 +178,7 @@ module.exports = async (req, res) => {
     };
 
     for (const sug of suggestions) {
-      if (resolved.length >= limit) break;
+      if (resolved.length >= normalizedLimit) break;
       const media = sug.media_type === 'tv' ? 'tv' : 'movie';
       const searchUrl = `${TMDB_BASE}/search/${media}?api_key=${TMDB_KEY}&query=${encodeURIComponent(sug.title)}&include_adult=false&language=${encodeURIComponent(language)}`;
       try {
@@ -130,7 +205,7 @@ module.exports = async (req, res) => {
           if (recRes.ok) {
             const recJson = await recRes.json();
             for (const r of (recJson.results || [])) {
-              if (resolved.length >= limit) break;
+              if (resolved.length >= normalizedLimit) break;
               if (r.adult) continue;
               pushIfNew({
                 id: r.id,
@@ -154,12 +229,12 @@ module.exports = async (req, res) => {
     // Hybrid fallback: if AI suggestions didn't resolve, perform a TMDB multi search using the raw prompt
     if (resolved.length === 0) {
       try {
-        const searchUrl = `${TMDB_BASE}/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent(prompt)}&include_adult=false&language=${encodeURIComponent(language)}`;
+        const searchUrl = `${TMDB_BASE}/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent(normalizedPrompt)}&include_adult=false&language=${encodeURIComponent(language)}`;
         const sRes = await fetch(searchUrl);
         if (sRes.ok) {
           const sJson = await sRes.json();
           for (const first of (sJson.results || [])) {
-            if (resolved.length >= limit) break;
+            if (resolved.length >= normalizedLimit) break;
             if (first.adult) continue;
             const media = first.media_type === 'tv' ? 'tv' : 'movie';
             pushIfNew({
@@ -188,7 +263,7 @@ module.exports = async (req, res) => {
           const raw = fs.readFileSync(p, 'utf8');
           const data = JSON.parse(raw || '[]');
           for (const d of (data || []) ) {
-            if (resolved.length >= limit) break;
+            if (resolved.length >= normalizedLimit) break;
             pushIfNew({
               id: d.id,
               media_type: d.media_type || 'movie',

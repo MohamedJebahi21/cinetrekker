@@ -2,27 +2,19 @@
 
 /* Card grid and hover improvements */
 .media-grid {
-  @apply grid gap-4;
-  /* Very small phones: single column for small screens under 480px */
-  grid-template-columns: repeat(1, 1fr);
-}
-@media (min-width: 480px) {
-  .media-grid {
-    /* Small phones / large phones: 2 columns */
-    grid-template-columns: repeat(2, 1fr);
-  }
+  @apply grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, 1fr);
 }
 @media (min-width: 768px) {
   .media-grid {
-    /* Tablet: 3 columns */
     grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
   }
 }
 @media (min-width: 1024px) {
   .media-grid {
-    /* Desktop: 5 columns */
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
   }
 }
 .glass-card-hover {
@@ -233,14 +225,14 @@
     text-align: right;
   }
 
-  /* Touch targets: minimum 44x44px for accessibility */
+  /* Touch targets: minimum 48x48px for accessibility */
   button, 
   a, 
   [role="button"],
   input[type="checkbox"],
   input[type="radio"] {
-    min-height: 44px;
-    min-width: 44px;
+    min-height: 48px;
+    min-width: 48px;
   }
 
   /* Exception for inline links */
@@ -585,44 +577,21 @@
 
   /* Responsive media grid - Mobile-first with optimal touch targets */
   .media-grid {
-    @apply grid gap-4;
-    /* Very small phones: single column for small screens under 480px */
-    grid-template-columns: repeat(1, 1fr);
-  }
-
-  @media (min-width: 480px) {
-    .media-grid {
-      /* Small phones / large phones: 2 columns */
-      grid-template-columns: repeat(2, 1fr);
-    }
+    @apply grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   @media (min-width: 768px) {
     .media-grid {
-      /* Tablet: 3 columns */
       grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
     }
   }
 
   @media (min-width: 1024px) {
     .media-grid {
-      /* Desktop: 5 columns */
-      grid-template-columns: repeat(5, 1fr);
-    }
-  }
-
-  /* Limit vertical height for mobile posters to avoid oversized cards */
-  @media (max-width: 640px) {
-    .media-grid > * {
-      max-height: 250px;
-    }
-    .media-grid > * .poster-overlay {
-      height: 100%;
-    }
-    .media-grid img {
-      object-fit: cover;
-      height: 100%;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
     }
   }
 

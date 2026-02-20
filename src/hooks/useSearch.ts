@@ -8,8 +8,6 @@ import { validateSearchQuery } from '@/lib/validation';
 const canceller = new RequestCanceller();
 const searchThrottler = new RequestThrottler(1000); // 1 request per second
 
-const canceller = new RequestCanceller();
-
 type SearchType = 'all' | 'movie' | 'tv' | 'person';
 
 interface UseSearchOptions {
@@ -28,7 +26,7 @@ export function useSearch(
   language: string = 'en',
   options: UseSearchOptions = {}
 ) {
-  const { debounceMs = 500, enabled = true } = options;
+  const { debounceMs = 300, enabled = true } = options;
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [debouncedQuery, setDebouncedQuery] = useState(query);
 

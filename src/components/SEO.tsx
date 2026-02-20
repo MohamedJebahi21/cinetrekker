@@ -12,7 +12,7 @@ export interface SEOProps {
 }
 
 const SITE_NAME = 'Cinetrekker';
-const TITLE_TEMPLATE = `${SITE_NAME} | %s`;
+const TITLE_TEMPLATE = `%s | ${SITE_NAME}`;
 const DEFAULT_TITLE = TITLE_TEMPLATE.replace('%s', 'Discover & Track Movies & TV Shows');
 const DEFAULT_DESCRIPTION = 'Track your favorite movies and TV shows. Discover trending content, manage your watchlist, and get personalized recommendations.';
 const DEFAULT_IMAGE = 'https://cinetrekker.vercel.app/og-image.png';

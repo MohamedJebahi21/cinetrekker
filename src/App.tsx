@@ -1,9 +1,11 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useQueryClient } from "@tanstack/react-query";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Analytics } from "@vercel/analytics/react";
+import { useTranslation } from 'react-i18next';
 import { lazy, Suspense } from 'react';
 import MovieSkeleton from '@/components/ui/MovieSkeleton';
 import LoadingFallback from '@/components/ui/LoadingFallback';
@@ -12,15 +14,14 @@ import { UserListsProvider } from "@/contexts/UserListsContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import KeyboardShortcuts from '@/components/KeyboardShortcuts';
 import ScrollToTop from '@/components/ScrollToTop';
-import ScrollTopButton from '@/components/ScrollTopButton';
-import { Header } from "@/components/Header";
-import { BottomNav } from "@/components/BottomNav";
+import { UnifiedNav } from "@/components/UnifiedNav";
 import { Footer } from "@/components/Footer";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { GlobalLoader } from "@/components/GlobalLoader";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import SEO from '@/components/SEO';
 import { websiteJsonLd } from '@/lib/schema';
 
@@ -79,7 +80,6 @@ function NetworkMonitor() {
 
 function AnimatedRoutes() {
   const location = useLocation();
-  console.log("🛣️  AnimatedRoutes rendering for path:", location.pathname);
   
   return (
     <AnimatePresence mode="wait" initial={false}>
@@ -292,9 +292,16 @@ function AnimatedRoutes() {
  * Protected routes require authentication.
  */
 const App = () => {
-  console.log("📱 App component is rendering...");
-  console.log("🎨 Setting up providers...");
-  
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const { handlers, containerStyle, pullDistance, isRefreshing, threshold } = usePullToRefresh({
+    onRefresh: async () => {
+      await queryClient.invalidateQueries();
+    },
+    threshold: 100,
+    maxPull: 150,
+  });
+
   try {
     return (
       <ThemeProvider>
@@ -309,15 +316,41 @@ const App = () => {
                 <GlobalLoader />
                 <NetworkMonitor />
                 <div className="flex min-h-screen flex-col">
-                  <Header />
+                  <UnifiedNav />
                   <ScrollToTop />
-                  <ScrollTopButton />
-                  <main id="main" tabIndex={-1} className="flex-1 pb-16 md:pb-0">
+
+                  <div className="md:hidden fixed left-0 right-0 top-16 z-40 flex justify-center pointer-events-none">
+                    <div
+                      className="mt-2 px-4 py-2 rounded-full bg-background/90 border border-border text-foreground text-xs shadow-sm transition-opacity duration-200 flex items-center gap-2"
+                      style={{ opacity: pullDistance > 0 || isRefreshing ? 1 : 0 }}
+                      aria-live="polite"
+                    >
+                      <span
+                        className={isRefreshing ? 'inline-block w-3 h-3 rounded-full border-2 border-primary border-t-transparent animate-spin' : 'hidden'}
+                        aria-hidden="true"
+                      />
+                      {isRefreshing
+                        ? t('common.refresh', 'Refreshing...')
+                        : pullDistance >= threshold
+                          ? t('common.releaseToRefresh', 'Release to refresh')
+                          : t('common.pullToRefresh', 'Pull to refresh')}
+                    </div>
+                  </div>
+
+                  <main
+                    id="main"
+                    tabIndex={-1}
+                    className="flex-1 pb-0"
+                    style={containerStyle}
+                    onTouchStart={handlers.onTouchStart}
+                    onTouchMove={handlers.onTouchMove}
+                    onTouchEnd={handlers.onTouchEnd}
+                    onTouchCancel={handlers.onTouchCancel}
+                  >
                     <ErrorBoundary>
                       <AnimatedRoutes />
                     </ErrorBoundary>
                   </main>
-                  <BottomNav />
                   <Footer />
                 </div>
               </ErrorBoundary>

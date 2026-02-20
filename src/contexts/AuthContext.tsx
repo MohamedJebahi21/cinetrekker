@@ -24,10 +24,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        // Debug: log auth events to help diagnose 403 issues
-        // (Remove these logs after debugging)
-        // eslint-disable-next-line no-console
-        console.debug('[Auth] onAuthStateChange', { event, session, user: session?.user?.id });
         setLoading(false);
       }
     );
@@ -36,9 +32,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      // Debug: log initial session fetch
-      // eslint-disable-next-line no-console
-      console.debug('[Auth] getSession', { session, user: session?.user?.id });
       setLoading(false);
     });
 
@@ -46,22 +39,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
     });
 
     if (error) {
       return { error: error as Error | null };
-    }
-
-    // If signUp does not return a session, attempt immediate sign-in
-    if (!data?.session) {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      return { error: signInError as Error | null };
     }
 
     return { error: null };

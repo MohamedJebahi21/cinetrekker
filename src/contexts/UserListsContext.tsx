@@ -21,10 +21,10 @@ interface UserListsContextType {
   watchlist: UserMediaItem[];
   watched: UserMediaItem[];
   hiddenRecommendations: HiddenRecommendation[];
-  addToWatchlist: (mediaId: number, mediaType: 'movie' | 'tv') => void;
-  removeFromWatchlist: (mediaId: number, mediaType: 'movie' | 'tv') => void;
-  addToWatched: (mediaId: number, mediaType: 'movie' | 'tv', rating?: number, note?: string, status?: string) => void;
-  removeFromWatched: (mediaId: number, mediaType: 'movie' | 'tv') => void;
+  addToWatchlist: (mediaId: number, mediaType: 'movie' | 'tv') => Promise<void>;
+  removeFromWatchlist: (mediaId: number, mediaType: 'movie' | 'tv') => Promise<void>;
+  addToWatched: (mediaId: number, mediaType: 'movie' | 'tv', rating?: number, note?: string, status?: string) => Promise<void>;
+  removeFromWatched: (mediaId: number, mediaType: 'movie' | 'tv') => Promise<void>;
   updateWatchedItem: (mediaId: number, mediaType: 'movie' | 'tv', updates: Partial<UserMediaItem>) => void;
   isInWatchlist: (mediaId: number, mediaType: 'movie' | 'tv') => boolean;
   isWatched: (mediaId: number, mediaType: 'movie' | 'tv') => boolean;
@@ -214,9 +214,9 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
   }, [user, watchlistData, watchedData]);
 
   // Wrapper functions to maintain backward compatibility with existing code
-  const addToWatchlist = useCallback((mediaId: number, mediaType: 'movie' | 'tv') => {
+  const addToWatchlist = useCallback(async (mediaId: number, mediaType: 'movie' | 'tv') => {
     if (user) {
-      addToWatchlistMutation.mutate({ mediaId, mediaType });
+      await addToWatchlistMutation.mutateAsync({ mediaId, mediaType });
     } else {
       // guest — persist to local state + storage
       setWatchlist(prev => {
@@ -239,11 +239,11 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
         return next;
       });
     }
-  }, [addToWatchlistMutation]);
+  }, [addToWatchlistMutation, t, user]);
 
-  const removeFromWatchlist = useCallback((mediaId: number, mediaType: 'movie' | 'tv') => {
+  const removeFromWatchlist = useCallback(async (mediaId: number, mediaType: 'movie' | 'tv') => {
     if (user) {
-      removeFromWatchlistMutation.mutate({ mediaId, mediaType });
+      await removeFromWatchlistMutation.mutateAsync({ mediaId, mediaType });
     } else {
       setWatchlist(prev => {
         const next = prev.filter(i => !(i.mediaId === mediaId && i.mediaType === mediaType));
@@ -254,11 +254,11 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
         return next;
       });
     }
-  }, [removeFromWatchlistMutation]);
+  }, [removeFromWatchlistMutation, t, user]);
 
-  const addToWatched = useCallback((mediaId: number, mediaType: 'movie' | 'tv', rating?: number, note?: string, status?: string) => {
+  const addToWatched = useCallback(async (mediaId: number, mediaType: 'movie' | 'tv', rating?: number, note?: string, status?: string) => {
     if (user) {
-      addToWatchedMutation.mutate({ mediaId, mediaType, rating, note, status });
+      await addToWatchedMutation.mutateAsync({ mediaId, mediaType, rating, note, status });
     } else {
       setWatched(prev => {
         const exists = prev.some(i => i.mediaId === mediaId && i.mediaType === mediaType);
@@ -284,11 +284,11 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
         return next;
       });
     }
-  }, [addToWatchedMutation]);
+  }, [addToWatchedMutation, t, user]);
 
-  const removeFromWatched = useCallback((mediaId: number, mediaType: 'movie' | 'tv') => {
+  const removeFromWatched = useCallback(async (mediaId: number, mediaType: 'movie' | 'tv') => {
     if (user) {
-      removeFromWatchedMutation.mutate({ mediaId, mediaType });
+      await removeFromWatchedMutation.mutateAsync({ mediaId, mediaType });
     } else {
       setWatched(prev => {
         const next = prev.filter(i => !(i.mediaId === mediaId && i.mediaType === mediaType));
@@ -299,7 +299,7 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
         return next;
       });
     }
-  }, [removeFromWatchedMutation]);
+  }, [removeFromWatchedMutation, t, user]);
 
   const updateWatchedItem = useCallback((mediaId: number, mediaType: 'movie' | 'tv', updates: Partial<UserMediaItem>) => {
     updateWatchedMutation.mutate({ mediaId, mediaType, updates });

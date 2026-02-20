@@ -24,6 +24,23 @@ interface SanitizedAuthError {
   code?: string; // Error code for debugging (server logs only)
 }
 
+function getErrorDetails(error: unknown): { message: string; code: string } {
+  if (error && typeof error === 'object') {
+    const maybeMessage = 'message' in error ? (error as { message?: unknown }).message : undefined;
+    const maybeCode = 'code' in error ? (error as { code?: unknown }).code : undefined;
+
+    return {
+      message: typeof maybeMessage === 'string' ? maybeMessage : 'Unknown error',
+      code: typeof maybeCode === 'string' ? maybeCode : '',
+    };
+  }
+
+  return {
+    message: 'Unknown error',
+    code: '',
+  };
+}
+
 /**
  * Sanitizes Supabase auth errors to prevent account enumeration attacks
  *
@@ -39,16 +56,10 @@ interface SanitizedAuthError {
  * @returns Sanitized error with generic user message and detailed log message
  */
 export function sanitizeAuthError(error: unknown): SanitizedAuthError {
-  const errorMessage = error?.message?.toLowerCase() || '';
-  const errorCode = error?.code || '';
-  const originalError = error?.message || 'Unknown error';
-
-  // Debug log (never sent to client)
-  console.debug('[Auth Error Debug]', {
-    code: errorCode,
-    message: originalError,
-    timestamp: new Date().toISOString(),
-  });
+  const details = getErrorDetails(error);
+  const errorMessage = details.message.toLowerCase();
+  const errorCode = details.code;
+  const originalError = details.message;
 
   // Sign-in specific errors - distinguish "invalid creds" from "user doesn't exist"
   if (
@@ -132,7 +143,7 @@ export function sanitizeAuthError(error: unknown): SanitizedAuthError {
  * @returns True if error reveals account existence
  */
 export function isAccountEnumerationAttempt(error: unknown): boolean {
-  const errorMessage = error?.message?.toLowerCase() || '';
+  const errorMessage = getErrorDetails(error).message.toLowerCase();
   return (
     errorMessage.includes('user not found') ||
     errorMessage.includes('user does not exist') ||
