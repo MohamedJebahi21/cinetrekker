@@ -22,15 +22,15 @@ export default function ActionButtons({ inWatchlist, watched, onAddToWatchlist, 
   // Mobile: fixed bottom sheet / FAB
   if (isMobile) {
     return (
-      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 w-[92%]">
-        <div className="rounded-xl backdrop-blur-md bg-black/60 p-3 flex items-center justify-between gap-3">
-          <Button size="sm" onClick={onAddToWatchlist} className={`flex-1 ${mainClass}`}>
+      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 z-50 w-[92%] mobile-nav-safe">
+        <div className="rounded-xl backdrop-blur-sm md:backdrop-blur-md bg-black/60 p-3 flex items-center justify-between gap-3">
+          <Button size="sm" onClick={onAddToWatchlist} className={`flex-1 min-h-11 ${mainClass}`}>
             <Bookmark className="w-4 h-4 mr-2" />{inWatchlist ? t('actions.inWatchlist') : t('actions.watchlist')}
           </Button>
-          <Button size="sm" onClick={onMarkAsWatched} className={`flex-1 ${secondaryClass}`}>
+          <Button size="sm" onClick={onMarkAsWatched} className={`flex-1 min-h-11 ${secondaryClass}`}>
             <Check className="w-4 h-4 mr-2" />{watched ? t('actions.watched') : t('actions.mark')}
           </Button>
-          <Button size="sm" variant="ghost" onClick={onShare} className="px-3">
+          <Button size="sm" variant="ghost" onClick={onShare} className="px-3 min-h-11 min-w-11">
             <Share2 className="w-4 h-4" />
           </Button>
         </div>

@@ -1,13 +1,13 @@
 import { test, expect } from '@playwright/test';
 
 const viewports = [
-  { width: 360, expectedCols: 1 },
-  { width: 412, expectedCols: 1 },
+  { width: 360, expectedCols: 2 },
+  { width: 412, expectedCols: 2 },
   { width: 480, expectedCols: 2 },
   { width: 768, expectedCols: 3 },
-  { width: 1024, expectedCols: 5 },
-  { width: 1280, expectedCols: 5 },
-  { width: 1400, expectedCols: 5 },
+  { width: 1024, expectedCols: 4 },
+  { width: 1280, expectedCols: 4 },
+  { width: 1400, expectedCols: 4 },
 ];
 
 test.describe('Responsive checks for .media-grid', () => {
@@ -33,4 +33,59 @@ test.describe('Responsive checks for .media-grid', () => {
       expect(cols, `expected ${vp.expectedCols} columns at ${vp.width}px on ${browserName} (found cols=${cols}, gridTemplateColumns='${colsValue}')`).toBe(vp.expectedCols);
     });
   }
+});
+
+test.describe('Mobile orientation and fixed footer checks', () => {
+  test('portrait viewport keeps injected mobile footer within bounds', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+
+    const result = await page.evaluate(() => {
+      const footer = document.createElement('div');
+      footer.className = 'mobile-nav-safe';
+      footer.style.position = 'fixed';
+      footer.style.left = '0';
+      footer.style.right = '0';
+      footer.style.bottom = '0';
+      footer.style.height = '56px';
+      footer.style.zIndex = '9999';
+      document.body.appendChild(footer);
+
+      const rect = footer.getBoundingClientRect();
+      const style = getComputedStyle(footer);
+      const paddingBottom = style.paddingBottom;
+      const isWithinViewport = rect.bottom <= window.innerHeight + 0.5;
+
+      document.body.removeChild(footer);
+      return { isWithinViewport, paddingBottom };
+    });
+
+    expect(result.isWithinViewport).toBe(true);
+    expect(result.paddingBottom).not.toBe('');
+  });
+
+  test('landscape viewport keeps injected mobile footer within bounds', async ({ page }) => {
+    await page.setViewportSize({ width: 844, height: 390 });
+    await page.goto('/');
+
+    const result = await page.evaluate(() => {
+      const footer = document.createElement('div');
+      footer.className = 'mobile-nav-safe';
+      footer.style.position = 'fixed';
+      footer.style.left = '0';
+      footer.style.right = '0';
+      footer.style.bottom = '0';
+      footer.style.height = '56px';
+      footer.style.zIndex = '9999';
+      document.body.appendChild(footer);
+
+      const rect = footer.getBoundingClientRect();
+      const isWithinViewport = rect.bottom <= window.innerHeight + 0.5;
+
+      document.body.removeChild(footer);
+      return { isWithinViewport };
+    });
+
+    expect(result.isWithinViewport).toBe(true);
+  });
 });

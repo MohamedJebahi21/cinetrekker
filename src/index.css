@@ -606,9 +606,13 @@
 
   /* Improve touch targets on touch devices */
   @media (hover: none) and (pointer: coarse) {
-    button, a {
-      min-height: 44px;
-      min-width: 44px;
+    button,
+    a,
+    [role="button"],
+    input[type="checkbox"],
+    input[type="radio"] {
+      min-height: 48px;
+      min-width: 48px;
     }
     
     /* Increase tap area for card actions */

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 // Track actor match missing-data logging across renders (and StrictMode double-mount)
 let actorMatchesMissingLogged = false;
@@ -20,15 +20,13 @@ import {
   Clock,
   Clapperboard,
   Plus,
-  TrendingUp,
-  Check,
-  X
+  TrendingUp
 } from 'lucide-react';
 import { useUserLists, type UserListsContextType } from '@/contexts/UserListsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFollowedShows, useWatchedEpisodes } from '@/hooks/useFollowedShows';
 import { Link } from 'react-router-dom';
-import { getImageUrl, getPersonDetails, getPopularPeople, getPopularMovies, getPopularTV, getBackdropUrl } from '@/services/tmdb';
+import { getImageUrl, getPersonDetails, getPopularPeople } from '@/services/tmdb';
 import { profileService, type UserProfile } from '@/services/profile';
 import { validateNote, validateDisplayName, sanitizeBio } from '@/lib/validation';
 import { profileUpdateRateLimiter } from '@/lib/reviewRateLimiter';
@@ -72,8 +70,6 @@ export default function Profile() {
 
   const profileKey = useMemo(() => `cinetrekker_profile_${user?.id || 'guest'}`, [user?.id]);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
-  const [coverPhoto, setCoverPhoto] = useState<string | null>(null);
-  const [showCoverModal, setShowCoverModal] = useState(false);
   const [dateOfBirth, setDateOfBirth] = useState<string>('');
   const [displayName, setDisplayName] = useState<string>('');
   const [bio, setBio] = useState<string>('');
@@ -525,52 +521,16 @@ export default function Profile() {
     enabled: Boolean(dateOfBirth),
   });
 
-  const { data: coverPhotoOptions = { results: [] }, isLoading: loadingCoverPhotos } = useQuery({
-    queryKey: ['cover-photo-options', i18n.language],
-    queryFn: async () => {
-      try {
-        const [movies, tv] = await Promise.all([
-          getPopularMovies(1, i18n.language),
-          getPopularTV(1, i18n.language),
-        ]);
-        return {
-          results: [...movies.results.slice(0, 8), ...tv.results.slice(0, 8)],
-        };
-      } catch (error) {
-        console.error('❌ Error fetching cover photo options:', error);
-        return { results: [] };
-      }
-    },
-  });
-
-  const { sameBirthday, sameAge } = useMemo(() => {
+  const { sameAge } = useMemo(() => {
     if (!parsedDob || !popularPeopleDetails || popularPeopleDetails.length === 0) {
       if (!missingActorDataLogged.current && !actorMatchesMissingLogged) {
         missingActorDataLogged.current = true;
         actorMatchesMissingLogged = true;
       }
-      return { sameBirthday: [], sameAge: [] };
+      return { sameAge: [] };
     }
     missingActorDataLogged.current = false;
     actorMatchesMissingLogged = false;
-    const month = parsedDob.getMonth();
-    const day = parsedDob.getDate();
-
-    const matchesBirthday = popularPeopleDetails
-      .filter(person => {
-        if (!person?.birthday) return false;
-        try {
-          // Parse birthday string (format: YYYY-MM-DD)
-          const parts = person.birthday.split('-');
-          if (parts.length !== 3) return false;
-          const birthdayMonth = parseInt(parts[1], 10) - 1; // Convert to 0-indexed
-          const birthdayDay = parseInt(parts[2], 10);
-          if (isNaN(birthdayMonth) || isNaN(birthdayDay)) return false;
-          return birthdayMonth === month && birthdayDay === day;
-        } catch {
-          return false;
-        }
-      });
 
     const matchesAge = popularPeopleDetails
       .filter(person => {
@@ -599,7 +559,7 @@ export default function Profile() {
         }
       });
 
-    return { sameBirthday: matchesBirthday, sameAge: matchesAge };
+    return { sameAge: matchesAge };
   }, [parsedDob, popularPeopleDetails, userAge]);
 
   // Compute watch statistics from user lists
@@ -638,31 +598,6 @@ export default function Profile() {
 
       {!isLoadingProfile && (
       <>
-      {/* Cover Photo Section */}
-      <motion.section variants={itemVariants} className="mb-6">
-        <Card className="relative overflow-hidden border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm h-32 sm:h-48 md:h-64 group">
-          {coverPhoto ? (
-            <>
-              <img src={coverPhoto} alt="Cover" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            </>
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-neutral-800 to-neutral-900 flex items-center justify-center">
-              <Film className="w-8 h-8 text-neutral-600" />
-            </div>
-          )}
-          <Button
-            onClick={() => setShowCoverModal(true)}
-            variant="ghost"
-            size="sm"
-            className="absolute bottom-3 right-3 bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-700 text-neutral-300 hover:text-white transition-all opacity-0 group-hover:opacity-100"
-          >
-            <Camera className="w-4 h-4 mr-1" />
-            <span className="text-xs">Change</span>
-          </Button>
-        </Card>
-      </motion.section>
-
       {/* Premium Profile Hero */}
       <motion.section variants={itemVariants} className="mb-8">
         <Card className="relative overflow-hidden border-neutral-800/50 bg-gradient-to-br from-neutral-900/90 via-neutral-900/70 to-neutral-800/90 backdrop-blur-md shadow-2xl">
@@ -885,53 +820,12 @@ export default function Profile() {
           <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm">
             <CardContent className="pt-6">
               <p className="text-neutral-400">
-                Add your date of birth to see actors who share your birthday or age.
+                Add your date of birth to see actors who share your age.
               </p>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm">
-              <CardContent className="pt-6">
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <CalendarDays className="w-4 h-4 text-red-500" />
-                  {t('profile.sameBirthday')}
-                </h3>
-                {loadingPeople ? (
-                  <div className="grid grid-cols-2 gap-3">
-                    {[...Array(6)].map((_, i) => (
-                      <div key={i} className="rounded-lg overflow-hidden bg-neutral-800/40 animate-pulse aspect-[3/4]">
-                        <div className="w-full h-full bg-neutral-800" />
-                      </div>
-                    ))}
-                  </div>
-                ) : sameBirthday.length === 0 ? (
-                  <p className="text-neutral-500 text-sm">No matches found in popular actors.</p>
-                ) : (
-                  <div className="grid grid-cols-2 gap-3">
-                    {sameBirthday.slice(0, 6).map((person) => (
-                      <Link key={person.id} to={`/person/${person.id}`} className="group">
-                        <div className="rounded-lg overflow-hidden bg-neutral-800/40 border border-neutral-700 hover:border-red-500/50 transition-colors aspect-[3/4]">
-                          {person.profile_path ? (
-                            <img
-                              src={getImageUrl(person.profile_path, 'w185') || ''}
-                              alt={person.name}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-neutral-800">
-                              <User className="w-6 h-6 text-neutral-600" />
-                            </div>
-                          )}
-                        </div>
-                        <p className="text-xs mt-2 line-clamp-2 text-neutral-300 font-medium">{person.name}</p>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
+          <div className="grid gap-6 md:grid-cols-1">
             <Card className="border-neutral-800/50 bg-neutral-900/50 backdrop-blur-sm">
               <CardContent className="pt-6">
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
@@ -986,85 +880,7 @@ export default function Profile() {
         saveLabel={t('settings.saveChanges') || 'Save Changes'}
         cancelLabel="Cancel"
       />
-
-      {/* Cover Photo Selection Modal */}
-      <AnimatePresence>
-        {showCoverModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setShowCoverModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-neutral-900/95 border border-neutral-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="sticky top-0 bg-neutral-900/95 border-b border-neutral-800 flex items-center justify-between p-4 sm:p-6">
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-bold">Choose Cover Photo</h2>
-                  <p className="text-sm text-neutral-400 mt-1">Select from popular movies and TV series</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-full hover:bg-neutral-800"
-                  onClick={() => setShowCoverModal(false)}
-                >
-                  <X className="w-5 h-5" />
-                </Button>
-              </div>
-
-              <div className="p-4 sm:p-6">
-                {loadingCoverPhotos ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-                    {[...Array(8)].map((_, i) => (
-                      <div key={i} className="rounded-lg overflow-hidden bg-neutral-800/40 animate-pulse aspect-video" />
-                    ))}
-                  </div>
-                ) : coverPhotoOptions.results.length === 0 ? (
-                  <p className="text-neutral-400 text-center py-8">No cover photos available</p>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-                    {coverPhotoOptions.results.map((media) => (
-                      <button
-                        key={`${media.media_type}-${media.id}`}
-                        onClick={() => {
-                          if (media.backdrop_path) {
-                            setCoverPhoto(getBackdropUrl(media.backdrop_path, 'w780'));
-                            setHasUnsavedChanges(true);
-                            setShowCoverModal(false);
-                          }
-                        }}
-                        className="group rounded-lg overflow-hidden border border-neutral-700 hover:border-red-500/50 transition-all hover:shadow-lg hover:shadow-red-500/20 aspect-video"
-                      >
-                        {media.backdrop_path ? (
-                          <img
-                            src={getBackdropUrl(media.backdrop_path, 'w780') || ''}
-                            alt={media.title || media.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-neutral-800 flex items-center justify-center">
-                            <Film className="w-6 h-6 text-neutral-600" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Check className="w-6 h-6 text-white" />
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>      </>
+      </>
       )}
     </motion.div>
     </>
