@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/contexts/AuthContext';
 import Home from 'lucide-react/dist/esm/icons/home';
 import SearchIcon from 'lucide-react/dist/esm/icons/search';
 import Bookmark from 'lucide-react/dist/esm/icons/bookmark';
@@ -52,13 +53,19 @@ export function BottomNav({ showOnMobile = true, watchlistCount, watchedCount }:
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { user } = useAuth();
 
   if (!showOnMobile) return null;
 
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
 
   const handleNavigate = (path: string) => {
-    navigate(path);
+    // Redirect to signup if trying to access profile without authentication
+    if (path === '/profile' && !user) {
+      navigate('/signup');
+    } else {
+      navigate(path);
+    }
   };
 
   return (

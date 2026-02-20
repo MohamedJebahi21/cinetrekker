@@ -6,7 +6,7 @@ import {
   LogOut,
   User as UserIcon,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import {
@@ -72,6 +72,7 @@ export function UserProfileDropdown({
   const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const [isOpen, setIsOpen] = React.useState(false);
+  const navigate = useNavigate();
 
   const userEmail = user?.email || '';
   const userName = displayName || userEmail.split('@')[0] || 'User';
@@ -151,10 +152,16 @@ export function UserProfileDropdown({
                 animate="visible"
                 className="px-4 py-4 border-b border-border/50 bg-gradient-to-br from-primary/5 to-background/50"
               >
-                <Link
-                  to="/profile"
+                <div
                   className="flex items-center gap-3 group cursor-pointer"
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => {
+                    setIsOpen(false);
+                    if (user) {
+                      navigate('/profile');
+                    } else {
+                      navigate('/signup');
+                    }
+                  }}
                 >
                   <div className="relative">
                     {profilePhoto ? (
@@ -177,7 +184,7 @@ export function UserProfileDropdown({
                       {userEmail}
                     </p>
                   </div>
-                </Link>
+                </div>
               </motion.div>
 
               {/* Social Section */}
