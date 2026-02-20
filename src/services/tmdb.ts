@@ -1,6 +1,6 @@
 // TMDB API Service - handles all TMDB API requests via edge function proxy
 // SECURITY: All requests routed through Supabase Edge Function - API key NEVER exposed to client
-import { Media, MediaDetails, TMDBResponse, TimeWindow, Genre, PersonSearchResult } from '@/types/media';
+import { Media, MediaDetails, TMDBResponse, TimeWindow, Genre, PersonSearchResult, WatchProviders } from '@/types/media';
 
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -233,7 +233,7 @@ export const getMovieGenres = async (language: string = 'en'): Promise<{ genres:
   return fetchTMDB(`/genre/movie/list`, language);
 };
 
-export const getWatchProviders = async (mediaType: 'movie' | 'tv', id: number): Promise<any> => {
+export const getWatchProviders = async (mediaType: 'movie' | 'tv', id: number): Promise<WatchProviders> => {
   return fetchTMDB(`/${mediaType}/${id}/watch/providers`);
 };
 

@@ -1,4 +1,5 @@
 import { discoverMovies, getMovieGenres, searchMovies } from '@/services/tmdb';
+import type { Genre, Media, RankingResult, AIRecommendationItem, AIRecommendationResponse } from '@/types/media';
 
 type AIExtract = { genres: string[]; moods: string[]; similar: string[] };
 
@@ -21,7 +22,7 @@ async function callAI(prompt: string) {
   }
 }
 
-function mapTmdbResultToMedia(item: any) {
+function mapTmdbResultToMedia(item: Media): Omit<Media, 'genres' | 'genre_ids'> {
   return {
     id: item.id,
     media_type: 'movie',
@@ -58,16 +59,16 @@ export async function getAIRecommendations(prompt: string, language = 'en') {
   try {
     const genreList = await getMovieGenres(language);
     const nameToId = new Map<string, number>();
-    (genreList.genres || []).forEach((g: any) => nameToId.set(g.name.toLowerCase(), g.id));
+    (genreList.genres || []).forEach((g: Genre) => nameToId.set(g.name.toLowerCase(), g.id));
     genreIds = extracted.genres.map(g => nameToId.get(g.toLowerCase())).filter(Boolean).map(String);
   } catch (e) {
     genreIds = [];
   }
 
   // 3) Discover movies using genre ids (if any) and moods as keywords via popularity
-  let discovered: any[] = [];
+  let discovered: Media[] = [];
   try {
-    const params: any = { page: '1' };
+    const params: Record<string, string> = { page: '1' };
     if (genreIds.length) params.with_genres = genreIds.join(',');
     // sorting by popularity to return mainstream choices that match genres/moods
     params.sort_by = 'popularity.desc';
@@ -88,8 +89,8 @@ export async function getAIRecommendations(prompt: string, language = 'en') {
       if (searchResults.length > 0) {
         // merge unique by id (search first)
         const byId = new Map<number, any>();
-        searchResults.forEach((s: any) => byId.set(s.id, s));
-        discovered.forEach((d: any) => { if (!byId.has(d.id)) byId.set(d.id, d); });
+        searchResults.forEach((s: Media) => byId.set(s.id, s));
+        discovered.forEach((d: Media) => { if (!byId.has(d.id)) byId.set(d.id, d); });
         discovered = Array.from(byId.values()).slice(0, 20);
       }
     } catch (err) {
@@ -100,11 +101,11 @@ export async function getAIRecommendations(prompt: string, language = 'en') {
   // If AI suggested similar titles, attempt to find them directly via search and merge
   if (extracted.similar && extracted.similar.length > 0) {
     try {
-      const byId = new Map<number, any>(discovered.map((d: any) => [d.id, d]));
+      const byId = new Map<number, Media>(discovered.map((d: Media) => [d.id, d]));
       for (const title of extracted.similar.slice(0, 5)) {
         try {
           const sr = await searchMovies(title, 1, language);
-          (sr.results || []).slice(0, 3).forEach((r: any) => { if (!byId.has(r.id)) byId.set(r.id, r); });
+          (sr.results || []).slice(0, 3).forEach((r: Media) => { if (!byId.has(r.id)) byId.set(r.id, r); });
         } catch (e) {
           // ignore per-title failure
         }
@@ -122,7 +123,7 @@ export async function getAIRecommendations(prompt: string, language = 'en') {
     const rankPrompt = `Original request: ${prompt}. Here are candidate movie titles: ${JSON.stringify(titles)}. Which of these 20 movies best matches the original request? Rank the top 5 and return ONLY a JSON array of objects with keys {"title","score","reason"} where score is a percentage (0-100).`;
     const rankResp = await callAI(rankPrompt);
     if (Array.isArray(rankResp)) {
-      ranking = rankResp.map((r: any) => ({ title: r.title, score: Number(r.score) || 0, reason: r.reason || '' }));
+      ranking = rankResp.map((r: RankingResult) => ({ title: r.title, score: Number(r.score) || 0, reason: r.reason || '' }));
     } else if (typeof rankResp === 'string') {
       try { ranking = JSON.parse(rankResp); } catch { ranking = []; }
     }
@@ -131,7 +132,7 @@ export async function getAIRecommendations(prompt: string, language = 'en') {
   }
 
   // 5) Merge ranking with discovered results and build final items
-  const finalItems = discovered.map((d: any) => {
+  const finalItems = discovered.map((d: Media) => {
     const matched = ranking.find(r => (r.title || '').toLowerCase() === (d.title || '').toLowerCase());
     return {
       ...mapTmdbResultToMedia(d),

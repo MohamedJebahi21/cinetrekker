@@ -74,7 +74,7 @@ export default function Watchlist() {
 
   // Apply sorting
   if (filteredMedia) {
-    filteredMedia = sortMedia(filteredMedia, sortBy as any, addedDates);
+    filteredMedia = sortMedia(filteredMedia, sortBy as SortOption, addedDates);
   }
 
   const statusCounts = {

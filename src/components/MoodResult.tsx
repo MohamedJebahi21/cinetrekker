@@ -36,7 +36,7 @@ function runtimeParamsFor(time?: TimeSlot) {
 
 export async function fetchMoodMatch(mood: MoodId, time?: TimeSlot, language = 'en'): Promise<Media | null> {
   const genre = MOOD_GENRE_MAP[mood];
-  const params: any = { page: '1', with_genres: genre, sort_by: 'popularity.desc', ...runtimeParamsFor(time) };
+  const params: Record<string, string | number> = { page: '1', with_genres: genre, sort_by: 'popularity.desc', ...runtimeParamsFor(time) };
   try {
     const resp = await discoverMovies(params, language as string);
     const list = resp?.results || [];
@@ -67,7 +67,7 @@ export default function MoodResult({ mood, time, onTryAnother, className = '' }:
   const handleAdd = async () => {
     if (!match) return;
     try {
-      addToWatchlist?.({ mediaId: match.id, mediaType: match.media_type || 'movie' } as any);
+      addToWatchlist?.({ mediaId: match.id, mediaType: match.media_type || 'movie' } as { mediaId: number; mediaType: 'movie' | 'tv' });
     } catch {
       // ignore
     }

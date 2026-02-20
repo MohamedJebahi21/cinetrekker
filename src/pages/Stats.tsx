@@ -149,14 +149,14 @@ export default function Stats() {
     if (!watchedItems) return watchedItems;
     return watchedItems.filter(w => {
       if (decadeFilter !== 'all') {
-        const date = (w as any).release_date;
+        const date = (w as Media).release_date;
         if (!date) return false;
         const year = parseInt(String(date).slice(0,4));
         const dec = `${Math.floor(year / 10) * 10}s`;
         if (dec !== decadeFilter) return false;
       }
       if (minRating !== 'all') {
-        const rating = (w as any).rating ?? 0;
+        const rating = (w as UserMediaItem).rating ?? 0;
         if (rating < (minRating as number)) return false;
       }
       return true;

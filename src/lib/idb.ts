@@ -26,7 +26,7 @@ export async function idbGet<T = any>(key: string): Promise<T | undefined> {
   });
 }
 
-export async function idbSet(key: string, value: any): Promise<void> {
+export async function idbSet(key: string, value: unknown): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction('kv', 'readwrite');
@@ -37,7 +37,7 @@ export async function idbSet(key: string, value: any): Promise<void> {
   });
 }
 
-export async function idbAddToQueue(item: any): Promise<number> {
+export async function idbAddToQueue(item: unknown): Promise<number> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction('queue', 'readwrite');

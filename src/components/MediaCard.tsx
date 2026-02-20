@@ -113,7 +113,7 @@ export const MediaCard = React.memo(function MediaCard({ media, mediaType: media
       try {
         if (nextState) {
           await addToWatchlist(media.id, mediaType);
-          try { if (typeof navigator !== 'undefined' && 'vibrate' in navigator) (navigator as any).vibrate?.(10); } catch (e) {}
+          try { if (typeof navigator !== 'undefined' && 'vibrate' in navigator) (navigator as Navigator).vibrate?.(10); } catch (e) { /* vibration not supported */ }
         } else {
           await removeFromWatchlist(media.id, mediaType);
         }

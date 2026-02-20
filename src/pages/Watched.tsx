@@ -60,7 +60,7 @@ export default function Watched() {
         </div>
       ) : mediaDetails && mediaDetails.length > 0 ? (
         <div className="media-grid">
-          {mediaDetails.map((media: any) => {
+          {mediaDetails.map((media: Media) => {
             const title = getMediaTitle(media);
             const posterUrl = getImageUrl(media.poster_path, 'w342');
             const year = (media.release_date || media.first_air_date)?.slice(0, 4);

@@ -7,7 +7,7 @@ import {
   MessageSquare, ChevronLeft, Heart, HeartOff, PlayCircle
 } from 'lucide-react';
 import { getMovieDetails, getTVDetails, getImageUrl, getBackdropUrl, getTVSeasonDetails, getWatchProviders } from '@/services/tmdb';
-import { Media } from '@/types/media';
+import { Media, Cast, Provider } from '@/types/media';
 import { getProviderUrlFromData } from '@/lib/providerMap';
 import { getProviderWatchUrl } from '@/lib/providerLinks';
 import { useUserLists } from '@/contexts/UserListsContext';
@@ -384,9 +384,9 @@ export default function Details() {
 
   const renderWatchProviders = () => {
     if (!providerData) return null;
-    const renderList = (arr: any[]) => (
+    const renderList = (arr: Provider[]) => (
       <div className="flex items-center gap-3 flex-wrap">
-        {arr.map((p: any) => {
+        {arr.map((p: Provider) => {
           // Try provider-specific search/watch URL first (uses title), then existing mappings, then TMDB link
           const href = getProviderWatchUrl(p.provider_id, title, mediaId) || getProviderUrlFromData(p, providerData) || '';
           return (

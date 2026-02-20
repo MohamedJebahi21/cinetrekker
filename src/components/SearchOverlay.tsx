@@ -52,7 +52,7 @@ export default function SearchOverlay() {
 
   const results = (data?.results || []).slice(0, 10);
 
-  const getItemRoute = (item: any) => {
+  const getItemRoute = (item: Media) => {
     if (item.media_type === 'person') return `/person/${item.id}`;
     return `/${item.media_type}/${item.id}`;
   };
@@ -119,7 +119,7 @@ export default function SearchOverlay() {
                 </div>
               ) : results.length > 0 ? (
                 <ul>
-                  {results.map((item: any) => (
+                  {results.map((item: Media) => (
                     <li key={`${item.media_type}-${item.id}`}>
                       <button
                         onClick={() => {

@@ -63,7 +63,7 @@ export default function CommandPalette() {
     staleTime: 1000 * 60 * 5,
   });
 
-  const onSelectMedia = (item: any) => {
+  const onSelectMedia = (item: Media) => {
     setOpen(false);
     if (!item) return;
     const type = item.media_type === 'person' ? 'person' : (item.media_type || (item.title ? 'movie' : 'tv'));
@@ -99,7 +99,7 @@ export default function CommandPalette() {
 
           <CommandGroup heading="Collections">
             {collections.length === 0 && <CommandItem disabled> No collections </CommandItem>}
-            {collections.map((c: any) => (
+            {collections.map((c: { name: string; id: string }) => (
               <CommandItem key={c.id} onSelect={() => { navigate(`/watchlist?collection=${c.id}`); setOpen(false); }}>
                 {c.name}
               </CommandItem>
@@ -110,7 +110,7 @@ export default function CommandPalette() {
 
           <CommandGroup heading="Search Results">
             {isFetching && <CommandItem disabled>Searching...</CommandItem>}
-            {!isFetching && searchResults.slice(0, 10).map((r: any) => (
+            {!isFetching && searchResults.slice(0, 10).map((r: Media) => (
               <CommandItem key={`${r.id}-${r.media_type || 'm'}`} onSelect={() => onSelectMedia(r)}>
                 {r.title || r.name}
                 <CommandShortcut>{r.media_type || (r.title ? 'Movie' : 'TV')}</CommandShortcut>

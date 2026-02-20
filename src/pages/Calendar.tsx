@@ -149,7 +149,7 @@ export default function Calendar() {
 
     // Add TV shows with episode info
     if (onAirTV && (mediaTypeFilter === 'all' || mediaTypeFilter === 'tv')) {
-      onAirTV.forEach((show: any) => {
+      onAirTV.forEach((show: TVShow) => {
         const nextEp = show.next_episode_to_air || show.last_episode_to_air;
         const airDate = nextEp?.air_date || show.first_air_date;
         

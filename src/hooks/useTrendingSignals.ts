@@ -31,7 +31,7 @@ export const useTrendingForMedia = (mediaType: 'movie' | 'tv', mediaId: number) 
       return { ts: ts.toISOString(), count: 0 };
     });
 
-    (data || []).forEach((row: any) => {
+    (data || []).forEach((row: { media_id: number; signal_type: string; score: number }) => {
       const added = new Date(row.added_at).getTime();
       const diffHours = Math.floor((now - added) / (60 * 60 * 1000));
       if (diffHours >= 0 && diffHours < 24) {

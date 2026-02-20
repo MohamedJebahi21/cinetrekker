@@ -21,7 +21,7 @@ const providerNameMap: Record<string, string> = {
   'microsoft': 'https://www.microsoft.com',
 };
 
-export function getProviderUrlFromData(p: any, providerData?: any): string | null {
+export function getProviderUrlFromData(p: Provider, providerData?: ProviderDataResult): string | null {
   // Prefer explicit URLs present in the provider record
   const explicit = p?.url || p?.provider_url || p?.urls?.standard_web || p?.urls?.web || null;
   if (explicit) return explicit;

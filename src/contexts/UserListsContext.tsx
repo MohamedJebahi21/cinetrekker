@@ -224,7 +224,7 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
         if (exists) return prev;
         const item: UserMediaItem = { mediaId, mediaType } as UserMediaItem;
         const next = [...prev, item];
-        try { localStorage.setItem(STORAGE_KEYS.watchlist, JSON.stringify(next)); } catch (e) {}
+        try { localStorage.setItem(STORAGE_KEYS.watchlist, JSON.stringify(next)); } catch (e) { console.warn('Failed to save watchlist to localStorage:', e); }
         try {
           toast({
             title: t('actions.watchlistAdded', 'Saved locally'),
@@ -235,7 +235,7 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
               </ToastAction>
             ),
           });
-        } catch (e) {}
+        } catch (e) { console.warn('Failed to show watchlist toast:', e); }
         return next;
       });
     }
@@ -247,10 +247,10 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
     } else {
       setWatchlist(prev => {
         const next = prev.filter(i => !(i.mediaId === mediaId && i.mediaType === mediaType));
-        try { localStorage.setItem(STORAGE_KEYS.watchlist, JSON.stringify(next)); } catch (e) {}
+        try { localStorage.setItem(STORAGE_KEYS.watchlist, JSON.stringify(next)); } catch (e) { console.warn('Failed to remove from watchlist localStorage:', e); }
         try {
           toast({ title: t('actions.watchlistRemoved', 'Removed from watchlist') });
-        } catch (e) {}
+        } catch (e) { console.warn('Failed to show watchlist removal toast:', e); }
         return next;
       });
     }
@@ -269,7 +269,7 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
         } else {
           next = [...prev, item];
         }
-        try { localStorage.setItem(STORAGE_KEYS.watched, JSON.stringify(next)); } catch (e) {}
+        try { localStorage.setItem(STORAGE_KEYS.watched, JSON.stringify(next)); } catch (e) { console.warn('Failed to save watched to localStorage:', e); }
         try {
           toast({
             title: t('actions.watchedAdded', 'Saved locally'),
@@ -280,7 +280,7 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
               </ToastAction>
             ),
           });
-        } catch (e) {}
+        } catch (e) { console.warn('Failed to show watched toast:', e); }
         return next;
       });
     }
@@ -292,10 +292,10 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
     } else {
       setWatched(prev => {
         const next = prev.filter(i => !(i.mediaId === mediaId && i.mediaType === mediaType));
-        try { localStorage.setItem(STORAGE_KEYS.watched, JSON.stringify(next)); } catch (e) {}
+        try { localStorage.setItem(STORAGE_KEYS.watched, JSON.stringify(next)); } catch (e) { console.warn('Failed to remove from watched localStorage:', e); }
         try {
           toast({ title: t('actions.watchedRemoved', 'Removed from watched') });
-        } catch (e) {}
+        } catch (e) { console.warn('Failed to show watched removal toast:', e); }
         return next;
       });
     }
@@ -343,7 +343,7 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
         } else {
           toast({ title: t('recommendations.hidden', 'Hidden from recommendations') });
         }
-      } catch (e) {}
+      } catch (e) { console.warn('Failed to show hidden recommendation toast:', e); }
       return next;
     });
   }, [user]);

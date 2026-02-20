@@ -53,7 +53,7 @@ export function WatchedShowsNewEpisodes() {
       if (cacheAge > maxAge) return null; // Cache is stale
 
       // Transform snake_case to camelCase for consistency
-      const transformedEpisodes = (data.episodes || []).map((ep: any) => ({
+      const transformedEpisodes = (data.episodes || []).map((ep: TVEpisodeInfo) => ({
         ...ep,
         showId: ep.show_id,
         showName: ep.show_name,

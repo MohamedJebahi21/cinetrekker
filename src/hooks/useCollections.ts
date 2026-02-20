@@ -24,7 +24,7 @@ export const useCollections = () => {
           const errorCode = (error as Record<string, unknown>).code as string | undefined;
           const errorMessage = (error as Record<string, unknown>).message as string | undefined;
           if (errorCode === 'PGRST205' || errorMessage?.includes("Could not find the table")) {
-            try { localStorage.setItem(DISABLE_KEY, '1'); } catch (e) {}
+            try { localStorage.setItem(DISABLE_KEY, '1'); } catch (e) { console.warn('Failed to save collection disabled state:', e); }
             console.warn('Collections table missing in Supabase; disabling collections fetch.');
             return [];
           }
@@ -136,7 +136,7 @@ export const useCollectionItems = (collectionId?: number) => {
           return [];
         }
 
-        return (data || []).map((d: any) => ({ mediaId: d.media_id, mediaType: d.media_type }));
+        return (data || []).map((d: { media_id: number; media_type: string }) => ({ mediaId: d.media_id, mediaType: d.media_type }));
       } catch (err) {
         console.error('Network error fetching collection items', err);
         return [];

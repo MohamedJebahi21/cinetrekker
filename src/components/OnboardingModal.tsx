@@ -17,7 +17,7 @@ export function OnboardingModal() {
   }, []);
   const handleClose = () => {
     setOpen(false);
-    try { localStorage.setItem("hasSeenOnboarding", "1"); } catch (e) {}
+    try { localStorage.setItem("hasSeenOnboarding", "1"); } catch (e) { console.warn('Failed to save onboarding state:', e); }
   };
   return (
     <Dialog open={open} onOpenChange={setOpen}>
