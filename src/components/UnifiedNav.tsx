@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import Menu from 'lucide-react/dist/esm/icons/menu';
 import X from 'lucide-react/dist/esm/icons/x';
 import LogIn from 'lucide-react/dist/esm/icons/log-in';
@@ -9,6 +10,7 @@ import Settings from 'lucide-react/dist/esm/icons/settings';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { SearchDropdown } from '@/components/SearchDropdown';
+import { profileService } from '@/services/profile';
 
 interface NavItem {
   path: string;
@@ -38,11 +40,25 @@ export function UnifiedNav() {
   const mobileToggleButtonRef = useRef<HTMLButtonElement>(null);
   const desktopToggleButtonRef = useRef<HTMLButtonElement>(null);
 
+  // Fetch profile from Supabase to get the uploaded profile photo
+  const { data: profile } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: () => profileService.getProfile(user!.id),
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
   const profileImageUrl = useMemo(() => {
+    // Prefer uploaded profile photo from database
+    if (profile?.profile_photo) {
+      return profile.profile_photo;
+    }
+    
+    // Fallback to auth metadata
     const metadata = user?.user_metadata as Record<string, unknown> | undefined;
     const candidates = [metadata?.avatar_url, metadata?.picture, metadata?.photo_url];
     return candidates.find((value): value is string => typeof value === 'string' && value.trim().length > 0) ?? null;
-  }, [user]);
+  }, [profile, user]);
 
   const profileInitial = useMemo(() => {
     const metadata = user?.user_metadata as Record<string, unknown> | undefined;
