@@ -18,18 +18,18 @@ jobs:
 
       - name: Check for hardcoded API keys (Stripe)
         run: |
-          if grep -r "sk_live_" cinetrekker/src cinetrekker/api 2>/dev/null; then
+          if grep -r "sk_live_" src api 2>/dev/null; then
             echo "❌ ERROR: Found Stripe live API keys!"
             exit 1
           fi
-          if grep -r "sk_test_" cinetrekker/src cinetrekker/api 2>/dev/null; then
+          if grep -r "sk_test_" src api 2>/dev/null; then
             echo "⚠️ WARNING: Found Stripe test API keys (ensure they're not sensitive)"
           fi
           echo "✅ No hardcoded Stripe keys found"
 
       - name: Check for hardcoded JWT tokens
         run: |
-          if grep -r "eyJ" cinetrekker/src cinetrekker/api 2>/dev/null | grep -v "node_modules\|dist\|build"; then
+          if grep -r "eyJ" src api 2>/dev/null | grep -v "node_modules\|dist\|build"; then
             echo "❌ ERROR: Found potential JWT tokens in code!"
             exit 1
           fi
@@ -37,7 +37,7 @@ jobs:
 
       - name: Check for OpenAI API keys
         run: |
-          if grep -r "sk-" cinetrekker/src 2>/dev/null | grep -v "skip\|skeleton"; then
+          if grep -r "sk-" src 2>/dev/null | grep -v "skip\|skeleton"; then
             echo "⚠️ WARNING: Found potential OpenAI keys"
             exit 1
           fi
@@ -46,7 +46,7 @@ jobs:
       - name: Check for TMDB API keys
         run: |
           # TMDB API keys are long hex strings
-          if grep -rE "[a-f0-9]{32}" cinetrekker/src 2>/dev/null | grep -v "node_modules\|dist\|*.test\|*.spec"; then
+          if grep -rE "[a-f0-9]{32}" src 2>/dev/null | grep -v "node_modules\|dist\|*.test\|*.spec"; then
             echo "⚠️ WARNING: Found potential API key patterns"
           fi
           echo "✅ API key scan complete"
@@ -73,16 +73,13 @@ jobs:
           node-version: '18'
           cache: 'npm'
 
-      - name: Install dependencies (cinetrekker)
-        working-directory: cinetrekker
+      - name: Install dependencies
         run: npm ci
 
       - name: Verify TypeScript compilation
-        working-directory: cinetrekker
         run: npx tsc --noEmit --skipLibCheck
 
       - name: Check ESLint
-        working-directory: cinetrekker
         run: npm run lint || echo "⚠️ Lint warnings detected (non-blocking)"
 
   security-config:
@@ -94,7 +91,7 @@ jobs:
 
       - name: Verify vercel.json exists
         run: |
-          if [ ! -f "cinetrekker/vercel.json" ]; then
+          if [ ! -f "vercel.json" ]; then
             echo "❌ ERROR: vercel.json is missing!"
             exit 1
           fi
@@ -102,13 +99,13 @@ jobs:
 
       - name: Validate vercel.json syntax
         run: |
-          python3 -m json.tool cinetrekker/vercel.json > /dev/null && \
+          python3 -m json.tool vercel.json > /dev/null && \
           echo "✅ vercel.json is valid JSON" || \
           (echo "❌ ERROR: vercel.json has invalid syntax"; exit 1)
 
       - name: Check for security headers in vercel.json
         run: |
-          HEADERS=$(grep -c "X-Content-Type-Options\|X-Frame-Options\|Strict-Transport-Security" cinetrekker/vercel.json || true)
+          HEADERS=$(grep -c "X-Content-Type-Options\|X-Frame-Options\|Strict-Transport-Security" vercel.json || true)
           if [ "$HEADERS" -lt 3 ]; then
             echo "⚠️ WARNING: Not all security headers found in vercel.json"
           fi
@@ -116,7 +113,7 @@ jobs:
 
       - name: Verify CSP policy exists
         run: |
-          if grep -q "Content-Security-Policy" cinetrekker/vercel.json; then
+          if grep -q "Content-Security-Policy" vercel.json; then
             echo "✅ Content-Security-Policy header configured"
           else
             echo "⚠️ WARNING: CSP header not found in vercel.json"
@@ -124,7 +121,7 @@ jobs:
 
       - name: Verify .gitignore includes .env files
         run: |
-          if grep -q "\.env" cinetrekker/.gitignore; then
+          if grep -q "\.env" .gitignore; then
             echo "✅ .env files are properly ignored"
           else
             echo "❌ ERROR: .env files not in .gitignore!"
@@ -140,7 +137,7 @@ jobs:
 
       - name: Check for authErrorHandler implementation
         run: |
-          if [ -f "cinetrekker/src/lib/authErrorHandler.ts" ]; then
+          if [ -f "src/lib/authErrorHandler.ts" ]; then
             echo "✅ authErrorHandler.ts exists"
           else
             echo "⚠️ WARNING: authErrorHandler.ts not found"
@@ -148,7 +145,7 @@ jobs:
 
       - name: Check for generic error messages in Auth.tsx
         run: |
-          if grep -q "sanitizeAuthError\|logAuthFailure" cinetrekker/src/pages/Auth.tsx; then
+          if grep -q "sanitizeAuthError\|logAuthFailure" src/pages/Auth.tsx; then
             echo "✅ Auth.tsx uses sanitized error messages"
           else
             echo "⚠️ WARNING: Auth.tsx may not use error sanitization"
@@ -156,7 +153,7 @@ jobs:
 
       - name: Verify no account enumeration leaks
         run: |
-          cd cinetrekker/src
+          cd src
           if grep -r "User not found\|Incorrect password\|Email already exists" . 2>/dev/null; then
             echo "❌ ERROR: Found potential account enumeration messages!"
             exit 1
@@ -176,12 +173,10 @@ jobs:
           node-version: '18'
           cache: 'npm'
 
-      - name: Install dependencies (cinetrekker)
-        working-directory: cinetrekker
+      - name: Install dependencies
         run: npm ci
 
       - name: Run npm audit
-        working-directory: cinetrekker
         continue-on-error: true
         run: |
           echo "🔍 Checking for vulnerabilities..."
@@ -190,7 +185,6 @@ jobs:
           }
 
       - name: Check for dompurify installation
-        working-directory: cinetrekker
         run: |
           if grep -q "isomorphic-dompurify" package.json; then
             echo "✅ DOMPurify is installed"
@@ -207,7 +201,7 @@ jobs:
 
       - name: Check for rate limiting middleware
         run: |
-          if [ -f "cinetrekker/api/_lib/rateLimitMiddleware.ts" ]; then
+          if [ -f "api/_lib/rateLimitMiddleware.ts" ]; then
             echo "✅ Rate limiting middleware exists"
           else
             echo "⚠️ WARNING: Rate limiting middleware not found"
@@ -215,7 +209,7 @@ jobs:
 
       - name: Check search debounce value
         run: |
-          if grep -q "debounceMs = 500\|debounceMs = 500" cinetrekker/src/hooks/*.ts; then
+          if grep -q "debounceMs = 500\|debounceMs = 500" src/hooks/*.ts; then
             echo "✅ Search debounce is set to 500ms"
           else
             echo "⚠️ WARNING: Search debounce may not be 500ms"
