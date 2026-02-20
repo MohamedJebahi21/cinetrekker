@@ -1,23 +1,20 @@
 import React, { createContext, useLayoutEffect, useEffect, useState } from 'react';
+import {
+  Theme,
+  ThemeContextValue,
+  THEME_KEY,
+  TRANSITION_STYLE_ID,
+  TRANSITION_CLASS,
+  TRANSITION_MS,
+} from '@/lib/constants';
 
-type Theme = 'light' | 'dark';
-
-export type ThemeContextValue = {
-  theme: Theme;
-  setTheme: (t: Theme) => void;
-  toggle: () => void;
-};
+export type { Theme, ThemeContextValue };
 
 export const ThemeContext = createContext<ThemeContextValue>({
   theme: 'light',
   setTheme: () => {},
   toggle: () => {},
 });
-
-const THEME_KEY = 'cinetrekker:theme';
-const TRANSITION_STYLE_ID = 'cinetrekker-theme-transition-style';
-const TRANSITION_CLASS = 'cinetrekker-theme-transition';
-const TRANSITION_MS = 300;
 
 function injectTransitionStyle() {
   if (typeof document === 'undefined') return;
