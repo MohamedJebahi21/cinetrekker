@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
@@ -16,13 +16,13 @@ interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   delay?: number;
 }
 
-export function Skeleton({
+const Skeleton: React.FC<SkeletonProps> = ({
   className,
   animation = 'shimmer',
   delay = 0,
   ...props
-}: SkeletonProps) {
-  const shimmerVariants = {
+}) => {
+  const shimmerKeyframes = {
     initial: { transform: 'translateX(-100%)' },
     animate: {
       transform: 'translateX(100%)',
@@ -35,7 +35,7 @@ export function Skeleton({
     },
   };
 
-  const pulseVariants = {
+  const pulseKeyframes = {
     initial: { opacity: 0.6 },
     animate: {
       opacity: [0.6, 1, 0.6],
@@ -48,7 +48,7 @@ export function Skeleton({
     },
   };
 
-  const effectiveAnimation = animation === 'shimmer' ? shimmerVariants : pulseVariants;
+  const effectiveAnimation = animation === 'shimmer' ? shimmerKeyframes : pulseKeyframes;
 
   return (
     <motion.div
@@ -63,7 +63,7 @@ export function Skeleton({
       {...props}
     />
   );
-}
+};
 
-export { Skeleton };
+export default Skeleton;
 export type { SkeletonProps };
