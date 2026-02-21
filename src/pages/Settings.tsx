@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Settings as SettingsIcon, Globe, Lock, Bell, Eye, Bookmark, TrendingUp, Check } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import { profileService } from '@/services/profile';
 import { languages } from '@/i18n';
 import { cn } from '@/lib/utils';
@@ -50,22 +50,6 @@ export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Auth guard - require authentication
-  if (!user) {
-    return (
-      <div className="page-container pt-20 pb-24 md:pb-0">
-        <Card className="max-w-md mx-auto mt-8">
-          <CardHeader>
-            <CardTitle>Authentication Required</CardTitle>
-            <CardDescription>
-              Please sign in to access settings
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  }
-
   const profileKey = useMemo(() => `cinetrekker_profile_${user?.id || 'guest'}`, [user?.id]);
   
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
@@ -73,22 +57,21 @@ export default function Settings() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   
-  // Helper function to detect actual changes
-  const hasSettingsChanged = () => {
-    return (
-      initialStateRef.publicProfile !== settings.publicProfile ||
-      initialStateRef.showWatchlist !== settings.showWatchlist ||
-      initialStateRef.showStats !== settings.showStats ||
-      initialStateRef.allowRecommendations !== settings.allowRecommendations
-    );
-  };
-  
-  const initialStateRef = {
+  const initialStateRef = useRef({
     publicProfile: DEFAULT_SETTINGS.publicProfile,
     showWatchlist: DEFAULT_SETTINGS.showWatchlist,
     showStats: DEFAULT_SETTINGS.showStats,
     allowRecommendations: DEFAULT_SETTINGS.allowRecommendations,
-  };
+  });
+
+  const hasSettingsChanged = useCallback(() => {
+    return (
+      initialStateRef.current.publicProfile !== settings.publicProfile ||
+      initialStateRef.current.showWatchlist !== settings.showWatchlist ||
+      initialStateRef.current.showStats !== settings.showStats ||
+      initialStateRef.current.allowRecommendations !== settings.allowRecommendations
+    );
+  }, [settings.publicProfile, settings.showWatchlist, settings.showStats, settings.allowRecommendations]);
 
   // Load settings from Supabase (with localStorage fallback)
   useEffect(() => {
@@ -97,6 +80,11 @@ export default function Settings() {
 
     const loadSettings = async () => {
       if (!isMounted) return;
+
+      if (!user?.id) {
+        setIsLoadingSettings(false);
+        return;
+      }
       
       setIsLoadingSettings(true);
       
@@ -184,7 +172,23 @@ export default function Settings() {
     if (!isLoadingSettings) {
       setHasUnsavedChanges(hasSettingsChanged());
     }
-  }, [settings.publicProfile, settings.showWatchlist, settings.showStats, settings.allowRecommendations, isLoadingSettings]);
+  }, [isLoadingSettings, hasSettingsChanged]);
+
+  // Auth guard - require authentication
+  if (!user) {
+    return (
+      <div className="page-container pt-20 pb-24 md:pb-0">
+        <Card className="max-w-md mx-auto mt-8">
+          <CardHeader>
+            <CardTitle>Authentication Required</CardTitle>
+            <CardDescription>
+              Please sign in to access settings
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   const handleSaveSettings = async () => {
     setIsSaving(true);

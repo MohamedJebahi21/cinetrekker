@@ -14,8 +14,8 @@ import {
   isAfter,
 } from 'date-fns';
 import { CalendarIcon, ChevronLeft, ChevronRight, Film, Tv, Star, Filter, Clock } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useUserLists } from '@/contexts/UserListsContext';
+import { useAuth } from '@/contexts/auth-context';
+import { useUserLists } from '@/contexts/user-lists-context';
 import { useFollowedShows } from '@/hooks/useFollowedShows';
 import { getUpcomingMovies, getOnTheAirTV, getImageUrl, getTVDetails } from '@/services/tmdb';
 import { Media } from '@/types/media';

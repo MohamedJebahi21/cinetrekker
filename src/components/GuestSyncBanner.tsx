@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { STORAGE_KEYS } from '@/contexts/UserListsContext';
+import { STORAGE_KEYS } from '@/contexts/user-lists-context';
 import User from 'lucide-react/dist/esm/icons/user';
 
 export default function GuestSyncBanner() {

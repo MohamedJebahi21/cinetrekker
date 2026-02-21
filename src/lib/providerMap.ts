@@ -31,7 +31,7 @@ export function getProviderUrlFromData(p: Provider, providerData?: ProviderDataR
   if (name && providerNameMap[name]) return providerNameMap[name];
 
   // Try normalized variants
-  const normalized = name.replace(/[+\s\.]/g, '').replace(/\s+/g, '');
+  const normalized = name.replace(/[+\s.]/g, '').replace(/\s+/g, '');
   if (normalized && providerNameMap[normalized]) return providerNameMap[normalized];
 
   // As a last resort, fall back to the TMDB provided link for the media

@@ -8,8 +8,8 @@ import Sparkles from 'lucide-react/dist/esm/icons/sparkles';
 import { Link } from 'react-router-dom';
 import { getTrending, getBackdropUrl, getMediaTitle, getMovieVideos, getTVVideos, getMediaType } from '@/services/tmdb';
 import { Button } from '@/components/ui/button';
-import { useUserLists } from '@/contexts/UserListsContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useUserLists } from '@/contexts/user-lists-context';
+import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
 
 export function HeroSection() {

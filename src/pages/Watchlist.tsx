@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Bookmark, Printer } from 'lucide-react';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useUserLists } from '@/contexts/UserListsContext';
+import { useUserLists } from '@/contexts/user-lists-context';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 import { Media } from '@/types/media';
 import { Button } from '@/components/ui/button';

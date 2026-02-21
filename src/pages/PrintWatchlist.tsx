@@ -1,5 +1,5 @@
 import React from 'react';
-import { useUserLists } from '@/contexts/UserListsContext';
+import { useUserLists } from '@/contexts/user-lists-context';
 import { useQuery } from '@tanstack/react-query';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 import { useTranslation } from 'react-i18next';

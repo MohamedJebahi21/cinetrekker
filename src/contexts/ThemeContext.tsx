@@ -1,7 +1,5 @@
-import { createContext, useContext, useLayoutEffect } from "react";
-
-type Theme = "dark";
-const ThemeContext = createContext<{theme: Theme}>({theme: "dark"});
+import { useLayoutEffect } from "react";
+import { ThemeContext } from '@/contexts/theme-context';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useLayoutEffect(() => {
@@ -21,5 +19,3 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   return <ThemeContext.Provider value={{theme: "dark"}}>{children}</ThemeContext.Provider>;
 }
-
-export const useTheme = () => useContext(ThemeContext);

@@ -10,9 +10,9 @@ import { getMovieDetails, getTVDetails, getImageUrl, getBackdropUrl, getTVSeason
 import { Media, Cast, Provider } from '@/types/media';
 import { getProviderUrlFromData } from '@/lib/providerMap';
 import { getProviderWatchUrl } from '@/lib/providerLinks';
-import { useUserLists } from '@/contexts/UserListsContext';
+import { useUserLists } from '@/contexts/user-lists-context';
 import { useFollowedShows, useWatchedEpisodes } from '@/hooks/useFollowedShows';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import { useLastViewed } from '@/hooks/useLastViewed';
 import { addToRecentlyViewed } from '@/lib/recentlyViewed';
 import { MediaSection } from '@/components/MediaSection';

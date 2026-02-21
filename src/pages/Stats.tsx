@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth-context";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
@@ -25,6 +25,9 @@ interface GenreCount {
   count: number;
 }
 
+type TmdbGenre = { name: string };
+type EnrichedWatchedItem = WatchedItem & { release_date?: string; rating?: number };
+
 export default function Stats() {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -45,7 +48,7 @@ export default function Stats() {
       const rows = (data ?? []) as { media_id: number; media_type: string; watched_at?: string }[];
 
       // Enrich each watched item with runtime and genres from TMDB
-      const enriched = await Promise.all(rows.map(async (r) => {
+      const enriched = await Promise.all(rows.map(async (r): Promise<EnrichedWatchedItem> => {
         try {
           if (r.media_type === 'movie') {
             const details = await getMovieDetails(r.media_id);
@@ -53,10 +56,10 @@ export default function Stats() {
               media_id: r.media_id,
               media_type: 'movie' as const,
               runtime: details.runtime || 0,
-              genres: (details.genres || []).map((g: any) => g.name),
+              genres: (details.genres || []).map((g: TmdbGenre) => g.name),
               release_date: details.release_date,
               rating: details.vote_average,
-            } as WatchedItem & { release_date?: string; rating?: number };
+            };
           } else {
             const details = await getTVDetails(r.media_id);
             const runtime = details.episode_run_time?.[0] ?? 0;
@@ -64,10 +67,10 @@ export default function Stats() {
               media_id: r.media_id,
               media_type: 'tv' as const,
               runtime,
-              genres: (details.genres || []).map((g: any) => g.name),
+              genres: (details.genres || []).map((g: TmdbGenre) => g.name),
               release_date: details.first_air_date,
               rating: details.vote_average,
-            } as WatchedItem & { release_date?: string; rating?: number };
+            };
           }
         } catch (err) {
           // If TMDB fetch fails, fall back to zero/empty
@@ -76,7 +79,7 @@ export default function Stats() {
             media_type: (r.media_type as 'movie' | 'tv'),
             runtime: 0,
             genres: [],
-          } as WatchedItem;
+          };
         }
       }));
 
@@ -136,7 +139,7 @@ export default function Stats() {
     if (!watchedItems) return ['all'];
     const set = new Set<string>();
     watchedItems.forEach(w => {
-      const date = (w as any).release_date;
+      const date = (w as EnrichedWatchedItem).release_date;
       if (!date) return;
       const year = parseInt(String(date).slice(0,4));
       const dec = `${Math.floor(year / 10) * 10}s`;
@@ -149,14 +152,14 @@ export default function Stats() {
     if (!watchedItems) return watchedItems;
     return watchedItems.filter(w => {
       if (decadeFilter !== 'all') {
-        const date = (w as Media).release_date;
+        const date = (w as EnrichedWatchedItem).release_date;
         if (!date) return false;
         const year = parseInt(String(date).slice(0,4));
         const dec = `${Math.floor(year / 10) * 10}s`;
         if (dec !== decadeFilter) return false;
       }
       if (minRating !== 'all') {
-        const rating = (w as UserMediaItem).rating ?? 0;
+        const rating = (w as EnrichedWatchedItem).rating ?? 0;
         if (rating < (minRating as number)) return false;
       }
       return true;

@@ -1,6 +1,6 @@
-﻿import React from 'react';
+import React from 'react';
 
-// AIMovieScout removed — stub component to keep import paths safe.
+// AIMovieScout removed � stub component to keep import paths safe.
 export default function AIMovieScout() {
   return null;
 }

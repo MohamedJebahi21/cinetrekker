@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
-import { useUserLists } from '@/contexts/UserListsContext';
+import { useUserLists } from '@/contexts/user-lists-context';
 import { UserMediaItem } from '@/types/media';
 
 export function ExportImportButton() {

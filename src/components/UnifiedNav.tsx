@@ -16,7 +16,7 @@ import Calendar from 'lucide-react/dist/esm/icons/calendar';
 import ChartNoAxesCombined from 'lucide-react/dist/esm/icons/chart-no-axes-combined';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import { SearchDropdown } from '@/components/SearchDropdown';
 import { profileService } from '@/services/profile';
 

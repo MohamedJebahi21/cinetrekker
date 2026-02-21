@@ -7,7 +7,7 @@ import {
   User as UserIcon,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,

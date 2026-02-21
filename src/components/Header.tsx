@@ -34,8 +34,8 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { languages } from '@/i18n';
-import { useAuth } from '@/contexts/AuthContext';
-import { useUserLists } from '@/contexts/UserListsContext';
+import { useAuth } from '@/contexts/auth-context';
+import { useUserLists } from '@/contexts/user-lists-context';
 import { SearchDropdown } from '@/components/SearchDropdown';
 import { cn } from '@/lib/utils';
 import GuestSyncBanner from '@/components/GuestSyncBanner';

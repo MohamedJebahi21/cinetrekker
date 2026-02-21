@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { useState, useEffect, ReactNode, useCallback } from 'react';
 import { UserMediaItem, HiddenRecommendation } from '@/types/media';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import { supabase } from '@/integrations/supabase/client';
 import { validateNote, validateRating } from '@/lib/validation';
 import { 
@@ -11,38 +11,13 @@ import {
 import { toast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
 import { useTranslation } from 'react-i18next';
+import { STORAGE_KEYS, UserListsContext, type UserListsContextType } from '@/contexts/user-lists-context';
 import {
   useWatchedQuery,
   useAddToWatched as useAddToWatchedMutation,
   useRemoveFromWatched as useRemoveFromWatchedMutation,
   useUpdateWatched as useUpdateWatchedMutation
 } from '@/hooks/useWatchedQueries';
-interface UserListsContextType {
-  watchlist: UserMediaItem[];
-  watched: UserMediaItem[];
-  hiddenRecommendations: HiddenRecommendation[];
-  addToWatchlist: (mediaId: number, mediaType: 'movie' | 'tv') => Promise<void>;
-  removeFromWatchlist: (mediaId: number, mediaType: 'movie' | 'tv') => Promise<void>;
-  addToWatched: (mediaId: number, mediaType: 'movie' | 'tv', rating?: number, note?: string, status?: string) => Promise<void>;
-  removeFromWatched: (mediaId: number, mediaType: 'movie' | 'tv') => Promise<void>;
-  updateWatchedItem: (mediaId: number, mediaType: 'movie' | 'tv', updates: Partial<UserMediaItem>) => void;
-  isInWatchlist: (mediaId: number, mediaType: 'movie' | 'tv') => boolean;
-  isWatched: (mediaId: number, mediaType: 'movie' | 'tv') => boolean;
-  getWatchedItem: (mediaId: number, mediaType: 'movie' | 'tv') => UserMediaItem | undefined;
-  hideFromRecommendations: (mediaId: number, mediaType: 'movie' | 'tv') => void;
-  isHiddenFromRecommendations: (mediaId: number, mediaType: 'movie' | 'tv') => boolean;
-  loading: boolean;
-}
-
-export type { UserListsContextType };
-
-const UserListsContext = createContext<UserListsContextType | undefined>(undefined);
-
-export const STORAGE_KEYS = {
-  watchlist: 'mywatch_watchlist',
-  watched: 'mywatch_watched',
-  hidden: 'mywatch_hidden_recommendations',
-};
 
 export function UserListsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -105,7 +80,7 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
 
     // only update loading when it actually changes
     setLoading(Boolean(watchlistLoading || watchedLoading));
-  }, [watchlistData, watchedData, watchlistLoading, watchedLoading, watchlist, watched]);
+  }, [watchlistData, watchedData, watchlistLoading, watchedLoading, watchlist, watched, user]);
 
   // Load hidden recommendations from localStorage
   useEffect(() => {
@@ -213,7 +188,7 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
     };
 
     syncLocalToServer();
-  }, [user, watchlistData, watchedData]);
+  }, [user]);
 
   // Wrapper functions to maintain backward compatibility with existing code
   const addToWatchlist = useCallback(async (mediaId: number, mediaType: 'movie' | 'tv') => {
@@ -348,7 +323,7 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
       } catch (e) { console.warn('Failed to show hidden recommendation toast:', e); }
       return next;
     });
-  }, [user]);
+  }, [t, user]);
 
   const isHiddenFromRecommendations = useCallback((mediaId: number, mediaType: 'movie' | 'tv') => {
     return hiddenRecommendations.some(item => item.mediaId === mediaId && item.mediaType === mediaType);
@@ -374,12 +349,4 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
       {children}
     </UserListsContext.Provider>
   );
-}
-
-export function useUserLists(): UserListsContextType {
-  const context = useContext(UserListsContext);
-  if (context === undefined) {
-    throw new Error('useUserLists must be used within a UserListsProvider');
-  }
-  return context;
 }

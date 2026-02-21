@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useUserLists } from '@/contexts/UserListsContext';
+import { useUserLists } from '@/contexts/user-lists-context';
 import { UserMediaItem, MediaDetails } from '@/types/media';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 import { SEO } from '@/components/SEO';

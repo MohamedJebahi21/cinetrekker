@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Sparkles, EyeOff, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useUserLists } from '@/contexts/UserListsContext';
+import { useUserLists } from '@/contexts/user-lists-context';
 import { getRecommendations, getSimilar } from '@/services/tmdb';
 import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
 import { Media } from '@/types/media';

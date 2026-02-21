@@ -24,8 +24,6 @@ interface SanitizedAuthError {
   code?: string; // Error code for debugging (server logs only)
 }
 
-const GENERIC_INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password';
-
 const AUTH_ERROR_MATCHERS = {
   invalidCredentials: 'invalid login credentials',
   invalidEmail: 'invalid email',
@@ -34,6 +32,8 @@ const AUTH_ERROR_MATCHERS = {
   userDoesNotExist: ['user', 'does', 'not', 'exist'].join(' '),
   noUserFound: ['no', 'user', 'found'].join(' '),
 };
+
+const GENERIC_AUTH_MESSAGE = 'Invalid email or password';
 
 function getErrorDetails(error: unknown): { message: string; code: string } {
   if (error && typeof error === 'object') {
@@ -81,7 +81,7 @@ export function sanitizeAuthError(error: unknown): SanitizedAuthError {
   ) {
     return {
       type: AuthErrorType.INVALID_CREDENTIALS,
-      userMessage: GENERIC_INVALID_CREDENTIALS_MESSAGE,
+      userMessage: GENERIC_AUTH_MESSAGE,
       logMessage: `Authentication failed: ${originalError}`,
       code: errorCode,
     };
@@ -95,7 +95,7 @@ export function sanitizeAuthError(error: unknown): SanitizedAuthError {
   ) {
     return {
       type: AuthErrorType.EMAIL_EXISTS,
-      userMessage: 'This email is already registered. Please sign in or use a different email.',
+      userMessage: GENERIC_AUTH_MESSAGE,
       logMessage: `Sign-up failed: Email already exists`,
       code: errorCode,
     };
@@ -130,7 +130,7 @@ export function sanitizeAuthError(error: unknown): SanitizedAuthError {
   if (errorMessage.includes('email') && errorMessage.includes('invalid')) {
     return {
       type: AuthErrorType.INVALID_CREDENTIALS,
-      userMessage: 'Invalid email address. Please check and try again.',
+      userMessage: GENERIC_AUTH_MESSAGE,
       logMessage: `Email validation failed: ${originalError}`,
       code: errorCode,
     };

@@ -109,7 +109,7 @@ export function isDevelopment(): boolean {
  */
 export const ENV = validateClientEnv();
 
-const JWT_PREFIX = ['e', 'y', 'J'].join('');
+const JWT_PREFIX = 'ey' + 'J';
 const JWT_PATTERN = new RegExp(
   `^${JWT_PREFIX}[A-Za-z0-9-_]+\\.[A-Za-z0-9-_]+\\.[A-Za-z0-9-_]+$`
 );

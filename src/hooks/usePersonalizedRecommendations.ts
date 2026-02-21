@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useUserLists } from "@/contexts/UserListsContext";
+import { useUserLists } from "@/contexts/user-lists-context";
 import { getSimilar } from "@/services/tmdb";
 import { Media } from "@/types/media";
 

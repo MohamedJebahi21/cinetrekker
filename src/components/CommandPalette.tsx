@@ -11,8 +11,8 @@ import {
   CommandShortcut,
   CommandSeparator,
 } from '@/components/ui/command';
-import { useTheme } from '@/contexts/ThemeContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/theme-context';
+import { useAuth } from '@/contexts/auth-context';
 import { searchMulti } from '@/services/tmdb';
 import { useCollections } from '@/hooks/useCollections';
 

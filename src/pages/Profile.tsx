@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 
 // Track actor match missing-data logging across renders (and StrictMode double-mount)
@@ -22,8 +22,8 @@ import {
   Plus,
   TrendingUp
 } from 'lucide-react';
-import { useUserLists, type UserListsContextType } from '@/contexts/UserListsContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useUserLists, type UserListsContextType } from '@/contexts/user-lists-context';
+import { useAuth } from '@/contexts/auth-context';
 import { useFollowedShows, useWatchedEpisodes } from '@/hooks/useFollowedShows';
 import { Link } from 'react-router-dom';
 import { getImageUrl, getPersonDetails, getPopularPeople, type PersonDetails } from '@/services/tmdb';
@@ -91,7 +91,7 @@ export default function Profile() {
   });
 
   // Helper function to detect actual changes
-  const hasChanges = () => {
+  const hasChanges = useCallback(() => {
     const initial = initialStateRef.current;
     const current = {
       profilePhoto: profilePhoto || '',
@@ -108,7 +108,7 @@ export default function Profile() {
       initial.bio !== current.bio ||
       JSON.stringify(initial.favoriteGenres) !== JSON.stringify(current.favoriteGenres)
     );
-  };
+  }, [profilePhoto, dateOfBirth, displayName, bio, favoriteGenres]);
 
   // Load profile from Supabase (with localStorage fallback)
   useEffect(() => {
@@ -255,14 +255,14 @@ export default function Profile() {
       // Check if there are actual changes
       setHasUnsavedChanges(hasChanges());
     }
-  }, [initialLoadComplete]);
+  }, [initialLoadComplete, profilePhoto, dateOfBirth, displayName, bio, favoriteGenres, hasChanges]);
 
   // Detect changes after initial load
   useEffect(() => {
     if (initialLoadComplete) {
       setHasUnsavedChanges(hasChanges());
     }
-  }, [profilePhoto, dateOfBirth, displayName, bio, favoriteGenres]);
+  }, [profilePhoto, dateOfBirth, displayName, bio, favoriteGenres, initialLoadComplete, hasChanges]);
 
   const handleSaveProfile = async (): Promise<void> => {
     setIsSaving(true);

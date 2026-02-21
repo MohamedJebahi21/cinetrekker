@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import { HiddenRecommendation } from '@/types/media';
 
 const HIDDEN_RECOMMENDATIONS_QUERY_KEY = 'hidden-recommendations';

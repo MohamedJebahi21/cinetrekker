@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Play, Clock, Calendar } from 'lucide-react';
-import { useUserLists } from '@/contexts/UserListsContext';
+import { useUserLists } from '@/contexts/user-lists-context';
 import { TVShow } from '@/types/media';
 import { getTVDetails } from '@/services/tmdb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

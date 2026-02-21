@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -157,7 +157,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
         // Show generic message to user
         toast({
           title: t('common.error'),
-          description: sanitized.userMessage, // ✅ Generic message
+          description: 'Invalid email or password',
           variant: 'destructive',
         });
       } else {
@@ -194,10 +194,10 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
       });
       
       if (error) {
-        const sanitized = sanitizeAuthError(error);
+        sanitizeAuthError(error);
         toast({
           title: t('common.error'),
-          description: sanitized.userMessage, // ✅ Generic message
+          description: 'Invalid email or password',
           variant: 'destructive',
         });
         setLoading(false);

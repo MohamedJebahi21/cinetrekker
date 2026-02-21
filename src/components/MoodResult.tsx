@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { getBackdropUrl, getMediaTitle } from '@/services/tmdb';
-import { useUserLists } from '@/contexts/UserListsContext';
+import { useUserLists } from '@/contexts/user-lists-context';
 import { HeroSkeleton, MovieCardSkeleton } from '@/components/skeletons';
 import { fetchMoodMatch, type MoodId, type TimeSlot } from '@/components/mood-result.utils';
 import { cn } from '@/lib/utils';

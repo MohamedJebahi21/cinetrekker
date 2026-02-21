@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useUserLists } from '@/contexts/UserListsContext';
+import { useUserLists } from '@/contexts/user-lists-context';
 import { Genre } from '@/types/media';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

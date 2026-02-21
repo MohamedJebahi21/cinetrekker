@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Check, Star } from 'lucide-react';
-import { useUserLists } from '@/contexts/UserListsContext';
+import { useUserLists } from '@/contexts/user-lists-context';
 import { getMovieDetails, getTVDetails, getImageUrl, getMediaTitle } from '@/services/tmdb';
 import { Media } from '@/types/media';
 import { Link } from 'react-router-dom';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useUserLists } from '@/contexts/UserListsContext';
+import { useUserLists } from '@/contexts/user-lists-context';
 import { calculateAchievements, getAchievementProgress } from '@/lib/achievements';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
