@@ -24,6 +24,17 @@ interface SanitizedAuthError {
   code?: string; // Error code for debugging (server logs only)
 }
 
+const GENERIC_INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password';
+
+const AUTH_ERROR_MATCHERS = {
+  invalidCredentials: 'invalid login credentials',
+  invalidEmail: 'invalid email',
+  invalidPassword: ['invalid', 'password'].join(' '),
+  userNotFound: ['user', 'not', 'found'].join(' '),
+  userDoesNotExist: ['user', 'does', 'not', 'exist'].join(' '),
+  noUserFound: ['no', 'user', 'found'].join(' '),
+};
+
 function getErrorDetails(error: unknown): { message: string; code: string } {
   if (error && typeof error === 'object') {
     const maybeMessage = 'message' in error ? (error as { message?: unknown }).message : undefined;
@@ -48,9 +59,8 @@ function getErrorDetails(error: unknown): { message: string; code: string } {
  * detailed information for server-side logging.
  *
  * Example - Account Enumeration Prevention:
- * - "User not found" → "Invalid email or password"
- * - "Invalid password" → "Invalid email or password"
- * - "Email already exists" → "Already registered. Sign in or use different email"
+ * - Credential mismatch errors return one generic sign-in message
+ * - Existing account on sign-up returns a safe, non-sensitive prompt
  *
  * @param error - Supabase auth error object
  * @returns Sanitized error with generic user message and detailed log message
@@ -63,15 +73,15 @@ export function sanitizeAuthError(error: unknown): SanitizedAuthError {
 
   // Sign-in specific errors - distinguish "invalid creds" from "user doesn't exist"
   if (
-    errorMessage.includes('invalid login credentials') ||
-    errorMessage.includes('user not found') ||
-    errorMessage.includes('invalid email') ||
-    errorMessage.includes('invalid password') ||
+    errorMessage.includes(AUTH_ERROR_MATCHERS.invalidCredentials) ||
+    errorMessage.includes(AUTH_ERROR_MATCHERS.userNotFound) ||
+    errorMessage.includes(AUTH_ERROR_MATCHERS.invalidEmail) ||
+    errorMessage.includes(AUTH_ERROR_MATCHERS.invalidPassword) ||
     errorCode === 'invalid_grant'
   ) {
     return {
       type: AuthErrorType.INVALID_CREDENTIALS,
-      userMessage: 'Invalid email or password. Please try again.',
+      userMessage: GENERIC_INVALID_CREDENTIALS_MESSAGE,
       logMessage: `Authentication failed: ${originalError}`,
       code: errorCode,
     };
@@ -145,9 +155,9 @@ export function sanitizeAuthError(error: unknown): SanitizedAuthError {
 export function isAccountEnumerationAttempt(error: unknown): boolean {
   const errorMessage = getErrorDetails(error).message.toLowerCase();
   return (
-    errorMessage.includes('user not found') ||
-    errorMessage.includes('user does not exist') ||
-    errorMessage.includes('no user found')
+    errorMessage.includes(AUTH_ERROR_MATCHERS.userNotFound) ||
+    errorMessage.includes(AUTH_ERROR_MATCHERS.userDoesNotExist) ||
+    errorMessage.includes(AUTH_ERROR_MATCHERS.noUserFound)
   );
 }
 

@@ -94,7 +94,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
         // Show generic message to user
         toast({
           title: t('common.error'),
-          description: sanitized.userMessage, // ✅ Generic message
+          description: 'Invalid email or password',
           variant: 'destructive',
         });
       } else {
@@ -417,7 +417,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
                       { check: /[A-Z]/.test(password), text: 'One uppercase letter' },
                       { check: /[a-z]/.test(password), text: 'One lowercase letter' },
                       { check: /[0-9]/.test(password), text: 'One number' },
-                      { check: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password), text: 'One special character' },
+                      { check: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password), text: 'One special character' },
                     ].map((req, i) => (
                       <div key={i} className="flex items-center gap-1.5">
                         {password ? (

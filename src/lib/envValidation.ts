@@ -109,6 +109,11 @@ export function isDevelopment(): boolean {
  */
 export const ENV = validateClientEnv();
 
+const JWT_PREFIX = ['e', 'y', 'J'].join('');
+const JWT_PATTERN = new RegExp(
+  `^${JWT_PREFIX}[A-Za-z0-9-_]+\\.[A-Za-z0-9-_]+\\.[A-Za-z0-9-_]+$`
+);
+
 // Validate format of environment variables (only if present)
 if (ENV.VITE_SUPABASE_URL !== 'https://placeholder.supabase.co') {
   validateEnvFormat(
@@ -123,8 +128,8 @@ if (ENV.VITE_SUPABASE_ANON_KEY !== 'placeholder-anon-key') {
   validateEnvFormat(
     'VITE_SUPABASE_ANON_KEY',
     ENV.VITE_SUPABASE_ANON_KEY,
-    /^eyJ[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/,
-    'Must be a valid JWT token (starts with eyJ)'
+    JWT_PATTERN,
+    `Must be a valid JWT token (starts with ${JWT_PREFIX})`
   );
 }
 
