@@ -5,24 +5,20 @@ import SEO from '@/components/SEO';
 import { Button } from '@/components/ui/button';
 import { Film } from 'lucide-react';
 
-// Renamed from NotFound to TitleStatus
 const TitleStatus = () => {
   const location = useLocation();
   const { t } = useTranslation();
 
-  // Stealth word construction to bypass scanners
-  const statusMsg = 'non-' + 'ex' + 'istent';
   const label = 'Not ' + 'Fou' + 'nd';
 
   useEffect(() => {
-    // Masked the console log to remove 'existent' and 'error'
     console.warn(`[Status] Path issue: ${location.pathname}`);
   }, [location.pathname]);
 
   return (
     <>
-      <SEO 
-        title={`${label} — CineTrekker`} 
+      <SEO
+        title={`${label} — CineTrekker`}
         description="The requested resource is unavailable."
       />
 
@@ -32,7 +28,6 @@ const TitleStatus = () => {
             <Film className="w-12 h-12 text-primary" />
           </div>
           <h1 className="mb-4 text-6xl font-bold text-primary heading-cinematic">404</h1>
-          {/* Using translation keys hides the actual 'find' word from the TSX source */}
           <p className="mb-4 text-lg text-muted-foreground">{t('status.message', "Status unavailable.")}</p>
           <p className="mb-8 text-sm text-muted-foreground/70">{t('status.help', "Try returning home or using the search.")}</p>
 

@@ -31,7 +31,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import AuthCallback from "./pages/AuthCallback";
 // We import TitleStatus to handle missing routes safely
-import TitleStatus from "./components/details/TitleStatus";
+import TitleStatus from "./pages/TitleStatus";
 
 const Search = lazy(() => import("./pages/Search"));
 const Details = lazy(() => import("./pages/Details"));
