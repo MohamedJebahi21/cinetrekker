@@ -41,16 +41,17 @@ const STATUS_CONFIG: Record<string, WatchStatusConfig> = {
 function PosterImage({ posterPath, alt }: { posterPath: string | null; alt: string }) {
   const [ref, inView] = useInView<HTMLDivElement>({ rootMargin: '300px' });
 
+  const tiny = posterPath ? getImageUrl(posterPath, 'w92') : null;
   const small = posterPath ? getImageUrl(posterPath, 'w185') : null;
   const medium = posterPath ? getImageUrl(posterPath, 'w342') : null;
 
   return (
     <div ref={ref} className="w-full h-full aspect-[2/3] relative overflow-hidden bg-muted">
       {inView ? (
-        (small || medium) ? (
+        (tiny || small || medium) ? (
           <img
             src={small || medium || ''}
-            srcSet={`${small ? `${small} 185w, ` : ''}${medium ? `${medium} 342w` : ''}`}
+            srcSet={`${tiny ? `${tiny} 92w, ` : ''}${small ? `${small} 185w, ` : ''}${medium ? `${medium} 342w` : ''}`}
             sizes="(max-width: 480px) calc(50vw - 24px), (max-width: 768px) calc(33vw - 20px), (max-width: 1024px) calc(25vw - 20px), 200px"
             alt={alt}
             width={185}

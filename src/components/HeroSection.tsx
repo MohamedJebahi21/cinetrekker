@@ -70,7 +70,7 @@ export function HeroSection() {
   }
 
   return (
-    <section className="relative overflow-hidden min-h-[60vh] md:min-h-[80vh] flex items-center">
+    <section className="relative overflow-hidden min-h-[70vh] md:min-h-[80vh] flex items-center">
       {/* Optimized Backdrop Image */}
       {heroBackdropSrc && (
         <Image

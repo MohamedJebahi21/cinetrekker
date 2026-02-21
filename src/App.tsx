@@ -3,7 +3,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
 import { Routes, Route, useLocation } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
 import { Analytics } from "@vercel/analytics/react";
 import { Loader2 } from 'lucide-react';
 import { lazy, Suspense } from 'react';
@@ -58,12 +57,6 @@ const YearInReview = lazy(() => import("./pages/YearInReview"));
 const WatchHistory = lazy(() => import("./pages/WatchHistory"));
 const AccessibilitySettings = lazy(() => import("./pages/AccessibilitySettings"));
 
-const pageVariants = {
-  initial: { opacity: 0 },
-  enter: { opacity: 1, transition: { duration: 0.2 } },
-  exit: { opacity: 0, transition: { duration: 0.15 } },
-};
-
 function NetworkMonitor() {
   useNetworkStatus();
   return null;
@@ -82,9 +75,8 @@ function AnimatedRoutes() {
   const location = useLocation();
   
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div key={location.pathname} variants={pageVariants} initial="initial" animate="enter" exit="exit">
-        <Routes location={location}>
+    <div key={location.pathname} className="animate-fade-in">
+      <Routes location={location}>
           <Route path="/" element={<Suspense fallback={<RouteSpinner />}><Index /></Suspense>} />
           <Route path="/search" element={<Suspense fallback={<RouteSpinner />}><Search /></Suspense>} />
           <Route path="/movie/:id" element={<Suspense fallback={<RouteSpinner />}><Details /></Suspense>} />
@@ -123,8 +115,7 @@ function AnimatedRoutes() {
           
           <Route path="*" element={<Suspense fallback={<RouteSpinner />}><TitleStatus /></Suspense>} />
         </Routes>
-      </motion.div>
-    </AnimatePresence>
+    </div>
   );
 }
 

@@ -339,18 +339,26 @@
     mix-blend-mode: normal;
   }
 
-  /* Trending badge with pulsing red glow */
+  /* Trending badge with pulsing red glow - composited opacity animation for better performance */
   @keyframes redGlowPulse {
-    0% { box-shadow: 0 0 0 0 rgba(229,9,20,0); }
-    50% { box-shadow: 0 0 30px 8px rgba(229,9,20,0.18); }
-    100% { box-shadow: 0 0 0 0 rgba(229,9,20,0); }
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
   }
 
   .trending-badge {
     @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-black/60 text-white;
-    animation: redGlowPulse 2s ease-in-out infinite;
     position: relative;
     z-index: 10;
+  }
+
+  .trending-badge::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 30px 8px rgba(229,9,20,0.18);
+    animation: redGlowPulse 2s ease-in-out infinite;
+    pointer-events: none;
   }
 
   /* Slightly lighter primary for badges/icons */
@@ -505,7 +513,7 @@
 
     .skeleton-shimmer,
     .skeleton-shimmer::after,
-    .trending-badge,
+    .trending-badge::after,
     .animate-red-pulse {
       animation: none !important;
     }
