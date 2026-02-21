@@ -13,7 +13,7 @@ export function SupportButton({
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 rounded-lg bg-[#FFDD00] px-4 py-2 text-sm font-semibold text-black transition-transform duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/40"
+        className="inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-card/80 px-4 py-2 text-sm font-semibold text-foreground shadow-card backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:border-primary/70 hover:bg-primary/15 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
         aria-label="Buy Me a Coffee"
       >
         <svg
