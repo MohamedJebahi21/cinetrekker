@@ -18,6 +18,7 @@ import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
 import { SearchDropdown } from '@/components/SearchDropdown';
+import SupportButton from '@/components/SupportButton';
 import { profileService } from '@/services/profile';
 
 interface NavItem {
@@ -149,6 +150,8 @@ export function UnifiedNav() {
         )}
 
         <div className="hidden md:flex items-center gap-1">
+          <SupportButton className="mr-1" />
+
           <Link
             to="/profile"
             className={cn(
