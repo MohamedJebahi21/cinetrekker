@@ -51,10 +51,10 @@ function PosterImage({ posterPath, alt }: { posterPath: string | null; alt: stri
           <img
             src={small || medium || ''}
             srcSet={`${small ? `${small} 185w, ` : ''}${medium ? `${medium} 342w` : ''}`}
-            sizes="(max-width: 768px) 113px, 170px"
+            sizes="(max-width: 480px) calc(50vw - 24px), (max-width: 768px) calc(33vw - 20px), (max-width: 1024px) calc(25vw - 20px), 200px"
             alt={alt}
-            width={113}
-            height={170}
+            width={185}
+            height={278}
             className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
             loading="lazy"
           />
