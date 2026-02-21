@@ -26,7 +26,7 @@ export default {
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          foreground: "hsl(var(--secondary-foreground), 0.8)", // Adjusted for better contrast
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -38,7 +38,7 @@ export default {
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          foreground: "hsl(var(--muted-foreground), 0.7)", // Adjusted for better contrast
         },
         accent: {
           DEFAULT: "hsl(var(--accent))",

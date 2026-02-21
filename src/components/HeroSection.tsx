@@ -73,7 +73,7 @@ export function HeroSection() {
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
           loading="eager"
-          fetchpriority="high"
+          fetchPriority="high"
         />
       )}
       {/* Vignette to softly fade poster edges into True Black */}

@@ -24,6 +24,7 @@ import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import SEO from '@/components/SEO';
 import { websiteJsonLd } from '@/lib/schema';
+import { siteMetadata } from '@/lib/metadata';
 
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -139,7 +140,16 @@ const App = () => {
               <Toaster />
               <KeyboardShortcuts />
               <Sonner position="bottom-right" />
-              <SEO jsonLd={websiteJsonLd()} title="CineTrekker" description="Track movies" canonical="https://cinetrekker.vercel.app" />
+              <SEO
+                jsonLd={websiteJsonLd({
+                  name: siteMetadata.siteName,
+                  url: siteMetadata.canonical,
+                  description: siteMetadata.description,
+                })}
+                title={siteMetadata.title}
+                description={siteMetadata.description}
+                canonical={siteMetadata.canonical}
+              />
               <GlobalLoader />
               <NetworkMonitor />
               <div className="flex min-h-screen flex-col">

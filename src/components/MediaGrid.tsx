@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Media } from '@/types/media';
 import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
+import MovieSkeleton from '@/components/ui/MovieSkeleton';
 
 interface MediaGridProps {
   items: (Media & { watchStatus?: string })[];
@@ -62,18 +63,11 @@ export function MediaGrid({
   // Loading state with staggered skeletons
   if (isLoading) {
     return (
-      <motion.div
-        className={`grid ${gridColsMap[columns]} ${gapMap[gap]} ${className}`}
-        variants={containerVariants}
-        initial="initial"
-        animate="animate"
-      >
+      <div className={`grid ${gridColsMap[columns]} ${gapMap[gap]} ${className}`}>
         {Array.from({ length: skeletonCount }).map((_, i) => (
-          <motion.div key={i} variants={itemVariants}>
-            <MediaCardSkeleton delay={i * 50} />
-          </motion.div>
+          <MovieSkeleton key={i} />
         ))}
-      </motion.div>
+      </div>
     );
   }
 

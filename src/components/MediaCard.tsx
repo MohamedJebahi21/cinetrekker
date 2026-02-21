@@ -44,34 +44,22 @@ const STATUS_CONFIG: Record<string, WatchStatusConfig> = {
 
 function PosterImage({ posterPath, alt }: { posterPath: string | null; alt: string }) {
   const [ref, inView] = useInView<HTMLDivElement>({ rootMargin: '300px' });
-  const [loaded, setLoaded] = useState(false);
 
-  // build responsive URLs: use w342 for mobile and w500 for desktop
   const small = posterPath ? getImageUrl(posterPath, 'w342') : null;
-  const medium = posterPath ? getImageUrl(posterPath, 'w500') : null;
+  const medium = posterPath ? getImageUrl(posterPath, 'w780') : null;
 
   return (
     <div ref={ref} className="w-full h-full aspect-[2/3] relative overflow-hidden bg-muted">
       {inView ? (
         medium ? (
-          <>
-            {!loaded && <div className="absolute inset-0 bg-muted animate-pulse" />}
-            <img
-              src={medium}
-              srcSet={`${small ? `${small} 342w, ` : ''}${medium} 500w`}
-              sizes="(max-width: 640px) 342px, 500px"
-              width={500}
-              height={750}
-              alt={alt}
-              className={cn(
-                "w-full h-full object-cover transition-all duration-500 ease-out group-hover:scale-105 bg-[#1a1a1a]",
-                loaded ? "opacity-100 blur-0" : "opacity-60 blur-sm"
-              )}
-              loading="lazy"
-              decoding="async"
-              onLoad={() => setLoaded(true)}
-            />
-          </>
+          <img
+            src={medium}
+            srcSet={`${small ? `${small} 342w, ` : ''}${medium} 780w`}
+            sizes="(max-width: 768px) 342px, 780px"
+            alt={alt}
+            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+            loading="lazy"
+          />
         ) : (
           <div className="w-full h-full skeleton-shimmer" />
         )
@@ -96,6 +84,7 @@ export const MediaCard = React.memo(function MediaCard({ media, mediaType: media
   const year = useMemo(() => getMediaYear(media), [media]);
   const mediaType = useMemo(() => mediaTypeProp ?? getMediaType(media), [mediaTypeProp, media]);
   const posterUrl = useMemo(() => getImageUrl(media.poster_path, 'w342'), [media.poster_path]);
+  const posterAlt = `${title} Poster`;
   const inWatchlist = user ? isInWatchlist(media.id, mediaType) : localInWatchlist;
   const watched = isWatched(media.id, mediaType);
   const watchStatus = media.watchStatus;

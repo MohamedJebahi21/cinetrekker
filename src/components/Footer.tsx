@@ -84,22 +84,13 @@ export function Footer() {
               {t('footer.legal', 'Legal')}
             </h3>
             <nav className="flex flex-col gap-3" aria-label="Legal links">
-              <Link 
-                to="/privacy" 
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
+              <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 {t('nav.privacy', 'Privacy Policy')}
               </Link>
-              <Link 
-                to="/terms" 
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
+              <Link to="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 {t('footer.terms', 'Terms of Service')}
               </Link>
-              <Link 
-                to="/cookies" 
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
+              <Link to="/cookies" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 {t('footer.cookies', 'Cookie Policy')}
               </Link>
             </nav>

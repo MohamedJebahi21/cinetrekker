@@ -6,12 +6,12 @@ const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ID = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-export const getImageUrl = (path: string | null, size: 'w92' | 'w154' | 'w185' | 'w342' | 'w500' | 'w780' | 'original' = 'w500') => {
+export const getImageUrl = (path: string | null, size: 'w342' | 'w780' = 'w342') => {
   if (!path) return null;
   return `${TMDB_IMAGE_BASE}/${size}${path}`;
 };
 
-export const getBackdropUrl = (path: string | null, size: 'w300' | 'w780' | 'w1280' | 'original' = 'w1280') => {
+export const getBackdropUrl = (path: string | null, size: 'w342' | 'w780' = 'w780') => {
   if (!path) return null;
   return `${TMDB_IMAGE_BASE}/${size}${path}`;
 };

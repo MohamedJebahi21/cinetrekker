@@ -2,9 +2,9 @@
 
 /* Card grid and hover improvements */
 .media-grid {
-  @apply grid;
-  gap: 12px;
-  grid-template-columns: repeat(2, 1fr);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
 }
 /* Tablet and up */
 @media (min-width: 768px) {

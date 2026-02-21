@@ -70,6 +70,7 @@ export default function DecadeExplorer() {
               key={decade.value}
               variant={selectedDecade.value === decade.value ? 'default' : 'outline'}
               className="cursor-pointer text-base py-2 px-4 hover:bg-primary/10 transition-colors"
+              style={{ minWidth: '44px', minHeight: '44px' }} // Ensure 44px hit area
               onClick={() => setSelectedDecade(decade)}
             >
               {decade.label}
