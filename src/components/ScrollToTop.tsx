@@ -16,7 +16,6 @@ export default function ScrollToTop() {
       }
     } catch (e) {
       // fail silently in non-browser or restricted environments
-      // eslint-disable-next-line no-console
       console.warn('ScrollToTop: unable to scroll to top', e);
     }
   }, [pathname]);

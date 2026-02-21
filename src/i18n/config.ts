@@ -26,7 +26,6 @@ export const defaultI18nOptions: InitOptions = {
   parseMissingKeyHandler: (key: string) => {
     if (isDev) {
       // Log missing keys only in development
-      // eslint-disable-next-line no-console
       console.warn(`[i18n] Missing translation key: ${key}`);
     }
     
@@ -50,12 +49,13 @@ export function initI18n(options?: Partial<InitOptions>) {
   if (!i18n.isInitialized) {
     i18n.use(initReactI18next).init(initOpts).catch((err) => {
       if (isDev) {
-        // eslint-disable-next-line no-console
         console.error('[i18n] Initialization failed; falling back to embedded English', err);
       }
       try {
         i18n.init(defaultI18nOptions);
-      } catch {}
+      } catch (fallbackError) {
+        void fallbackError;
+      }
     });
   }
   return i18n;

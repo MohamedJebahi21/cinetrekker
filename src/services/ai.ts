@@ -88,7 +88,7 @@ export async function getAIRecommendations(prompt: string, language = 'en') {
       // prefer search results when we actually have matches
       if (searchResults.length > 0) {
         // merge unique by id (search first)
-        const byId = new Map<number, any>();
+        const byId = new Map<number, Media>();
         searchResults.forEach((s: Media) => byId.set(s.id, s));
         discovered.forEach((d: Media) => { if (!byId.has(d.id)) byId.set(d.id, d); });
         discovered = Array.from(byId.values()).slice(0, 20);

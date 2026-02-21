@@ -33,7 +33,9 @@ export type {
 } from './media';
 
 // Context types
-export type { AuthContextType, User, Session } from '@supabase/supabase-js';
+export type { User, Session } from '@supabase/supabase-js';
+
+import type { User, Session } from '@supabase/supabase-js';
 
 // User lists context type
 export interface UserListsContextType {
@@ -55,8 +57,8 @@ export interface UserListsContextType {
 
 // Auth context type
 export interface AuthContextType {
-  user: any | null; // Supabase User type
-  session: any | null; // Supabase Session type
+  user: User | null;
+  session: Session | null;
   loading: boolean;
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;

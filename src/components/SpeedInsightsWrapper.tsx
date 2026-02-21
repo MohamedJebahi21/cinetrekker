@@ -12,7 +12,6 @@ export function SpeedInsightsWrapper() {
       injectSpeedInsights();
     } catch (err) {
       // Non-fatal — log for visibility
-      // eslint-disable-next-line no-console
       console.warn('injectSpeedInsights failed:', err);
     }
   }, []);

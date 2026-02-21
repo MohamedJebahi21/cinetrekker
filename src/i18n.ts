@@ -61,7 +61,6 @@ i18n
     },
     parseMissingKeyHandler: (key) => {
       if (isDev) {
-        // eslint-disable-next-line no-console
         console.warn(`[i18n] Missing translation key: ${key}`);
       }
       return lastSegmentTitleCase(key);
