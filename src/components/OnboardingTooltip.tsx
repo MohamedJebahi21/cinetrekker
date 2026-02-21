@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Sparkles, BookmarkPlus, Play, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn } from "src/lib/utils";
 
 const ONBOARDING_ID = 'cinetrekker_onboarding_completed';
 

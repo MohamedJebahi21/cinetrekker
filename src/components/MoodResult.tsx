@@ -6,7 +6,7 @@ import { getBackdropUrl, getMediaTitle } from '@/services/tmdb';
 import { useUserLists } from '@/contexts/user-lists-context';
 import { HeroSkeleton, MovieCardSkeleton } from '@/components/skeletons';
 import { fetchMoodMatch, type MoodId, type TimeSlot } from '@/components/mood-result.utils';
-import { cn } from '@/lib/utils';
+import { cn } from "src/lib/utils";
 
 type Props = {
   mood: MoodId;

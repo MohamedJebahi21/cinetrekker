@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { cn } from "src/lib/utils";
 
 export type MoodId =
   | 'escapist'

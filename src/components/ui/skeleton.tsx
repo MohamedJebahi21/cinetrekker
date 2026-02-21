@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { cn } from "src/lib/utils";
 
 interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
@@ -21,6 +21,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   delay = 0,
   ...props
 }) => {
+  // Ensure GPU optimization by adding `will-change` property to shimmer animation
   const shimmerKeyframes = {
     initial: { transform: "translateX(-100%)" },
     animate: {
@@ -39,7 +40,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
       className={cn(
         "relative overflow-hidden rounded-md bg-muted",
         animation === "shimmer" &&
-          "before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_1.5s_infinite] before:bg-gradient-to-r before:from-transparent before:via-muted-foreground/10 before:to-transparent",
+          "before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_1.5s_infinite] before:bg-gradient-to-r before:from-transparent before:via-muted-foreground/10 before:to-transparent before:will-change-transform",
         className
       )}
       variants={animation === "shimmer" ? shimmerKeyframes : undefined}
