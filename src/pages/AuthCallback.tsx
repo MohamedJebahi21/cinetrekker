@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { GENERIC_SIGNIN_ERROR_MESSAGE } from '@/lib/authErrorHandler';
 
 /**
  * OAuth Callback Handler
@@ -36,7 +37,7 @@ export default function AuthCallback() {
         if (session) {
           toast({
             title: t('auth.signIn', 'Sign In'),
-            description: `Welcome ${session.user.email}!`,
+            description: 'Welcome back!',
           });
           
           // Redirect to home after successful authentication
@@ -46,11 +47,10 @@ export default function AuthCallback() {
           throw new Error('No session established');
         }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to complete sign in';
         console.error('OAuth callback error:', error);
         toast({
           title: t('common.error', 'Error'),
-          description: errorMessage,
+          description: GENERIC_SIGNIN_ERROR_MESSAGE,
           variant: 'destructive',
         });
         

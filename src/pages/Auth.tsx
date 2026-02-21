@@ -11,7 +11,14 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { validatePassword, PasswordValidationResult } from '@/lib/passwordValidation';
-import { sanitizeAuthError, logAuthFailure, checkAuthRateLimit, clearAuthRateLimit } from '@/lib/authErrorHandler';
+import {
+  sanitizeAuthError,
+  logAuthFailure,
+  checkAuthRateLimit,
+  clearAuthRateLimit,
+  GENERIC_SIGNIN_ERROR_MESSAGE,
+  GENERIC_SIGNUP_RESPONSE_MESSAGE,
+} from '@/lib/authErrorHandler';
 import { supabase } from '@/integrations/supabase/client';
 import SEO from '@/components/SEO';
 
@@ -69,11 +76,12 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const rateLimitInfo = checkAuthRateLimit(email.trim().toLowerCase());
+    const normalizedEmail = email.trim().toLowerCase();
+    const rateLimitInfo = checkAuthRateLimit(normalizedEmail);
     if (rateLimitInfo.isLimited) {
       toast({
         title: t('common.error'),
-        description: 'Too many sign-in attempts. Please wait a minute and try again.',
+        description: GENERIC_SIGNIN_ERROR_MESSAGE,
         variant: 'destructive',
       });
       return;
@@ -89,16 +97,16 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
         const sanitized = sanitizeAuthError(error);
         
         // Log security event (never shown to user)
-        logAuthFailure(email, sanitized.type);
+        logAuthFailure(normalizedEmail, sanitized.type);
         
         // Show generic message to user
         toast({
           title: t('common.error'),
-          description: 'Invalid email or password',
+          description: GENERIC_SIGNIN_ERROR_MESSAGE,
           variant: 'destructive',
         });
       } else {
-        clearAuthRateLimit(email.trim().toLowerCase());
+        clearAuthRateLimit(normalizedEmail);
         toast({
           title: t('auth.signIn'),
           description: 'Welcome back!',
@@ -109,7 +117,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
       console.error('[Auth] Unexpected sign-in error:', unexpectedError);
       toast({
         title: t('common.error'),
-        description: 'An unexpected error occurred. Please try again.',
+        description: GENERIC_SIGNIN_ERROR_MESSAGE,
         variant: 'destructive',
       });
     } finally {
@@ -120,12 +128,12 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const rateLimitInfo = checkAuthRateLimit(email.trim().toLowerCase());
+    const normalizedEmail = email.trim().toLowerCase();
+    const rateLimitInfo = checkAuthRateLimit(normalizedEmail);
     if (rateLimitInfo.isLimited) {
       toast({
-        title: t('common.error'),
-        description: 'Too many sign-up attempts. Please wait a minute and try again.',
-        variant: 'destructive',
+        title: t('auth.signUp', 'Sign Up'),
+        description: GENERIC_SIGNUP_RESPONSE_MESSAGE,
       });
       return;
     }
@@ -152,34 +160,28 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
         const sanitized = sanitizeAuthError(error);
         
         // Log security event
-        logAuthFailure(email, sanitized.type);
-        
-        // Show generic message to user
-        toast({
-          title: t('common.error'),
-          description: 'Invalid email or password',
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: t('auth.signUp', 'Sign Up'),
-          description: 'Check your email to verify your account before signing in.',
-        });
-        setActiveTab('signin');
+        logAuthFailure(normalizedEmail, sanitized.type);
       }
+
+      toast({
+        title: t('auth.signUp', 'Sign Up'),
+        description: GENERIC_SIGNUP_RESPONSE_MESSAGE,
+      });
+      setActiveTab('signin');
     } catch (unexpectedError) {
       console.error('[Auth] Unexpected sign-up error:', unexpectedError);
       toast({
-        title: t('common.error'),
-        description: 'An unexpected error occurred. Please try again.',
-        variant: 'destructive',
+        title: t('auth.signUp', 'Sign Up'),
+        description: GENERIC_SIGNUP_RESPONSE_MESSAGE,
       });
+      setActiveTab('signin');
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
+    const normalizedEmail = email.trim().toLowerCase();
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -194,10 +196,11 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
       });
       
       if (error) {
-        sanitizeAuthError(error);
+        const sanitized = sanitizeAuthError(error);
+        logAuthFailure(normalizedEmail, sanitized.type);
         toast({
           title: t('common.error'),
-          description: 'Invalid email or password',
+          description: GENERIC_SIGNIN_ERROR_MESSAGE,
           variant: 'destructive',
         });
         setLoading(false);
@@ -207,7 +210,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
       console.error('[Auth] OAuth error:', unexpectedError);
       toast({
         title: t('common.error'),
-        description: 'Sign-in failed. Please try again.',
+        description: GENERIC_SIGNIN_ERROR_MESSAGE,
         variant: 'destructive',
       });
       setLoading(false);

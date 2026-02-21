@@ -33,7 +33,9 @@ const AUTH_ERROR_MATCHERS = {
   noUserFound: ['no', 'user', 'found'].join(' '),
 };
 
-const GENERIC_AUTH_MESSAGE = 'Invalid email or password';
+export const GENERIC_SIGNIN_ERROR_MESSAGE = 'Invalid email or password';
+export const GENERIC_SIGNUP_RESPONSE_MESSAGE =
+  'If an account exists with this email, you will receive a confirmation link.';
 
 function getErrorDetails(error: unknown): { message: string; code: string } {
   if (error && typeof error === 'object') {
@@ -71,17 +73,19 @@ export function sanitizeAuthError(error: unknown): SanitizedAuthError {
   const errorCode = details.code;
   const originalError = details.message;
 
-  // Sign-in specific errors - distinguish "invalid creds" from "user doesn't exist"
+  // Sign-in specific errors - always generic response
   if (
     errorMessage.includes(AUTH_ERROR_MATCHERS.invalidCredentials) ||
     errorMessage.includes(AUTH_ERROR_MATCHERS.userNotFound) ||
+    errorMessage.includes(AUTH_ERROR_MATCHERS.userDoesNotExist) ||
+    errorMessage.includes(AUTH_ERROR_MATCHERS.noUserFound) ||
     errorMessage.includes(AUTH_ERROR_MATCHERS.invalidEmail) ||
     errorMessage.includes(AUTH_ERROR_MATCHERS.invalidPassword) ||
     errorCode === 'invalid_grant'
   ) {
     return {
       type: AuthErrorType.INVALID_CREDENTIALS,
-      userMessage: GENERIC_AUTH_MESSAGE,
+      userMessage: GENERIC_SIGNIN_ERROR_MESSAGE,
       logMessage: `Authentication failed: ${originalError}`,
       code: errorCode,
     };
@@ -95,7 +99,7 @@ export function sanitizeAuthError(error: unknown): SanitizedAuthError {
   ) {
     return {
       type: AuthErrorType.EMAIL_EXISTS,
-      userMessage: GENERIC_AUTH_MESSAGE,
+      userMessage: GENERIC_SIGNUP_RESPONSE_MESSAGE,
       logMessage: `Sign-up failed: Email already exists`,
       code: errorCode,
     };
@@ -130,7 +134,7 @@ export function sanitizeAuthError(error: unknown): SanitizedAuthError {
   if (errorMessage.includes('email') && errorMessage.includes('invalid')) {
     return {
       type: AuthErrorType.INVALID_CREDENTIALS,
-      userMessage: GENERIC_AUTH_MESSAGE,
+      userMessage: GENERIC_SIGNIN_ERROR_MESSAGE,
       logMessage: `Email validation failed: ${originalError}`,
       code: errorCode,
     };
@@ -139,7 +143,7 @@ export function sanitizeAuthError(error: unknown): SanitizedAuthError {
   // Unknown errors - generic fallback (never expose internal error)
   return {
     type: AuthErrorType.UNKNOWN,
-    userMessage: 'An error occurred. Please try again later or contact support.',
+    userMessage: GENERIC_SIGNIN_ERROR_MESSAGE,
     logMessage: `Unknown auth error: ${originalError}`,
     code: errorCode,
   };
