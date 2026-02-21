@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { getTrending, getPopularMovies, getPopularTV, getTopRatedMovies, getTopRatedTV, discoverMovies } from '@/services/tmdb';
+import { getTrending, getPopularMovies, getPopularTV, getTopRatedMovies, getTopRatedTV } from '@/services/tmdb';
 import { MediaSection } from '@/components/MediaSection';
 import { MediaCarousel } from '@/components/MediaCarousel';
 import { MediaCard } from '@/components/MediaCard';
@@ -9,11 +9,9 @@ import { MediaGrid } from '@/components/MediaGrid';
 import { WatchedShowsNewEpisodes } from '@/components/WatchedShowsNewEpisodes';
 import { RecentlyAddedMovies } from '@/components/RecentlyAddedMovies';
 import { BecauseYouLiked } from '@/components/BecauseYouLiked';
-import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { ContinueWatching } from '@/components/ContinueWatching';
 import { OnboardingTooltip } from '@/components/OnboardingTooltip';
 import { HeroSection } from '@/components/HeroSection';
-import { YearFilter } from '@/components/YearFilter';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SEO from '@/components/SEO';
 
@@ -25,7 +23,6 @@ export default function Index() {
   const [topThisWeekType, setTopThisWeekType] = useState<'movie' | 'tv'>('movie');
   const [topRatedType, setTopRatedType] = useState<'movie' | 'tv'>('movie');
   const [popularType, setPopularType] = useState<'movie' | 'tv'>('movie');
-  const [selectedYear, setSelectedYear] = useState<number | null>(null);
 
   const { data: trendingDay, isLoading: loadingDay } = useQuery({
     queryKey: ['trending', 'day', language],
@@ -67,21 +64,6 @@ export default function Index() {
     queryFn: () => getTopRatedTV(1, language),
   });
 
-  // Year-filtered trending
-  const { data: yearFilteredMovies, isLoading: loadingYearFiltered } = useQuery({
-    queryKey: ['year-filtered', selectedYear],
-    queryFn: async () => {
-      if (!selectedYear) return null;
-      const results = await discoverMovies({
-        page: 1,
-        'primary_release_year': selectedYear.toString(),
-        'sort_by': 'popularity.desc',
-      });
-      return results.results;
-    },
-    enabled: selectedYear !== null
-  });
-
   return (
     <div className="min-h-screen pt-16">
       <SEO title="CineTrekker — Track Your Movies & TV Shows" description="Discover trending movies and TV shows, track your watchlist, and get personalized recommendations." canonical="https://cinetrekker.vercel.app" />
@@ -94,34 +76,12 @@ export default function Index() {
 
       <div className="page-container space-y-8 pb-24 md:pb-0">
         {/* Personalized Recommendations removed */}
-        {/* Year Filter */}
-        <section>
-          <h2 className="section-title mb-4">Browse by Year</h2>
-          <YearFilter 
-            selectedYear={selectedYear} 
-            onYearChange={setSelectedYear}
-          />
-          {selectedYear && (
-            <div className="mt-6">
-              <MediaGrid
-                items={yearFilteredMovies || []}
-                isLoading={loadingYearFiltered}
-                columns="normal"
-                gap="md"
-                skeletonCount={12}
-              />
-            </div>
-          )}
-        </section>
 
         {/* Phase 3: "Because You Liked" personalized row */}
         <BecauseYouLiked />
 
         {/* Continue Watching - TV shows in progress */}
         <ContinueWatching />
-
-        {/* Recently Viewed */}
-        <RecentlyViewed />
 
         {/* Did You Watch? - New episodes for watched TV shows */}
         <WatchedShowsNewEpisodes />
