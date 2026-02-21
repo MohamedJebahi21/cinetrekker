@@ -17,10 +17,10 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState('login');
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<{ type: 'complete' | 'error'; text: string } | null>(null);
   
   // Line 27: Fixed strict typing instead of 'any'
-  const [vResult, setVResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [vResult, setVResult] = useState<{ isDone: boolean; message: string } | null>(null);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,12 +38,12 @@ export default function Auth() {
     try {
       if (activeTab === 'login') {
         // Mock login call - replace with actual auth provider call
-        // The processAuthError handler ensures no specific details leak
+        // The processAuthError handler handles auth safely
         await new Promise((resolve, reject) => setTimeout(() => reject('Unauthorized'), 1000));
       } else {
         // Registration logic
         const result = processSignupResult(null);
-        setMessage({ type: 'success', text: result.userMessage });
+        setMessage({ type: 'complete', text: result.userMessage });
       }
     } catch (error: unknown) {
       // Line 94: Using the central handler to avoid enumeration leaks
@@ -70,7 +70,7 @@ export default function Auth() {
 
             <form onSubmit={handleAuth} className="space-y-4 pt-4">
               {message && (
-                <Alert variant={message.type === 'error' ? 'destructive' : 'default'}>
+                <Alert variant={message.type === 'complete' ? 'default' : 'destructive'}>
                   <AlertDescription>{message.text}</AlertDescription>
                 </Alert>
               )}
