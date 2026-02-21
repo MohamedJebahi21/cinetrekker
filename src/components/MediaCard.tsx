@@ -41,8 +41,8 @@ const STATUS_CONFIG: Record<string, WatchStatusConfig> = {
 function PosterImage({ posterPath, alt }: { posterPath: string | null; alt: string }) {
   const [ref, inView] = useInView<HTMLDivElement>({ rootMargin: '300px' });
 
-  const small = posterPath ? getImageUrl(posterPath, 'w342') : null;
-  const medium = posterPath ? getImageUrl(posterPath, 'w780') : null;
+  const small = posterPath ? getImageUrl(posterPath, 'w185') : null;
+  const medium = posterPath ? getImageUrl(posterPath, 'w342') : null;
 
   return (
     <div ref={ref} className="w-full h-full aspect-[2/3] relative overflow-hidden bg-muted">
@@ -50,12 +50,12 @@ function PosterImage({ posterPath, alt }: { posterPath: string | null; alt: stri
         medium ? (
           <img
             src={medium}
-            srcSet={`${small ? `${small} 342w, ` : ''}${medium} 780w`}
-            sizes="(max-width: 640px) 115px, (max-width: 1024px) 180px, 250px"
+            srcSet={`${small ? `${small} 185w, ` : ''}${medium} 342w`}
+            sizes="(max-width: 768px) 113px, 170px"
             alt={alt}
-            width={342}
-            height={513}
-            className="w-full h-auto object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+            width={113}
+            height={170}
+            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
             loading="lazy"
           />
         ) : (

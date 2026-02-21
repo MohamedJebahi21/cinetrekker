@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { getTrending, getPopularMovies, getPopularTV, getTopRatedMovies, getTopRatedTV } from '@/services/tmdb';
@@ -23,45 +23,100 @@ export default function Index() {
   const [topRatedType, setTopRatedType] = useState<'movie' | 'tv'>('movie');
   const [popularType, setPopularType] = useState<'movie' | 'tv'>('movie');
 
-  const { data: trendingDay, isLoading: loadingDay } = useQuery({
-    queryKey: ['trending', 'day', language],
-    queryFn: () => getTrending('all', 'day', language),
+  const [deferredEnabled, setDeferredEnabled] = useState(false);
+
+  const {
+    data: criticalData,
+    isLoading: loadingCritical,
+    error: criticalError,
+  } = useQuery({
+    queryKey: ['home-critical', language],
+    queryFn: async () => {
+      const [popularMoviesData, trendingWeekData] = await Promise.all([
+        getPopularMovies(1, language),
+        getTrending('all', 'week', language),
+      ]);
+
+      return {
+        popularMovies: popularMoviesData,
+        trendingWeek: trendingWeekData,
+      };
+    },
   });
 
-  const { data: trendingWeek, isLoading: loadingWeek } = useQuery({
-    queryKey: ['trending', 'week', language],
-    queryFn: () => getTrending('all', 'week', language),
-  });
+  useEffect(() => {
+    setDeferredEnabled(false);
 
-  const { data: trendingMoviesWeek, isLoading: loadingMoviesWeek } = useQuery({
+    let timeoutId: number | undefined;
+    let idleId: number | undefined;
+
+    const enableDeferred = () => setDeferredEnabled(true);
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      idleId = window.requestIdleCallback(enableDeferred, { timeout: 1200 });
+    } else {
+      timeoutId = window.setTimeout(enableDeferred, 0);
+    }
+
+    return () => {
+      if (idleId !== undefined && 'cancelIdleCallback' in window) {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [language]);
+
+  const { data: trendingMoviesWeek, isLoading: loadingMoviesWeek, error: trendingMoviesWeekError } = useQuery({
     queryKey: ['trending', 'movie', 'week', language],
     queryFn: () => getTrending('movie', 'week', language),
+    enabled: deferredEnabled,
   });
 
-  const { data: trendingTVWeek, isLoading: loadingTVWeek } = useQuery({
+  const { data: trendingTVWeek, isLoading: loadingTVWeek, error: trendingTVWeekError } = useQuery({
     queryKey: ['trending', 'tv', 'week', language],
     queryFn: () => getTrending('tv', 'week', language),
+    enabled: deferredEnabled,
   });
 
-  const { data: popularMovies, isLoading: loadingPopularMovies } = useQuery({
-    queryKey: ['popular', 'movie', language],
-    queryFn: () => getPopularMovies(1, language),
-  });
-
-  const { data: popularTV, isLoading: loadingPopularTV } = useQuery({
+  const { data: popularTV, isLoading: loadingPopularTV, error: popularTVError } = useQuery({
     queryKey: ['popular', 'tv', language],
     queryFn: () => getPopularTV(1, language),
+    enabled: deferredEnabled,
   });
 
-  const { data: topRatedMovies, isLoading: loadingTopRatedMovies } = useQuery({
+  const { data: topRatedMovies, isLoading: loadingTopRatedMovies, error: topRatedMoviesError } = useQuery({
     queryKey: ['top-rated', 'movie', language],
     queryFn: () => getTopRatedMovies(1, language),
+    enabled: deferredEnabled,
   });
 
-  const { data: topRatedTV, isLoading: loadingTopRatedTV } = useQuery({
+  const { data: topRatedTV, isLoading: loadingTopRatedTV, error: topRatedTVError } = useQuery({
     queryKey: ['top-rated', 'tv', language],
     queryFn: () => getTopRatedTV(1, language),
+    enabled: deferredEnabled,
   });
+
+  const { data: trendingDay, isLoading: loadingDay, error: trendingDayError } = useQuery({
+    queryKey: ['trending', 'day', language],
+    queryFn: () => getTrending('all', 'day', language),
+    enabled: deferredEnabled,
+  });
+
+  const popularMovies = criticalData?.popularMovies;
+  const trendingWeek = criticalData?.trendingWeek;
+  const loadingPopularMovies = loadingCritical;
+  const loadingWeek = loadingCritical;
+
+  const hasDeferredErrors = Boolean(
+    trendingMoviesWeekError ||
+    trendingTVWeekError ||
+    popularTVError ||
+    topRatedMoviesError ||
+    topRatedTVError ||
+    trendingDayError
+  );
 
   return (
     <div className="min-h-screen">
@@ -74,6 +129,18 @@ export default function Index() {
       {/* AI Movie Scout removed per request */}
 
       <div className="page-container space-y-8 pb-24 md:pb-0">
+        {criticalError && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+            {t('common.error', 'Something went wrong loading featured content. Please try again.')}
+          </div>
+        )}
+
+        {hasDeferredErrors && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">
+            {t('common.error', 'Some sections failed to load. You can keep browsing and retry shortly.')}
+          </div>
+        )}
+
         {/* Personalized Recommendations removed */}
 
         {/* Phase 3: "Because You Liked" personalized row */}
@@ -118,7 +185,7 @@ export default function Index() {
             <MediaCarousel
               title={t('home.topMoviesWeek')}
               items={trendingMoviesWeek?.results || []}
-              loading={loadingMoviesWeek}
+              loading={!deferredEnabled || loadingMoviesWeek}
               showMoreLink="/search?type=movie"
             />
           )}
@@ -126,7 +193,7 @@ export default function Index() {
             <MediaCarousel
               title={t('home.topSeriesWeek')}
               items={trendingTVWeek?.results || []}
-              loading={loadingTVWeek}
+              loading={!deferredEnabled || loadingTVWeek}
               showMoreLink="/search?type=tv"
             />
           )}
@@ -163,7 +230,7 @@ export default function Index() {
             <MediaSection
               title={t('home.topRatedMovies') || 'Top Rated Movies'}
               items={topRatedMovies?.results || []}
-              loading={loadingTopRatedMovies}
+              loading={!deferredEnabled || loadingTopRatedMovies}
               showMoreLink="/search?sort=top_rated&type=movie"
             />
           )}
@@ -171,7 +238,7 @@ export default function Index() {
             <MediaSection
               title={t('home.topRatedSeries') || 'Top Rated Series'}
               items={topRatedTV?.results || []}
-              loading={loadingTopRatedTV}
+              loading={!deferredEnabled || loadingTopRatedTV}
               showMoreLink="/search?sort=top_rated&type=tv"
             />
           )}
@@ -196,7 +263,7 @@ export default function Index() {
                   <MediaSection
                     title={t('home.trendingToday')}
                     items={trendingDay?.results || []}
-                    loading={loadingDay}
+                    loading={!deferredEnabled || loadingDay}
                     showMoreLink="/search?sort=popularity"
                   />
             </TabsContent>
@@ -251,7 +318,7 @@ export default function Index() {
             <MediaCarousel
               title={t('home.popularSeries')}
               items={popularTV?.results || []}
-              loading={loadingPopularTV}
+              loading={!deferredEnabled || loadingPopularTV}
               showMoreLink="/search?type=tv"
             />
           )}

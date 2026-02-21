@@ -21,7 +21,7 @@ export default function DetailsHero({ title, year, posterPath, backdropPath, rat
     <motion.header initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.45 }} className="relative overflow-hidden">
       {backdropPath && (
         <div className="absolute inset-0 -z-10">
-          <img src={getImageUrl(backdropPath, 'w1280') || ''} alt={title} className="w-full h-full object-cover" />
+          <img src={getImageUrl(backdropPath, 'w1280') || ''} alt={title} width={1280} height={720} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/90" />
         </div>
       )}
@@ -30,7 +30,7 @@ export default function DetailsHero({ title, year, posterPath, backdropPath, rat
         <div className="flex flex-col md:flex-row items-start gap-6">
           <div className="rounded-xl backdrop-blur-md bg-black/60 p-4 md:p-6 flex-shrink-0 w-full md:w-56 lg:w-72">
             {posterUrl ? (
-              <img src={posterUrl} alt={title} className="w-full h-auto rounded-md shadow-2xl" />
+              <img src={posterUrl} alt={title} width={342} height={513} className="w-full h-auto rounded-md shadow-2xl" />
             ) : (
               <div className="w-full aspect-[2/3] bg-muted rounded-md" />
             )}
