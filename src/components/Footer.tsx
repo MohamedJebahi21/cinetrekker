@@ -131,7 +131,7 @@ export function Footer() {
           </div>
           
           {/* TMDB Attribution Text */}
-          <p className="text-[10px] text-muted-foreground/80 text-center mt-4 max-w-2xl mx-auto">
+          <p className="text-[10px] text-muted-foreground text-center mt-4 max-w-2xl mx-auto">
             {t('footer.attribution', 'This product uses the TMDB API but is not endorsed or certified by TMDB. All movie and TV show data, including images and metadata, is provided by The Movie Database (TMDB).')}
           </p>
         </div>

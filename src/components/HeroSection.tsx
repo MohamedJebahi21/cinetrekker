@@ -27,7 +27,7 @@ export function HeroSection() {
   const heroMedia = trendingDay?.results?.[0];
   const mediaType = heroMedia ? getMediaType(heroMedia) : 'movie';
   const heroBackdropUrl = heroMedia?.backdrop_path 
-    ? getBackdropUrl(heroMedia.backdrop_path, 'w1280')
+    ? `${getBackdropUrl(heroMedia.backdrop_path, 'w780')} 780w, ${getBackdropUrl(heroMedia.backdrop_path, 'w1280')} 1280w`
     : null;
 
   // Fetch trailer
@@ -69,12 +69,13 @@ export function HeroSection() {
       {/* Optimized Backdrop Image */}
       {heroBackdropUrl && (
         <img
-          src={heroBackdropUrl}
+          srcSet={heroBackdropUrl}
+          sizes="(max-width: 640px) 780px, 1280px"
+          src={getBackdropUrl(heroMedia.backdrop_path, 'w1280')}
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
           loading="eager"
           fetchPriority="high"
-          sizes="(max-width: 640px) 640px, (max-width: 1024px) 1024px, 1280px"
         />
       )}
       {/* Vignette to softly fade poster edges into True Black */}
@@ -189,7 +190,7 @@ export function HeroSection() {
                   "gap-2 h-11 md:h-12 px-4 md:px-6 text-sm md:text-base w-full",
                   trailer ? "border-[rgba(255,255,255,0.2)] hover:bg-white/10" : "btn-primary-glow"
                 )}
-                aria-label={t('home.viewDetails', 'View Details')}
+                aria-label={t('home.viewDetails', `View details for ${heroMedia.title}`)}
               >
                 {t('home.viewDetails', 'More Info')}
               </Button>

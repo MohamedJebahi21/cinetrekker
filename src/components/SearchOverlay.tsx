@@ -78,20 +78,21 @@ export default function SearchOverlay() {
           <div className="w-full max-w-3xl bg-popover/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl">
             <div className="flex items-center gap-2 p-3">
               <Search className="w-5 h-5 text-muted-foreground ml-2" />
-              <div role="combobox" aria-expanded={open} aria-controls="search-results">
+              <div role="combobox" className="flex-1">
                 <input
                   ref={inputRef}
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={t('search.placeholder', 'Search movies, TV shows, and more')}
-                  className="w-full bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
-                  aria-autocomplete="list"
-                  aria-controls="search-results"
+                  className="w-full bg-transparent border-none outline-none text-foreground placeholder-muted-foreground"
                 />
               </div>
-              <button onClick={() => setOpen(false)} aria-label="Close search" className="p-2 rounded-md hover:bg-muted/30 ml-2 min-w-[44px] min-h-[44px]">
-                <X className="w-4 h-4" />
+              <button
+                onClick={() => setOpen(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
 
