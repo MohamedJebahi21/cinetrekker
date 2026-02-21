@@ -10,17 +10,18 @@ const nextConfig = {
   async headers() {
     const csp = [
       "default-src 'self'",
-      // script-src and script-src-elem should match to be safe
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' 'unsafe-hashes' https://vercel.live https://*.vercel-scripts.com https://*.vercel.com",
-      "script-src-elem 'self' 'unsafe-inline' https://vercel.live https://*.vercel-scripts.com https://*.vercel.com",
-      // style-src handles your Google Fonts and inline styles
-      "style-src 'self' 'unsafe-inline' 'unsafe-hashes' https://fonts.googleapis.com",
+      "script-src 'self' 'sha256-L0E2mSS27KxsHfOa0MiC8gBkUaCQNYpiRGh6VJxueVc=' https://va.vercel-scripts.com https://vercel.live",
+      "script-src-elem 'self' 'sha256-L0E2mSS27KxsHfOa0MiC8gBkUaCQNYpiRGh6VJxueVc=' https://va.vercel-scripts.com https://vercel.live",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' blob: data: https://image.tmdb.org https://www.themoviedb.org",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.themoviedb.org https://*.vercel-scripts.com https://*.vercel-insights.com https://vitals.vercel-insights.com",
-      "font-src 'self' data: https://fonts.gstatic.com https://r2cdn.perplexity.ai",
-      "frame-src 'self' https://vercel.live https://*.vercel.com",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.themoviedb.org https://va.vercel-scripts.com https://vercel.live",
+      "frame-src 'self' https://www.youtube.com https://player.vimeo.com",
+      "frame-ancestors 'self'",
       "object-src 'none'",
       "base-uri 'self'",
+      "form-action 'self'",
+      "upgrade-insecure-requests",
+      "block-all-mixed-content",
     ].join('; ');
 
     return [

@@ -28,7 +28,7 @@ const cspPlugin = (): Plugin => {
     transformIndexHtml(html) {
       return html.replace(
         '<head>',
-        `<head>\n    <meta http-equiv="Content-Security-Policy" content="${policy}">`
+        `<head>` // Removed meta http-equiv="Content-Security-Policy"
       );
     },
     configureServer(server) {
