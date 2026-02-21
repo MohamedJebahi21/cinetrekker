@@ -7,6 +7,14 @@ import X from 'lucide-react/dist/esm/icons/x';
 import LogIn from 'lucide-react/dist/esm/icons/log-in';
 import LogOut from 'lucide-react/dist/esm/icons/log-out';
 import Settings from 'lucide-react/dist/esm/icons/settings';
+import House from 'lucide-react/dist/esm/icons/house';
+import Search from 'lucide-react/dist/esm/icons/search';
+import Bookmark from 'lucide-react/dist/esm/icons/bookmark';
+import CheckCheck from 'lucide-react/dist/esm/icons/check-check';
+import Sparkles from 'lucide-react/dist/esm/icons/sparkles';
+import Calendar from 'lucide-react/dist/esm/icons/calendar';
+import ChartNoAxesCombined from 'lucide-react/dist/esm/icons/chart-no-axes-combined';
+import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { SearchDropdown } from '@/components/SearchDropdown';
@@ -16,17 +24,18 @@ interface NavItem {
   path: string;
   key: string;
   fallback: string;
+  icon: LucideIcon;
   exact?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { path: '/', key: 'nav.home', fallback: 'Home', exact: true },
-  { path: '/search', key: 'nav.search', fallback: 'Search' },
-  { path: '/watchlist', key: 'nav.watchlist', fallback: 'Watchlist' },
-  { path: '/watched', key: 'nav.watched', fallback: 'Watched' },
-  { path: '/recommendations', key: 'nav.recommendations', fallback: 'Recommendations' },
-  { path: '/calendar', key: 'nav.calendar', fallback: 'Calendar' },
-  { path: '/enhanced-stats', key: 'nav.stats', fallback: 'Stats' },
+  { path: '/', key: 'nav.home', fallback: 'Home', icon: House, exact: true },
+  { path: '/search', key: 'nav.search', fallback: 'Search', icon: Search },
+  { path: '/watchlist', key: 'nav.watchlist', fallback: 'Watchlist', icon: Bookmark },
+  { path: '/watched', key: 'nav.watched', fallback: 'Watched', icon: CheckCheck },
+  { path: '/recommendations', key: 'nav.recommendations', fallback: 'Recommendations', icon: Sparkles },
+  { path: '/calendar', key: 'nav.calendar', fallback: 'Calendar', icon: Calendar },
+  { path: '/enhanced-stats', key: 'nav.stats', fallback: 'Stats', icon: ChartNoAxesCombined },
 ];
 
 export function UnifiedNav() {
@@ -245,6 +254,7 @@ export function UnifiedNav() {
         <nav className="p-3 flex flex-col gap-1" aria-label={t('nav.main', 'Main navigation')}>
           {NAV_ITEMS.map((item) => {
             const isActive = item.exact ? pathname === item.path : pathname.startsWith(item.path);
+            const Icon = item.icon;
             return (
               <Link
                 key={item.path}
@@ -255,6 +265,7 @@ export function UnifiedNav() {
                 )}
                 aria-current={isActive ? 'page' : undefined}
               >
+                <Icon className="h-4 w-4 mr-2" />
                 {t(item.key, item.fallback)}
               </Link>
             );
@@ -299,6 +310,7 @@ export function UnifiedNav() {
 
           {NAV_ITEMS.map((item) => {
             const isActive = item.exact ? pathname === item.path : pathname.startsWith(item.path);
+            const Icon = item.icon;
             return (
               <Link
                 key={item.path}
@@ -309,6 +321,7 @@ export function UnifiedNav() {
                 )}
                 aria-current={isActive ? 'page' : undefined}
               >
+                <Icon className="h-4 w-4 mr-2" />
                 {t(item.key, item.fallback)}
               </Link>
             );
