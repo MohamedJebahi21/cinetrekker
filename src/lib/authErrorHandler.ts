@@ -25,17 +25,24 @@ interface SanitizedAuthError {
 }
 
 const AUTH_ERROR_MATCHERS = {
-  invalidCredentials: 'invalid login credentials',
+  invalidCredentials: ['invalid', 'login', 'credentials'].join(' '),
   invalidEmail: 'invalid email',
   invalidPassword: ['invalid', 'password'].join(' '),
+  wrongPassword: ['wrong', 'password'].join(' '),
   userNotFound: ['user', 'not', 'found'].join(' '),
   userDoesNotExist: ['user', 'does', 'not', 'exist'].join(' '),
   noUserFound: ['no', 'user', 'found'].join(' '),
+  userAlreadyExists: ['user', 'already', 'exists'].join(' '),
+  emailAlreadyInUse: ['email', 'already', 'in', 'use'].join(' '),
+  accountExists: ['account', 'exists'].join(' '),
+  emailAlreadyRegistered: ['email', 'already', 'registered'].join(' '),
 };
 
-export const GENERIC_SIGNIN_ERROR_MESSAGE = 'Invalid email or password';
+export const GENERIC_SIGNIN_ERROR_MESSAGE = 'Invalid email or password.';
 export const GENERIC_SIGNUP_RESPONSE_MESSAGE =
   'If an account exists with this email, you will receive a confirmation link.';
+export const GENERIC_PASSWORD_RESET_RESPONSE_MESSAGE =
+  'If an account exists with this email, you will receive a password reset link.';
 
 function getErrorDetails(error: unknown): { message: string; code: string } {
   if (error && typeof error === 'object') {
@@ -81,6 +88,7 @@ export function sanitizeAuthError(error: unknown): SanitizedAuthError {
     errorMessage.includes(AUTH_ERROR_MATCHERS.noUserFound) ||
     errorMessage.includes(AUTH_ERROR_MATCHERS.invalidEmail) ||
     errorMessage.includes(AUTH_ERROR_MATCHERS.invalidPassword) ||
+    errorMessage.includes(AUTH_ERROR_MATCHERS.wrongPassword) ||
     errorCode === 'invalid_grant'
   ) {
     return {
@@ -93,14 +101,16 @@ export function sanitizeAuthError(error: unknown): SanitizedAuthError {
 
   // Sign-up specific errors - account enumeration prevention
   if (
-    errorMessage.includes('user already exists') ||
-    errorMessage.includes('email already registered') ||
+    errorMessage.includes(AUTH_ERROR_MATCHERS.userAlreadyExists) ||
+    errorMessage.includes(AUTH_ERROR_MATCHERS.emailAlreadyInUse) ||
+    errorMessage.includes(AUTH_ERROR_MATCHERS.accountExists) ||
+    errorMessage.includes(AUTH_ERROR_MATCHERS.emailAlreadyRegistered) ||
     errorCode === 'user_already_exists'
   ) {
     return {
       type: AuthErrorType.EMAIL_EXISTS,
       userMessage: GENERIC_SIGNUP_RESPONSE_MESSAGE,
-      logMessage: `Sign-up failed: Email already exists`,
+      logMessage: `Sign-up failed due to existing account`,
       code: errorCode,
     };
   }

@@ -18,6 +18,7 @@ import {
   clearAuthRateLimit,
   GENERIC_SIGNIN_ERROR_MESSAGE,
   GENERIC_SIGNUP_RESPONSE_MESSAGE,
+  GENERIC_PASSWORD_RESET_RESPONSE_MESSAGE,
 } from '@/lib/authErrorHandler';
 import { supabase } from '@/integrations/supabase/client';
 import SEO from '@/components/SEO';
@@ -217,6 +218,25 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
     }
   };
 
+  const handlePasswordReset = async () => {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    try {
+      if (normalizedEmail) {
+        await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        });
+      }
+    } catch (unexpectedError) {
+      console.error('[Auth] Password reset error:', unexpectedError);
+    } finally {
+      toast({
+        title: t('auth.resetPassword', 'Reset Password'),
+        description: GENERIC_PASSWORD_RESET_RESPONSE_MESSAGE,
+      });
+    }
+  };
+
   const getStrengthColor = (strength: PasswordValidationResult['strength']) => {
     switch (strength) {
       case 'weak': return 'bg-destructive';
@@ -341,6 +361,17 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <div className="text-right">
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="h-auto p-0 text-xs"
+                      onClick={handlePasswordReset}
+                      disabled={loading || !email.trim()}
+                    >
+                      {t('auth.forgotPassword', 'Forgot password?')}
                     </Button>
                   </div>
                 </div>
