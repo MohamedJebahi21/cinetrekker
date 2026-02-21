@@ -26,7 +26,7 @@ import { useUserLists, type UserListsContextType } from '@/contexts/UserListsCon
 import { useAuth } from '@/contexts/AuthContext';
 import { useFollowedShows, useWatchedEpisodes } from '@/hooks/useFollowedShows';
 import { Link } from 'react-router-dom';
-import { getImageUrl, getPersonDetails, getPopularPeople } from '@/services/tmdb';
+import { getImageUrl, getPersonDetails, getPopularPeople, type PersonDetails } from '@/services/tmdb';
 import { profileService, type UserProfile } from '@/services/profile';
 import { validateNote, validateDisplayName, sanitizeBio } from '@/lib/validation';
 import { profileUpdateRateLimiter } from '@/lib/reviewRateLimiter';
@@ -489,6 +489,39 @@ export default function Profile() {
     return age;
   }, [parsedDob]);
 
+  const getActorAge = (birthday?: string | null): number | null => {
+    if (!birthday) return null;
+    const [year, month, day] = birthday.split('-').map(Number);
+    if (!year || !month || !day) return null;
+
+    const birth = new Date(year, month - 1, day, 12, 0, 0);
+    if (Number.isNaN(birth.getTime())) return null;
+
+    const now = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    const monthDiff = now.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
+      age -= 1;
+    }
+    return age;
+  };
+
+  const getTopWorks = (person: PersonDetails): string[] => {
+    const cast = person.combined_credits?.cast ?? [];
+
+    const sortedWorks = [...cast].sort((workA, workB) => {
+      const popularityDiff = (workB.popularity ?? 0) - (workA.popularity ?? 0);
+      if (popularityDiff !== 0) return popularityDiff;
+      return (workB.vote_count ?? 0) - (workA.vote_count ?? 0);
+    });
+
+    const names = sortedWorks
+      .map((work) => work.title || work.name)
+      .filter((value): value is string => Boolean(value));
+
+    return Array.from(new Set(names)).slice(0, 3);
+  };
+
   const { data: popularPeopleDetails = [], isLoading: loadingPeople } = useQuery({
     queryKey: ['people-birthday-match', dateOfBirth, i18n.language],
     queryFn: async () => {
@@ -843,27 +876,57 @@ export default function Profile() {
                 ) : sameAge.length === 0 ? (
                   <p className="text-neutral-500 text-sm">No matches found in popular actors.</p>
                 ) : (
-                  <div className="grid grid-cols-2 gap-3">
-                    {sameAge.slice(0, 6).map((person) => (
-                      <Link key={person.id} to={`/person/${person.id}`} className="group">
-                        <div className="rounded-lg overflow-hidden bg-neutral-800/40 border border-neutral-700 hover:border-red-500/50 transition-colors aspect-[3/4]">
-                          {person.profile_path ? (
-                            <img
-                              src={getImageUrl(person.profile_path, 'w185') || ''}
-                              alt={person.name}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-neutral-800">
-                              <User className="w-6 h-6 text-neutral-600" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {sameAge.slice(0, 6).map((person) => {
+                      const actorAge = getActorAge(person.birthday);
+                      const topWorks = getTopWorks(person);
+
+                      return (
+                        <Link key={person.id} to={`/person/${person.id}`} className="group block">
+                          <div className="rounded-lg border border-neutral-700 bg-neutral-800/40 p-3 hover:border-red-500/50 transition-colors">
+                            <div className="flex items-start gap-3">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-white line-clamp-1">{person.name}</p>
+                                <p className="text-xs text-neutral-400 mt-0.5">
+                                  {actorAge !== null ? `Age ${actorAge}` : 'Age unavailable'}
+                                </p>
+
+                                <div className="mt-2">
+                                  <p className="text-[11px] uppercase tracking-wide text-neutral-500 mb-1">Top Works</p>
+                                  {topWorks.length > 0 ? (
+                                    <ul className="space-y-0.5">
+                                      {topWorks.map((work) => (
+                                        <li key={`${person.id}-${work}`} className="text-xs text-neutral-300 line-clamp-1">
+                                          • {work}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  ) : (
+                                    <p className="text-xs text-neutral-500">No top works available</p>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="shrink-0 w-20 sm:w-24 h-24 sm:h-28 rounded-md overflow-hidden border border-neutral-700 bg-neutral-800">
+                                {person.profile_path ? (
+                                  <img
+                                    src={getImageUrl(person.profile_path, 'w185') || ''}
+                                    alt={person.name}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-neutral-800">
+                                    <User className="w-5 h-5 text-neutral-600" />
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          )}
-                        </div>
-                        <p className="text-xs mt-2 line-clamp-2 text-neutral-300 font-medium">{person.name}</p>
-                      </Link>
-                    ))}
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
-                )}"
+                )}
 
               </CardContent>
             </Card>
