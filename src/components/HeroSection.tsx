@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { useUserLists } from '@/contexts/user-lists-context';
 import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
+import { Image } from '@/components/ui/Image';
 
 export function HeroSection() {
   const { t, i18n } = useTranslation();
@@ -68,14 +69,13 @@ export function HeroSection() {
     <section className="relative overflow-hidden min-h-[60vh] md:min-h-[80vh] flex items-center">
       {/* Optimized Backdrop Image */}
       {heroBackdropUrl && (
-        <img
-          srcSet={heroBackdropUrl}
-          sizes="(max-width: 640px) 780px, 1280px"
-          src={getBackdropUrl(heroMedia.backdrop_path, 'w1280')}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover"
-          loading="eager"
+        <Image
+          src={heroBackdropUrl}
+          alt={getMediaTitle(heroMedia)}
+          width={1280}
+          height={720}
           fetchPriority="high"
+          className="absolute inset-0 w-full h-full object-cover"
         />
       )}
       {/* Vignette to softly fade poster edges into True Black */}

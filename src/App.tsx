@@ -62,6 +62,9 @@ const YearInReview = lazy(() => import("./pages/YearInReview"));
 const WatchHistory = lazy(() => import("./pages/WatchHistory"));
 const AccessibilitySettings = lazy(() => import("./pages/AccessibilitySettings"));
 
+const HeroSection = lazy(() => import('@/components/HeroSection'));
+const MediaGrid = lazy(() => import('@/components/MediaGrid'));
+
 const pageVariants = {
   initial: { opacity: 0 },
   enter: { opacity: 1, transition: { duration: 0.2 } },

@@ -1,11 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import Star from 'lucide-react/dist/esm/icons/star';
-import Bookmark from 'lucide-react/dist/esm/icons/bookmark';
-import Check from 'lucide-react/dist/esm/icons/check';
-import Plus from 'lucide-react/dist/esm/icons/plus';
-import BookmarkCheck from 'lucide-react/dist/esm/icons/bookmark-check';
+import { Star, ChevronRight } from 'lucide-react';
 import { Media, type UserMediaItem } from '@/types/media';
 import { getImageUrl, getMediaTitle, getMediaYear, getMediaType } from '@/services/tmdb';
 import { useInView } from '@/hooks/useInView';
@@ -18,8 +14,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { TVWatchStatusModal } from '@/components/TVWatchStatusModal';
 import { useWatchedEpisodes } from '@/hooks/useFollowedShows';
 import { useEffect } from 'react';
-// Media preview modal removed — navigate to details page instead
-import { cn } from '@/lib/utils';
+import { Image } from '@/components/ui/Image';
 
 export interface MediaCardProps {
   media: Media & { watchStatus?: string };

@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5.0, viewport-fit=cover" />
     
+    <!-- Preload critical CSS -->
+    <link rel="preload" href="/src/index.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="/src/index.css"></noscript>
+
     <script>
       // Force dark mode - clear any stored theme preferences and ensure dark class
       (function () {
@@ -23,7 +27,7 @@
       })();
     </script>
 
-    <script src="/loading.js"></script>
+    <script src="/loading.js" defer></script>
 
     <title>CineTrekker | Track Movies & TV Shows - Your Personal Watchlist</title>
     <meta name="description" content="Discover, track, and organize your favorite movies and TV shows with CineTrekker. Create watchlists, mark watched, and explore filming locations.">
