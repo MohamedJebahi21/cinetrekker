@@ -56,7 +56,7 @@ function parseBody(req) {
   return {};
 }
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
@@ -133,4 +133,4 @@ module.exports = async (req, res) => {
       detail: error instanceof Error ? error.message : 'Unknown error',
     });
   }
-};
+}
