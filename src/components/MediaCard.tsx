@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Star, ChevronRight } from 'lucide-react';
+import { Star, ChevronRight, Plus, Check, BookmarkCheck } from 'lucide-react';
 import { Media, type UserMediaItem } from '@/types/media';
 import { getImageUrl, getMediaTitle, getMediaYear, getMediaType } from '@/services/tmdb';
 import { useInView } from '@/hooks/useInView';
