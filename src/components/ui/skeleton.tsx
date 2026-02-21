@@ -1,69 +1,51 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import React from "react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
    * Optional animation variant
    * - shimmer: Moving gradient effect (default)
-   * - pulse: Opacity pulsing
    * - none: Static for reduced motion
    */
-  animation?: 'shimmer' | 'pulse' | 'none';
+  animation?: "shimmer" | "none";
   /**
    * Delay before animation starts (ms)
    */
   delay?: number;
 }
 
-const Skeleton: React.FC<SkeletonProps> = ({
+export const Skeleton: React.FC<SkeletonProps> = ({
   className,
-  animation = 'shimmer',
+  animation = "shimmer",
   delay = 0,
   ...props
 }) => {
   const shimmerKeyframes = {
-    initial: { transform: 'translateX(-100%)' },
+    initial: { transform: "translateX(-100%)" },
     animate: {
-      transform: 'translateX(100%)',
+      transform: "translateX(100%)",
       transition: {
         duration: 1.5,
         repeat: Infinity,
-        ease: 'linear',
+        ease: "linear",
         delay: delay / 1000,
       },
     },
   };
-
-  const pulseKeyframes = {
-    initial: { opacity: 0.6 },
-    animate: {
-      opacity: [0.6, 1, 0.6],
-      transition: {
-        duration: 1.5,
-        repeat: Infinity,
-        ease: 'easeInOut',
-        delay: delay / 1000,
-      },
-    },
-  };
-
-  const effectiveAnimation = animation === 'shimmer' ? shimmerKeyframes : pulseKeyframes;
 
   return (
     <motion.div
       className={cn(
-        'relative overflow-hidden rounded-md bg-muted',
-        animation === 'shimmer' && 'bg-gradient-to-r from-muted via-muted-foreground/10 to-muted',
+        "relative overflow-hidden rounded-md bg-muted",
+        animation === "shimmer" &&
+          "before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_1.5s_infinite] before:bg-gradient-to-r before:from-transparent before:via-muted-foreground/10 before:to-transparent",
         className
       )}
-      variants={effectiveAnimation}
+      variants={animation === "shimmer" ? shimmerKeyframes : undefined}
       initial="initial"
       animate="animate"
       {...props}
     />
   );
 };
-
-export default Skeleton;
-export type { SkeletonProps };
