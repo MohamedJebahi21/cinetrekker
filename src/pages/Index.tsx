@@ -9,7 +9,6 @@ import { MediaGrid } from '@/components/MediaGrid';
 import { WatchedShowsNewEpisodes } from '@/components/WatchedShowsNewEpisodes';
 import { RecentlyAddedMovies } from '@/components/RecentlyAddedMovies';
 import { BecauseYouLiked } from '@/components/BecauseYouLiked';
-import { ContinueWatching } from '@/components/ContinueWatching';
 import { OnboardingTooltip } from '@/components/OnboardingTooltip';
 import { HeroSection } from '@/components/HeroSection';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -79,9 +78,6 @@ export default function Index() {
 
         {/* Phase 3: "Because You Liked" personalized row */}
         <BecauseYouLiked />
-
-        {/* Continue Watching - TV shows in progress */}
-        <ContinueWatching />
 
         {/* Did You Watch? - New episodes for watched TV shows */}
         <WatchedShowsNewEpisodes />
