@@ -319,7 +319,10 @@ const App = () => {
                   <UnifiedNav />
                   <ScrollToTop />
 
-                  <div className="md:hidden fixed left-0 right-0 top-16 z-40 flex justify-center pointer-events-none">
+                  <div
+                    className="md:hidden fixed left-0 right-0 z-40 flex justify-center pointer-events-none"
+                    style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px) + 0.4rem)' }}
+                  >
                     <div
                       className="mt-2 px-4 py-2 rounded-full bg-background/90 border border-border text-foreground text-xs shadow-sm transition-opacity duration-200 flex items-center gap-2"
                       style={{ opacity: pullDistance > 0 || isRefreshing ? 1 : 0 }}

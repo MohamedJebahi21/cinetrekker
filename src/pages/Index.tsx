@@ -64,7 +64,7 @@ export default function Index() {
   });
 
   return (
-    <div className="min-h-screen pt-16">
+    <div className="min-h-screen">
       <SEO title="CineTrekker — Track Your Movies & TV Shows" description="Discover trending movies and TV shows, track your watchlist, and get personalized recommendations." canonical="https://cinetrekker.vercel.app" />
       {/* Onboarding for new users */}
       <OnboardingTooltip />

@@ -58,14 +58,14 @@ export function HeroSection() {
 
   if (isLoading || !heroMedia) {
     return (
-      <section className="relative overflow-hidden -mt-16 min-h-[70vh] md:min-h-[80vh] flex items-center bg-background">
+      <section className="relative overflow-hidden min-h-[70vh] md:min-h-[80vh] flex items-center bg-background">
         <div className="absolute inset-0 skeleton-shimmer" />
       </section>
     );
   }
 
   return (
-    <section className="relative overflow-hidden -mt-16 min-h-[60vh] md:min-h-[80vh] flex items-center">
+    <section className="relative overflow-hidden min-h-[60vh] md:min-h-[80vh] flex items-center">
       {/* Optimized Backdrop Image */}
       {heroBackdropUrl && (
         <img
