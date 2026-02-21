@@ -41,19 +41,3 @@ export function ProtectedRoute({
 
   return <>{children}</>;
 }
-
-/**
- * Hook to check if user is authenticated
- * Useful for conditional rendering in components
- */
-export function useIsAuthenticated(): {
-  isAuthenticated: boolean;
-  isLoading: boolean;
-} {
-  const { user, loading } = useAuth();
-  
-  return {
-    isAuthenticated: !!user,
-    isLoading: loading,
-  };
-}

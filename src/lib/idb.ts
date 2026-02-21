@@ -15,7 +15,7 @@ function openDB(): Promise<IDBDatabase> {
   });
 }
 
-export async function idbGet<T = any>(key: string): Promise<T | undefined> {
+export async function idbGet<T = unknown>(key: string): Promise<T | undefined> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction('kv', 'readonly');
@@ -48,13 +48,13 @@ export async function idbAddToQueue(item: unknown): Promise<number> {
   });
 }
 
-export async function idbGetAllQueue(): Promise<any[]> {
+export async function idbGetAllQueue<T = unknown>(): Promise<T[]> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction('queue', 'readonly');
     const store = tx.objectStore('queue');
     const req = store.getAll();
-    req.onsuccess = () => resolve(req.result || []);
+    req.onsuccess = () => resolve((req.result as T[]) || []);
     req.onerror = () => reject(req.error);
   });
 }

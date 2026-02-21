@@ -13,7 +13,7 @@ function useClientAnimate() {
     else mq.addListener(handler);
     return () => {
       if (mq.removeEventListener) mq.removeEventListener('change', handler);
-      else mq.removeListener(handler as any);
+      else mq.removeListener(handler);
     };
   }, []);
   return animate;

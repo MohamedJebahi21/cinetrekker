@@ -1,20 +1,12 @@
-import React, { createContext, useLayoutEffect, useEffect, useState } from 'react';
+import React, { useLayoutEffect, useEffect, useState } from 'react';
 import {
   Theme,
-  ThemeContextValue,
   THEME_KEY,
   TRANSITION_STYLE_ID,
   TRANSITION_CLASS,
   TRANSITION_MS,
 } from '@/lib/constants';
-
-export type { Theme, ThemeContextValue };
-
-export const ThemeContext = createContext<ThemeContextValue>({
-  theme: 'light',
-  setTheme: () => {},
-  toggle: () => {},
-});
+import { ThemeContext } from '@/components/theme-context';
 
 function injectTransitionStyle() {
   if (typeof document === 'undefined') return;

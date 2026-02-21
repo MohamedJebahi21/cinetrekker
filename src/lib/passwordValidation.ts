@@ -42,7 +42,7 @@ const PASSWORD_PATTERNS = {
   hasUppercase: /[A-Z]/,
   hasLowercase: /[a-z]/,
   hasNumber: /[0-9]/,
-  hasSpecial: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/,
+  hasSpecial: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/,
 };
 
 export interface PasswordValidationResult {

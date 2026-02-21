@@ -119,7 +119,7 @@ export const MediaCard = React.memo(function MediaCard({ media, mediaType: media
       try {
         if (nextState) {
           await addToWatchlist(media.id, mediaType);
-          try { if (typeof navigator !== 'undefined' && 'vibrate' in navigator) (navigator as Navigator).vibrate?.(10); } catch (e) { /* vibration not supported */ }
+          try { if (typeof navigator !== 'undefined' && 'vibrate' in navigator) (navigator as Navigator).vibrate?.(10); } catch (e) { /* TODO: add optional debug logging for vibration API failures */ }
         } else {
           await removeFromWatchlist(media.id, mediaType);
         }
@@ -131,7 +131,7 @@ export const MediaCard = React.memo(function MediaCard({ media, mediaType: media
       setLocalInWatchlist(newState);
       setOptimisticInWatchlist(newState);
       if (newState) {
-        try { if (typeof navigator !== 'undefined' && 'vibrate' in navigator) (navigator as any).vibrate?.(10); } catch (e) {}
+        try { if (typeof navigator !== 'undefined' && 'vibrate' in navigator) (navigator as Navigator).vibrate?.(10); } catch (e) { /* TODO: add optional debug logging for vibration API failures */ }
       }
     }
   };

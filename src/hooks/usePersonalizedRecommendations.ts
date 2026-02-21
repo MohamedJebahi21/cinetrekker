@@ -13,7 +13,9 @@ export function usePersonalizedRecommendations(language: string) {
         try {
           const similar = await getSimilar(item.mediaType, item.mediaId, language);
           recs.push(...(similar.results || []));
-        } catch {}
+        } catch {
+          // TODO: surface recommendation fetch errors via telemetry if needed
+        }
       }
       // Deduplicate by id
       return recs.filter((v, i, arr) => arr.findIndex(x => x.id === v.id && x.media_type === v.media_type) === i);

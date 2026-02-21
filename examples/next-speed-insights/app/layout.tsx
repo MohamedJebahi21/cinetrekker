@@ -1,9 +1,6 @@
 import './globals.css'
 import SpeedInsightsClient from './speed-insights-client'
-
-export const metadata = {
-  title: 'App Router Example',
-}
+import { metadata } from './metadata'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -69,6 +69,63 @@ const STREAMING_SERVICES = [
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 50 }, (_, i) => (currentYear - i).toString());
 
+type SearchSortOption =
+  | 'popularity.desc'
+  | 'vote_average.desc'
+  | 'primary_release_date.desc'
+  | 'original_title.asc';
+
+const ALLOWED_SORTS = new Set<SearchSortOption>([
+  'popularity.desc',
+  'vote_average.desc',
+  'primary_release_date.desc',
+  'original_title.asc',
+]);
+
+function normalizeSortBy(value: string): SearchSortOption {
+  return ALLOWED_SORTS.has(value as SearchSortOption)
+    ? (value as SearchSortOption)
+    : 'popularity.desc';
+}
+
+function getMediaDateValue(item: Media): number {
+  return new Date(item.release_date || item.first_air_date || '1900-01-01').getTime();
+}
+
+function sortClientResults(items: Media[], sortBy: SearchSortOption): Media[] {
+  const sorted = [...items];
+
+  switch (sortBy) {
+    case 'vote_average.desc':
+      sorted.sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0));
+      break;
+    case 'primary_release_date.desc':
+      sorted.sort((a, b) => getMediaDateValue(b) - getMediaDateValue(a));
+      break;
+    case 'original_title.asc':
+      sorted.sort((a, b) =>
+        (a.title || a.name || '').localeCompare((b.title || b.name || ''), undefined, { sensitivity: 'base' })
+      );
+      break;
+    case 'popularity.desc':
+    default:
+      sorted.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+      break;
+  }
+
+  return sorted;
+}
+
+function getDiscoverSort(sortBy: SearchSortOption, mediaType: 'movie' | 'tv'): string {
+  if (sortBy === 'primary_release_date.desc') {
+    return mediaType === 'tv' ? 'first_air_date.desc' : 'primary_release_date.desc';
+  }
+  if (sortBy === 'original_title.asc') {
+    return mediaType === 'tv' ? 'name.asc' : 'original_title.asc';
+  }
+  return sortBy;
+}
+
 export default function Search() {
   const { t, i18n } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -79,7 +136,7 @@ export default function Search() {
   const initialGenre = searchParams.get('genre') || '';
   const initialYear = searchParams.get('year') || '';
   const initialLang = searchParams.get('lang') || '';
-  const initialSort = searchParams.get('sort') || 'popularity.desc';
+  const initialSort = normalizeSortBy(searchParams.get('sort') || 'popularity.desc');
   const initialRuntime = searchParams.get('runtime') || '';
   const initialStreaming = searchParams.get('streaming') || '';
   
@@ -90,7 +147,7 @@ export default function Search() {
   const [genreFilter, setGenreFilter] = useState<string>(initialGenre);
   const [yearFilter, setYearFilter] = useState<string>(initialYear);
   const [languageFilter, setLanguageFilter] = useState<string>(initialLang);
-  const [sortBy, setSortBy] = useState<string>(initialSort);
+  const [sortBy, setSortBy] = useState<SearchSortOption>(initialSort);
   const [runtimeFilter, setRuntimeFilter] = useState<string>(initialRuntime);
   const [streamingFilter, setStreamingFilter] = useState<string>(initialStreaming);
   
@@ -157,7 +214,7 @@ export default function Search() {
       with_genres: effectiveGenres,
       primary_release_year: yearFilter || undefined,
       with_original_language: languageFilter || undefined,
-      sort_by: sortBy,
+      sort_by: getDiscoverSort(sortBy, 'movie'),
       with_runtime_gte: runtimeConfig?.gte,
       with_runtime_lte: runtimeConfig?.lte,
       with_watch_providers: streamingFilter || undefined,
@@ -173,7 +230,7 @@ export default function Search() {
       with_genres: effectiveGenres,
       first_air_date_year: yearFilter || undefined,
       with_original_language: languageFilter || undefined,
-      sort_by: sortBy,
+      sort_by: getDiscoverSort(sortBy, 'tv'),
       with_runtime_gte: runtimeConfig?.gte,
       with_runtime_lte: runtimeConfig?.lte,
       with_watch_providers: streamingFilter || undefined,
@@ -210,31 +267,25 @@ export default function Search() {
         filtered = filtered.filter(item => item.genre_ids?.includes(genreId));
       }
 
-      return filtered;
+      return sortClientResults(filtered as Media[], sortBy);
     }
 
     if (useDiscoverMode) {
       const movies = (discoverMoviesResults?.results || []).map(m => ({ ...m, media_type: 'movie' as const }));
       const tvShows = (discoverTVResults?.results || []).map(s => ({ ...s, media_type: 'tv' as const }));
 
-      if (mediaTypeFilter === 'movie') return movies;
-      if (mediaTypeFilter === 'tv') return tvShows;
-      
-      // Interleave results for "all" type
-      const combined = [];
-      const maxLen = Math.max(movies.length, tvShows.length);
-      for (let i = 0; i < maxLen; i++) {
-        if (movies[i]) combined.push(movies[i]);
-        if (tvShows[i]) combined.push(tvShows[i]);
-      }
-      return combined;
+      if (mediaTypeFilter === 'movie') return sortClientResults(movies as Media[], sortBy);
+      if (mediaTypeFilter === 'tv') return sortClientResults(tvShows as Media[], sortBy);
+
+      return sortClientResults(([...movies, ...tvShows]) as Media[], sortBy);
     }
 
     // Default: show trending
-    return trendingResults?.results?.filter(item => 
+    const trending = trendingResults?.results?.filter(item => 
       item.media_type === 'movie' || item.media_type === 'tv'
     ) || [];
-  }, [useSearchMode, useDiscoverMode, searchResults, discoverMoviesResults, discoverTVResults, trendingResults, mediaTypeFilter, genreFilter]);
+    return sortClientResults(trending as Media[], sortBy);
+  }, [useSearchMode, useDiscoverMode, searchResults, discoverMoviesResults, discoverTVResults, trendingResults, mediaTypeFilter, genreFilter, sortBy]);
 
   const clearFilters = () => {
     setMediaTypeFilter('all');
@@ -423,7 +474,7 @@ export default function Search() {
         {/* Sort */}
         <div className="space-y-1 col-span-2 sm:col-span-1">
           <label className="text-xs text-muted-foreground">{t('filters.sort')}</label>
-          <Select value={sortBy} onValueChange={setSortBy}>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(normalizeSortBy(v))}>
             <SelectTrigger className="bg-background/50">
               <SelectValue />
             </SelectTrigger>
