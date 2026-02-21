@@ -24,11 +24,12 @@ interface SanitizedAuthError {
   code?: string;
 }
 
-export const GENERIC_SIGNIN_ERROR_MESSAGE = 'Invalid credentials. Please try again.';
+// SECURITY: Generic messages prevent account enumeration
+export const GENERIC_SIGNIN_ERROR_MESSAGE = 'Invalid email or password.';
 export const GENERIC_SIGNUP_RESPONSE_MESSAGE =
-  'If an account is associated with this email, a message has been sent.';
+  'Please check your email to complete setup.';
 export const GENERIC_PASSWORD_RESET_RESPONSE_MESSAGE =
-  'If an account is associated with this email, a message has been sent.';
+  'If an account exists with this email, you will receive a password reset link.';
 
 function getErrorDetails(error: unknown): { message: string; code: string } {
   if (error && typeof error === 'object') {
@@ -47,14 +48,77 @@ function getErrorDetails(error: unknown): { message: string; code: string } {
   };
 }
 
+/**
+ * Sanitizes Supabase auth errors to prevent account enumeration attacks
+ *
+ * Maps specific errors to generic user-facing messages while preserving
+ * detailed information for server-side logging.
+ *
+ * @param error - Supabase auth error object
+ * @returns Sanitized error with generic user message and detailed log message
+ */
 export function sanitizeAuthError(error: unknown): SanitizedAuthError {
   const details = getErrorDetails(error);
+  const errorMessage = details.message.toLowerCase();
   const errorCode = details.code;
   const originalError = details.message;
+
+  // Error matchers for various auth failure types
+  const matcherPatterns = {
+    invalidCredentials: ['invalid', 'login', 'credentials', 'signin'],
+    userNotFound: ['user', 'not', 'found', 'does not exist', 'no user'],
+    wrongPassword: ['wrong', 'password', 'invalid password'],
+    emailExists: ['email', 'already', 'exists', 'already registered', 'user already exists'],
+  };
+
+  // Check for sign-in/credential errors (user not found, wrong password, etc.)
+  if (
+    errorMessage.includes('invalid') ||
+    matcherPatterns.userNotFound.some(p => errorMessage.includes(p)) ||
+    matcherPatterns.wrongPassword.some(p => errorMessage.includes(p)) ||
+    errorCode === 'invalid_grant' ||
+    errorCode === '401'
+  ) {
+    return {
+      type: AuthErrorType.INVALID_CREDENTIALS,
+      userMessage: GENERIC_SIGNIN_ERROR_MESSAGE,
+      logMessage: `Authentication failed: ${originalError}`,
+      code: errorCode,
+    };
+  }
+
+  // Check for email already exists (sign-up errors)
+  if (
+    matcherPatterns.emailExists.some(p => errorMessage.includes(p)) ||
+    errorCode === 'user_already_exists'
+  ) {
+    return {
+      type: AuthErrorType.EMAIL_EXISTS,
+      userMessage: GENERIC_SIGNUP_RESPONSE_MESSAGE,
+      logMessage: `Sign-up failed: Account already exists (email enumeration attempt detected)`,
+      code: errorCode,
+    };
+  }
+
+  // Network errors
+  if (
+    errorMessage.includes('network') ||
+    errorMessage.includes('fetch') ||
+    errorCode === 'NETWORK_ERROR'
+  ) {
+    return {
+      type: AuthErrorType.NETWORK_ERROR,
+      userMessage: 'Network error. Please check your connection and try again.',
+      logMessage: `Network error: ${originalError}`,
+      code: errorCode,
+    };
+  }
+
+  // Unknown errors - generic fallback
   return {
-    type: AuthErrorType.INVALID_CREDENTIALS,
+    type: AuthErrorType.UNKNOWN,
     userMessage: GENERIC_SIGNIN_ERROR_MESSAGE,
-    logMessage: `Authentication failure: ${originalError}`,
+    logMessage: `Unknown auth error: ${originalError}`,
     code: errorCode,
   };
 }
@@ -101,7 +165,8 @@ export function logAuthFailure(
     timestamp: new Date().toISOString(),
   };
 
-  console.error('[Security] Authentication failure', logData);
+  // Do NOT output raw error details that could reveal account info
+  console.warn('[Security] Authentication event:', logData.event, 'Type:', logData.errorType);
 
   // TODO: Send to security monitoring service
   // Only in production environment

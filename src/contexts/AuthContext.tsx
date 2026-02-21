@@ -35,6 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (error) {
+      // Do NOT log raw error object
+      console.warn('[Auth] Sign-up error occurred');
       return { error: error as Error | null };
     }
 
@@ -46,6 +48,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
     });
+    
+    if (error) {
+      // Do NOT log raw error object
+      console.warn('[Auth] Sign-in error occurred');
+    }
+    
     return { error: error as Error | null };
   };
 

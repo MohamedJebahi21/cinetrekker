@@ -115,7 +115,8 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
         navigate(from, { replace: true });
       }
     } catch (unexpectedError) {
-      console.error('[Auth] Unexpected sign-in error:', unexpectedError);
+      // Do not log raw error object
+      console.warn('[Auth] Sign-in error occurred');
       toast({
         title: t('common.error'),
         description: GENERIC_SIGNIN_ERROR_MESSAGE,
@@ -170,7 +171,8 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
       });
       setActiveTab('signin');
     } catch (unexpectedError) {
-      console.error('[Auth] Unexpected sign-up error:', unexpectedError);
+      // Do not log raw error object
+      console.warn('[Auth] Sign-up error occurred');
       toast({
         title: t('auth.signUp', 'Sign Up'),
         description: GENERIC_SIGNUP_RESPONSE_MESSAGE,
@@ -208,7 +210,8 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
       }
       // OAuth redirect will happen automatically if no error
     } catch (unexpectedError) {
-      console.error('[Auth] OAuth error:', unexpectedError);
+      // Do not log raw error object
+      console.warn('[Auth] OAuth error occurred');
       toast({
         title: t('common.error'),
         description: GENERIC_SIGNIN_ERROR_MESSAGE,
@@ -228,7 +231,8 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
         });
       }
     } catch (unexpectedError) {
-      console.error('[Auth] Password reset error:', unexpectedError);
+      // Do not log raw error object
+      console.warn('[Auth] Password reset attempt made');
     } finally {
       toast({
         title: t('auth.resetPassword', 'Reset Password'),
