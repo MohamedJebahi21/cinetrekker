@@ -151,6 +151,14 @@ jobs:
             echo "⚠️ WARNING: Auth.tsx may not use error sanitization"
           fi
 
+      - name: DEBUG: List all scanned files in src
+        run: |
+          cd src
+          find . -type f \( -name "*.ts" -o -name "*.tsx" \) \
+            ! -path "*node_modules*" ! -path "*dist*" ! -path "*build*" \
+            ! -name "*authErrorHandler*" ! -name "*.test.*" ! -name "*.spec.*" \
+            -print
+
       - name: Verify no account enumeration leaks
         run: |
           cd src
