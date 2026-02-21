@@ -22,8 +22,8 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import SEO from '@/components/SEO';
 import { websiteJsonLd } from '@/lib/schema';
 import { siteMetadata } from '@/lib/metadata';
+import Index from "./pages/Index";
 
-const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
