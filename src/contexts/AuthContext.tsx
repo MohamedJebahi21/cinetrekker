@@ -34,13 +34,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
     });
 
-    if (error) {
-      // Do NOT log raw error object
-      console.warn('[Auth] Sign-up error occurred');
-      return { error: error as Error | null };
-    }
-
-    return { error: null };
+    // Return error as-is
+    // UI layer decides how to handle it
+    return { error: error as Error | null };
   };
 
   const signIn = async (email: string, password: string) => {
@@ -48,12 +44,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
     });
-    
-    if (error) {
-      // Do NOT log raw error object
-      console.warn('[Auth] Sign-in error occurred');
-    }
-    
+
+    // Return error as-is
+    // UI layer decides how to handle it
     return { error: error as Error | null };
   };
 

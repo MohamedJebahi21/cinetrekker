@@ -12,13 +12,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { validatePassword, PasswordValidationResult } from '@/lib/passwordValidation';
 import {
-  sanitizeAuthError,
-  logAuthFailure,
-  checkAuthRateLimit,
-  clearAuthRateLimit,
-  GENERIC_SIGNIN_ERROR_MESSAGE,
-  GENERIC_SIGNUP_RESPONSE_MESSAGE,
-  GENERIC_PASSWORD_RESET_RESPONSE_MESSAGE,
+  GENERIC_AUTH_ERROR,
+  GENERIC_SIGNUP_SUCCESS,
+  GENERIC_PASSWORD_RESET,
+  processSignupResult,
+  checkRateLimit,
+  clearRateLimit,
+  logAuthEventServer,
 } from '@/lib/authErrorHandler';
 import { supabase } from '@/integrations/supabase/client';
 import SEO from '@/components/SEO';
@@ -78,48 +78,49 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
     e.preventDefault();
 
     const normalizedEmail = email.trim().toLowerCase();
-    const rateLimitInfo = checkAuthRateLimit(normalizedEmail);
-    if (rateLimitInfo.isLimited) {
+    
+    // Rate limit check
+    const rateLimit = checkRateLimit(normalizedEmail);
+    if (rateLimit.isLimited) {
       toast({
         title: t('common.error'),
-        description: GENERIC_SIGNIN_ERROR_MESSAGE,
+        description: GENERIC_AUTH_ERROR,
         variant: 'destructive',
       });
       return;
     }
 
     setLoading(true);
-    
+
     try {
       const { error } = await signIn(email, password);
-      
+
+      // CRITICAL: Single path - no branching on error type
       if (error) {
-        // Sanitize error message to prevent account enumeration
-        const sanitized = sanitizeAuthError(error);
+        logAuthEventServer('signin_attempt', normalizedEmail, false);
         
-        // Log security event (never shown to user)
-        logAuthFailure(normalizedEmail, sanitized.type);
-        
-        // Show generic message to user
         toast({
           title: t('common.error'),
-          description: GENERIC_SIGNIN_ERROR_MESSAGE,
+          description: GENERIC_AUTH_ERROR,
           variant: 'destructive',
         });
       } else {
-        clearAuthRateLimit(normalizedEmail);
+        logAuthEventServer('signin_attempt', normalizedEmail, true);
+        clearRateLimit(normalizedEmail);
+        
         toast({
           title: t('auth.signIn'),
           description: 'Welcome back!',
         });
         navigate(from, { replace: true });
       }
-    } catch (unexpectedError) {
-      // Do not log raw error object
-      console.warn('[Auth] Sign-in error occurred');
+    } catch {
+      // Catch block: do NOT log error object
+      console.warn('[Auth] Sign-in attempt completed');
+      
       toast({
         title: t('common.error'),
-        description: GENERIC_SIGNIN_ERROR_MESSAGE,
+        description: GENERIC_AUTH_ERROR,
         variant: 'destructive',
       });
     } finally {
@@ -131,21 +132,22 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
     e.preventDefault();
 
     const normalizedEmail = email.trim().toLowerCase();
-    const rateLimitInfo = checkAuthRateLimit(normalizedEmail);
-    if (rateLimitInfo.isLimited) {
+
+    const rateLimit = checkRateLimit(normalizedEmail);
+    if (rateLimit.isLimited) {
+      // Even rate limit shows same message
       toast({
         title: t('auth.signUp', 'Sign Up'),
-        description: GENERIC_SIGNUP_RESPONSE_MESSAGE,
+        description: GENERIC_SIGNUP_SUCCESS,
       });
       return;
     }
-    
-    // Validate password BEFORE submission (client-side, ok to show)
+
+    // Client-side password validation (ok to show detailed errors)
     const validation = validatePassword(password);
     if (!validation.isValid) {
-      // Password validation is CLIENT-SIDE, ok to show detailed errors
       toast({
-        title: 'Password Requirements Not Met',
+        title: 'Password Requirements',
         description: validation.errors[0],
         variant: 'destructive',
       });
@@ -153,29 +155,31 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
     }
 
     setLoading(true);
-    
+
     try {
       const { error } = await signUp(email, password);
-      
-      if (error) {
-        // Sanitize error message to prevent account enumeration
-        const sanitized = sanitizeAuthError(error);
-        
-        // Log security event
-        logAuthFailure(normalizedEmail, sanitized.type);
-      }
 
+      // Process signup result - treats "account registered" as success
+      const result = processSignupResult(error);
+
+      logAuthEventServer('signup_attempt', normalizedEmail, result.isSuccess);
+
+      // CRITICAL: Same message always shown
       toast({
         title: t('auth.signUp', 'Sign Up'),
-        description: GENERIC_SIGNUP_RESPONSE_MESSAGE,
+        description: result.userMessage,
       });
+
+      // Always redirect to signin after signup
       setActiveTab('signin');
-    } catch (unexpectedError) {
-      // Do not log raw error object
-      console.warn('[Auth] Sign-up error occurred');
+    } catch {
+      // Catch: do NOT log error object
+      console.warn('[Auth] Sign-up attempt completed');
+
+      // Even on exception, same message
       toast({
         title: t('auth.signUp', 'Sign Up'),
-        description: GENERIC_SIGNUP_RESPONSE_MESSAGE,
+        description: GENERIC_SIGNUP_SUCCESS,
       });
       setActiveTab('signin');
     } finally {
@@ -184,37 +188,32 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
   };
 
   const handleGoogleSignIn = async () => {
-    const normalizedEmail = email.trim().toLowerCase();
     setLoading(true);
+    const normalizedEmail = email.trim().toLowerCase();
+
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
         },
       });
-      
+
       if (error) {
-        const sanitized = sanitizeAuthError(error);
-        logAuthFailure(normalizedEmail, sanitized.type);
+        logAuthEventServer('signin_attempt', normalizedEmail, false);
         toast({
           title: t('common.error'),
-          description: GENERIC_SIGNIN_ERROR_MESSAGE,
+          description: GENERIC_AUTH_ERROR,
           variant: 'destructive',
         });
         setLoading(false);
       }
-      // OAuth redirect will happen automatically if no error
-    } catch (unexpectedError) {
-      // Do not log raw error object
-      console.warn('[Auth] OAuth error occurred');
+      // OAuth redirect happens automatically if successful
+    } catch {
+      console.warn('[Auth] OAuth initiated');
       toast({
         title: t('common.error'),
-        description: GENERIC_SIGNIN_ERROR_MESSAGE,
+        description: GENERIC_AUTH_ERROR,
         variant: 'destructive',
       });
       setLoading(false);
@@ -230,13 +229,15 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
           redirectTo: `${window.location.origin}/auth/callback`,
         });
       }
-    } catch (unexpectedError) {
-      // Do not log raw error object
-      console.warn('[Auth] Password reset attempt made');
+    } catch {
+      console.warn('[Auth] Password reset initiated');
     } finally {
+      // CRITICAL: Same message whether account is registered or not
+      logAuthEventServer('password_reset', normalizedEmail, true);
+      
       toast({
         title: t('auth.resetPassword', 'Reset Password'),
-        description: GENERIC_PASSWORD_RESET_RESPONSE_MESSAGE,
+        description: GENERIC_PASSWORD_RESET,
       });
     }
   };

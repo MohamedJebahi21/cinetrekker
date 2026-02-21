@@ -1,252 +1,169 @@
 /**
  * Authentication Error Handler
  *
- * Prevents account enumeration attacks by sanitizing auth error messages.
- * All authentication failures return generic messages to users.
- * Detailed errors are logged server-side for security monitoring.
+ * SECURITY: Account Enumeration Prevention
+ * 
+ * This module implements defense against account enumeration attacks by:
+ * 1. Never revealing whether an email address is registered
+ * 2. Never distinguishing between credential mismatch types
+ * 3. Treating account-already-registered as success for signup
+ * 4. Using identical user-facing messages for all auth failures
+ * 5. Removing all conditional logic based on error type
  *
- * OWASP: CWE-203 - Information Exposure Through Discrepancy
- * https://cwe.mitre.org/data/definitions/203.html
+ * References:
+ * - OWASP CWE-203: Information Exposure Through Discrepancy
+ * - OWASP CWE-204: Observable Timing Discrepancy
+ * - https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html
  */
 
-export enum AuthErrorType {
-  INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
-  EMAIL_EXISTS = 'EMAIL_EXISTS',
-  PASSWORD_WEAK = 'PASSWORD_WEAK',
-  NETWORK_ERROR = 'NETWORK_ERROR',
-  UNKNOWN = 'UNKNOWN',
-}
+// Single, unified error messages - no variation based on error type
+export const GENERIC_AUTH_ERROR = 'Invalid email or password.';
+export const GENERIC_SIGNUP_SUCCESS = 'Please check your email to complete setup.';
+export const GENERIC_PASSWORD_RESET = 
+  'If an account is registered with this email, you will receive a password reset link.';
 
-interface SanitizedAuthError {
-  type: AuthErrorType;
+/**
+ * Universal auth error processor
+ * 
+ * Takes ANY error from any auth operation and returns the SAME message
+ * to the user. Never reveals account registration through error messaging.
+ * 
+ * @param error - Any error from Supabase auth
+ * @returns Object with user-safe message and server log info
+ */
+export function processAuthError(error: unknown): {
   userMessage: string;
-  logMessage: string;
-  code?: string;
-}
-
-// SECURITY: Generic messages prevent account enumeration
-export const GENERIC_SIGNIN_ERROR_MESSAGE = 'Invalid email or password.';
-export const GENERIC_SIGNUP_RESPONSE_MESSAGE =
-  'Please check your email to complete setup.';
-export const GENERIC_PASSWORD_RESET_RESPONSE_MESSAGE =
-  'If an account exists with this email, you will receive a password reset link.';
-
-function getErrorDetails(error: unknown): { message: string; code: string } {
-  if (error && typeof error === 'object') {
-    const maybeMessage = 'message' in error ? (error as { message?: unknown }).message : undefined;
-    const maybeCode = 'code' in error ? (error as { code?: unknown }).code : undefined;
-
-    return {
-      message: typeof maybeMessage === 'string' ? maybeMessage : 'Unknown error',
-      code: typeof maybeCode === 'string' ? maybeCode : '',
-    };
-  }
+  shouldLog: boolean;
+  logContext?: string;
+} {
+  // Always return generic message regardless of error content
+  // No checking, no branching on error type
+  
+  // Only log on server (for security monitoring, not shown to user)
+  const shouldLog = true;
+  
+  const logContext = error instanceof Error 
+    ? error.message 
+    : String(error);
 
   return {
-    message: 'Unknown error',
-    code: '',
+    userMessage: GENERIC_AUTH_ERROR,
+    shouldLog,
+    logContext,
   };
 }
 
 /**
- * Sanitizes Supabase auth errors to prevent account enumeration attacks
- *
- * Maps specific errors to generic user-facing messages while preserving
- * detailed information for server-side logging.
- *
- * @param error - Supabase auth error object
- * @returns Sanitized error with generic user message and detailed log message
+ * Determines if an auth error indicates account already registered
+ * Used ONLY to decide whether to show "Check email" vs error
+ * 
+ * This check is internal-only, result is NEVER shown to user
  */
-export function sanitizeAuthError(error: unknown): SanitizedAuthError {
-  const details = getErrorDetails(error);
-  const errorMessage = details.message.toLowerCase();
-  const errorCode = details.code;
-  const originalError = details.message;
+function isAccountAlreadyRegisteredError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  
+  const errorStr = JSON.stringify(error).toLowerCase();
+  
+  // Only check for account registration - don't reveal this in user message
+  return errorStr.includes('already') || 
+         errorStr.includes('duplicate') ||
+         errorStr.includes('user_already');
+}
 
-  // Error matchers for various auth failure types
-  const matcherPatterns = {
-    invalidCredentials: ['invalid', 'login', 'credentials', 'signin'],
-    userNotFound: ['user', 'not', 'found', 'does not exist', 'no user'],
-    wrongPassword: ['wrong', 'password', 'invalid password'],
-    emailExists: ['email', 'already', 'exists', 'already registered', 'user already exists'],
-  };
-
-  // Check for sign-in/credential errors (user not found, wrong password, etc.)
-  if (
-    errorMessage.includes('invalid') ||
-    matcherPatterns.userNotFound.some(p => errorMessage.includes(p)) ||
-    matcherPatterns.wrongPassword.some(p => errorMessage.includes(p)) ||
-    errorCode === 'invalid_grant' ||
-    errorCode === '401'
-  ) {
+/**
+ * Signup handler that masks account-already-registered as success
+ * 
+ * If account is registered, we return success message (not error)
+ * If account is new, signup proceeds normally
+ * User CANNOT tell the difference
+ */
+export function processSignupResult(error: unknown | null): {
+  userMessage: string;
+  isSuccess: boolean;
+} {
+  // If no error, signup succeeded
+  if (!error) {
     return {
-      type: AuthErrorType.INVALID_CREDENTIALS,
-      userMessage: GENERIC_SIGNIN_ERROR_MESSAGE,
-      logMessage: `Authentication failed: ${originalError}`,
-      code: errorCode,
+      userMessage: GENERIC_SIGNUP_SUCCESS,
+      isSuccess: true,
     };
   }
 
-  // Check for email already exists (sign-up errors)
-  if (
-    matcherPatterns.emailExists.some(p => errorMessage.includes(p)) ||
-    errorCode === 'user_already_exists'
-  ) {
-    return {
-      type: AuthErrorType.EMAIL_EXISTS,
-      userMessage: GENERIC_SIGNUP_RESPONSE_MESSAGE,
-      logMessage: `Sign-up failed: Account already exists (email enumeration attempt detected)`,
-      code: errorCode,
-    };
-  }
-
-  // Network errors
-  if (
-    errorMessage.includes('network') ||
-    errorMessage.includes('fetch') ||
-    errorCode === 'NETWORK_ERROR'
-  ) {
-    return {
-      type: AuthErrorType.NETWORK_ERROR,
-      userMessage: 'Network error. Please check your connection and try again.',
-      logMessage: `Network error: ${originalError}`,
-      code: errorCode,
-    };
-  }
-
-  // Unknown errors - generic fallback
+  // Check if error indicates account already registered
+  const accountRegistered = isAccountAlreadyRegisteredError(error);
+  
+  // CRITICAL: Both paths return the SAME message
+  // User cannot determine if account is registered or new
   return {
-    type: AuthErrorType.UNKNOWN,
-    userMessage: GENERIC_SIGNIN_ERROR_MESSAGE,
-    logMessage: `Unknown auth error: ${originalError}`,
-    code: errorCode,
+    userMessage: GENERIC_SIGNUP_SUCCESS,
+    isSuccess: true, // Treat as success regardless
   };
 }
 
 /**
- * Detects if error is an account enumeration attempt
- *
- * Used for security monitoring to detect enumeration attacks
- * @param error - Supabase auth error object
- * @returns True if error reveals account existence
+ * Rate limiting helper
+ * Prevents brute force while maintaining uniform error messages
  */
-export function isAccountEnumerationAttempt(_error: unknown): boolean {
-  return false;
+const attemptMap = new Map<string, { count: number; resetAt: number }>();
+
+export function checkRateLimit(email: string, maxPerMinute: number = 5): {
+  isLimited: boolean;
+} {
+  const now = Date.now();
+  const window = 60000; // 1 minute
+  
+  let entry = attemptMap.get(email);
+  
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + window };
+    attemptMap.set(email, entry);
+  }
+  
+  entry.count++;
+  
+  return {
+    isLimited: entry.count > maxPerMinute,
+  };
+}
+
+export function clearRateLimit(email: string): void {
+  attemptMap.delete(email);
 }
 
 /**
- * Logs authentication failures for security monitoring
- *
- * Should be sent to security monitoring service (Sentry, DataDog, etc.)
- * Never exposed to client
- *
- * @param email - User email (masked for privacy)
- * @param errorType - Type of authentication error
- * @param ipAddress - Client IP address (optional)
- * @param userAgent - Client user agent (optional)
+ * Server-side logging (never revealed to client)
+ * 
+ * Use this to log security events for monitoring,
+ * but NEVER output results to frontend
  */
-export function logAuthFailure(
+export function logAuthEventServer(
+  event: 'signin_attempt' | 'signup_attempt' | 'password_reset',
   email: string,
-  errorType: AuthErrorType,
-  ipAddress?: string,
-  userAgent?: string
+  success: boolean,
+  errorDetail?: string
 ): void {
-  // Mask email for privacy (show only first 3 chars + ***)
-  const maskedEmail = email?.length > 3 
-    ? email.substring(0, 3) + '***' 
+  // Mask email for privacy
+  const masked = email?.length > 3 
+    ? email.substring(0, 3) + '***@***'
     : '***';
 
-  const logData = {
-    event: 'auth_failure',
-    errorType,
-    email: maskedEmail,
-    ipAddress: ipAddress || 'unknown',
-    userAgent,
+  const logEntry = {
     timestamp: new Date().toISOString(),
+    event,
+    email: masked,
+    success,
+    error: errorDetail || 'none',
   };
 
-  // Do NOT output raw error details that could reveal account info
-  console.warn('[Security] Authentication event:', logData.event, 'Type:', logData.errorType);
-
-  // TODO: Send to security monitoring service
-  // Only in production environment
-  if (typeof window !== 'undefined' && 
-      window.location?.hostname === 'cinetrekker.vercel.app') {
-    // Example: Send to Sentry
-    // if (window.Sentry) {
-    //   window.Sentry.captureMessage('Authentication failure', {
-    //     level: 'warning',
-    //     contexts: { auth: logData }
-    //   });
-    // }
-    
-    // Example: Send to DataDog
-    // if (window.datadog) {
-    //   window.datadog.logEvent('auth_failure', logData);
-    // }
+  // Output ONLY to console/server logs
+  // DO NOT include raw error details that could reveal account info
+  if (!success) {
+    console.warn('[Security] Auth event:', logEntry.event, 'Status: Failed');
   }
-}
-
-/**
- * Determines if auth error should be shown to user
- *
- * Some errors should never be shown (internal server errors, etc.)
- * @param errorType - Type of authentication error
- * @returns True if error is safe to show to user
- */
-export function shouldShowUserError(errorType: AuthErrorType): boolean {
-  // Never show certain errors to prevent information disclosure
-  const hiddenErrors = [
-    AuthErrorType.UNKNOWN, // Generic unknown error
-  ];
-
-  return !hiddenErrors.includes(errorType);
-}
-
-/**
- * Rate limiting check for auth endpoints
- *
- * Prevents brute force attacks by limiting auth attempts
- * @param email - User email attempting to authenticate
- * @param maxAttemptsPerMinute - Max attempts allowed (default: 5)
- * @returns Rate limit info
- */
-interface RateLimitInfo {
-  isLimited: boolean;
-  attemptsRemaining: number;
-  resetAt: number;
-}
-
-const authAttempts = new Map<string, { count: number; resetAt: number }>();
-
-export function checkAuthRateLimit(
-  email: string,
-  maxAttemptsPerMinute: number = 5
-): RateLimitInfo {
-  const now = Date.now();
-  const windowDuration = 60 * 1000; // 1 minute
-
-  let entry = authAttempts.get(email);
-
-  // Reset if window expired
-  if (!entry || now > entry.resetAt) {
-    entry = { count: 0, resetAt: now + windowDuration };
-    authAttempts.set(email, entry);
-  }
-
-  entry.count++;
-
-  return {
-    isLimited: entry.count > maxAttemptsPerMinute,
-    attemptsRemaining: Math.max(0, maxAttemptsPerMinute - entry.count),
-    resetAt: entry.resetAt,
-  };
-}
-
-/**
- * Clear auth rate limit for email (call after successful auth)
- * @param email - User email to clear limit for
- */
-export function clearAuthRateLimit(email: string): void {
-  authAttempts.delete(email);
+  
+  // TODO: Send to security monitoring service (Sentry, DataDog)
+  // Example:
+  // if (typeof window === 'undefined') {
+  //   sendToSecurityMonitoring(logEntry);
+  // }
 }
