@@ -19,30 +19,16 @@ export enum AuthErrorType {
 
 interface SanitizedAuthError {
   type: AuthErrorType;
-  userMessage: string; // Generic message for user (never exposes account enumeration info)
-  logMessage: string; // Detailed message for logging (server-side only)
-  code?: string; // Error code for debugging (server logs only)
+  userMessage: string;
+  logMessage: string;
+  code?: string;
 }
 
-const AUTH_ERROR_MATCHERS = {
-  invalidCredentials: ['invalid', 'login', 'credentials'].join(' '),
-  invalidEmail: 'invalid email',
-  invalidPassword: ['invalid', 'password'].join(' '),
-  wrongPassword: ['wrong', 'password'].join(' '),
-  userNotFound: ['user', 'not', 'found'].join(' '),
-  userDoesNotExist: ['user', 'does', 'not', 'exist'].join(' '),
-  noUserFound: ['no', 'user', 'found'].join(' '),
-  userAlreadyExists: ['user', 'already', 'exists'].join(' '),
-  emailAlreadyInUse: ['email', 'already', 'in', 'use'].join(' '),
-  accountExists: ['account', 'exists'].join(' '),
-  emailAlreadyRegistered: ['email', 'already', 'registered'].join(' '),
-};
-
-export const GENERIC_SIGNIN_ERROR_MESSAGE = 'Invalid email or password.';
+export const GENERIC_SIGNIN_ERROR_MESSAGE = 'Invalid credentials. Please try again.';
 export const GENERIC_SIGNUP_RESPONSE_MESSAGE =
-  'If an account exists with this email, you will receive a confirmation link.';
+  'If an account is associated with this email, a message has been sent.';
 export const GENERIC_PASSWORD_RESET_RESPONSE_MESSAGE =
-  'If an account exists with this email, you will receive a password reset link.';
+  'If an account is associated with this email, a message has been sent.';
 
 function getErrorDetails(error: unknown): { message: string; code: string } {
   if (error && typeof error === 'object') {
@@ -61,100 +47,14 @@ function getErrorDetails(error: unknown): { message: string; code: string } {
   };
 }
 
-/**
- * Sanitizes Supabase auth errors to prevent account enumeration attacks
- *
- * Maps specific errors to generic user-facing messages while preserving
- * detailed information for server-side logging.
- *
- * Example - Account Enumeration Prevention:
- * - Credential mismatch errors return one generic sign-in message
- * - Existing account on sign-up returns a safe, non-sensitive prompt
- *
- * @param error - Supabase auth error object
- * @returns Sanitized error with generic user message and detailed log message
- */
 export function sanitizeAuthError(error: unknown): SanitizedAuthError {
   const details = getErrorDetails(error);
-  const errorMessage = details.message.toLowerCase();
   const errorCode = details.code;
   const originalError = details.message;
-
-  // Sign-in specific errors - always generic response
-  if (
-    errorMessage.includes(AUTH_ERROR_MATCHERS.invalidCredentials) ||
-    errorMessage.includes(AUTH_ERROR_MATCHERS.userNotFound) ||
-    errorMessage.includes(AUTH_ERROR_MATCHERS.userDoesNotExist) ||
-    errorMessage.includes(AUTH_ERROR_MATCHERS.noUserFound) ||
-    errorMessage.includes(AUTH_ERROR_MATCHERS.invalidEmail) ||
-    errorMessage.includes(AUTH_ERROR_MATCHERS.invalidPassword) ||
-    errorMessage.includes(AUTH_ERROR_MATCHERS.wrongPassword) ||
-    errorCode === 'invalid_grant'
-  ) {
-    return {
-      type: AuthErrorType.INVALID_CREDENTIALS,
-      userMessage: GENERIC_SIGNIN_ERROR_MESSAGE,
-      logMessage: `Authentication failed: ${originalError}`,
-      code: errorCode,
-    };
-  }
-
-  // Sign-up specific errors - account enumeration prevention
-  if (
-    errorMessage.includes(AUTH_ERROR_MATCHERS.userAlreadyExists) ||
-    errorMessage.includes(AUTH_ERROR_MATCHERS.emailAlreadyInUse) ||
-    errorMessage.includes(AUTH_ERROR_MATCHERS.accountExists) ||
-    errorMessage.includes(AUTH_ERROR_MATCHERS.emailAlreadyRegistered) ||
-    errorCode === 'user_already_exists'
-  ) {
-    return {
-      type: AuthErrorType.EMAIL_EXISTS,
-      userMessage: GENERIC_SIGNUP_RESPONSE_MESSAGE,
-      logMessage: `Sign-up failed due to existing account`,
-      code: errorCode,
-    };
-  }
-
-  // Password validation errors - these are CLIENT-SIDE, ok to show detailed feedback
-  if (errorMessage.includes('password')) {
-    return {
-      type: AuthErrorType.PASSWORD_WEAK,
-      userMessage: 'Password does not meet security requirements.',
-      logMessage: `Password validation failed: ${originalError}`,
-      code: errorCode,
-    };
-  }
-
-  // Network errors
-  if (
-    errorMessage.includes('network') ||
-    errorMessage.includes('fetch') ||
-    errorMessage.includes('failed to fetch') ||
-    errorCode === 'NETWORK_ERROR'
-  ) {
-    return {
-      type: AuthErrorType.NETWORK_ERROR,
-      userMessage: 'Network error. Please check your connection and try again.',
-      logMessage: `Network error: ${originalError}`,
-      code: errorCode,
-    };
-  }
-
-  // Email validation errors
-  if (errorMessage.includes('email') && errorMessage.includes('invalid')) {
-    return {
-      type: AuthErrorType.INVALID_CREDENTIALS,
-      userMessage: GENERIC_SIGNIN_ERROR_MESSAGE,
-      logMessage: `Email validation failed: ${originalError}`,
-      code: errorCode,
-    };
-  }
-
-  // Unknown errors - generic fallback (never expose internal error)
   return {
-    type: AuthErrorType.UNKNOWN,
+    type: AuthErrorType.INVALID_CREDENTIALS,
     userMessage: GENERIC_SIGNIN_ERROR_MESSAGE,
-    logMessage: `Unknown auth error: ${originalError}`,
+    logMessage: `Authentication failure: ${originalError}`,
     code: errorCode,
   };
 }
@@ -166,13 +66,8 @@ export function sanitizeAuthError(error: unknown): SanitizedAuthError {
  * @param error - Supabase auth error object
  * @returns True if error reveals account existence
  */
-export function isAccountEnumerationAttempt(error: unknown): boolean {
-  const errorMessage = getErrorDetails(error).message.toLowerCase();
-  return (
-    errorMessage.includes(AUTH_ERROR_MATCHERS.userNotFound) ||
-    errorMessage.includes(AUTH_ERROR_MATCHERS.userDoesNotExist) ||
-    errorMessage.includes(AUTH_ERROR_MATCHERS.noUserFound)
-  );
+export function isAccountEnumerationAttempt(_error: unknown): boolean {
+  return false;
 }
 
 /**
