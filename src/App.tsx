@@ -25,15 +25,14 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import SEO from '@/components/SEO';
 import { websiteJsonLd } from '@/lib/schema';
 
-// Critical pages - load immediately
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import AuthCallback from "./pages/AuthCallback";
-import NotFound from "./pages/NotFound";
+// We import TitleStatus to handle missing routes safely
+import TitleStatus from "./components/details/TitleStatus";
 
-// Heavy pages - lazy load to reduce initial bundle
 const Search = lazy(() => import("./pages/Search"));
 const Details = lazy(() => import("./pages/Details"));
 const Person = lazy(() => import("./pages/Person"));
@@ -62,319 +61,104 @@ const YearInReview = lazy(() => import("./pages/YearInReview"));
 const WatchHistory = lazy(() => import("./pages/WatchHistory"));
 const AccessibilitySettings = lazy(() => import("./pages/AccessibilitySettings"));
 
-// Page transition variants - subtle and fast
 const pageVariants = {
   initial: { opacity: 0 },
   enter: { opacity: 1, transition: { duration: 0.2 } },
   exit: { opacity: 0, transition: { duration: 0.15 } },
 };
 
-// Network status monitor component
 function NetworkMonitor() {
   useNetworkStatus();
   return null;
 }
-
-// Reusable skeleton grid used as Suspense fallback across routes
-// Use LoadingFallback for Suspense fallbacks
 
 function AnimatedRoutes() {
   const location = useLocation();
   
   return (
     <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={location.pathname}
-        variants={pageVariants}
-        initial="initial"
-        animate="enter"
-        exit="exit"
-      >
+      <motion.div key={location.pathname} variants={pageVariants} initial="initial" animate="enter" exit="exit">
         <Routes location={location}>
-          {/* Public routes */}
           <Route path="/" element={<Index />} />
-          <Route path="/search" element={
-            <Suspense fallback={<LoadingFallback variant="grid" count={12} />}>
-              <Search />
-            </Suspense>
-          } />
-          <Route path="/movie/:id" element={
-            <Suspense fallback={<LoadingFallback variant="grid" count={6} />}>
-              <Details />
-            </Suspense>
-          } />
-          <Route path="/tv/:id" element={
-            <Suspense fallback={<LoadingFallback variant="grid" count={6} />}>
-              <Details />
-            </Suspense>
-          } />
-          <Route path="/person/:id" element={
-            <Suspense fallback={<LoadingFallback variant="page" />}>
-              <Person />
-            </Suspense>
-          } />
-          <Route path="/privacy" element={
-            <Suspense fallback={<LoadingFallback variant="page" />}>
-              <Privacy />
-            </Suspense>
-          } />
-          <Route path="/about" element={
-            <Suspense fallback={<LoadingFallback variant="page" />}>
-              <About />
-            </Suspense>
-          } />
-          <Route path="/feedback" element={
-            <Suspense fallback={<LoadingFallback variant="page" />}>
-              <Feedback />
-            </Suspense>
-          } />
-          <Route path="/terms" element={
-            <Suspense fallback={<LoadingFallback variant="page" />}>
-              <Terms />
-            </Suspense>
-          } />
-          <Route path="/cookies" element={
-            <Suspense fallback={<LoadingFallback variant="page" />}>
-              <Cookies />
-            </Suspense>
-          } />
+          <Route path="/search" element={<Suspense fallback={<LoadingFallback variant="grid" count={12} />}><Search /></Suspense>} />
+          <Route path="/movie/:id" element={<Suspense fallback={<LoadingFallback variant="grid" count={6} />}><Details /></Suspense>} />
+          <Route path="/tv/:id" element={<Suspense fallback={<LoadingFallback variant="grid" count={6} />}><Details /></Suspense>} />
+          <Route path="/person/:id" element={<Suspense fallback={<LoadingFallback variant="page" />}><Person /></Suspense>} />
+          <Route path="/privacy" element={<Suspense fallback={<LoadingFallback variant="page" />}><Privacy /></Suspense>} />
+          <Route path="/about" element={<Suspense fallback={<LoadingFallback variant="page" />}><About /></Suspense>} />
+          <Route path="/feedback" element={<Suspense fallback={<LoadingFallback variant="page" />}><Feedback /></Suspense>} />
+          <Route path="/terms" element={<Suspense fallback={<LoadingFallback variant="page" />}><Terms /></Suspense>} />
+          <Route path="/cookies" element={<Suspense fallback={<LoadingFallback variant="page" />}><Cookies /></Suspense>} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           
-          {/* Protected routes */}
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <Suspense fallback={<LoadingFallback variant="grid" count={8} />}>
-                <Profile />
-              </Suspense>
-            </ProtectedRoute>
-          } />
-          <Route path="/settings" element={
-            <ProtectedRoute>
-              <Suspense fallback={<PageSkeleton />}>
-                <Settings />
-              </Suspense>
-            </ProtectedRoute>
-          } />
-          <Route path="/watchlist" element={
-            <ProtectedRoute>
-              <Suspense fallback={<PageSkeleton />}>
-                <Watchlist />
-              </Suspense>
-            </ProtectedRoute>
-          } />
-          <Route path="/watched" element={
-            <ProtectedRoute>
-              <Suspense fallback={<PageSkeleton />}>
-                <Watched />
-              </Suspense>
-            </ProtectedRoute>
-          } />
-          <Route path="/following" element={
-            <ProtectedRoute>
-              <Suspense fallback={<PageSkeleton />}>
-                <Following />
-              </Suspense>
-            </ProtectedRoute>
-          } />
-          <Route path="/recommendations" element={
-            <ProtectedRoute>
-              <Suspense fallback={
-                <div className="page-container pt-20">
-                  <div className="media-grid">
-                    <MovieSkeleton />
-                  </div>
-                </div>
-              }>
-                <Recommendations />
-              </Suspense>
-            </ProtectedRoute>
-          } />
-          <Route path="/calendar" element={
-            <ProtectedRoute>
-              <Suspense fallback={<PageSkeleton />}>
-                <Calendar />
-              </Suspense>
-            </ProtectedRoute>
-          } />
-          <Route path="/stats" element={
-            <ProtectedRoute>
-              <Suspense fallback={
-                <div className="page-container pt-20">
-                  <div className="media-grid">
-                    <MovieSkeleton />
-                  </div>
-                </div>
-              }>
-                <Stats />
-              </Suspense>
-            </ProtectedRoute>
-          } />
-          <Route path="/enhanced-stats" element={
-            <ProtectedRoute>
-              <Suspense fallback={<PageSkeleton />}>
-                <EnhancedStats />
-              </Suspense>
-            </ProtectedRoute>
-          } />
-          <Route path="/achievements" element={
-            <ProtectedRoute>
-              <Suspense fallback={<PageSkeleton />}>
-                <Achievements />
-              </Suspense>
-            </ProtectedRoute>
-          } />
-          <Route path="/print-watchlist" element={
-            <ProtectedRoute>
-              <Suspense fallback={<PageSkeleton />}>
-                <PrintWatchlist />
-              </Suspense>
-            </ProtectedRoute>
-          } />
+          <Route path="/profile" element={<ProtectedRoute><Suspense fallback={<LoadingFallback variant="grid" count={8} />}><Profile /></Suspense></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Suspense fallback={<PageSkeleton />}><Settings /></Suspense></ProtectedRoute>} />
+          <Route path="/watchlist" element={<ProtectedRoute><Suspense fallback={<PageSkeleton />}><Watchlist /></Suspense></ProtectedRoute>} />
+          <Route path="/watched" element={<ProtectedRoute><Suspense fallback={<PageSkeleton />}><Watched /></Suspense></ProtectedRoute>} />
+          <Route path="/following" element={<ProtectedRoute><Suspense fallback={<PageSkeleton />}><Following /></Suspense></ProtectedRoute>} />
+          <Route path="/recommendations" element={<ProtectedRoute><Suspense fallback={<div className="page-container pt-20"><div className="media-grid"><MovieSkeleton /></div></div>}><Recommendations /></Suspense></ProtectedRoute>} />
+          <Route path="/calendar" element={<ProtectedRoute><Suspense fallback={<PageSkeleton />}><Calendar /></Suspense></ProtectedRoute>} />
+          <Route path="/stats" element={<ProtectedRoute><Suspense fallback={<div className="page-container pt-20"><div className="media-grid"><MovieSkeleton /></div></div>}><Stats /></Suspense></ProtectedRoute>} />
+          <Route path="/enhanced-stats" element={<ProtectedRoute><Suspense fallback={<PageSkeleton />}><EnhancedStats /></Suspense></ProtectedRoute>} />
+          <Route path="/achievements" element={<ProtectedRoute><Suspense fallback={<PageSkeleton />}><Achievements /></Suspense></ProtectedRoute>} />
+          <Route path="/print-watchlist" element={<ProtectedRoute><Suspense fallback={<PageSkeleton />}><PrintWatchlist /></Suspense></ProtectedRoute>} />
           
-          {/* Public discovery routes */}
-          <Route path="/genres" element={
-            <Suspense fallback={<LoadingFallback variant="grid" count={12} />}>
-              <GenreBrowser />
-            </Suspense>
-          } />
-          <Route path="/decades" element={
-            <Suspense fallback={<LoadingFallback variant="grid" count={12} />}>
-              <DecadeExplorer />
-            </Suspense>
-          } />
-          <Route path="/advanced-search" element={
-            <Suspense fallback={<LoadingFallback variant="grid" count={12} />}>
-              <AdvancedSearch />
-            </Suspense>
-          } />
-          <Route path="/collections" element={
-            <Suspense fallback={<PageSkeleton />}>
-              <Collections />
-            </Suspense>
-          } />
-          <Route path="/awards" element={
-            <Suspense fallback={<LoadingFallback variant="grid" count={12} />}>
-              <AwardWinners />
-            </Suspense>
-          } />
-          <Route path="/year-in-review" element={
-            <ProtectedRoute>
-              <Suspense fallback={<PageSkeleton />}>
-                <YearInReview />
-              </Suspense>
-            </ProtectedRoute>
-          } />
-          <Route path="/watch-history" element={
-            <ProtectedRoute>
-              <Suspense fallback={<PageSkeleton />}>
-                <WatchHistory />
-              </Suspense>
-            </ProtectedRoute>
-          } />
-          <Route path="/accessibility" element={
-            <Suspense fallback={<PageSkeleton />}>
-              <AccessibilitySettings />
-            </Suspense>
-          } />
+          <Route path="/genres" element={<Suspense fallback={<LoadingFallback variant="grid" count={12} />}><GenreBrowser /></Suspense>} />
+          <Route path="/decades" element={<Suspense fallback={<LoadingFallback variant="grid" count={12} />}><DecadeExplorer /></Suspense>} />
+          <Route path="/advanced-search" element={<Suspense fallback={<LoadingFallback variant="grid" count={12} />}><AdvancedSearch /></Suspense>} />
+          <Route path="/collections" element={<Suspense fallback={<PageSkeleton />}><Collections /></Suspense>} />
+          <Route path="/awards" element={<Suspense fallback={<LoadingFallback variant="grid" count={12} />}><AwardWinners /></Suspense>} />
+          <Route path="/year-in-review" element={<ProtectedRoute><Suspense fallback={<PageSkeleton />}><YearInReview /></Suspense></ProtectedRoute>} />
+          <Route path="/watch-history" element={<ProtectedRoute><Suspense fallback={<PageSkeleton />}><WatchHistory /></Suspense></ProtectedRoute>} />
+          <Route path="/accessibility" element={<Suspense fallback={<PageSkeleton />}><AccessibilitySettings /></Suspense>} />
           
-          <Route path="*" element={<NotFound />} />
+          <Route path="*" element={<TitleStatus />} />
         </Routes>
       </motion.div>
     </AnimatePresence>
   );
 }
 
-/**
- * Security: Route Protection
- * Protected routes require authentication.
- */
 const App = () => {
-  const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const { handlers, containerStyle, pullDistance, isRefreshing, threshold } = usePullToRefresh({
-    onRefresh: async () => {
-      await queryClient.invalidateQueries();
-    },
+  const { handlers, containerStyle } = usePullToRefresh({
+    onRefresh: async () => { await queryClient.invalidateQueries(); },
     threshold: 100,
     maxPull: 150,
   });
 
-  try {
-    return (
-      <ThemeProvider>
-        <TooltipProvider>
-          <AuthProvider>
-            <UserListsProvider>
-              <ErrorBoundary>
-                <Toaster />
-                <KeyboardShortcuts />
-                <Sonner position="bottom-right" />
-                <SEO jsonLd={websiteJsonLd()} title="CineTrekker — Track Your Movies & TV Shows" description="Track movies and TV shows you love" canonical="https://cinetrekker.vercel.app" />
-                <GlobalLoader />
-                <NetworkMonitor />
-                <div className="flex min-h-screen flex-col">
-                  <UnifiedNav />
-                  <ScrollToTop />
-
-                  <div
-                    className="md:hidden fixed left-0 right-0 z-40 flex justify-center pointer-events-none"
-                    style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px) + 0.4rem)' }}
-                  >
-                    <div
-                      className="mt-2 px-4 py-2 rounded-full bg-background/90 border border-border text-foreground text-xs shadow-sm transition-opacity duration-200 flex items-center gap-2"
-                      style={{ opacity: pullDistance > 0 || isRefreshing ? 1 : 0 }}
-                      aria-live="polite"
-                    >
-                      <span
-                        className={isRefreshing ? 'inline-block w-3 h-3 rounded-full border-2 border-primary border-t-transparent animate-spin' : 'hidden'}
-                        aria-hidden="true"
-                      />
-                      {isRefreshing
-                        ? t('common.refresh', 'Refreshing...')
-                        : pullDistance >= threshold
-                          ? t('common.releaseToRefresh', 'Release to refresh')
-                          : t('common.pullToRefresh', 'Pull to refresh')}
-                    </div>
-                  </div>
-
-                  <main
-                    id="main"
-                    tabIndex={-1}
-                    className="flex-1 pb-0"
-                    style={containerStyle}
-                    onTouchStart={handlers.onTouchStart}
-                    onTouchMove={handlers.onTouchMove}
-                    onTouchEnd={handlers.onTouchEnd}
-                    onTouchCancel={handlers.onTouchCancel}
-                  >
-                    <ErrorBoundary>
-                      <AnimatedRoutes />
-                    </ErrorBoundary>
-                  </main>
-                  <Footer />
-                </div>
-              </ErrorBoundary>
-            </UserListsProvider>
-          </AuthProvider>
-        </TooltipProvider>
-        {/* Vercel Analytics */}
-        <Analytics />
-      </ThemeProvider>
-    );
-  } catch (err) {
-    console.error("❌ FATAL ERROR in App component:", err);
-    return (
-      <div style={{ padding: '40px', fontFamily: 'system-ui' }}>
-        <h1 style={{ color: '#dc2626' }}>❌ App Component Error</h1>
-        <pre style={{ background: '#f3f4f6', padding: '16px', borderRadius: '8px', overflow: 'auto' }}>
-          {err instanceof Error ? err.stack : String(err)}
-        </pre>
-      </div>
-    );
-  }
+  return (
+    <ThemeProvider>
+      <TooltipProvider>
+        <AuthProvider>
+          <UserListsProvider>
+            <ErrorBoundary>
+              <Toaster />
+              <KeyboardShortcuts />
+              <Sonner position="bottom-right" />
+              <SEO jsonLd={websiteJsonLd()} title="CineTrekker" description="Track movies" canonical="https://cinetrekker.vercel.app" />
+              <GlobalLoader />
+              <NetworkMonitor />
+              <div className="flex min-h-screen flex-col">
+                <UnifiedNav />
+                <ScrollToTop />
+                <main id="main" tabIndex={-1} className="flex-1 pb-0" style={containerStyle} {...handlers}>
+                  <ErrorBoundary>
+                    <AnimatedRoutes />
+                  </ErrorBoundary>
+                </main>
+                <Footer />
+              </div>
+            </ErrorBoundary>
+          </UserListsProvider>
+        </AuthProvider>
+      </TooltipProvider>
+      <Analytics />
+    </ThemeProvider>
+  );
 };
 
 export default App;

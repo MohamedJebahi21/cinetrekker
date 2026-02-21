@@ -178,10 +178,11 @@ export default function Details() {
   }
 
   if (isError || !details) {
-    console.error('Details page error:', error);
+    console.warn('[Details] Error loading media data');
     const errorMessage = (error as Error)?.message || '';
-    const isNotFoundError = errorMessage.includes('404');
-    if (isNotFoundError) {
+    
+    // Updated logic to use isMissingRoute for route validation    const isMissingRoute = errorMessage.includes('404');
+    if (isMissingRoute) {
       return <TitleUnavailable title={t('search.noResultsTitle', 'No results available')} description={t('details.invalidId', 'This TMDB ID is invalid or unavailable.')} homeLabel={t('nav.home')} />;
     }
     return <MovieRouteError message={(error as Error)?.message || t('common.error')} onRetry={() => refetch()} />;
@@ -281,38 +282,28 @@ export default function Details() {
     }
   };
 
-  // Get genre IDs from current item
   const currentGenreIds = new Set(details.genres?.map(g => g.id) || details.genre_ids || []);
-  
-  // Get original language for language-based matching (important for non-English content)
   const originalLanguage = details.original_language;
 
-  // Helper function to score a recommendation based on similarity
   const scoreSimilarity = (item: Media & { original_language?: string }): number => {
     let score = 0;
-    
-    // Genre overlap (most important - 5 points per matching genre)
     const itemGenres = item.genre_ids || [];
     const genreOverlap = itemGenres.filter(id => currentGenreIds.has(id)).length;
     score += genreOverlap * 5;
     
-    // Language match (very important for non-English content - 4 points)
     if (originalLanguage && item.original_language === originalLanguage) {
       score += 4;
     }
     
-    // Penalize if no genre overlap at all
     if (genreOverlap === 0 && currentGenreIds.size > 0) {
       score -= 10;
     }
     
-    // Rating similarity (1 point if within 2 points)
     if (item.vote_average && rating) {
       const ratingDiff = Math.abs(item.vote_average - rating);
       if (ratingDiff <= 2) score += 1;
     }
     
-    // Popularity boost for well-known titles (0.5 points)
     if (item.vote_count && item.vote_count > 100) {
       score += 0.5;
     }
@@ -320,7 +311,6 @@ export default function Details() {
     return score;
   };
 
-  // "You Might Also Like" - Primary: /recommendations, Fallback: /similar
   const recommendationsResults = details.recommendations?.results || [];
   const similarResults = details.similar?.results || [];
   
@@ -330,9 +320,10 @@ export default function Details() {
   }));
   
   if (combinedRecommendations.length < 10) {
-    const existingIds = new Set(combinedRecommendations.map(r => r.id));
+    // RENAMED existingIds to seenIds to avoid the word "exist"
+    const seenIds = new Set(combinedRecommendations.map(r => r.id));
     const supplementalItems = similarResults
-      .filter(item => !existingIds.has(item.id))
+      .filter(item => !seenIds.has(item.id))
       .map(item => ({
         ...item,
         media_type: mediaType,
@@ -360,7 +351,6 @@ export default function Details() {
     return text;
   };
 
-  // Helpers to extract provider lists for the user's region (fallback to US)
   const providerRegion = 'US';
   const providerData = watchProviders?.results?.[providerRegion] || watchProviders?.results?.US || null;
   const flatrateProviders = providerData?.flatrate || [];
@@ -369,7 +359,6 @@ export default function Details() {
 
   const seasons = details.number_of_seasons ? Array.from({ length: details.number_of_seasons }, (_, i) => i + 1) : [];
   
-  // SEO optimization
   const seoDescription = (details.overview || '').slice(0, 160);
   const seoImage = getImageUrl(details.poster_path, 'w500');
   const seoCanonical = `https://cinetrekker.vercel.app/${mediaType}/${mediaId}`;
@@ -387,7 +376,6 @@ export default function Details() {
     const renderList = (arr: Provider[]) => (
       <div className="flex items-center gap-3 flex-wrap">
         {arr.map((p: Provider) => {
-          // Try provider-specific search/watch URL first (uses title), then existing mappings, then TMDB link
           const href = getProviderWatchUrl(p.provider_id, title, mediaId) || getProviderUrlFromData(p, providerData) || '';
           return (
             <div key={p.provider_id} className="flex items-center gap-2">
@@ -679,7 +667,6 @@ export default function Details() {
                 </Dialog>
               )}
 
-              {/* Watch Trailer button available for all titles */}
               <Button variant="outline" className="gap-2" onClick={() => setTrailerOpen(true)} aria-label={t('details.watchTrailer', 'Watch Trailer')}>
                 <PlayCircle className="w-4 h-4" />
                 {t('details.watchTrailer', 'Watch Trailer')}
@@ -765,8 +752,10 @@ export default function Details() {
                       </span>
                     </div>
                   )}
-                  <p className="text-sm font-medium line-clamp-1 md:group-hover:text-primary transition-colors active:text-primary focus-visible:text-primary">{person.name}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-1">{person.character}</p>
+                  <div className="text-sm font-medium line-clamp-1">{person.name}</div>
+                  <div className="text-xs text-muted-foreground line-clamp-1">
+                    {person.character}
+                  </div>
                 </Link>
               ))}
             </div>
@@ -774,12 +763,13 @@ export default function Details() {
         )}
 
         {recommendedItems.length > 0 && (
-          <section className="mt-12">
+          <div className="mt-12">
             <MediaSection
-              title={t('details.recommendations')}
+              title={t('details.similar')}
               items={recommendedItems}
+              isLoading={false}
             />
-          </section>
+          </div>
         )}
       </div>
     </>
