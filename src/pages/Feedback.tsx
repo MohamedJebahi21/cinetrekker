@@ -40,7 +40,8 @@ export default function Feedback() {
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(data?.error || 'Failed to send feedback. Please try again.');
+        const details = [data?.error, data?.detail].filter(Boolean).join(' ');
+        setError(details || 'Failed to send feedback. Please try again.');
         return;
       }
 

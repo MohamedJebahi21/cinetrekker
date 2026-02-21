@@ -1,5 +1,3 @@
-const fetch = globalThis.fetch;
-
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const MAX_REQUESTS_PER_WINDOW = 5;
 const MAX_NAME_LENGTH = 120;
@@ -45,6 +43,19 @@ function normalizeText(value, maxLength) {
   return value.trim().slice(0, maxLength);
 }
 
+function parseBody(req) {
+  if (!req || typeof req !== 'object') return {};
+  if (req.body && typeof req.body === 'object') return req.body;
+  if (typeof req.body === 'string') {
+    try {
+      return JSON.parse(req.body);
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -57,9 +68,10 @@ module.exports = async (req, res) => {
     return res.status(429).json({ error: 'Too many requests. Please try again later.' });
   }
 
-  const name = normalizeText(req.body?.name, MAX_NAME_LENGTH);
-  const email = normalizeText(req.body?.email, MAX_EMAIL_LENGTH);
-  const message = normalizeText(req.body?.message, MAX_MESSAGE_LENGTH);
+  const body = parseBody(req);
+  const name = normalizeText(body?.name, MAX_NAME_LENGTH);
+  const email = normalizeText(body?.email, MAX_EMAIL_LENGTH);
+  const message = normalizeText(body?.message, MAX_MESSAGE_LENGTH);
 
   if (!name || !email || !message) {
     return res.status(400).json({ error: 'Name, email, and message are required.' });
@@ -75,11 +87,22 @@ module.exports = async (req, res) => {
   const FEEDBACK_FROM_EMAIL = process.env.FEEDBACK_FROM_EMAIL || 'CineTrekker Feedback <onboarding@resend.dev>';
 
   if (!RESEND_API_KEY || !FEEDBACK_TO_EMAIL) {
-    return res.status(503).json({ error: 'Feedback service is not configured.' });
+    return res.status(503).json({
+      error: 'Feedback service is not configured.',
+      detail: 'Missing RESEND_API_KEY or FEEDBACK_TO_EMAIL.',
+    });
+  }
+
+  const runtimeFetch = typeof globalThis.fetch === 'function' ? globalThis.fetch.bind(globalThis) : null;
+  if (!runtimeFetch) {
+    return res.status(500).json({
+      error: 'Feedback service runtime error.',
+      detail: 'Fetch API is unavailable in this server runtime.',
+    });
   }
 
   try {
-    const response = await fetch('https://api.resend.com/emails', {
+    const response = await runtimeFetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${RESEND_API_KEY}`,
@@ -96,12 +119,18 @@ module.exports = async (req, res) => {
 
     if (!response.ok) {
       const detail = await response.text().catch(() => '');
-      return res.status(502).json({ error: 'Failed to send feedback.', detail });
+      return res.status(502).json({
+        error: 'Failed to send feedback via provider.',
+        detail: detail || 'Resend returned a non-OK response.',
+      });
     }
 
     return res.status(200).json({ ok: true });
   } catch (error) {
     console.error('feedback function error', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({
+      error: 'Internal feedback service error.',
+      detail: error instanceof Error ? error.message : 'Unknown error',
+    });
   }
 };
