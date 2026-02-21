@@ -120,7 +120,10 @@ export function UnifiedNav() {
   }, [pathname]);
 
   return (
-    <header role="banner" className={cn('glass-nav h-16 transition-all duration-300', isScrolled && 'scrolled')}>
+    <header
+      role="banner"
+      className={cn('glass-nav h-16 pt-[env(safe-area-inset-top,0px)] transition-all duration-300', isScrolled && 'scrolled')}
+    >
       <div className="container mx-auto flex h-full items-center justify-between px-4 gap-4">
         <Link to="/" className="flex items-center gap-3 group flex-shrink-0" aria-label={t('common.appName', 'CineTrekker')}>
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary transition-all duration-300 group-hover:shadow-[0_0_20px_hsl(358_94%_46%/0.5)]">
@@ -231,9 +234,10 @@ export function UnifiedNav() {
       <div
         ref={desktopMenuRef}
         className={cn(
-          'hidden md:block absolute right-4 top-16 z-50 w-80 rounded-xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl overflow-hidden transition-all duration-300 ease-out',
+          'hidden md:block absolute right-4 z-50 w-80 rounded-xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl overflow-hidden transition-all duration-300 ease-out',
           isMenuOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'
         )}
+        style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}
       >
         <nav className="p-3 flex flex-col gap-1" aria-label={t('nav.main', 'Main navigation')}>
           {NAV_ITEMS.map((item) => {
