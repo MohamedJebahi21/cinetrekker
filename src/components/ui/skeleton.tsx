@@ -16,25 +16,18 @@ interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   delay?: number;
 }
 
-function Skeleton({
+export function Skeleton({
   className,
   animation = 'shimmer',
   delay = 0,
   ...props
 }: SkeletonProps) {
-  // Respect user's motion preferences
-  const prefersReducedMotion =
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  const effectiveAnimation = prefersReducedMotion ? 'none' : animation;
-
   const shimmerVariants = {
-    initial: { backgroundPosition: '200% 0' },
+    initial: { transform: 'translateX(-100%)' },
     animate: {
-      backgroundPosition: '-200% 0',
+      transform: 'translateX(100%)',
       transition: {
-        duration: 2,
+        duration: 1.5,
         repeat: Infinity,
         ease: 'linear',
         delay: delay / 1000,
@@ -55,21 +48,16 @@ function Skeleton({
     },
   };
 
-  const baseClasses = cn(
-    'relative overflow-hidden rounded-md bg-muted',
-    effectiveAnimation === 'shimmer' &&
-      'bg-gradient-to-r from-muted via-muted-foreground/10 to-muted bg-[length:200%_100%]',
-    className
-  );
-
-  if (effectiveAnimation === 'none') {
-    return <div className={baseClasses} {...props} />;
-  }
+  const effectiveAnimation = animation === 'shimmer' ? shimmerVariants : pulseVariants;
 
   return (
     <motion.div
-      className={baseClasses}
-      variants={effectiveAnimation === 'shimmer' ? shimmerVariants : pulseVariants}
+      className={cn(
+        'relative overflow-hidden rounded-md bg-muted',
+        animation === 'shimmer' && 'bg-gradient-to-r from-muted via-muted-foreground/10 to-muted',
+        className
+      )}
+      variants={effectiveAnimation}
       initial="initial"
       animate="animate"
       {...props}
