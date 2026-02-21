@@ -15,7 +15,7 @@ import { TVWatchStatusModal } from '@/components/TVWatchStatusModal';
 import { useWatchedEpisodes } from '@/hooks/useFollowedShows';
 import { useEffect } from 'react';
 import { Image } from '@/components/ui/Image';
-import { cn } from "src/lib/utils";
+import { cn } from "../lib/utils";
 
 export interface MediaCardProps {
   media: Media & { watchStatus?: string };

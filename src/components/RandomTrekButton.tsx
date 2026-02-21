@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { getTopRatedMovies, getTopRatedTV } from '@/services/tmdb';
 import { Media } from '@/types/media';
 import { Button } from '@/components/ui/button';
-import { cn } from "src/lib/utils";
+import { cn } from "../lib/utils";
 
 interface RandomTrekButtonProps {
   className?: string;

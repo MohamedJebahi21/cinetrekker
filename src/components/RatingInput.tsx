@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Star } from 'lucide-react';
-import { cn } from "src/lib/utils";
+import { cn } from "../lib/utils";
 
 interface RatingInputProps {
   value?: number;
