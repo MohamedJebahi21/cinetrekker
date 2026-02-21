@@ -1,9 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-
-// Track actor match missing-data logging across renders (and StrictMode double-mount)
-let actorMatchesMissingLogged = false;
 import { useQuery } from '@tanstack/react-query';
 import { 
   User, 
@@ -42,6 +39,9 @@ import { useToast } from '@/hooks/use-toast';
 import SEO from '@/components/SEO';
 import { StickySaveBar } from '@/components/StickySaveBar';
 import { EmptyState } from '@/components/EmptyState';
+
+// Track actor match missing-data logging across renders (and StrictMode double-mount)
+let actorMatchesMissingLogged = false;
 
 const containerVariants = {
   hidden: { opacity: 0 },

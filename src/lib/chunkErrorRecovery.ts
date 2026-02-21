@@ -168,50 +168,64 @@ class ChunkErrorRecovery {
 
     const prompt = document.createElement('div');
     prompt.id = 'chunk-error-prompt';
-    prompt.innerHTML = `
-      <div style="
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 99999;
-        background: white;
-        padding: 32px;
-        border-radius: 16px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        max-width: 400px;
-        text-align: center;
-        font-family: system-ui, -apple-system, sans-serif;
-      ">
-        <div style="font-size: 48px; margin-bottom: 16px;">🔄</div>
-        <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 12px; color: #1a1a1a;">
-          Update Required
-        </h2>
-        <p style="color: #666; margin-bottom: 24px; line-height: 1.5;">
-          A new version of CineTrekker is available. Please refresh the page to continue.
-        </p>
-        <button onclick="window.location.reload()" style="
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          border: none;
-          padding: 12px 32px;
-          border-radius: 8px;
-          font-size: 16px;
-          font-weight: 600;
-          cursor: pointer;
-          width: 100%;
-          transition: transform 0.2s;
-        " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-          Refresh Now
-        </button>
-      </div>
-      <div style="
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.5);
-        z-index: 99998;
-      "></div>
-    `;
+
+    // Backdrop
+    const backdrop = document.createElement('div');
+    backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99998;';
+
+    // Dialog container
+    const dialog = document.createElement('div');
+    dialog.style.cssText = [
+      'position:fixed',
+      'top:50%',
+      'left:50%',
+      'transform:translate(-50%,-50%)',
+      'z-index:99999',
+      'background:white',
+      'padding:32px',
+      'border-radius:16px',
+      'box-shadow:0 20px 60px rgba(0,0,0,0.3)',
+      'max-width:400px',
+      'text-align:center',
+      'font-family:system-ui,-apple-system,sans-serif',
+    ].join(';');
+
+    const icon = document.createElement('div');
+    icon.style.cssText = 'font-size:48px;margin-bottom:16px;';
+    icon.textContent = '🔄';
+
+    const heading = document.createElement('h2');
+    heading.style.cssText = 'font-size:20px;font-weight:600;margin-bottom:12px;color:#1a1a1a;';
+    heading.textContent = 'Update Required';
+
+    const message = document.createElement('p');
+    message.style.cssText = 'color:#666;margin-bottom:24px;line-height:1.5;';
+    message.textContent = 'A new version of CineTrekker is available. Please refresh the page to continue.';
+
+    const button = document.createElement('button');
+    button.style.cssText = [
+      'background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)',
+      'color:white',
+      'border:none',
+      'padding:12px 32px',
+      'border-radius:8px',
+      'font-size:16px',
+      'font-weight:600',
+      'cursor:pointer',
+      'width:100%',
+      'transition:transform 0.2s',
+    ].join(';');
+    button.textContent = 'Refresh Now';
+    button.addEventListener('click', () => window.location.reload());
+    button.addEventListener('mouseover', () => { button.style.transform = 'scale(1.05)'; });
+    button.addEventListener('mouseout', () => { button.style.transform = 'scale(1)'; });
+
+    dialog.appendChild(icon);
+    dialog.appendChild(heading);
+    dialog.appendChild(message);
+    dialog.appendChild(button);
+    prompt.appendChild(dialog);
+    prompt.appendChild(backdrop);
     document.body.appendChild(prompt);
   }
 

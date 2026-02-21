@@ -47,10 +47,10 @@ function PosterImage({ posterPath, alt }: { posterPath: string | null; alt: stri
   return (
     <div ref={ref} className="w-full h-full aspect-[2/3] relative overflow-hidden bg-muted">
       {inView ? (
-        medium ? (
+        (small || medium) ? (
           <img
-            src={medium}
-            srcSet={`${small ? `${small} 185w, ` : ''}${medium} 342w`}
+            src={small || medium || ''}
+            srcSet={`${small ? `${small} 185w, ` : ''}${medium ? `${medium} 342w` : ''}`}
             sizes="(max-width: 768px) 113px, 170px"
             alt={alt}
             width={113}
