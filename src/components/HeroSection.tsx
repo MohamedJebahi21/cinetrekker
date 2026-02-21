@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import Play from 'lucide-react/dist/esm/icons/play';
@@ -19,6 +19,29 @@ export function HeroSection() {
   const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useUserLists();
   const language = i18n.language;
   const [showTrailer, setShowTrailer] = useState(false);
+  const [allowTrailerFetch, setAllowTrailerFetch] = useState(false);
+
+  useEffect(() => {
+    let idleId: number | null = null;
+    let timeoutId: number | null = null;
+
+    const enable = () => setAllowTrailerFetch(true);
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      idleId = window.requestIdleCallback(enable, { timeout: 1800 });
+    } else {
+      timeoutId = window.setTimeout(enable, 300);
+    }
+
+    return () => {
+      if (idleId !== null && 'cancelIdleCallback' in window) {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, []);
 
   const { data: trendingDay, isLoading } = useQuery({
     queryKey: ['trending', 'day', language],
@@ -41,7 +64,7 @@ export function HeroSection() {
     queryFn: () => mediaType === 'movie' 
       ? getMovieVideos(heroMedia!.id, language)
       : getTVVideos(heroMedia!.id, language),
-    enabled: !!heroMedia?.id,
+    enabled: allowTrailerFetch && !!heroMedia?.id,
   });
 
   const trailer = videos?.results?.find(

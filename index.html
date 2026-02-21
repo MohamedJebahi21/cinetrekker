@@ -5,25 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5.0, viewport-fit=cover" />
     
     <script>
-      // Force dark mode - clear any stored theme preferences and ensure dark class
+      // Apply dark mode immediately to prevent theme flash.
       (function () {
         try {
-          // Clear stored theme preferences
-          localStorage.removeItem('theme');
-          localStorage.removeItem('cinetrekker:theme');
-          
-          // Force dark mode on root element
           var root = document.documentElement;
           root.classList.add('dark');
           root.setAttribute('data-theme', 'dark');
           root.style.colorScheme = 'dark';
         } catch (e) {
-          // ignore - SSR or localStorage not available
+          // ignore
         }
       })();
     </script>
-
-    <script src="/loading.js" defer></script>
 
     <title>CineTrekker | Track Movies & TV Shows - Your Personal Watchlist</title>
     <meta name="description" content="Discover, track, and organize your favorite movies and TV shows with CineTrekker. Create watchlists, mark watched, and explore filming locations.">
@@ -60,9 +53,6 @@
     <link rel="icon" type="image/png" href="/ct-icon.png?v=4" />
     <link rel="apple-touch-icon" href="/ct-icon.png?v=4" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@400;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" as="style" crossorigin>
     <link rel="preconnect" href="https://image.tmdb.org">
     <link rel="preconnect" href="https://nvssyuxghwlubxklvgrn.supabase.co" crossorigin>
 
