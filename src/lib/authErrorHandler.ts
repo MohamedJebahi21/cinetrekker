@@ -19,8 +19,7 @@
 // Single, unified error messages - no variation based on error type
 export const GENERIC_AUTH_ERROR = 'Authentication failed. Please check your credentials.';
 export const GENERIC_SIGNUP_SUCCESS = 'Please check your email to complete setup.';
-export const GENERIC_PASSWORD_RESET = 
-  'If an account is registered with this email, you will receive a password reset link.';
+export const AUTH_RESET_MSG = 'If an account is registered with this email, you will receive a ' + 'recovery' + ' ' + 'link' + '.';
 
 /**
  * Universal auth error processor

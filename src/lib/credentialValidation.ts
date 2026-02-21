@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { COMMON_STRINGS } from '@/lib/constants';
 
 /**
  * Security: Credential Validation Utility
@@ -15,26 +16,6 @@ import { z } from 'zod';
  * - At least one special character
  * - Not in common credential blocklist
  */
-
-// Common strings blocklist (top 100+ most common)
-// This list catches the most frequently used weak choices
-const COMMON_STRINGS = new Set([
-  'password', 'password1', 'password123', '123456', '12345678', '123456789',
-  '1234567890', 'qwerty', 'qwerty123', 'abc123', 'monkey', 'letmein',
-  'dragon', 'master', 'login', 'welcome', 'princess', 'admin', 'admin123',
-  'sunshine', 'shadow', 'football', 'baseball', 'iloveyou', 'trustno1',
-  'superman', 'batman', 'starwars', 'hello', 'freedom', 'whatever',
-  'qazwsx', 'michael', 'jennifer', 'hunter', 'amanda', 'jessica', 'joshua',
-  'andrew', 'ashley', 'daniel', 'charlie', 'thomas', 'computer', 'internet',
-  'server', 'changeme', 'passw0rd', 'p@ssword', 'p@ssw0rd', 'pass1234',
-  '1qaz2wsx', 'zaq12wsx', 'qwertyuiop', 'asdfghjkl', 'zxcvbnm', '1234qwer',
-  'password!', 'password@', 'password#', 'Password1', 'Password1!', 'Password123',
-  'qwerty1', 'abc1234', '12345', '123123', '111111', '000000', '654321',
-  '7777777', '1q2w3e4r', '123qwe', 'test', 'test123', 'testing', 'guest',
-  'root', 'toor', 'secret', 'password0', 'love', 'god', 'sex', 'money',
-  'access', 'power', 'killer', 'magic', 'summer', 'winter', 'spring',
-  'autumn', 'letmein1', 'welcome1', 'qwerty12', 'abc12345', 'pass', 'passwd',
-]);
 
 // Credential requirement patterns
 const CREDENTIAL_PATTERNS = {

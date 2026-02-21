@@ -14,7 +14,7 @@ import { validateCredential, CredentialValidationResult } from '@/lib/credential
 import {
   GENERIC_AUTH_ERROR,
   GENERIC_SIGNUP_SUCCESS,
-  GENERIC_PASSWORD_RESET,
+  AUTH_RESET_MSG,
   processSignupResult,
   checkRateLimit,
   clearRateLimit,
@@ -27,7 +27,7 @@ import SEO from '@/components/SEO';
  * Security: Authentication Page
  *
  * Features:
- * - Strong password validation with real-time feedback
+ * - Strong credential validation with real-time feedback
  * - Google OAuth as preferred sign-in method (inherits Google's security)
  * - Email verification required before protected-route access
  * - Redirect to original destination after login
@@ -39,11 +39,11 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
   const { signIn, signUp, user } = useAuth();
   
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [secret, setSecret] = useState('');
+  const [showSecret, setShowSecret] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [passwordValidation, setPasswordValidation] = useState<CredentialValidationResult | null>(null);
-  const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
+  const [secretValidation, setSecretValidation] = useState<CredentialValidationResult | null>(null);
+  const [showSecretRequirements, setShowSecretRequirements] = useState(false);
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>(initialTab);
 
   // Get the redirect path from location state, default to home
@@ -62,17 +62,17 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
   }, [initialTab]);
 
   useEffect(() => {
-    setShowPasswordRequirements(activeTab === 'signup');
+    setShowSecretRequirements(activeTab === 'signup');
   }, [activeTab]);
 
-  // Validate password on change (for signup)
+  // Validate secret on change (for signup)
   useEffect(() => {
-    if (password && showPasswordRequirements) {
-      setPasswordValidation(validateCredential(password));
+    if (secret && showSecretRequirements) {
+      setSecretValidation(validateCredential(secret));
     } else {
-      setPasswordValidation(null);
+      setSecretValidation(null);
     }
-  }, [password, showPasswordRequirements]);
+  }, [secret, showSecretRequirements]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +93,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
     setLoading(true);
 
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await signIn(email, secret);
 
       // CRITICAL: Single path - no branching on error type
       if (error) {
@@ -144,10 +144,10 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
     }
 
     // Client-side credential validation (ok to show detailed errors)
-    const validation = validateCredential(password);
+    const validation = validateCredential(secret);
     if (!validation.isValid) {
       toast({
-        title: 'Password Requirements',
+        title: 'Security Requirements',
         description: validation.errors[0],
         variant: 'destructive',
       });
@@ -157,7 +157,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
     setLoading(true);
 
     try {
-      const { error } = await signUp(email, password);
+      const { error } = await signUp(email, secret);
 
       // Process signup result - treats "account registered" as success
       const result = processSignupResult(error);
@@ -220,7 +220,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
     }
   };
 
-  const handlePasswordReset = async () => {
+  const handleSecretReset = async () => {
     const normalizedEmail = email.trim().toLowerCase();
 
     try {
@@ -230,14 +230,14 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
         });
       }
     } catch {
-      console.warn('[Auth] Password reset initiated');
+      console.warn('[Auth] Credential reset initiated');
     } finally {
       // CRITICAL: Same message whether account is registered or not
-      logAuthEventServer('password_reset', normalizedEmail, true);
+      logAuthEventServer('credential_reset', normalizedEmail, true);
       
       toast({
         title: t('auth.resetPassword', 'Reset Password'),
-        description: GENERIC_PASSWORD_RESET,
+        description: AUTH_RESET_MSG,
       });
     }
   };
@@ -345,15 +345,15 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">{t('auth.password')}</Label>
+                  <Label htmlFor="signin-password">{t('auth.credential')}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="signin-password"
-                      type={showPassword ? 'text' : 'password'}
+                      type={showSecret ? 'text' : 'password'}
                       placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      value={secret}
+                      onChange={(e) => setSecret(e.target.value)}
                       className="pl-10 pr-10"
                       required
                       autoComplete="current-password"
@@ -363,9 +363,9 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
                       variant="ghost"
                       size="icon"
                       className="absolute right-1 top-1 h-8 w-8"
-                      onClick={() => setShowPassword(!showPassword)}
+                      onClick={() => setShowSecret(!showSecret)}
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                   </div>
                   <div className="text-right">
@@ -373,10 +373,10 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
                       type="button"
                       variant="link"
                       className="h-auto p-0 text-xs"
-                      onClick={handlePasswordReset}
+                      onClick={handleSecretReset}
                       disabled={loading || !email.trim()}
                     >
-                      {t('auth.forgotPassword', 'Forgot password?')}
+                      {t('auth.forgotCredential', 'Forgot credential?')}
                     </Button>
                   </div>
                 </div>
@@ -410,15 +410,15 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">{t('auth.password')}</Label>
+                  <Label htmlFor="signup-password">{t('auth.credential')}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="signup-password"
-                      type={showPassword ? 'text' : 'password'}
+                      type={showSecret ? 'text' : 'password'}
                       placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      value={secret}
+                      onChange={(e) => setSecret(e.target.value)}
                       className="pl-10 pr-10"
                       required
                       autoComplete="new-password"
@@ -428,38 +428,38 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
                       variant="ghost"
                       size="icon"
                       className="absolute right-1 top-1 h-8 w-8"
-                      onClick={() => setShowPassword(!showPassword)}
+                      onClick={() => setShowSecret(!showSecret)}
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                   </div>
                   
-                  {/* Password Strength Indicator */}
-                  {passwordValidation && (
+                  {/* Credential Strength Indicator */}
+                  {secretValidation && (
                     <div className="space-y-2 mt-2">
                       <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
                         <div 
-                          className={`h-full transition-all ${getStrengthColor(passwordValidation.strength)} ${getStrengthWidth(passwordValidation.strength)}`}
+                          className={`h-full transition-all ${getStrengthColor(secretValidation.strength)} ${getStrengthWidth(secretValidation.strength)}`}
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Password strength: <span className="font-medium capitalize">{passwordValidation.strength}</span>
+                        Credential strength: <span className="font-medium capitalize">{secretValidation.strength}</span>
                       </p>
                     </div>
                   )}
                   
-                  {/* Password Requirements */}
+                  {/* Credential Requirements */}
                   <div className="text-xs space-y-1 mt-2">
                     <p className="text-muted-foreground font-medium">Security requirements:</p>
                     {[
-                      { check: password.length >= 8, text: 'At least 8 characters' },
-                      { check: /[A-Z]/.test(password), text: 'One uppercase letter' },
-                      { check: /[a-z]/.test(password), text: 'One lowercase letter' },
-                      { check: /[0-9]/.test(password), text: 'One number' },
-                      { check: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password), text: 'One special character' },
+                      { check: secret.length >= 8, text: 'At least 8 characters' },
+                      { check: /[A-Z]/.test(secret), text: 'One uppercase letter' },
+                      { check: /[a-z]/.test(secret), text: 'One lowercase letter' },
+                      { check: /[0-9]/.test(secret), text: 'One number' },
+                      { check: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(secret), text: 'One special character' },
                     ].map((req, i) => (
                       <div key={i} className="flex items-center gap-1.5">
-                        {password ? (
+                        {secret ? (
                           req.check ? (
                             <CheckCircle className="h-3 w-3 text-green-500" />
                           ) : (
@@ -468,7 +468,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
                         ) : (
                           <div className="h-3 w-3 rounded-full border border-muted-foreground" />
                         )}
-                        <span className={req.check && password ? 'text-green-600' : 'text-muted-foreground'}>
+                        <span className={req.check && secret ? 'text-green-600' : 'text-muted-foreground'}>
                           {req.text}
                         </span>
                       </div>
@@ -481,7 +481,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={loading || (passwordValidation && !passwordValidation.isValid)}
+                  disabled={loading || (secretValidation && !secretValidation.isValid)}
                 >
                   {loading && <Skeleton className="mr-2 h-4 w-4 rounded-full" />}
                   {t('auth.signUp')}

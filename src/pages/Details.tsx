@@ -17,7 +17,7 @@ import { useLastViewed } from '@/hooks/useLastViewed';
 import { addToRecentlyViewed } from '@/lib/recentlyViewed';
 import { MediaSection } from '@/components/MediaSection';
 import { MovieRouteError } from '@/components/details/MovieRouteError';
-import { MovieRouteNotFound } from '@/components/details/MovieRouteNotFound';
+import { TitleUnavailable } from '@/components/details/TitleUnavailable';
 import SEO from '@/components/SEO';
 import useDocumentTitle from '@/hooks/useDocumentTitle';
 import MovieSchema from '@/components/MovieSchema';
@@ -174,7 +174,7 @@ export default function Details() {
   }
 
   if (!isValidId) {
-    return <MovieRouteNotFound title={t('search.noResultsTitle', 'No results available')} description={t('details.invalidId', 'Invalid title id.')} homeLabel={t('nav.home')} />;
+    return <TitleUnavailable title={t('search.noResultsTitle', 'No results available')} description={t('details.invalidId', 'Invalid title id.')} homeLabel={t('nav.home')} />;
   }
 
   if (isError || !details) {
@@ -182,7 +182,7 @@ export default function Details() {
     const errorMessage = (error as Error)?.message || '';
     const isNotFoundError = errorMessage.includes('404');
     if (isNotFoundError) {
-      return <MovieRouteNotFound title={t('search.noResultsTitle', 'No results available')} description={t('details.invalidId', 'This TMDB ID is invalid or unavailable.')} homeLabel={t('nav.home')} />;
+      return <TitleUnavailable title={t('search.noResultsTitle', 'No results available')} description={t('details.invalidId', 'This TMDB ID is invalid or unavailable.')} homeLabel={t('nav.home')} />;
     }
     return <MovieRouteError message={(error as Error)?.message || t('common.error')} onRetry={() => refetch()} />;
   }
