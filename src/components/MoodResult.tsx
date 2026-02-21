@@ -56,7 +56,7 @@ export default function MoodResult({ mood, time, onTryAnother, className = '' }:
   if (!match) {
     return (
       <div className={cn('page-container py-12 text-center', className)}>
-        <p className="text-lg font-semibold">{t('mood.noMatch', 'No match found')}</p>
+        <p className="text-lg font-semibold">{t('mood.noMatch', 'No matches available')}</p>
         <p className="text-muted-foreground mt-2">{t('mood.tryDifferent', 'Try a different mood or time')}</p>
         <div className="mt-6 flex items-center justify-center gap-3">
           <Button onClick={handleTryAnother} variant="outline">{t('mood.tryAnother', 'Try Another')}</Button>

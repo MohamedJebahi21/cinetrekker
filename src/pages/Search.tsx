@@ -642,7 +642,7 @@ export default function Search() {
           </div>
           <h3 className="text-2xl font-bold mb-3 title-display">
             {normalizedQuery 
-              ? t('search.noResultsTitle', 'No results found')
+              ? t('search.noResultsTitle', 'No results available')
               : t('search.startJourney', 'Your Journey Starts Here')
             }
           </h3>

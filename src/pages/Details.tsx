@@ -174,15 +174,15 @@ export default function Details() {
   }
 
   if (!isValidId) {
-    return <MovieRouteNotFound title={t('search.noResultsTitle', 'No results found')} description={t('details.invalidId', 'Invalid title id.')} homeLabel={t('nav.home')} />;
+    return <MovieRouteNotFound title={t('search.noResultsTitle', 'No results available')} description={t('details.invalidId', 'Invalid title id.')} homeLabel={t('nav.home')} />;
   }
 
   if (isError || !details) {
     console.error('Details page error:', error);
     const errorMessage = (error as Error)?.message || '';
-    const isNotFoundError = /not found|404/i.test(errorMessage);
+    const isNotFoundError = errorMessage.includes('404');
     if (isNotFoundError) {
-      return <MovieRouteNotFound title={t('search.noResultsTitle', 'No results found')} description={t('details.invalidId', 'This TMDB ID is invalid or unavailable.')} homeLabel={t('nav.home')} />;
+      return <MovieRouteNotFound title={t('search.noResultsTitle', 'No results available')} description={t('details.invalidId', 'This TMDB ID is invalid or unavailable.')} homeLabel={t('nav.home')} />;
     }
     return <MovieRouteError message={(error as Error)?.message || t('common.error')} onRetry={() => refetch()} />;
   }

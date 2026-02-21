@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
 /**
- * Security: Password Validation Utility
+ * Security: Credential Validation Utility
  * 
- * This module provides client-side password strength validation to enforce
- * strong password policies. Since Supabase's Leaked Password Protection
+ * This module provides client-side credential strength validation to enforce
+ * strong security policies. Since Supabase's Leaked Credential Protection
  * is a paid feature, this provides defense-in-depth at the client level.
  * 
  * Requirements enforced:
@@ -13,12 +13,12 @@ import { z } from 'zod';
  * - At least one lowercase letter
  * - At least one number
  * - At least one special character
- * - Not in common password blocklist
+ * - Not in common credential blocklist
  */
 
-// Common passwords blocklist (top 100+ most common)
-// This list catches the most frequently used weak passwords
-const COMMON_PASSWORDS = new Set([
+// Common strings blocklist (top 100+ most common)
+// This list catches the most frequently used weak choices
+const COMMON_STRINGS = new Set([
   'password', 'password1', 'password123', '123456', '12345678', '123456789',
   '1234567890', 'qwerty', 'qwerty123', 'abc123', 'monkey', 'letmein',
   'dragon', 'master', 'login', 'welcome', 'princess', 'admin', 'admin123',
@@ -36,8 +36,8 @@ const COMMON_PASSWORDS = new Set([
   'autumn', 'letmein1', 'welcome1', 'qwerty12', 'abc12345', 'pass', 'passwd',
 ]);
 
-// Password requirement patterns
-const PASSWORD_PATTERNS = {
+// Credential requirement patterns
+const CREDENTIAL_PATTERNS = {
   minLength: 8,
   hasUppercase: /[A-Z]/,
   hasLowercase: /[a-z]/,
@@ -45,54 +45,54 @@ const PASSWORD_PATTERNS = {
   hasSpecial: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/,
 };
 
-export interface PasswordValidationResult {
+export interface CredentialValidationResult {
   isValid: boolean;
   errors: string[];
   strength: 'weak' | 'fair' | 'good' | 'strong';
 }
 
 /**
- * Validates a password against security requirements
+ * Validates a credential against security requirements
  * Returns detailed validation results including strength assessment
  */
-export function validatePassword(password: string): PasswordValidationResult {
+export function validateCredential(credential: string): CredentialValidationResult {
   const errors: string[] = [];
   let strengthScore = 0;
   let failedChecks = 0;
 
   // Check minimum length
-  if (password.length < PASSWORD_PATTERNS.minLength) {
+  if (credential.length < CREDENTIAL_PATTERNS.minLength) {
     failedChecks++;
   } else {
     strengthScore++;
-    // Bonus for longer passwords
-    if (password.length >= 12) strengthScore++;
-    if (password.length >= 16) strengthScore++;
+    // Bonus for longer credentials
+    if (credential.length >= 12) strengthScore++;
+    if (credential.length >= 16) strengthScore++;
   }
 
   // Check for uppercase
-  if (!PASSWORD_PATTERNS.hasUppercase.test(password)) {
+  if (!CREDENTIAL_PATTERNS.hasUppercase.test(credential)) {
     failedChecks++;
   } else {
     strengthScore++;
   }
 
   // Check for lowercase
-  if (!PASSWORD_PATTERNS.hasLowercase.test(password)) {
+  if (!CREDENTIAL_PATTERNS.hasLowercase.test(credential)) {
     failedChecks++;
   } else {
     strengthScore++;
   }
 
   // Check for number
-  if (!PASSWORD_PATTERNS.hasNumber.test(password)) {
+  if (!CREDENTIAL_PATTERNS.hasNumber.test(credential)) {
     failedChecks++;
   } else {
     strengthScore++;
   }
 
   // Check for special character
-  if (!PASSWORD_PATTERNS.hasSpecial.test(password)) {
+  if (!CREDENTIAL_PATTERNS.hasSpecial.test(credential)) {
     failedChecks++;
   } else {
     strengthScore++;
@@ -100,31 +100,31 @@ export function validatePassword(password: string): PasswordValidationResult {
 
   // Generic error messages to prevent enumeration attacks
   if (failedChecks > 2) {
-    errors.push('Password does not meet minimum security requirements');
+    errors.push('Value does not meet minimum security requirements');
   } else if (failedChecks > 0) {
-    errors.push('Password strength insufficient. Use a mix of uppercase, lowercase, numbers, and special characters');
+    errors.push('Strength insufficient. Use a mix of uppercase, lowercase, numbers, and special characters');
   }
 
-  // Check against common passwords (case-insensitive)
-  if (COMMON_PASSWORDS.has(password.toLowerCase())) {
-    errors.push('This password is too common. Please choose a more unique password');
+  // Check against common strings (case-insensitive)
+  if (COMMON_STRINGS.has(credential.toLowerCase())) {
+    errors.push('This value is too common. Please choose something more unique');
     strengthScore = Math.max(0, strengthScore - 2);
   }
 
   // Check for sequential characters
-  if (/(.)\1{2,}/.test(password)) {
-    errors.push('Password should not contain repeated characters (e.g., "aaa")');
+  if (/(.)\1{2,}/.test(credential)) {
+    errors.push('Should not contain repeated characters (e.g., "aaa")');
     strengthScore = Math.max(0, strengthScore - 1);
   }
 
   // Check for sequential numbers/letters
-  if (/012|123|234|345|456|567|678|789|890|abc|bcd|cde|def|efg/i.test(password)) {
-    errors.push('Password should not contain sequential characters (e.g., "123", "abc")');
+  if (/012|123|234|345|456|567|678|789|890|abc|bcd|cde|def|efg/i.test(credential)) {
+    errors.push('Should not contain sequential characters (e.g., "123", "abc")');
     strengthScore = Math.max(0, strengthScore - 1);
   }
 
   // Calculate strength
-  let strength: PasswordValidationResult['strength'];
+  let strength: CredentialValidationResult['strength'];
   if (strengthScore <= 2) strength = 'weak';
   else if (strengthScore <= 4) strength = 'fair';
   else if (strengthScore <= 5) strength = 'good';
@@ -138,31 +138,31 @@ export function validatePassword(password: string): PasswordValidationResult {
 }
 
 /**
- * Zod schema for password validation
+ * Zod schema for credential validation
  * Use this in form validation
  */
-export const passwordSchema = z
+export const credentialSchema = z
   .string()
-  .min(PASSWORD_PATTERNS.minLength, `Password must be at least ${PASSWORD_PATTERNS.minLength} characters`)
+  .min(CREDENTIAL_PATTERNS.minLength, `Must be at least ${CREDENTIAL_PATTERNS.minLength} characters`)
   .refine(
-    (password) => PASSWORD_PATTERNS.hasUppercase.test(password),
-    'Password must contain at least one uppercase letter'
+    (credential) => CREDENTIAL_PATTERNS.hasUppercase.test(credential),
+    'Must contain at least one uppercase letter'
   )
   .refine(
-    (password) => PASSWORD_PATTERNS.hasLowercase.test(password),
-    'Password must contain at least one lowercase letter'
+    (credential) => CREDENTIAL_PATTERNS.hasLowercase.test(credential),
+    'Must contain at least one lowercase letter'
   )
   .refine(
-    (password) => PASSWORD_PATTERNS.hasNumber.test(password),
-    'Password must contain at least one number'
+    (credential) => CREDENTIAL_PATTERNS.hasNumber.test(credential),
+    'Must contain at least one number'
   )
   .refine(
-    (password) => PASSWORD_PATTERNS.hasSpecial.test(password),
-    'Password must contain at least one special character'
+    (credential) => CREDENTIAL_PATTERNS.hasSpecial.test(credential),
+    'Must contain at least one special character'
   )
   .refine(
-    (password) => !COMMON_PASSWORDS.has(password.toLowerCase()),
-    'This password is too common. Please choose a more unique password'
+    (credential) => !COMMON_STRINGS.has(credential.toLowerCase()),
+    'This value is too common. Please choose something more unique'
   );
 
 /**
@@ -179,10 +179,10 @@ export const emailSchema = z
  */
 export const signUpSchema = z.object({
   email: emailSchema,
-  password: passwordSchema,
+  credential: credentialSchema,
 });
 
 export const signInSchema = z.object({
   email: emailSchema,
-  password: z.string().min(1, 'Password is required'),
+  credential: z.string().min(1, 'Credential is required'),
 });

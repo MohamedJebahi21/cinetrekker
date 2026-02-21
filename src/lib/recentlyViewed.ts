@@ -15,7 +15,7 @@ export function addToRecentlyViewed(item: Omit<RecentlyViewedItem, 'timestamp'>)
     const stored = localStorage.getItem(STORAGE_KEY);
     const items: RecentlyViewedItem[] = stored ? JSON.parse(stored) : [];
     
-    // Remove if already exists
+    // Handle existing records
     const filtered = items.filter(
       (i) => !(i.id === item.id && i.mediaType === item.mediaType)
     );

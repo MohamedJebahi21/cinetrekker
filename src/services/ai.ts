@@ -142,6 +142,6 @@ export async function getAIRecommendations(prompt: string, language = 'en') {
   });
 
   // 6) Return a short summary and the results
-  const summary = `Found ${finalItems.length} candidates using genres: ${extracted.genres.join(', ')} and moods: ${extracted.moods.join(', ')}`;
+  const summary = `Generated ${finalItems.length} matches using genres: ${extracted.genres.join(', ')} and moods: ${extracted.moods.join(', ')}`;
   return { summary, results: finalItems };
 }

@@ -197,8 +197,8 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
     } else {
       // guest — persist to local state + storage
       setWatchlist(prev => {
-        const exists = prev.some(i => i.mediaId === mediaId && i.mediaType === mediaType);
-        if (exists) return prev;
+        const isDuplicate = prev.some(i => i.mediaId === mediaId && i.mediaType === mediaType);
+        if (isDuplicate) return prev;
         const item: UserMediaItem = { mediaId, mediaType } as UserMediaItem;
         const next = [...prev, item];
         try { localStorage.setItem(STORAGE_KEYS.watchlist, JSON.stringify(next)); } catch (e) { console.warn('Failed to save watchlist to localStorage:', e); }
@@ -238,10 +238,10 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
       await addToWatchedMutation.mutateAsync({ mediaId, mediaType, rating, note, status });
     } else {
       setWatched(prev => {
-        const exists = prev.some(i => i.mediaId === mediaId && i.mediaType === mediaType);
+        const isDuplicate = prev.some(i => i.mediaId === mediaId && i.mediaType === mediaType);
         const item: UserMediaItem = { mediaId, mediaType, rating, note, status } as UserMediaItem;
         let next: UserMediaItem[];
-        if (exists) {
+        if (isDuplicate) {
           next = prev.map(i => (i.mediaId === mediaId && i.mediaType === mediaType ? { ...i, ...item } : i));
         } else {
           next = [...prev, item];

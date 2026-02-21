@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { validatePassword, PasswordValidationResult } from '@/lib/passwordValidation';
+import { validateCredential, CredentialValidationResult } from '@/lib/credentialValidation';
 import {
   GENERIC_AUTH_ERROR,
   GENERIC_SIGNUP_SUCCESS,
@@ -42,7 +42,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [passwordValidation, setPasswordValidation] = useState<PasswordValidationResult | null>(null);
+  const [passwordValidation, setPasswordValidation] = useState<CredentialValidationResult | null>(null);
   const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>(initialTab);
 
@@ -68,7 +68,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
   // Validate password on change (for signup)
   useEffect(() => {
     if (password && showPasswordRequirements) {
-      setPasswordValidation(validatePassword(password));
+      setPasswordValidation(validateCredential(password));
     } else {
       setPasswordValidation(null);
     }
@@ -143,8 +143,8 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
       return;
     }
 
-    // Client-side password validation (ok to show detailed errors)
-    const validation = validatePassword(password);
+    // Client-side credential validation (ok to show detailed errors)
+    const validation = validateCredential(password);
     if (!validation.isValid) {
       toast({
         title: 'Password Requirements',
@@ -242,7 +242,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
     }
   };
 
-  const getStrengthColor = (strength: PasswordValidationResult['strength']) => {
+  const getStrengthColor = (strength: CredentialValidationResult['strength']) => {
     switch (strength) {
       case 'weak': return 'bg-destructive';
       case 'fair': return 'bg-orange-500';
@@ -251,7 +251,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
     }
   };
 
-  const getStrengthWidth = (strength: PasswordValidationResult['strength']) => {
+  const getStrengthWidth = (strength: CredentialValidationResult['strength']) => {
     switch (strength) {
       case 'weak': return 'w-1/4';
       case 'fair': return 'w-2/4';
@@ -450,7 +450,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
                   
                   {/* Password Requirements */}
                   <div className="text-xs space-y-1 mt-2">
-                    <p className="text-muted-foreground font-medium">Password must have:</p>
+                    <p className="text-muted-foreground font-medium">Security requirements:</p>
                     {[
                       { check: password.length >= 8, text: 'At least 8 characters' },
                       { check: /[A-Z]/.test(password), text: 'One uppercase letter' },

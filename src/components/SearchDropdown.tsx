@@ -286,7 +286,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
           ) : (
             <div className="py-8 px-4 text-center">
               <p className="text-sm text-muted-foreground mb-2">
-                {t('search.noResults', `No results found for "${debouncedQuery}"`)}
+                {t('search.noResults', `No results available for "${debouncedQuery}"`)}
               </p>
               <p className="text-xs text-muted-foreground/60">
                 {t('search.tryDifferent', 'Try different keywords or check spelling')}

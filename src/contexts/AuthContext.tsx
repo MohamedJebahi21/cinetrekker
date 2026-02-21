@@ -28,10 +28,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, code: string) => {
     const { error } = await supabase.auth.signUp({
       email,
-      password,
+      password: code,
     });
 
     // Return error as-is
@@ -39,10 +39,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error as Error | null };
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, code: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
-      password,
+      password: code,
     });
 
     // Return error as-is

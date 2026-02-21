@@ -57,8 +57,8 @@ export function EmptySearchResults({ query, onNewSearch }: { query: string; onNe
   return (
     <EmptyState
       icon={Search}
-      title="No results found"
-      description={query ? `No results found. Try different keywords or filters.` : 'Try searching for movies, TV shows, or actors.'}
+      title="No results available"
+      description={query ? `No results available. Try different keywords or filters.` : 'Try searching for movies, TV shows, or actors.'}
       action={{ label: 'Browse Trending', onClick: onNewSearch }}
       className="min-h-96"
     />

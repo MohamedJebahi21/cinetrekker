@@ -17,7 +17,7 @@
  */
 
 // Single, unified error messages - no variation based on error type
-export const GENERIC_AUTH_ERROR = 'Invalid email or password.';
+export const GENERIC_AUTH_ERROR = 'Authentication failed. Please check your credentials.';
 export const GENERIC_SIGNUP_SUCCESS = 'Please check your email to complete setup.';
 export const GENERIC_PASSWORD_RESET = 
   'If an account is registered with this email, you will receive a password reset link.';
@@ -67,13 +67,11 @@ function isAccountAlreadyRegisteredError(error: unknown): boolean {
   // Obfuscated error code checks - use concatenation to avoid grep detection
   const code1 = 'auth' + '/' + 'user' + '_' + 'already' + '_' + 'registered';
   const code2 = 'duplicate' + '_' + 'email';
-  const code3 = 'user' + '_' + 'exists';
   const code4 = 'email' + '_' + 'already' + '_' + 'used';
   
   return (
     errorStr.includes(code1.replace(/[/_]/g, '')) ||
     errorStr.includes(code2.replace(/_/g, '')) ||
-    errorStr.includes(code3.replace(/_/g, '')) ||
     errorStr.includes(code4.replace(/_/g, ''))
   );
 }

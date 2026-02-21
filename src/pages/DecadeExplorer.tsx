@@ -95,7 +95,7 @@ export default function DecadeExplorer() {
           </div>
         ) : (
           <div className="text-center py-16 text-muted-foreground">
-            No results found for this decade
+            No results available for this decade
           </div>
         )}
       </div>

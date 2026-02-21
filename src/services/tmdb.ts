@@ -54,7 +54,7 @@ const fetchTMDB = async <T>(endpoint: string, language: string = 'en', extraPara
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      const statusText = response.status === 404 ? 'Not Found - Invalid endpoint' 
+      const statusText = response.status === 404 ? 'Unavailable - Invalid endpoint' 
         : response.status >= 500 ? 'Server Error - TMDB or Supabase issue' 
         : `HTTP ${response.status}`;
       

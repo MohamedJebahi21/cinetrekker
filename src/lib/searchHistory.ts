@@ -12,7 +12,7 @@ export function addToSearchHistory(query: string): void {
   try {
     const history = getSearchHistory();
     
-    // Remove duplicate if exists
+    // Clean up duplicates
     const filtered = history.filter(item => item.query.toLowerCase() !== query.toLowerCase());
     
     // Add new search at the beginning

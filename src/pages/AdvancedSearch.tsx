@@ -271,7 +271,7 @@ export default function AdvancedSearch() {
         ) : filteredResults && filteredResults.length > 0 ? (
           <>
             <p className="text-sm text-muted-foreground mb-4">
-              Found {filteredResults.length} results
+              Showing {filteredResults.length} matches
             </p>
             <div className="media-grid">
               {filteredResults.map((media) => (
@@ -281,7 +281,7 @@ export default function AdvancedSearch() {
           </>
         ) : query ? (
           <div className="text-center py-16 text-muted-foreground">
-            No results found. Try adjusting your filters.
+            No results available. Try adjusting your filters.
           </div>
         ) : (
           <div className="text-center py-16 text-muted-foreground">

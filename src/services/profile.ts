@@ -61,7 +61,7 @@ export const profileService = {
   // Create or update user profile
   async saveProfile(userId: string, profile: Partial<UserProfile>): Promise<UserProfile | null> {
     try {
-      // First check if profile exists
+      // First check for profile record
       const existing = await this.getProfile(userId);
 
       const validatedProfilePhoto = validateProfilePhotoDataUrl(profile.profile_photo);

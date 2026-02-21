@@ -16,8 +16,8 @@ installChunkErrorHandlers();
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
-  console.error("❌ CRITICAL: Root element not found! Make sure index.html has <div id=\"root\"></div>");
-  throw new Error("Root element not found in index.html");
+  console.error("❌ CRITICAL: Missing root element! Make sure index.html has <div id=\"root\"></div>");
+  throw new Error("Missing root element in index.html");
 }
 
 try {

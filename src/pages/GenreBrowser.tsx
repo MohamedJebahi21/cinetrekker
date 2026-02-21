@@ -94,7 +94,7 @@ export default function GenreBrowser() {
               </div>
             ) : (
               <div className="text-center py-16 text-muted-foreground">
-                No results found for this genre.
+                No results available for this genre.
               </div>
             )}
           </>

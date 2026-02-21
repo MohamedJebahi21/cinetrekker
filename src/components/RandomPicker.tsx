@@ -38,7 +38,7 @@ export function RandomPicker({
 
     if (items.length === 0) {
       toast({
-        title: 'No items found',
+        title: 'Selection unavailable',
         description: `Your ${source} is empty!`,
         variant: 'destructive',
       });

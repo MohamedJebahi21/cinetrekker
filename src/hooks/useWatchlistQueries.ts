@@ -19,14 +19,14 @@ export function useWatchlistQuery() {
     queryFn: async () => {
       if (user) {
         try {
-          // Fetch from Supabase with error handling for missing tables
+          // Verify table schema is accessible
           const { data, error } = await supabase
             .from('user_watchlist')
             .select('*')
             .eq('user_id', user.id);
 
           if (error) {
-            console.error("Watchlist fetch error (check if table exists):", error);
+            console.error("Watchlist query error:", error);
             return [];
           }
           

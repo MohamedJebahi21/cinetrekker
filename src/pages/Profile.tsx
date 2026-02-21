@@ -874,7 +874,7 @@ export default function Profile() {
                     ))}
                   </div>
                 ) : sameAge.length === 0 ? (
-                  <p className="text-neutral-500 text-sm">No matches found in popular actors.</p>
+                  <p className="text-neutral-500 text-sm">No matches in popular actors.</p>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {sameAge.slice(0, 6).map((person) => {

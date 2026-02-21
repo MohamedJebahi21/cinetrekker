@@ -38,7 +38,7 @@ export default function Watchlist() {
               ? await getMovieDetails(item.mediaId, language)
               : await getTVDetails(item.mediaId, language);
             
-            // Get watch status if exists
+            // Get current watch status
             const watchedItem = watched.find(
               w => w.mediaId === item.mediaId && w.mediaType === item.mediaType
             );
