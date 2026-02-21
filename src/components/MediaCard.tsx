@@ -53,6 +53,8 @@ function PosterImage({ posterPath, alt }: { posterPath: string | null; alt: stri
             srcSet={`${small ? `${small} 342w, ` : ''}${medium} 780w`}
             sizes="(max-width: 640px) 115px, (max-width: 1024px) 180px, 250px"
             alt={alt}
+            width={342}
+            height={513}
             className="w-full h-auto object-cover transition-transform duration-500 ease-out group-hover:scale-105"
             loading="lazy"
           />
