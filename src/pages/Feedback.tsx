@@ -1,4 +1,4 @@
-﻿import { FormEvent, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import SEO from '@/components/SEO';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,22 +10,49 @@ export default function Feedback() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
+    setSuccess('');
 
     if (!name.trim() || !email.trim() || !message.trim()) {
       setError('Please fill in all fields before sending feedback.');
       return;
     }
 
-    const subject = encodeURIComponent(`CineTrekker Feedback from ${name.trim()}`);
-    const body = encodeURIComponent(
-      `Name: ${name.trim()}\nEmail: ${email.trim()}\n\nFeedback:\n${message.trim()}`
-    );
+    setIsSubmitting(true);
 
-    window.location.href = `mailto:support@cinetrekker.app?subject=${subject}&body=${body}`;
+    try {
+      const response = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          message: message.trim(),
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setError(data?.error || 'Failed to send feedback. Please try again.');
+        return;
+      }
+
+      setSuccess('Thanks for your feedback. It was sent successfully.');
+      setName('');
+      setEmail('');
+      setMessage('');
+    } catch {
+      setError('Failed to send feedback. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -34,7 +61,7 @@ export default function Feedback() {
       <div className="max-w-3xl mx-auto py-12">
         <h1 className="section-title">Feedback</h1>
         <p className="text-muted-foreground mt-4">
-          We&apos;d love to hear your feedback. Fill out the form below and we&apos;ll open your email client to send it.
+          We&apos;d love to hear your feedback. Fill out the form below and send it directly from the website.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-5 rounded-xl border border-border/40 bg-card/50 p-6">
@@ -76,9 +103,10 @@ export default function Feedback() {
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
+          {success && <p className="text-sm text-emerald-400">{success}</p>}
 
-          <Button type="submit" className="w-full sm:w-auto">
-            Send Feedback
+          <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
+            {isSubmitting ? 'Sending...' : 'Send Feedback'}
           </Button>
         </form>
       </div>
