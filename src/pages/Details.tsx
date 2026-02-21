@@ -191,7 +191,13 @@ export default function Details() {
   const title = details.title || details.name || '';
   const overview = details.overview || t('details.noOverview');
   const posterUrl = getImageUrl(details.poster_path, 'w500');
+  const posterSrcSet = details.poster_path
+    ? `${getImageUrl(details.poster_path, 'w185')} 185w, ${getImageUrl(details.poster_path, 'w342')} 342w, ${getImageUrl(details.poster_path, 'w500')} 500w`
+    : null;
   const backdropUrl = getBackdropUrl(details.backdrop_path);
+  const backdropSrcSet = details.backdrop_path
+    ? `${getBackdropUrl(details.backdrop_path, 'w342')} 342w, ${getBackdropUrl(details.backdrop_path, 'w780')} 780w, ${getBackdropUrl(details.backdrop_path, 'w1280')} 1280w`
+    : null;
   const releaseDate = details.release_date || details.first_air_date;
   const year = releaseDate ? new Date(releaseDate).getFullYear() : null;
   const runtime = details.runtime || (details.episode_run_time?.[0]);
@@ -446,7 +452,11 @@ export default function Details() {
         {backdropUrl && (
           <img
             src={backdropUrl}
+            srcSet={backdropSrcSet || undefined}
+            sizes="100vw"
             alt={title}
+            fetchPriority="high"
+            loading="eager"
             className="w-full h-full object-cover"
           />
         )}
@@ -468,7 +478,10 @@ export default function Details() {
             {posterUrl ? (
               <img
                 src={posterUrl}
+                srcSet={posterSrcSet || undefined}
+                sizes="(max-width: 768px) 192px, 256px"
                 alt={title}
+                loading="lazy"
                 className="w-48 md:w-64 rounded-xl shadow-2xl"
               />
             ) : (

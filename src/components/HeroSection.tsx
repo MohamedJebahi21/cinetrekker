@@ -52,10 +52,10 @@ export function HeroSection() {
   const heroTitle = heroMedia ? getMediaTitle(heroMedia) : '';
   const mediaType = heroMedia ? getMediaType(heroMedia) : 'movie';
   const heroBackdropSrc = heroMedia?.backdrop_path
-    ? getBackdropUrl(heroMedia.backdrop_path, 'w1280')
+    ? getBackdropUrl(heroMedia.backdrop_path, 'w780')
     : null;
   const heroBackdropSrcSet = heroMedia?.backdrop_path
-    ? `${getBackdropUrl(heroMedia.backdrop_path, 'w780')} 780w, ${getBackdropUrl(heroMedia.backdrop_path, 'w1280')} 1280w`
+    ? `${getBackdropUrl(heroMedia.backdrop_path, 'w342')} 342w, ${getBackdropUrl(heroMedia.backdrop_path, 'w780')} 780w, ${getBackdropUrl(heroMedia.backdrop_path, 'w1280')} 1280w`
     : null;
 
   // Fetch trailer
