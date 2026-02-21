@@ -78,27 +78,18 @@ export default function SearchOverlay() {
           <div className="w-full max-w-3xl bg-popover/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl">
             <div className="flex items-center gap-2 p-3">
               <Search className="w-5 h-5 text-muted-foreground ml-2" />
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t('search.placeholder')}
-                className="flex-1 bg-transparent outline-none text-foreground px-2 py-2 text-sm"
-                aria-label={t('search.placeholder')}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') setOpen(false);
-                  if (e.key === 'Enter') {
-                    const q = query.trim();
-                    if (q.length >= 2) addToRecents(q);
-                    if (results.length > 0) {
-                      navigate(getItemRoute(results[0]));
-                    } else if (q.length > 0) {
-                      navigate(`/search?q=${encodeURIComponent(q)}`);
-                    }
-                    setOpen(false);
-                  }
-                }}
-              />
+              <div role="combobox" aria-expanded={open} aria-controls="search-results">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={t('search.placeholder', 'Search movies, TV shows, and more')}
+                  className="w-full bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
+                  aria-autocomplete="list"
+                  aria-controls="search-results"
+                />
+              </div>
               <button onClick={() => setOpen(false)} aria-label="Close search" className="p-2 rounded-md hover:bg-muted/30 ml-2 min-w-[44px] min-h-[44px]">
                 <X className="w-4 h-4" />
               </button>

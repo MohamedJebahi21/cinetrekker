@@ -74,6 +74,7 @@ export function HeroSection() {
           className="absolute inset-0 w-full h-full object-cover"
           loading="eager"
           fetchPriority="high"
+          sizes="(max-width: 640px) 640px, (max-width: 1024px) 1024px, 1280px"
         />
       )}
       {/* Vignette to softly fade poster edges into True Black */}
