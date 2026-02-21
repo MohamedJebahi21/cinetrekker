@@ -451,7 +451,7 @@ export default function Search() {
         canonical={`https://cinetrekker.vercel.app/search${window.location.search}`}
       />
       {/* Search Header */}
-      <div className="mb-8 sticky top-16 z-40 bg-background/95 backdrop-blur-md border-b border-border/60 py-2">
+      <div className="mb-8 bg-background/95 backdrop-blur-md border-b border-border/60 py-2">
         <div className="flex items-center justify-between mb-4">
           <h1 className="section-title mb-0">{t('nav.search')}</h1>
           <RandomTrekButton />

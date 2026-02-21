@@ -32,6 +32,7 @@ const NAV_ITEMS: NavItem[] = [
 export function UnifiedNav() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
+  const isSearchPage = pathname.startsWith('/search');
   const { user, signOut, loading } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -132,9 +133,11 @@ export function UnifiedNav() {
           <span className="text-xl font-bold text-foreground hidden lg:block">{t('common.appName', 'CineTrekker')}</span>
         </Link>
 
-        <div className="hidden md:block flex-1 max-w-xl mx-4">
-          <SearchDropdown />
-        </div>
+        {!isSearchPage && (
+          <div className="hidden md:block flex-1 max-w-xl mx-4">
+            <SearchDropdown />
+          </div>
+        )}
 
         <div className="hidden md:flex items-center gap-1">
           <Link
