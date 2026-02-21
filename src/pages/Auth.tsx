@@ -24,7 +24,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
   const [secret, setSecret] = useState('');
   const [showSecret, setShowSecret] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [vResult, setVResult] = useState<any>(null);
+  const [vResult, setVResult] = useState<{ success: boolean; message: string } | null>(null);
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>(initialTab);
 
   const from = (location.state as { from?: string })?.from || '/';
@@ -91,7 +91,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
   const handleReset = async () => {
     try {
       if (email) {
-        // @ts-ignore
+        // @ts-expect-error
         await supabase.auth[resetMethod](email.trim().toLowerCase(), {
           redirectTo: `${window.location.origin}/auth/callback`,
         });
@@ -110,7 +110,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
       <div className="page-container pt-20 flex items-center justify-center min-h-[70vh]">
         <div className="w-full max-w-md">
           <Card className="glass-card">
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'login' | 'register')}>
               <CardHeader>
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="signin">{t('auth.signIn')}</TabsTrigger>
