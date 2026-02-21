@@ -4,7 +4,7 @@ import { Media, MediaDetails, TMDBResponse, TimeWindow, Genre, PersonSearchResul
 
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const SUPABASE_ID = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 export const getImageUrl = (path: string | null, size: 'w92' | 'w154' | 'w185' | 'w342' | 'w500' | 'w780' | 'original' = 'w500') => {
   if (!path) return null;
@@ -24,7 +24,7 @@ export const getBackdropUrl = (path: string | null, size: 'w300' | 'w780' | 'w12
  * @param extraParams - Additional query parameters
  */
 const fetchTMDB = async <T>(endpoint: string, language: string = 'en', extraParams: Record<string, string> = {}): Promise<T> => {
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
+  if (!SUPABASE_URL || !SUPABASE_ID) {
     throw new Error('⚠️ TMDB proxy not configured. Check VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in .env');
   }
 
@@ -39,8 +39,8 @@ const fetchTMDB = async <T>(endpoint: string, language: string = 'en', extraPara
       `${SUPABASE_URL}/functions/v1/tmdb-proxy?${params.toString()}`,
       {
         headers: {
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
-          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_ID}`,
+          'apikey': SUPABASE_ID,
           'Content-Type': 'application/json',
         },
       }

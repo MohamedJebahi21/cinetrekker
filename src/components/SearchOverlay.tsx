@@ -57,15 +57,15 @@ export default function SearchOverlay() {
     return `/${item.media_type}/${item.id}`;
   };
 
-  const RECENTS_KEY = 'cinetrekker_recent_searches';
+  const RECENTS_ID = 'cinetrekker_recent_searches';
   const addToRecents = (q: string) => {
     if (!q || !q.trim()) return;
     try {
       const trimmed = q.trim();
-      const stored = localStorage.getItem(RECENTS_KEY);
+      const stored = localStorage.getItem(RECENTS_ID);
       const prev: string[] = stored ? JSON.parse(stored) : [];
       const next = [trimmed, ...prev.filter(x => x !== trimmed)].slice(0, 10);
-      localStorage.setItem(RECENTS_KEY, JSON.stringify(next));
+      localStorage.setItem(RECENTS_ID, JSON.stringify(next));
     } catch (e) {
       // ignore
     }

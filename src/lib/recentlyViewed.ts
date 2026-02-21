@@ -1,5 +1,5 @@
 // Recently viewed tracking
-const STORAGE_KEY = 'cinetrekker_recently_viewed';
+const STORAGE_ID = 'cinetrekker_recently_viewed';
 const MAX_ITEMS = 20;
 
 export interface RecentlyViewedItem {
@@ -12,7 +12,7 @@ export interface RecentlyViewedItem {
 
 export function addToRecentlyViewed(item: Omit<RecentlyViewedItem, 'timestamp'>) {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_ID);
     const items: RecentlyViewedItem[] = stored ? JSON.parse(stored) : [];
     
     // Handle existing records
@@ -29,7 +29,7 @@ export function addToRecentlyViewed(item: Omit<RecentlyViewedItem, 'timestamp'>)
     // Keep only MAX_ITEMS
     const trimmed = filtered.slice(0, MAX_ITEMS);
     
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+    localStorage.setItem(STORAGE_ID, JSON.stringify(trimmed));
   } catch (error) {
     console.error('Failed to save recently viewed:', error);
   }
@@ -37,7 +37,7 @@ export function addToRecentlyViewed(item: Omit<RecentlyViewedItem, 'timestamp'>)
 
 export function getRecentlyViewed(): RecentlyViewedItem[] {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_ID);
     return stored ? JSON.parse(stored) : [];
   } catch (error) {
     console.error('Failed to load recently viewed:', error);
@@ -46,5 +46,5 @@ export function getRecentlyViewed(): RecentlyViewedItem[] {
 }
 
 export function clearRecentlyViewed() {
-  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(STORAGE_ID);
 }

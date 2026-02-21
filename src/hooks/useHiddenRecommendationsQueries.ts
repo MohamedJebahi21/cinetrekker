@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/auth-context';
 import { HiddenRecommendation } from '@/types/media';
 
-const HIDDEN_RECOMMENDATIONS_QUERY_KEY = 'hidden-recommendations';
-const HIDDEN_RECOMMENDATIONS_STORAGE_KEY = 'mywatch_hidden_recommendations';
+const HIDDEN_RECOMMENDATIONS_QUERY_ID = 'hidden-recommendations';
+const HIDDEN_RECOMMENDATIONS_STORAGE_ID = 'mywatch_hidden_recommendations';
 
 /**
  * Hook to fetch hidden recommendations from Supabase or localStorage
@@ -12,15 +12,15 @@ export function useHiddenRecommendationsQuery() {
   const { user } = useAuth();
   
   return useQuery({
-    queryKey: [HIDDEN_RECOMMENDATIONS_QUERY_KEY, user?.id],
+    queryKey: [HIDDEN_RECOMMENDATIONS_QUERY_ID, user?.id],
     queryFn: async () => {
       if (user) {
         // Fall back to localStorage (user_hidden_recommendations table doesn't exist in schema)
-        const storedHidden = localStorage.getItem(`${HIDDEN_RECOMMENDATIONS_STORAGE_KEY}_${user.id}`);
+        const storedHidden = localStorage.getItem(`${HIDDEN_RECOMMENDATIONS_STORAGE_ID}_${user.id}`);
         return storedHidden ? JSON.parse(storedHidden) : [];
       } else {
         // Fetch from localStorage for non-authenticated users
-        const stored = localStorage.getItem(HIDDEN_RECOMMENDATIONS_STORAGE_KEY);
+        const stored = localStorage.getItem(HIDDEN_RECOMMENDATIONS_STORAGE_ID);
         return stored ? JSON.parse(stored) : [];
       }
     },
@@ -38,7 +38,7 @@ export function useHideFromRecommendations() {
   return useMutation({
     mutationFn: async (params: { mediaId: number; mediaType: 'movie' | 'tv' }) => {
       if (user) {
-        const storageKey = `${HIDDEN_RECOMMENDATIONS_STORAGE_KEY}_${user.id}`;
+        const storageKey = `${HIDDEN_RECOMMENDATIONS_STORAGE_ID}_${user.id}`;
         const stored = localStorage.getItem(storageKey);
         const list = stored ? JSON.parse(stored) : [];
         if (!list.some((item: HiddenRecommendation) => item.mediaId === params.mediaId && item.mediaType === params.mediaType)) {
@@ -56,16 +56,16 @@ export function useHideFromRecommendations() {
     },
     onMutate: async (params) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: [HIDDEN_RECOMMENDATIONS_QUERY_KEY] });
+      await queryClient.cancelQueries({ queryKey: [HIDDEN_RECOMMENDATIONS_QUERY_ID] });
 
       // Snapshot previous state
       const previousHidden = queryClient.getQueryData<HiddenRecommendation[]>([
-        HIDDEN_RECOMMENDATIONS_QUERY_KEY,
+        HIDDEN_RECOMMENDATIONS_QUERY_ID,
         user?.id,
       ]);
 
       // Optimistic update
-      queryClient.setQueryData([HIDDEN_RECOMMENDATIONS_QUERY_KEY, user?.id], (old: HiddenRecommendation[] = []) => {
+      queryClient.setQueryData([HIDDEN_RECOMMENDATIONS_QUERY_ID, user?.id], (old: HiddenRecommendation[] = []) => {
         // Check if already hidden
         if (old.some(item => item.mediaId === params.mediaId && item.mediaType === params.mediaType)) {
           return old;
@@ -82,7 +82,7 @@ export function useHideFromRecommendations() {
 
       // Update localStorage if not authenticated
       if (!user) {
-        const stored = localStorage.getItem(HIDDEN_RECOMMENDATIONS_STORAGE_KEY);
+        const stored = localStorage.getItem(HIDDEN_RECOMMENDATIONS_STORAGE_ID);
         const list = stored ? JSON.parse(stored) : [];
         if (!list.some((item: HiddenRecommendation) => item.mediaId === params.mediaId && item.mediaType === params.mediaType)) {
           list.push({
@@ -92,7 +92,7 @@ export function useHideFromRecommendations() {
             userId: 'local',
             hiddenAt: new Date().toISOString(),
           });
-          localStorage.setItem(HIDDEN_RECOMMENDATIONS_STORAGE_KEY, JSON.stringify(list));
+          localStorage.setItem(HIDDEN_RECOMMENDATIONS_STORAGE_ID, JSON.stringify(list));
         }
       }
 
@@ -101,12 +101,12 @@ export function useHideFromRecommendations() {
     onError: (error, variables, context) => {
       // Rollback optimistic update
       if (context?.previousHidden) {
-        queryClient.setQueryData([HIDDEN_RECOMMENDATIONS_QUERY_KEY, user?.id], context.previousHidden);
+        queryClient.setQueryData([HIDDEN_RECOMMENDATIONS_QUERY_ID, user?.id], context.previousHidden);
       }
       console.error('Failed to hide from recommendations:', error);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: [HIDDEN_RECOMMENDATIONS_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [HIDDEN_RECOMMENDATIONS_QUERY_ID] });
     },
   });
 }
@@ -121,7 +121,7 @@ export function useUnhideFromRecommendations() {
   return useMutation({
     mutationFn: async (params: { mediaId: number; mediaType: 'movie' | 'tv' }) => {
       if (user) {
-        const storageKey = `${HIDDEN_RECOMMENDATIONS_STORAGE_KEY}_${user.id}`;
+        const storageKey = `${HIDDEN_RECOMMENDATIONS_STORAGE_ID}_${user.id}`;
         const stored = localStorage.getItem(storageKey);
         const list = stored ? JSON.parse(stored) : [];
         const newList = list.filter((item: HiddenRecommendation) => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType));
@@ -131,25 +131,25 @@ export function useUnhideFromRecommendations() {
     },
     onMutate: async (params) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: [HIDDEN_RECOMMENDATIONS_QUERY_KEY] });
+      await queryClient.cancelQueries({ queryKey: [HIDDEN_RECOMMENDATIONS_QUERY_ID] });
 
       // Snapshot previous state
       const previousHidden = queryClient.getQueryData<HiddenRecommendation[]>([
-        HIDDEN_RECOMMENDATIONS_QUERY_KEY,
+        HIDDEN_RECOMMENDATIONS_QUERY_ID,
         user?.id,
       ]);
 
       // Optimistic update
-      queryClient.setQueryData([HIDDEN_RECOMMENDATIONS_QUERY_KEY, user?.id], (old: HiddenRecommendation[] = []) =>
+      queryClient.setQueryData([HIDDEN_RECOMMENDATIONS_QUERY_ID, user?.id], (old: HiddenRecommendation[] = []) =>
         old.filter(item => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType))
       );
 
       // Update localStorage if not authenticated
       if (!user) {
-        const stored = localStorage.getItem(HIDDEN_RECOMMENDATIONS_STORAGE_KEY);
+        const stored = localStorage.getItem(HIDDEN_RECOMMENDATIONS_STORAGE_ID);
         const list = stored ? JSON.parse(stored) : [];
         const newList = list.filter((item: HiddenRecommendation) => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType));
-        localStorage.setItem(HIDDEN_RECOMMENDATIONS_STORAGE_KEY, JSON.stringify(newList));
+        localStorage.setItem(HIDDEN_RECOMMENDATIONS_STORAGE_ID, JSON.stringify(newList));
       }
 
       return { previousHidden };
@@ -157,12 +157,12 @@ export function useUnhideFromRecommendations() {
     onError: (error, variables, context) => {
       // Rollback optimistic update
       if (context?.previousHidden) {
-        queryClient.setQueryData([HIDDEN_RECOMMENDATIONS_QUERY_KEY, user?.id], context.previousHidden);
+        queryClient.setQueryData([HIDDEN_RECOMMENDATIONS_QUERY_ID, user?.id], context.previousHidden);
       }
       console.error('Failed to unhide from recommendations:', error);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: [HIDDEN_RECOMMENDATIONS_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [HIDDEN_RECOMMENDATIONS_QUERY_ID] });
     },
   });
 }

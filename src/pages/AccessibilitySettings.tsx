@@ -11,15 +11,15 @@ import Type from 'lucide-react/dist/esm/icons/type';
 import Contrast from 'lucide-react/dist/esm/icons/contrast';
 import { useToast } from '@/hooks/use-toast';
 
-const FONT_SIZE_KEY = 'cinetrekker_font_size';
-const HIGH_CONTRAST_KEY = 'cinetrekker_high_contrast';
-const REDUCE_MOTION_KEY = 'cinetrekker_reduce_motion';
+const FONT_SIZE_ID = 'cinetrekker_font_size';
+const HIGH_CONTRAST_ID = 'cinetrekker_high_contrast';
+const REDUCE_MOTION_ID = 'cinetrekker_reduce_motion';
 
 export default function AccessibilitySettings() {
   const { toast } = useToast();
   const [fontSize, setFontSize] = useState<number>(() => {
     try {
-      const stored = localStorage.getItem(FONT_SIZE_KEY);
+      const stored = localStorage.getItem(FONT_SIZE_ID);
       return stored ? parseInt(stored) : 100;
     } catch {
       return 100;
@@ -28,7 +28,7 @@ export default function AccessibilitySettings() {
   
   const [highContrast, setHighContrast] = useState<boolean>(() => {
     try {
-      return localStorage.getItem(HIGH_CONTRAST_KEY) === 'true';
+      return localStorage.getItem(HIGH_CONTRAST_ID) === 'true';
     } catch {
       return false;
     }
@@ -36,7 +36,7 @@ export default function AccessibilitySettings() {
   
   const [reduceMotion, setReduceMotion] = useState<boolean>(() => {
     try {
-      return localStorage.getItem(REDUCE_MOTION_KEY) === 'true';
+      return localStorage.getItem(REDUCE_MOTION_ID) === 'true';
     } catch {
       return false;
     }
@@ -45,7 +45,7 @@ export default function AccessibilitySettings() {
   // Apply font size
   useEffect(() => {
     document.documentElement.style.fontSize = `${fontSize}%`;
-    localStorage.setItem(FONT_SIZE_KEY, fontSize.toString());
+    localStorage.setItem(FONT_SIZE_ID, fontSize.toString());
   }, [fontSize]);
 
   // Apply high contrast
@@ -55,7 +55,7 @@ export default function AccessibilitySettings() {
     } else {
       document.documentElement.classList.remove('high-contrast');
     }
-    localStorage.setItem(HIGH_CONTRAST_KEY, highContrast.toString());
+    localStorage.setItem(HIGH_CONTRAST_ID, highContrast.toString());
   }, [highContrast]);
 
   // Apply reduce motion
@@ -65,7 +65,7 @@ export default function AccessibilitySettings() {
     } else {
       document.documentElement.classList.remove('reduce-motion');
     }
-    localStorage.setItem(REDUCE_MOTION_KEY, reduceMotion.toString());
+    localStorage.setItem(REDUCE_MOTION_ID, reduceMotion.toString());
   }, [reduceMotion]);
 
   const resetToDefaults = () => {

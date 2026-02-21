@@ -50,8 +50,8 @@ serve(async (req) => {
   }
 
   try {
-    const TMDB_API_KEY = Deno.env.get('TMDB_API_KEY');
-    if (!TMDB_API_KEY) {
+    const TMDB_API_ID = Deno.env.get('TMDB_API_KEY');
+    if (!TMDB_API_ID) {
       console.error('[TMDB Proxy] TMDB_API_KEY not found');
       throw new Error('TMDB_API_KEY is not configured');
     }
@@ -74,9 +74,9 @@ serve(async (req) => {
     if (!tmdbParams.has('page')) tmdbParams.set('page', '1');
     tmdbParams.set('include_adult', 'false');
 
-    const isV4Token = TMDB_API_KEY.includes('.');
+    const isV4Token = TMDB_API_ID.includes('.');
     if (!isV4Token) {
-      tmdbParams.set('api_key', TMDB_API_KEY);
+      tmdbParams.set('api_key', TMDB_API_ID);
     }
 
     const tmdbUrl = `${TMDB_BASE_URL}${endpoint}?${tmdbParams.toString()}`;
@@ -85,7 +85,7 @@ serve(async (req) => {
     const response = await fetch(tmdbUrl, {
       headers: isV4Token
         ? {
-            'Authorization': `Bearer ${TMDB_API_KEY}`,
+            'Authorization': `Bearer ${TMDB_API_ID}`,
             'Content-Type': 'application/json',
           }
         : { 'Content-Type': 'application/json' },

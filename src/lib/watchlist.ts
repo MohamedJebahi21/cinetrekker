@@ -1,8 +1,8 @@
-export const WATCHLIST_KEY = 'cine-watchlist';
+export const WATCHLIST_ID = 'cine-watchlist';
 
 export function getWatchlistIds(): number[] {
   try {
-    const raw = localStorage.getItem(WATCHLIST_KEY);
+    const raw = localStorage.getItem(WATCHLIST_ID);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) return parsed.map((v) => Number(v)).filter(Boolean);
@@ -16,7 +16,7 @@ export function getWatchlistIds(): number[] {
 export function saveWatchlistIds(ids: number[]) {
   try {
     const unique = Array.from(new Set(ids.map((i) => Number(i))));
-    localStorage.setItem(WATCHLIST_KEY, JSON.stringify(unique));
+    localStorage.setItem(WATCHLIST_ID, JSON.stringify(unique));
   } catch (e) {
     console.error('Failed to save watchlist to localStorage', e);
   }

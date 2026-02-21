@@ -4,7 +4,7 @@
  */
 
 // Theme constants
-export const THEME_KEY = 'cinetrekker:theme';
+export const THEME_ID = 'cinetrekker:theme';
 export const TRANSITION_STYLE_ID = 'cinetrekker-theme-transition-style';
 export const TRANSITION_CLASS = 'cinetrekker-theme-transition';
 export const TRANSITION_MS = 300;

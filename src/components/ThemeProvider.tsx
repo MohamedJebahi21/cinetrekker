@@ -1,7 +1,7 @@
 import React, { useLayoutEffect, useEffect, useState } from 'react';
 import {
   Theme,
-  THEME_KEY,
+  THEME_ID,
   TRANSITION_STYLE_ID,
   TRANSITION_CLASS,
   TRANSITION_MS,
@@ -37,7 +37,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     injectTransitionStyle();
 
     try {
-      const stored = localStorage.getItem(THEME_KEY) as Theme | null;
+      const stored = localStorage.getItem(THEME_ID) as Theme | null;
       const prefersDark =
         typeof window.matchMedia === 'function' &&
         window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -54,7 +54,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const onStorage = (e: StorageEvent) => {
-      if (e.key === THEME_KEY && (e.newValue === 'light' || e.newValue === 'dark')) {
+      if (e.key === THEME_ID && (e.newValue === 'light' || e.newValue === 'dark')) {
         const newTheme = e.newValue as Theme;
         setThemeState(newTheme);
         applyThemeClass(newTheme);
@@ -72,7 +72,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const el = document.documentElement;
     el.classList.add(TRANSITION_CLASS);
     try {
-      localStorage.setItem(THEME_KEY, t);
+      localStorage.setItem(THEME_ID, t);
     } catch {
       // ignore
     }

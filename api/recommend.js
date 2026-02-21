@@ -98,11 +98,11 @@ module.exports = async (req, res) => {
     ? Math.max(MIN_LIMIT, Math.min(MAX_LIMIT, Number(limit)))
     : 12;
 
-  const OPENAI_KEY = process.env.OPENAI_API_KEY;
-  const TMDB_KEY = process.env.TMDB_API_KEY;
+  const OPENAI_ID = process.env.OPENAI_API_KEY;
+  const TMDB_ID = process.env.TMDB_API_KEY;
 
   // Generic error to prevent enumeration of which services are configured
-  if (!OPENAI_KEY || !TMDB_KEY) {
+  if (!OPENAI_ID || !TMDB_ID) {
     return res.status(503).json({ error: 'Service temporarily unavailable' });
   }
 
@@ -113,7 +113,7 @@ module.exports = async (req, res) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_KEY}`,
+        'Authorization': `Bearer ${OPENAI_ID}`,
       },
       body: JSON.stringify({
         model: 'gpt-3.5-turbo',
@@ -180,7 +180,7 @@ module.exports = async (req, res) => {
     for (const sug of suggestions) {
       if (resolved.length >= normalizedLimit) break;
       const media = sug.media_type === 'tv' ? 'tv' : 'movie';
-      const searchUrl = `${TMDB_BASE}/search/${media}?api_key=${TMDB_KEY}&query=${encodeURIComponent(sug.title)}&include_adult=false&language=${encodeURIComponent(language)}`;
+      const searchUrl = `${TMDB_BASE}/search/${media}?api_key=${TMDB_ID}&query=${encodeURIComponent(sug.title)}&include_adult=false&language=${encodeURIComponent(language)}`;
       try {
         const sRes = await fetch(searchUrl);
         if (!sRes.ok) continue;
@@ -200,7 +200,7 @@ module.exports = async (req, res) => {
 
         // Context awareness: fetch recommendations to include related tags/themes
         try {
-          const recUrl = `${TMDB_BASE}/${media}/${first.id}/recommendations?api_key=${TMDB_KEY}&language=${encodeURIComponent(language)}`;
+          const recUrl = `${TMDB_BASE}/${media}/${first.id}/recommendations?api_key=${TMDB_ID}&language=${encodeURIComponent(language)}`;
           const recRes = await fetch(recUrl);
           if (recRes.ok) {
             const recJson = await recRes.json();
@@ -229,7 +229,7 @@ module.exports = async (req, res) => {
     // Hybrid fallback: if AI suggestions didn't resolve, perform a TMDB multi search using the raw prompt
     if (resolved.length === 0) {
       try {
-        const searchUrl = `${TMDB_BASE}/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent(normalizedPrompt)}&include_adult=false&language=${encodeURIComponent(language)}`;
+        const searchUrl = `${TMDB_BASE}/search/multi?api_key=${TMDB_ID}&query=${encodeURIComponent(normalizedPrompt)}&include_adult=false&language=${encodeURIComponent(language)}`;
         const sRes = await fetch(searchUrl);
         if (sRes.ok) {
           const sJson = await sRes.json();

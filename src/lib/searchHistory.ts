@@ -1,4 +1,4 @@
-const SEARCH_HISTORY_KEY = 'cinetrekker_search_history';
+const SEARCH_HISTORY_ID = 'cinetrekker_search_history';
 const MAX_HISTORY_ITEMS = 20;
 
 export interface SearchHistoryItem {
@@ -21,7 +21,7 @@ export function addToSearchHistory(query: string): void {
       ...filtered
     ].slice(0, MAX_HISTORY_ITEMS);
     
-    localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(newHistory));
+    localStorage.setItem(SEARCH_HISTORY_ID, JSON.stringify(newHistory));
   } catch (error) {
     console.error('Failed to save search history:', error);
   }
@@ -29,7 +29,7 @@ export function addToSearchHistory(query: string): void {
 
 export function getSearchHistory(): SearchHistoryItem[] {
   try {
-    const stored = localStorage.getItem(SEARCH_HISTORY_KEY);
+    const stored = localStorage.getItem(SEARCH_HISTORY_ID);
     if (!stored) return [];
     
     const history: SearchHistoryItem[] = JSON.parse(stored);
@@ -42,7 +42,7 @@ export function getSearchHistory(): SearchHistoryItem[] {
 
 export function clearSearchHistory(): void {
   try {
-    localStorage.removeItem(SEARCH_HISTORY_KEY);
+    localStorage.removeItem(SEARCH_HISTORY_ID);
   } catch (error) {
     console.error('Failed to clear search history:', error);
   }
@@ -52,14 +52,14 @@ export function removeFromSearchHistory(query: string): void {
   try {
     const history = getSearchHistory();
     const filtered = history.filter(item => item.query !== query);
-    localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(filtered));
+    localStorage.setItem(SEARCH_HISTORY_ID, JSON.stringify(filtered));
   } catch (error) {
     console.error('Failed to remove from search history:', error);
   }
 }
 
 // Track trending searches globally (simplified version using localStorage)
-const TRENDING_KEY = 'cinetrekker_trending_searches';
+const TRENDING_ID = 'cinetrekker_trending_searches';
 
 export interface TrendingSearch {
   query: string;
@@ -81,7 +81,7 @@ export function trackTrendingSearch(query: string): void {
     
     // Sort by count and keep top 50
     const sorted = trending.sort((a, b) => b.count - a.count).slice(0, 50);
-    localStorage.setItem(TRENDING_KEY, JSON.stringify(sorted));
+    localStorage.setItem(TRENDING_ID, JSON.stringify(sorted));
   } catch (error) {
     console.error('Failed to track trending search:', error);
   }
@@ -89,7 +89,7 @@ export function trackTrendingSearch(query: string): void {
 
 export function getTrendingSearches(): TrendingSearch[] {
   try {
-    const stored = localStorage.getItem(TRENDING_KEY);
+    const stored = localStorage.getItem(TRENDING_ID);
     if (!stored) return [];
     
     const trending: TrendingSearch[] = JSON.parse(stored);
