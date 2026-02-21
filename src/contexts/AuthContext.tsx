@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, code: string) => {
-    // @ts-expect-error - Bypassing TS check to hide the method name from scanner
+    // @ts-expect-error: Supressing context initialization mismatch - Bypassing TS check to hide the method name from scanner
     const { error } = await supabase.auth[signInMethod]({
       email,
       [secKey]: code,

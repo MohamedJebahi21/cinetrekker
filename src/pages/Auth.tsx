@@ -91,7 +91,7 @@ export default function Auth({ initialTab = 'signin' }: { initialTab?: 'signin' 
   const handleReset = async () => {
     try {
       if (email) {
-        // @ts-expect-error
+        // @ts-expect-error: Bypassing strict type check for legacy auth logic
         await supabase.auth[resetMethod](email.trim().toLowerCase(), {
           redirectTo: `${window.location.origin}/auth/callback`,
         });
