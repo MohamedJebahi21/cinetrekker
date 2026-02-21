@@ -151,22 +151,15 @@ jobs:
             echo "⚠️ WARNING: Auth.tsx may not use error sanitization"
           fi
 
-      - name: DEBUG: List all scanned files in src
-        run: |
-          cd src
-          find . -type f \( -name "*.ts" -o -name "*.tsx" \) \
-            ! -path "*node_modules*" ! -path "*dist*" ! -path "*build*" \
-            ! -name "*authErrorHandler*" ! -name "*.test.*" ! -name "*.spec.*" \
-            -print
-
       - name: Verify no account enumeration leaks
         run: |
-          cd src
-          # Find all TypeScript files, excluding authErrorHandler, test files, and build dirs
-          if find . -type f \( -name "*.ts" -o -name "*.tsx" \) \
-             ! -path "*node_modules*" ! -path "*dist*" ! -path "*build*" \
-             ! -name "*authErrorHandler*" ! -name "*.test.*" ! -name "*.spec.*" \
-             -exec grep -l "User not found\|Incorrect password\|Email already exists" {} \; 2>/dev/null; then
+          # Search TypeScript files for account enumeration messages, excluding authErrorHandler and test files
+          if grep -rl -e "User not found" -e "Incorrect password" -e "Email already exists" \
+             --include="*.ts" --include="*.tsx" \
+             --exclude="*authErrorHandler*" \
+             --exclude="*.test.*" --exclude="*.spec.*" \
+             --exclude-dir="node_modules" --exclude-dir="dist" --exclude-dir="build" \
+             src/ 2>/dev/null; then
             echo "❌ ERROR: Found potential account enumeration messages!"
             exit 1
           fi
