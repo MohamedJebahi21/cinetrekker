@@ -47,8 +47,6 @@ export function UnifiedNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const desktopMenuRef = useRef<HTMLDivElement>(null);
-  const mobileMenuRef = useRef<HTMLDivElement>(null);
-  const mobileToggleButtonRef = useRef<HTMLButtonElement>(null);
   const desktopToggleButtonRef = useRef<HTMLButtonElement>(null);
 
   // Fetch profile from Supabase to get the uploaded profile photo
@@ -93,11 +91,9 @@ export function UnifiedNav() {
 
       const target = event.target as Node;
       const clickedInsideDesktopMenu = desktopMenuRef.current?.contains(target);
-      const clickedInsideMobileMenu = mobileMenuRef.current?.contains(target);
-      const clickedMobileToggle = mobileToggleButtonRef.current?.contains(target);
       const clickedDesktopToggle = desktopToggleButtonRef.current?.contains(target);
 
-      if (!clickedInsideDesktopMenu && !clickedInsideMobileMenu && !clickedMobileToggle && !clickedDesktopToggle) {
+      if (!clickedInsideDesktopMenu && !clickedDesktopToggle) {
         setIsMenuOpen(false);
       }
     };
@@ -234,17 +230,6 @@ export function UnifiedNav() {
           >
             <Settings className="h-5 w-5" />
           </Link>
-
-          <button
-            ref={mobileToggleButtonRef}
-            type="button"
-            className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground hover:bg-accent transition-colors"
-            onClick={() => setIsMenuOpen((prev) => !prev)}
-            aria-label={isMenuOpen ? t('nav.closeMenu', 'Close menu') : t('nav.openMenu', 'Open menu')}
-            aria-expanded={isMenuOpen}
-          >
-            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
         </div>
       </div>
 
@@ -301,64 +286,6 @@ export function UnifiedNav() {
         </nav>
       </div>
 
-      <div
-        ref={mobileMenuRef}
-        className={cn(
-          'md:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl overflow-y-auto overscroll-contain transition-all duration-300 ease-out',
-          isMenuOpen ? 'max-h-[calc(100dvh-5rem)] opacity-100' : 'max-h-0 opacity-0'
-        )}
-      >
-        <nav className="container mx-auto px-4 py-4 flex flex-col gap-2" aria-label={t('nav.mobile', 'Mobile navigation')}>
-          <div className="mb-1">
-            <SearchDropdown onNavigate={() => setIsMenuOpen(false)} />
-          </div>
-
-          <SupportButton className="justify-start" />
-
-          {NAV_ITEMS.map((item) => {
-            const isActive = item.exact ? pathname === item.path : pathname.startsWith(item.path);
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  'px-4 py-3 rounded-lg text-sm font-medium transition-colors min-h-[44px] flex items-center',
-                  isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                )}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                <Icon className="h-4 w-4 mr-2" />
-                {t(item.key, item.fallback)}
-              </Link>
-            );
-          })}
-
-          {!loading && (
-            user ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    signOut();
-                    setIsMenuOpen(false);
-                  }}
-                  className="px-4 py-3 rounded-lg text-sm font-medium text-left text-destructive hover:bg-destructive/10 min-h-[44px]"
-                >
-                  {t('nav.signOut', 'Sign Out')}
-                </button>
-              </>
-            ) : (
-              <Link
-                to="/login"
-                className="px-4 py-3 rounded-lg text-sm font-medium min-h-[44px] flex items-center justify-center bg-primary text-primary-foreground"
-              >
-                {t('nav.signIn', 'Sign In')}
-              </Link>
-            )
-          )}
-        </nav>
-      </div>
     </header>
   );
 }
