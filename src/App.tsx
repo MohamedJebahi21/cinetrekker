@@ -12,6 +12,7 @@ import KeyboardShortcuts from '@/components/KeyboardShortcuts';
 import ScrollToTop from '@/components/ScrollToTop';
 import { UnifiedNav } from "@/components/UnifiedNav";
 import { Footer } from "@/components/Footer";
+import { BottomNav } from "@/components/BottomNav";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { GlobalLoader } from "@/components/GlobalLoader";
@@ -180,6 +181,7 @@ const App = () => {
                     <AnimatedRoutes />
                   </ErrorBoundary>
                 </main>
+                <BottomNav />
                 <Footer />
               </div>
             </ErrorBoundary>

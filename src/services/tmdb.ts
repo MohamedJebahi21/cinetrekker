@@ -25,7 +25,7 @@ export const getBackdropUrl = (path: string | null, size: 'w342' | 'w780' | 'w12
  */
 const fetchTMDB = async <T>(endpoint: string, language: string = 'en', extraParams: Record<string, string> = {}): Promise<T> => {
   if (!SUPABASE_URL || !SUPABASE_ID) {
-    throw new Error('⚠️ TMDB proxy not configured. Check VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in .env');
+    throw new Error('TMDB proxy not configured. Check VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in .env');
   }
 
   const params = new URLSearchParams({
@@ -48,7 +48,7 @@ const fetchTMDB = async <T>(endpoint: string, language: string = 'en', extraPara
 
     // Explicit 401 handling - Stop retries immediately
     if (response.status === 401) {
-      console.error('🚫 401 Unauthorized: Invalid Supabase API key or expired session');
+      console.error('401 Unauthorized: Invalid Supabase API key or expired session');
       throw new Error('AUTHENTICATION_ERROR');
     }
 
@@ -57,8 +57,7 @@ const fetchTMDB = async <T>(endpoint: string, language: string = 'en', extraPara
       const statusText = response.status === 404 ? 'Unavailable - Invalid endpoint' 
         : response.status >= 500 ? 'Server Error - TMDB or Supabase issue' 
         : `HTTP ${response.status}`;
-      
-      console.error(`❌ TMDB Proxy Error [${response.status}]:`, {
+      console.error(`TMDB Proxy Error [${response.status}]:`, {
         endpoint,
         status: response.status,
         statusText,
@@ -78,8 +77,13 @@ const fetchTMDB = async <T>(endpoint: string, language: string = 'en', extraPara
   }
 };
 
-export const getTrending = async (mediaType: 'all' | 'movie' | 'tv' = 'all', timeWindow: TimeWindow = 'day', language: string = 'en'): Promise<TMDBResponse<Media>> => {
-  return fetchTMDB(`/trending/${mediaType}/${timeWindow}`, language);
+export const getTrending = async (
+  mediaType: 'all' | 'movie' | 'tv' = 'all',
+  timeWindow: TimeWindow = 'day',
+  language: string = 'en',
+  page: number = 1
+): Promise<TMDBResponse<Media>> => {
+  return fetchTMDB(`/trending/${mediaType}/${timeWindow}`, language, { page: page.toString() });
 };
 
 export const searchMulti = async (query: string, page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
@@ -306,3 +310,6 @@ export interface PersonDetails {
   poster_path: string | null;
   episodes: TVEpisode[];
 }
+
+
+

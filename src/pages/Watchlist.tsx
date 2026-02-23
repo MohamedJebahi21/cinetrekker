@@ -1,17 +1,17 @@
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
-import { Bookmark, Printer } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Bookmark, Printer, LayoutGrid, List } from 'lucide-react';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useUserLists } from '@/contexts/user-lists-context';
-import { getMovieDetails, getTVDetails } from '@/services/tmdb';
+import { getMovieDetails, getTVDetails, getImageUrl, getMediaTitle, getMediaYear, getMediaType } from '@/services/tmdb';
 import { Media } from '@/types/media';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import SEO from '@/components/SEO';
 import { EmptyState } from '@/components/EmptyState';
-import { sortMedia } from '@/lib/sortFilter';
+import { sortMedia, type SortOption } from '@/lib/sortFilter';
 import { RandomPicker } from '@/components/RandomPicker';
 import { ShareButton } from '@/components/ShareButton';
 import { ExportImportButton } from '@/components/ExportImportButton';
@@ -22,24 +22,40 @@ import { WatchlistStats, WatchlistStatsLine } from '@/components/WatchlistStats'
 export default function Watchlist() {
   const { t, i18n } = useTranslation();
   const { watchlist, watched } = useUserLists();
+  const [searchParams] = useSearchParams();
   const language = i18n.language;
   const [statusFilter, setStatusFilter] = useState<'all' | 'watching' | 'plan_to_watch' | 'completed' | 'dropped'>('all');
   const [sortBy, setSortBy] = useState('added-desc');
   const [filterExpanded, setFilterExpanded] = useState(true);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  const sharedParam = searchParams.get('share') || '';
+  const sharedItems = sharedParam
+    ? sharedParam.split(',').map((entry) => {
+        const [mediaType, mediaId] = entry.split(':');
+        const parsedId = Number(mediaId);
+        if ((mediaType === 'movie' || mediaType === 'tv') && Number.isFinite(parsedId)) {
+          return { mediaType, mediaId: parsedId, addedAt: undefined };
+        }
+        return null;
+      }).filter(Boolean) as Array<{ mediaType: 'movie' | 'tv'; mediaId: number; addedAt?: string }>
+    : [];
+  const isSharedView = sharedItems.length > 0;
+  const listItems = isSharedView ? sharedItems : watchlist;
 
   // Fetch details for all watchlist items
   const { data: mediaDetails, isLoading } = useQuery({
-    queryKey: ['watchlist-details', watchlist.map(i => `${i.mediaType}-${i.mediaId}`), language],
+    queryKey: ['watchlist-details', listItems.map(i => `${i.mediaType}-${i.mediaId}`), language],
     queryFn: async () => {
       const results = await Promise.all(
-        watchlist.map(async (item) => {
+        listItems.map(async (item) => {
           try {
             const details = item.mediaType === 'movie'
               ? await getMovieDetails(item.mediaId, language)
               : await getTVDetails(item.mediaId, language);
             
             // Get current watch status
-            const watchedItem = watched.find(
+            const watchedItem = isSharedView ? undefined : watched.find(
               w => w.mediaId === item.mediaId && w.mediaType === item.mediaType
             );
             
@@ -56,18 +72,19 @@ export default function Watchlist() {
       );
       return results.filter(Boolean) as (Media & { watchStatus?: string })[];
     },
-    enabled: watchlist.length > 0,
+    enabled: listItems.length > 0,
   });
 
   // Filter by status
+  const effectiveStatusFilter = isSharedView ? 'all' : statusFilter;
   let filteredMedia = mediaDetails?.filter(media => {
-    if (statusFilter !== 'all' && media.watchStatus !== statusFilter) return false;
+    if (effectiveStatusFilter !== 'all' && media.watchStatus !== effectiveStatusFilter) return false;
     return true;
   });
 
   // Create added dates map for sorting
   const addedDates = new Map<string, Date>();
-  watchlist.forEach((item) => {
+  listItems.forEach((item) => {
     const key = `${item.mediaType}-${item.mediaId}`;
     addedDates.set(key, new Date(item.addedAt || 0));
   });
@@ -79,17 +96,17 @@ export default function Watchlist() {
 
   const statusCounts = {
     all: mediaDetails?.length || 0,
-    watching: mediaDetails?.filter(m => m.watchStatus === 'watching').length || 0,
-    plan_to_watch: mediaDetails?.filter(m => m.watchStatus === 'plan_to_watch' || !m.watchStatus).length || 0,
-    completed: mediaDetails?.filter(m => m.watchStatus === 'completed').length || 0,
-    dropped: mediaDetails?.filter(m => m.watchStatus === 'dropped').length || 0,
+    watching: isSharedView ? 0 : mediaDetails?.filter(m => m.watchStatus === 'watching').length || 0,
+    plan_to_watch: isSharedView ? 0 : mediaDetails?.filter(m => m.watchStatus === 'plan_to_watch' || !m.watchStatus).length || 0,
+    completed: isSharedView ? 0 : mediaDetails?.filter(m => m.watchStatus === 'completed').length || 0,
+    dropped: isSharedView ? 0 : mediaDetails?.filter(m => m.watchStatus === 'dropped').length || 0,
   };
 
   return (
     <>
       <SEO 
-        title="My Watchlist — CineTrekker" 
-        description="Movies and TV shows you want to watch"
+        title={isSharedView ? 'Shared Watchlist - CineTrekker' : 'My Watchlist - CineTrekker'}
+        description={isSharedView ? 'A shared CineTrekker watchlist' : 'Movies and TV shows you want to watch'}
         canonical="https://cinetrekker.vercel.app/watchlist"
       />
       <div className="page-container pt-20 pb-24 md:pb-0">
@@ -101,7 +118,7 @@ export default function Watchlist() {
           className="flex items-center justify-between mb-8 flex-wrap gap-4"
         >
           <div>
-            <h1 className="section-title mb-2">{t('watchlist.title')}</h1>
+            <h1 className="section-title mb-2">{isSharedView ? 'Shared Watchlist' : t('watchlist.title')}</h1>
             <WatchlistStatsLine 
               totalCount={statusCounts.all}
               watchingCount={statusCounts.watching}
@@ -112,12 +129,38 @@ export default function Watchlist() {
           <div className="flex items-center gap-2 flex-wrap">
             <RandomPicker source="watchlist" variant="outline" size="sm" label="Random" />
             <ShareButton
-              title="My CineTrekker Watchlist"
-              url={window.location.origin + '/watchlist'}
-              text={`Check out my watchlist of ${watchlist.length} movies and shows!`}
+              title={isSharedView ? 'Shared CineTrekker Watchlist' : 'My CineTrekker Watchlist'}
+              url={isSharedView
+                ? window.location.href
+                : `${window.location.origin}/watchlist?share=${encodeURIComponent(
+                    listItems.slice(0, 100).map((item) => `${item.mediaType}:${item.mediaId}`).join(',')
+                  )}`}
+              text={`Check out this watchlist of ${listItems.length} movies and shows!`}
               variant="ghost"
               size="sm"
             />
+            <div className="flex items-center gap-1 rounded-lg border border-border/60 bg-background/60 p-1">
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                aria-label="Grid view"
+                aria-pressed={viewMode === 'grid'}
+                className={`inline-flex items-center justify-center rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors ${viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                <LayoutGrid className="h-3.5 w-3.5 mr-1" />
+                Grid
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                aria-label="List view"
+                aria-pressed={viewMode === 'list'}
+                className={`inline-flex items-center justify-center rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors ${viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                <List className="h-3.5 w-3.5 mr-1" />
+                List
+              </button>
+            </div>
             <ExportImportButton />
             <Button variant="ghost" size="sm" asChild>
               <Link to="/print-watchlist">
@@ -129,7 +172,14 @@ export default function Watchlist() {
         </motion.div>
 
         {/* Stats Card */}
-        {mediaDetails && mediaDetails.length > 0 && (
+        {isSharedView && (
+          <div className="mb-6 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-primary">
+            You're viewing a shared watchlist. Sign in to manage your own list.
+          </div>
+        )}
+
+        {/* Stats Card */}
+        {!isSharedView && mediaDetails && mediaDetails.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -146,7 +196,7 @@ export default function Watchlist() {
         )}
 
         {/* Filters */}
-        {mediaDetails && mediaDetails.length > 0 && (
+        {!isSharedView && mediaDetails && mediaDetails.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -168,11 +218,58 @@ export default function Watchlist() {
         {isLoading ? (
           <MediaGrid items={[]} isLoading columns="normal" gap="md" />
         ) : filteredMedia && filteredMedia.length > 0 ? (
-          <MediaGrid 
-            items={filteredMedia} 
-            columns="normal"
-            gap="md"
-          />
+          viewMode === 'grid' ? (
+            <MediaGrid 
+              items={filteredMedia} 
+              columns="normal"
+              gap="md"
+            />
+          ) : (
+            <div className="divide-y divide-border/50 rounded-xl border border-border/50 bg-background/40">
+              {filteredMedia.map((media) => {
+                const title = getMediaTitle(media);
+                const year = getMediaYear(media);
+                const mediaType = getMediaType(media);
+                const poster = getImageUrl(media.poster_path, 'w154');
+                const rating = media.vote_average;
+                return (
+                  <Link
+                    key={`${mediaType}-${media.id}`}
+                    to={`/${mediaType}/${media.id}`}
+                    className="flex items-center gap-4 p-4 transition-colors hover:bg-accent/30"
+                  >
+                    <div className="h-20 w-14 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+                      {poster ? (
+                        <img
+                          src={poster}
+                          alt={`${title} poster`}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="h-full w-full bg-muted" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-sm md:text-base truncate">{title}</h3>
+                        <Badge variant="secondary" className="text-[10px] uppercase">
+                          {mediaType}
+                        </Badge>
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground flex flex-wrap items-center gap-2">
+                        {year && <span>{year}</span>}
+                        {rating > 0 && <span>Rating: {rating.toFixed(1)}</span>}
+                        {media.watchStatus && (
+                          <span className="capitalize">{media.watchStatus.replace(/_/g, ' ')}</span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )
         ) : mediaDetails && mediaDetails.length > 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
@@ -203,3 +300,6 @@ export default function Watchlist() {
     </>
   );
 }
+
+
+

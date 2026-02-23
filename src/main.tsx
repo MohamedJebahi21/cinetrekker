@@ -15,7 +15,7 @@ installChunkErrorHandlers();
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
-  console.error("❌ CRITICAL: Missing root element! Make sure index.html has <div id=\"root\"></div>");
+  console.error("CRITICAL: Missing root element! Make sure index.html has <div id=\"root\"></div>");
   throw new Error("Missing root element in index.html");
 }
 
@@ -43,14 +43,14 @@ try {
     window.setTimeout(injectInsights, 600);
   }
 } catch (err) {
-  console.error("❌ FATAL ERROR during React render:", err);
+  console.error("FATAL ERROR during React render:", err);
 
   const container = document.createElement('div');
   container.style.cssText = 'padding: 40px; font-family: system-ui; max-width: 600px; margin: 0 auto;';
 
   const heading = document.createElement('h1');
   heading.style.color = '#dc2626';
-  heading.textContent = '❌ Application Failed to Load';
+  heading.textContent = 'Application Failed to Load';
 
   const errorText = document.createElement('p');
   errorText.style.cssText = 'background: #fef2f2; padding: 16px; border-radius: 8px; border-left: 4px solid #dc2626;';
@@ -63,3 +63,5 @@ try {
   rootElement.replaceChildren(container);
   throw err;
 }
+
+
