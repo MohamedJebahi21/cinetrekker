@@ -199,6 +199,8 @@ export function UnifiedNav() {
         </div>
 
         <div className="md:hidden flex items-center gap-1">
+          <SupportButton className="justify-start" />
+
           <Link
             to="/profile"
             className={cn(
