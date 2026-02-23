@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { getMediaYear } from '@/services/tmdb';
 
 interface WatchedItem {
   media_id: number;
   media_type: 'movie' | 'tv';
-  runtime?: number; // minutes
+  runtime?: number;
   genres?: string[];
 }
 
@@ -71,7 +70,6 @@ export default function StatsPanel({ watchedItems, loading = false }: Props) {
     return watchedItems.reduce((sum, it) => sum + ((it.genres || []).some(g => g.toLowerCase() === 'horror') ? 1 : 0), 0);
   }, [watchedItems]);
 
-  // If there's no data and we're not loading, show a friendly empty state card
   if (!loading && (!watchedItems || watchedItems.length === 0)) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -120,9 +118,8 @@ export default function StatsPanel({ watchedItems, loading = false }: Props) {
           </CardHeader>
           <CardContent>
             {topGenre ? (
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <div className="w-20 h-20 flex items-center justify-center">
-                  {/* Small SVG circle to visualize percent */}
                   <svg width="64" height="64" viewBox="0 0 36 36" className="transform rotate-[-90deg]">
                     <path
                       d="M18 2.0845
@@ -146,16 +143,16 @@ export default function StatsPanel({ watchedItems, loading = false }: Props) {
 
                 <div className="flex-1">
                   <div className="text-lg font-semibold">{topGenre.genre}</div>
-                  <div className="text-sm text-muted-foreground">{topGenre.count} items • {genrePercent}%</div>
+                  <div className="text-sm text-muted-foreground">{topGenre.count} items | {genrePercent}%</div>
                 </div>
               </div>
             ) : (
-              <div className="text-muted-foreground">No genres yet — watch more to generate insights.</div>
+              <div className="text-muted-foreground">No genres yet - watch more to generate insights.</div>
             )}
           </CardContent>
         </Card>
       </div>
-      {/* Achievements */}
+
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
         {horrorCount > 5 && (
           <Card className="glass-card-hover">
@@ -164,12 +161,12 @@ export default function StatsPanel({ watchedItems, loading = false }: Props) {
               <CardDescription className="text-sm text-zinc-400">Watched {horrorCount} horror movies</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-sm text-zinc-300">You're a certified Scream Queen — you love horror!</div>
+              <div className="text-sm text-zinc-300">You're a certified Scream Queen - you love horror!</div>
             </CardContent>
           </Card>
         )}
       </div>
-      {/* Genre Breakdown */}
+
       <div className="mt-6 glass-card p-4">
         <h3 className="text-lg font-semibold mb-4 text-red-600">Genre Breakdown</h3>
         {watchedItems && watchedItems.length > 0 ? (
@@ -190,7 +187,7 @@ export default function StatsPanel({ watchedItems, loading = false }: Props) {
             })}
           </div>
         ) : (
-          <div className="text-zinc-400">No genres yet — watch some titles to populate this chart.</div>
+          <div className="text-zinc-400">No genres yet - watch some titles to populate this chart.</div>
         )}
       </div>
     </section>

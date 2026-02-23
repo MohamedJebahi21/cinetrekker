@@ -5,9 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Film, Tv, Clock, TrendingUp } from "lucide-react";
 import StatsPanel from '@/components/Stats';
-import { BingeTimer } from '@/components/BingeTimer';
 import SEO from "@/components/SEO";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -37,7 +35,6 @@ export default function Stats() {
     queryFn: async () => {
       if (!user) return [];
 
-      // Supabase table does not contain runtime/genres columns; fetch basic watched rows
       const { data, error } = await supabase
         .from('user_watched')
         .select('media_id, media_type, watched_at')
@@ -47,7 +44,6 @@ export default function Stats() {
 
       const rows = (data ?? []) as { media_id: number; media_type: string; watched_at?: string }[];
 
-      // Enrich each watched item with runtime and genres from TMDB
       const enriched = await Promise.all(rows.map(async (r): Promise<EnrichedWatchedItem> => {
         try {
           if (r.media_type === 'movie') {
@@ -60,20 +56,19 @@ export default function Stats() {
               release_date: details.release_date,
               rating: details.vote_average,
             };
-          } else {
-            const details = await getTVDetails(r.media_id);
-            const runtime = details.episode_run_time?.[0] ?? 0;
-            return {
-              media_id: r.media_id,
-              media_type: 'tv' as const,
-              runtime,
-              genres: (details.genres || []).map((g: TmdbGenre) => g.name),
-              release_date: details.first_air_date,
-              rating: details.vote_average,
-            };
           }
-        } catch (err) {
-          // If TMDB fetch fails, fall back to zero/empty
+
+          const details = await getTVDetails(r.media_id);
+          const runtime = details.episode_run_time?.[0] ?? 0;
+          return {
+            media_id: r.media_id,
+            media_type: 'tv' as const,
+            runtime,
+            genres: (details.genres || []).map((g: TmdbGenre) => g.name),
+            release_date: details.first_air_date,
+            rating: details.vote_average,
+          };
+        } catch {
           return {
             media_id: r.media_id,
             media_type: (r.media_type as 'movie' | 'tv'),
@@ -91,23 +86,15 @@ export default function Stats() {
   const calculateStats = () => {
     if (!watchedItems?.length) {
       return {
-        totalHours: 0,
         movieCount: 0,
         tvCount: 0,
         topGenres: [] as GenreCount[],
       };
     }
 
-    // Calculate total hours
-    const totalMinutes = watchedItems.reduce((sum, item) => {
-      return sum + (item.runtime || 0);
-    }, 0);
-
-    // Count by type
     const movieCount = watchedItems.filter(item => item.media_type === 'movie').length;
     const tvCount = watchedItems.filter(item => item.media_type === 'tv').length;
 
-    // Calculate top genres
     const genreMap = new Map<string, number>();
     watchedItems.forEach(item => {
       item.genres?.forEach(genre => {
@@ -121,7 +108,6 @@ export default function Stats() {
       .slice(0, 3);
 
     return {
-      totalHours: Math.round(totalMinutes / 60),
       movieCount,
       tvCount,
       topGenres,
@@ -141,7 +127,7 @@ export default function Stats() {
     watchedItems.forEach(w => {
       const date = (w as EnrichedWatchedItem).release_date;
       if (!date) return;
-      const year = parseInt(String(date).slice(0,4));
+      const year = parseInt(String(date).slice(0, 4));
       const dec = `${Math.floor(year / 10) * 10}s`;
       set.add(dec);
     });
@@ -154,7 +140,7 @@ export default function Stats() {
       if (decadeFilter !== 'all') {
         const date = (w as EnrichedWatchedItem).release_date;
         if (!date) return false;
-        const year = parseInt(String(date).slice(0,4));
+        const year = parseInt(String(date).slice(0, 4));
         const dec = `${Math.floor(year / 10) * 10}s`;
         if (dec !== decadeFilter) return false;
       }
@@ -168,9 +154,9 @@ export default function Stats() {
 
   if (!user) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <SEO 
-          title="Stats — CineTrekker" 
+      <div className="page-container pt-20 pb-24 md:pb-0">
+        <SEO
+          title="Stats - CineTrekker"
           description="View your watching statistics"
         />
         <Card className="max-w-md mx-auto">
@@ -186,14 +172,14 @@ export default function Stats() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <SEO 
-        title="Stats — CineTrekker" 
+    <div className="page-container pt-20 pb-24 md:pb-0">
+      <SEO
+        title="Stats - CineTrekker"
         description="View your watching statistics and insights"
       />
-      
+
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{t('nav.stats')}</h1>
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">{t('nav.stats')}</h1>
         <p className="text-muted-foreground">
           Your watching journey at a glance
         </p>
@@ -215,9 +201,9 @@ export default function Stats() {
       ) : (
         <>
           <div ref={containerRef}>
-            <div className="mb-4 flex items-center justify-between gap-4">
-              <div className="flex gap-3 items-center">
-                <div className="w-48">
+            <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full md:w-auto">
+                <div className="w-full sm:w-48">
                   <Select onValueChange={(v) => setDecadeFilter(v)}>
                     <SelectTrigger>
                       <SelectValue>{decadeFilter === 'all' ? 'Any decade' : decadeFilter}</SelectValue>
@@ -230,42 +216,46 @@ export default function Stats() {
                   </Select>
                 </div>
 
-                <div className="w-40">
+                <div className="w-full sm:w-40">
                   <Select onValueChange={(v) => setMinRating(v === 'all' ? 'all' : Number(v))}>
                     <SelectTrigger>
-                      <SelectValue>{minRating === 'all' ? 'Any rating' : `≥ ${minRating}`}</SelectValue>
+                      <SelectValue>{minRating === 'all' ? 'Any rating' : `>= ${minRating}`}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Any rating</SelectItem>
-                      {[10,9,8,7,6,5,4,3,2,1].map(r => (
-                        <SelectItem key={r} value={String(r)}>{`≥ ${r}`}</SelectItem>
+                      {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map(r => (
+                        <SelectItem key={r} value={String(r)}>{`>= ${r}`}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
-              <Button onClick={async () => {
-                if (!containerRef.current) return;
-                try {
-                  const { toPng } = await import('html-to-image');
-                  const dataUrl = await toPng(containerRef.current, { cacheBust: true });
-                  const link = document.createElement('a');
-                  link.href = dataUrl;
-                  link.download = 'cinetrekker-stats.png';
-                  document.body.appendChild(link);
-                  link.click();
-                  link.remove();
-                } catch (err) {
-                  console.error('Share capture failed', err);
-                }
-              }}>Share Stats</Button>
+              <Button
+                className="w-full md:w-auto"
+                onClick={async () => {
+                  if (!containerRef.current) return;
+                  try {
+                    const { toPng } = await import('html-to-image');
+                    const dataUrl = await toPng(containerRef.current, { cacheBust: true });
+                    const link = document.createElement('a');
+                    link.href = dataUrl;
+                    link.download = 'cinetrekker-stats.png';
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                  } catch (err) {
+                    console.error('Share capture failed', err);
+                  }
+                }}
+              >
+                Share Stats
+              </Button>
             </div>
 
             <StatsPanel watchedItems={filteredWatched} loading={isLoading} />
           </div>
 
-          {/* Top Genres (existing detailed list) */}
           <Card>
             <CardHeader>
               <CardTitle>Your Top Genres</CardTitle>
@@ -289,10 +279,10 @@ export default function Stats() {
                           </span>
                         </div>
                         <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                          <div 
+                          <div
                             className="h-full bg-primary transition-all"
-                            style={{ 
-                              width: `${(genre.count / (watchedItems?.length || 1)) * 100}%` 
+                            style={{
+                              width: `${(genre.count / (watchedItems?.length || 1)) * 100}%`
                             }}
                           />
                         </div>
@@ -307,9 +297,6 @@ export default function Stats() {
               )}
             </CardContent>
           </Card>
-
-          {/* Binge Timer */}
-          <BingeTimer />
         </>
       )}
     </div>
