@@ -33,10 +33,10 @@ export interface WatchStatusConfig {
 }
 
 const STATUS_CONFIG: Record<string, WatchStatusConfig> = {
-  watching: { icon: '📺', label: 'Watching', color: 'bg-blue-500' },
-  completed: { icon: '✅', label: 'Completed', color: 'bg-green-500' },
-  dropped: { icon: '❌', label: 'Dropped', color: 'bg-red-500' },
-  plan_to_watch: { icon: '📋', label: 'Plan to Watch', color: 'bg-yellow-500' },
+  watching: { icon: '', label: 'Watching', color: 'bg-blue-500' },
+  completed: { icon: '', label: 'Completed', color: 'bg-green-500' },
+  dropped: { icon: '', label: 'Dropped', color: 'bg-red-500' },
+  plan_to_watch: { icon: '', label: 'Plan to Watch', color: 'bg-yellow-500' },
 };
 
 function PosterImage({ posterPath, alt }: { posterPath: string | null; alt: string }) {
@@ -168,14 +168,14 @@ export const MediaCard = React.memo(function MediaCard({ media, mediaType: media
     }
   };
 
-  // Quick view removed — card links to details page via the surrounding <Link>
+  // Quick view removed - card links to details page via the surrounding <Link>
 
   return (
     <>
       <Link
         to={`/${mediaType}/${media.id}`}
         className="group relative glass-card-hover overflow-hidden block focus-ring rounded-xl border border-white/5 shadow-card hover:shadow-card-hover hover:border-primary/20 hover:scale-[1.03] hover:-translate-y-1 transition-all duration-300"
-        aria-label={`${title} — open details`}
+        aria-label={`${title} - open details`}
         tabIndex={0}
       >
         {/* Poster with gradient overlay for text readability */}
@@ -366,3 +366,6 @@ export const MediaCardSkeleton = React.forwardRef<
   );
 });
 MediaCardSkeleton.displayName = 'MediaCardSkeleton';
+
+
+

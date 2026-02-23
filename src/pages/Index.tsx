@@ -120,7 +120,7 @@ export default function Index() {
 
   return (
     <div className="min-h-screen">
-      <SEO title="CineTrekker — Track Your Movies & TV Shows" description="Discover trending movies and TV shows, track your watchlist, and get personalized recommendations." canonical="https://cinetrekker.vercel.app" />
+      <SEO title="CineTrekker - Track Your Movies & TV Shows" description="Discover trending movies and TV shows, track your watchlist, and get personalized recommendations." canonical="https://cinetrekker.vercel.app" />
       {/* Onboarding for new users */}
       {deferredEnabled && (
         <Suspense fallback={null}>
@@ -172,7 +172,7 @@ export default function Index() {
 
         {/* Top This Week - Movies/Series Toggle */}
         <section>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
             <h2 className="section-title mb-0">{t('home.topThisWeek') || 'Top This Week'}</h2>
             <div className="flex gap-2 bg-card/50 border border-white/5 rounded-lg p-1">
               <button
@@ -217,7 +217,7 @@ export default function Index() {
 
         {/* Top Rated - Movies/Series Toggle */}
         <section>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
             <h2 className="section-title mb-0">{t('home.topRated') || 'Top Rated'}</h2>
             <div className="flex gap-2 bg-card/50 border border-white/5 rounded-lg p-1">
               <button
@@ -263,7 +263,7 @@ export default function Index() {
         {/* Trending Section with Tabs */}
         <section>
           <Tabs defaultValue="day" className="w-full">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
               <h2 className="section-title mb-0">{t('home.trending')}</h2>
               <TabsList className="bg-card/50 border border-white/5">
                 <TabsTrigger value="day" className="text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
@@ -297,7 +297,7 @@ export default function Index() {
 
         {/* Popular - Movies/Series Toggle */}
         <section>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
             <h2 className="section-title mb-0">{t('home.popular') || 'Popular'}</h2>
             <div className="flex gap-2 bg-card/50 border border-white/5 rounded-lg p-1">
               <button
@@ -343,3 +343,5 @@ export default function Index() {
     </div>
   );
 }
+
+

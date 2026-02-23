@@ -788,6 +788,11 @@ img {
   object-fit: cover;
 }
 
+/* Prevent logo distortion */
+.logo-image {
+  object-fit: contain;
+}
+
 /* Prevent image stretching on poster images */
 .poster-image {
   object-fit: cover;

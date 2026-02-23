@@ -302,14 +302,16 @@ export function UnifiedNav() {
       <div
         ref={mobileMenuRef}
         className={cn(
-          'md:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl overflow-hidden transition-all duration-300 ease-out',
-          isMenuOpen ? 'max-h-[520px] opacity-100' : 'max-h-0 opacity-0'
+          'md:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl overflow-y-auto overscroll-contain transition-all duration-300 ease-out',
+          isMenuOpen ? 'max-h-[calc(100dvh-5rem)] opacity-100' : 'max-h-0 opacity-0'
         )}
       >
         <nav className="container mx-auto px-4 py-4 flex flex-col gap-2" aria-label={t('nav.mobile', 'Mobile navigation')}>
           <div className="mb-1">
             <SearchDropdown onNavigate={() => setIsMenuOpen(false)} />
           </div>
+
+          <SupportButton className="justify-start" />
 
           {NAV_ITEMS.map((item) => {
             const isActive = item.exact ? pathname === item.path : pathname.startsWith(item.path);

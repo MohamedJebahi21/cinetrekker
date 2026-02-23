@@ -72,7 +72,7 @@ export function MediaCarousel({
   const handleManualScroll = (direction: 'left' | 'right') => {
     const container = scrollContainerRef.current;
     if (!container) return;
-    const scrollDistance = 400;
+    const scrollDistance = Math.floor(container.clientWidth * 0.9);
     const targetScroll = container.scrollLeft + (direction === 'left' ? -scrollDistance : scrollDistance);
     container.scrollTo({ left: targetScroll, behavior: 'smooth' });
   };
@@ -86,12 +86,12 @@ export function MediaCarousel({
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl md:text-2xl font-bold">{title}</h2>
         {showMoreLink && (
-          <Link to={showMoreLink}>
-            <Button variant="ghost" size="sm" className="gap-1">
+          <Button asChild variant="ghost" size="sm" className="gap-1">
+            <Link to={showMoreLink}>
               {t('common.seeAll')}
               <ChevronRight className="w-4 h-4" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         )}
       </div>
 
@@ -148,6 +148,12 @@ export function MediaCarousel({
               </div>
             ))}
           </div>
+          <div
+            className={`pointer-events-none absolute left-0 top-0 h-full w-8 bg-gradient-to-r from-background to-transparent md:hidden ${canScroll.left ? 'opacity-100' : 'opacity-0'}`}
+          />
+          <div
+            className={`pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-background to-transparent md:hidden ${canScroll.right ? 'opacity-100' : 'opacity-0'}`}
+          />
         </div>
       ) : (
         <div className="text-center py-12 text-muted-foreground">

@@ -172,7 +172,7 @@ const App = () => {
               />
               {enableEnhancements && <GlobalLoader />}
               {enableEnhancements && <NetworkMonitor />}
-              <div className="flex min-h-screen flex-col">
+              <div className="flex min-h-[100dvh] flex-col">
                 <UnifiedNav />
                 <ScrollToTop />
                 <main id="main" tabIndex={-1} className="flex-1 pb-0" style={containerStyle} {...handlers}>
