@@ -31,6 +31,18 @@ const resources = {
 
 const isDev = (typeof import.meta !== 'undefined' && (import.meta as Record<string, unknown>).env?.DEV) || process.env.NODE_ENV !== 'production';
 
+// Custom logger that suppresses the i18next locize advertisement
+const LOCIZE_AD_PREFIX = '🌐 i18next is maintained with support from Locize';
+const i18nLogger = {
+  type: 'logger' as const,
+  log(...args: unknown[]) {
+    if (args.some((a) => typeof a === 'string' && a.startsWith(LOCIZE_AD_PREFIX))) return;
+    if (isDev) console.log(...args);
+  },
+  warn(...args: unknown[]) { if (isDev) console.warn(...args); },
+  error(...args: unknown[]) { console.error(...args); },
+};
+
 function lastSegmentTitleCase(key: string) {
   const seg = key.split('.').pop() || key;
   return seg
@@ -41,6 +53,7 @@ function lastSegmentTitleCase(key: string) {
 }
 
 i18n
+  .use(i18nLogger)
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({

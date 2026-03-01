@@ -29,23 +29,9 @@ function getRejectionMessage(reason: unknown): string {
   return '';
 }
 
-function getRejectionStack(reason: unknown): string {
-  if (reason instanceof Error) return reason.stack ?? '';
-  if (reason && typeof reason === 'object' && 'stack' in reason) {
-    const stack = (reason as { stack?: unknown }).stack;
-    return typeof stack === 'string' ? stack : '';
-  }
-  return '';
-}
-
 function isExtensionConnectionNoise(reason: unknown): boolean {
   const message = getRejectionMessage(reason).trim();
-  if (!extensionConnectionErrorRegex.test(message)) {
-    return false;
-  }
-
-  const stack = getRejectionStack(reason);
-  return stack.includes('chrome-extension://') || stack.includes('moz-extension://') || stack === '';
+  return extensionConnectionErrorRegex.test(message);
 }
 
 class ChunkErrorRecovery {
@@ -284,7 +270,7 @@ export function installChunkErrorHandlers(): void {
 
   // Handle unhandled promise rejections (common for dynamic imports)
   window.addEventListener('unhandledrejection', (event) => {
-    if (!isDev && isExtensionConnectionNoise(event.reason)) {
+    if (isExtensionConnectionNoise(event.reason)) {
       event.preventDefault();
       return;
     }
