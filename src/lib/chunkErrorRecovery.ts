@@ -303,7 +303,7 @@ export function installChunkErrorHandlers(): void {
   window.addEventListener(
     "unhandledrejection",
     (event) => {
-      if (!isDev && isExtensionConnectionNoise(event.reason)) {
+      if (isExtensionConnectionNoise(event.reason)) {
         event.preventDefault();
         return;
       }
@@ -323,7 +323,7 @@ export function installChunkErrorHandlers(): void {
   window.addEventListener(
     "error",
     (event) => {
-      if (!isDev && isExtensionConnectionNoiseFromErrorEvent(event)) {
+      if (isExtensionConnectionNoiseFromErrorEvent(event)) {
         event.preventDefault();
         return;
       }
