@@ -25,7 +25,7 @@ const requiredClientVars: (keyof EnvConfig)[] = [
 
 /**
  * Validates that all required client-side environment variables are present
- * @throws {Error} In production if any required variables are missing
+ * Never throws on missing variables; falls back to placeholders and logs actionable guidance.
  * @returns {EnvConfig} Validated environment configuration
  */
 export function validateClientEnv(): EnvConfig {
@@ -49,8 +49,10 @@ export function validateClientEnv(): EnvConfig {
       `  - Use VITE_ prefix for client-side variables\n`;
     
     if (import.meta.env.PROD) {
-      // In production, fail hard
-      throw new Error(errorMsg);
+      // In production, avoid a full app crash; run in degraded mode instead.
+      console.error('⚠️ Environment Validation Error');
+      console.error(errorMsg);
+      console.error('App is running in degraded mode until variables are configured.\n');
     } else {
       // In development, warn but continue with placeholders
       console.warn('⚠️ Environment Validation Warning');
