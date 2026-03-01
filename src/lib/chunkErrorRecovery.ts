@@ -39,7 +39,7 @@ function isExtensionConnectionNoise(reason: unknown): boolean {
 }
 
 function isExtensionConnectionNoiseFromErrorEvent(event: ErrorEvent): boolean {
-  const message = (event.message || '').trim();
+  const message = (event.message || "").trim();
   if (extensionConnectionErrorRegex.test(message)) {
     return true;
   }
@@ -313,7 +313,7 @@ export function installChunkErrorHandlers(): void {
     ) {
       event.preventDefault(); // Prevent default error logging
     }
-  });
+  }, { capture: true });
 
   // Handle global errors
   window.addEventListener("error", (event) => {
@@ -325,7 +325,7 @@ export function installChunkErrorHandlers(): void {
     if (chunkErrorRecovery.handleError(event.error || event)) {
       event.preventDefault();
     }
-  });
+  }, { capture: true });
 
   // Reset retry count when app successfully loads
   window.addEventListener("load", () => {

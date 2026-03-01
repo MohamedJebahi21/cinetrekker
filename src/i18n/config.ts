@@ -22,6 +22,7 @@ export const defaultI18nOptions: InitOptions = {
   },
   fallbackLng: "en",
   debug: Boolean(isDev),
+  showSupportNotice: false,
   ns: ["translation"],
   defaultNS: "translation",
   interpolation: { escapeValue: false },
