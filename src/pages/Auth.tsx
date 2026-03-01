@@ -78,6 +78,8 @@ export default function Auth() {
               <div className="space-y-2">
                 <Input 
                   type="email" 
+                  name="email"
+                  autoComplete={activeTab === 'login' ? 'username' : 'email'}
                   placeholder="Email" 
                   value={email} 
                   onChange={(e) => setEmail(e.target.value)}
@@ -87,6 +89,8 @@ export default function Auth() {
               <div className="space-y-2">
                 <Input 
                   type="password" 
+                  name="password"
+                  autoComplete={activeTab === 'login' ? 'current-password' : 'new-password'}
                   placeholder="Password" 
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)}
