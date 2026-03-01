@@ -33,12 +33,6 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
     text: string;
   } | null>(null);
 
-  // Line 27: Fixed strict typing instead of 'any'
-  const [vResult, setVResult] = useState<{
-    isDone: boolean;
-    message: string;
-  } | null>(null);
-
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
 

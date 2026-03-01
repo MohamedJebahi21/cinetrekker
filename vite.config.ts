@@ -56,7 +56,10 @@ const cspPlugin = (): Plugin => {
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const supabaseUrl = env.VITE_SUPABASE_URL?.trim();
+  const supabaseProjectId = env.VITE_SUPABASE_PROJECT_ID?.trim();
+  const supabaseUrl =
+    env.VITE_SUPABASE_URL?.trim() ||
+    (supabaseProjectId ? `https://${supabaseProjectId}.supabase.co` : undefined);
 
   let supabaseOrigin: string | undefined;
   if (supabaseUrl) {
