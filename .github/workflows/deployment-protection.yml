@@ -53,8 +53,8 @@ jobs:
 
       - name: Verify .env files not committed
         run: |
-          if git diff --cached --name-only | grep -E "\.env\." || \
-             git log -1 --name-only | grep -E "\.env\."; then
+          if git diff --cached --name-only | grep -E "\.env\." | grep -v "\.env\.example$" | grep -q . || \
+             git log -1 --name-only | grep -E "\.env\." | grep -v "\.env\.example$" | grep -q .; then
             echo "❌ ERROR: Environment files detected in commit!"
             exit 1
           fi
