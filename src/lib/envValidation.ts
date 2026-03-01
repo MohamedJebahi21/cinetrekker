@@ -21,11 +21,6 @@ interface EnvConfig {
 const PLACEHOLDER_SUPABASE_URL = "https://placeholder.supabase.co";
 const PLACEHOLDER_SUPABASE_ANON_KEY = "placeholder-anon-key";
 
-const requiredClientVars: (keyof EnvConfig)[] = [
-  "VITE_SUPABASE_URL",
-  "VITE_SUPABASE_ANON_KEY",
-];
-
 /**
  * Validates that all required client-side environment variables are present
  * Never throws on missing variables; falls back to placeholders and logs actionable guidance.
@@ -34,11 +29,24 @@ const requiredClientVars: (keyof EnvConfig)[] = [
 export function validateClientEnv(): EnvConfig {
   const missing: string[] = [];
 
-  requiredClientVars.forEach((key) => {
-    if (!import.meta.env[key]) {
-      missing.push(key);
-    }
-  });
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
+  const supabaseProjectId = import.meta.env.VITE_SUPABASE_PROJECT_ID?.trim();
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
+  const supabasePublishableKey =
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
+
+  const resolvedSupabaseUrl =
+    supabaseUrl ||
+    (supabaseProjectId ? `https://${supabaseProjectId}.supabase.co` : "");
+  const resolvedSupabaseAnonKey = supabaseAnonKey || supabasePublishableKey;
+
+  if (!resolvedSupabaseUrl) {
+    missing.push("VITE_SUPABASE_URL or VITE_SUPABASE_PROJECT_ID");
+  }
+
+  if (!resolvedSupabaseAnonKey) {
+    missing.push("VITE_SUPABASE_ANON_KEY or VITE_SUPABASE_PUBLISHABLE_KEY");
+  }
 
   if (missing.length > 0) {
     const errorMsg =
@@ -62,10 +70,9 @@ export function validateClientEnv(): EnvConfig {
   }
 
   return {
-    VITE_SUPABASE_URL:
-      import.meta.env.VITE_SUPABASE_URL || PLACEHOLDER_SUPABASE_URL,
+    VITE_SUPABASE_URL: resolvedSupabaseUrl || PLACEHOLDER_SUPABASE_URL,
     VITE_SUPABASE_ANON_KEY:
-      import.meta.env.VITE_SUPABASE_ANON_KEY || PLACEHOLDER_SUPABASE_ANON_KEY,
+      resolvedSupabaseAnonKey || PLACEHOLDER_SUPABASE_ANON_KEY,
   };
 }
 
