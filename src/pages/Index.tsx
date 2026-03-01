@@ -12,7 +12,6 @@ import SEO from '@/components/SEO';
 const BecauseYouLiked = lazy(() => import('@/components/BecauseYouLiked').then((mod) => ({ default: mod.BecauseYouLiked })));
 const WatchedShowsNewEpisodes = lazy(() => import('@/components/WatchedShowsNewEpisodes').then((mod) => ({ default: mod.WatchedShowsNewEpisodes })));
 const RecentlyAddedMovies = lazy(() => import('@/components/RecentlyAddedMovies').then((mod) => ({ default: mod.RecentlyAddedMovies })));
-const OnboardingTooltip = lazy(() => import('@/components/OnboardingTooltip').then((mod) => ({ default: mod.OnboardingTooltip })));
 
 export default function Index() {
   const { t, i18n } = useTranslation();
@@ -47,7 +46,7 @@ export default function Index() {
   useEffect(() => {
     setDeferredEnabled(false);
 
-    let timeoutId: number | undefined;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
     let idleId: number | undefined;
 
     const enableDeferred = () => setDeferredEnabled(true);
@@ -55,7 +54,7 @@ export default function Index() {
     if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
       idleId = window.requestIdleCallback(enableDeferred, { timeout: 1200 });
     } else {
-      timeoutId = window.setTimeout(enableDeferred, 0);
+      timeoutId = globalThis.setTimeout(enableDeferred, 0);
     }
 
     return () => {
@@ -63,7 +62,7 @@ export default function Index() {
         window.cancelIdleCallback(idleId);
       }
       if (timeoutId !== undefined) {
-        window.clearTimeout(timeoutId);
+        globalThis.clearTimeout(timeoutId);
       }
     };
   }, [language]);
@@ -121,12 +120,6 @@ export default function Index() {
   return (
     <div className="min-h-screen">
       <SEO title="CineTrekker - Track Your Movies & TV Shows" description="Discover trending movies and TV shows, track your watchlist, and get personalized recommendations." canonical="https://cinetrekker.vercel.app" />
-      {/* Onboarding for new users */}
-      {deferredEnabled && (
-        <Suspense fallback={null}>
-          <OnboardingTooltip />
-        </Suspense>
-      )}
       {/* High-Conversion Hero Section */}
       <HeroSection />
 
