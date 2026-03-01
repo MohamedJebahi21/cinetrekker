@@ -246,6 +246,11 @@ export const chunkErrorRecovery = ChunkErrorRecovery.getInstance({
  * Call this once at app initialization (in main.tsx)
  */
 export function installChunkErrorHandlers(): void {
+  const isDev = Boolean(
+    (typeof import.meta !== 'undefined' && import.meta.env?.DEV) ||
+    (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development')
+  );
+
   // Handle unhandled promise rejections (common for dynamic imports)
   window.addEventListener('unhandledrejection', (event) => {
     if (chunkErrorRecovery.handleError(new Error(event.reason?.message || 'Unknown error'))) {
@@ -267,5 +272,7 @@ export function installChunkErrorHandlers(): void {
     }, 5000); // Reset after 5 seconds of successful operation
   });
 
-  console.log('✅ Chunk error recovery handlers installed');
+  if (isDev) {
+    console.log('✅ Chunk error recovery handlers installed');
+  }
 }

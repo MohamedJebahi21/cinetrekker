@@ -2,7 +2,10 @@ import i18n, { InitOptions } from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import en from '../locales/en.json';
 
-const isDev = (typeof import.meta !== 'undefined' && (import.meta as Record<string, unknown>).env?.DEV) || process.env.NODE_ENV !== 'production';
+const isDev = Boolean(
+  (typeof import.meta !== 'undefined' && import.meta.env?.DEV) ||
+  (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development')
+);
 
 function lastSegmentTitleCase(key: string) {
   const seg = key.split('.').pop() || key;
