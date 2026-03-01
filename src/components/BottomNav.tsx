@@ -9,6 +9,9 @@ import CheckCircle2 from 'lucide-react/dist/esm/icons/check-circle-2';
 import MoreHorizontal from 'lucide-react/dist/esm/icons/more-horizontal';
 import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3';
 import Settings from 'lucide-react/dist/esm/icons/settings';
+import Calendar from 'lucide-react/dist/esm/icons/calendar';
+import Sparkles from 'lucide-react/dist/esm/icons/sparkles';
+import User from 'lucide-react/dist/esm/icons/user';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -28,16 +31,16 @@ interface NavItem {
 const PRIMARY_NAV_ITEMS: NavItem[] = [
   { path: '/', label: 'Home', icon: Home },
   { path: '/search', label: 'Discover', icon: SearchIcon },
-  { path: '/stats', label: 'Stats', icon: BarChart3 },
+  { path: '/enhanced-stats', label: 'Stats', icon: BarChart3 },
   { path: '/watchlist', label: 'Watchlist', icon: Bookmark },
 ];
 
 const SECONDARY_NAV_ITEMS: NavItem[] = [
   { path: '/watched', label: 'Watched', icon: CheckCircle2 },
-  { path: '/calendar', label: 'Calendar', icon: Home },
-  { path: '/recommendations', label: 'Recommendations', icon: Home },
+  { path: '/calendar', label: 'Calendar', icon: Calendar },
+  { path: '/recommendations', label: 'Recommendations', icon: Sparkles },
   { path: '/accessibility', label: 'Accessibility', icon: Settings },
-  { path: '/profile', label: 'Profile', icon: Home },
+  { path: '/profile', label: 'Profile', icon: User },
 ];
 
 interface BottomNavProps {
@@ -60,9 +63,10 @@ export function BottomNav({ showOnMobile = true, watchlistCount, watchedCount }:
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
 
   const handleNavigate = (path: string) => {
-    // Redirect to signup if trying to access profile without authentication
-    if (path === '/profile' && !user) {
-      navigate('/signup');
+    // Redirect to login if trying to access a protected route without authentication
+    const protectedPaths = ['/profile', '/watchlist', '/watched', '/recommendations', '/calendar', '/enhanced-stats', '/settings'];
+    if (protectedPaths.some(p => path === p || path.startsWith(p + '/')) && !user) {
+      navigate('/login');
     } else {
       navigate(path);
     }
