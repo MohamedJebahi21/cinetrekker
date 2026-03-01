@@ -7,8 +7,7 @@
       content="width=device-width, initial-scale=1, maximum-scale=5.0, viewport-fit=cover"
     />
 
-    <!-- Suppress browser-extension connection errors as early as possible (no network delay). Full source is in public/bootstrap.js. -->
-    <script>(function(){try{var r=/^(?:Error:\s*)?Could not establish connection\. Receiving end does not exist\.?$/i;function g(x){return typeof x==='string'?x:(x&&typeof x.message==='string'?x.message:'');}window.addEventListener('unhandledrejection',function(e){if(r.test(g(e.reason).trim())){e.preventDefault();if(e.stopImmediatePropagation)e.stopImmediatePropagation();}},{capture:true});window.addEventListener('error',function(e){if(r.test((e.message||'').trim())||(e.error&&r.test(g(e.error).trim()))){e.preventDefault();if(e.stopImmediatePropagation)e.stopImmediatePropagation();}},{capture:true});}catch(x){}})();</script>
+    <!-- Bootstrap scripts (CSP-compatible external scripts only). -->
     <script src="/bootstrap.js"></script>
 
     <title>

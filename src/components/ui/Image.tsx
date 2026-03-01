@@ -17,6 +17,11 @@ export const Image: React.FC<ImageProps> = ({
   fetchPriority = 'auto',
   ...props
 }) => {
+  const fetchPriorityAttr =
+    fetchPriority && fetchPriority !== 'auto'
+      ? ({ fetchpriority: fetchPriority } as { fetchpriority: 'high' | 'low' })
+      : {};
+
   return (
     <img
       src={src}
@@ -26,7 +31,7 @@ export const Image: React.FC<ImageProps> = ({
       srcSet={srcSet}
       sizes={sizes}
       loading={loading}
-      fetchPriority={fetchPriority}
+      {...fetchPriorityAttr}
       {...props}
     />
   );

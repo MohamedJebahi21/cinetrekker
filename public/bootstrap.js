@@ -14,11 +14,14 @@
 (function () {
   try {
     var extensionConnectionErrorRegex =
-      /^(?:Error:\s*)?Could not establish connection\. Receiving end does not exist\.?$/i;
+      /Could not establish connection\. Receiving end does not exist\.?/i;
 
     var getReasonMessage = function (reason) {
       if (typeof reason === "string") return reason;
       if (reason && typeof reason.message === "string") return reason.message;
+      if (reason && typeof reason.toString === "function") {
+        return String(reason);
+      }
       return "";
     };
 

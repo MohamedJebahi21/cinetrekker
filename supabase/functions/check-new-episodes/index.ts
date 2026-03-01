@@ -15,10 +15,12 @@ const ALLOWED_ORIGINS = [
       ]
     : []),
 ];
+const LOCAL_ORIGIN_PATTERN =
+  /^https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])(?::\d{1,5})?$/i;
 
 function getCorsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get('origin') || '';
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin)
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) || LOCAL_ORIGIN_PATTERN.test(origin)
     ? origin
     : 'https://cinetrekker.vercel.app';
 

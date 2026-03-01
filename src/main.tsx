@@ -8,7 +8,7 @@ import "./index.css";
 import "./i18n";
 
 // Install chunk error recovery handlers
-import { installChunkErrorHandlers } from '@/lib/chunkErrorRecovery';
+import { installChunkErrorHandlers } from "@/lib/chunkErrorRecovery";
 
 // Install chunk error handlers BEFORE React renders
 installChunkErrorHandlers();
@@ -30,17 +30,23 @@ try {
     </StrictMode>
   );
 
-  // Defer non-critical Speed Insights script to avoid competing with initial paint.
-  const injectInsights = () => {
-    import('@vercel/speed-insights')
-      .then((mod) => mod.injectSpeedInsights())
-      .catch(() => undefined);
-  };
+  const shouldLoadSpeedInsights =
+    import.meta.env.PROD ||
+    import.meta.env.VITE_ENABLE_VERCEL_SPEED_INSIGHTS === "true";
 
-  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-    window.requestIdleCallback(injectInsights, { timeout: 2500 });
-  } else {
-    window.setTimeout(injectInsights, 600);
+  if (shouldLoadSpeedInsights) {
+    // Defer non-critical Speed Insights script to avoid competing with initial paint.
+    const injectInsights = () => {
+      import("@vercel/speed-insights")
+        .then((mod) => mod.injectSpeedInsights())
+        .catch(() => undefined);
+    };
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      window.requestIdleCallback(injectInsights, { timeout: 2500 });
+    } else {
+      window.setTimeout(injectInsights, 600);
+    }
   }
 } catch (err) {
   console.error("FATAL ERROR during React render:", err);
