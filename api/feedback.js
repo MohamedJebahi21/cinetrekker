@@ -20,6 +20,20 @@ function getClientIP(req) {
   return req.socket?.remoteAddress || 'unknown';
 }
 
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+
+  const allowedOrigins = new Set([
+    'https://cinetrekker.vercel.app',
+    'https://www.cinetrekker.vercel.app',
+  ]);
+
+  const isPreview = /^https:\/\/cinetrekker-[a-zA-Z0-9-]+\.vercel\.app$/.test(origin);
+  const isLocal = process.env.NODE_ENV !== 'production' && /^http:\/\/localhost:(5173|5174|8080|4173)$/.test(origin);
+
+  return allowedOrigins.has(origin) || isPreview || isLocal;
+}
+
 function isRateLimited(key) {
   const now = Date.now();
   const entry = requestStore.get(key);
@@ -61,6 +75,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
+  // CORS origin validation
+  const origin = req.headers.origin;
+  if (origin && !isAllowedOrigin(origin)) {
+    return res.status(403).json({ error: 'Forbidden origin' });
+  }
+
   const ip = getClientIP(req);
   const limitCheck = isRateLimited(`feedback:${ip}`);
   if (limitCheck.limited) {
@@ -88,16 +108,14 @@ export default async function handler(req, res) {
 
   if (!RESEND_API_KEY || !FEEDBACK_TO_EMAIL) {
     return res.status(503).json({
-      error: 'Feedback service is not configured.',
-      detail: 'Missing RESEND_API_KEY or FEEDBACK_TO_EMAIL.',
+      error: 'Feedback service is temporarily unavailable.',
     });
   }
 
   const runtimeFetch = typeof globalThis.fetch === 'function' ? globalThis.fetch.bind(globalThis) : null;
   if (!runtimeFetch) {
     return res.status(500).json({
-      error: 'Feedback service runtime error.',
-      detail: 'Fetch API is unavailable in this server runtime.',
+      error: 'Feedback service is temporarily unavailable.',
     });
   }
 
@@ -118,10 +136,8 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      const detail = await response.text().catch(() => '');
       return res.status(502).json({
-        error: 'Failed to send feedback via provider.',
-        detail: detail || 'Resend returned a non-OK response.',
+        error: 'Failed to send feedback. Please try again later.',
       });
     }
 
@@ -130,7 +146,6 @@ export default async function handler(req, res) {
     console.error('feedback function error', error);
     return res.status(500).json({
       error: 'Internal feedback service error.',
-      detail: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }
