@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "CineTrekker",
+  "description": "Track movies and TV shows with personalized watchlists and filming location discovery",
+  "url": "https://cinetrekker.vercel.app",
+  "applicationCategory": "EntertainmentApplication",
+  "operatingSystem": "Any",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+}

@@ -4,56 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5.0, viewport-fit=cover" />
     
-    <script>
-      // Apply dark mode immediately to prevent theme flash.
-      (function () {
-        try {
-          var root = document.documentElement;
-          root.classList.add('dark');
-          root.setAttribute('data-theme', 'dark');
-          root.style.colorScheme = 'dark';
-        } catch (e) {
-          // ignore
-        }
-      })();
-    </script>
-
-    <script>
-      // Suppress noisy browser-extension connection errors before app modules execute.
-      (function () {
-        try {
-          var extensionConnectionErrorRegex = /^(?:Error:\s*)?Could not establish connection\. Receiving end does not exist\.?$/i;
-
-          var getReasonMessage = function (reason) {
-            if (typeof reason === 'string') return reason;
-            if (reason && typeof reason.message === 'string') return reason.message;
-            return '';
-          };
-
-          window.addEventListener('unhandledrejection', function (event) {
-            var message = getReasonMessage(event.reason).trim();
-            if (!extensionConnectionErrorRegex.test(message)) return;
-
-            event.preventDefault();
-            if (typeof event.stopImmediatePropagation === 'function') {
-              event.stopImmediatePropagation();
-            }
-          }, { capture: true });
-
-          window.addEventListener('error', function (event) {
-            var message = (event && typeof event.message === 'string' ? event.message : '').trim();
-            if (!extensionConnectionErrorRegex.test(message)) return;
-
-            event.preventDefault();
-            if (typeof event.stopImmediatePropagation === 'function') {
-              event.stopImmediatePropagation();
-            }
-          }, { capture: true });
-        } catch (e) {
-          // ignore bootstrap noise filter errors
-        }
-      })();
-    </script>
+    <script src="/bootstrap.js"></script>
 
     <title>CineTrekker | Track Movies & TV Shows - Your Personal Watchlist</title>
     <meta name="description" content="Discover, track, and organize your favorite movies and TV shows with CineTrekker. Create watchlists, mark watched, and explore filming locations.">
@@ -93,22 +44,7 @@
     <link rel="preconnect" href="https://image.tmdb.org">
     <link rel="preconnect" href="https://nvssyuxghwlubxklvgrn.supabase.co" crossorigin>
 
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "CineTrekker",
-      "description": "Track movies and TV shows with personalized watchlists and filming location discovery",
-      "url": "https://cinetrekker.vercel.app",
-      "applicationCategory": "EntertainmentApplication",
-      "operatingSystem": "Any",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
-      }
-    }
-    </script>
+    <script type="application/ld+json" src="/schema/webapp.json"></script>
 
     <style>
       /* Reset & Base Styles */
