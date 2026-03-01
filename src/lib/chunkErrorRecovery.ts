@@ -300,32 +300,40 @@ export function installChunkErrorHandlers(): void {
   );
 
   // Handle unhandled promise rejections (common for dynamic imports)
-  window.addEventListener("unhandledrejection", (event) => {
-    if (!isDev && isExtensionConnectionNoise(event.reason)) {
-      event.preventDefault();
-      return;
-    }
+  window.addEventListener(
+    "unhandledrejection",
+    (event) => {
+      if (!isDev && isExtensionConnectionNoise(event.reason)) {
+        event.preventDefault();
+        return;
+      }
 
-    if (
-      chunkErrorRecovery.handleError(
-        new Error(event.reason?.message || "Unknown error"),
-      )
-    ) {
-      event.preventDefault(); // Prevent default error logging
-    }
-  }, { capture: true });
+      if (
+        chunkErrorRecovery.handleError(
+          new Error(event.reason?.message || "Unknown error"),
+        )
+      ) {
+        event.preventDefault(); // Prevent default error logging
+      }
+    },
+    { capture: true },
+  );
 
   // Handle global errors
-  window.addEventListener("error", (event) => {
-    if (!isDev && isExtensionConnectionNoiseFromErrorEvent(event)) {
-      event.preventDefault();
-      return;
-    }
+  window.addEventListener(
+    "error",
+    (event) => {
+      if (!isDev && isExtensionConnectionNoiseFromErrorEvent(event)) {
+        event.preventDefault();
+        return;
+      }
 
-    if (chunkErrorRecovery.handleError(event.error || event)) {
-      event.preventDefault();
-    }
-  }, { capture: true });
+      if (chunkErrorRecovery.handleError(event.error || event)) {
+        event.preventDefault();
+      }
+    },
+    { capture: true },
+  );
 
   // Reset retry count when app successfully loads
   window.addEventListener("load", () => {
