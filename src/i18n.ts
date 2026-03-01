@@ -29,7 +29,10 @@ const resources = {
   de: { translation: de },
 };
 
-const isDev = (typeof import.meta !== 'undefined' && (import.meta as Record<string, unknown>).env?.DEV) || process.env.NODE_ENV !== 'production';
+const isDev = Boolean(
+  (typeof import.meta !== 'undefined' && import.meta.env?.DEV) ||
+  (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development')
+);
 
 function lastSegmentTitleCase(key: string) {
   const seg = key.split('.').pop() || key;
@@ -45,6 +48,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
+    debug: isDev,
     fallbackLng: 'en',
     supportedLngs: languages.map(l => l.code),
     load: 'languageOnly',

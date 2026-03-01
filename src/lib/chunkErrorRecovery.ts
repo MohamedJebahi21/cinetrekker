@@ -38,6 +38,19 @@ function isExtensionConnectionNoise(reason: unknown): boolean {
   return true;
 }
 
+function isExtensionConnectionNoiseFromErrorEvent(event: ErrorEvent): boolean {
+  const message = (event.message || '').trim();
+  if (extensionConnectionErrorRegex.test(message)) {
+    return true;
+  }
+
+  if (event.error instanceof Error) {
+    return isExtensionConnectionNoise(event.error);
+  }
+
+  return false;
+}
+
 class ChunkErrorRecovery {
   private static instance: ChunkErrorRecovery;
   private retryCount: number = 0;
@@ -304,6 +317,11 @@ export function installChunkErrorHandlers(): void {
 
   // Handle global errors
   window.addEventListener("error", (event) => {
+    if (!isDev && isExtensionConnectionNoiseFromErrorEvent(event)) {
+      event.preventDefault();
+      return;
+    }
+
     if (chunkErrorRecovery.handleError(event.error || event)) {
       event.preventDefault();
     }

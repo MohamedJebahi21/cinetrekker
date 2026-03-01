@@ -1,13 +1,13 @@
 /**
  * Environment Variable Validation Utility
- * 
+ *
  * Ensures all required client-side environment variables are present
  * at build/runtime. Provides type-safe access to environment variables.
- * 
+ *
  * Usage:
  * ```typescript
  * import { ENV } from '@/lib/envValidation';
- * 
+ *
  * const url = ENV.VITE_SUPABASE_URL;
  * ```
  */
@@ -19,8 +19,8 @@ interface EnvConfig {
 }
 
 const requiredClientVars: (keyof EnvConfig)[] = [
-  'VITE_SUPABASE_URL',
-  'VITE_SUPABASE_ANON_KEY',
+  "VITE_SUPABASE_URL",
+  "VITE_SUPABASE_ANON_KEY",
 ];
 
 /**
@@ -30,7 +30,7 @@ const requiredClientVars: (keyof EnvConfig)[] = [
  */
 export function validateClientEnv(): EnvConfig {
   const missing: string[] = [];
-  
+
   requiredClientVars.forEach((key) => {
     if (!import.meta.env[key]) {
       missing.push(key);
@@ -38,8 +38,8 @@ export function validateClientEnv(): EnvConfig {
   });
 
   if (missing.length > 0) {
-    const errorMsg = 
-      `❌ Missing required environment variables:\n${missing.map(v => `   - ${v}`).join('\n')}\n\n` +
+    const errorMsg =
+      `❌ Missing required environment variables:\n${missing.map((v) => `   - ${v}`).join("\n")}\n\n` +
       `Please follow these steps:\n` +
       `  1. Copy .env.example to .env.local\n` +
       `  2. Fill in the missing values (see .env.example for instructions)\n` +
@@ -47,23 +47,22 @@ export function validateClientEnv(): EnvConfig {
       `For production deployment:\n` +
       `  - Vercel: Add variables in Dashboard → Settings → Environment Variables\n` +
       `  - Use VITE_ prefix for client-side variables\n`;
-    
+
     if (import.meta.env.PROD) {
-      // In production, avoid a full app crash; run in degraded mode instead.
-      console.error('⚠️ Environment Validation Error');
-      console.error(errorMsg);
-      console.error('App is running in degraded mode until variables are configured.\n');
+      // In production, avoid noisy console output and run in degraded mode.
     } else {
       // In development, warn but continue with placeholders
-      console.warn('⚠️ Environment Validation Warning');
+      console.warn("⚠️ Environment Validation Warning");
       console.warn(errorMsg);
-      console.warn('Continuing with placeholder values...\n');
+      console.warn("Continuing with placeholder values...\n");
     }
   }
 
   return {
-    VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co',
-    VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-anon-key',
+    VITE_SUPABASE_URL:
+      import.meta.env.VITE_SUPABASE_URL || "https://placeholder.supabase.co",
+    VITE_SUPABASE_ANON_KEY:
+      import.meta.env.VITE_SUPABASE_ANON_KEY || "placeholder-anon-key",
   };
 }
 
@@ -78,11 +77,11 @@ export function validateEnvFormat(
   key: string,
   value: string,
   pattern: RegExp,
-  errorMsg: string
+  errorMsg: string,
 ): void {
   if (!pattern.test(value)) {
     const msg = `Invalid format for ${key}: ${errorMsg}`;
-    
+
     if (import.meta.env.PROD) {
       throw new Error(msg);
     } else {
@@ -111,33 +110,35 @@ export function isDevelopment(): boolean {
  */
 export const ENV = validateClientEnv();
 
-const JWT_PREFIX = 'ey' + 'J';
+const JWT_PREFIX = "ey" + "J";
 const JWT_PATTERN = new RegExp(
-  `^${JWT_PREFIX}[A-Za-z0-9-_]+\\.[A-Za-z0-9-_]+\\.[A-Za-z0-9-_]+$`
+  `^${JWT_PREFIX}[A-Za-z0-9-_]+\\.[A-Za-z0-9-_]+\\.[A-Za-z0-9-_]+$`,
 );
 
 // Validate format of environment variables (only if present)
-if (ENV.VITE_SUPABASE_URL !== 'https://placeholder.supabase.co') {
+if (ENV.VITE_SUPABASE_URL !== "https://placeholder.supabase.co") {
   validateEnvFormat(
-    'VITE_SUPABASE_URL',
+    "VITE_SUPABASE_URL",
     ENV.VITE_SUPABASE_URL,
     /^https:\/\/.+\.supabase\.co$/,
-    'Must be a valid Supabase URL (https://YOUR_PROJECT.supabase.co)'
+    "Must be a valid Supabase URL (https://YOUR_PROJECT.supabase.co)",
   );
 }
 
-if (ENV.VITE_SUPABASE_ANON_KEY !== 'placeholder-anon-key') {
+if (ENV.VITE_SUPABASE_ANON_KEY !== "placeholder-anon-key") {
   validateEnvFormat(
-    'VITE_SUPABASE_ANON_KEY',
+    "VITE_SUPABASE_ANON_KEY",
     ENV.VITE_SUPABASE_ANON_KEY,
     JWT_PATTERN,
-    `Must be a valid JWT token (starts with ${JWT_PREFIX})`
+    `Must be a valid JWT token (starts with ${JWT_PREFIX})`,
   );
 }
 
 // Log environment info on startup (development only)
 if (isDevelopment()) {
-  console.log('🔧 Environment Configuration:');
+  console.log("🔧 Environment Configuration:");
   console.log(`  - Mode: ${import.meta.env.MODE}`);
-  console.log(`  - Supabase URL: ${ENV.VITE_SUPABASE_URL.replace(/https:\/\/([^.]+)\..*/, 'https://$1.supabase.co')}`);
+  console.log(
+    `  - Supabase URL: ${ENV.VITE_SUPABASE_URL.replace(/https:\/\/([^.]+)\..*/, "https://$1.supabase.co")}`,
+  );
 }
