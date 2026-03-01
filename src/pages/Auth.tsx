@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/auth-context";
 import {
   processAuthError,
   processSignupResult,
@@ -18,10 +19,14 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default function Auth() {
+export default function Auth({ initialTab }: { initialTab?: string }) {
+  const normalizedTab =
+    initialTab === "signin" ? "login"
+    : initialTab === "signup" ? "register"
+    : (initialTab ?? "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [activeTab, setActiveTab] = useState("login");
+  const [activeTab, setActiveTab] = useState(normalizedTab);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{
     type: "complete" | "error";
@@ -33,6 +38,9 @@ export default function Auth() {
     isDone: boolean;
     message: string;
   } | null>(null);
+
+  const navigate = useNavigate();
+  const { signIn, signUp } = useAuth();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,14 +57,13 @@ export default function Auth() {
 
     try {
       if (activeTab === "login") {
-        // Mock login call - replace with actual auth provider call
-        // The processAuthError handler handles auth safely
-        await new Promise((resolve, reject) =>
-          setTimeout(() => reject("Unauthorized"), 1000),
-        );
+        const { error } = await signIn(email, password);
+        if (error) throw error;
+        navigate("/");
       } else {
-        // Registration logic
-        const result = processSignupResult(null);
+        const { error } = await signUp(email, password);
+        if (error) throw error;
+        const result = processSignupResult(error);
         setMessage({ type: "complete", text: result.userMessage });
       }
     } catch (error: unknown) {
