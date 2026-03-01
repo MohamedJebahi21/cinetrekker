@@ -18,6 +18,43 @@
       })();
     </script>
 
+    <script>
+      // Suppress noisy browser-extension connection errors before app modules execute.
+      (function () {
+        try {
+          var extensionConnectionErrorRegex = /^(?:Error:\s*)?Could not establish connection\. Receiving end does not exist\.?$/i;
+
+          var getReasonMessage = function (reason) {
+            if (typeof reason === 'string') return reason;
+            if (reason && typeof reason.message === 'string') return reason.message;
+            return '';
+          };
+
+          window.addEventListener('unhandledrejection', function (event) {
+            var message = getReasonMessage(event.reason).trim();
+            if (!extensionConnectionErrorRegex.test(message)) return;
+
+            event.preventDefault();
+            if (typeof event.stopImmediatePropagation === 'function') {
+              event.stopImmediatePropagation();
+            }
+          }, { capture: true });
+
+          window.addEventListener('error', function (event) {
+            var message = (event && typeof event.message === 'string' ? event.message : '').trim();
+            if (!extensionConnectionErrorRegex.test(message)) return;
+
+            event.preventDefault();
+            if (typeof event.stopImmediatePropagation === 'function') {
+              event.stopImmediatePropagation();
+            }
+          }, { capture: true });
+        } catch (e) {
+          // ignore bootstrap noise filter errors
+        }
+      })();
+    </script>
+
     <title>CineTrekker | Track Movies & TV Shows - Your Personal Watchlist</title>
     <meta name="description" content="Discover, track, and organize your favorite movies and TV shows with CineTrekker. Create watchlists, mark watched, and explore filming locations.">
     <meta name="keywords" content="movie tracker, TV show tracker, watchlist, filming locations, cinema, movies, TV series, film tracking, TMDB">
