@@ -1,0 +1,994 @@
+import { useState, useEffect, useMemo, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import {
+  Search as SearchIcon,
+  Filter,
+  SlidersHorizontal,
+  X,
+  TrendingUp,
+} from "lucide-react";
+import SEO from "@/components/SEO";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogClose,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import {
+  searchMulti,
+  getMovieGenres,
+  getTVGenres,
+  discoverMovies,
+  discoverTV,
+  getTrending,
+} from "@/services/tmdb";
+import { Media } from "@/types/media";
+import { InfiniteMediaGrid } from "@/components/MediaGrid";
+import SkeletonCard from "@/components/ui/SkeletonCard";
+import { RandomTrekButton } from "@/components/RandomTrekButton";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { MediaType, Genre } from "@/types/media";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useContentPolicy } from "@/contexts/content-policy-context";
+import { applySafetyFilter } from "@/lib/contentFilter";
+
+const LANGUAGES = [
+  { code: "en", key: "search.lang.english", fallback: "English" },
+  { code: "es", key: "search.lang.spanish", fallback: "Spanish" },
+  { code: "fr", key: "search.lang.french", fallback: "French" },
+  { code: "de", key: "search.lang.german", fallback: "German" },
+  { code: "it", key: "search.lang.italian", fallback: "Italian" },
+  { code: "pt", key: "search.lang.portuguese", fallback: "Portuguese" },
+  { code: "ja", key: "search.lang.japanese", fallback: "Japanese" },
+  { code: "ko", key: "search.lang.korean", fallback: "Korean" },
+  { code: "zh", key: "search.lang.chinese", fallback: "Chinese" },
+  { code: "ar", key: "search.lang.arabic", fallback: "Arabic" },
+  { code: "hi", key: "search.lang.hindi", fallback: "Hindi" },
+  { code: "tr", key: "search.lang.turkish", fallback: "Turkish" },
+  { code: "ru", key: "search.lang.russian", fallback: "Russian" },
+];
+
+// Runtime options
+const RUNTIMES = [
+  {
+    id: "short",
+    key: "search.runtime.short",
+    fallback: "Quick Watch (< 90 min)",
+    gte: "0",
+    lte: "90",
+  },
+  {
+    id: "medium",
+    key: "search.runtime.medium",
+    fallback: "Standard (90-120 min)",
+    gte: "90",
+    lte: "120",
+  },
+  {
+    id: "long",
+    key: "search.runtime.long",
+    fallback: "Epic (2h+)",
+    gte: "120",
+    lte: "500",
+  },
+];
+
+// Streaming services (common provider IDs)
+const STREAMING_SERVICES = [
+  { id: "8", key: "search.streaming.netflix", fallback: "Netflix" },
+  { id: "9", key: "search.streaming.amazonPrime", fallback: "Amazon Prime" },
+  { id: "337", key: "search.streaming.disneyPlus", fallback: "Disney+" },
+  { id: "1899", key: "search.streaming.max", fallback: "Max" },
+  { id: "15", key: "search.streaming.hulu", fallback: "Hulu" },
+  { id: "350", key: "search.streaming.appleTv", fallback: "Apple TV+" },
+  { id: "531", key: "search.streaming.paramount", fallback: "Paramount+" },
+  { id: "387", key: "search.streaming.peacock", fallback: "Peacock" },
+];
+
+const currentYear = new Date().getFullYear();
+const YEARS = Array.from({ length: 50 }, (_, i) =>
+  (currentYear - i).toString(),
+);
+
+type SearchSortOption =
+  | "popularity.desc"
+  | "vote_average.desc"
+  | "primary_release_date.desc"
+  | "original_title.asc";
+
+const ALLOWED_SORTS = new Set<SearchSortOption>([
+  "popularity.desc",
+  "vote_average.desc",
+  "primary_release_date.desc",
+  "original_title.asc",
+]);
+
+function normalizeSortBy(value: string): SearchSortOption {
+  const normalized = value.trim().toLowerCase();
+
+  // Backward compatibility for legacy sort aliases used in older links.
+  const aliases: Record<string, SearchSortOption> = {
+    popularity: "popularity.desc",
+    top_rated: "vote_average.desc",
+    rating: "vote_average.desc",
+    newest: "primary_release_date.desc",
+    latest: "primary_release_date.desc",
+    title_asc: "original_title.asc",
+  };
+
+  if (normalized in aliases) {
+    return aliases[normalized];
+  }
+
+  return ALLOWED_SORTS.has(normalized as SearchSortOption)
+    ? (normalized as SearchSortOption)
+    : "popularity.desc";
+}
+
+function getMediaYear(item: Media): string {
+  const date = item.release_date || item.first_air_date;
+  return typeof date === "string" && date.length >= 4 ? date.slice(0, 4) : "";
+}
+
+function getMediaDateValue(item: Media): number {
+  return new Date(
+    item.release_date || item.first_air_date || "1900-01-01",
+  ).getTime();
+}
+
+function sortClientResults(items: Media[], sortBy: SearchSortOption): Media[] {
+  const sorted = [...items];
+
+  switch (sortBy) {
+    case "vote_average.desc":
+      sorted.sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0));
+      break;
+    case "primary_release_date.desc":
+      sorted.sort((a, b) => getMediaDateValue(b) - getMediaDateValue(a));
+      break;
+    case "original_title.asc":
+      sorted.sort((a, b) =>
+        (a.title || a.name || "").localeCompare(
+          b.title || b.name || "",
+          undefined,
+          { sensitivity: "base" },
+        ),
+      );
+      break;
+    case "popularity.desc":
+    default:
+      sorted.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+      break;
+  }
+
+  return sorted;
+}
+
+function getDiscoverSort(
+  sortBy: SearchSortOption,
+  mediaType: "movie" | "tv",
+): string {
+  if (sortBy === "primary_release_date.desc") {
+    return mediaType === "tv"
+      ? "first_air_date.desc"
+      : "primary_release_date.desc";
+  }
+  if (sortBy === "original_title.asc") {
+    return mediaType === "tv" ? "name.asc" : "original_title.asc";
+  }
+  return sortBy;
+}
+
+type PagedMedia = {
+  page: number;
+  total_pages: number;
+  results: Media[];
+};
+
+export default function Search() {
+  const { t, i18n } = useTranslation();
+  const { strictFiltering, moderateFiltering } = useContentPolicy();
+  const includeAdult = !(strictFiltering || moderateFiltering);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Initialize from URL params
+  const initialQuery = searchParams.get("q") || searchParams.get("query") || "";
+  const initialType = (searchParams.get("type") as MediaType) || "all";
+  const initialGenre = searchParams.get("genre") || "";
+  const initialYear = searchParams.get("year") || "";
+  const initialLang = searchParams.get("lang") || "";
+  const initialSort = normalizeSortBy(
+    searchParams.get("sort") || "popularity.desc",
+  );
+  const initialRuntime = searchParams.get("runtime") || "";
+  const initialStreaming = searchParams.get("streaming") || "";
+
+  const [query, setQuery] = useState(initialQuery);
+  const debouncedQuery = useDebounce(query, 300);
+  const normalizedQuery = useMemo(
+    () => debouncedQuery.normalize("NFKC").trim(),
+    [debouncedQuery],
+  );
+  const [mediaTypeFilter, setMediaTypeFilter] =
+    useState<MediaType>(initialType);
+  const [genreFilter, setGenreFilter] = useState<string>(initialGenre);
+  const [yearFilter, setYearFilter] = useState<string>(initialYear);
+  const [languageFilter, setLanguageFilter] = useState<string>(initialLang);
+  const [sortBy, setSortBy] = useState<SearchSortOption>(initialSort);
+  const [runtimeFilter, setRuntimeFilter] = useState<string>(initialRuntime);
+  const [streamingFilter, setStreamingFilter] =
+    useState<string>(initialStreaming);
+
+  // Quick preview modal removed - navigation to details is used instead
+
+  const language = i18n.language;
+
+  // Update URL params when filters change
+  useEffect(() => {
+    const params: Record<string, string> = {};
+    if (normalizedQuery) params.q = normalizedQuery;
+    if (mediaTypeFilter !== "all") params.type = mediaTypeFilter;
+    if (genreFilter) params.genre = genreFilter;
+    if (yearFilter) params.year = yearFilter;
+    if (languageFilter) params.lang = languageFilter;
+    if (sortBy !== "popularity.desc") params.sort = sortBy;
+    if (runtimeFilter) params.runtime = runtimeFilter;
+    if (streamingFilter) params.streaming = streamingFilter;
+    setSearchParams(params);
+  }, [
+    normalizedQuery,
+    mediaTypeFilter,
+    genreFilter,
+    yearFilter,
+    languageFilter,
+    sortBy,
+    runtimeFilter,
+    streamingFilter,
+    setSearchParams,
+  ]);
+
+  const { data: movieGenres } = useQuery({
+    queryKey: ["genres", "movie", language],
+    queryFn: () => getMovieGenres(language),
+  });
+
+  const { data: tvGenres } = useQuery({
+    queryKey: ["genres", "tv", language],
+    queryFn: () => getTVGenres(language),
+  });
+
+  // Combine and deduplicate genres
+  const allGenres = useMemo(() => {
+    const genreMap = new Map<number, Genre>();
+    movieGenres?.genres?.forEach((g) => genreMap.set(g.id, g));
+    tvGenres?.genres?.forEach((g) => genreMap.set(g.id, g));
+    return Array.from(genreMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+  }, [movieGenres, tvGenres]);
+
+  // Use genre filter directly
+  const effectiveGenres = genreFilter || undefined;
+
+  // Get runtime params
+  const runtimeConfig = runtimeFilter
+    ? RUNTIMES.find((r) => r.id === runtimeFilter)
+    : undefined;
+
+  // Determine if we should use text search or discover API
+  const hasFilters =
+    mediaTypeFilter !== "all" ||
+    !!genreFilter ||
+    !!yearFilter ||
+    !!languageFilter ||
+    !!runtimeFilter ||
+    !!streamingFilter;
+  const useDiscoverMode = !normalizedQuery && hasFilters;
+  const useSearchMode = normalizedQuery.length > 0;
+  const showTrending = !useDiscoverMode && !useSearchMode;
+
+  // Text search query (infinite)
+  const searchQuery = useInfiniteQuery({
+    queryKey: ["search", normalizedQuery, language, includeAdult],
+    queryFn: ({ pageParam = 1 }) =>
+      searchMulti(normalizedQuery, pageParam as number, language, includeAdult),
+    enabled: Boolean(useSearchMode),
+    retry: 1,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined,
+  });
+
+  // Discover query (combined movies + TV when needed)
+  const discoverQuery = useInfiniteQuery<PagedMedia>({
+    queryKey: [
+      "discover",
+      mediaTypeFilter,
+      effectiveGenres,
+      yearFilter,
+      languageFilter,
+      sortBy,
+      runtimeConfig?.gte,
+      runtimeConfig?.lte,
+      streamingFilter,
+      language,
+      includeAdult,
+    ],
+    queryFn: async ({ pageParam = 1 }) => {
+      const page = pageParam as number;
+      const common = {
+        with_genres: effectiveGenres,
+        with_original_language: languageFilter || undefined,
+        with_runtime_gte: runtimeConfig?.gte,
+        with_runtime_lte: runtimeConfig?.lte,
+        with_watch_providers: streamingFilter || undefined,
+        watch_region: streamingFilter ? "US" : undefined,
+      };
+
+      if (mediaTypeFilter === "movie") {
+        const resp = await discoverMovies(
+          {
+            ...common,
+            page,
+            primary_release_year: yearFilter || undefined,
+            sort_by: getDiscoverSort(sortBy, "movie"),
+            include_adult: includeAdult ? "true" : "false",
+          },
+          language,
+        );
+        return {
+          page: resp.page,
+          total_pages: resp.total_pages,
+          results: resp.results.map((m) => ({
+            ...m,
+            media_type: "movie" as const,
+          })),
+        };
+      }
+
+      if (mediaTypeFilter === "tv") {
+        const resp = await discoverTV(
+          {
+            ...common,
+            page,
+            first_air_date_year: yearFilter || undefined,
+            sort_by: getDiscoverSort(sortBy, "tv"),
+            include_adult: includeAdult ? "true" : "false",
+          },
+          language,
+        );
+        return {
+          page: resp.page,
+          total_pages: resp.total_pages,
+          results: resp.results.map((s) => ({
+            ...s,
+            media_type: "tv" as const,
+          })),
+        };
+      }
+
+      const [moviesResp, tvResp] = await Promise.all([
+        discoverMovies(
+          {
+            ...common,
+            page,
+            primary_release_year: yearFilter || undefined,
+            sort_by: getDiscoverSort(sortBy, "movie"),
+            include_adult: includeAdult ? "true" : "false",
+          },
+          language,
+        ),
+        discoverTV(
+          {
+            ...common,
+            page,
+            first_air_date_year: yearFilter || undefined,
+            sort_by: getDiscoverSort(sortBy, "tv"),
+            include_adult: includeAdult ? "true" : "false",
+          },
+          language,
+        ),
+      ]);
+
+      return {
+        page,
+        total_pages: Math.max(moviesResp.total_pages, tvResp.total_pages),
+        results: [
+          ...moviesResp.results.map((m) => ({
+            ...m,
+            media_type: "movie" as const,
+          })),
+          ...tvResp.results.map((s) => ({ ...s, media_type: "tv" as const })),
+        ],
+      };
+    },
+    enabled: Boolean(useDiscoverMode),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined,
+  });
+
+  // Trending for default view (infinite)
+  const trendingQuery = useInfiniteQuery({
+    queryKey: ["trending", "all", "week", language, includeAdult],
+    queryFn: ({ pageParam = 1 }) =>
+      getTrending("all", "week", language, pageParam as number, includeAdult),
+    enabled: Boolean(showTrending),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined,
+  });
+
+  const activeQuery = useSearchMode
+    ? searchQuery
+    : useDiscoverMode
+      ? discoverQuery
+      : trendingQuery;
+  const isLoading = activeQuery.isLoading;
+  const isError = activeQuery.isError;
+  const activeError = activeQuery.error as Error | null;
+  const hasMore = Boolean(activeQuery.hasNextPage);
+
+  const handleLoadMore = () => {
+    if (!activeQuery.hasNextPage || activeQuery.isFetchingNextPage) return;
+    activeQuery.fetchNextPage();
+  };
+
+  // Combine and filter results
+  const results = useMemo(() => {
+    const pages = activeQuery.data?.pages ?? [];
+    const combined = pages.flatMap((page) => page.results || []);
+
+    if (useSearchMode) {
+      // Filter search results by type and genre
+      let filtered = combined.filter(
+        (item) => item.media_type === "movie" || item.media_type === "tv",
+      );
+
+      if (mediaTypeFilter !== "all") {
+        filtered = filtered.filter(
+          (item) => item.media_type === mediaTypeFilter,
+        );
+      }
+
+      if (genreFilter) {
+        const genreId = parseInt(genreFilter);
+        filtered = filtered.filter((item) => item.genre_ids?.includes(genreId));
+      }
+
+      if (yearFilter) {
+        filtered = filtered.filter((item) => getMediaYear(item) === yearFilter);
+      }
+
+      if (languageFilter) {
+        filtered = filtered.filter(
+          (item) => item.original_language === languageFilter,
+        );
+      }
+
+      return sortClientResults(
+        applySafetyFilter(filtered, strictFiltering, moderateFiltering),
+        sortBy,
+      );
+    }
+
+    if (useDiscoverMode) {
+      return sortClientResults(
+        applySafetyFilter(combined, strictFiltering, moderateFiltering),
+        sortBy,
+      );
+    }
+
+    const trending = combined.filter(
+      (item) => item.media_type === "movie" || item.media_type === "tv",
+    );
+    return sortClientResults(
+      applySafetyFilter(trending, strictFiltering, moderateFiltering),
+      sortBy,
+    );
+  }, [
+    activeQuery.data,
+    useSearchMode,
+    useDiscoverMode,
+    mediaTypeFilter,
+    genreFilter,
+    yearFilter,
+    languageFilter,
+    sortBy,
+    strictFiltering,
+    moderateFiltering,
+  ]);
+
+  const clearFilters = () => {
+    setMediaTypeFilter("all");
+    setGenreFilter("");
+    setYearFilter("");
+    setLanguageFilter("");
+    setSortBy("popularity.desc");
+    setRuntimeFilter("");
+    setStreamingFilter("");
+  };
+
+  const clearSearch = () => {
+    setQuery("");
+  };
+
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const mobileFiltersRef = useRef<HTMLDivElement | null>(null);
+
+  // Keyboard shortcut: 'f' to open filters on mobile when not focused on input
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (
+        e.key.toLowerCase() === "f" &&
+        document.activeElement?.tagName !== "INPUT" &&
+        document.activeElement?.tagName !== "TEXTAREA"
+      ) {
+        e.preventDefault();
+        setMobileFiltersOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // When mobile filters open, scroll to top and focus first control for better UX
+  useEffect(() => {
+    if (mobileFiltersOpen) {
+      setTimeout(() => {
+        mobileFiltersRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+        const first = mobileFiltersRef.current?.querySelector<HTMLElement>(
+          "button, input, select",
+        );
+        first?.focus();
+      }, 50);
+    }
+  }, [mobileFiltersOpen]);
+
+  const activeFiltersCount = [
+    mediaTypeFilter !== "all",
+    genreFilter,
+    yearFilter,
+    languageFilter,
+    runtimeFilter,
+    streamingFilter,
+  ].filter(Boolean).length;
+
+  // Card click navigates via the card's Link; quick preview removed
+
+  // Extracted filters content so it can be used in desktop and mobile drawer
+  const FiltersContent = () => (
+    <>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4 text-primary" />
+          <span className="font-semibold">{t("search.filters")}</span>
+          {activeFiltersCount > 0 && (
+            <Badge
+              variant="secondary"
+              className="ml-2 bg-primary/10 text-primary border-0"
+            >
+              {activeFiltersCount} {t("search.active")}
+            </Badge>
+          )}
+        </div>
+        {activeFiltersCount > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearFilters}
+            className="text-muted-foreground md:hover:text-primary active:text-primary focus-visible:text-primary"
+          >
+            <X className="w-4 h-4 mr-1" />
+            {t("search.clearFilters")}
+          </Button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        {/* Type Filter */}
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">
+            {t("filters.type")}
+          </label>
+          <Select
+            value={mediaTypeFilter}
+            onValueChange={(v) => setMediaTypeFilter(v as MediaType)}
+          >
+            <SelectTrigger className="bg-background/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("common.all")}</SelectItem>
+              <SelectItem value="movie">{t("common.movies")}</SelectItem>
+              <SelectItem value="tv">{t("common.tvShows")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Genre Filter */}
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">
+            {t("filters.genre")}
+          </label>
+          <Select
+            value={genreFilter || "__all__"}
+            onValueChange={(v) => setGenreFilter(v === "__all__" ? "" : v)}
+          >
+            <SelectTrigger className="bg-background/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">{t("common.all")}</SelectItem>
+              {allGenres.map((genre) => (
+                <SelectItem key={genre.id} value={genre.id.toString()}>
+                  {genre.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Runtime Filter */}
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">
+            {t("filters.runtime") || "Runtime"}
+          </label>
+          <Select
+            value={runtimeFilter || "__all__"}
+            onValueChange={(v) => setRuntimeFilter(v === "__all__" ? "" : v)}
+          >
+            <SelectTrigger className="bg-background/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">{t("common.all")}</SelectItem>
+              {RUNTIMES.map((runtime) => (
+                <SelectItem key={runtime.id} value={runtime.id}>
+                  {t(runtime.key, runtime.fallback)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Streaming Service Filter */}
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">
+            {t("filters.streaming") || "Streaming"}
+          </label>
+          <Select
+            value={streamingFilter || "__all__"}
+            onValueChange={(v) => setStreamingFilter(v === "__all__" ? "" : v)}
+          >
+            <SelectTrigger className="bg-background/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">{t("common.all")}</SelectItem>
+              {STREAMING_SERVICES.map((service) => (
+                <SelectItem key={service.id} value={service.id}>
+                  {t(service.key, service.fallback)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Year Filter */}
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">
+            {t("filters.year")}
+          </label>
+          <Select
+            value={yearFilter || "__all__"}
+            onValueChange={(v) => setYearFilter(v === "__all__" ? "" : v)}
+          >
+            <SelectTrigger className="bg-background/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">{t("common.all")}</SelectItem>
+              {YEARS.map((year) => (
+                <SelectItem key={year} value={year}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Language Filter */}
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">
+            {t("filters.language")}
+          </label>
+          <Select
+            value={languageFilter || "__all__"}
+            onValueChange={(v) => setLanguageFilter(v === "__all__" ? "" : v)}
+          >
+            <SelectTrigger className="bg-background/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">{t("common.all")}</SelectItem>
+              {LANGUAGES.map((lang) => (
+                <SelectItem key={lang.code} value={lang.code}>
+                  {t(lang.key, lang.fallback)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Sort */}
+        <div className="space-y-1 col-span-2 sm:col-span-1">
+          <label className="text-xs text-muted-foreground">
+            {t("filters.sort")}
+          </label>
+          <Select
+            value={sortBy}
+            onValueChange={(v) => setSortBy(normalizeSortBy(v))}
+          >
+            <SelectTrigger className="bg-background/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="popularity.desc">
+                {t("filters.sortOptions.popularity")}
+              </SelectItem>
+              <SelectItem value="vote_average.desc">
+                {t("filters.sortOptions.rating")}
+              </SelectItem>
+              <SelectItem value="primary_release_date.desc">
+                {t("filters.sortOptions.newest")}
+              </SelectItem>
+              <SelectItem value="original_title.asc">
+                {t("filters.sortOptions.title")}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="page-container pt-20">
+      <SEO
+        title={query ? `Search: ${query}` : "Search Movies & TV Shows"}
+        description={
+          query
+            ? `Search results for "${query}" - Find movies, TV shows, and actors on CineTrekker`
+            : "Search and discover movies and TV shows by genre, year, rating, and mood. Filter by streaming services and find your next watch."
+        }
+        keywords={
+          query
+            ? `${query}, movies, TV shows, search, streaming`
+            : "movie search, TV show search, genre filter, mood filter, streaming services"
+        }
+        canonical={`https://cinetrekker.vercel.app/search${window.location.search}`}
+      />
+      {/* Search Header */}
+      <div className="mb-8 bg-background/95 backdrop-blur-md border-b border-border/60 py-2">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="section-title mb-0">{t("nav.search")}</h1>
+          <RandomTrekButton />
+        </div>
+
+        {/* Search Input with Clear Button */}
+        <div className="relative max-w-2xl">
+          <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Input
+            type="search"
+            inputMode="search"
+            enterKeyHint="search"
+            autoComplete="off"
+            placeholder={t("search.placeholder")}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="pl-12 pr-12 h-14 text-lg bg-card/50 border-white/10 rounded-xl focus:border-primary focus:ring-primary/20 transition-all"
+            aria-label={t("search.placeholder")}
+          />
+          {query && (
+            <button
+              onClick={clearSearch}
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary transition-all"
+              aria-label={t("search.clearSearch", "Clear search")}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Filter hint */}
+        <p className="text-sm text-muted-foreground mt-3 flex items-center gap-2">
+          <SlidersHorizontal className="w-4 h-4" />
+          {t("search.filterHint")}
+        </p>
+      </div>
+
+      {/* Advanced Filters (desktop) */}
+      <div className="hidden md:block">
+        <div className="glass-card p-5 mb-8">
+          <FiltersContent />
+        </div>
+      </div>
+
+      {/* Mobile filter button and dialog */}
+      <div className="md:hidden mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4" />
+                {t("search.filterHint")}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              {t("search.openFilters", "Open filters (Press F)")}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
+        <Dialog open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+          <DialogTrigger asChild>
+            <Button variant="default" className="flex items-center gap-2">
+              <Filter className="w-4 h-4" />
+              {t("search.filters")}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="fixed right-0 top-0 h-full w-full max-w-sm bg-background p-4 z-50">
+            <DialogDescription className="sr-only">
+              {t("search.filterHint")}
+            </DialogDescription>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-primary" />
+                <span className="font-semibold">{t("search.filters")}</span>
+              </div>
+              <DialogClose asChild>
+                <button
+                  type="button"
+                  aria-label={t("common.close", "Close")}
+                  title={t("common.close", "Close")}
+                  className="p-2 rounded-md hover:bg-muted/30 ml-2 min-w-[44px] min-h-[44px]"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </DialogClose>
+            </div>
+            <div ref={mobileFiltersRef} className="overflow-auto max-h-[80vh]">
+              <FiltersContent />
+            </div>
+
+            <div className="border-t border-border/50 mt-4 pt-3 flex items-center gap-2">
+              <Button
+                variant="ghost"
+                className="flex-1"
+                onClick={() => {
+                  clearFilters();
+                  mobileFiltersRef.current?.scrollTo({ top: 0 });
+                }}
+              >
+                {t("search.clearFilters")}
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={() => setMobileFiltersOpen(false)}
+              >
+                {t("common.apply", "Apply")}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Results Header */}
+      <div className="mb-4">
+        <p className="text-sm text-muted-foreground">
+          {isLoading ? (
+            <>{t("common.loading")}</>
+          ) : isError ? (
+            <>{activeError?.message || t("common.error")}</>
+          ) : normalizedQuery ? (
+            <>
+              {t("search.resultsFor", { query: normalizedQuery })} (
+              {results.length})
+            </>
+          ) : hasFilters ? (
+            <>
+              {t("search.filterResults")} ({results.length})
+            </>
+          ) : (
+            <>{t("search.trendingNow")}</>
+          )}
+        </p>
+      </div>
+
+      {/* Results */}
+      {isLoading ? (
+        <div className="media-grid">
+          {Array.from({ length: 18 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      ) : isError ? (
+        <div className="text-center py-20 max-w-md mx-auto">
+          <h3 className="text-2xl font-bold mb-3 title-display">
+            {t("common.error")}
+          </h3>
+          <p className="text-muted-foreground mb-6 leading-relaxed">
+            {activeError?.message ||
+              t(
+                "search.noResultsDescription",
+                "Something went wrong while searching.",
+              )}
+          </p>
+        </div>
+      ) : results.length > 0 ? (
+        <InfiniteMediaGrid
+          items={results}
+          hasMore={hasMore}
+          onLoadMore={handleLoadMore}
+          columns="normal"
+          gap="md"
+        />
+      ) : (
+        <div className="text-center py-20 max-w-md mx-auto">
+          <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+            <SearchIcon className="w-12 h-12 text-primary" />
+          </div>
+          <h3 className="text-2xl font-bold mb-3 title-display">
+            {normalizedQuery
+              ? t("search.noResultsTitle", "No results available")
+              : t("search.startJourney", "Your Journey Starts Here")}
+          </h3>
+          <p className="text-muted-foreground mb-6 leading-relaxed">
+            {normalizedQuery
+              ? t(
+                  "search.noResultsDescription",
+                  `We couldn't find anything matching "${normalizedQuery}". Try adjusting your filters or search terms.`,
+                )
+              : t(
+                  "search.trySearching",
+                  "Search for movies, TV shows, or use the genre chips above to discover something new.",
+                )}
+          </p>
+          {(hasFilters || normalizedQuery) && (
+            <Button
+              variant="default"
+              onClick={() => {
+                clearFilters();
+                clearSearch();
+              }}
+              className="btn-primary-glow gap-2"
+            >
+              <TrendingUp className="w-4 h-4" />
+              {t("common.discoverTrending", "Discover Trending")}
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Media preview removed */}
+    </div>
+  );
+}

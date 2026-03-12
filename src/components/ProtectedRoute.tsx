@@ -1,0 +1,38 @@
+import { ReactNode } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/auth-context';
+import { Skeleton } from '@/components/ui/skeleton';
+
+/**
+ * Security: Protected Route Component
+ *
+ * This component guards routes that require authentication.
+ * Unauthenticated users are redirected to /login.
+ */
+
+interface ProtectedRouteProps {
+  children: ReactNode;
+}
+
+export function ProtectedRoute({
+  children,
+}: ProtectedRouteProps) {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Skeleton className="w-20 h-28 rounded-lg" />
+      </div>
+    );
+  }
+
+  // Redirect to login if not authenticated
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
+
+  return <>{children}</>;
+}

@@ -1,0 +1,38 @@
+name: Check New Episodes (Background Job)
+
+on:
+  schedule:
+    # Runs daily at 3:00 AM UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch: # Allows manual trigger
+
+jobs:
+  check-episodes:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Call Supabase Edge Function
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          # We use /dynamic-worker because that is your function's URL Slug
+          response=$(curl -X POST \
+            "${SUPABASE_URL}/functions/v1/dynamic-worker" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            -H "Content-Type: application/json" \
+            -w "\n%{http_code}" \
+            -s)
+          
+          http_code=$(echo "$response" | tail -n 1)
+          body=$(echo "$response" | sed '$d')
+          
+          echo "Response: $body"
+          echo "Status: $http_code"
+          
+          if [ "$http_code" -ne 200 ]; then
+            echo "❌ Background job failed with status $http_code"
+            exit 1
+          fi
+          
+          echo "✅ Background job completed successfully"
