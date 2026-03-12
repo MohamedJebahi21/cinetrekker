@@ -5,11 +5,9 @@ import { useToast } from '@/hooks/use-toast';
 
 export const useCollections = () => {
   const { user } = useAuth();
-  const DISABLE_ID = 'cinetrekker:collections_disabled';
-  const disabledFlag = typeof window !== 'undefined' && localStorage.getItem(DISABLE_ID) === '1';
   return useQuery({
     queryKey: ['collections', user?.id],
-    enabled: !!user && !disabledFlag,
+    enabled: !!user,
     queryFn: async () => {
       if (!user) return [];
       try {
@@ -20,12 +18,10 @@ export const useCollections = () => {
           .order('created_at', { ascending: false });
 
         if (error) {
-          // If the Supabase instance doesn't have the table, disable future fetches to avoid noisy console errors
           const errorCode = (error as Record<string, unknown>).code as string | undefined;
           const errorMessage = (error as Record<string, unknown>).message as string | undefined;
           if (errorCode === 'PGRST205' || errorMessage?.includes("Could not find the table")) {
-            try { localStorage.setItem(DISABLE_ID, '1'); } catch (e) { console.warn('Failed to save collection disabled state:', e); }
-            console.warn('Collections table missing in Supabase; disabling collections fetch.');
+            console.warn('Collections table missing in Supabase; returning empty list.');
             return [];
           }
           console.error('Failed to fetch collections', error);

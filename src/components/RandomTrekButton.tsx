@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Shuffle, Sparkles } from 'lucide-react';
+import { Dice5, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getTopRatedMovies, getTopRatedTV } from '@/services/tmdb';
+import { getTrending, getPopularMovies } from '@/services/tmdb';
 import { Media } from '@/types/media';
 import { Button } from '@/components/ui/button';
 import { cn } from "../lib/utils";
@@ -16,57 +16,59 @@ interface RandomTrekButtonProps {
 }
 
 export function RandomTrekButton({ className, variant = 'default' }: RandomTrekButtonProps) {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const { strictFiltering, moderateFiltering } = useContentPolicy();
   const includeAdult = !(strictFiltering || moderateFiltering);
   const language = i18n.language;
-  const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
   const navigate = useNavigate();
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [isPicking, setIsPicking] = useState(false);
 
-  const { data: topMovies } = useQuery({
-    queryKey: ['top-rated-movies', language, includeAdult],
-    queryFn: () => getTopRatedMovies(1, language, includeAdult),
-    staleTime: 1000 * 60 * 10, // Cache for 10 minutes
-  });
-
-  const { data: topTV } = useQuery({
-    queryKey: ['top-rated-tv', language, includeAdult],
-    queryFn: () => getTopRatedTV(1, language, includeAdult),
+  const { data: trendingMovies } = useQuery({
+    queryKey: ['surprise-trending-movies', language, includeAdult],
+    queryFn: () => getTrending('movie', 'day', language, 1, includeAdult),
     staleTime: 1000 * 60 * 10,
   });
 
-  const handleRandomTrek = () => {
-    // Combine top rated movies and TV shows
-    const allMedia: Media[] = applySafetyFilter([
-      ...(topMovies?.results || []).map(m => ({ ...m, media_type: 'movie' as const })),
-      ...(topTV?.results || []).map(s => ({ ...s, media_type: 'tv' as const })),
-    ], strictFiltering, moderateFiltering).filter(item => item.vote_average >= 7.5); // Only highly rated
+  const { data: popularMovies } = useQuery({
+    queryKey: ['surprise-popular-movies', language, includeAdult],
+    queryFn: () => getPopularMovies(1, language, includeAdult),
+    staleTime: 1000 * 60 * 10,
+  });
 
-    if (allMedia.length === 0) return;
+  const moviePool = useMemo(() => {
+    const combined: Media[] = [
+      ...((trendingMovies?.results || []) as Media[]),
+      ...((popularMovies?.results || []) as Media[]),
+    ].map((m) => ({ ...m, media_type: 'movie' as const }));
 
-    // Animate the button
-    setIsAnimating(true);
-    
-    // Simulate "shuffling" effect
-    let shuffleCount = 0;
-    let lastSelected: Media | null = null;
-    const shuffleInterval = setInterval(() => {
-      const randomIndex = Math.floor(Math.random() * allMedia.length);
-      lastSelected = allMedia[randomIndex];
-      setSelectedMedia(lastSelected);
-      shuffleCount++;
+    const filtered = applySafetyFilter(combined, strictFiltering, moderateFiltering)
+      .filter((item) => (item.vote_average || 0) > 0);
 
-      if (shuffleCount >= 8) {
-        clearInterval(shuffleInterval);
-        setIsAnimating(false);
-        // Navigate to selected media details page instead of opening preview modal
-        if (lastSelected) {
-          const mediaType = lastSelected.media_type === 'tv' ? 'tv' : 'movie';
-          navigate(`/${mediaType}/${lastSelected.id}`);
-        }
-      }
-    }, 100);
+    return filtered.filter(
+      (item, index, arr) => arr.findIndex((x) => x.id === item.id) === index,
+    );
+  }, [trendingMovies, popularMovies, strictFiltering, moderateFiltering]);
+
+  const getRandomIndex = (max: number) => {
+    if (max <= 1) return 0;
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+      const array = new Uint32Array(1);
+      crypto.getRandomValues(array);
+      return array[0] % max;
+    }
+    return Math.floor(Math.random() * max);
+  };
+
+  const handleSurpriseMe = async () => {
+    if (moviePool.length === 0 || isPicking) return;
+
+    setIsPicking(true);
+    const randomMovie = moviePool[getRandomIndex(moviePool.length)];
+
+    // Tiny delay keeps the UI feeling responsive without heavy animation.
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    navigate(`/movie/${randomMovie.id}`);
+    setIsPicking(false);
   };
 
   if (variant === 'hero') {
@@ -74,22 +76,22 @@ export function RandomTrekButton({ className, variant = 'default' }: RandomTrekB
       <>
         <Button
           size="lg"
-          onClick={handleRandomTrek}
-          disabled={isAnimating}
+          onClick={handleSurpriseMe}
+          disabled={isPicking || moviePool.length === 0}
           className={cn(
             "gap-3 text-base font-semibold px-8 py-6 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70",
             "shadow-[0_0_30px_hsl(358_81%_47%/0.3)] hover:shadow-[0_0_40px_hsl(358_81%_47%/0.5)]",
             "transition-all duration-300",
-            isAnimating && "animate-pulse",
+            isPicking && "animate-pulse",
             className
           )}
         >
-          {isAnimating ? (
-            <Sparkles className="w-5 h-5 animate-spin" />
+          {isPicking ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
-            <Shuffle className="w-5 h-5" />
+            <Dice5 className="w-5 h-5" />
           )}
-          {t('randomTrek.button') || 'Random Trek'}
+          🎲 Surprise Me
         </Button>
 
         {/* Media preview removed; navigates to details */}
@@ -101,20 +103,20 @@ export function RandomTrekButton({ className, variant = 'default' }: RandomTrekB
     <>
       <Button
         variant="outline"
-        onClick={handleRandomTrek}
-        disabled={isAnimating}
+        onClick={handleSurpriseMe}
+        disabled={isPicking || moviePool.length === 0}
         className={cn(
           "gap-2 border-primary/30 hover:border-primary hover:bg-primary/10",
-          isAnimating && "animate-pulse",
+          isPicking && "animate-pulse",
           className
         )}
       >
-        {isAnimating ? (
-          <Sparkles className="w-4 h-4 animate-spin" />
+        {isPicking ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
         ) : (
-          <Shuffle className="w-4 h-4" />
+          <Dice5 className="w-4 h-4" />
         )}
-        {t('randomTrek.button') || 'Random Trek'}
+        🎲 Surprise Me
       </Button>
 
       {/* Media preview removed; navigates to details */}

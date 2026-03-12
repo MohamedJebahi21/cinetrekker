@@ -1,7 +1,7 @@
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { AuthProvider } from "@/contexts/auth-context";
@@ -39,12 +39,14 @@ const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const TitleStatus = lazy(() => import("./pages/TitleStatus"));
 
 const Search = lazy(() => import("./pages/Search"));
+const Trending = lazy(() => import("./pages/Trending"));
 const Details = lazy(() => import("./pages/Details"));
 const LocationDetails = lazy(() => import("./pages/LocationDetails"));
 const Person = lazy(() => import("./pages/Person"));
 const Watchlist = lazy(() => import("./pages/Watchlist"));
 const Watched = lazy(() => import("./pages/Watched"));
 const Following = lazy(() => import("./pages/Following"));
+const Notifications = lazy(() => import("./pages/Notifications"));
 const Recommendations = lazy(() => import("./pages/Recommendations"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
@@ -57,14 +59,11 @@ const Calendar = lazy(() => import("./pages/Calendar"));
 const EnhancedStats = lazy(() => import("./pages/EnhancedStats"));
 const GenreBrowser = lazy(() => import("./pages/GenreBrowser"));
 const DecadeExplorer = lazy(() => import("./pages/DecadeExplorer"));
-const AdvancedSearch = lazy(() => import("./pages/AdvancedSearch"));
 const Achievements = lazy(() => import("./pages/Achievements"));
 const Collections = lazy(() => import("./pages/Collections"));
-const TrekLists = lazy(() => import("./pages/TrekLists"));
 const PrintWatchlist = lazy(() => import("./pages/PrintWatchlist"));
 const AwardWinners = lazy(() => import("./pages/AwardWinners"));
 const YearInReview = lazy(() => import("./pages/YearInReview"));
-const WatchHistory = lazy(() => import("./pages/WatchHistory"));
 const AccessibilitySettings = lazy(
   () => import("./pages/AccessibilitySettings"),
 );
@@ -116,6 +115,14 @@ function AnimatedRoutes() {
           element={
             <Suspense fallback={<RouteSpinner />}>
               <Search />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/trending"
+          element={
+            <Suspense fallback={<RouteSpinner />}>
+              <Trending />
             </Suspense>
           }
         />
@@ -283,6 +290,16 @@ function AnimatedRoutes() {
           }
         />
         <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={<RouteSpinner />}>
+                <Notifications />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/recommendations"
           element={
             <ProtectedRoute>
@@ -312,16 +329,7 @@ function AnimatedRoutes() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/enhanced-stats"
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<RouteSpinner />}>
-                <EnhancedStats />
-              </Suspense>
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/enhanced-stats" element={<Navigate to="/stats" replace />} />
         <Route
           path="/achievements"
           element={
@@ -360,14 +368,6 @@ function AnimatedRoutes() {
           }
         />
         <Route
-          path="/advanced-search"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <AdvancedSearch />
-            </Suspense>
-          }
-        />
-        <Route
           path="/collections"
           element={
             <Suspense fallback={<RouteSpinner />}>
@@ -375,16 +375,7 @@ function AnimatedRoutes() {
             </Suspense>
           }
         />
-        <Route
-          path="/trek-lists"
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<RouteSpinner />}>
-                <TrekLists />
-              </Suspense>
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/trek-lists" element={<Navigate to="/" replace />} />
         <Route
           path="/awards"
           element={
@@ -403,16 +394,7 @@ function AnimatedRoutes() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/watch-history"
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<RouteSpinner />}>
-                <WatchHistory />
-              </Suspense>
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/watch-history" element={<Navigate to="/watched" replace />} />
         <Route
           path="/accessibility"
           element={

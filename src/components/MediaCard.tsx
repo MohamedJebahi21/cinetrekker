@@ -32,7 +32,6 @@ import { useWatchedEpisodes } from "@/hooks/useFollowedShows";
 import { useEffect } from "react";
 import { Image } from "@/components/ui/Image";
 import { cn } from "../lib/utils";
-import { getFilmedInBadge } from "@/lib/filmingLocations";
 
 export interface MediaCardProps {
   media: Media & { watchStatus?: string };
@@ -96,7 +95,7 @@ function PosterImage({
     >
       {inView ? (
         tiny || small || medium ? (
-          <img
+          <Image
             src={small || medium || ""}
             srcSet={`${tiny ? `${tiny} 92w, ` : ""}${small ? `${small} 185w, ` : ""}${medium ? `${medium} 342w` : ""}`}
             sizes="(max-width: 480px) calc(50vw - 24px), (max-width: 768px) calc(33vw - 20px), (max-width: 1024px) calc(25vw - 20px), 200px"
@@ -105,6 +104,7 @@ function PosterImage({
             height={278}
             className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
             loading="lazy"
+            fetchPriority="low"
           />
         ) : (
           <div className="w-full h-full skeleton-shimmer" />
@@ -157,7 +157,6 @@ export const MediaCard = React.memo(function MediaCard({
   const watched = isWatched(media.id, mediaType);
   const watchStatus = media.watchStatus;
   const rating = media.vote_average;
-  const filmedInBadge = getFilmedInBadge(media);
   const ratingClass =
     rating >= 7 ? "rating-high" : rating >= 5 ? "rating-medium" : "rating-low";
 
@@ -421,9 +420,6 @@ export const MediaCard = React.memo(function MediaCard({
           <h3 className="title-display min-h-[3.5rem] line-clamp-2 text-base font-semibold transition-colors group-hover:text-primary md:text-lg">
             {title}
           </h3>
-          <span className="mt-1 inline-flex w-fit rounded-full border border-[#f2c572]/40 bg-[#160f05]/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#f4cb80]">
-            {filmedInBadge}
-          </span>
           {year && (
             <p className="mt-auto pt-1 text-xs text-muted-foreground">{year}</p>
           )}

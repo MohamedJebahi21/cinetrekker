@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Search, X, Film, Tv, User, ArrowRight } from 'lucide-react';
-import { searchMulti, getImageUrl, getMediaTitle, getMediaYear, getMediaType } from '@/services/tmdb';
+import { searchMovies, searchPeople, getImageUrl } from '@/services/tmdb';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -28,6 +28,7 @@ function SearchResultSkeleton() {
 interface SearchResult {
   id: number;
   media_type: 'movie' | 'tv' | 'person';
+  person_role?: 'actor' | 'director';
   title?: string;
   name?: string;
   poster_path?: string | null;
@@ -49,7 +50,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
   const includeAdult = !(strictFiltering || moderateFiltering);
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
-  const debouncedQuery = useDebounce(query, 500); // 500ms debounce for bot protection
+  const debouncedQuery = useDebounce(query, 250); // Faster debounce for instant suggestions
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -85,19 +86,56 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
 
   const { data: searchResults, isLoading, isFetching } = useQuery({
     queryKey: ['search-dropdown', debouncedQuery, language, includeAdult],
-    queryFn: () => searchMulti(debouncedQuery, 1, language, includeAdult),
-    enabled: debouncedQuery.length >= 2,
+    queryFn: async () => {
+      const q = debouncedQuery.trim();
+      if (!q) return [] as SearchResult[];
+
+      // Efficient: fetch movies and people in parallel so suggestions include actors/directors immediately.
+      const [movieResponse, peopleResponse] = await Promise.all([
+        searchMovies(q, 1, language, includeAdult),
+        searchPeople(q, 1, language),
+      ]);
+
+      const movies = ((movieResponse?.results || []) as SearchResult[])
+        .slice(0, 6)
+        .map((item) => ({ ...item, media_type: 'movie' as const }));
+
+      const peopleRaw = (peopleResponse?.results || []) as SearchResult[];
+      const peopleWithRole = peopleRaw
+        .map((person) => {
+          const department = ((person as { known_for_department?: string }).known_for_department || '').toLowerCase();
+          let personRole: 'actor' | 'director' | undefined;
+
+          if (department.includes('direct')) {
+            personRole = 'director';
+          } else if (department.includes('actor')) {
+            personRole = 'actor';
+          }
+
+          return personRole ? { ...person, media_type: 'person' as const, person_role: personRole } : null;
+        })
+        .filter(Boolean) as SearchResult[];
+
+      const actors = peopleWithRole.filter((p) => p.person_role === 'actor').slice(0, 3);
+      const directors = peopleWithRole.filter((p) => p.person_role === 'director').slice(0, 3);
+
+      const merged = [...movies, ...actors, ...directors];
+      const deduped = merged.filter(
+        (item, index, arr) =>
+          arr.findIndex((x) => x.media_type === item.media_type && x.id === item.id) === index,
+      );
+
+      return deduped.slice(0, 8);
+    },
+    enabled: debouncedQuery.trim().length >= 1,
     staleTime: 30000,
   });
 
-  // Filter and limit results (top 5)
   const results: SearchResult[] = applySafetyFilter(
-    ((searchResults?.results as unknown as SearchResult[])?.filter(
-    (item) => item.media_type === 'movie' || item.media_type === 'tv' || item.media_type === 'person'
-    ) || []) as SearchResult[],
+    (searchResults || []) as SearchResult[],
     strictFiltering,
     moderateFiltering,
-  ).slice(0, 5);
+  );
 
   const getItemRoute = (item: SearchResult): string => {
     if (item.media_type === 'person') return `/person/${item.id}`;
@@ -151,6 +189,15 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
     return <Tv className="w-4 h-4 text-muted-foreground" />;
   };
 
+  const getItemTypeLabel = (item: SearchResult): string => {
+    if (item.media_type === 'person') {
+      if (item.person_role === 'director') return 'director';
+      if (item.person_role === 'actor') return 'actor';
+      return 'person';
+    }
+    return item.media_type;
+  };
+
   const getItemImage = (item: SearchResult) => {
     if (item.media_type === 'person') {
       return getImageUrl(item.profile_path || null, 'w92');
@@ -179,18 +226,13 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
-            setIsOpen(e.target.value.length >= 2);
+            setIsOpen(e.target.value.trim().length >= 1);
             setSelectedIndex(-1);
           }}
-          onFocus={() => query.length >= 2 && setIsOpen(true)}
+          onFocus={() => query.trim().length >= 1 && setIsOpen(true)}
           onKeyDown={handleKeyDown}
           className="pl-9 pr-16 h-10 bg-card/50 border-white/10 rounded-lg focus:border-primary focus:ring-primary/20 transition-all"
           aria-label={t('search.placeholder')}
-          role="combobox"
-          aria-autocomplete="list"
-          aria-controls="search-dropdown-results"
-          aria-expanded={isOpen}
-          aria-haspopup="listbox"
         />
         
         {/* Keyboard hint */}
@@ -213,10 +255,9 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
       </div>
 
       {/* Dropdown Results */}
-      {isOpen && debouncedQuery.length >= 2 && (
+      {isOpen && debouncedQuery.trim().length >= 1 && (
         <div
           id="search-dropdown-results"
-          role="listbox"
           className="absolute top-full left-0 right-0 mt-2 bg-popover/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl overflow-y-auto max-h-screen z-50 animate-fade-in"
         >
           {isLoading || (isFetching && query !== debouncedQuery) ? (
@@ -231,8 +272,6 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                 {results.map((item, index) => (
                   <li key={`${item.media_type}-${item.id}`}>
                     <button
-                      role="option"
-                      aria-selected={selectedIndex === index}
                       onClick={() => handleItemClick(item)}
                       className={cn(
                         "w-full flex items-center gap-3 px-4 py-2 text-left transition-colors",
@@ -266,7 +305,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                         </p>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           {getItemIcon(item)}
-                          <span className="capitalize">{item.media_type}</span>
+                          <span className="capitalize">{getItemTypeLabel(item)}</span>
                           {item.media_type !== 'person' && getItemYear(item) && (
                             <>
                               <span>•</span>

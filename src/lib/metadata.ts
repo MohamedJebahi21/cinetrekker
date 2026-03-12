@@ -11,14 +11,14 @@ export const siteMetadata = {
     title: 'CineTrekker | Track Movies & TV Shows',
     description:
       'Track movies and TV shows, manage watchlists, and discover personalized recommendations with CineTrekker.',
-    images: ['https://cinetrekker.vercel.app/og-image.png'],
+    images: ['https://cinetrekker.vercel.app/og-image.svg'],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'CineTrekker | Track Movies & TV Shows',
     description:
       'Track movies and TV shows, manage watchlists, and discover personalized recommendations with CineTrekker.',
-    image: 'https://cinetrekker.vercel.app/og-image.png',
+    image: 'https://cinetrekker.vercel.app/og-image.svg',
     imageAlt: 'CineTrekker preview image',
   },
 } as const;

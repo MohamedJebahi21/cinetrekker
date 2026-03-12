@@ -16,7 +16,9 @@ import Sparkles from "lucide-react/dist/esm/icons/sparkles";
 import Calendar from "lucide-react/dist/esm/icons/calendar";
 import ChartNoAxesCombined from "lucide-react/dist/esm/icons/chart-no-axes-combined";
 import Trophy from "lucide-react/dist/esm/icons/trophy";
-import MapPinned from "lucide-react/dist/esm/icons/map-pinned";
+import Layers from "lucide-react/dist/esm/icons/layers";
+import CalendarDays from "lucide-react/dist/esm/icons/calendar-days";
+import Award from "lucide-react/dist/esm/icons/award";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
@@ -60,7 +62,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: Calendar,
   },
   {
-    path: "/enhanced-stats",
+    path: "/stats",
     key: "nav.stats",
     fallback: "Stats",
     icon: ChartNoAxesCombined,
@@ -72,10 +74,22 @@ const NAV_ITEMS: NavItem[] = [
     icon: Trophy,
   },
   {
-    path: "/trek-lists",
-    key: "nav.trekLists",
-    fallback: "Trek Lists",
-    icon: MapPinned,
+    path: "/genres",
+    key: "nav.genres",
+    fallback: "Browse Genres",
+    icon: Layers,
+  },
+  {
+    path: "/decades",
+    key: "nav.decades",
+    fallback: "By Decade",
+    icon: CalendarDays,
+  },
+  {
+    path: "/awards",
+    key: "nav.awards",
+    fallback: "Award Winners",
+    icon: Award,
   },
 ];
 
@@ -317,13 +331,79 @@ export function UnifiedNav() {
               </div>
             </>
           ) : (
-            <Link
-              to="/login"
-              className="inline-flex items-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-            >
-              <LogIn className="h-4 w-4 mr-2" />
-              {t("nav.signIn", "Sign In")}
-            </Link>
+            <>
+              <Link
+                to="/settings"
+                className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent"
+                aria-label={t("nav.settings", "Settings")}
+              >
+                <Settings className="h-5 w-5" />
+              </Link>
+
+              <div className="relative" ref={desktopThemeMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsThemeMenuOpen((prev) => !prev)}
+                  className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent"
+                  aria-label={t("nav.changeTheme", "Change theme")}
+                  title={`${t("nav.changeTheme", "Change theme")} (${theme.toUpperCase()})`}
+                >
+                  <Palette className="h-5 w-5" />
+                </button>
+
+                {isThemeMenuOpen && (
+                  <div className="absolute right-0 top-full z-50 mt-2 min-w-[140px] rounded-md border border-border/50 bg-popover/95 p-1 shadow-lg backdrop-blur-xl">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTheme("dark");
+                        setIsThemeMenuOpen(false);
+                      }}
+                      className={cn(
+                        "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
+                        theme === "dark" && "bg-accent",
+                      )}
+                    >
+                      {t("nav.themeDark", "Dark")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTheme("light");
+                        setIsThemeMenuOpen(false);
+                      }}
+                      className={cn(
+                        "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
+                        theme === "light" && "bg-accent",
+                      )}
+                    >
+                      {t("nav.themeLight", "Light")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTheme("oled");
+                        setIsThemeMenuOpen(false);
+                      }}
+                      className={cn(
+                        "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
+                        theme === "oled" && "bg-accent",
+                      )}
+                    >
+                      {t("nav.themeOled", "OLED")}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <Link
+                to="/login"
+                className="inline-flex items-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                <LogIn className="h-4 w-4 mr-2" />
+                {t("nav.signIn", "Sign In")}
+              </Link>
+            </>
           )}
 
           <button
@@ -436,13 +516,79 @@ export function UnifiedNav() {
               </div>
             </>
           ) : (
-            <Link
-              to="/login"
-              className="inline-flex items-center justify-center p-2 rounded-lg text-foreground hover:bg-accent transition-colors"
-              aria-label={t("nav.signIn", "Sign In")}
-            >
-              <LogIn className="h-5 w-5" />
-            </Link>
+            <>
+              <Link
+                to="/settings"
+                className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent"
+                aria-label={t("nav.settings", "Settings")}
+              >
+                <Settings className="h-5 w-5" />
+              </Link>
+
+              <div className="relative" ref={mobileThemeMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsThemeMenuOpen((prev) => !prev)}
+                  className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent"
+                  aria-label={t("nav.changeTheme", "Change theme")}
+                  title={`${t("nav.changeTheme", "Change theme")} (${theme.toUpperCase()})`}
+                >
+                  <Palette className="h-5 w-5" />
+                </button>
+
+                {isThemeMenuOpen && (
+                  <div className="absolute right-0 top-full z-50 mt-2 min-w-[140px] rounded-md border border-border/50 bg-popover/95 p-1 shadow-lg backdrop-blur-xl">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTheme("dark");
+                        setIsThemeMenuOpen(false);
+                      }}
+                      className={cn(
+                        "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
+                        theme === "dark" && "bg-accent",
+                      )}
+                    >
+                      {t("nav.themeDark", "Dark")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTheme("light");
+                        setIsThemeMenuOpen(false);
+                      }}
+                      className={cn(
+                        "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
+                        theme === "light" && "bg-accent",
+                      )}
+                    >
+                      {t("nav.themeLight", "Light")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTheme("oled");
+                        setIsThemeMenuOpen(false);
+                      }}
+                      className={cn(
+                        "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
+                        theme === "oled" && "bg-accent",
+                      )}
+                    >
+                      {t("nav.themeOled", "OLED")}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <Link
+                to="/login"
+                className="inline-flex items-center justify-center p-2 rounded-lg text-foreground hover:bg-accent transition-colors"
+                aria-label={t("nav.signIn", "Sign In")}
+              >
+                <LogIn className="h-5 w-5" />
+              </Link>
+            </>
           )}
         </div>
       </div>
@@ -450,14 +596,14 @@ export function UnifiedNav() {
       <div
         ref={desktopMenuRef}
         className={cn(
-          "hidden md:block absolute right-4 top-[calc(4rem+env(safe-area-inset-top,0px)+0.4rem)] z-50 w-80 rounded-xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl overflow-hidden transition-all duration-300 ease-out",
+          "hidden md:block absolute right-4 top-[calc(4rem+env(safe-area-inset-top,0px)+0.4rem)] z-50 w-80 max-h-[calc(100vh-6.5rem)] overflow-y-auto overscroll-contain rounded-xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl transition-all duration-300 ease-out",
           isMenuOpen
             ? "opacity-100 translate-y-0 pointer-events-auto"
             : "opacity-0 -translate-y-2 pointer-events-none",
         )}
       >
         <nav
-          className="p-3 flex flex-col gap-1"
+          className="p-3 grid grid-cols-2 gap-1"
           aria-label={t("nav.main", "Main navigation")}
         >
           {NAV_ITEMS.map((item) => {
@@ -470,7 +616,7 @@ export function UnifiedNav() {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "px-4 py-3 rounded-lg text-sm font-medium transition-colors min-h-[48px] flex items-center",
+                  "px-3 py-3 rounded-lg text-sm font-medium transition-colors min-h-[48px] flex items-center",
                   isActive
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -491,14 +637,14 @@ export function UnifiedNav() {
                   signOut();
                   setIsMenuOpen(false);
                 }}
-                className="px-4 py-3 rounded-lg text-sm font-medium text-left text-destructive hover:bg-destructive/10 min-h-[48px]"
+                className="col-span-2 px-4 py-3 rounded-lg text-sm font-medium text-left text-destructive hover:bg-destructive/10 min-h-[48px]"
               >
                 {t("nav.signOut", "Sign Out")}
               </button>
             ) : (
               <Link
                 to="/login"
-                className="px-4 py-3 rounded-lg text-sm font-medium min-h-[48px] flex items-center justify-center bg-primary text-primary-foreground"
+                className="col-span-2 px-4 py-3 rounded-lg text-sm font-medium min-h-[48px] flex items-center justify-center bg-primary text-primary-foreground"
               >
                 <LogIn className="h-4 w-4 mr-2" />
                 {t("nav.signIn", "Sign In")}

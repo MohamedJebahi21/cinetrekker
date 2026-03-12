@@ -13,7 +13,6 @@ import Calendar from "lucide-react/dist/esm/icons/calendar";
 import Sparkles from "lucide-react/dist/esm/icons/sparkles";
 import User from "lucide-react/dist/esm/icons/user";
 import Trophy from "lucide-react/dist/esm/icons/trophy";
-import MapPinned from "lucide-react/dist/esm/icons/map-pinned";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/theme-context";
@@ -36,7 +35,6 @@ const SECONDARY_NAV_ITEMS: NavItem[] = [
   { path: "/watched", label: "Watched", icon: CheckCircle2 },
   { path: "/calendar", label: "Calendar", icon: Calendar },
   { path: "/recommendations", label: "Recommendations", icon: Sparkles },
-  { path: "/trek-lists", label: "Trek Lists", icon: MapPinned },
   { path: "/achievements", label: "Achievements", icon: Trophy },
   { path: "/accessibility", label: "Accessibility", icon: Settings },
   { path: "/profile", label: "Profile", icon: User },
@@ -80,7 +78,6 @@ export function BottomNav({
       "/enhanced-stats",
       "/achievements",
       "/settings",
-      "/trek-lists",
     ];
     if (
       protectedPaths.some((p) => path === p || path.startsWith(p + "/")) &&

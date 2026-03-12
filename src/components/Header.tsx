@@ -42,6 +42,7 @@ import { SearchDropdown } from "@/components/SearchDropdown";
 import { cn } from "@/lib/utils";
 import GuestSyncBanner from "@/components/GuestSyncBanner";
 import { UserProfileDropdown } from "@/components/UserProfileDropdown";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export function Header() {
   const { t, i18n } = useTranslation();
@@ -358,6 +359,7 @@ export function Header() {
             (user ? (
               <div className="flex items-center gap-2">
                 {renderThemeSwitcher()}
+                <NotificationBell />
                 <UserProfileDropdown
                   profilePhoto={profilePhoto}
                   displayName={displayName}
@@ -407,7 +409,7 @@ export function Header() {
       {/* Mobile Menu */}
       {isMenuOpen && (
         <nav
-          className="lg:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl animate-fade-in"
+          className="lg:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl animate-fade-in max-h-[calc(100vh-4rem-env(safe-area-inset-top))] overflow-y-auto overscroll-contain"
           aria-label="Mobile navigation"
         >
           <div className="container mx-auto px-4 py-4 flex flex-col gap-3">

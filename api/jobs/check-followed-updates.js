@@ -1,0 +1,303 @@
+import { json } from "../_lib/http.js";
+import { getSupabaseAdminClient } from "../_lib/supabaseAdmin.js";
+
+const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+const DEFAULT_BATCH_SIZE = 5;
+
+function getEnv(name) {
+  const value = process.env[name];
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function parseBearer(req) {
+  const authHeader = req?.headers?.authorization;
+  if (typeof authHeader !== "string") return "";
+  const match = authHeader.match(/^Bearer\s+(.+)$/i);
+  return match?.[1]?.trim() || "";
+}
+
+function isAuthorizedCronCall(req) {
+  const cronSecret = getEnv("CRON_SECRET");
+  if (!cronSecret) return false;
+
+  const cronHeader = typeof req?.headers?.["x-cron-secret"] === "string"
+    ? req.headers["x-cron-secret"].trim()
+    : "";
+  const bearer = parseBearer(req);
+
+  return cronHeader === cronSecret || bearer === cronSecret;
+}
+
+function parseMovieKey(movieId) {
+  const raw = typeof movieId === "string" ? movieId.trim() : "";
+  const match = raw.match(/^(movie|tv)-(\d+)$/i);
+  if (!match) return null;
+
+  return {
+    movieKey: raw,
+    mediaType: match[1].toLowerCase(),
+    tmdbId: Number.parseInt(match[2], 10),
+  };
+}
+
+async function fetchTmdbDetails(mediaType, tmdbId, tmdbApiKey) {
+  const endpoint = mediaType === "tv" ? "tv" : "movie";
+  const response = await fetch(
+    `${TMDB_BASE_URL}/${endpoint}/${tmdbId}?api_key=${encodeURIComponent(tmdbApiKey)}&language=en-US`,
+  );
+
+  if (!response.ok) {
+    throw new Error(`TMDB request failed (${response.status}) for ${endpoint}-${tmdbId}`);
+  }
+
+  return response.json();
+}
+
+function toDateOnly(value) {
+  if (!value || typeof value !== "string") return null;
+  return value.slice(0, 10);
+}
+
+function getSnapshotFromTmdb(parsed, details) {
+  if (parsed.mediaType === "movie") {
+    return {
+      movie_id: parsed.movieKey,
+      media_type: "movie",
+      tmdb_id: parsed.tmdbId,
+      release_date: toDateOnly(details?.release_date),
+      status: typeof details?.status === "string" ? details.status : null,
+      number_of_seasons: null,
+      last_episode_air_date: null,
+      last_episode_season_number: null,
+      last_episode_number: null,
+    };
+  }
+
+  const lastEp = details?.last_episode_to_air || null;
+  return {
+    movie_id: parsed.movieKey,
+    media_type: "tv",
+    tmdb_id: parsed.tmdbId,
+    release_date: toDateOnly(details?.first_air_date),
+    status: typeof details?.status === "string" ? details.status : null,
+    number_of_seasons:
+      Number.isFinite(Number(details?.number_of_seasons))
+        ? Number(details.number_of_seasons)
+        : null,
+    last_episode_air_date: toDateOnly(lastEp?.air_date),
+    last_episode_season_number:
+      Number.isFinite(Number(lastEp?.season_number))
+        ? Number(lastEp.season_number)
+        : null,
+    last_episode_number:
+      Number.isFinite(Number(lastEp?.episode_number))
+        ? Number(lastEp.episode_number)
+        : null,
+  };
+}
+
+function createChangeEvents(prev, next, title) {
+  const events = [];
+
+  if (prev?.release_date && next.release_date && prev.release_date !== next.release_date) {
+    events.push({
+      type: "release_date_changed",
+      message: `${title} release date updated to ${next.release_date}.`,
+      eventKey: `${next.movie_id}:release_date:${next.release_date}`,
+    });
+  }
+
+  if (prev?.status && next.status && prev.status !== next.status) {
+    events.push({
+      type: "status_changed",
+      message: `${title} status changed to ${next.status}.`,
+      eventKey: `${next.movie_id}:status:${next.status}`,
+    });
+  }
+
+  if (
+    next.media_type === "tv" &&
+    Number.isFinite(next.number_of_seasons) &&
+    Number.isFinite(prev?.number_of_seasons) &&
+    next.number_of_seasons > prev.number_of_seasons
+  ) {
+    events.push({
+      type: "new_season",
+      message: `${title} Season ${next.number_of_seasons} confirmed.`,
+      eventKey: `${next.movie_id}:season:${next.number_of_seasons}`,
+    });
+  }
+
+  const hasNewEpisode =
+    next.media_type === "tv" &&
+    Number.isFinite(next.last_episode_season_number) &&
+    Number.isFinite(next.last_episode_number) &&
+    (
+      !Number.isFinite(prev?.last_episode_season_number) ||
+      !Number.isFinite(prev?.last_episode_number) ||
+      next.last_episode_season_number > prev.last_episode_season_number ||
+      (next.last_episode_season_number === prev.last_episode_season_number &&
+        next.last_episode_number > prev.last_episode_number)
+    );
+
+  if (hasNewEpisode) {
+    events.push({
+      type: "new_episode",
+      message: `${title} S${next.last_episode_season_number}E${next.last_episode_number} is now available.`,
+      eventKey: `${next.movie_id}:episode:${next.last_episode_season_number}-${next.last_episode_number}`,
+    });
+  }
+
+  return events;
+}
+
+async function insertNotificationsForFollowers(supabase, followers, next, events) {
+  if (!Array.isArray(followers) || followers.length === 0 || events.length === 0) {
+    return 0;
+  }
+
+  const rows = [];
+  for (const follower of followers) {
+    for (const event of events) {
+      rows.push({
+        user_id: follower.user_id,
+        movie_id: next.movie_id,
+        type: event.type,
+        message: event.message,
+        event_key: event.eventKey,
+      });
+    }
+  }
+
+  const { error } = await supabase
+    .from("notifications")
+    .upsert(rows, { onConflict: "user_id,event_key", ignoreDuplicates: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return rows.length;
+}
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return json(res, 405, { error: "Method Not Allowed" });
+  }
+
+  if (!isAuthorizedCronCall(req)) {
+    return json(res, 401, { error: "Unauthorized" });
+  }
+
+  const tmdbApiKey = getEnv("TMDB_API_KEY");
+  if (!tmdbApiKey) {
+    return json(res, 500, { error: "TMDB_API_KEY is missing." });
+  }
+
+  try {
+    const supabase = getSupabaseAdminClient();
+
+    const { data: follows, error: followsError } = await supabase
+      .from("movie_followers")
+      .select("user_id, movie_id");
+
+    if (followsError) {
+      return json(res, 500, { error: "Failed to read followed movies." });
+    }
+
+    const followRows = Array.isArray(follows) ? follows : [];
+    if (followRows.length === 0) {
+      return json(res, 200, {
+        ok: true,
+        processedTitles: 0,
+        notificationsCreated: 0,
+        message: "No followed movies to process.",
+      });
+    }
+
+    const followersByMovie = new Map();
+    for (const row of followRows) {
+      const key = row.movie_id;
+      if (!followersByMovie.has(key)) followersByMovie.set(key, []);
+      followersByMovie.get(key).push(row);
+    }
+
+    const movieKeys = Array.from(followersByMovie.keys());
+    const parsedKeys = movieKeys.map(parseMovieKey).filter(Boolean);
+
+    const { data: existingStates, error: stateError } = await supabase
+      .from("followed_title_state")
+      .select("*")
+      .in("movie_id", parsedKeys.map((p) => p.movieKey));
+
+    if (stateError) {
+      return json(res, 500, { error: "Failed to read title state." });
+    }
+
+    const stateByMovieId = new Map(
+      (existingStates || []).map((state) => [state.movie_id, state]),
+    );
+
+    let processedTitles = 0;
+    let notificationsCreated = 0;
+    let errors = 0;
+
+    for (let i = 0; i < parsedKeys.length; i += DEFAULT_BATCH_SIZE) {
+      const batch = parsedKeys.slice(i, i + DEFAULT_BATCH_SIZE);
+      const batchResults = await Promise.all(
+        batch.map(async (parsed) => {
+          try {
+            const details = await fetchTmdbDetails(parsed.mediaType, parsed.tmdbId, tmdbApiKey);
+            const title =
+              parsed.mediaType === "tv"
+                ? String(details?.name || `TV ${parsed.tmdbId}`)
+                : String(details?.title || `Movie ${parsed.tmdbId}`);
+
+            const nextSnapshot = getSnapshotFromTmdb(parsed, details);
+            const prevSnapshot = stateByMovieId.get(parsed.movieKey) || null;
+
+            // First observation only seeds state; notifications start from subsequent runs.
+            const events = prevSnapshot ? createChangeEvents(prevSnapshot, nextSnapshot, title) : [];
+
+            const inserted = await insertNotificationsForFollowers(
+              supabase,
+              followersByMovie.get(parsed.movieKey) || [],
+              nextSnapshot,
+              events,
+            );
+
+            const { error: upsertError } = await supabase
+              .from("followed_title_state")
+              .upsert({ ...nextSnapshot, updated_at: new Date().toISOString() }, { onConflict: "movie_id" });
+
+            if (upsertError) {
+              throw upsertError;
+            }
+
+            return { processed: 1, inserted, error: 0 };
+          } catch (err) {
+            console.error(`Failed processing ${parsed.movieKey}`, err);
+            return { processed: 1, inserted: 0, error: 1 };
+          }
+        }),
+      );
+
+      for (const item of batchResults) {
+        processedTitles += item.processed;
+        notificationsCreated += item.inserted;
+        errors += item.error;
+      }
+    }
+
+    return json(res, 200, {
+      ok: true,
+      processedTitles,
+      notificationsCreated,
+      errors,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("POST /api/jobs/check-followed-updates error", error);
+    return json(res, 500, { error: "Internal server error." });
+  }
+}

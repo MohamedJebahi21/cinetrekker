@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
-import { Bookmark, Printer, LayoutGrid, List, MapPin } from "lucide-react";
+import { Bookmark, Printer, LayoutGrid, List } from "lucide-react";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useUserLists } from "@/contexts/user-lists-context";
@@ -28,8 +28,6 @@ import {
   WatchlistStats,
   WatchlistStatsLine,
 } from "@/components/WatchlistStats";
-import { FilmingLocationsMap } from "@/components/FilmingLocationsMap";
-import { getFilmedInBadge, getFilmingLocation } from "@/lib/filmingLocations";
 import { Image } from "@/components/ui/Image";
 
 const HERO_BACKDROP =
@@ -136,22 +134,6 @@ export default function Watchlist() {
   if (filteredMedia) {
     filteredMedia = sortMedia(filteredMedia, sortBy as SortOption, addedDates);
   }
-
-  const mapItems = filteredMedia ?? mediaDetails ?? [];
-  const topLocations = useMemo(() => {
-    const locationCounter = new Map<string, number>();
-    mapItems.forEach((media) => {
-      const locationLabel = getFilmingLocation(media).label;
-      locationCounter.set(
-        locationLabel,
-        (locationCounter.get(locationLabel) || 0) + 1,
-      );
-    });
-
-    return Array.from(locationCounter.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6);
-  }, [mapItems]);
 
   const statusCounts = {
     all: mediaDetails?.length || 0,
@@ -342,40 +324,6 @@ export default function Watchlist() {
           </motion.div>
         )}
 
-        {/* Interactive filming location map */}
-        {mapItems.length > 0 && (
-          <motion.section
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.15 }}
-            className="mb-8 rounded-2xl border border-white/10 bg-[linear-gradient(160deg,rgba(10,13,22,0.94),rgba(5,7,11,0.94))] p-4 md:p-6"
-          >
-            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 className="heading-credits text-3xl text-white md:text-4xl">
-                  Filming Route Map
-                </h2>
-                <p className="editorial-copy mt-1 text-xs text-white/75 md:text-sm">
-                  Explore where your saved stories were filmed and uncover the
-                  geography behind each scene.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {topLocations.map(([location, count]) => (
-                  <span
-                    key={location}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-[#f2c572]/35 bg-[#1a1308]/80 px-2.5 py-1 text-[11px] text-[#f7d499]"
-                  >
-                    <MapPin className="h-3 w-3" />
-                    {location} · {count}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <FilmingLocationsMap items={mapItems} />
-          </motion.section>
-        )}
-
         {/* Filters */}
         {!isSharedView && mediaDetails && mediaDetails.length > 0 && (
           <motion.div
@@ -445,9 +393,6 @@ export default function Watchlist() {
                       <div className="mt-1 text-xs text-muted-foreground flex flex-wrap items-center gap-2">
                         {year && <span>{year}</span>}
                         {rating > 0 && <span>Rating: {rating.toFixed(1)}</span>}
-                        <span className="rounded-full border border-[#f2c572]/35 bg-[#160f05]/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#f4cb80]">
-                          {getFilmedInBadge(media)}
-                        </span>
                         {media.watchStatus && (
                           <span className="capitalize">
                             {media.watchStatus.replace(/_/g, " ")}

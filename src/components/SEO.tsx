@@ -12,6 +12,8 @@ export interface SEOProps {
   jsonLd?: object | null;
   keywords?: string;
   type?: "website" | "article" | "video.movie" | "video.tv_show";
+  releaseDate?: string;
+  rating?: number;
 }
 
 const SITE_NAME = siteMetadata.siteName;
@@ -37,6 +39,8 @@ export function SEO({
   jsonLd,
   keywords,
   type,
+  releaseDate,
+  rating,
 }: SEOProps) {
   const location = useLocation();
 
@@ -106,6 +110,23 @@ export function SEO({
     setMeta('twitter:image:alt', imageAltValue);
     setMeta('twitter:url', urlValue);
 
+    if (releaseDate) {
+      setMeta('release_date', releaseDate);
+      setProp('movie:release_date', releaseDate);
+      setProp('video:release_date', releaseDate);
+    } else {
+      removeMeta('release_date');
+    }
+
+    if (typeof rating === 'number' && Number.isFinite(rating)) {
+      const normalizedRating = rating.toFixed(1);
+      setMeta('rating', normalizedRating);
+      setMeta('movie:rating', normalizedRating);
+    } else {
+      removeMeta('rating');
+      removeMeta('movie:rating');
+    }
+
     // Canonical URL
     if (urlValue) {
       let link: HTMLLinkElement | null = document.querySelector("link[rel='canonical']");
@@ -134,7 +155,7 @@ export function SEO({
         script.remove();
       }
     }
-  }, [title, description, image, imageAlt, url, canonical, jsonLd, keywords, type, location]);
+  }, [title, description, image, imageAlt, url, canonical, jsonLd, keywords, type, releaseDate, rating, location]);
 
   return null;
 }

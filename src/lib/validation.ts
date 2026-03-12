@@ -30,8 +30,7 @@ export const bioSchema = z
 export const searchQuerySchema = z
   .string()
   .min(1, 'Search query required')
-  .max(200, 'Search query too long')
-  .regex(/^[a-zA-Z0-9\s\-'.,:!?()&]*$/, 'Invalid characters in search');
+  .max(200, 'Search query too long');
 
 export const episodeNameSchema = z
   .string()

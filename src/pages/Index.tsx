@@ -15,11 +15,15 @@ import { HeroSection } from "@/components/HeroSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SEO from "@/components/SEO";
 import { useContentPolicy } from "@/contexts/content-policy-context";
-import { TrekOfWeekSection } from "@/components/TrekOfWeekSection";
 
 const BecauseYouLiked = lazy(() =>
   import("@/components/BecauseYouLiked").then((mod) => ({
     default: mod.BecauseYouLiked,
+  })),
+);
+const ContinueWatching = lazy(() =>
+  import("@/components/ContinueWatching").then((mod) => ({
+    default: mod.ContinueWatching,
   })),
 );
 const WatchedShowsNewEpisodes = lazy(() =>
@@ -198,7 +202,12 @@ export default function Index() {
 
         {/* Personalized Recommendations removed */}
 
-        <TrekOfWeekSection />
+        {/* Phase 3: "Because You Liked" personalized row */}
+        {deferredEnabled && (
+          <Suspense fallback={null}>
+            <ContinueWatching />
+          </Suspense>
+        )}
 
         {/* Phase 3: "Because You Liked" personalized row */}
         {deferredEnabled && (

@@ -15,7 +15,6 @@ import {
   Heart,
   HeartOff,
   PlayCircle,
-  MapPinned,
 } from "lucide-react";
 import {
   getMovieDetails,
@@ -63,8 +62,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useContentPolicy } from "@/contexts/content-policy-context";
 import { isMediaAllowedBySafety } from "@/lib/contentFilter";
 import { Image } from "@/components/ui/Image";
-import { getEnrichedFilmingLocations } from "@/services/filmingLocations";
-import { FilmingLocationsMap } from "@/components/FilmingLocationsMap";
+import { FollowUpdatesButton } from "@/components/FollowUpdatesButton";
 
 const normalizePinnedFavoriteKeys = (keys: string[]) => {
   const movieKeys = keys.filter((key) => key.startsWith("movie-")).slice(0, 4);
@@ -251,19 +249,6 @@ export default function Details() {
     retry: 1,
   });
 
-  const titleForLocations = details ? details.title || details.name || "" : "";
-  const { data: enrichedLocations = [] } = useQuery({
-    queryKey: ["details-enriched-locations", mediaType, mediaId, titleForLocations],
-    queryFn: () =>
-      getEnrichedFilmingLocations({
-        mediaType,
-        mediaId,
-        title: titleForLocations,
-        media: details as Media,
-      }),
-    enabled: !!details,
-  });
-
   const isBlockedByPolicy =
     !!details &&
     ((details as { blocked_by_policy?: boolean }).blocked_by_policy === true ||
@@ -297,9 +282,7 @@ export default function Details() {
     ? details.release_date || details.first_air_date
     : null;
   const _year = _releaseDate ? new Date(_releaseDate).getFullYear() : null;
-  const seoTitle = _title
-    ? `${_title} - Track, Review & Explore | CineTrekker`
-    : undefined;
+  const seoTitle = _title ? `${_title} | CineTrekker` : undefined;
   useDocumentTitle(seoTitle);
 
   if (isLoading) {
@@ -646,7 +629,14 @@ export default function Details() {
     ? Array.from({ length: details.number_of_seasons }, (_, i) => i + 1)
     : [];
 
-  const seoDescription = (details.overview || "").slice(0, 160);
+  const seoDescription = [
+    details.overview || "",
+    releaseDate ? `Release: ${releaseDate}.` : "",
+    rating > 0 ? `Rating: ${rating.toFixed(1)}/10.` : "",
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .slice(0, 160);
   const seoImage = getImageUrl(details.poster_path, "w500");
   const seoCanonical = `https://cinetrekker.vercel.app/${mediaType}/${mediaId}`;
   const seoKeywords = [
@@ -746,9 +736,19 @@ export default function Details() {
         canonical={seoCanonical}
         keywords={seoKeywords}
         type={mediaType === "movie" ? "video.movie" : "video.tv_show"}
+        releaseDate={releaseDate || undefined}
+        rating={rating || undefined}
       />
       {mediaType === "movie" && (
-        <MovieSchema title={title} description={overview} image={posterUrl} />
+        <MovieSchema
+          title={title}
+          description={overview}
+          image={posterUrl}
+          releaseDate={releaseDate || undefined}
+          rating={rating || undefined}
+          ratingCount={details.vote_count}
+          url={seoCanonical}
+        />
       )}
 
       <div className="relative h-[50vh] md:h-[70vh] overflow-hidden -mt-16">
@@ -949,6 +949,10 @@ export default function Details() {
                 </Button>
               )}
 
+              {mediaType === "movie" && user && (
+                <FollowUpdatesButton mediaId={mediaId} mediaType={mediaType} />
+              )}
+
               {mediaType === "tv" && seasons.length > 0 && user && (
                 <Dialog
                   open={episodesDialogOpen}
@@ -1082,13 +1086,6 @@ export default function Details() {
                 {t("details.watchTrailer", "Watch Trailer")}
               </Button>
 
-              <Button asChild variant="outline" className="gap-2">
-                <Link to={`/${mediaType}/${mediaId}/locations`}>
-                  <MapPinned className="w-4 h-4" />
-                  Filming Locations
-                </Link>
-              </Button>
-
               {optimisticWatched && (
                 <Button
                   variant="outline"
@@ -1169,34 +1166,6 @@ export default function Details() {
               </div>
             )}
 
-            {enrichedLocations.length > 0 && (
-              <section className="rounded-xl border border-white/10 bg-black/30 p-4">
-                <h2 className="heading-credits text-3xl text-white">Filming Spotlight</h2>
-                <p className="mt-2 text-xs text-white/70">
-                  Scene-level filming coordinates for this title.
-                </p>
-                <div className="mt-4">
-                  <FilmingLocationsMap
-                    points={enrichedLocations.map((location, index) => ({
-                      id: `${mediaId}-${index}`,
-                      title,
-                      ...location,
-                    }))}
-                  />
-                </div>
-                <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                  {enrichedLocations.slice(0, 4).map((location, index) => (
-                    <div
-                      key={`${location.label}-${index}`}
-                      className="rounded-lg border border-white/10 bg-black/35 p-3"
-                    >
-                      <p className="text-sm font-semibold text-[#f2c572]">{location.label}</p>
-                      <p className="mt-1 text-xs text-white/70">{location.scene}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
           </div>
         </div>
 

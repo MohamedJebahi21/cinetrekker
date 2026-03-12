@@ -26,7 +26,7 @@ export function websiteJsonLd({
   name = 'CineTrekker',
   url = 'https://cinetrekker.vercel.app',
   description = 'Track movies and TV shows you love',
-  logo = '/placeholder.svg',
+  logo = 'https://cinetrekker.vercel.app/og-image.svg',
 } = {}) {
   return {
     '@context': 'https://schema.org',

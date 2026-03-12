@@ -6,7 +6,7 @@ export default function Login() {
     <>
       <SEO
         title="Login - CineTrekker"
-        description="Sign in to CineTrekker to manage your watchlist, trek lists, and recommendations."
+        description="Sign in to CineTrekker to manage your watchlist and recommendations."
         canonical="https://cinetrekker.vercel.app/login"
       />
       <Auth initialTab="signin" />

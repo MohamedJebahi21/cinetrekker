@@ -1,7 +1,17 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "crons": [
+    {
+      "path": "/api/jobs/check-followed-updates",
+      "schedule": "0 */4 * * *"
+    }
+  ],
   "rewrites": [
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
     {
       "source": "/((?!api/|assets/|static/|.*\\..*).*)",
       "destination": "/index.html"

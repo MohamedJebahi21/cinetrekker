@@ -6,7 +6,7 @@ export default function Signup() {
     <>
       <SEO
         title="Sign Up - CineTrekker"
-        description="Create a CineTrekker account to track movies and TV shows, build trek lists, and get personalized recommendations."
+        description="Create a CineTrekker account to track movies and TV shows and get personalized recommendations."
         canonical="https://cinetrekker.vercel.app/signup"
       />
       <Auth initialTab="signup" />

@@ -22,6 +22,34 @@ const TMDB_PROXY_URL = import.meta.env.DEV
   : `${SUPABASE_URL}${TMDB_PROXY_PATH}`;
 
 const CONTENT_POLICY_STORAGE_KEY = "cinetrekker_content_policy";
+const TMDB_CACHE_MAX_ENTRIES = 300;
+const tmdbResponseCache = new Map<string, { expiresAt: number; data: unknown }>();
+const tmdbInFlight = new Map<string, Promise<unknown>>();
+
+function getCacheTTL(endpoint: string): number {
+  if (endpoint.startsWith('/trending')) return 60_000; // 1 min for near-real-time sections
+  if (endpoint.startsWith('/search')) return 30_000; // short-lived search cache
+  if (endpoint.startsWith('/movie/') || endpoint.startsWith('/tv/') || endpoint.startsWith('/person/')) {
+    return 5 * 60_000; // details can be cached longer
+  }
+  return 2 * 60_000;
+}
+
+function makeCacheKey(endpoint: string, language: string, extraParams: Record<string, string>, maturityLevel: MaturityRating): string {
+  const params = Object.entries(extraParams)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}=${v}`)
+    .join('&');
+  return `${endpoint}|lang=${language}|maturity=${maturityLevel}|${params}`;
+}
+
+function setCachedResponse(cacheKey: string, ttlMs: number, data: unknown): void {
+  if (tmdbResponseCache.size >= TMDB_CACHE_MAX_ENTRIES) {
+    const oldestKey = tmdbResponseCache.keys().next().value;
+    if (oldestKey) tmdbResponseCache.delete(oldestKey);
+  }
+  tmdbResponseCache.set(cacheKey, { expiresAt: Date.now() + ttlMs, data });
+}
 
 function parseMaturityFromStorage(): {
   maturityLevel: MaturityRating;
@@ -105,6 +133,18 @@ const fetchTMDB = async <T>(
   const { maturityLevel } = parseMaturityFromStorage();
   const includeAdultFromStorage =
     maturityLevel === SafetyLevel.NONE ? "true" : "false";
+  const cacheKey = makeCacheKey(endpoint, language, extraParams, maturityLevel);
+  const now = Date.now();
+
+  const cached = tmdbResponseCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    return cached.data as T;
+  }
+
+  const inFlight = tmdbInFlight.get(cacheKey);
+  if (inFlight) {
+    return (await inFlight) as T;
+  }
 
   const params = new URLSearchParams({
     endpoint,
@@ -115,7 +155,8 @@ const fetchTMDB = async <T>(
   params.set("include_adult", includeAdultFromStorage);
 
   try {
-    const response = await fetch(`${TMDB_PROXY_URL}?${params.toString()}`, {
+    const requestPromise = (async () => {
+      const response = await fetch(`${TMDB_PROXY_URL}?${params.toString()}`, {
       headers: {
         Authorization: `Bearer ${SUPABASE_API_KEY}`,
         apikey: SUPABASE_API_KEY,
@@ -131,7 +172,7 @@ const fetchTMDB = async <T>(
       throw new Error("AUTHENTICATION_ERROR");
     }
 
-    if (!response.ok) {
+      if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       const statusText =
         response.status === 404
@@ -147,10 +188,19 @@ const fetchTMDB = async <T>(
       });
 
       throw new Error(errorData.error || `TMDB API error: ${statusText}`);
-    }
+      }
 
-    return response.json();
+      const data = await response.json();
+      setCachedResponse(cacheKey, getCacheTTL(endpoint), data);
+      return data;
+    })();
+
+    tmdbInFlight.set(cacheKey, requestPromise);
+    const result = await requestPromise;
+    tmdbInFlight.delete(cacheKey);
+    return result as T;
   } catch (error) {
+    tmdbInFlight.delete(cacheKey);
     // Ensure authentication errors propagate with correct type
     if (error instanceof Error && error.message === "AUTHENTICATION_ERROR") {
       throw error;
