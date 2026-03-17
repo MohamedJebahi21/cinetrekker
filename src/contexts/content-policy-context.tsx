@@ -349,7 +349,9 @@ export function ContentPolicyProvider({
 
           try {
             await persistRemote(persistedPolicy, true);
-            await queryClient.invalidateQueries();
+            await queryClient.invalidateQueries({ queryKey: ["recommendations"] });
+            await queryClient.invalidateQueries({ queryKey: ["search"] });
+            await queryClient.invalidateQueries({ queryKey: ["details"] });
           } catch (syncError) {
             console.error(
               "Error syncing persisted age verification:",
@@ -403,7 +405,9 @@ export function ContentPolicyProvider({
 
       try {
         await persistRemote(next, false);
-        await queryClient.invalidateQueries();
+        await queryClient.invalidateQueries({ queryKey: ["recommendations"] });
+        await queryClient.invalidateQueries({ queryKey: ["search"] });
+        await queryClient.invalidateQueries({ queryKey: ["details"] });
         return { syncedRemotely: true };
       } catch (error) {
         console.error("Error saving maturity preference:", error);
@@ -432,7 +436,9 @@ export function ContentPolicyProvider({
 
       try {
         await persistRemote(next, true);
-        await queryClient.invalidateQueries();
+        await queryClient.invalidateQueries({ queryKey: ["recommendations"] });
+        await queryClient.invalidateQueries({ queryKey: ["search"] });
+        await queryClient.invalidateQueries({ queryKey: ["details"] });
       } catch (error) {
         console.error("Error saving age verification:", error);
         toast({

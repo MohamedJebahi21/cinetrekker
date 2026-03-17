@@ -1,16 +1,18 @@
-import { useCallback, useEffect, useState } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
-import type { UserMediaItem } from '@/types/media';
+import { useCallback, useEffect, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
+import type { UserMediaItem } from "@/types/media";
 
-const GUEST_WATCHLIST_KEY = 'mywatch_watchlist';
-const GUEST_WATCHED_KEY = 'mywatch_watched';
-const GUEST_MEDIA_EVENT = 'cinetrekker:guest-media-updated';
+const GUEST_WATCHLIST_KEY = "mywatch_watchlist";
+const GUEST_WATCHED_KEY = "mywatch_watched";
+const GUEST_MEDIA_EVENT = "cinetrekker:guest-media-updated";
 
 type GuestStorageKey = typeof GUEST_WATCHLIST_KEY | typeof GUEST_WATCHED_KEY;
-type MediaType = 'movie' | 'tv';
+type MediaType = "movie" | "tv";
 
 function canUseStorage() {
-  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+  return (
+    typeof window !== "undefined" && typeof window.localStorage !== "undefined"
+  );
 }
 
 function dedupeItems(items: UserMediaItem[]) {
@@ -59,7 +61,11 @@ function writeItems(storageKey: GuestStorageKey, items: UserMediaItem[]) {
   return next;
 }
 
-function removeItem(storageKey: GuestStorageKey, mediaId: number, mediaType: MediaType) {
+function removeItem(
+  storageKey: GuestStorageKey,
+  mediaId: number,
+  mediaType: MediaType,
+) {
   const next = readItems(storageKey).filter(
     (item) => !(item.mediaId === mediaId && item.mediaType === mediaType),
   );
@@ -74,7 +80,9 @@ function syncFromStorage(
 }
 
 function useGuestItems(storageKey: GuestStorageKey) {
-  const [items, setItems] = useState<UserMediaItem[]>(() => readItems(storageKey));
+  const [items, setItems] = useState<UserMediaItem[]>(() =>
+    readItems(storageKey),
+  );
 
   const refresh = useCallback(() => {
     syncFromStorage(storageKey, setItems);
@@ -99,12 +107,18 @@ function useGuestItems(storageKey: GuestStorageKey) {
       }
     };
 
-    window.addEventListener('storage', handleStorage);
-    window.addEventListener(GUEST_MEDIA_EVENT, handleGuestUpdate as EventListener);
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener(
+      GUEST_MEDIA_EVENT,
+      handleGuestUpdate as EventListener,
+    );
 
     return () => {
-      window.removeEventListener('storage', handleStorage);
-      window.removeEventListener(GUEST_MEDIA_EVENT, handleGuestUpdate as EventListener);
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener(
+        GUEST_MEDIA_EVENT,
+        handleGuestUpdate as EventListener,
+      );
     };
   }, [refresh, storageKey]);
 
@@ -130,33 +144,44 @@ export function clearGuestWatched() {
 export function useGuestWatchlist() {
   const { items, refresh } = useGuestItems(GUEST_WATCHLIST_KEY);
 
-  const addToGuestWatchlist = useCallback((mediaId: number, mediaType: MediaType) => {
-    const now = new Date().toISOString();
-    const next = writeItems(GUEST_WATCHLIST_KEY, [
-      ...readItems(GUEST_WATCHLIST_KEY).filter(
-        (item) => !(item.mediaId === mediaId && item.mediaType === mediaType),
-      ),
-      {
-        id: `${mediaType}-${mediaId}`,
-        mediaId,
-        mediaType,
-        userId: 'guest',
-        addedAt: now,
-      },
-    ]);
-    refresh();
-    return next;
-  }, [refresh]);
+  const addToGuestWatchlist = useCallback(
+    (mediaId: number, mediaType: MediaType) => {
+      const now = new Date().toISOString();
+      const next = writeItems(GUEST_WATCHLIST_KEY, [
+        ...readItems(GUEST_WATCHLIST_KEY).filter(
+          (item) => !(item.mediaId === mediaId && item.mediaType === mediaType),
+        ),
+        {
+          id: `${mediaType}-${mediaId}`,
+          mediaId,
+          mediaType,
+          userId: "guest",
+          addedAt: now,
+        },
+      ]);
+      refresh();
+      return next;
+    },
+    [refresh],
+  );
 
-  const removeFromGuestWatchlist = useCallback((mediaId: number, mediaType: MediaType) => {
-    const next = removeItem(GUEST_WATCHLIST_KEY, mediaId, mediaType);
-    refresh();
-    return next;
-  }, [refresh]);
+  const removeFromGuestWatchlist = useCallback(
+    (mediaId: number, mediaType: MediaType) => {
+      const next = removeItem(GUEST_WATCHLIST_KEY, mediaId, mediaType);
+      refresh();
+      return next;
+    },
+    [refresh],
+  );
 
-  const isInGuestWatchlist = useCallback((mediaId: number, mediaType: MediaType) => {
-    return items.some((item) => item.mediaId === mediaId && item.mediaType === mediaType);
-  }, [items]);
+  const isInGuestWatchlist = useCallback(
+    (mediaId: number, mediaType: MediaType) => {
+      return items.some(
+        (item) => item.mediaId === mediaId && item.mediaType === mediaType,
+      );
+    },
+    [items],
+  );
 
   return {
     items,
@@ -175,7 +200,7 @@ export function useGuestWatched() {
     (
       mediaId: number,
       mediaType: MediaType,
-      extras: Pick<UserMediaItem, 'rating' | 'note' | 'status'> = {},
+      extras: Pick<UserMediaItem, "rating" | "note" | "status"> = {},
     ) => {
       const now = new Date().toISOString();
       const next = writeItems(GUEST_WATCHED_KEY, [
@@ -186,7 +211,7 @@ export function useGuestWatched() {
           id: `${mediaType}-${mediaId}`,
           mediaId,
           mediaType,
-          userId: 'guest',
+          userId: "guest",
           rating: extras.rating,
           note: extras.note,
           status: extras.status,
@@ -200,15 +225,23 @@ export function useGuestWatched() {
     [refresh],
   );
 
-  const removeFromGuestWatched = useCallback((mediaId: number, mediaType: MediaType) => {
-    const next = removeItem(GUEST_WATCHED_KEY, mediaId, mediaType);
-    refresh();
-    return next;
-  }, [refresh]);
+  const removeFromGuestWatched = useCallback(
+    (mediaId: number, mediaType: MediaType) => {
+      const next = removeItem(GUEST_WATCHED_KEY, mediaId, mediaType);
+      refresh();
+      return next;
+    },
+    [refresh],
+  );
 
-  const isGuestWatched = useCallback((mediaId: number, mediaType: MediaType) => {
-    return items.some((item) => item.mediaId === mediaId && item.mediaType === mediaType);
-  }, [items]);
+  const isGuestWatched = useCallback(
+    (mediaId: number, mediaType: MediaType) => {
+      return items.some(
+        (item) => item.mediaId === mediaId && item.mediaType === mediaType,
+      );
+    },
+    [items],
+  );
 
   return {
     items,

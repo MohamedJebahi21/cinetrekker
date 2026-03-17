@@ -43,7 +43,9 @@ const GUEST_FOLLOWS_EVENT = "cinetrekker:guest-follows-updated";
 const GUEST_TITLE_STATE_KEY = "cinetrekker_guest_followed_title_state";
 
 function canUseStorage() {
-  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+  return (
+    typeof window !== "undefined" && typeof window.localStorage !== "undefined"
+  );
 }
 
 export function createFollowKey(mediaType: FollowMediaType, mediaId: number) {
@@ -59,7 +61,8 @@ function dedupeTitles(items: FollowedTitle[]) {
 
   return Array.from(unique.values()).sort(
     (left, right) =>
-      new Date(right.followedAt).getTime() - new Date(left.followedAt).getTime(),
+      new Date(right.followedAt).getTime() -
+      new Date(left.followedAt).getTime(),
   );
 }
 
@@ -130,7 +133,10 @@ function normalizeMovieFollow(row: {
   const [mediaType, mediaIdText] = row.movie_id.split("-");
   const mediaId = Number(mediaIdText);
 
-  if ((mediaType !== "movie" && mediaType !== "tv") || !Number.isFinite(mediaId)) {
+  if (
+    (mediaType !== "movie" && mediaType !== "tv") ||
+    !Number.isFinite(mediaId)
+  ) {
     return null;
   }
 
@@ -195,7 +201,9 @@ export function useTitleFollows() {
 
     const migrateGuestFollows = async () => {
       const tvFollows = guestItems.filter((item) => item.mediaType === "tv");
-      const movieFollows = guestItems.filter((item) => item.mediaType === "movie");
+      const movieFollows = guestItems.filter(
+        (item) => item.mediaType === "movie",
+      );
 
       if (tvFollows.length > 0) {
         const { error } = await supabase.from("followed_shows").upsert(
@@ -328,7 +336,13 @@ export function useTitleFollows() {
   const followedTitles = user ? remoteFollows : guestFollows;
 
   const followMutation = useMutation({
-    mutationFn: async ({ mediaId, mediaType, title, posterPath, initialState }: FollowTitleInput) => {
+    mutationFn: async ({
+      mediaId,
+      mediaType,
+      title,
+      posterPath,
+      initialState,
+    }: FollowTitleInput) => {
       const followId = createFollowKey(mediaType, mediaId);
 
       if (!user) {
@@ -374,9 +388,11 @@ export function useTitleFollows() {
       }
 
       if (initialState) {
-        const { error } = await supabase.from("followed_title_state").upsert(initialState, {
-          onConflict: "movie_id",
-        });
+        const { error } = await supabase
+          .from("followed_title_state")
+          .upsert(initialState, {
+            onConflict: "movie_id",
+          });
 
         if (error) {
           throw error;
@@ -388,17 +404,25 @@ export function useTitleFollows() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["title-follows"] });
       toast({
-        title: variables.mediaType === "tv" ? "Series followed" : "Movie followed",
+        title:
+          variables.mediaType === "tv" ? "Series followed" : "Movie followed",
         description: `You will get updates for ${variables.title}.`,
       });
     },
     onError: (error: Error) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
   const unfollowMutation = useMutation({
-    mutationFn: async ({ mediaId, mediaType }: Pick<FollowTitleInput, "mediaId" | "mediaType">) => {
+    mutationFn: async ({
+      mediaId,
+      mediaType,
+    }: Pick<FollowTitleInput, "mediaId" | "mediaType">) => {
       const followId = createFollowKey(mediaType, mediaId);
 
       if (!user) {
@@ -431,18 +455,28 @@ export function useTitleFollows() {
         }
       }
 
-      await supabase.from("followed_title_state").delete().eq("movie_id", followId);
+      await supabase
+        .from("followed_title_state")
+        .delete()
+        .eq("movie_id", followId);
 
       return { followId, mediaType };
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["title-follows"] });
       toast({
-        title: variables.mediaType === "tv" ? "Series unfollowed" : "Movie unfollowed",
+        title:
+          variables.mediaType === "tv"
+            ? "Series unfollowed"
+            : "Movie unfollowed",
       });
     },
     onError: (error: Error) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 

@@ -1,15 +1,21 @@
-import { Bell, Trash2, CheckCheck } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { formatDistanceToNow } from 'date-fns';
-import { useNotifications } from '@/hooks/useNotifications';
-import SEO from '@/components/SEO';
-import { Button } from '@/components/ui/button';
-import { EmptyState } from '@/components/EmptyState';
-import { cn } from '@/lib/utils';
+import { Bell, Trash2, CheckCheck } from "lucide-react";
+import { Link } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
+import { useNotifications } from "@/hooks/useNotifications";
+import SEO from "@/components/SEO";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/EmptyState";
+import { cn } from "@/lib/utils";
 
 export default function Notifications() {
-  const { notifications, unreadCount, isLoading, markRead, markAllRead, deleteNotification } =
-    useNotifications();
+  const {
+    notifications,
+    unreadCount,
+    isLoading,
+    markRead,
+    markAllRead,
+    deleteNotification,
+  } = useNotifications();
 
   return (
     <>
@@ -57,9 +63,9 @@ export default function Notifications() {
               <li
                 key={n.id}
                 className={cn(
-                  'flex items-start justify-between gap-3 rounded-lg border p-4 transition-colors',
-                  !n.is_read && 'border-primary/30 bg-primary/5',
-                  n.is_read && 'border-border bg-card',
+                  "flex items-start justify-between gap-3 rounded-lg border p-4 transition-colors",
+                  !n.is_read && "border-primary/30 bg-primary/5",
+                  n.is_read && "border-border bg-card",
                 )}
               >
                 <button
@@ -69,15 +75,21 @@ export default function Notifications() {
                   <div className="flex items-start gap-2">
                     <span
                       className={cn(
-                        'mt-1 h-2 w-2 rounded-full shrink-0',
-                        !n.is_read ? 'bg-primary' : 'bg-transparent border border-muted-foreground/30',
+                        "mt-1 h-2 w-2 rounded-full shrink-0",
+                        !n.is_read
+                          ? "bg-primary"
+                          : "bg-transparent border border-muted-foreground/30",
                       )}
                       aria-hidden="true"
                     />
-                    <p className={cn('text-sm', !n.is_read && 'font-medium')}>{n.message}</p>
+                    <p className={cn("text-sm", !n.is_read && "font-medium")}>
+                      {n.message}
+                    </p>
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+                    {formatDistanceToNow(new Date(n.created_at), {
+                      addSuffix: true,
+                    })}
                   </p>
                 </button>
                 <Button

@@ -12,6 +12,7 @@ import {
 } from "@/services/tmdb";
 import { profileService } from "@/services/profile";
 import { useAuth } from "@/contexts/auth-context";
+import { logger } from "@/lib/logger";
 import {
   Tooltip,
   TooltipContent,
@@ -238,7 +239,7 @@ export default function ActorMatchesSection({
               profile.actor_matches.length >= MIN_ACTOR_MATCHES;
 
             if (isContextSame && isFresh && hasEnoughMatches) {
-              console.log("ActorMatches: Loaded from Supabase cache");
+              logger.debug("ActorMatches: Loaded from Supabase cache");
               return profile.actor_matches as PersonDetails[];
             }
           }
@@ -272,7 +273,7 @@ export default function ActorMatchesSection({
             localParsed.data.length >= MIN_ACTOR_MATCHES;
 
           if (isContextSame && isFresh && hasEnoughMatches) {
-            console.log("ActorMatches: Loaded from LocalStorage cache");
+            logger.debug("ActorMatches: Loaded from LocalStorage cache");
             return localParsed.data;
           }
         }
@@ -281,7 +282,7 @@ export default function ActorMatchesSection({
       }
 
       // 4. Recalculation (Speed Boosted)
-      console.log("ActorMatches: Recalculating matches...");
+      logger.debug("ActorMatches: Recalculating matches...");
       const pages = await Promise.all([
         getPopularPeople(1, language),
         getPopularPeople(2, language),
@@ -344,7 +345,7 @@ export default function ActorMatchesSection({
             `${LOCAL_CACHE_KEY}_${user?.id || "guest"}`,
             JSON.stringify(updatePayload),
           );
-          console.log("ActorMatches: Saved to LocalStorage");
+          logger.debug("ActorMatches: Saved to LocalStorage");
         } catch (e) {
           console.warn("ActorMatches: Failed to save to localStorage", e);
         }
@@ -356,7 +357,7 @@ export default function ActorMatchesSection({
               actor_matches_context: currentContext,
               actor_matches_updated_at: updatePayload.updatedAt,
             });
-            console.log("ActorMatches: Saved to Supabase");
+            logger.debug("ActorMatches: Saved to Supabase");
           } catch (err) {
             console.warn("ActorMatches: Failed to save to Supabase", err);
           }

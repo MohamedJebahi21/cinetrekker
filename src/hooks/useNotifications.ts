@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/auth-context';
-import { toast } from '@/hooks/use-toast';
+import { useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth-context";
+import { toast } from "@/hooks/use-toast";
 
 export interface AppNotification {
   id: string;
@@ -15,11 +15,13 @@ export interface AppNotification {
   is_read: boolean;
 }
 
-const GUEST_NOTIFICATIONS_KEY = 'cinetrekker_guest_notifications';
-const GUEST_NOTIFICATIONS_EVENT = 'cinetrekker:guest-notifications-updated';
+const GUEST_NOTIFICATIONS_KEY = "cinetrekker_guest_notifications";
+const GUEST_NOTIFICATIONS_EVENT = "cinetrekker:guest-notifications-updated";
 
 function canUseStorage() {
-  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+  return (
+    typeof window !== "undefined" && typeof window.localStorage !== "undefined"
+  );
 }
 
 function dedupeNotifications(items: AppNotification[]) {
@@ -28,7 +30,9 @@ function dedupeNotifications(items: AppNotification[]) {
     unique.set(item.event_key || item.id, item);
   }
   return Array.from(unique.values()).sort(
-    (left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime(),
+    (left, right) =>
+      new Date(right.created_at).getTime() -
+      new Date(left.created_at).getTime(),
   );
 }
 
@@ -39,9 +43,11 @@ export function readGuestNotifications() {
     const raw = window.localStorage.getItem(GUEST_NOTIFICATIONS_KEY);
     if (!raw) return [] as AppNotification[];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? dedupeNotifications(parsed as AppNotification[]) : [];
+    return Array.isArray(parsed)
+      ? dedupeNotifications(parsed as AppNotification[])
+      : [];
   } catch (error) {
-    console.warn('[Notifications] Failed to read guest notifications', error);
+    console.warn("[Notifications] Failed to read guest notifications", error);
     return [] as AppNotification[];
   }
 }
@@ -55,7 +61,7 @@ export function writeGuestNotifications(items: AppNotification[]) {
     window.localStorage.setItem(GUEST_NOTIFICATIONS_KEY, JSON.stringify(next));
     window.dispatchEvent(new CustomEvent(GUEST_NOTIFICATIONS_EVENT));
   } catch (error) {
-    console.warn('[Notifications] Failed to write guest notifications', error);
+    console.warn("[Notifications] Failed to write guest notifications", error);
   }
 
   return next;
@@ -72,16 +78,16 @@ function clearGuestNotifications() {
     window.localStorage.removeItem(GUEST_NOTIFICATIONS_KEY);
     window.dispatchEvent(new CustomEvent(GUEST_NOTIFICATIONS_EVENT));
   } catch (error) {
-    console.warn('[Notifications] Failed to clear guest notifications', error);
+    console.warn("[Notifications] Failed to clear guest notifications", error);
   }
 }
 
 export function useNotifications() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [guestNotifications, setGuestNotifications] = useState<AppNotification[]>(() =>
-    readGuestNotifications(),
-  );
+  const [guestNotifications, setGuestNotifications] = useState<
+    AppNotification[]
+  >(() => readGuestNotifications());
 
   useEffect(() => {
     if (!canUseStorage()) {
@@ -96,12 +102,15 @@ export function useNotifications() {
       }
     };
 
-    window.addEventListener('storage', handleStorage);
+    window.addEventListener("storage", handleStorage);
     window.addEventListener(GUEST_NOTIFICATIONS_EVENT, sync as EventListener);
 
     return () => {
-      window.removeEventListener('storage', handleStorage);
-      window.removeEventListener(GUEST_NOTIFICATIONS_EVENT, sync as EventListener);
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener(
+        GUEST_NOTIFICATIONS_EVENT,
+        sync as EventListener,
+      );
     };
   }, []);
 
@@ -132,10 +141,10 @@ export function useNotifications() {
         .filter((item): item is string => Boolean(item));
 
       const { data: existing, error: existingError } = await supabase
-        .from('notifications')
-        .select('event_key')
-        .eq('user_id', user.id)
-        .in('event_key', eventKeys);
+        .from("notifications")
+        .select("event_key")
+        .eq("user_id", user.id)
+        .in("event_key", eventKeys);
 
       if (existingError) {
         throw existingError;
@@ -149,7 +158,7 @@ export function useNotifications() {
       );
 
       if (pending.length > 0) {
-        const { error } = await supabase.from('notifications').insert(pending);
+        const { error } = await supabase.from("notifications").insert(pending);
         if (error) {
           throw error;
         }
@@ -161,10 +170,10 @@ export function useNotifications() {
 
       clearGuestNotifications();
       setGuestNotifications([]);
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
       toast({
-        title: 'Notifications synced',
-        description: `${pending.length} guest notification${pending.length === 1 ? '' : 's'} moved to your account.`,
+        title: "Notifications synced",
+        description: `${pending.length} guest notification${pending.length === 1 ? "" : "s"} moved to your account.`,
       });
     };
 
@@ -172,8 +181,12 @@ export function useNotifications() {
       if (cancelled) {
         return;
       }
-      console.warn('[Notifications] Guest notification sync failed', error);
-      toast({ title: 'Notification sync failed', description: error.message, variant: 'destructive' });
+      console.warn("[Notifications] Guest notification sync failed", error);
+      toast({
+        title: "Notification sync failed",
+        description: error.message,
+        variant: "destructive",
+      });
     });
 
     return () => {
@@ -182,14 +195,14 @@ export function useNotifications() {
   }, [queryClient, user]);
 
   const { data: notifications = [], isLoading } = useQuery({
-    queryKey: ['notifications', user?.id],
+    queryKey: ["notifications", user?.id],
     queryFn: async () => {
       if (!user) return [];
       const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
+        .from("notifications")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
         .limit(50);
 
       if (error) throw error;
@@ -218,13 +231,13 @@ export function useNotifications() {
       }
 
       const { error } = await supabase
-        .from('notifications')
+        .from("notifications")
         .update({ is_read: true })
-        .eq('id', id);
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 
@@ -242,17 +255,21 @@ export function useNotifications() {
       }
 
       const { error } = await supabase
-        .from('notifications')
+        .from("notifications")
         .update({ is_read: true })
-        .eq('user_id', user.id)
-        .eq('is_read', false);
+        .eq("user_id", user.id)
+        .eq("is_read", false);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
     onError: (error: Error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -260,20 +277,22 @@ export function useNotifications() {
     mutationFn: async (id: string) => {
       if (!user) {
         const next = writeGuestNotifications(
-          readGuestNotifications().filter((notification) => notification.id !== id),
+          readGuestNotifications().filter(
+            (notification) => notification.id !== id,
+          ),
         );
         setGuestNotifications(next);
         return;
       }
 
       const { error } = await supabase
-        .from('notifications')
+        .from("notifications")
         .delete()
-        .eq('id', id);
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 

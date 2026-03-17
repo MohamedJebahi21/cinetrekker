@@ -1,25 +1,25 @@
 export const siteMetadata = {
-  siteName: 'CineTrekker',
-  title: 'CineTrekker | Track Movies & TV Shows',
+  siteName: "CineTrekker",
+  title: "CineTrekker | Track Movies & TV Shows",
   description:
-    'Track movies and TV shows with CineTrekker: build watchlists, mark progress, discover trending titles, and get personalized recommendations in one place.',
-  canonical: 'https://cinetrekker.vercel.app',
+    "Track movies and TV shows with CineTrekker: build watchlists, mark progress, discover trending titles, and get personalized recommendations in one place.",
+  canonical: "https://cinetrekker.vercel.app",
   openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    url: 'https://cinetrekker.vercel.app',
-    title: 'CineTrekker | Track Movies & TV Shows',
+    type: "website",
+    locale: "en_US",
+    url: "https://cinetrekker.vercel.app",
+    title: "CineTrekker | Track Movies & TV Shows",
     description:
-      'Track movies and TV shows, manage watchlists, and discover personalized recommendations with CineTrekker.',
-    images: ['https://cinetrekker.vercel.app/og-image.png'],
+      "Track movies and TV shows, manage watchlists, and discover personalized recommendations with CineTrekker.",
+    images: ["https://cinetrekker.vercel.app/og-image.png"],
   },
   twitter: {
-    card: 'summary_large_image',
-    title: 'CineTrekker | Track Movies & TV Shows',
+    card: "summary_large_image",
+    title: "CineTrekker | Track Movies & TV Shows",
     description:
-      'Track movies and TV shows, manage watchlists, and discover personalized recommendations with CineTrekker.',
-    image: 'https://cinetrekker.vercel.app/og-image.png',
-    imageAlt: 'CineTrekker preview image',
+      "Track movies and TV shows, manage watchlists, and discover personalized recommendations with CineTrekker.",
+    image: "https://cinetrekker.vercel.app/og-image.png",
+    imageAlt: "CineTrekker preview image",
   },
 } as const;
 

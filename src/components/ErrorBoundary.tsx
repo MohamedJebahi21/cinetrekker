@@ -1,6 +1,6 @@
-import { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Component, ErrorInfo, ReactNode } from "react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   children: ReactNode;
@@ -26,7 +26,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
   }
 
   private handleRetry = async () => {
@@ -35,7 +35,7 @@ export class ErrorBoundary extends Component<Props, State> {
     try {
       await this.props.onRetry?.();
     } catch (retryError) {
-      console.error('ErrorBoundary retry failed:', retryError);
+      console.error("ErrorBoundary retry failed:", retryError);
     } finally {
       this.setState({ hasError: false, error: null, isRetrying: false });
     }
@@ -58,9 +58,12 @@ export class ErrorBoundary extends Component<Props, State> {
               Something went wrong. Retry.
             </p>
             <div className="flex items-center justify-center gap-3">
-              <Button onClick={this.handleRetry} disabled={this.state.isRetrying}>
+              <Button
+                onClick={this.handleRetry}
+                disabled={this.state.isRetrying}
+              >
                 <RefreshCw className="w-4 h-4 mr-2" />
-                {this.state.isRetrying ? 'Retrying...' : 'Retry'}
+                {this.state.isRetrying ? "Retrying..." : "Retry"}
               </Button>
             </div>
           </div>
@@ -86,7 +89,8 @@ export function ApiError({ message, onRetry }: ApiErrorProps) {
       </div>
       <h3 className="font-semibold mb-2">Failed to load content</h3>
       <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-        {message || "We couldn't fetch the data. Please check your connection and try again."}
+        {message ||
+          "We couldn't fetch the data. Please check your connection and try again."}
       </p>
       {onRetry && (
         <Button variant="outline" size="sm" onClick={onRetry}>
@@ -105,7 +109,9 @@ export function OfflineIndicator() {
       <div className="bg-destructive text-destructive-foreground px-4 py-3 rounded-lg shadow-lg flex items-center gap-3">
         <div className="w-2 h-2 rounded-full bg-destructive-foreground animate-pulse" />
         <span className="text-sm font-medium">You're offline</span>
-        <span className="text-sm opacity-80">— Some features may be unavailable</span>
+        <span className="text-sm opacity-80">
+          — Some features may be unavailable
+        </span>
       </div>
     </div>
   );

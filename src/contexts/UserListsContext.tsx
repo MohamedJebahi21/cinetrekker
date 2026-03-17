@@ -1,5 +1,5 @@
 import React, { useState, useEffect, ReactNode, useCallback } from "react";
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from "@tanstack/react-query";
 import { UserMediaItem, HiddenRecommendation } from "@/types/media";
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,7 +29,7 @@ import {
   readGuestWatched,
   useGuestWatchlist,
   useGuestWatched,
-} from '@/hooks/useGuestMediaLists';
+} from "@/hooks/useGuestMediaLists";
 
 export function UserListsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -158,11 +158,11 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
 
         if (guestWatchlistItems.length > 0) {
           const rows = guestWatchlistItems.map((item) => ({
-              user_id: user.id,
-              media_id: item.mediaId,
-              media_type: item.mediaType,
-              added_at: item.addedAt || new Date().toISOString(),
-            }));
+            user_id: user.id,
+            media_id: item.mediaId,
+            media_type: item.mediaType,
+            added_at: item.addedAt || new Date().toISOString(),
+          }));
 
           try {
             const { error } = await supabase
@@ -177,15 +177,15 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
 
         if (guestWatchedItems.length > 0) {
           const rows = guestWatchedItems.map((item) => ({
-              user_id: user.id,
-              media_id: item.mediaId,
-              media_type: item.mediaType,
-              rating: item.rating ?? null,
-              note: item.note ?? null,
-              status: item.status ?? "completed",
-              watched_at:
-                item.watchedAt || item.addedAt || new Date().toISOString(),
-            }));
+            user_id: user.id,
+            media_id: item.mediaId,
+            media_type: item.mediaType,
+            rating: item.rating ?? null,
+            note: item.note ?? null,
+            status: item.status ?? "completed",
+            watched_at:
+              item.watchedAt || item.addedAt || new Date().toISOString(),
+          }));
 
           try {
             const { error } = await supabase
@@ -200,8 +200,10 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
 
         clearGuestWatchlist();
         clearGuestWatched();
-        await queryClient.invalidateQueries({ queryKey: ['watchlist', user.id] });
-        await queryClient.invalidateQueries({ queryKey: ['watched', user.id] });
+        await queryClient.invalidateQueries({
+          queryKey: ["watchlist", user.id],
+        });
+        await queryClient.invalidateQueries({ queryKey: ["watched", user.id] });
       } catch (e) {
         console.error("Sync local to server failed", e);
       }
@@ -218,7 +220,7 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
       } else {
         const next = guestWatchlist.addToGuestWatchlist(mediaId, mediaType);
         setWatchlist(next);
-        toast('Added to Watchlist (guest)');
+        toast("Added to Watchlist (guest)");
       }
     },
     [addToWatchlistMutation, guestWatchlist, user],
@@ -229,7 +231,10 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
       if (user) {
         await removeFromWatchlistMutation.mutateAsync({ mediaId, mediaType });
       } else {
-        const next = guestWatchlist.removeFromGuestWatchlist(mediaId, mediaType);
+        const next = guestWatchlist.removeFromGuestWatchlist(
+          mediaId,
+          mediaType,
+        );
         setWatchlist(next);
         toast(t("actions.watchlistRemoved", "Removed from watchlist"));
       }
@@ -257,7 +262,7 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
         const next = guestWatched.addToGuestWatched(mediaId, mediaType, {
           rating: validateRating(rating),
           note: validateNote(note),
-          status: status as UserMediaItem['status'],
+          status: status as UserMediaItem["status"],
         });
         setWatched(next);
         toast(t("actions.watchedAdded", "Saved locally"), {

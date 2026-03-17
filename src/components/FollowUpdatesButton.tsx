@@ -24,7 +24,8 @@ export function FollowUpdatesButton({
   posterPath,
   details,
 }: FollowUpdatesButtonProps) {
-  const { isFollowing, followTitle, unfollowTitle, isPending } = useTitleFollows();
+  const { isFollowing, followTitle, unfollowTitle, isPending } =
+    useTitleFollows();
   const followed = isFollowing(mediaId, mediaType);
 
   const handleClick = async () => {

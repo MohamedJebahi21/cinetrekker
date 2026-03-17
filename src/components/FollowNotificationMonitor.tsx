@@ -1,7 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getMovieDetails, getTVDetails } from "@/services/tmdb";
-import { appendGuestNotifications, readGuestNotifications } from "@/hooks/useNotifications";
+import {
+  appendGuestNotifications,
+  readGuestNotifications,
+} from "@/hooks/useNotifications";
 import {
   buildFollowedTitleState,
   createFollowKey,
@@ -15,7 +18,9 @@ import { toast } from "@/hooks/use-toast";
 const GUEST_TITLE_STATE_KEY = "cinetrekker_guest_followed_title_state";
 
 function canUseStorage() {
-  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+  return (
+    typeof window !== "undefined" && typeof window.localStorage !== "undefined"
+  );
 }
 
 function readGuestTitleStates() {
@@ -67,7 +72,11 @@ function buildChangeNotifications(
     return [] as Array<{ eventKey: string; type: string; message: string }>;
   }
 
-  const notifications: Array<{ eventKey: string; type: string; message: string }> = [];
+  const notifications: Array<{
+    eventKey: string;
+    type: string;
+    message: string;
+  }> = [];
 
   if (
     current.media_type === "movie" &&
@@ -111,7 +120,8 @@ function buildChangeNotifications(
     current.last_episode_air_date &&
     (current.last_episode_air_date !== previous.last_episode_air_date ||
       current.last_episode_number !== previous.last_episode_number ||
-      current.last_episode_season_number !== previous.last_episode_season_number);
+      current.last_episode_season_number !==
+        previous.last_episode_season_number);
 
   if (hasNewEpisode) {
     const seasonNumber = padEpisodeNumber(current.last_episode_season_number);
@@ -128,7 +138,11 @@ function buildChangeNotifications(
     });
   }
 
-  if (current.status && current.status !== previous.status && current.media_type === "tv") {
+  if (
+    current.status &&
+    current.status !== previous.status &&
+    current.media_type === "tv"
+  ) {
     notifications.push({
       eventKey: `${follow.id}:status:${current.status.toLowerCase()}`,
       type: "status_change",
@@ -144,7 +158,11 @@ export function FollowNotificationMonitor() {
   const { followedTitles } = useTitleFollows();
 
   useQuery({
-    queryKey: ["follow-notification-monitor", user?.id ?? "guest", followedTitles.map((item) => item.id).join("|")],
+    queryKey: [
+      "follow-notification-monitor",
+      user?.id ?? "guest",
+      followedTitles.map((item) => item.id).join("|"),
+    ],
     enabled: followedTitles.length > 0,
     staleTime: 5 * 60_000,
     refetchInterval: 10 * 60_000,
@@ -157,42 +175,55 @@ export function FollowNotificationMonitor() {
               ? await getMovieDetails(follow.mediaId)
               : await getTVDetails(follow.mediaId);
 
-          const title = details.title || details.name || follow.title || follow.id;
+          const title =
+            details.title || details.name || follow.title || follow.id;
 
           return {
             follow,
             title,
-            state: buildFollowedTitleState(follow.mediaType, follow.mediaId, details),
+            state: buildFollowedTitleState(
+              follow.mediaType,
+              follow.mediaId,
+              details,
+            ),
           };
         }),
       );
 
       if (user) {
         const followIds = currentStates.map((item) => item.state.movie_id);
-        const { data: previousStates, error: previousStatesError } = await supabase
-          .from("followed_title_state")
-          .select("*")
-          .in("movie_id", followIds);
+        const { data: previousStates, error: previousStatesError } =
+          await supabase
+            .from("followed_title_state")
+            .select("*")
+            .in("movie_id", followIds);
 
         if (previousStatesError) {
           throw previousStatesError;
         }
 
         const previousById = new Map(
-          (previousStates || []).map((item) => [item.movie_id, item as FollowedTitleState]),
+          (previousStates || []).map((item) => [
+            item.movie_id,
+            item as FollowedTitleState,
+          ]),
         );
 
-        const pendingNotifications = currentStates.flatMap(({ follow, title, state }) =>
-          buildChangeNotifications(follow, title, previousById.get(state.movie_id), state).map(
-            (notification) => ({
+        const pendingNotifications = currentStates.flatMap(
+          ({ follow, title, state }) =>
+            buildChangeNotifications(
+              follow,
+              title,
+              previousById.get(state.movie_id),
+              state,
+            ).map((notification) => ({
               user_id: user.id,
               movie_id: createFollowKey(follow.mediaType, follow.mediaId),
               event_key: notification.eventKey,
               type: notification.type,
               message: notification.message,
               is_read: false,
-            }),
-          ),
+            })),
         );
 
         if (pendingNotifications.length > 0) {
@@ -200,18 +231,21 @@ export function FollowNotificationMonitor() {
             .map((item) => item.event_key)
             .filter((item): item is string => Boolean(item));
 
-          const { data: existingNotifications, error: existingError } = await supabase
-            .from("notifications")
-            .select("event_key")
-            .eq("user_id", user.id)
-            .in("event_key", eventKeys);
+          const { data: existingNotifications, error: existingError } =
+            await supabase
+              .from("notifications")
+              .select("event_key")
+              .eq("user_id", user.id)
+              .in("event_key", eventKeys);
 
           if (existingError) {
             throw existingError;
           }
 
           const existingKeys = new Set(
-            (existingNotifications || []).map((item) => item.event_key).filter(Boolean),
+            (existingNotifications || [])
+              .map((item) => item.event_key)
+              .filter(Boolean),
           );
           const newNotifications = pendingNotifications.filter(
             (item) => item.event_key && !existingKeys.has(item.event_key),
@@ -234,7 +268,10 @@ export function FollowNotificationMonitor() {
 
         const { error: upsertError } = await supabase
           .from("followed_title_state")
-          .upsert(currentStates.map((item) => item.state), { onConflict: "movie_id" });
+          .upsert(
+            currentStates.map((item) => item.state),
+            { onConflict: "movie_id" },
+          );
 
         if (upsertError) {
           throw upsertError;
@@ -248,19 +285,23 @@ export function FollowNotificationMonitor() {
         currentStates.map((item) => [item.state.movie_id, item.state]),
       );
 
-      const guestNotifications = currentStates.flatMap(({ follow, title, state }) => {
-        const previous = previousById[state.movie_id];
-        return buildChangeNotifications(follow, title, previous, state).map((notification) => ({
-          id: notification.eventKey,
-          user_id: "guest",
-          movie_id: state.movie_id,
-          event_key: notification.eventKey,
-          type: notification.type,
-          message: notification.message,
-          created_at: new Date().toISOString(),
-          is_read: false,
-        }));
-      });
+      const guestNotifications = currentStates.flatMap(
+        ({ follow, title, state }) => {
+          const previous = previousById[state.movie_id];
+          return buildChangeNotifications(follow, title, previous, state).map(
+            (notification) => ({
+              id: notification.eventKey,
+              user_id: "guest",
+              movie_id: state.movie_id,
+              event_key: notification.eventKey,
+              type: notification.type,
+              message: notification.message,
+              created_at: new Date().toISOString(),
+              is_read: false,
+            }),
+          );
+        },
+      );
 
       if (guestNotifications.length > 0) {
         const existingKeys = new Set(

@@ -1,8 +1,15 @@
 # Temp / cache
 .tmp
 lighthouse-desktop-report
+lighthouse-accessibility-report.html
 playwright-report
 supabase/.temp
+
+# Dev server logs
+dev.log
+dev-full.log
+devserver.err.log
+devserver.out.log
 
 # Logs
 logs

@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Clock, Pause, Play, RotateCcw } from 'lucide-react';
+import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Clock, Pause, Play, RotateCcw } from "lucide-react";
 
 export function BingeTimer() {
   const [seconds, setSeconds] = useState(0);
@@ -11,7 +11,7 @@ export function BingeTimer() {
   useEffect(() => {
     if (isRunning) {
       intervalRef.current = window.setInterval(() => {
-        setSeconds(s => s + 1);
+        setSeconds((s) => s + 1);
       }, 1000);
     } else if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -26,7 +26,7 @@ export function BingeTimer() {
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const secs = totalSeconds % 60;
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m ${secs}s`;
     }
@@ -47,13 +47,15 @@ export function BingeTimer() {
         <Clock className="h-5 w-5 text-primary" />
         <h3 className="text-lg font-semibold">Binge-Watch Timer</h3>
       </div>
-      
+
       <div className="text-center mb-6">
         <div className="text-4xl font-bold font-mono text-primary mb-2">
           {formatTime(seconds)}
         </div>
         <p className="text-sm text-muted-foreground">
-          {isRunning ? 'Currently watching...' : 'Start tracking your watch time'}
+          {isRunning
+            ? "Currently watching..."
+            : "Start tracking your watch time"}
         </p>
       </div>
 
@@ -76,13 +78,8 @@ export function BingeTimer() {
             </>
           )}
         </Button>
-        
-        <Button
-          onClick={reset}
-          variant="outline"
-          size="sm"
-          className="gap-2"
-        >
+
+        <Button onClick={reset} variant="outline" size="sm" className="gap-2">
           <RotateCcw className="h-4 w-4" />
           Reset
         </Button>
@@ -91,9 +88,11 @@ export function BingeTimer() {
       {seconds > 0 && (
         <div className="mt-4 pt-4 border-t text-sm text-muted-foreground">
           <p>
-            {seconds >= 3600 ? '🎬 Epic binge session!' : 
-             seconds >= 1800 ? '📺 Getting into it!' : 
-             '⏱️ Just getting started'}
+            {seconds >= 3600
+              ? "🎬 Epic binge session!"
+              : seconds >= 1800
+                ? "📺 Getting into it!"
+                : "⏱️ Just getting started"}
           </p>
         </div>
       )}

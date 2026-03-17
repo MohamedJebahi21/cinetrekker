@@ -256,7 +256,9 @@ export default function Index() {
               <button
                 type="button"
                 onClick={() => setTopThisWeekType("movie")}
-                aria-label={t("home.topMoviesWeek") || "Show top movies this week"}
+                aria-label={
+                  t("home.topMoviesWeek") || "Show top movies this week"
+                }
                 className={`px-4 py-2 rounded text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   topThisWeekType === "movie"
                     ? "bg-primary text-primary-foreground"
@@ -268,7 +270,9 @@ export default function Index() {
               <button
                 type="button"
                 onClick={() => setTopThisWeekType("tv")}
-                aria-label={t("home.topSeriesWeek") || "Show top series this week"}
+                aria-label={
+                  t("home.topSeriesWeek") || "Show top series this week"
+                }
                 className={`px-4 py-2 rounded text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   topThisWeekType === "tv"
                     ? "bg-primary text-primary-foreground"

@@ -138,6 +138,8 @@ const fetchTMDB = async <T>(
 
   const cached = tmdbResponseCache.get(cacheKey);
   if (cached && cached.expiresAt > now) {
+    tmdbResponseCache.delete(cacheKey);
+    tmdbResponseCache.set(cacheKey, cached);
     return cached.data as T;
   }
 
@@ -611,8 +613,4 @@ export interface PersonDetails {
     cast: PersonCredit[];
     crew: PersonCredit[];
   };
-  episode_count: number;
-  air_date: string | null;
-  poster_path: string | null;
-  episodes: TVEpisode[];
 }

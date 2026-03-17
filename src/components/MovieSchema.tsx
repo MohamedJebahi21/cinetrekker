@@ -41,10 +41,13 @@ export default function MovieSchema({
         : undefined,
   };
 
+  // Escape < to \u003c to prevent </script> injection in JSON-LD blocks
+  const safeJson = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
+
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: safeJson }}
     />
   );
 }

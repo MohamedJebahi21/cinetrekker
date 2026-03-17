@@ -1,7 +1,13 @@
 import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Star, ChevronRight, Check, BookmarkCheck, Loader2 } from "lucide-react";
+import {
+  Star,
+  ChevronRight,
+  Check,
+  BookmarkCheck,
+  Loader2,
+} from "lucide-react";
 import Plus from "lucide-react/dist/esm/icons/plus";
 import { Media, type UserMediaItem } from "@/types/media";
 import {

@@ -63,11 +63,7 @@ import { isMediaAllowedBySafety } from "@/lib/contentFilter";
 import { Image } from "@/components/ui/Image";
 import { FollowUpdatesButton } from "@/components/FollowUpdatesButton";
 
-const normalizePinnedFavoriteKeys = (keys: string[]) => {
-  const movieKeys = keys.filter((key) => key.startsWith("movie-")).slice(0, 4);
-  const tvKeys = keys.filter((key) => key.startsWith("tv-")).slice(0, 4);
-  return [...movieKeys, ...tvKeys];
-};
+import { normalizePinnedFavoriteKeys } from "@/utils/pinnedFavorites";
 
 function getPolicyRatingTag(
   mediaType: "movie" | "tv",
@@ -1191,7 +1187,6 @@ export default function Details() {
                 </p>
               </div>
             )}
-
           </div>
         </div>
 
@@ -1242,7 +1237,6 @@ export default function Details() {
             />
           </div>
         )}
-
       </div>
     </>
   );

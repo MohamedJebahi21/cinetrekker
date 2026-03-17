@@ -1,12 +1,12 @@
-import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
-import { Media } from '@/types/media';
-import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
-import { Button } from '@/components/ui/button';
-import { useContentPolicy } from '@/contexts/content-policy-context';
-import { applySafetyFilter } from '@/lib/contentFilter';
+import { useState, useRef, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { ChevronRight, ChevronLeft } from "lucide-react";
+import { Media } from "@/types/media";
+import { MediaCard, MediaCardSkeleton } from "@/components/MediaCard";
+import { Button } from "@/components/ui/button";
+import { useContentPolicy } from "@/contexts/content-policy-context";
+import { applySafetyFilter } from "@/lib/contentFilter";
 
 interface MediaCarouselProps {
   title: string;
@@ -15,7 +15,7 @@ interface MediaCarouselProps {
   showMoreLink?: string;
   emptyMessage?: string;
   showManualNav?: boolean;
-  scrollSnap?: 'mandatory' | 'proximity';
+  scrollSnap?: "mandatory" | "proximity";
 }
 
 /**
@@ -34,7 +34,7 @@ export function MediaCarousel({
   showMoreLink,
   emptyMessage,
   showManualNav = true,
-  scrollSnap = 'proximity',
+  scrollSnap = "proximity",
 }: MediaCarouselProps) {
   const { t } = useTranslation();
   const { strictFiltering, moderateFiltering } = useContentPolicy();
@@ -42,7 +42,11 @@ export function MediaCarousel({
   const [isHovered, setIsHovered] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScroll, setCanScroll] = useState({ left: false, right: true });
-  const filteredItems = applySafetyFilter(items, strictFiltering, moderateFiltering);
+  const filteredItems = applySafetyFilter(
+    items,
+    strictFiltering,
+    moderateFiltering,
+  );
 
   // Check if horizontal scrolling is possible and current position
   const checkScroll = () => {
@@ -51,7 +55,10 @@ export function MediaCarousel({
     const hasScroll = container.scrollWidth > container.clientWidth;
     setCanScroll({
       left: hasScroll && container.scrollLeft > 10,
-      right: hasScroll && container.scrollLeft < container.scrollWidth - container.clientWidth - 10,
+      right:
+        hasScroll &&
+        container.scrollLeft <
+          container.scrollWidth - container.clientWidth - 10,
     });
   };
 
@@ -63,27 +70,29 @@ export function MediaCarousel({
 
     const handleScroll = () => checkScroll();
     const handleResize = () => checkScroll();
-    
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleResize);
-    
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleResize);
+
     return () => {
-      container.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleResize);
+      container.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
     };
   }, [filteredItems.length]);
 
   // Manual scroll handler for navigation buttons
-  const handleManualScroll = (direction: 'left' | 'right') => {
+  const handleManualScroll = (direction: "left" | "right") => {
     const container = scrollContainerRef.current;
     if (!container) return;
     const scrollDistance = Math.floor(container.clientWidth * 0.9);
-    const targetScroll = container.scrollLeft + (direction === 'left' ? -scrollDistance : scrollDistance);
-    container.scrollTo({ left: targetScroll, behavior: 'smooth' });
+    const targetScroll =
+      container.scrollLeft +
+      (direction === "left" ? -scrollDistance : scrollDistance);
+    container.scrollTo({ left: targetScroll, behavior: "smooth" });
   };
 
   return (
-    <section 
+    <section
       className="animate-fade-in group/carousel"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -93,7 +102,7 @@ export function MediaCarousel({
         {showMoreLink && (
           <Button asChild variant="ghost" size="sm" className="gap-1">
             <Link to={showMoreLink}>
-              {t('common.seeAll')}
+              {t("common.seeAll")}
               <ChevronRight className="w-4 h-4" />
             </Link>
           </Button>
@@ -115,19 +124,19 @@ export function MediaCarousel({
             <>
               <button
                 type="button"
-                onClick={() => handleManualScroll('left')}
+                onClick={() => handleManualScroll("left")}
                 disabled={!canScroll.left}
                 className="absolute -left-4 md:-left-6 top-1/3 z-10 hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                aria-label={t('common.previous') || 'Previous'}
+                aria-label={t("common.previous") || "Previous"}
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <button
                 type="button"
-                onClick={() => handleManualScroll('right')}
+                onClick={() => handleManualScroll("right")}
                 disabled={!canScroll.right}
                 className="absolute -right-4 md:-right-6 top-1/3 z-10 hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                aria-label={t('common.next') || 'Next'}
+                aria-label={t("common.next") || "Next"}
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
@@ -140,34 +149,33 @@ export function MediaCarousel({
             className="flex gap-4 overflow-x-auto scroll-smooth overscroll-contain pb-2"
             style={{
               scrollSnapType: `x ${scrollSnap}`,
-              WebkitOverflowScrolling: 'touch',
-              msOverflowStyle: 'none',
-              scrollbarWidth: 'none',
+              WebkitOverflowScrolling: "touch",
+              msOverflowStyle: "none",
+              scrollbarWidth: "none",
             }}
           >
             {filteredItems.map((item) => (
               <div
-                key={`${item.id}-${item.media_type || 'unknown'}`}
+                key={`${item.id}-${item.media_type || "unknown"}`}
                 className="flex-shrink-0 w-[160px] sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
-                style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
+                style={{ scrollSnapAlign: "start", scrollSnapStop: "always" }}
               >
                 <MediaCard media={item} />
               </div>
             ))}
           </div>
           <div
-            className={`pointer-events-none absolute left-0 top-0 h-full w-8 bg-gradient-to-r from-background to-transparent md:hidden ${canScroll.left ? 'opacity-100' : 'opacity-0'}`}
+            className={`pointer-events-none absolute left-0 top-0 h-full w-8 bg-gradient-to-r from-background to-transparent md:hidden ${canScroll.left ? "opacity-100" : "opacity-0"}`}
           />
           <div
-            className={`pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-background to-transparent md:hidden ${canScroll.right ? 'opacity-100' : 'opacity-0'}`}
+            className={`pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-background to-transparent md:hidden ${canScroll.right ? "opacity-100" : "opacity-0"}`}
           />
         </div>
       ) : (
         <div className="text-center py-12 text-muted-foreground">
-          {emptyMessage || t('common.noResults')}
+          {emptyMessage || t("common.noResults")}
         </div>
       )}
     </section>
   );
 }
-

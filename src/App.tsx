@@ -1,7 +1,13 @@
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
-import { Routes, Route, useNavigate, Navigate, useLocation } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  useNavigate,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -70,7 +76,8 @@ const AccessibilitySettings = lazy(
   () => import("./pages/AccessibilitySettings"),
 );
 const isVercelHost =
-  typeof window !== "undefined" && /(?:^|\.)vercel\.app$/i.test(window.location.hostname);
+  typeof window !== "undefined" &&
+  /(?:^|\.)vercel\.app$/i.test(window.location.hostname);
 const shouldLoadVercelAnalytics =
   import.meta.env.VITE_ENABLE_VERCEL_ANALYTICS === "true" ||
   (import.meta.env.PROD && isVercelHost);
@@ -112,314 +119,320 @@ function AnimatedRoutes() {
         exit={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.22, ease: "easeOut" }}
       >
-      <Routes location={location}>
-        <Route
-          path="/"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <Index />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/search"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <Search />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/trending"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <Trending />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/movie/:id"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <Details />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/movie/:id/locations"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <LocationDetails />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/tv/:id"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <Details />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/tv/:id/locations"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <LocationDetails />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/person/:id"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <Person />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/privacy"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <Privacy />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/about"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <About />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/feedback"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <Feedback />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/terms"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <Terms />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/cookies"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <Cookies />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/auth"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <Auth />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/login"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <Login />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/signup"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <Signup />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/auth/callback"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <AuthCallback />
-            </Suspense>
-          }
-        />
+        <Routes location={location}>
+          <Route
+            path="/"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Index />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/search"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Search />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/trending"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Trending />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/movie/:id"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Details />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/movie/:id/locations"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <LocationDetails />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/tv/:id"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Details />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/tv/:id/locations"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <LocationDetails />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/person/:id"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Person />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/privacy"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Privacy />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/about"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <About />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/feedback"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Feedback />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/terms"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Terms />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/cookies"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Cookies />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/auth"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Auth />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Login />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Signup />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/auth/callback"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <AuthCallback />
+              </Suspense>
+            }
+          />
 
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Profile />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Settings />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/watchlist"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Watchlist />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/watched"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Watched />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/following"
+            element={
               <Suspense fallback={<RouteSpinner />}>
-                <Profile />
+                <Following />
               </Suspense>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
               <Suspense fallback={<RouteSpinner />}>
-                <Settings />
+                <Notifications />
               </Suspense>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/watchlist"
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<RouteSpinner />}>
-                <Watchlist />
-              </Suspense>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/watched"
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<RouteSpinner />}>
-                <Watched />
-              </Suspense>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/following"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <Following />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/notifications"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <Notifications />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/recommendations"
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<RouteSpinner />}>
-                <Recommendations />
-              </Suspense>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/calendar"
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<RouteSpinner />}>
-                <Calendar />
-              </Suspense>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/stats"
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<RouteSpinner />}>
-                <EnhancedStats />
-              </Suspense>
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/enhanced-stats" element={<Navigate to="/stats" replace />} />
-        <Route
-          path="/achievements"
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<RouteSpinner />}>
-                <Achievements />
-              </Suspense>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/print-watchlist"
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<RouteSpinner />}>
-                <PrintWatchlist />
-              </Suspense>
-            </ProtectedRoute>
-          }
-        />
+            }
+          />
+          <Route
+            path="/recommendations"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Recommendations />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/calendar"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Calendar />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/stats"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <EnhancedStats />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/enhanced-stats"
+            element={<Navigate to="/stats" replace />}
+          />
+          <Route
+            path="/achievements"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Achievements />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/print-watchlist"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <PrintWatchlist />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/genres"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <GenreBrowser />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/decades"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <DecadeExplorer />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/collections"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <Collections />
-            </Suspense>
-          }
-        />
-        <Route path="/trek-lists" element={<Navigate to="/" replace />} />
-        <Route
-          path="/awards"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <AwardWinners />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/year-in-review"
-          element={
-            <ProtectedRoute>
+          <Route
+            path="/genres"
+            element={
               <Suspense fallback={<RouteSpinner />}>
-                <YearInReview />
+                <GenreBrowser />
               </Suspense>
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/watch-history" element={<Navigate to="/watched" replace />} />
-        <Route
-          path="/accessibility"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <AccessibilitySettings />
-            </Suspense>
-          }
-        />
+            }
+          />
+          <Route
+            path="/decades"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <DecadeExplorer />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/collections"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Collections />
+              </Suspense>
+            }
+          />
+          <Route path="/trek-lists" element={<Navigate to="/" replace />} />
+          <Route
+            path="/awards"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <AwardWinners />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/year-in-review"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <YearInReview />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/watch-history"
+            element={<Navigate to="/watched" replace />}
+          />
+          <Route
+            path="/accessibility"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <AccessibilitySettings />
+              </Suspense>
+            }
+          />
 
-        <Route
-          path="*"
-          element={
-            <Suspense fallback={<RouteSpinner />}>
-              <TitleStatus />
-            </Suspense>
-          }
-        />
-      </Routes>
+          <Route
+            path="*"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <TitleStatus />
+              </Suspense>
+            }
+          />
+        </Routes>
       </motion.div>
     </AnimatePresence>
   );
@@ -581,7 +594,8 @@ const App = () => {
                     <DialogHeader>
                       <DialogTitle>Sign in required</DialogTitle>
                       <DialogDescription className="text-muted-foreground">
-                        Sign in to sync your guest watchlist and watched history across devices.
+                        Sign in to sync your guest watchlist and watched history
+                        across devices.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="mt-4 flex justify-end gap-2">

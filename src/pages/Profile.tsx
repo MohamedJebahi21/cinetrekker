@@ -107,23 +107,7 @@ type PinnedFavoriteRef = {
   mediaType: "movie" | "tv";
 };
 
-function normalizePinnedFavoriteKeys(keys: string[]): string[] {
-  const movieKeys: string[] = [];
-  const seriesKeys: string[] = [];
-
-  keys.forEach((key) => {
-    if (key.startsWith("movie-") && movieKeys.length < 4) {
-      movieKeys.push(key);
-      return;
-    }
-
-    if (key.startsWith("tv-") && seriesKeys.length < 4) {
-      seriesKeys.push(key);
-    }
-  });
-
-  return [...movieKeys, ...seriesKeys];
-}
+import { normalizePinnedFavoriteKeys } from '@/utils/pinnedFavorites';
 
 function useCountUp(target: number, durationMs: number, reduceMotion: boolean) {
   const [value, setValue] = useState(reduceMotion ? target : 0);
@@ -576,8 +560,13 @@ export default function Profile() {
   };
 
   const handleCancelChanges = (): void => {
-    // Reload the page to discard changes
-    window.location.reload();
+    setProfilePhoto(initialStateRef.current.profilePhoto || null);
+    setDateOfBirth(initialStateRef.current.dateOfBirth || '');
+    setDisplayName(initialStateRef.current.displayName || '');
+    setBio(initialStateRef.current.bio || '');
+    setFavoriteGenres([...initialStateRef.current.favoriteGenres]);
+    setHasUnsavedChanges(false);
+    setIsEditMode(false);
   };
 
   const handlePhotoChange = async (

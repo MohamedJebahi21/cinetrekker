@@ -1,7 +1,5 @@
 /**
  * Environment Variable Validation Utility
-/**
- * Environment Variable Validation Utility
  *
  * Ensures all required client-side environment variables are present
  * at build/runtime. Provides type-safe access to environment variables.
