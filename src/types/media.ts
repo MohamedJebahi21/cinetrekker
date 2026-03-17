@@ -6,6 +6,7 @@ export interface Media {
   original_name?: string;
   overview: string;
   poster_path: string | null;
+  profile_path?: string | null;
   backdrop_path: string | null;
   release_date?: string;
   first_air_date?: string;
@@ -14,7 +15,7 @@ export interface Media {
   popularity: number;
   genre_ids?: number[];
   genres?: Genre[];
-  media_type?: "movie" | "tv";
+  media_type?: "movie" | "tv" | "person";
   adult?: boolean;
   runtime?: number;
   episode_run_time?: number[];
@@ -154,6 +155,15 @@ export interface Provider {
   provider_name: string;
   logo_path: string | null;
   display_priority: number;
+  short_name?: string;
+  clear_name?: string;
+  icon_url?: string | null;
+  provider_url?: string;
+  url?: string;
+  urls?: {
+    standard_web?: string;
+    web?: string;
+  } | null;
 }
 
 export interface WatchProviderDetails {

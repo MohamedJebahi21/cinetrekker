@@ -208,6 +208,10 @@ export default function ActorMatchesSection({
     enabled: isReady,
     staleTime: 24 * 60 * 60 * 1000, // 24 hours client session
     queryFn: async () => {
+      if (userAge === null) {
+        return [];
+      }
+
       // 1. Context Helper
       const currentContext = {
         age: userAge,

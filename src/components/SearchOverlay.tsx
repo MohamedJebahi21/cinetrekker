@@ -162,7 +162,9 @@ export default function SearchOverlay() {
                 </div>
               ) : results.length > 0 ? (
                 <ul>
-                  {results.map((item: Media) => (
+                  {results.map((item: Media) => {
+                    const thumbPath = item.poster_path ?? item.profile_path ?? null;
+                    return (
                     <li key={`${item.media_type}-${item.id}`}>
                       <button
                         onClick={() => {
@@ -172,10 +174,10 @@ export default function SearchOverlay() {
                         className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-accent/30 transition-colors"
                       >
                         <div className="w-12 h-16 rounded overflow-hidden bg-muted flex-shrink-0">
-                          {getImageUrl(item.poster_path || item.profile_path, 'w92') ? (
+                          {getImageUrl(thumbPath, 'w92') ? (
                             <img
-                              src={getImageUrl(item.poster_path || item.profile_path, 'w92')!}
-                              srcSet={`${getImageUrl(item.poster_path || item.profile_path, 'w92')!} 92w, ${getImageUrl(item.poster_path || item.profile_path, 'w185')!} 185w`}
+                              src={getImageUrl(thumbPath, 'w92')!}
+                              srcSet={`${getImageUrl(thumbPath, 'w92')!} 92w, ${getImageUrl(thumbPath, 'w185')!} 185w`}
                               sizes="48px"
                               width={48}
                               height={64}
@@ -197,7 +199,8 @@ export default function SearchOverlay() {
                         <ArrowRight className="w-4 h-4 text-muted-foreground" />
                       </button>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               ) : (
                 <div className="p-4 text-sm text-muted-foreground">{debounced.length >= 2 ? t('search.noResults', `No results for "${debounced}"`) : t('search.prompt', 'Type at least 2 characters')}</div>

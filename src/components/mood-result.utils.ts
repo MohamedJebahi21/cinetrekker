@@ -20,7 +20,10 @@ const MOOD_GENRE_MAP: Record<MoodId, string> = {
   edge: '53',
 };
 
-function runtimeParamsFor(time?: TimeSlot) {
+function runtimeParamsFor(time?: TimeSlot): {
+  with_runtime_gte?: string;
+  with_runtime_lte?: string;
+} {
   if (time === 'short') return { with_runtime_gte: '0', with_runtime_lte: '90' };
   if (time === 'medium') return { with_runtime_gte: '90', with_runtime_lte: '120' };
   if (time === 'long') return { with_runtime_gte: '120', with_runtime_lte: '500' };
@@ -29,12 +32,14 @@ function runtimeParamsFor(time?: TimeSlot) {
 
 export async function fetchMoodMatch(mood: MoodId, time?: TimeSlot, language = 'en'): Promise<Media | null> {
   const genre = MOOD_GENRE_MAP[mood];
+  const runtime = runtimeParamsFor(time);
   const params: Record<string, string | number> = {
     page: '1',
     with_genres: genre,
     sort_by: 'popularity.desc',
-    ...runtimeParamsFor(time),
   };
+  if (runtime.with_runtime_gte) params.with_runtime_gte = runtime.with_runtime_gte;
+  if (runtime.with_runtime_lte) params.with_runtime_lte = runtime.with_runtime_lte;
   try {
     const resp = await discoverMovies(params, language);
     const list = resp?.results || [];

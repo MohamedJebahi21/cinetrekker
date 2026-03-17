@@ -1,14 +1,7 @@
 import React from 'react';
 import { getProviderUrlFromData } from '@/lib/providerMap';
 import { getProviderWatchUrl } from '@/lib/providerLinks';
-
-type Provider = {
-  provider_id?: number;
-  icon_url?: string | null;
-  short_name?: string;
-  clear_name?: string;
-  urls?: { standard_web?: string } | null;
-};
+import type { Provider } from '@/types/media';
 
 export default function StreamingInfo({ providers }: { providers?: Provider[] }) {
   if (!providers || providers.length === 0) return null;

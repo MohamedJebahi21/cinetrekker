@@ -30,8 +30,9 @@ export default function MoodResult({ mood, time, onTryAnother, className = '' }:
 
   const handleAdd = async () => {
     if (!match) return;
+    const mediaType = match.media_type === 'tv' ? 'tv' : 'movie';
     try {
-      addToWatchlist?.(match.id, match.media_type || 'movie');
+      addToWatchlist?.(match.id, mediaType);
     } catch {
       // ignore
     }

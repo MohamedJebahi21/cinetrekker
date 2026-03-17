@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { getImageUrl } from '@/services/tmdb';
+import { getBackdropUrl, getImageUrl } from '@/services/tmdb';
 
 type Props = {
   title: string;
@@ -21,7 +21,7 @@ export default function DetailsHero({ title, year, posterPath, backdropPath, rat
     <motion.header initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.45 }} className="relative overflow-hidden">
       {backdropPath && (
         <div className="absolute inset-0 -z-10">
-          <img src={getImageUrl(backdropPath, 'w1280') || ''} alt={title} width={1280} height={720} className="w-full h-full object-cover" />
+          <img src={getBackdropUrl(backdropPath, 'w1280') || ''} alt={title} width={1280} height={720} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/90" />
         </div>
       )}
