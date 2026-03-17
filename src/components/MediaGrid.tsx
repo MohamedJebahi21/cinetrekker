@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Media } from '@/types/media';
 import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
@@ -48,7 +48,7 @@ export function MediaGrid({
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     initial: { opacity: 0, y: 20 },
     animate: {
       opacity: 1,

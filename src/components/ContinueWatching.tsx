@@ -3,14 +3,14 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Play, Clock, Calendar } from 'lucide-react';
 import { useUserLists } from '@/contexts/user-lists-context';
-import { TVShow } from '@/types/media';
+import { MediaDetails, Season } from '@/types/media';
 import { getTVDetails } from '@/services/tmdb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useTranslation } from 'react-i18next';
 
-interface TVShowWithProgress extends TVShow {
+interface TVShowWithProgress extends MediaDetails {
   currentEpisode: number;
   currentSeason: number;
   lastWatched: string;
@@ -64,8 +64,8 @@ export function ContinueWatching() {
         {showsDetails.map((show) => {
           const totalEpisodes =
             show.seasons
-              ?.filter((s) => s.season_number > 0)
-              .reduce((acc: number, s) => acc + (s.episode_count ?? 0), 0) || 0;
+              ?.filter((s: Season) => s.season_number > 0)
+              .reduce((acc: number, s: Season) => acc + (s.episode_count ?? 0), 0) || 0;
           
           const currentProgress = show.currentSeason * show.currentEpisode;
           const progressPercent = totalEpisodes > 0 ? (currentProgress / totalEpisodes) * 100 : 0;

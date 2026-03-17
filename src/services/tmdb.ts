@@ -106,7 +106,7 @@ export const getImageUrl = (
 
 export const getBackdropUrl = (
   path: string | null,
-  size: "w342" | "w780" | "w1280" = "w780",
+  size: "w342" | "w780" | "w1280" | "original" = "w780",
 ) => {
   if (!path) return null;
   return `${TMDB_IMAGE_BASE}/${size}${path}`;
