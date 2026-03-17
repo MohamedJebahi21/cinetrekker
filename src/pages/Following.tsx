@@ -12,7 +12,7 @@ import { Media } from "@/types/media";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import SEO from "@/components/SEO";
-import { EmptyState } from "@/components/EmptyState";
+import { EmptyState } from "@/components/EmptyStates";
 
 export default function Following() {
   const { t, i18n } = useTranslation();

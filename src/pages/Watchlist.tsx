@@ -17,7 +17,7 @@ import { Media } from "@/types/media";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import SEO from "@/components/SEO";
-import { EmptyState } from "@/components/EmptyState";
+import { EmptyState } from "@/components/EmptyStates";
 import { sortMedia, type SortOption } from "@/lib/sortFilter";
 import { RandomPicker } from "@/components/RandomPicker";
 import { ShareButton } from "@/components/ShareButton";

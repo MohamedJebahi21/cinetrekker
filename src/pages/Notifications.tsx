@@ -4,7 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useNotifications } from "@/hooks/useNotifications";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/EmptyState";
+import { EmptyState } from "@/components/EmptyStates";
 import { cn } from "@/lib/utils";
 
 export default function Notifications() {
