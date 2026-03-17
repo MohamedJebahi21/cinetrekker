@@ -107,7 +107,10 @@ function getPersonGenreSet(person: PersonDetails): Set<number> {
   return genres;
 }
 
-function getGenreMatchScore(person: PersonDetails, favoriteGenres: number[]): number {
+function getGenreMatchScore(
+  person: PersonDetails,
+  favoriteGenres: number[],
+): number {
   if (favoriteGenres.length === 0) return 0;
   const personGenres = getPersonGenreSet(person);
   if (personGenres.size === 0) return 0;
@@ -141,10 +144,7 @@ function calculateMatchScore(
   const genreScore = getGenreMatchScore(person, favoriteGenres);
   const popularityScore = getPopularityScore(person);
 
-  const weighted =
-    ageScore * 0.55 +
-    genreScore * 0.35 +
-    popularityScore * 0.1;
+  const weighted = ageScore * 0.55 + genreScore * 0.35 + popularityScore * 0.1;
 
   // Keep output in a human-friendly 0-100 range.
   return Math.round(weighted * 100);
@@ -161,7 +161,10 @@ function selectBestMatches(
     return {
       person,
       score: calculateMatchScore(person, targetAge, favoriteGenres),
-      ageDiff: actorAge === null ? Number.POSITIVE_INFINITY : Math.abs(actorAge - targetAge),
+      ageDiff:
+        actorAge === null
+          ? Number.POSITIVE_INFINITY
+          : Math.abs(actorAge - targetAge),
       popularity: person.popularity ?? 0,
     };
   });
@@ -224,7 +227,11 @@ export default function ActorMatchesSection({
         try {
           const profile = await profileService.getProfile(user.id);
           if (profile?.actor_matches && profile.actor_matches_context) {
-            const { age, genres, language: cachedLanguage } = profile.actor_matches_context;
+            const {
+              age,
+              genres,
+              language: cachedLanguage,
+            } = profile.actor_matches_context;
             const cacheDate = profile.actor_matches_updated_at
               ? new Date(profile.actor_matches_updated_at)
               : null;
@@ -509,7 +516,11 @@ export default function ActorMatchesSection({
         {sameAgeMatches.slice(0, 6).map((person) => {
           const actorAge = getActorAge(person.birthday);
           const topWorks = getTopWorks(person);
-          const matchScore = calculateMatchScore(person, userAge, favoriteGenres);
+          const matchScore = calculateMatchScore(
+            person,
+            userAge,
+            favoriteGenres,
+          );
 
           return (
             <Link

@@ -1,20 +1,20 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
-import { searchMulti, getImageUrl } from '@/services/tmdb';
-import { useDebounce } from '@/hooks/useDebounce';
-import { X, Search, Film, Tv, User, ArrowRight } from 'lucide-react';
-import type { Media } from '@/types/media';
-import { useContentPolicy } from '@/contexts/content-policy-context';
-import { applySafetyFilter } from '@/lib/contentFilter';
+import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
+import { searchMulti, getImageUrl } from "@/services/tmdb";
+import { useDebounce } from "@/hooks/useDebounce";
+import { X, Search, Film, Tv, User, ArrowRight } from "lucide-react";
+import type { Media } from "@/types/media";
+import { useContentPolicy } from "@/contexts/content-policy-context";
+import { applySafetyFilter } from "@/lib/contentFilter";
 
 export default function SearchOverlay() {
   const { t, i18n } = useTranslation();
   const { strictFiltering, moderateFiltering } = useContentPolicy();
   const includeAdult = !(strictFiltering || moderateFiltering);
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const debounced = useDebounce(query, 500); // 500ms debounce for bot protection
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -23,54 +23,59 @@ export default function SearchOverlay() {
 
   useEffect(() => {
     const onOpen = () => setOpen(true);
-    window.addEventListener('open-search-overlay', onOpen as EventListener);
+    window.addEventListener("open-search-overlay", onOpen as EventListener);
 
     const onAppEscape = () => setOpen(false);
-    window.addEventListener('app:escape', onAppEscape as EventListener);
+    window.addEventListener("app:escape", onAppEscape as EventListener);
 
     const onKey = (e: KeyboardEvent) => {
       // Ctrl+/ or Meta+/
-      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+      if ((e.ctrlKey || e.metaKey) && e.key === "/") {
         e.preventDefault();
         setOpen((v) => !v);
       }
       // "/" to open search when not focused on input/textarea/select
-      if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        const tag = (document.activeElement?.tagName || '').toLowerCase();
-        if (!['input', 'textarea', 'select'].includes(tag)) {
+      if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const tag = (document.activeElement?.tagName || "").toLowerCase();
+        if (!["input", "textarea", "select"].includes(tag)) {
           e.preventDefault();
           setOpen(true);
         }
       }
     };
-    window.addEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
 
     return () => {
-      window.removeEventListener('open-search-overlay', onOpen as EventListener);
-      window.removeEventListener('keydown', onKey);
-      window.removeEventListener('app:escape', onAppEscape as EventListener);
+      window.removeEventListener(
+        "open-search-overlay",
+        onOpen as EventListener,
+      );
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("app:escape", onAppEscape as EventListener);
     };
   }, []);
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 0);
-    else setQuery('');
+    else setQuery("");
   }, [open]);
 
   useEffect(() => {
     if (!open) return;
-    
+
     const handleTab = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
-      
+      if (e.key !== "Tab") return;
+
       const focusableElements = modalRef.current?.querySelectorAll(
-        'a[href], button, textarea, input[type="text"], input[type="radio"], input[type="checkbox"], select'
+        'a[href], button, textarea, input[type="text"], input[type="radio"], input[type="checkbox"], select',
       );
       if (!focusableElements || focusableElements.length === 0) return;
-      
+
       const firstElement = focusableElements[0] as HTMLElement;
-      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
-      
+      const lastElement = focusableElements[
+        focusableElements.length - 1
+      ] as HTMLElement;
+
       if (e.shiftKey) {
         if (document.activeElement === firstElement) {
           lastElement.focus();
@@ -83,33 +88,37 @@ export default function SearchOverlay() {
         }
       }
     };
-    
-    document.addEventListener('keydown', handleTab);
-    return () => document.removeEventListener('keydown', handleTab);
+
+    document.addEventListener("keydown", handleTab);
+    return () => document.removeEventListener("keydown", handleTab);
   }, [open]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['search-overlay', debounced, language, includeAdult],
+    queryKey: ["search-overlay", debounced, language, includeAdult],
     queryFn: () => searchMulti(debounced, 1, language, includeAdult),
     enabled: debounced.length >= 2,
     staleTime: 30_000,
   });
 
-  const results = applySafetyFilter(data?.results || [], strictFiltering, moderateFiltering).slice(0, 10);
+  const results = applySafetyFilter(
+    data?.results || [],
+    strictFiltering,
+    moderateFiltering,
+  ).slice(0, 10);
 
   const getItemRoute = (item: Media) => {
-    if (item.media_type === 'person') return `/person/${item.id}`;
+    if (item.media_type === "person") return `/person/${item.id}`;
     return `/${item.media_type}/${item.id}`;
   };
 
-  const RECENTS_ID = 'cinetrekker_recent_searches';
+  const RECENTS_ID = "cinetrekker_recent_searches";
   const addToRecents = (q: string) => {
     if (!q || !q.trim()) return;
     try {
       const trimmed = q.trim();
       const stored = localStorage.getItem(RECENTS_ID);
       const prev: string[] = stored ? JSON.parse(stored) : [];
-      const next = [trimmed, ...prev.filter(x => x !== trimmed)].slice(0, 10);
+      const next = [trimmed, ...prev.filter((x) => x !== trimmed)].slice(0, 10);
       localStorage.setItem(RECENTS_ID, JSON.stringify(next));
     } catch (e) {
       // ignore
@@ -120,11 +129,11 @@ export default function SearchOverlay() {
     <>
       {open && (
         <div className="fixed inset-0 z-[100] flex items-start md:items-center justify-center p-4">
-          <div 
+          <div
             ref={modalRef}
-            role="dialog" 
-            aria-modal="true" 
-            aria-label={t('nav.search', 'Search')}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("nav.search", "Search")}
             className="w-full max-w-3xl bg-popover/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl"
           >
             <div className="flex items-center gap-2 p-3">
@@ -135,7 +144,10 @@ export default function SearchOverlay() {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder={t('search.placeholder', 'Search movies, TV shows, and more')}
+                  placeholder={t(
+                    "search.placeholder",
+                    "Search movies, TV shows, and more",
+                  )}
                   className="w-full bg-transparent border-none outline-none text-foreground placeholder-muted-foreground"
                 />
               </div>
@@ -163,47 +175,67 @@ export default function SearchOverlay() {
               ) : results.length > 0 ? (
                 <ul>
                   {results.map((item: Media) => {
-                    const thumbPath = item.poster_path ?? item.profile_path ?? null;
+                    const thumbPath =
+                      item.poster_path ?? item.profile_path ?? null;
                     return (
-                    <li key={`${item.media_type}-${item.id}`}>
-                      <button
-                        onClick={() => {
-                          navigate(getItemRoute(item));
-                          setOpen(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-accent/30 transition-colors"
-                      >
-                        <div className="w-12 h-16 rounded overflow-hidden bg-muted flex-shrink-0">
-                          {getImageUrl(thumbPath, 'w92') ? (
-                            <img
-                              src={getImageUrl(thumbPath, 'w92')!}
-                              srcSet={`${getImageUrl(thumbPath, 'w92')!} 92w, ${getImageUrl(thumbPath, 'w185')!} 185w`}
-                              sizes="48px"
-                              width={48}
-                              height={64}
-                              alt={item.media_type === 'person'
-                                ? `${item.name} profile`
-                                : `${item.title || item.name} poster`}
-                              className="w-full h-full object-cover bg-muted"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                              {item.media_type === 'person' ? <User /> : (item.media_type === 'movie' ? <Film /> : <Tv />)}
+                      <li key={`${item.media_type}-${item.id}`}>
+                        <button
+                          onClick={() => {
+                            navigate(getItemRoute(item));
+                            setOpen(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-accent/30 transition-colors"
+                        >
+                          <div className="w-12 h-16 rounded overflow-hidden bg-muted flex-shrink-0">
+                            {getImageUrl(thumbPath, "w92") ? (
+                              <img
+                                src={getImageUrl(thumbPath, "w92")!}
+                                srcSet={`${getImageUrl(thumbPath, "w92")!} 92w, ${getImageUrl(thumbPath, "w185")!} 185w`}
+                                sizes="48px"
+                                width={48}
+                                height={64}
+                                alt={
+                                  item.media_type === "person"
+                                    ? `${item.name} profile`
+                                    : `${item.title || item.name} poster`
+                                }
+                                className="w-full h-full object-cover bg-muted"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                                {item.media_type === "person" ? (
+                                  <User />
+                                ) : item.media_type === "movie" ? (
+                                  <Film />
+                                ) : (
+                                  <Tv />
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm truncate">
+                              {item.title || item.name}
                             </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm truncate">{item.title || item.name}</div>
-                          <div className="text-xs text-muted-foreground mt-1">{item.media_type}{item.release_date ? ` | ${new Date(item.release_date).getFullYear()}` : ''}</div>
-                        </div>
-                        <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                      </button>
-                    </li>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {item.media_type}
+                              {item.release_date
+                                ? ` | ${new Date(item.release_date).getFullYear()}`
+                                : ""}
+                            </div>
+                          </div>
+                          <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                      </li>
                     );
                   })}
                 </ul>
               ) : (
-                <div className="p-4 text-sm text-muted-foreground">{debounced.length >= 2 ? t('search.noResults', `No results for "${debounced}"`) : t('search.prompt', 'Type at least 2 characters')}</div>
+                <div className="p-4 text-sm text-muted-foreground">
+                  {debounced.length >= 2
+                    ? t("search.noResults", `No results for "${debounced}"`)
+                    : t("search.prompt", "Type at least 2 characters")}
+                </div>
               )}
             </div>
           </div>
@@ -212,6 +244,3 @@ export default function SearchOverlay() {
     </>
   );
 }
-
-
-
