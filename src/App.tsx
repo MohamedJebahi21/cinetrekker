@@ -488,13 +488,62 @@ const App = () => {
     maxPull: 150,
   });
 
+  const handleBoundaryRetry = async () => {
+    await queryClient.invalidateQueries({
+      predicate: (query) => {
+        const head = query.queryKey[0];
+        const key = typeof head === "string" ? head : "";
+
+        // Refetch common TMDB-backed queries across pages and widgets.
+        return [
+          "details",
+          "trending",
+          "trending-movies",
+          "trending-tv",
+          "popular",
+          "top-rated",
+          "nowPlaying",
+          "airingToday",
+          "videos",
+          "search",
+          "search-dropdown",
+          "search-overlay",
+          "genres",
+          "genre-media",
+          "watch-providers",
+          "watchProviders",
+          "tv-details",
+          "tv-seasons",
+          "season-details",
+          "home-critical",
+          "location-details",
+          "enriched-filming-locations",
+          "followed-titles-details",
+          "print-watchlist",
+          "recommendations",
+          "continue-watching",
+          "new-episodes",
+        ].includes(key);
+      },
+    });
+
+    await queryClient.refetchQueries({
+      type: "active",
+      predicate: (query) => {
+        const head = query.queryKey[0];
+        const key = typeof head === "string" ? head : "";
+        return key.length > 0;
+      },
+    });
+  };
+
   return (
     <ThemeProvider>
       <TooltipProvider>
         <AuthProvider>
           <ContentPolicyProvider>
             <UserListsProvider>
-              <ErrorBoundary>
+              <ErrorBoundary onRetry={handleBoundaryRetry}>
                 {enableEnhancements && <KeyboardShortcuts />}
                 <Sonner position="bottom-right" />
                 <SEO
@@ -519,7 +568,7 @@ const App = () => {
                     className="flex-1 pb-0 md:pb-10"
                     {...handlers}
                   >
-                    <ErrorBoundary>
+                    <ErrorBoundary onRetry={handleBoundaryRetry}>
                       <AnimatedRoutes />
                     </ErrorBoundary>
                   </main>

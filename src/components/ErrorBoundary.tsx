@@ -1,21 +1,24 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  onRetry?: () => Promise<void> | void;
 }
 
 interface State {
   hasError: boolean;
   error: Error | null;
+  isRetrying: boolean;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
     error: null,
+    isRetrying: false,
   };
 
   public static getDerivedStateFromError(error: Error): State {
@@ -26,12 +29,16 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 
-  private handleRetry = () => {
-    this.setState({ hasError: false, error: null });
-  };
+  private handleRetry = async () => {
+    this.setState({ isRetrying: true });
 
-  private handleGoHome = () => {
-    window.location.href = '/';
+    try {
+      await this.props.onRetry?.();
+    } catch (retryError) {
+      console.error('ErrorBoundary retry failed:', retryError);
+    } finally {
+      this.setState({ hasError: false, error: null, isRetrying: false });
+    }
   };
 
   public render() {
@@ -48,16 +55,12 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
             <h2 className="text-xl font-bold mb-2">Something went wrong</h2>
             <p className="text-muted-foreground text-sm mb-6">
-              We encountered an unexpected error. Please try again or return to the home page.
+              Something went wrong. Retry.
             </p>
             <div className="flex items-center justify-center gap-3">
-              <Button variant="outline" onClick={this.handleGoHome}>
-                <Home className="w-4 h-4 mr-2" />
-                Go Home
-              </Button>
-              <Button onClick={this.handleRetry}>
+              <Button onClick={this.handleRetry} disabled={this.state.isRetrying}>
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Try Again
+                {this.state.isRetrying ? 'Retrying...' : 'Retry'}
               </Button>
             </div>
           </div>
