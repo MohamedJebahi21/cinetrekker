@@ -42,3 +42,4 @@ supabase/functions/.env
 *.njsproj*
 *.sln
 *.sw?
+tsconfig.tsbuildinfo
