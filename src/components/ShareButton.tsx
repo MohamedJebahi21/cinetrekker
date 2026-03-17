@@ -94,7 +94,7 @@ export function ShareButton({ title, url, text, variant = 'ghost', size = 'sm' }
               Share this
             </div>
             
-            {navigator.share && (
+            {typeof navigator.share === 'function' && (
               <>
                 <button
                   onClick={() => { setIsOpen(false); handleShare(); }}

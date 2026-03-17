@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useContentPolicy } from '@/contexts/content-policy-context';
-import { applySafetyFilter } from '@/lib/contentFilter';
+import { applySafetyFilter, type SafetyMedia } from '@/lib/contentFilter';
 import {
   addToSearchHistory,
   clearSearchHistory,
@@ -148,10 +148,10 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
   });
 
   const results: SearchResult[] = applySafetyFilter(
-    (searchResults || []) as SearchResult[],
+    (searchResults || []) as unknown as SafetyMedia[],
     strictFiltering,
     moderateFiltering,
-  );
+  ) as unknown as SearchResult[];
 
   const shouldShowRecentSearches = isOpen && query.trim().length === 0 && recentSearches.length > 0;
 

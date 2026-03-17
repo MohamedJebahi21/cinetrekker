@@ -156,7 +156,7 @@ export function sanitizeJSON(jsonString: string): Record<string, unknown> | null
     const parsed = JSON.parse(jsonString);
 
     // Recursively sanitize string values in the object
-    return sanitizeObjectStrings(parsed);
+    return sanitizeObjectStrings(parsed) as Record<string, unknown> | null;
   } catch {
     return null;
   }
@@ -186,5 +186,5 @@ function sanitizeObjectStrings(
     return sanitized;
   }
 
-  return obj;
+  return obj as string | number | boolean | null;
 }

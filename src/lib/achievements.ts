@@ -79,7 +79,7 @@ export function calculateAchievements(
   // Genre Explorer - watch 10 from same genre
   const genreCount = new Map<number, number>();
   watched.forEach((item) => {
-    const genreIds = (item as Record<string, unknown>).genreIds as
+    const genreIds = (item as unknown as Record<string, unknown>).genreIds as
       | number[]
       | undefined;
     genreIds?.forEach((id: number) => {

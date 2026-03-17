@@ -110,7 +110,7 @@ export const profileService = {
         // Update existing profile
         result = await supabase
           .from("profiles")
-          .update(profileData)
+          .update(profileData as never)
           .eq("user_id", userId)
           .select()
           .single();
@@ -118,7 +118,7 @@ export const profileService = {
         // Create new profile
         result = await supabase
           .from("profiles")
-          .insert([profileData])
+          .insert([profileData] as never)
           .select()
           .single();
       }
