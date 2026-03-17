@@ -62,6 +62,7 @@ import { useContentPolicy } from "@/contexts/content-policy-context";
 import { isMediaAllowedBySafety } from "@/lib/contentFilter";
 import { Image } from "@/components/ui/Image";
 import { FollowUpdatesButton } from "@/components/FollowUpdatesButton";
+import { profileService } from "@/services/profile";
 
 import { normalizePinnedFavoriteKeys } from "@/utils/pinnedFavorites";
 
@@ -193,21 +194,49 @@ export default function Details() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    try {
-      const raw = localStorage.getItem(pinnedFavoritesStorageKey);
-      const parsed = raw ? (JSON.parse(raw) as string[]) : [];
-      const normalized = Array.isArray(parsed)
-        ? normalizePinnedFavoriteKeys(parsed)
-        : [];
-      setPinnedFavoriteKeys(normalized);
-      localStorage.setItem(
-        pinnedFavoritesStorageKey,
-        JSON.stringify(normalized),
-      );
-    } catch {
-      setPinnedFavoriteKeys([]);
-    }
-  }, [pinnedFavoritesStorageKey]);
+    let isMounted = true;
+
+    const loadPinnedFavorites = async () => {
+      try {
+        if (user?.id) {
+          const profile = await profileService.getProfile(user.id);
+          const normalized = normalizePinnedFavoriteKeys(
+            Array.isArray(profile?.favorite_titles)
+              ? profile.favorite_titles
+              : [],
+          );
+          if (!isMounted) return;
+          setPinnedFavoriteKeys(normalized);
+          localStorage.setItem(
+            pinnedFavoritesStorageKey,
+            JSON.stringify(normalized),
+          );
+          return;
+        }
+
+        const raw = localStorage.getItem(pinnedFavoritesStorageKey);
+        const parsed = raw ? (JSON.parse(raw) as string[]) : [];
+        const normalized = Array.isArray(parsed)
+          ? normalizePinnedFavoriteKeys(parsed)
+          : [];
+        if (!isMounted) return;
+        setPinnedFavoriteKeys(normalized);
+        localStorage.setItem(
+          pinnedFavoritesStorageKey,
+          JSON.stringify(normalized),
+        );
+      } catch {
+        if (isMounted) {
+          setPinnedFavoriteKeys([]);
+        }
+      }
+    };
+
+    void loadPinnedFavorites();
+    return () => {
+      isMounted = false;
+    };
+  }, [pinnedFavoritesStorageKey, user?.id]);
 
   const { isEpisodeWatched, markEpisodeWatched, removeEpisodeWatched } =
     useWatchedEpisodes(mediaId);
@@ -544,6 +573,10 @@ export default function Details() {
 
       if (typeof window !== "undefined") {
         localStorage.setItem(pinnedFavoritesStorageKey, JSON.stringify(next));
+      }
+
+      if (user?.id) {
+        void profileService.updateProfile(user.id, { favorite_titles: next });
       }
 
       toast({

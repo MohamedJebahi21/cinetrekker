@@ -58,6 +58,11 @@ function toDateOnly(value) {
   return value.slice(0, 10);
 }
 
+function normalizeStatus(value) {
+  if (typeof value !== "string") return "";
+  return value.trim().toLowerCase();
+}
+
 function getSnapshotFromTmdb(parsed, details) {
   if (parsed.mediaType === "movie") {
     return {
@@ -108,10 +113,11 @@ function createChangeEvents(prev, next, title) {
   }
 
   if (prev?.status && next.status && prev.status !== next.status) {
+    const normalizedStatus = normalizeStatus(next.status);
     events.push({
       type: "status_changed",
       message: `${title} status changed to ${next.status}.`,
-      eventKey: `${next.movie_id}:status:${next.status}`,
+      eventKey: `${next.movie_id}:status:${normalizedStatus}`,
     });
   }
 
@@ -151,22 +157,9 @@ function createChangeEvents(prev, next, title) {
   return events;
 }
 
-async function insertNotificationsForFollowers(supabase, followers, next, events) {
-  if (!Array.isArray(followers) || followers.length === 0 || events.length === 0) {
+async function insertNotifications(supabase, rows) {
+  if (!Array.isArray(rows) || rows.length === 0) {
     return 0;
-  }
-
-  const rows = [];
-  for (const follower of followers) {
-    for (const event of events) {
-      rows.push({
-        user_id: follower.user_id,
-        movie_id: next.movie_id,
-        type: event.type,
-        message: event.message,
-        event_key: event.eventKey,
-      });
-    }
   }
 
   const { error } = await supabase
@@ -225,17 +218,25 @@ export default async function handler(req, res) {
     const movieKeys = Array.from(followersByMovie.keys());
     const parsedKeys = movieKeys.map(parseMovieKey).filter(Boolean);
 
+    const followerUserIds = Array.from(
+      new Set(followRows.map((row) => row.user_id).filter(Boolean)),
+    );
+
     const { data: existingStates, error: stateError } = await supabase
-      .from("followed_title_state")
+      .from("followed_title_state_user")
       .select("*")
+      .in("user_id", followerUserIds)
       .in("movie_id", parsedKeys.map((p) => p.movieKey));
 
     if (stateError) {
       return json(res, 500, { error: "Failed to read title state." });
     }
 
-    const stateByMovieId = new Map(
-      (existingStates || []).map((state) => [state.movie_id, state]),
+    const stateByUserMovieId = new Map(
+      (existingStates || []).map((state) => [
+        `${state.user_id}|${state.movie_id}`,
+        state,
+      ]),
     );
 
     let processedTitles = 0;
@@ -254,21 +255,43 @@ export default async function handler(req, res) {
                 : String(details?.title || `Movie ${parsed.tmdbId}`);
 
             const nextSnapshot = getSnapshotFromTmdb(parsed, details);
-            const prevSnapshot = stateByMovieId.get(parsed.movieKey) || null;
+            const followers = followersByMovie.get(parsed.movieKey) || [];
+            const notificationsToInsert = [];
+            const stateRowsToUpsert = [];
 
-            // First observation only seeds state; notifications start from subsequent runs.
-            const events = prevSnapshot ? createChangeEvents(prevSnapshot, nextSnapshot, title) : [];
+            for (const follower of followers) {
+              const stateKey = `${follower.user_id}|${parsed.movieKey}`;
+              const prevSnapshot = stateByUserMovieId.get(stateKey) || null;
 
-            const inserted = await insertNotificationsForFollowers(
-              supabase,
-              followersByMovie.get(parsed.movieKey) || [],
-              nextSnapshot,
-              events,
-            );
+              // First observation only seeds state; notifications start from subsequent runs.
+              const events = prevSnapshot
+                ? createChangeEvents(prevSnapshot, nextSnapshot, title)
+                : [];
+
+              for (const event of events) {
+                notificationsToInsert.push({
+                  user_id: follower.user_id,
+                  movie_id: nextSnapshot.movie_id,
+                  type: event.type,
+                  message: event.message,
+                  event_key: event.eventKey,
+                });
+              }
+
+              const nextStateForUser = {
+                user_id: follower.user_id,
+                ...nextSnapshot,
+                updated_at: new Date().toISOString(),
+              };
+              stateRowsToUpsert.push(nextStateForUser);
+              stateByUserMovieId.set(stateKey, nextStateForUser);
+            }
+
+            const inserted = await insertNotifications(supabase, notificationsToInsert);
 
             const { error: upsertError } = await supabase
-              .from("followed_title_state")
-              .upsert({ ...nextSnapshot, updated_at: new Date().toISOString() }, { onConflict: "movie_id" });
+              .from("followed_title_state_user")
+              .upsert(stateRowsToUpsert, { onConflict: "user_id,movie_id" });
 
             if (upsertError) {
               throw upsertError;

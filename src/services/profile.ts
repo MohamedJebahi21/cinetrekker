@@ -38,6 +38,7 @@ export interface UserProfile {
   profile_photo: string | null;
   avatar_url: string | null;
   favorite_genres: number[];
+  favorite_titles: string[];
   is_public: boolean;
   show_watchlist: boolean;
   show_stats: boolean;
@@ -177,6 +178,7 @@ export const profileService = {
         profile_photo: null,
         avatar_url: null,
         favorite_genres: [],
+        favorite_titles: [],
         is_public: false,
         show_watchlist: true,
         show_stats: true,

@@ -233,7 +233,8 @@ export function useNotifications() {
       const { error } = await supabase
         .from("notifications")
         .update({ is_read: true })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("user_id", user.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -288,7 +289,8 @@ export function useNotifications() {
       const { error } = await supabase
         .from("notifications")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("user_id", user.id);
       if (error) throw error;
     },
     onSuccess: () => {
