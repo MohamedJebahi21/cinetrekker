@@ -6,6 +6,7 @@ import { getBackdropUrl, getMediaTitle } from '@/services/tmdb';
 import { useUserLists } from '@/contexts/user-lists-context';
 import { HeroSkeleton, MovieCardSkeleton } from '@/components/skeletons';
 import { fetchMoodMatch, type MoodId, type TimeSlot } from '@/components/mood-result.utils';
+import type { Media } from '@/types/media';
 import { cn } from "../lib/utils";
 
 type Props = {
@@ -20,16 +21,17 @@ export default function MoodResult({ mood, time, onTryAnother, className = '' }:
   const language = i18n.language;
   const { addToWatchlist } = useUserLists();
 
-  const { data: match, isLoading, refetch, isFetching } = useQuery(
-    ['mood-match', mood, time, language],
-    () => fetchMoodMatch(mood, time, language),
-    { staleTime: 1000 * 60 * 5, retry: 1 }
-  );
+  const { data: match, isLoading, refetch, isFetching } = useQuery<Media | null>({
+    queryKey: ['mood-match', mood, time, language],
+    queryFn: () => fetchMoodMatch(mood, time, language),
+    staleTime: 1000 * 60 * 5,
+    retry: 1,
+  });
 
   const handleAdd = async () => {
     if (!match) return;
     try {
-      addToWatchlist?.({ mediaId: match.id, mediaType: match.media_type || 'movie' } as { mediaId: number; mediaType: 'movie' | 'tv' });
+      addToWatchlist?.(match.id, match.media_type || 'movie');
     } catch {
       // ignore
     }

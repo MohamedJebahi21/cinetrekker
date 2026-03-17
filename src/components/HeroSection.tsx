@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { Image } from "@/components/ui/Image";
 import { useContentPolicy } from "@/contexts/content-policy-context";
 import { applySafetyFilter } from "@/lib/contentFilter";
+import type { Media } from "@/types/media";
 
 export function HeroSection() {
   const { t, i18n } = useTranslation();
@@ -35,14 +36,14 @@ export function HeroSection() {
 
   useEffect(() => {
     let idleId: number | null = null;
-    let timeoutId: number | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const enable = () => setAllowTrailerFetch(true);
 
     if (typeof window !== "undefined" && "requestIdleCallback" in window) {
       idleId = window.requestIdleCallback(enable, { timeout: 1800 });
     } else {
-      timeoutId = window.setTimeout(enable, 300);
+      timeoutId = setTimeout(enable, 300);
     }
 
     return () => {
@@ -50,7 +51,7 @@ export function HeroSection() {
         window.cancelIdleCallback(idleId);
       }
       if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
+        clearTimeout(timeoutId);
       }
     };
   }, []);
@@ -60,8 +61,8 @@ export function HeroSection() {
     queryFn: () => getTrending("all", "day", language, 1, includeAdult),
   });
 
-  const filteredTrending = applySafetyFilter(
-    trendingDay?.results || [],
+  const filteredTrending = applySafetyFilter<Media>(
+    (trendingDay?.results ?? []) as Media[],
     strictFiltering,
     moderateFiltering,
   );
