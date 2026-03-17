@@ -29,6 +29,16 @@ export default function CommandPalette() {
   const { strictFiltering, moderateFiltering } = useContentPolicy();
   const includeAdult = !(strictFiltering || moderateFiltering);
   const { data: collections = [] } = useCollections();
+  const safeCollections = (Array.isArray(collections) ? (collections as unknown[]) : []).filter((value) => {
+    return (
+      !!value &&
+      typeof value === 'object' &&
+      'id' in value &&
+      'name' in value &&
+      typeof (value as { id?: unknown }).id === 'string' &&
+      typeof (value as { name?: unknown }).name === 'string'
+    );
+  }) as Array<{ id: string; name: string }>;
 
   // Global shortcut
   useEffect(() => {
@@ -71,7 +81,8 @@ export default function CommandPalette() {
   const onSelectMedia = (item: Media) => {
     setOpen(false);
     if (!item) return;
-    const type = item.media_type === 'person' ? 'person' : (item.media_type || (item.title ? 'movie' : 'tv'));
+    const mediaType = (item as { media_type?: string }).media_type;
+    const type = mediaType === 'person' ? 'person' : (mediaType || (item.title ? 'movie' : 'tv'));
     if (type === 'person') navigate(`/person/${item.id}`);
     else navigate(`/${type}/${item.id}`);
   };
@@ -103,8 +114,8 @@ export default function CommandPalette() {
           <CommandSeparator />
 
           <CommandGroup heading="Collections">
-            {collections.length === 0 && <CommandItem disabled> No collections </CommandItem>}
-            {collections.map((c: { name: string; id: string }) => (
+            {safeCollections.length === 0 && <CommandItem disabled> No collections </CommandItem>}
+            {safeCollections.map((c) => (
               <CommandItem key={c.id} onSelect={() => { navigate(`/watchlist?collection=${c.id}`); setOpen(false); }}>
                 {c.name}
               </CommandItem>

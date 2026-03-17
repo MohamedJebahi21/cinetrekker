@@ -47,12 +47,9 @@ export default function Notifications() {
           <EmptyState
             icon={Bell}
             title="No notifications yet"
-            description="Follow movies and series to get notified about new episodes, releases, and more."
-            action={
-              <Link to="/">
-                <Button variant="default">Browse titles</Button>
-              </Link>
-            }
+            description="Follow movies and series to get notified about new episodes, season changes, releases, and more."
+            actionLabel="Browse titles"
+            actionLink="/"
           />
         ) : (
           <ul className="space-y-2">

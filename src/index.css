@@ -39,7 +39,7 @@
 
     --border: 220 13% 91%; /* #E5E7EB */
     --input: 220 13% 91%; /* #E5E7EB */
-    --ring: 350 96% 43% / 0.3; /* rgba(217, 4, 41, 0.3) */
+    --ring: 350 96% 43%;
 
     --radius: 0.75rem;
 
@@ -108,7 +108,7 @@
     --secondary-foreground: 0 0% 90%;
 
     --muted: 0 0% 8%;
-    --muted-foreground: 0 0% 55%;
+    --muted-foreground: 0 0% 72%;
 
     --accent: 358 94% 46%;
     --accent-foreground: 0 0% 100%;
@@ -175,7 +175,7 @@
     --bg-card: #1a1a1a;
     --bg-row: #222222;
     --text-primary: #ffffff;
-    --text-secondary: rgba(255, 255, 255, 0.6);
+    --text-secondary: rgba(255, 255, 255, 0.82);
     --border: 0 0% 22%;
 
     --background: 0 0% 7%;
@@ -195,7 +195,7 @@
     --bg-card: #0a0a0a;
     --bg-row: #111111;
     --text-primary: #ffffff;
-    --text-secondary: rgba(255, 255, 255, 0.55);
+    --text-secondary: rgba(255, 255, 255, 0.82);
     --border: 0 0% 16%;
 
     --background: 0 0% 0%;
@@ -234,6 +234,7 @@
   :focus-visible {
     outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
+    box-shadow: 0 0 0 4px hsl(var(--background));
   }
 
   a:focus-visible,
@@ -244,6 +245,7 @@
   [role="button"]:focus-visible {
     outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
+    box-shadow: 0 0 0 4px hsl(var(--background));
   }
 
   /* Subtle grain texture - 1% opacity with soft-light blend for OLED screens (prevents TV static look) */
@@ -267,22 +269,8 @@
     text-align: right;
   }
 
-  /* Touch targets: minimum 48x48px for accessibility */
-  button,
-  a,
-  [role="button"],
-  input[type="checkbox"],
-  input[type="radio"] {
-    min-height: 48px;
-    min-width: 48px;
-  }
-
-  /* Exception for inline links */
-  p a,
-  span a,
-  .inline-link {
-    min-height: auto;
-    min-width: auto;
+  body {
+    overflow-x: hidden;
   }
 }
 

@@ -1,10 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import Play from 'lucide-react/dist/esm/icons/play';
-import Pause from 'lucide-react/dist/esm/icons/pause';
-import RotateCcw from 'lucide-react/dist/esm/icons/rotate-ccw';
-import Clock from 'lucide-react/dist/esm/icons/clock';
+import { Clock, Pause, Play, RotateCcw } from 'lucide-react';
 
 export function BingeTimer() {
   const [seconds, setSeconds] = useState(0);

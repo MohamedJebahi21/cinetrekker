@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Star, ChevronRight, Check, BookmarkCheck } from "lucide-react";
+import { Star, ChevronRight, Check, BookmarkCheck, Loader2 } from "lucide-react";
 import Plus from "lucide-react/dist/esm/icons/plus";
 import { Media, type UserMediaItem } from "@/types/media";
 import {
@@ -138,6 +138,8 @@ export const MediaCard = React.memo(function MediaCard({
   );
   const [optimisticInWatchlist, setOptimisticInWatchlist] = useState(false);
   const [optimisticWatched, setOptimisticWatched] = useState(false);
+  const [isWatchlistPending, setIsWatchlistPending] = useState(false);
+  const [isWatchedPending, setIsWatchedPending] = useState(false);
   const [watchStatusModalOpen, setWatchStatusModalOpen] = useState(false);
 
   const title = useMemo(() => getMediaTitle(media), [media]);
@@ -179,6 +181,7 @@ export const MediaCard = React.memo(function MediaCard({
     if (user) {
       const nextState = !optimisticInWatchlist;
       setOptimisticInWatchlist(nextState);
+      setIsWatchlistPending(true);
       try {
         if (nextState) {
           await addToWatchlist(media.id, mediaType);
@@ -193,6 +196,8 @@ export const MediaCard = React.memo(function MediaCard({
         }
       } catch {
         setOptimisticInWatchlist(!nextState);
+      } finally {
+        setIsWatchlistPending(false);
       }
     } else {
       const newState = toggleLocalWatchlist(media.id);
@@ -214,10 +219,13 @@ export const MediaCard = React.memo(function MediaCard({
     e.stopPropagation();
     if (optimisticWatched) {
       setOptimisticWatched(false);
+      setIsWatchedPending(true);
       try {
         await removeFromWatched(media.id, mediaType);
       } catch {
         setOptimisticWatched(true);
+      } finally {
+        setIsWatchedPending(false);
       }
     } else {
       // For TV shows, open modal to choose watch type
@@ -226,10 +234,13 @@ export const MediaCard = React.memo(function MediaCard({
       } else {
         // For movies or guests, just mark as watched
         setOptimisticWatched(true);
+        setIsWatchedPending(true);
         try {
           await addToWatched(media.id, mediaType);
         } catch {
           setOptimisticWatched(false);
+        } finally {
+          setIsWatchedPending(false);
         }
       }
     }
@@ -344,7 +355,7 @@ export const MediaCard = React.memo(function MediaCard({
                       }
                     }}
                     className={cn(
-                      "w-8 h-8 min-w-[48px] min-h-[48px] rounded-full flex items-center justify-center transform transition-all duration-200 ease-in-out cursor-pointer",
+                      "w-8 h-8 min-w-[48px] min-h-[48px] rounded-full flex items-center justify-center transform transition-all duration-200 ease-in-out cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                       optimisticInWatchlist
                         ? "bg-primary text-primary-foreground hover:scale-110"
                         : "bg-background/80 backdrop-blur-md text-foreground hover:bg-[#E50914] hover:text-white hover:scale-110",
@@ -355,7 +366,9 @@ export const MediaCard = React.memo(function MediaCard({
                         : t("actions.addToWatchlist")
                     }
                   >
-                    {optimisticInWatchlist ? (
+                    {isWatchlistPending ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : optimisticInWatchlist ? (
                       <BookmarkCheck className="w-3.5 h-3.5" />
                     ) : (
                       <Plus className="w-3.5 h-3.5" />
@@ -386,7 +399,7 @@ export const MediaCard = React.memo(function MediaCard({
                       }
                     }}
                     className={cn(
-                      "w-8 h-8 min-w-[48px] min-h-[48px] rounded-full flex items-center justify-center transform transition-all duration-200 ease-in-out cursor-pointer",
+                      "w-8 h-8 min-w-[48px] min-h-[48px] rounded-full flex items-center justify-center transform transition-all duration-200 ease-in-out cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                       optimisticWatched
                         ? "bg-success text-success-foreground hover:scale-110"
                         : "bg-background/80 backdrop-blur-md text-foreground hover:bg-success hover:text-success-foreground hover:scale-110",
@@ -397,7 +410,11 @@ export const MediaCard = React.memo(function MediaCard({
                         : t("actions.markAsWatched")
                     }
                   >
-                    <Check className="w-3.5 h-3.5" />
+                    {isWatchedPending ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Check className="w-3.5 h-3.5" />
+                    )}
                   </div>
                 </TooltipTrigger>
                 <TooltipContent
@@ -460,25 +477,33 @@ export const MediaCardSkeleton = React.forwardRef<
       aria-live="polite"
       role="status"
     >
-      {/* Poster placeholder with aspect ratio */}
-      <div className="poster-skeleton" />
+      <div className="relative aspect-[2/3] overflow-hidden rounded-t-xl bg-muted/60">
+        <div className="poster-skeleton h-full w-full rounded-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
 
-      {/* Content area */}
-      <div className="p-3 space-y-2">
-        {/* Title placeholder */}
-        <div className="h-4 skeleton-shimmer rounded" />
+        <div className="absolute left-2 right-2 top-2 flex items-start justify-between gap-2">
+          <div className="h-5 w-14 rounded-md skeleton-shimmer bg-background/70" />
+          <div className="h-5 w-8 rounded-md skeleton-shimmer bg-background/70" />
+        </div>
 
-        {/* Metadata placeholder */}
-        <div className="h-3 skeleton-shimmer rounded w-1/2" />
+        <div className="absolute bottom-2 left-2 h-6 w-12 rounded-md skeleton-shimmer bg-black/60" />
+      </div>
 
-        {/* Tags/badges placeholder */}
-        <div className="flex gap-2 mt-2">
-          <div className="h-6 w-12 skeleton-shimmer rounded-full" />
-          <div className="h-6 w-16 skeleton-shimmer rounded-full" />
+      <div className="flex min-h-[6.25rem] flex-col p-3">
+        <div className="space-y-2">
+          <div className="h-4 w-[88%] rounded-md skeleton-shimmer" />
+          <div className="h-4 w-[64%] rounded-md skeleton-shimmer" />
+        </div>
+
+        <div className="mt-auto flex items-center justify-between gap-3 pt-3">
+          <div className="h-3 w-12 rounded-md skeleton-shimmer" />
+          <div className="flex gap-2">
+            <div className="h-6 w-6 rounded-full skeleton-shimmer" />
+            <div className="h-6 w-6 rounded-full skeleton-shimmer" />
+          </div>
         </div>
       </div>
 
-      {/* Screen reader announcement */}
       <span className="sr-only">Loading media content...</span>
     </div>
   );

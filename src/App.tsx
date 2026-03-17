@@ -1,9 +1,10 @@
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
-import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
+import { Routes, Route, useNavigate, Navigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { AuthProvider } from "@/contexts/auth-context";
 import { UserListsProvider } from "@/contexts/user-lists-context";
 import { ThemeProvider } from "@/contexts/theme-context";
@@ -24,6 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { FollowNotificationMonitor } from "@/components/FollowNotificationMonitor";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import SEO from "@/components/SEO";
@@ -99,9 +101,18 @@ function RouteSpinner() {
 }
 
 function AnimatedRoutes() {
+  const location = useLocation();
+
   return (
-    <div className="animate-fade-in">
-      <Routes>
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={location.pathname}
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.22, ease: "easeOut" }}
+      >
+      <Routes location={location}>
         <Route
           path="/"
           element={
@@ -282,21 +293,17 @@ function AnimatedRoutes() {
         <Route
           path="/following"
           element={
-            <ProtectedRoute>
-              <Suspense fallback={<RouteSpinner />}>
-                <Following />
-              </Suspense>
-            </ProtectedRoute>
+            <Suspense fallback={<RouteSpinner />}>
+              <Following />
+            </Suspense>
           }
         />
         <Route
           path="/notifications"
           element={
-            <ProtectedRoute>
-              <Suspense fallback={<RouteSpinner />}>
-                <Notifications />
-              </Suspense>
-            </ProtectedRoute>
+            <Suspense fallback={<RouteSpinner />}>
+              <Notifications />
+            </Suspense>
           }
         />
         <Route
@@ -413,7 +420,8 @@ function AnimatedRoutes() {
           }
         />
       </Routes>
-    </div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
@@ -452,14 +460,14 @@ const App = () => {
 
   useEffect(() => {
     let idleId: number | null = null;
-    let timeoutId: number | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const enable = () => setEnableEnhancements(true);
 
     if (typeof window !== "undefined" && "requestIdleCallback" in window) {
       idleId = window.requestIdleCallback(enable, { timeout: 1500 });
     } else {
-      timeoutId = window.setTimeout(enable, 200);
+      timeoutId = globalThis.setTimeout(enable, 200);
     }
 
     return () => {
@@ -467,7 +475,7 @@ const App = () => {
         window.cancelIdleCallback(idleId);
       }
       if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
+        globalThis.clearTimeout(timeoutId);
       }
     };
   }, []);
@@ -500,6 +508,7 @@ const App = () => {
                 />
                 {enableEnhancements && <GlobalLoader />}
                 {enableEnhancements && <NetworkMonitor />}
+                <FollowNotificationMonitor />
                 <div className="flex min-h-[100dvh] flex-col">
                   <UnifiedNav />
                   <ScrollToTop />
@@ -523,7 +532,7 @@ const App = () => {
                     <DialogHeader>
                       <DialogTitle>Sign in required</DialogTitle>
                       <DialogDescription className="text-muted-foreground">
-                        Please sign in to add titles to your watchlist.
+                        Sign in to sync your guest watchlist and watched history across devices.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="mt-4 flex justify-end gap-2">

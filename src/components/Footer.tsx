@@ -37,19 +37,19 @@ export function Footer() {
             <nav className="flex flex-col gap-3" aria-label="Explore links">
               <Link
                 to="/search?sort=popularity.desc"
-                className="break-words text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.trending", "Trending")}
               </Link>
               <Link
                 to="/search?sort=primary_release_date.desc"
-                className="break-words text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.upcoming", "Upcoming")}
               </Link>
               <Link
                 to="/search?sort=vote_average.desc"
-                className="break-words text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.topRated", "Top Rated")}
               </Link>
@@ -71,19 +71,19 @@ export function Footer() {
                 href="https://buymeacoffee.com/mohamed_jebahi"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="break-words text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.buyMeACoffee", "Buy Me a Coffee")}
               </a>
               <Link
                 to="/about"
-                className="break-words text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.about", "About")}
               </Link>
               <Link
                 to="/feedback"
-                className="break-words text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.feedback", "Feedback")}
               </Link>
@@ -91,7 +91,7 @@ export function Footer() {
                 href="https://developer.themoviedb.org/docs"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="break-words text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.tmdbApi", "TMDB API")}
               </a>
@@ -111,19 +111,19 @@ export function Footer() {
             <nav className="flex flex-col gap-3" aria-label="Legal links">
               <Link
                 to="/privacy"
-                className="break-words text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("nav.privacy", "Privacy Policy")}
               </Link>
               <Link
                 to="/terms"
-                className="break-words text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.terms", "Terms of Service")}
               </Link>
               <Link
                 to="/cookies"
-                className="break-words text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.cookies", "Cookie Policy")}
               </Link>

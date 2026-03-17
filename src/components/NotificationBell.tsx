@@ -1,29 +1,26 @@
 import { Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useNotifications } from '@/hooks/useNotifications';
-import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Separator,
+} from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 
 export function NotificationBell() {
-  const { user } = useAuth();
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
-
-  if (!user) return null;
 
   const recent = notifications.slice(0, 5);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <Popover>
+      <PopoverTrigger asChild>
         <Button
           variant="ghost"
           size="icon"
@@ -37,21 +34,23 @@ export function NotificationBell() {
             </span>
           )}
         </Button>
-      </DropdownMenuTrigger>
+      </PopoverTrigger>
 
-      <DropdownMenuContent align="end" className="w-80">
+      <PopoverContent align="end" className="w-80 p-0">
         <div className="flex items-center justify-between px-3 py-2">
           <span className="text-sm font-semibold">Notifications</span>
           {unreadCount > 0 && (
             <button
+              type="button"
               onClick={() => markAllRead()}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Mark all notifications as read"
+              className="rounded-sm px-1 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               Mark all read
             </button>
           )}
         </div>
-        <DropdownMenuSeparator />
+        <Separator />
 
         {recent.length === 0 ? (
           <div className="px-3 py-6 text-center text-sm text-muted-foreground">
@@ -59,10 +58,12 @@ export function NotificationBell() {
           </div>
         ) : (
           recent.map((n) => (
-            <DropdownMenuItem
+            <button
               key={n.id}
+              type="button"
+              aria-label={n.is_read ? `Notification: ${n.message}` : `Unread notification: ${n.message}`}
               className={cn(
-                'flex items-start gap-2 px-3 py-2 cursor-pointer',
+                'flex w-full items-start gap-2 px-3 py-2 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset',
                 !n.is_read && 'bg-primary/5',
               )}
               onClick={() => !n.is_read && markRead(n.id)}
@@ -80,24 +81,24 @@ export function NotificationBell() {
                   {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
                 </span>
               </span>
-            </DropdownMenuItem>
+            </button>
           ))
         )}
 
         {notifications.length > 0 && (
           <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
+            <Separator />
+            <div className="p-1">
               <Link
                 to="/notifications"
-                className="w-full text-center text-xs text-primary py-2 justify-center"
+                className="flex w-full justify-center rounded-sm py-2 text-xs text-primary transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 View all notifications
               </Link>
-            </DropdownMenuItem>
+            </div>
           </>
         )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </PopoverContent>
+    </Popover>
   );
 }

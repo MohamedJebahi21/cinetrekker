@@ -12,9 +12,8 @@ import {
   Pin,
   MessageSquare,
   ChevronLeft,
-  Heart,
-  HeartOff,
   PlayCircle,
+  Loader2,
 } from "lucide-react";
 import {
   getMovieDetails,
@@ -28,7 +27,7 @@ import { Media, Cast, Provider } from "@/types/media";
 import { getProviderUrlFromData } from "@/lib/providerMap";
 import { getProviderWatchUrl } from "@/lib/providerLinks";
 import { useUserLists } from "@/contexts/user-lists-context";
-import { useFollowedShows, useWatchedEpisodes } from "@/hooks/useFollowedShows";
+import { useWatchedEpisodes } from "@/hooks/useFollowedShows";
 import { useAuth } from "@/contexts/auth-context";
 import { useLastViewed } from "@/hooks/useLastViewed";
 import { addToRecentlyViewed } from "@/lib/recentlyViewed";
@@ -163,6 +162,8 @@ export default function Details() {
   useEffect(() => setOptimisticInWatchlist(inWatchlist), [inWatchlist]);
   const [optimisticWatched, setOptimisticWatched] = useState<boolean>(watched);
   useEffect(() => setOptimisticWatched(watched), [watched]);
+  const [isWatchlistPending, setIsWatchlistPending] = useState(false);
+  const [isWatchedPending, setIsWatchedPending] = useState(false);
 
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [tempRating, setTempRating] = useState<number>(
@@ -212,7 +213,6 @@ export default function Details() {
     }
   }, [pinnedFavoritesStorageKey]);
 
-  const { isFollowing, followShow, unfollowShow } = useFollowedShows();
   const { isEpisodeWatched, markEpisodeWatched, removeEpisodeWatched } =
     useWatchedEpisodes(mediaId);
   const { saveLastViewed } = useLastViewed();
@@ -287,22 +287,57 @@ export default function Details() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pt-16">
-        <div className="page-container grid grid-cols-1 md:grid-cols-3 gap-8 items-start pb-24 md:pb-0">
-          <div className="md:col-span-1">
-            <div className="poster-skeleton" />
-          </div>
-          <div className="md:col-span-2 space-y-4">
-            <div className="h-8 w-3/4 skeleton-shimmer rounded" />
-            <div className="h-4 w-1/2 skeleton-shimmer rounded" />
-            <div className="grid grid-cols-2 gap-4">
-              <div className="h-6 skeleton-shimmer rounded" />
-              <div className="h-6 skeleton-shimmer rounded" />
+      <div className="min-h-screen">
+        <div className="relative h-[50vh] overflow-hidden -mt-16 md:h-[70vh]">
+          <div className="backdrop-skeleton h-full w-full" />
+          <div className="backdrop-fade absolute inset-0" />
+          <div className="absolute left-4 top-20 z-10 h-10 w-28 rounded-lg skeleton-shimmer bg-background/60" />
+        </div>
+
+        <div className="page-container relative z-10 -mt-32 pb-24 md:-mt-48 md:pb-0">
+          <div className="flex flex-col gap-8 md:flex-row">
+            <div className="mx-auto w-48 flex-shrink-0 md:mx-0 md:w-64">
+              <div className="poster-skeleton rounded-xl shadow-2xl" />
             </div>
-            <div className="space-y-2">
-              <div className="h-4 skeleton-shimmer rounded" />
-              <div className="h-4 skeleton-shimmer rounded w-5/6" />
-              <div className="h-4 skeleton-shimmer rounded w-2/3" />
+
+            <div className="flex-1 space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-6 w-20 rounded-full skeleton-shimmer" />
+                  <div className="h-5 w-12 rounded-md skeleton-shimmer" />
+                </div>
+
+                <div className="space-y-3">
+                  <div className="h-10 w-full max-w-xl rounded-xl skeleton-shimmer" />
+                  <div className="h-10 w-2/3 rounded-xl skeleton-shimmer" />
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  <div className="h-8 w-20 rounded-full skeleton-shimmer" />
+                  <div className="h-8 w-28 rounded-full skeleton-shimmer" />
+                  <div className="h-8 w-36 rounded-full skeleton-shimmer" />
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <div className="h-7 w-20 rounded-full skeleton-shimmer" />
+                  <div className="h-7 w-24 rounded-full skeleton-shimmer" />
+                  <div className="h-7 w-28 rounded-full skeleton-shimmer" />
+                </div>
+
+                <div className="flex flex-wrap gap-3 pt-2">
+                  <div className="h-10 w-40 rounded-lg skeleton-shimmer" />
+                  <div className="h-10 w-36 rounded-lg skeleton-shimmer" />
+                  <div className="h-10 w-36 rounded-lg skeleton-shimmer" />
+                </div>
+              </div>
+
+              <div className="space-y-3 rounded-2xl border border-border/40 bg-card/35 p-5 backdrop-blur-sm">
+                <div className="h-5 w-28 rounded-md skeleton-shimmer" />
+                <div className="h-4 w-full rounded-md skeleton-shimmer" />
+                <div className="h-4 w-[92%] rounded-md skeleton-shimmer" />
+                <div className="h-4 w-[84%] rounded-md skeleton-shimmer" />
+                <div className="h-4 w-[62%] rounded-md skeleton-shimmer" />
+              </div>
             </div>
           </div>
         </div>
@@ -383,8 +418,6 @@ export default function Details() {
   const ratingClass =
     rating >= 7 ? "rating-high" : rating >= 5 ? "rating-medium" : "rating-low";
 
-  const following = user ? isFollowing(mediaId) : false;
-
   const handleAddToWatchlist = async () => {
     if (!user) {
       window.dispatchEvent(new CustomEvent("cinetrekker:auth-required"));
@@ -393,6 +426,7 @@ export default function Details() {
 
     const nextState = !optimisticInWatchlist;
     setOptimisticInWatchlist(nextState);
+    setIsWatchlistPending(true);
     try {
       if (nextState) {
         await addToWatchlist(mediaId, mediaType);
@@ -401,16 +435,21 @@ export default function Details() {
       }
     } catch {
       setOptimisticInWatchlist(!nextState);
+    } finally {
+      setIsWatchlistPending(false);
     }
   };
 
   const handleMarkAsWatched = async () => {
     if (optimisticWatched) {
       setOptimisticWatched(false);
+      setIsWatchedPending(true);
       try {
         await removeFromWatched(mediaId, mediaType);
       } catch {
         setOptimisticWatched(true);
+      } finally {
+        setIsWatchedPending(false);
       }
     } else {
       setTempRating(watchedItem?.rating || 5);
@@ -420,6 +459,7 @@ export default function Details() {
         setStatusDialogOpen(true);
       } else {
         setOptimisticWatched(true);
+        setIsWatchedPending(true);
         const nextRating = watchedItem?.rating || 5;
         const nextNote = watchedItem?.note || "";
         const nextStatus = watchedItem?.status || "completed";
@@ -433,6 +473,8 @@ export default function Details() {
           );
         } catch {
           setOptimisticWatched(false);
+        } finally {
+          setIsWatchedPending(false);
         }
       }
     }
@@ -460,19 +502,6 @@ export default function Details() {
       addToWatched(mediaId, mediaType, rating, note, status);
     }
     setStatusDialogOpen(false);
-  };
-
-  const handleFollowShow = () => {
-    if (!user) return;
-    if (following) {
-      unfollowShow(mediaId);
-    } else {
-      followShow({
-        showId: mediaId,
-        showName: title,
-        posterPath: details.poster_path,
-      });
-    }
   };
 
   const handleEpisodeToggle = (
@@ -882,13 +911,22 @@ export default function Details() {
                 variant={optimisticInWatchlist ? "secondary" : "default"}
                 className="gap-2"
                 onClick={handleAddToWatchlist}
+                disabled={isWatchlistPending}
+                aria-busy={isWatchlistPending}
                 aria-label={
                   optimisticInWatchlist
                     ? t("actions.removeFromWatchlist")
                     : t("actions.addToWatchlist")
                 }
               >
-                {optimisticInWatchlist ? (
+                {isWatchlistPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {optimisticInWatchlist
+                      ? t("actions.inWatchlist")
+                      : t("actions.addToWatchlist")}
+                  </>
+                ) : optimisticInWatchlist ? (
                   <>
                     <Bookmark className="w-4 h-4 fill-current" />
                     {t("actions.inWatchlist")}
@@ -902,16 +940,25 @@ export default function Details() {
               </Button>
 
               <Button
-                variant={watched ? "secondary" : "outline"}
+                variant={optimisticWatched ? "secondary" : "outline"}
                 className="gap-2"
                 onClick={handleMarkAsWatched}
+                disabled={isWatchedPending}
+                aria-busy={isWatchedPending}
                 aria-label={
                   optimisticWatched
                     ? t("actions.updateWatched")
                     : t("actions.markAsWatched")
                 }
               >
-                {optimisticWatched ? (
+                {isWatchedPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {optimisticWatched
+                      ? t("actions.watched")
+                      : t("actions.markAsWatched")}
+                  </>
+                ) : optimisticWatched ? (
                   <>
                     <Check className="w-4 h-4" />
                     {t("actions.watched")}
@@ -924,34 +971,13 @@ export default function Details() {
                 )}
               </Button>
 
-              {mediaType === "tv" && user && (
-                <Button
-                  variant={following ? "secondary" : "outline"}
-                  className="gap-2"
-                  onClick={handleFollowShow}
-                  aria-label={
-                    following
-                      ? t("details.unfollowShow")
-                      : t("details.followShow")
-                  }
-                >
-                  {following ? (
-                    <>
-                      <HeartOff className="w-4 h-4" />
-                      {t("details.unfollowShow")}
-                    </>
-                  ) : (
-                    <>
-                      <Heart className="w-4 h-4" />
-                      {t("details.followShow")}
-                    </>
-                  )}
-                </Button>
-              )}
-
-              {mediaType === "movie" && user && (
-                <FollowUpdatesButton mediaId={mediaId} mediaType={mediaType} />
-              )}
+              <FollowUpdatesButton
+                mediaId={mediaId}
+                mediaType={mediaType}
+                title={title}
+                posterPath={details.poster_path}
+                details={details}
+              />
 
               {mediaType === "tv" && seasons.length > 0 && user && (
                 <Dialog

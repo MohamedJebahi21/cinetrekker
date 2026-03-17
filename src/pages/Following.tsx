@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Heart } from 'lucide-react';
-import { useFollowedShows } from '@/hooks/useFollowedShows';
-import { getTVDetails, getImageUrl, getMediaTitle } from '@/services/tmdb';
+import { useTitleFollows } from '@/hooks/useTitleFollows';
+import { getMovieDetails, getTVDetails, getImageUrl, getMediaTitle } from '@/services/tmdb';
 import { Media } from '@/types/media';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -11,31 +11,33 @@ import { EmptyState } from '@/components/EmptyState';
 
 export default function Following() {
   const { t, i18n } = useTranslation();
-  const { followedShows } = useFollowedShows();
+  const { followedTitles } = useTitleFollows();
   const language = i18n.language;
 
-  // Fetch details for all followed shows
   const { data: showDetails, isLoading } = useQuery({
-    queryKey: ['followed-shows-details', followedShows.map(s => s.show_id), language],
+    queryKey: ['followed-titles-details', followedTitles.map((item) => item.id), language],
     queryFn: async () => {
       const results = await Promise.all(
-        followedShows.map(async (show) => {
+        followedTitles.map(async (followedTitle) => {
           try {
-            const details = await getTVDetails(show.show_id, language);
+            const details =
+              followedTitle.mediaType === 'movie'
+                ? await getMovieDetails(followedTitle.mediaId, language)
+                : await getTVDetails(followedTitle.mediaId, language);
             return { 
               ...details, 
-              media_type: 'tv',
-              followedAt: show.followed_at,
+              media_type: followedTitle.mediaType,
+              followedAt: followedTitle.followedAt,
             } as Media & { followedAt?: string };
           } catch (error) {
-            console.error(`Failed to fetch details for show ${show.show_id}:`, error);
+            console.error(`Failed to fetch details for title ${followedTitle.id}:`, error);
             return null;
           }
         })
       );
       return results.filter(Boolean);
     },
-    enabled: followedShows.length > 0,
+    enabled: followedTitles.length > 0,
   });
 
   const containerVariants = {
@@ -69,7 +71,7 @@ export default function Following() {
             {t('nav.following', 'Following')}
           </h1>
           <p className="text-muted-foreground mt-2">
-            {followedShows.length} show{followedShows.length !== 1 ? 's' : ''} {t('following.followedShows', 'you\'re tracking')}
+            {followedTitles.length} title{followedTitles.length !== 1 ? 's' : ''} {t('following.followedShows', 'you\'re tracking')}
           </p>
         </div>
 
@@ -107,7 +109,7 @@ export default function Following() {
                   whileHover={{ scale: 1.02 }}
                 >
                   <Link
-                    to={`/tv/${show.id}`}
+                    to={`/${show.media_type}/${show.id}`}
                     className="group relative block overflow-hidden rounded-lg transition-all duration-300"
                   >
                     {posterUrl ? (
@@ -137,11 +139,11 @@ export default function Following() {
         ) : (
           <EmptyState
             icon={Heart}
-            title={t('following.empty', 'No shows being followed')}
-            description={t('following.emptyDesc', 'Start following shows to track new episodes and get updates')}
+            title={t('following.empty', 'No titles being followed')}
+            description={t('following.emptyDesc', 'Start following movies or series to track updates')}
             action={{
-              label: t('following.discoverShows', 'Discover Shows'),
-              href: '/search?type=tv',
+              label: t('following.discoverShows', 'Discover Titles'),
+              href: '/search',
             }}
           />
         )}

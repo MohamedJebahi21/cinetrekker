@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Search, X, Film, Tv, User, ArrowRight } from 'lucide-react';
+import { Search, X, Film, Tv, User, ArrowRight, Clock3, Trash2 } from 'lucide-react';
 import { searchMovies, searchPeople, getImageUrl } from '@/services/tmdb';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,13 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useContentPolicy } from '@/contexts/content-policy-context';
 import { applySafetyFilter } from '@/lib/contentFilter';
+import {
+  addToSearchHistory,
+  clearSearchHistory,
+  getSearchHistory,
+  removeFromSearchHistory,
+  type SearchHistoryItem,
+} from '@/lib/searchHistory';
 
 // Skeleton for dropdown search results
 function SearchResultSkeleton() {
@@ -53,9 +60,14 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
   const debouncedQuery = useDebounce(query, 250); // Faster debounce for instant suggestions
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [recentSearches, setRecentSearches] = useState<SearchHistoryItem[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const language = i18n.language;
+
+  const refreshRecentSearches = useCallback(() => {
+    setRecentSearches(getSearchHistory().slice(0, 6));
+  }, []);
 
   // Keyboard shortcut: "/" to focus search
   useEffect(() => {
@@ -72,6 +84,10 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    refreshRecentSearches();
+  }, [refreshRecentSearches]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -137,6 +153,19 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
     moderateFiltering,
   );
 
+  const shouldShowRecentSearches = isOpen && query.trim().length === 0 && recentSearches.length > 0;
+
+  const submitSearch = useCallback((nextQuery: string) => {
+    const normalizedQuery = nextQuery.trim();
+    if (!normalizedQuery) return;
+
+    addToSearchHistory(normalizedQuery);
+    refreshRecentSearches();
+    navigate(`/search?q=${encodeURIComponent(normalizedQuery)}`);
+    setIsOpen(false);
+    onNavigate?.();
+  }, [navigate, onNavigate, refreshRecentSearches]);
+
   const getItemRoute = (item: SearchResult): string => {
     if (item.media_type === 'person') return `/person/${item.id}`;
     return `/${item.media_type}/${item.id}`;
@@ -157,18 +186,18 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
       case 'Enter':
         e.preventDefault();
         if (selectedIndex >= 0 && results[selectedIndex]) {
+          addToSearchHistory(query.trim());
+          refreshRecentSearches();
           navigate(getItemRoute(results[selectedIndex]));
           setIsOpen(false);
           setQuery('');
           onNavigate?.();
         } else if (query.trim()) {
-          navigate(`/search?q=${encodeURIComponent(query.trim())}`);
-          setIsOpen(false);
-          onNavigate?.();
+          submitSearch(query);
         }
         break;
     }
-  }, [isOpen, results, selectedIndex, query, navigate, onNavigate]);
+  }, [isOpen, results, selectedIndex, query, navigate, onNavigate, refreshRecentSearches, submitSearch]);
 
   const clearSearch = () => {
     setQuery('');
@@ -177,10 +206,32 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
   };
 
   const handleItemClick = (item: SearchResult) => {
+    addToSearchHistory(query.trim());
+    refreshRecentSearches();
     navigate(getItemRoute(item));
     setIsOpen(false);
     setQuery('');
     onNavigate?.();
+  };
+
+  const handleRecentSearchClick = (recentQuery: string) => {
+    setQuery(recentQuery);
+    submitSearch(recentQuery);
+  };
+
+  const handleRemoveRecentSearch = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    recentQuery: string,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    removeFromSearchHistory(recentQuery);
+    refreshRecentSearches();
+  };
+
+  const handleClearRecentSearches = () => {
+    clearSearchHistory();
+    refreshRecentSearches();
   };
 
   const getItemIcon = (item: SearchResult) => {
@@ -226,13 +277,17 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
-            setIsOpen(e.target.value.trim().length >= 1);
+            setIsOpen(true);
             setSelectedIndex(-1);
           }}
-          onFocus={() => query.trim().length >= 1 && setIsOpen(true)}
+          onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
           className="pl-9 pr-16 h-10 bg-card/50 border-white/10 rounded-lg focus:border-primary focus:ring-primary/20 transition-all"
           aria-label={t('search.placeholder')}
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={isOpen}
+          aria-controls="search-dropdown-results"
         />
         
         {/* Keyboard hint */}
@@ -245,8 +300,9 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
         {/* Clear button */}
         {query && (
           <button
+            type="button"
             onClick={clearSearch}
-            className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors min-w-[44px] min-h-[44px]"
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors min-w-[44px] min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             aria-label="Clear search"
           >
             <X className="w-3 h-3" />
@@ -255,12 +311,60 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
       </div>
 
       {/* Dropdown Results */}
-      {isOpen && debouncedQuery.trim().length >= 1 && (
+      {isOpen && (debouncedQuery.trim().length >= 1 || shouldShowRecentSearches) && (
         <div
           id="search-dropdown-results"
           className="absolute top-full left-0 right-0 mt-2 bg-popover/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl overflow-y-auto max-h-screen z-50 animate-fade-in"
         >
-          {isLoading || (isFetching && query !== debouncedQuery) ? (
+          {shouldShowRecentSearches ? (
+            <div className="py-2">
+              <div className="flex items-center justify-between px-4 pb-2 pt-1">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  Recent searches
+                </p>
+                <button
+                  type="button"
+                  onClick={handleClearRecentSearches}
+                  aria-label="Clear recent searches"
+                  className="rounded-sm px-1 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                >
+                  Clear
+                </button>
+              </div>
+              <ul>
+                {recentSearches.map((item) => (
+                  <li key={item.timestamp}>
+                    <div className="flex items-center gap-3 px-4 py-1 transition-colors hover:bg-accent/50">
+                      <button
+                        type="button"
+                        onClick={() => handleRecentSearchClick(item.query)}
+                        aria-label={`Search again for ${item.query}`}
+                        className="flex min-h-[44px] flex-1 items-center gap-3 rounded-md py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                      >
+                        <Clock3 className="h-4 w-4 text-muted-foreground" />
+                        <span className="flex-1 truncate text-sm font-medium text-foreground">
+                          {item.query}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(item.timestamp).toLocaleDateString()}
+                        </span>
+                      </button>
+                      <div className="flex min-h-[44px] min-w-[44px] items-center justify-center">
+                        <button
+                          type="button"
+                          onClick={(event) => handleRemoveRecentSearch(event, item.query)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                          aria-label={`Remove ${item.query} from recent searches`}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : isLoading || (isFetching && query !== debouncedQuery) ? (
             <div className="py-2">
               {Array.from({ length: 3 }).map((_, i) => (
                 <SearchResultSkeleton key={i} />
@@ -272,9 +376,11 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                 {results.map((item, index) => (
                   <li key={`${item.media_type}-${item.id}`}>
                     <button
+                      type="button"
                       onClick={() => handleItemClick(item)}
+                      aria-label={`Open ${getItemTitle(item)} ${getItemTypeLabel(item)} details`}
                       className={cn(
-                        "w-full flex items-center gap-3 px-4 py-2 text-left transition-colors",
+                        "w-full flex items-center gap-3 px-4 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
                         selectedIndex === index ? "bg-accent" : "hover:bg-accent/50"
                       )}
                     >
@@ -323,10 +429,9 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
               <Link
                 to={`/search?q=${encodeURIComponent(query)}`}
                 onClick={() => {
-                  setIsOpen(false);
-                  onNavigate?.();
+                  submitSearch(query);
                 }}
-                className="flex items-center justify-between px-4 py-3 border-t border-border/50 text-sm text-primary hover:bg-accent/30 transition-colors"
+                className="flex items-center justify-between px-4 py-3 border-t border-border/50 text-sm text-primary hover:bg-accent/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
               >
                 <span>{t('common.seeAll')} results for "{query}"</span>
                 <ArrowRight className="w-4 h-4" />

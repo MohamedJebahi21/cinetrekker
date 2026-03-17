@@ -1,4 +1,5 @@
 import React, { useState, useEffect, ReactNode, useCallback } from "react";
+import { useQueryClient } from '@tanstack/react-query';
 import { UserMediaItem, HiddenRecommendation } from "@/types/media";
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,10 +22,19 @@ import {
   useRemoveFromWatched as useRemoveFromWatchedMutation,
   useUpdateWatched as useUpdateWatchedMutation,
 } from "@/hooks/useWatchedQueries";
+import {
+  clearGuestWatchlist,
+  clearGuestWatched,
+  readGuestWatchlist,
+  readGuestWatched,
+  useGuestWatchlist,
+  useGuestWatched,
+} from '@/hooks/useGuestMediaLists';
 
 export function UserListsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
   // Use TanStack Query hooks for watchlist and watched
   const { data: watchlistData = [], isLoading: watchlistLoading } =
@@ -37,6 +47,8 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
   const addToWatchedMutation = useAddToWatchedMutation();
   const removeFromWatchedMutation = useRemoveFromWatchedMutation();
   const updateWatchedMutation = useUpdateWatchedMutation();
+  const guestWatchlist = useGuestWatchlist();
+  const guestWatched = useGuestWatched();
 
   const [watchlist, setWatchlist] = useState<UserMediaItem[]>([]);
   const [watched, setWatched] = useState<UserMediaItem[]>([]);
@@ -64,25 +76,11 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
       if (!areSame(watchlist, watchlistData)) setWatchlist(watchlistData || []);
       if (!areSame(watched, watchedData)) setWatched(watchedData || []);
     } else {
-      // For guests, load from localStorage once if available, otherwise fall back to empty array
-      try {
-        const storedWatchlist = localStorage.getItem(STORAGE_KEYS.watchlist);
-        const storedWatched = localStorage.getItem(STORAGE_KEYS.watched);
-        if (storedWatchlist) {
-          const parsed = JSON.parse(storedWatchlist) as UserMediaItem[];
-          if (!areSame(watchlist, parsed)) setWatchlist(parsed || []);
-        } else if (!areSame(watchlist, watchlistData)) {
-          setWatchlist(watchlistData || []);
-        }
-        if (storedWatched) {
-          const parsed = JSON.parse(storedWatched) as UserMediaItem[];
-          if (!areSame(watched, parsed)) setWatched(parsed || []);
-        } else if (!areSame(watched, watchedData)) {
-          setWatched(watchedData || []);
-        }
-      } catch (e) {
-        setWatchlist(watchlistData || []);
-        setWatched(watchedData || []);
+      if (!areSame(watchlist, guestWatchlist.items)) {
+        setWatchlist(guestWatchlist.items);
+      }
+      if (!areSame(watched, guestWatched.items)) {
+        setWatched(guestWatched.items);
       }
     }
 
@@ -96,6 +94,8 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
     watchlist,
     watched,
     user,
+    guestWatchlist.items,
+    guestWatched.items,
   ]);
 
   // Load hidden recommendations from localStorage
@@ -144,14 +144,6 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
       } catch (e) {
         // ignore storage errors
       }
-    } else {
-      // When user is present, clear anonymous keys to avoid confusion (prefixed keys may remain)
-      try {
-        localStorage.removeItem(STORAGE_KEYS.watchlist);
-        localStorage.removeItem(STORAGE_KEYS.watched);
-      } catch (e) {
-        // ignore
-      }
     }
   }, [watchlist, watched, user]);
 
@@ -161,35 +153,30 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
 
     const syncLocalToServer = async () => {
       try {
-        const storedWatchlist = localStorage.getItem(STORAGE_KEYS.watchlist);
-        const storedWatched = localStorage.getItem(STORAGE_KEYS.watched);
+        const guestWatchlistItems = readGuestWatchlist();
+        const guestWatchedItems = readGuestWatched();
 
-        if (storedWatchlist) {
-          const parsed: UserMediaItem[] = JSON.parse(storedWatchlist) || [];
-          if (parsed.length > 0) {
-            const rows = parsed.map((item) => ({
+        if (guestWatchlistItems.length > 0) {
+          const rows = guestWatchlistItems.map((item) => ({
               user_id: user.id,
               media_id: item.mediaId,
               media_type: item.mediaType,
               added_at: item.addedAt || new Date().toISOString(),
             }));
 
-            try {
-              const { error } = await supabase
-                .from("user_watchlist")
-                .upsert(rows, { onConflict: "user_id,media_id,media_type" });
-              if (error)
-                console.error("Error upserting watchlist during sync:", error);
-            } catch (err) {
-              console.error("Watchlist sync failed:", err);
-            }
+          try {
+            const { error } = await supabase
+              .from("user_watchlist")
+              .upsert(rows, { onConflict: "user_id,media_id,media_type" });
+            if (error)
+              console.error("Error upserting watchlist during sync:", error);
+          } catch (err) {
+            console.error("Watchlist sync failed:", err);
           }
         }
 
-        if (storedWatched) {
-          const parsed: UserMediaItem[] = JSON.parse(storedWatched) || [];
-          if (parsed.length > 0) {
-            const rows = parsed.map((item) => ({
+        if (guestWatchedItems.length > 0) {
+          const rows = guestWatchedItems.map((item) => ({
               user_id: user.id,
               media_id: item.mediaId,
               media_type: item.mediaType,
@@ -200,28 +187,28 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
                 item.watchedAt || item.addedAt || new Date().toISOString(),
             }));
 
-            try {
-              const { error } = await supabase
-                .from("user_watched")
-                .upsert(rows, { onConflict: "user_id,media_id,media_type" });
-              if (error)
-                console.error("Error upserting watched during sync:", error);
-            } catch (err) {
-              console.error("Watched sync failed:", err);
-            }
+          try {
+            const { error } = await supabase
+              .from("user_watched")
+              .upsert(rows, { onConflict: "user_id,media_id,media_type" });
+            if (error)
+              console.error("Error upserting watched during sync:", error);
+          } catch (err) {
+            console.error("Watched sync failed:", err);
           }
         }
 
-        // Remove anonymous local copies once we attempted sync
-        localStorage.removeItem(STORAGE_KEYS.watchlist);
-        localStorage.removeItem(STORAGE_KEYS.watched);
+        clearGuestWatchlist();
+        clearGuestWatched();
+        await queryClient.invalidateQueries({ queryKey: ['watchlist', user.id] });
+        await queryClient.invalidateQueries({ queryKey: ['watched', user.id] });
       } catch (e) {
         console.error("Sync local to server failed", e);
       }
     };
 
     syncLocalToServer();
-  }, [user]);
+  }, [queryClient, user]);
 
   // Wrapper functions to maintain backward compatibility with existing code
   const addToWatchlist = useCallback(
@@ -229,10 +216,12 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
       if (user) {
         await addToWatchlistMutation.mutateAsync({ mediaId, mediaType });
       } else {
-        window.dispatchEvent(new CustomEvent("cinetrekker:auth-required"));
+        const next = guestWatchlist.addToGuestWatchlist(mediaId, mediaType);
+        setWatchlist(next);
+        toast('Added to Watchlist (guest)');
       }
     },
-    [addToWatchlistMutation, user],
+    [addToWatchlistMutation, guestWatchlist, user],
   );
 
   const removeFromWatchlist = useCallback(
@@ -240,25 +229,12 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
       if (user) {
         await removeFromWatchlistMutation.mutateAsync({ mediaId, mediaType });
       } else {
-        setWatchlist((prev) => {
-          const next = prev.filter(
-            (i) => !(i.mediaId === mediaId && i.mediaType === mediaType),
-          );
-          try {
-            localStorage.setItem(STORAGE_KEYS.watchlist, JSON.stringify(next));
-          } catch (e) {
-            console.warn("Failed to remove from watchlist localStorage:", e);
-          }
-          try {
-            toast(t("actions.watchlistRemoved", "Removed from watchlist"));
-          } catch (e) {
-            console.warn("Failed to show watchlist removal toast:", e);
-          }
-          return next;
-        });
+        const next = guestWatchlist.removeFromGuestWatchlist(mediaId, mediaType);
+        setWatchlist(next);
+        toast(t("actions.watchlistRemoved", "Removed from watchlist"));
       }
     },
-    [removeFromWatchlistMutation, t, user],
+    [guestWatchlist, removeFromWatchlistMutation, t, user],
   );
 
   const addToWatched = useCallback(
@@ -278,56 +254,21 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
           status,
         });
       } else {
-        setWatched((prev) => {
-          const nowIso = new Date().toISOString();
-          const isDuplicate = prev.some(
-            (i) => i.mediaId === mediaId && i.mediaType === mediaType,
-          );
-          const item: UserMediaItem = {
-            mediaId,
-            mediaType,
-            rating,
-            note,
-            status,
-            addedAt: nowIso,
-            watchedAt: nowIso,
-          } as UserMediaItem;
-          let next: UserMediaItem[];
-          if (isDuplicate) {
-            next = prev.map((i) =>
-              i.mediaId === mediaId && i.mediaType === mediaType
-                ? { ...i, ...item, watchedAt: nowIso }
-                : i,
-            );
-          } else {
-            next = [...prev, item];
-          }
-          try {
-            localStorage.setItem(STORAGE_KEYS.watched, JSON.stringify(next));
-          } catch (e) {
-            console.warn("Failed to save watched to localStorage:", e);
-          }
-          try {
-            toast(t("actions.watchedAdded", "Saved locally"), {
-              description: t(
-                "actions.watchedAddedGuest",
-                "Marked as watched on this device. Sign in to sync and save notes/ratings.",
-              ),
-              action: {
-                label: t("auth.signIn", "Sign in"),
-                onClick: () => {
-                  window.location.href = "/login";
-                },
-              },
-            });
-          } catch (e) {
-            console.warn("Failed to show watched toast:", e);
-          }
-          return next;
+        const next = guestWatched.addToGuestWatched(mediaId, mediaType, {
+          rating: validateRating(rating),
+          note: validateNote(note),
+          status: status as UserMediaItem['status'],
+        });
+        setWatched(next);
+        toast(t("actions.watchedAdded", "Saved locally"), {
+          description: t(
+            "actions.watchedAddedGuest",
+            "Marked as watched on this device. Sign in later to sync it to your account.",
+          ),
         });
       }
     },
-    [addToWatchedMutation, t, user],
+    [addToWatchedMutation, guestWatched, t, user],
   );
 
   const removeFromWatched = useCallback(
@@ -335,25 +276,12 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
       if (user) {
         await removeFromWatchedMutation.mutateAsync({ mediaId, mediaType });
       } else {
-        setWatched((prev) => {
-          const next = prev.filter(
-            (i) => !(i.mediaId === mediaId && i.mediaType === mediaType),
-          );
-          try {
-            localStorage.setItem(STORAGE_KEYS.watched, JSON.stringify(next));
-          } catch (e) {
-            console.warn("Failed to remove from watched localStorage:", e);
-          }
-          try {
-            toast(t("actions.watchedRemoved", "Removed from watched"));
-          } catch (e) {
-            console.warn("Failed to show watched removal toast:", e);
-          }
-          return next;
-        });
+        const next = guestWatched.removeFromGuestWatched(mediaId, mediaType);
+        setWatched(next);
+        toast(t("actions.watchedRemoved", "Removed from watched"));
       }
     },
-    [removeFromWatchedMutation, t, user],
+    [guestWatched, removeFromWatchedMutation, t, user],
   );
 
   const updateWatchedItem = useCallback(

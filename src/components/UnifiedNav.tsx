@@ -23,6 +23,7 @@ import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 import { useTheme } from "@/contexts/theme-context";
+import { NotificationBell } from "@/components/NotificationBell";
 import { SearchDropdown } from "@/components/SearchDropdown";
 import { profileService } from "@/services/profile";
 
@@ -240,6 +241,7 @@ export function UnifiedNav() {
         )}
 
         <div className="hidden md:flex items-center gap-1">
+          <NotificationBell />
           {user ? (
             <>
               <Link
@@ -426,6 +428,7 @@ export function UnifiedNav() {
         </div>
 
         <div className="md:hidden flex items-center gap-1">
+          <NotificationBell />
           {user ? (
             <>
               <Link

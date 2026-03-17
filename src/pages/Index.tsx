@@ -10,7 +10,7 @@ import {
 } from "@/services/tmdb";
 import { MediaSection } from "@/components/MediaSection";
 import { MediaCarousel } from "@/components/MediaCarousel";
-import { MediaCard } from "@/components/MediaCard";
+import { MediaCardSkeleton } from "@/components/MediaCard";
 import { HeroSection } from "@/components/HeroSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SEO from "@/components/SEO";
@@ -36,6 +36,20 @@ const RecentlyAddedMovies = lazy(() =>
     default: mod.RecentlyAddedMovies,
   })),
 );
+
+function TrendingSectionSkeleton() {
+  return (
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <MediaCardSkeleton
+          key={index}
+          delay={index * 70}
+          className="border-white/5 bg-card/40"
+        />
+      ))}
+    </div>
+  );
+}
 
 export default function Index() {
   const { t, i18n } = useTranslation();
@@ -240,8 +254,10 @@ export default function Index() {
             </h2>
             <div className="flex gap-2 bg-card/50 border border-white/5 rounded-lg p-1">
               <button
+                type="button"
                 onClick={() => setTopThisWeekType("movie")}
-                className={`px-4 py-2 rounded text-sm font-medium transition-all ${
+                aria-label={t("home.topMoviesWeek") || "Show top movies this week"}
+                className={`px-4 py-2 rounded text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   topThisWeekType === "movie"
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -250,8 +266,10 @@ export default function Index() {
                 {t("common.movies")}
               </button>
               <button
+                type="button"
                 onClick={() => setTopThisWeekType("tv")}
-                className={`px-4 py-2 rounded text-sm font-medium transition-all ${
+                aria-label={t("home.topSeriesWeek") || "Show top series this week"}
+                className={`px-4 py-2 rounded text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   topThisWeekType === "tv"
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -287,8 +305,10 @@ export default function Index() {
             </h2>
             <div className="flex gap-2 bg-card/50 border border-white/5 rounded-lg p-1">
               <button
+                type="button"
                 onClick={() => setTopRatedType("movie")}
-                className={`px-4 py-2 rounded text-sm font-medium transition-all ${
+                aria-label={t("home.topRatedMovies") || "Show top rated movies"}
+                className={`px-4 py-2 rounded text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   topRatedType === "movie"
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -297,8 +317,10 @@ export default function Index() {
                 {t("common.movies")}
               </button>
               <button
+                type="button"
                 onClick={() => setTopRatedType("tv")}
-                className={`px-4 py-2 rounded text-sm font-medium transition-all ${
+                aria-label={t("home.topRatedSeries") || "Show top rated series"}
+                className={`px-4 py-2 rounded text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   topRatedType === "tv"
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -348,21 +370,27 @@ export default function Index() {
             </div>
 
             <TabsContent value="day" className="mt-0">
-              <MediaSection
-                title={t("home.trendingToday")}
-                items={trendingDay?.results || []}
-                loading={!deferredEnabled || loadingDay}
-                showMoreLink="/search?sort=popularity.desc"
-              />
+              {!deferredEnabled || loadingDay ? (
+                <TrendingSectionSkeleton />
+              ) : (
+                <MediaSection
+                  title={t("home.trendingToday")}
+                  items={trendingDay?.results || []}
+                  showMoreLink="/search?sort=popularity.desc"
+                />
+              )}
             </TabsContent>
 
             <TabsContent value="week" className="mt-0">
-              <MediaSection
-                title={t("home.trendingWeek")}
-                items={trendingWeek?.results || []}
-                loading={loadingWeek}
-                showMoreLink="/search?sort=popularity.desc"
-              />
+              {loadingWeek ? (
+                <TrendingSectionSkeleton />
+              ) : (
+                <MediaSection
+                  title={t("home.trendingWeek")}
+                  items={trendingWeek?.results || []}
+                  showMoreLink="/search?sort=popularity.desc"
+                />
+              )}
             </TabsContent>
           </Tabs>
         </section>
@@ -375,8 +403,10 @@ export default function Index() {
             </h2>
             <div className="flex gap-2 bg-card/50 border border-white/5 rounded-lg p-1">
               <button
+                type="button"
                 onClick={() => setPopularType("movie")}
-                className={`px-4 py-2 rounded text-sm font-medium transition-all ${
+                aria-label={t("home.popularMovies") || "Show popular movies"}
+                className={`px-4 py-2 rounded text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   popularType === "movie"
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -385,8 +415,10 @@ export default function Index() {
                 {t("common.movies")}
               </button>
               <button
+                type="button"
                 onClick={() => setPopularType("tv")}
-                className={`px-4 py-2 rounded text-sm font-medium transition-all ${
+                aria-label={t("home.popularSeries") || "Show popular series"}
+                className={`px-4 py-2 rounded text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   popularType === "tv"
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
