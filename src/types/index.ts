@@ -32,6 +32,8 @@ export type {
   TimeWindow,
 } from "./media";
 
+import type { UserMediaItem, HiddenRecommendation } from "./media";
+
 // Context types
 export type { User, Session } from "@supabase/supabase-js";
 

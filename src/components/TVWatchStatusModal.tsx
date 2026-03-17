@@ -55,7 +55,7 @@ export function TVWatchStatusModal({
       if (!showDetails) return [];
       
       const seasons = [];
-      for (let i = 1; i <= showDetails.number_of_seasons; i++) {
+      for (let i = 1; i <= (showDetails.number_of_seasons ?? 1); i++) {
         try {
           const seasonDetails = await getTVSeasonDetails(showId, i, language);
           seasons.push(seasonDetails);

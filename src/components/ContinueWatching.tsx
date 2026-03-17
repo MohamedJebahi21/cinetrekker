@@ -3,14 +3,14 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Play, Clock, Calendar } from 'lucide-react';
 import { useUserLists } from '@/contexts/user-lists-context';
-import { TVShow } from '@/types/media';
+import type { MediaDetails, Season } from '@/types/media';
 import { getTVDetails } from '@/services/tmdb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useTranslation } from 'react-i18next';
 
-interface TVShowWithProgress extends TVShow {
+interface TVShowWithProgress extends MediaDetails {
   currentEpisode: number;
   currentSeason: number;
   lastWatched: string;

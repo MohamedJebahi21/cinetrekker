@@ -27,9 +27,12 @@ function mapTmdbResultToMedia(item: Media): Omit<Media, 'genres' | 'genre_ids'> 
     id: item.id,
     media_type: 'movie',
     title: item.title || item.name || '',
-    poster_path: item.poster_path || item.poster_path || null,
+    poster_path: item.poster_path || null,
     overview: item.overview || '',
     vote_average: item.vote_average || 0,
+    backdrop_path: item.backdrop_path || null,
+    vote_count: item.vote_count || 0,
+    popularity: item.popularity || 0,
   };
 }
 

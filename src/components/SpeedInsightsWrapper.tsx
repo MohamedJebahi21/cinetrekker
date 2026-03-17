@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { injectSpeedInsights } from '@vercel/speed-insights';
+import injectSpeedInsights from '@vercel/speed-insights';
 
 /**
  * Generic Speed Insights injector for React apps.

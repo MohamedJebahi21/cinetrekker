@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -31,7 +31,7 @@ export function StickySaveBar({
   children,
   className,
 }: StickySaveBarProps) {
-  const footerVariants = {
+  const footerVariants: Variants = {
     hidden: {
       y: 100,
       opacity: 0,
@@ -55,7 +55,7 @@ export function StickySaveBar({
     },
   };
 
-  const buttonContainerVariants = {
+  const buttonContainerVariants: Variants = {
     hidden: { opacity: 0, y: 10 },
     visible: {
       opacity: 1,
@@ -67,7 +67,7 @@ export function StickySaveBar({
     },
   };
 
-  const buttonVariants = {
+  const buttonVariants: Variants = {
     hidden: { opacity: 0, y: 10 },
     visible: {
       opacity: 1,

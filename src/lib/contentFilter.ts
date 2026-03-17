@@ -10,7 +10,7 @@ export type MaturityRating = "strict" | "moderate" | "none";
 
 type RatingLike = string | null | undefined;
 
-type SafetyMedia = Media & {
+export type SafetyMedia = Media & {
   rating?: RatingLike;
   certification?: RatingLike;
   ageRating?: RatingLike;

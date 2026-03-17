@@ -28,7 +28,7 @@ export function RecentlyViewed() {
           }
         })
       );
-      return results.filter(Boolean);
+      return results.filter((r): r is NonNullable<typeof r> => r !== null);
     },
     enabled: recentItems.length > 0,
   });

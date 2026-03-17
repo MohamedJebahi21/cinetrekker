@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { BrowserRouter } from "react-router-dom";
-import App from "./App.tsx";
+import App from "./App";
 import "./index.css";
 import "./i18n";
 import {
@@ -53,14 +53,14 @@ try {
     // Defer non-critical Speed Insights script to avoid competing with initial paint.
     const injectInsights = () => {
       import("@vercel/speed-insights")
-        .then((mod) => mod.injectSpeedInsights())
+        .then((mod) => (mod as unknown as { default: () => void }).default())
         .catch(() => undefined);
     };
 
     if (typeof window !== "undefined" && "requestIdleCallback" in window) {
       window.requestIdleCallback(injectInsights, { timeout: 2500 });
     } else {
-      window.setTimeout(injectInsights, 600);
+      setTimeout(injectInsights, 600);
     }
   }
 } catch (err) {

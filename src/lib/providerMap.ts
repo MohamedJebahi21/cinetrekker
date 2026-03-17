@@ -1,5 +1,7 @@
 // Maps common provider names or TMDB provider IDs to direct provider URLs
 // This is a best-effort mapping; entries can be expanded as needed.
+import type { Provider, ProviderDataResult } from '@/types/media';
+
 const providerNameMap: Record<string, string> = {
   netflix: 'https://www.netflix.com',
   'netflix streaming': 'https://www.netflix.com',
