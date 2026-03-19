@@ -11,6 +11,8 @@ What it does:
 - Repairs a broken local `HEAD` branch reference by repointing the current branch to `origin/main` when `HEAD` has no commit.
 - Restores the core public assets the app depends on (`favicon*`, `apple-touch-icon.png`, `og-image.png`, and `robots.txt`) when they are missing from disk.
 
+The doctor script is cross-platform and runs in local development and on Vercel/Linux builds.
+
 This check also runs automatically before the main local commands:
 
 - `npm run dev`

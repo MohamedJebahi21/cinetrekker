@@ -12,7 +12,7 @@
     "prepreview": "npm run workspace:doctor",
     "preaudit:desktop": "npm run workspace:doctor",
     "pretest:e2e:desktop": "npm run workspace:doctor",
-    "workspace:doctor": "powershell -ExecutionPolicy Bypass -File ./scripts/ensure-workspace-integrity.ps1",
+    "workspace:doctor": "node ./scripts/ensure-workspace-integrity.mjs",
     "dev": "vite",
     "dev:next": "next dev -p 8081",
     "build": "vite build",
