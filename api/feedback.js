@@ -2,8 +2,7 @@ import { enforceRequestSecurity } from './_lib/requestSecurity.js';
 
 const MAX_NAME_LENGTH = 120;
 const MAX_EMAIL_LENGTH = 254;
-const MAX_MESSAGE_LENGTH = 4000;:${userAgent.slice(0, 120)}`;
-}
+const MAX_MESSAGE_LENGTH = 4000;
 
 function normalizeText(value, maxLength) {
   if (typeof value !== 'string') return '';

@@ -535,7 +535,6 @@ export function ContentPolicyProvider({
   );
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
 export function useContentPolicy(): ContentPolicyContextType {
   const context = useContext(ContentPolicyContext);
   if (!context) {

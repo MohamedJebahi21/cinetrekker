@@ -451,7 +451,7 @@ export default function Profile() {
         subscription.unsubscribe();
       }
     };
-  }, [user?.id, profileKey, pinnedFavoritesStorageKey, toast]);
+  }, [user?.id, profileKey, pinnedFavoritesStorageKey, setPinnedFavoriteKeys, toast]);
 
   // Capture the loaded profile as the baseline once.
   useEffect(() => {
@@ -1327,7 +1327,7 @@ export default function Profile() {
         return next;
       });
     },
-    [persistPinnedFavorites, toast],
+    [persistPinnedFavorites, setPinnedFavoriteKeys, toast],
   );
 
   const unpinFavorite = useCallback(
@@ -1345,7 +1345,7 @@ export default function Profile() {
         return next;
       });
     },
-    [persistPinnedFavorites, toast],
+    [persistPinnedFavorites, setPinnedFavoriteKeys, toast],
   );
 
   return (

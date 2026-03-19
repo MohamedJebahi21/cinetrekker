@@ -18,7 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserLists } from '@/contexts/UserListsContext';
 import { useFollowedShows } from '@/hooks/useFollowedShows';
 import { getUpcomingMovies, getOnTheAirTV, getImageUrl, getTVDetails } from '@/services/tmdb';
-import { Media, TVShow } from '@/types/media';
+import { Media, TVEpisodeInfo, TVNetwork } from '@/types/media';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -49,6 +49,12 @@ interface CalendarItem {
   network?: string;
 }
 
+type CalendarTVItem = Media & {
+  networks: TVNetwork[];
+  next_episode_to_air?: TVEpisodeInfo | null;
+  last_episode_to_air?: TVEpisodeInfo | null;
+};
+
 export default function Calendar() {
   const { t, i18n } = useTranslation();
   const language = i18n.language;
@@ -73,7 +79,7 @@ export default function Calendar() {
   });
 
   // Fetch on-the-air TV shows with network info
-  const { data: onAirTV, isLoading: loadingTV } = useQuery({
+  const { data: onAirTV, isLoading: loadingTV } = useQuery<CalendarTVItem[]>({
     queryKey: ['on-air-tv-with-networks', language],
     queryFn: async () => {
       const [page1, page2] = await Promise.all([
@@ -92,9 +98,14 @@ export default function Calendar() {
               networks: details.networks || [],
               next_episode_to_air: details.next_episode_to_air,
               last_episode_to_air: details.last_episode_to_air,
-            };
+            } satisfies CalendarTVItem;
           } catch {
-            return show;
+            return {
+              ...show,
+              networks: [],
+              next_episode_to_air: null,
+              last_episode_to_air: null,
+            } satisfies CalendarTVItem;
           }
         })
       );
