@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 interface WatchedStatusDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: { rating: number; note: string; status: string }) => void;
+  onSave: (data: { rating: number; note: string; status: "watching" | "completed" | "dropped" | "plan_to_watch" }) => void;
   initialRating?: number;
   initialNote?: string;
   initialStatus?: string;
@@ -41,7 +41,7 @@ export function WatchedStatusDialog({
   const [hoveredStar, setHoveredStar] = useState(0);
 
   const handleSave = () => {
-    onSave({ rating, note, status });
+    onSave({ rating, note, status: status as "watching" | "completed" | "dropped" | "plan_to_watch" });
   };
 
   return (

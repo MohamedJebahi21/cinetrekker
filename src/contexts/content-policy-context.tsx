@@ -9,12 +9,11 @@ import React, {
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/contexts/AuthContext";
 import { profileService } from "@/services/profile";
 import { useToast } from "@/hooks/use-toast";
 import { AgeVerificationDialog } from "@/components/AgeVerificationDialog";
 import {
-  MaturityRating,
   SafetyLevel,
   maturityToFlags,
 } from "@/lib/contentFilter";
@@ -32,7 +31,7 @@ type ContentPolicyContextType = ContentPolicyState & {
   loading: boolean;
   setAge: (age: number) => Promise<void>;
   setMaturityRating: (
-    level: MaturityRating,
+    level: SafetyLevel,
   ) => Promise<{ syncedRemotely: boolean }>;
   setStrictFiltering: (enabled: boolean) => Promise<void>;
   setModerateFiltering: (enabled: boolean) => Promise<void>;
@@ -83,7 +82,7 @@ function defaultState(): ContentPolicyState {
   return { ageVerified: false, maturityRating: SafetyLevel.NONE };
 }
 
-function normalizeMaturity(level: MaturityRating): SafetyLevel {
+function normalizeMaturity(level: SafetyLevel): SafetyLevel {
   if (
     level === SafetyLevel.STRICT ||
     level === SafetyLevel.MODERATE ||
@@ -95,25 +94,25 @@ function normalizeMaturity(level: MaturityRating): SafetyLevel {
 
 function deriveMaturityFromLegacy(
   payload: LegacyContentPolicyState,
-): MaturityRating {
+): SafetyLevel {
   if (
     typeof payload.strictFiltering === "boolean" ||
     typeof payload.moderateFiltering === "boolean"
   ) {
-    if (payload.strictFiltering === true) return "strict";
-    if (payload.moderateFiltering === true) return "moderate";
-    return "none";
+    if (payload.strictFiltering === true) return SafetyLevel.STRICT;
+    if (payload.moderateFiltering === true) return SafetyLevel.MODERATE;
+    return SafetyLevel.NONE;
   }
 
   if (typeof payload.adultContentEnabled === "boolean") {
-    return payload.adultContentEnabled ? "none" : "strict";
+    return payload.adultContentEnabled ? SafetyLevel.NONE : SafetyLevel.STRICT;
   }
 
   if (typeof payload.age === "number") {
-    return payload.age < 18 ? "strict" : "none";
+    return payload.age < 18 ? SafetyLevel.STRICT : SafetyLevel.NONE;
   }
 
-  return "none";
+  return SafetyLevel.NONE;
 }
 
 function normalizeState(payload: unknown): ContentPolicyState {
@@ -196,7 +195,7 @@ function stateFromProfile(
   };
 }
 
-function toLegacyFlags(level: MaturityRating): {
+function toLegacyFlags(level: SafetyLevel): {
   strict_filtering_enabled: boolean;
   moderate_filtering_enabled: boolean;
   adult_content_enabled: boolean;
@@ -397,7 +396,7 @@ export function ContentPolicyProvider({
   ]);
 
   const setMaturityRating = useCallback(
-    async (level: MaturityRating) => {
+    async (level: SafetyLevel) => {
       const normalized = normalizeMaturity(level);
       const next = { ...state, maturityRating: normalized, ageVerified: true };
       setState(next);

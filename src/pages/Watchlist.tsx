@@ -2,12 +2,10 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { Bookmark, Printer, LayoutGrid, List } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { useUserLists } from "@/contexts/user-lists-context";
+import { useUserLists } from "@/contexts/UserListsContext";
 import {
-  getMovieDetails,
-  getTVDetails,
   getImageUrl,
   getMediaTitle,
   getMediaYear,
@@ -29,21 +27,27 @@ import {
   WatchlistStatsLine,
 } from "@/components/WatchlistStats";
 import { Image } from "@/components/ui/Image";
-import { createFallbackMedia } from "@/lib/mediaFallback";
+import { enrichMediaItems } from "@/lib/mediaEnrichment";
 
 const HERO_BACKDROP =
   "https://images.unsplash.com/photo-1526779259212-939e64788e3c?auto=format&fit=crop&w=2200&q=80&fm=webp";
 const HERO_OVERLAY =
   "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=2200&q=80&fm=webp";
 
+type WatchlistStatusFilter =
+  | "all"
+  | "watching"
+  | "plan_to_watch"
+  | "completed"
+  | "dropped";
+
 export default function Watchlist() {
   const { t, i18n } = useTranslation();
   const { watchlist, watched } = useUserLists();
   const [searchParams] = useSearchParams();
   const language = i18n.language;
-  const [statusFilter, setStatusFilter] = useState<
-    "all" | "watching" | "plan_to_watch" | "completed" | "dropped"
-  >("all");
+  const [statusFilter, setStatusFilter] =
+    useState<WatchlistStatusFilter>("all");
   const [sortBy, setSortBy] = useState("added-desc");
   const [filterExpanded, setFilterExpanded] = useState(true);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -80,36 +84,25 @@ export default function Watchlist() {
       language,
     ],
     queryFn: async () => {
-      const results = await Promise.all(
-        listItems.map(async (item) => {
+      return enrichMediaItems(listItems, {
+        language,
+        getReference: (item) => item,
+        mapExtras: (item) => {
           const watchedItem = isSharedView
             ? undefined
             : watched.find(
-                (w) =>
-                  w.mediaId === item.mediaId && w.mediaType === item.mediaType,
+                (watchedEntry) =>
+                  watchedEntry.mediaId === item.mediaId &&
+                  watchedEntry.mediaType === item.mediaType,
               );
 
-          try {
-            const details =
-              item.mediaType === "movie"
-                ? await getMovieDetails(item.mediaId, language)
-                : await getTVDetails(item.mediaId, language);
-
-            return {
-              ...details,
-              media_type: item.mediaType,
-              watchStatus: watchedItem?.status,
-              userRating: watchedItem?.rating,
-            } as Media & { watchStatus?: string; userRating?: number };
-          } catch {
-            return createFallbackMedia(item, {
-              watchStatus: watchedItem?.status,
-              userRating: watchedItem?.rating,
-            }) as Media & { watchStatus?: string; userRating?: number };
-          }
-        }),
-      );
-      return results as (Media & { watchStatus?: string })[];
+          return {
+            watchStatus: watchedItem?.status,
+            userRating: watchedItem?.rating,
+          };
+        },
+        logScope: "watchlist",
+      }) as Promise<(Media & { watchStatus?: string; userRating?: number })[]>;
     },
     enabled: listItems.length > 0,
   });
@@ -197,30 +190,7 @@ export default function Watchlist() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45 }}
             className="max-w-3xl"
-          >
-            <p className="heading-credits text-sm text-[#f2c572] md:text-base">
-              CineTrekker Expedition
-            </p>
-            <h1 className="heading-credits mt-2 text-5xl leading-[0.95] text-white md:text-7xl">
-              {isSharedView ? "Shared Watchlist Atlas" : "Your Watchlist Atlas"}
-            </h1>
-            <p className="editorial-copy mt-4 max-w-2xl text-sm text-white/88 md:text-base">
-              Track what you watch and where stories were captured, from the
-              dune seas of Jordan to rain-lit streets in New York. Every title
-              becomes a stop on your cinematic trek.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2 text-xs text-white/85">
-              <span className="rounded-full border border-[#f2c572]/45 bg-black/40 px-3 py-1.5">
-                Immersive dark mode
-              </span>
-              <span className="rounded-full border border-[#f2c572]/45 bg-black/40 px-3 py-1.5">
-                Filming location map
-              </span>
-              <span className="rounded-full border border-[#f2c572]/45 bg-black/40 px-3 py-1.5">
-                Travel-first movie cards
-              </span>
-            </div>
-          </motion.div>
+          />
         </div>
       </section>
 
@@ -335,7 +305,9 @@ export default function Watchlist() {
             <WatchlistFilters
               statusFilter={statusFilter}
               sortBy={sortBy}
-              onStatusChange={setStatusFilter}
+              onStatusChange={(status) =>
+                setStatusFilter(status as WatchlistStatusFilter)
+              }
               onSortChange={setSortBy}
               isExpanded={filterExpanded}
               onToggleExpand={setFilterExpanded}
@@ -434,8 +406,12 @@ export default function Watchlist() {
               "watchlist.emptyDesc",
               "Start adding movies and TV shows you want to watch!",
             )}
-            actionLabel={t("common.discoverTrending", "Discover Trending")}
-            actionLink="/search?sort=popularity.desc"
+            action={{
+              label: t("common.discoverTrending", "Discover Trending"),
+              onClick: () => {
+                window.location.href = "/search?sort=popularity.desc";
+              },
+            }}
           />
         )}
       </div>

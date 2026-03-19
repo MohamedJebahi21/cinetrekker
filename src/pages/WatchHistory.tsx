@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { useUserLists } from "@/contexts/user-lists-context";
+import { useUserLists } from "@/contexts/UserListsContext";
 import { UserMediaItem } from "@/types/media";
-import { getMovieDetails, getTVDetails } from "@/services/tmdb";
 import SEO from "@/components/SEO";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +14,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createFallbackMedia } from "@/lib/mediaFallback";
+import {
+  buildMediaLookupMap,
+  createMediaLookupKey,
+  enrichMediaItems,
+} from "@/lib/mediaEnrichment";
+import { getMediaTitle } from "@/services/tmdb";
 
 export default function WatchHistory() {
   const { watched } = useUserLists();
@@ -37,8 +42,18 @@ export default function WatchHistory() {
     );
   }
 
-  // Apply sorting
-  filtered.sort((a, b) => {
+  const { data: details } = useQuery({
+    queryKey: ["watch-history", filtered.map((i) => `${i.mediaType}-${i.mediaId}`)],
+    queryFn: () =>
+      enrichMediaItems(filtered.slice(0, 50), {
+        getReference: (item) => item,
+        logScope: "watch-history",
+      }),
+    enabled: filtered.length > 0,
+  });
+  const detailMap = buildMediaLookupMap(details);
+
+  const sortedItems = [...filtered].sort((a, b) => {
     const aDateStr = a.watchedAt || a.addedAt;
     const bDateStr = b.watchedAt || b.addedAt;
     const aDate = new Date(aDateStr).getTime();
@@ -47,29 +62,16 @@ export default function WatchHistory() {
     if (sortBy === "recent") return bDate - aDate;
     if (sortBy === "oldest") return aDate - bDate;
 
-    const aTitle = (a.title || "").toLocaleLowerCase();
-    const bTitle = (b.title || "").toLocaleLowerCase();
-    return aTitle.localeCompare(bTitle);
-  });
+    const aMedia =
+      detailMap.get(createMediaLookupKey(a.mediaType, a.mediaId)) ||
+      createFallbackMedia(a);
+    const bMedia =
+      detailMap.get(createMediaLookupKey(b.mediaType, b.mediaId)) ||
+      createFallbackMedia(b);
 
-  // Fetch details for visible items
-  const { data: details } = useQuery({
-    queryKey: ["watch-history", filtered.map((i) => i.mediaId).slice(0, 50)],
-    queryFn: async () => {
-      const items = filtered.slice(0, 50);
-      return Promise.all(
-        items.map(async (item) => {
-          try {
-            return item.mediaType === "movie"
-              ? await getMovieDetails(item.mediaId)
-              : await getTVDetails(item.mediaId);
-          } catch {
-            return createFallbackMedia(item);
-          }
-        }),
-      );
-    },
-    enabled: filtered.length > 0,
+    return getMediaTitle(aMedia)
+      .toLocaleLowerCase()
+      .localeCompare(getMediaTitle(bMedia).toLocaleLowerCase());
   });
 
   // Group by month for timeline view
@@ -97,7 +99,7 @@ export default function WatchHistory() {
     return groups;
   };
 
-  const timelineGroups = groupByMonth(filtered);
+  const timelineGroups = groupByMonth(sortedItems);
   const months = Object.keys(timelineGroups).filter((key) => key !== "Unknown");
 
   return (
@@ -115,7 +117,7 @@ export default function WatchHistory() {
             <div>
               <h1 className="text-3xl font-bold">Watch History</h1>
               <p className="text-muted-foreground mt-1">
-                {filtered.length} items in your timeline
+                {sortedItems.length} items in your timeline
               </p>
             </div>
           </div>
@@ -153,7 +155,7 @@ export default function WatchHistory() {
           </div>
         </div>
 
-        {filtered.length === 0 ? (
+        {sortedItems.length === 0 ? (
           <Card className="p-12 text-center">
             <History className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
             <p className="text-muted-foreground">
@@ -185,9 +187,12 @@ export default function WatchHistory() {
                   </div>
 
                   {/* Items for this month */}
-                  <div className="ml-24 space-y-4">
-                    {timelineGroups[month].map((item, idx) => {
-                      const detail = details?.[filtered.indexOf(item)];
+                    <div className="ml-24 space-y-4">
+                      {timelineGroups[month].map((item, idx) => {
+                      const detail =
+                        detailMap.get(
+                          createMediaLookupKey(item.mediaType, item.mediaId),
+                        ) || createFallbackMedia(item);
                       const watchedDateStr = item.watchedAt || item.addedAt;
                       const title = (detail?.title || detail?.name) as
                         | string
@@ -264,7 +269,10 @@ export default function WatchHistory() {
 
                     <div className="ml-24 space-y-4">
                       {timelineGroups["Unknown"].map((item, idx) => {
-                        const detail = details?.[filtered.indexOf(item)];
+                        const detail =
+                          detailMap.get(
+                            createMediaLookupKey(item.mediaType, item.mediaId),
+                          ) || createFallbackMedia(item);
                         const title = (detail?.title || detail?.name) as
                           | string
                           | undefined;

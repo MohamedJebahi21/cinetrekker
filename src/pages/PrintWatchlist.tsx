@@ -1,12 +1,11 @@
 import React from 'react';
-import { useUserLists } from '@/contexts/user-lists-context';
+import { useUserLists } from '@/contexts/UserListsContext';
 import { useQuery } from '@tanstack/react-query';
-import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 import { useTranslation } from 'react-i18next';
 import { Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SEO from '@/components/SEO';
-import { createFallbackMedia } from '@/lib/mediaFallback';
+import { enrichMediaItems } from '@/lib/mediaEnrichment';
 
 export default function PrintWatchlist() {
   const { watchlist } = useUserLists();
@@ -15,22 +14,12 @@ export default function PrintWatchlist() {
 
   const { data: mediaDetails } = useQuery({
     queryKey: ['print-watchlist', watchlist.map((i) => `${i.mediaType}-${i.mediaId}`), language],
-    queryFn: async () => {
-      const results = await Promise.all(
-        watchlist.map(async (item) => {
-          try {
-            const details =
-              item.mediaType === 'movie'
-                ? await getMovieDetails(item.mediaId, language)
-                : await getTVDetails(item.mediaId, language);
-            return { ...details, media_type: item.mediaType };
-          } catch {
-            return createFallbackMedia(item);
-          }
-        })
-      );
-      return results;
-    },
+    queryFn: () =>
+      enrichMediaItems(watchlist, {
+        language,
+        getReference: (item) => item,
+        logScope: 'print-watchlist',
+      }),
     enabled: watchlist.length > 0,
   });
 

@@ -1,54 +1,144 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from "@playwright/test";
 
-const viewports = [
-  { width: 360, expectedCols: 2 },
-  { width: 412, expectedCols: 2 },
-  { width: 480, expectedCols: 2 },
-  { width: 768, expectedCols: 3 },
-  { width: 1024, expectedCols: 4 },
-  { width: 1280, expectedCols: 4 },
-  { width: 1400, expectedCols: 4 },
+const gridProfiles = [
+  { width: 375, height: 667, expectedCols: 2 },
+  { width: 390, height: 844, expectedCols: 2 },
+  { width: 768, height: 1024, expectedCols: 3 },
+  { width: 820, height: 1180, expectedCols: 3 },
+  { width: 1024, height: 768, expectedCols: 4 },
 ];
 
-test.describe('Responsive checks for .media-grid', () => {
-  for (const vp of viewports) {
-    test(`viewport ${vp.width}px -> ${vp.expectedCols} columns`, async ({ page, browserName }) => {
-      await page.setViewportSize({ width: vp.width, height: 900 });
-      await page.goto('/');
-      // Inject a temporary element with the media-grid class and measure computed columns
+const deviceProfiles = [
+  { name: "phone-375", width: 375, height: 667 },
+  { name: "phone-390", width: 390, height: 844 },
+  { name: "ipad-768", width: 768, height: 1024 },
+  { name: "ipad-820", width: 820, height: 1180 },
+  { name: "tablet-landscape", width: 1024, height: 768 },
+];
+
+const routeMatrix = [
+  { name: "home", path: "/" },
+  { name: "watchlist", path: "/watchlist" },
+  { name: "details", path: "/movie/550" },
+  { name: "profile", path: "/profile" },
+  { name: "settings", path: "/settings" },
+];
+
+test.describe("Responsive grid system", () => {
+  for (const profile of gridProfiles) {
+    test(`media-grid uses ${profile.expectedCols} columns at ${profile.width}x${profile.height}`, async ({
+      page,
+      browserName,
+    }) => {
+      await page.setViewportSize({
+        width: profile.width,
+        height: profile.height,
+      });
+      await page.goto("/");
+
       const result = await page.evaluate(() => {
-        const el = document.createElement('div');
-        el.className = 'media-grid';
-        for (let i = 0; i < 4; i++) el.appendChild(document.createElement('div'));
+        const el = document.createElement("div");
+        el.className = "media-grid";
+        for (let i = 0; i < 6; i += 1) {
+          el.appendChild(document.createElement("div"));
+        }
         document.body.appendChild(el);
-        const style = getComputedStyle(el as Element);
-        const colsValue = style.gridTemplateColumns || '';
+        const style = getComputedStyle(el);
+        const colsValue = style.gridTemplateColumns || "";
         const count = colsValue.trim() ? colsValue.trim().split(/\s+/).length : 0;
         document.body.removeChild(el);
         return { count, colsValue };
       });
 
-      const cols = result.count;
-      const colsValue = result.colsValue;
-      expect(cols, `expected ${vp.expectedCols} columns at ${vp.width}px on ${browserName} (found cols=${cols}, gridTemplateColumns='${colsValue}')`).toBe(vp.expectedCols);
+      expect(
+        result.count,
+        `expected ${profile.expectedCols} columns at ${profile.width}px on ${browserName} (gridTemplateColumns='${result.colsValue}')`,
+      ).toBe(profile.expectedCols);
     });
   }
 });
 
-test.describe('Mobile orientation and fixed footer checks', () => {
-  test('portrait viewport keeps injected mobile footer within bounds', async ({ page }) => {
+test.describe("Responsive route shells", () => {
+  for (const profile of deviceProfiles) {
+    for (const route of routeMatrix) {
+      test(`${route.name} stays within viewport on ${profile.name}`, async ({
+        page,
+      }) => {
+        await page.setViewportSize({
+          width: profile.width,
+          height: profile.height,
+        });
+        await page.goto(route.path, { waitUntil: "domcontentloaded" });
+
+        const result = await page.evaluate(() => {
+          const html = document.documentElement;
+          const body = document.body;
+          const header = document.querySelector("header");
+          const mobileNav = document.querySelector("nav.mobile-nav-safe");
+          const firstCard = document.querySelector(
+            '[class*="glass-card"], [class*="media-card"], article, a.group',
+          );
+
+          const headerRect = header?.getBoundingClientRect() ?? null;
+          const mobileNavRect = mobileNav?.getBoundingClientRect() ?? null;
+          const cardRect = firstCard?.getBoundingClientRect() ?? null;
+
+          return {
+            scrollWidth: Math.max(
+              html.scrollWidth,
+              body.scrollWidth,
+              html.clientWidth,
+            ),
+            viewportWidth: window.innerWidth,
+            headerWithinViewport: headerRect
+              ? headerRect.left >= -1 && headerRect.right <= window.innerWidth + 1
+              : true,
+            mobileNavWithinViewport: mobileNavRect
+              ? mobileNavRect.left >= -1 &&
+                mobileNavRect.right <= window.innerWidth + 1 &&
+                mobileNavRect.bottom <= window.innerHeight + 1
+              : true,
+            cardWithinViewport: cardRect
+              ? cardRect.left >= -1 && cardRect.right <= window.innerWidth + 1
+              : true,
+          };
+        });
+
+        expect(
+          result.scrollWidth,
+          `${route.name} overflowed horizontally on ${profile.name}`,
+        ).toBeLessThanOrEqual(result.viewportWidth + 1);
+        expect(
+          result.headerWithinViewport,
+          `${route.name} header overflowed on ${profile.name}`,
+        ).toBe(true);
+        expect(
+          result.mobileNavWithinViewport,
+          `${route.name} mobile nav overflowed on ${profile.name}`,
+        ).toBe(true);
+        expect(
+          result.cardWithinViewport,
+          `${route.name} card layout overflowed on ${profile.name}`,
+        ).toBe(true);
+      });
+    }
+  }
+});
+
+test.describe("Safe-area footer behavior", () => {
+  test("mobile-nav-safe stays within portrait viewport", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/');
+    await page.goto("/");
 
     const result = await page.evaluate(() => {
-      const footer = document.createElement('div');
-      footer.className = 'mobile-nav-safe';
-      footer.style.position = 'fixed';
-      footer.style.left = '0';
-      footer.style.right = '0';
-      footer.style.bottom = '0';
-      footer.style.height = '56px';
-      footer.style.zIndex = '9999';
+      const footer = document.createElement("div");
+      footer.className = "mobile-nav-safe";
+      footer.style.position = "fixed";
+      footer.style.left = "0";
+      footer.style.right = "0";
+      footer.style.bottom = "0";
+      footer.style.height = "56px";
+      footer.style.zIndex = "9999";
       document.body.appendChild(footer);
 
       const rect = footer.getBoundingClientRect();
@@ -61,29 +151,28 @@ test.describe('Mobile orientation and fixed footer checks', () => {
     });
 
     expect(result.isWithinViewport).toBe(true);
-    expect(result.paddingBottom).not.toBe('');
+    expect(result.paddingBottom).not.toBe("");
   });
 
-  test('landscape viewport keeps injected mobile footer within bounds', async ({ page }) => {
-    await page.setViewportSize({ width: 844, height: 390 });
-    await page.goto('/');
+  test("mobile-nav-safe stays within landscape viewport", async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await page.goto("/");
 
     const result = await page.evaluate(() => {
-      const footer = document.createElement('div');
-      footer.className = 'mobile-nav-safe';
-      footer.style.position = 'fixed';
-      footer.style.left = '0';
-      footer.style.right = '0';
-      footer.style.bottom = '0';
-      footer.style.height = '56px';
-      footer.style.zIndex = '9999';
+      const footer = document.createElement("div");
+      footer.className = "mobile-nav-safe";
+      footer.style.position = "fixed";
+      footer.style.left = "0";
+      footer.style.right = "0";
+      footer.style.bottom = "0";
+      footer.style.height = "56px";
+      footer.style.zIndex = "9999";
       document.body.appendChild(footer);
 
       const rect = footer.getBoundingClientRect();
-      const isWithinViewport = rect.bottom <= window.innerHeight + 0.5;
-
       document.body.removeChild(footer);
-      return { isWithinViewport };
+
+      return { isWithinViewport: rect.bottom <= window.innerHeight + 0.5 };
     });
 
     expect(result.isWithinViewport).toBe(true);

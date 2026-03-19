@@ -31,7 +31,7 @@ export const useTrendingForMedia = (mediaType: 'movie' | 'tv', mediaId: number) 
       return { ts: ts.toISOString(), count: 0 };
     });
 
-    (data || []).forEach((row: { media_id: number; signal_type: string; score: number }) => {
+    (data || []).forEach((row: { added_at: string }) => {
       const added = new Date(row.added_at).getTime();
       const diffHours = Math.floor((now - added) / (60 * 60 * 1000));
       if (diffHours >= 0 && diffHours < 24) {
@@ -45,7 +45,7 @@ export const useTrendingForMedia = (mediaType: 'movie' | 'tv', mediaId: number) 
     return { series, buckets, total };
     },
     staleTime: 1000 * 60 * 10, // 10 minutes
-    cacheTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 30,
     retry: 1,
   });
 };

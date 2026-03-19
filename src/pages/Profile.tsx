@@ -33,8 +33,8 @@ import {
   Award,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useUserLists } from "@/contexts/user-lists-context";
-import { useAuth } from "@/contexts/auth-context";
+import { useUserLists } from "@/contexts/UserListsContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { profileService, type UserProfile } from "@/services/profile";
 import { validateDisplayName, sanitizeBio } from "@/lib/validation";
 import { profileUpdateRateLimiter } from "@/lib/reviewRateLimiter";
@@ -56,7 +56,9 @@ import { useToast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
 import { StickySaveBar } from "@/components/StickySaveBar";
 import { humanizeUiText } from "@/lib/humanize-ui-text";
-import { useTheme } from "@/contexts/theme-context";
+import { useTheme } from "@/contexts/ThemeContext";
+import { usePinnedFavorites } from "@/hooks/usePinnedFavorites";
+import { normalizePinnedFavoriteKeys } from "@/utils/pinnedFavorites";
 import {
   getImageUrl,
   getMovieDetails,
@@ -106,8 +108,6 @@ type PinnedFavoriteRef = {
   mediaId: number;
   mediaType: "movie" | "tv";
 };
-
-import { normalizePinnedFavoriteKeys } from "@/utils/pinnedFavorites";
 
 function useCountUp(target: number, durationMs: number, reduceMotion: boolean) {
   const [value, setValue] = useState(reduceMotion ? target : 0);
@@ -166,12 +166,27 @@ export default function Profile() {
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
-  const [pinnedFavoriteKeys, setPinnedFavoriteKeys] = useState<string[]>([]);
   const [isFavoritesPickerOpen, setIsFavoritesPickerOpen] = useState(false);
   const [favoriteSearchQuery, setFavoriteSearchQuery] = useState("");
   const [favoriteSearchType, setFavoriteSearchType] = useState<
     "all" | "movie" | "tv"
   >("all");
+  const {
+    pinnedFavoriteKeys,
+    pinnedFavoritesStorageKey,
+    persistPinnedFavorites,
+    setPinnedFavoriteKeys,
+  } = usePinnedFavorites({
+    userId: user?.id,
+    onSyncError: (error) => {
+      console.error("Error syncing favorites:", error);
+      toast({
+        title: "Favorites sync delayed",
+        description: "Saved locally. Will retry on your next update.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const text = useCallback(
     (key: string, fallback: string) => humanizeUiText(String(t(key, fallback))),
@@ -222,56 +237,6 @@ export default function Profile() {
     if (!user?.email) return "";
     return isEmailRevealed ? user.email : maskEmail(user.email);
   }, [isEmailRevealed, maskEmail, user?.email]);
-
-  const pinnedFavoritesStorageKey = useMemo(
-    () => `cinetrekker_profile_favorites_${user?.id || "guest"}`,
-    [user?.id],
-  );
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (user?.id) return;
-    try {
-      const raw = localStorage.getItem(pinnedFavoritesStorageKey);
-      const parsed = raw ? (JSON.parse(raw) as string[]) : [];
-      const normalized = Array.isArray(parsed)
-        ? normalizePinnedFavoriteKeys(parsed)
-        : [];
-      setPinnedFavoriteKeys(normalized);
-      localStorage.setItem(
-        pinnedFavoritesStorageKey,
-        JSON.stringify(normalized),
-      );
-    } catch {
-      setPinnedFavoriteKeys([]);
-    }
-  }, [pinnedFavoritesStorageKey, user?.id]);
-
-  const persistPinnedFavorites = useCallback(
-    async (next: string[]) => {
-      const normalized = normalizePinnedFavoriteKeys(next);
-      localStorage.setItem(
-        pinnedFavoritesStorageKey,
-        JSON.stringify(normalized),
-      );
-
-      if (!user?.id) return;
-
-      try {
-        await profileService.updateProfile(user.id, {
-          favorite_titles: normalized,
-        });
-      } catch (error) {
-        console.error("Error syncing favorites:", error);
-        toast({
-          title: "Favorites sync delayed",
-          description: "Saved locally. Will retry on your next update.",
-          variant: "destructive",
-        });
-      }
-    },
-    [pinnedFavoritesStorageKey, toast, user?.id],
-  );
 
   useEffect(() => {
     if (!shareCopied) return;
@@ -368,7 +333,9 @@ export default function Profile() {
             setBio(profile.bio || "");
             setFavoriteGenres(profile.favorite_genres || []);
             const normalizedFavorites = normalizePinnedFavoriteKeys(
-              profile.favorite_titles || [],
+              Array.isArray(profile.favorite_titles)
+                ? profile.favorite_titles
+                : [],
             );
             setPinnedFavoriteKeys(normalizedFavorites);
             localStorage.setItem(
@@ -409,7 +376,9 @@ export default function Profile() {
                 setFavoriteGenres(updatedProfile.favorite_genres || []);
                 setPinnedFavoriteKeys(
                   normalizePinnedFavoriteKeys(
-                    updatedProfile.favorite_titles || [],
+                    Array.isArray(updatedProfile.favorite_titles)
+                      ? updatedProfile.favorite_titles
+                      : [],
                   ),
                 );
               },
@@ -1347,7 +1316,7 @@ export default function Profile() {
           return current;
         }
 
-        const next = normalizePinnedFavoriteKeys([...current, key]);
+        const next = [...current, key];
         void persistPinnedFavorites(next);
         toast({
           title: "Pinned to favorites",

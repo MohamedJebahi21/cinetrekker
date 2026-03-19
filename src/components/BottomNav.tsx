@@ -1,43 +1,53 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, type ComponentType } from "react";
-import { useTranslation } from "react-i18next";
-import { useAuth } from "@/contexts/auth-context";
 import Home from "lucide-react/dist/esm/icons/home";
 import SearchIcon from "lucide-react/dist/esm/icons/search";
 import Bookmark from "lucide-react/dist/esm/icons/bookmark";
-import CheckCircle2 from "lucide-react/dist/esm/icons/check-circle-2";
 import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal";
+import CheckCircle2 from "lucide-react/dist/esm/icons/check-circle-2";
 import BarChart3 from "lucide-react/dist/esm/icons/bar-chart-3";
 import Settings from "lucide-react/dist/esm/icons/settings";
 import Calendar from "lucide-react/dist/esm/icons/calendar";
 import Sparkles from "lucide-react/dist/esm/icons/sparkles";
 import User from "lucide-react/dist/esm/icons/user";
 import Trophy from "lucide-react/dist/esm/icons/trophy";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { useTheme } from "@/contexts/theme-context";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 interface NavItem {
   path: string;
   label: string;
   icon: ComponentType<{ className?: string }>;
+  requiresAuth?: boolean;
   badge?: number | boolean;
 }
 
 const PRIMARY_NAV_ITEMS: NavItem[] = [
   { path: "/", label: "Home", icon: Home },
-  { path: "/search", label: "Discover", icon: SearchIcon },
-  { path: "/enhanced-stats", label: "Stats", icon: BarChart3 },
-  { path: "/watchlist", label: "Watchlist", icon: Bookmark },
+  { path: "/search", label: "Search", icon: SearchIcon },
+  { path: "/watchlist", label: "Watchlist", icon: Bookmark, requiresAuth: true },
 ];
 
 const SECONDARY_NAV_ITEMS: NavItem[] = [
-  { path: "/watched", label: "Watched", icon: CheckCircle2 },
-  { path: "/calendar", label: "Calendar", icon: Calendar },
-  { path: "/recommendations", label: "Recommendations", icon: Sparkles },
-  { path: "/achievements", label: "Achievements", icon: Trophy },
-  { path: "/accessibility", label: "Accessibility", icon: Settings },
-  { path: "/profile", label: "Profile", icon: User },
+  { path: "/watched", label: "Watched", icon: CheckCircle2, requiresAuth: true },
+  { path: "/stats", label: "Stats", icon: BarChart3, requiresAuth: true },
+  { path: "/calendar", label: "Calendar", icon: Calendar, requiresAuth: true },
+  {
+    path: "/recommendations",
+    label: "Recommendations",
+    icon: Sparkles,
+    requiresAuth: true,
+  },
+  { path: "/achievements", label: "Achievements", icon: Trophy, requiresAuth: true },
+  { path: "/profile", label: "Profile", icon: User, requiresAuth: true },
+  { path: "/settings", label: "Settings", icon: Settings },
 ];
 
 interface BottomNavProps {
@@ -46,9 +56,6 @@ interface BottomNavProps {
   watchedCount?: number;
 }
 
-/**
- * Mobile bottom navigation component
- */
 export function BottomNav({
   showOnMobile = true,
   watchlistCount,
@@ -56,190 +63,125 @@ export function BottomNav({
 }: BottomNavProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { t } = useTranslation();
   const { user } = useAuth();
-  const { theme } = useTheme();
-  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
-  const isLightTheme = theme === "light";
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   if (!showOnMobile) return null;
 
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + "/");
 
-  const handleNavigate = (path: string) => {
-    // Redirect to login if trying to access a protected route without authentication
-    const protectedPaths = [
-      "/profile",
-      "/watchlist",
-      "/watched",
-      "/recommendations",
-      "/calendar",
-      "/enhanced-stats",
-      "/achievements",
-      "/settings",
-    ];
-    if (
-      protectedPaths.some((p) => path === p || path.startsWith(p + "/")) &&
-      !user
-    ) {
-      navigate("/login");
-    } else {
-      navigate(path);
-    }
+  const handleNavigate = (item: NavItem) => {
+    const target = item.requiresAuth && !user ? "/login" : item.path;
+    navigate(target);
+    setSheetOpen(false);
   };
+
+  const primaryItems = PRIMARY_NAV_ITEMS.map((item) => ({
+    ...item,
+    badge: item.path === "/watchlist" ? watchlistCount : item.badge,
+  }));
 
   return (
     <>
-      {/* Mobile Bottom Nav (only visible on small screens) */}
-      <nav
-        className={cn(
-          "fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-xl bg-opacity-95 md:hidden",
-          isLightTheme
-            ? "border-black/10 bg-gradient-to-t from-white to-neutral-100 shadow-md"
-            : "border-white/5 bg-gradient-to-t from-surface-dark-1 to-surface-dark-2 shadow-glow",
-        )}
-      >
-        <div className="flex items-center justify-between h-20 px-2 gap-2">
-          {PRIMARY_NAV_ITEMS.map((item) => {
+      <nav className="mobile-nav-safe fixed bottom-0 left-0 right-0 z-40 w-full max-w-full overflow-hidden border-t border-border/70 bg-background/95 backdrop-blur-xl md:hidden">
+        <div className="grid min-h-[4.5rem] grid-cols-4 gap-1 px-2 pt-2">
+          {primaryItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
-            let badge = null;
-
-            if (item.path === "/watchlist" && watchlistCount) {
-              badge = watchlistCount;
-            } else if (item.path === "/watched" && watchedCount) {
-              badge = watchedCount;
-            }
 
             return (
               <button
                 key={item.path}
-                onClick={() => handleNavigate(item.path)}
+                type="button"
+                onClick={() => handleNavigate(item)}
                 aria-label={item.label}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-xl transition-all duration-200 interactive-element",
+                  "flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl px-2 text-[11px] font-semibold transition-colors",
                   active
-                    ? "bg-primary/10 text-primary shadow-glow"
-                    : cn(
-                        "text-muted-foreground hover:text-foreground",
-                        isLightTheme ? "hover:bg-black/5" : "hover:bg-surface-dark-3",
-                      ),
+                    ? "bg-primary/12 text-primary"
+                    : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
                 )}
               >
-                <div className="relative">
-                  <Icon
-                    className={cn(
-                      "h-5 w-5 transition-transform duration-200",
-                      active && "fill-current scale-110",
-                    )}
-                  />
-                  {badge && (
-                    <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-[10px] rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-glow">
-                      {typeof badge === "number" && badge > 99 ? "99+" : badge}
+                <span className="relative">
+                  <Icon className={cn("h-5 w-5", active && "scale-110")} />
+                  {item.badge ? (
+                    <span className="absolute -right-2 -top-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+                      {typeof item.badge === "number" && item.badge > 99
+                        ? "99+"
+                        : item.badge}
                     </span>
-                  )}
-                </div>
-                <span className="text-[10px] font-semibold leading-none">
-                  {item.label}
+                  ) : null}
                 </span>
+                <span>{item.label}</span>
               </button>
             );
           })}
 
-          {/* More Menu */}
-          <div className="relative flex-1">
-            <button
-              aria-label="More"
-              aria-haspopup="menu"
-              onClick={() => setMoreMenuOpen(!moreMenuOpen)}
-              className={cn(
-                "w-full flex flex-col items-center gap-1 py-3 px-2 rounded-xl transition-all duration-200 interactive-element text-muted-foreground hover:text-foreground",
-                isLightTheme ? "hover:bg-black/5" : "hover:bg-surface-dark-3",
-              )}
-            >
-              <MoreHorizontal className="h-5 w-5" />
-              <span className="text-[10px] font-semibold leading-none">
-                More
-              </span>
-            </button>
-            
-            {moreMenuOpen && (
-              <>
-                <div 
-                  className="fixed inset-0 z-40" 
-                  onClick={() => setMoreMenuOpen(false)} 
-                />
-                <div className="absolute bottom-full right-0 mb-4 w-48 bg-popover text-popover-foreground rounded-md shadow-md border z-50 overflow-hidden">
-                  {SECONDARY_NAV_ITEMS.map((item) => {
-                    const Icon = item.icon;
-                    const active = isActive(item.path);
-                    return (
-                      <button
-                        key={item.path}
-                        onClick={() => {
-                          setMoreMenuOpen(false);
-                          handleNavigate(item.path);
-                        }}
-                        className={cn(
-                          "w-full flex items-center px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors",
-                          active && "bg-primary/10 text-primary"
-                        )}
-                      >
-                        <Icon className="h-4 w-4 mr-2" />
-                        <span>{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={() => setSheetOpen(true)}
+            aria-label="More"
+            className="flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl px-2 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+          >
+            <MoreHorizontal className="h-5 w-5" />
+            <span>More</span>
+          </button>
         </div>
       </nav>
 
-      {/* Spacer to prevent content overlap */}
-      <div className="h-20 md:hidden" />
+      <div className="h-24 md:hidden" />
+
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side="bottom" className="rounded-t-3xl px-4 pb-8 pt-6 md:hidden">
+          <SheetHeader className="text-left">
+            <SheetTitle>More</SheetTitle>
+            <SheetDescription>
+              Quick access to the rest of CineTrekker.
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            {SECONDARY_NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.path);
+              const badge =
+                item.path === "/watched" ? watchedCount : item.badge;
+
+              return (
+                <button
+                  key={item.path}
+                  type="button"
+                  onClick={() => handleNavigate(item)}
+                  className={cn(
+                    "flex min-h-[72px] items-center gap-3 rounded-2xl border border-border/60 px-4 py-3 text-left transition-colors",
+                    active
+                      ? "border-primary/30 bg-primary/10 text-primary"
+                      : "bg-card/70 text-foreground hover:bg-accent/50",
+                  )}
+                >
+                  <span className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl bg-muted/70">
+                    <Icon className="h-5 w-5" />
+                    {badge ? (
+                      <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+                        {typeof badge === "number" && badge > 99 ? "99+" : badge}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="text-sm font-medium">{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
 
-/**
- * Desktop side navigation bar
- */
 export function SideNav() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { t } = useTranslation();
-
-  const isActive = (path: string) =>
-    location.pathname === path || location.pathname.startsWith(path + "/");
-
-  return (
-    <nav className="hidden md:fixed md:left-0 md:top-20 md:w-48 md:flex md:flex-col md:gap-1 md:p-4 md:border-r md:border-border">
-      {[...PRIMARY_NAV_ITEMS, ...SECONDARY_NAV_ITEMS].map((item) => {
-        const Icon = item.icon;
-        const active = isActive(item.path);
-
-        return (
-          <button
-            key={item.path}
-            onClick={() => navigate(item.path)}
-            className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-              active
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-muted",
-            )}
-          >
-            <Icon className="h-5 w-5" />
-            <span>{item.label}</span>
-          </button>
-        );
-      })}
-    </nav>
-  );
+  return null;
 }
 
 export default BottomNav;

@@ -11,7 +11,7 @@ import {
   type PersonDetails,
 } from "@/services/tmdb";
 import { profileService } from "@/services/profile";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/contexts/AuthContext";
 import { logger } from "@/lib/logger";
 import {
   Tooltip,

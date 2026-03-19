@@ -19,13 +19,21 @@ import Trophy from "lucide-react/dist/esm/icons/trophy";
 import Layers from "lucide-react/dist/esm/icons/layers";
 import CalendarDays from "lucide-react/dist/esm/icons/calendar-days";
 import Award from "lucide-react/dist/esm/icons/award";
+import User from "lucide-react/dist/esm/icons/user";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/auth-context";
-import { useTheme } from "@/contexts/theme-context";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { NotificationBell } from "@/components/NotificationBell";
 import { SearchDropdown } from "@/components/SearchDropdown";
 import { profileService } from "@/services/profile";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 interface NavItem {
   path: string;
@@ -94,6 +102,12 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
+const THEME_OPTIONS = [
+  { value: "dark", label: "Dark" },
+  { value: "light", label: "Light" },
+  { value: "oled", label: "OLED" },
+] as const;
+
 export function UnifiedNav() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
@@ -102,27 +116,24 @@ export function UnifiedNav() {
   const { theme, setTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
+  const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const desktopMenuRef = useRef<HTMLDivElement>(null);
   const desktopToggleButtonRef = useRef<HTMLButtonElement>(null);
   const desktopThemeMenuRef = useRef<HTMLDivElement>(null);
-  const mobileThemeMenuRef = useRef<HTMLDivElement>(null);
 
-  // Fetch profile from Supabase to get the uploaded profile photo
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
     queryFn: () => profileService.getProfile(user!.id),
     enabled: !!user?.id,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
   const profileImageUrl = useMemo(() => {
-    // Prefer uploaded profile photo from database
     if (profile?.profile_photo) {
       return profile.profile_photo;
     }
 
-    // Fallback to auth metadata
     const metadata = user?.user_metadata as Record<string, unknown> | undefined;
     const candidates = [
       metadata?.avatar_url,
@@ -161,21 +172,22 @@ export function UnifiedNav() {
 
   useEffect(() => {
     const onClickOutside = (event: MouseEvent | TouchEvent) => {
-      if (!isMenuOpen) return;
-
       const target = event.target as Node;
-      const clickedInsideDesktopMenu = desktopMenuRef.current?.contains(target);
-      const clickedDesktopToggle =
-        desktopToggleButtonRef.current?.contains(target);
 
-      if (!clickedInsideDesktopMenu && !clickedDesktopToggle) {
-        setIsMenuOpen(false);
+      if (isMenuOpen) {
+        const clickedInsideDesktopMenu = desktopMenuRef.current?.contains(target);
+        const clickedDesktopToggle =
+          desktopToggleButtonRef.current?.contains(target);
+
+        if (!clickedInsideDesktopMenu && !clickedDesktopToggle) {
+          setIsMenuOpen(false);
+        }
       }
 
-      const clickedInsideThemeMenu =
-        desktopThemeMenuRef.current?.contains(target) ||
-        mobileThemeMenuRef.current?.contains(target);
-      if (!clickedInsideThemeMenu) {
+      if (
+        isThemeMenuOpen &&
+        !desktopThemeMenuRef.current?.contains(target)
+      ) {
         setIsThemeMenuOpen(false);
       }
     };
@@ -184,6 +196,7 @@ export function UnifiedNav() {
       if (event.key === "Escape") {
         setIsMenuOpen(false);
         setIsThemeMenuOpen(false);
+        setIsMobileSheetOpen(false);
       }
     };
 
@@ -196,19 +209,32 @@ export function UnifiedNav() {
       document.removeEventListener("touchstart", onClickOutside);
       document.removeEventListener("keydown", onEscape);
     };
-  }, [isMenuOpen]);
+  }, [isMenuOpen, isThemeMenuOpen]);
 
   useEffect(() => {
     setIsMenuOpen(false);
     setIsThemeMenuOpen(false);
+    setIsMobileSheetOpen(false);
   }, [pathname]);
 
-  const activePath = useMemo(() => {
-    return NAV_ITEMS.find((item) => {
-      if (item.exact) return pathname === item.path;
-      return pathname.startsWith(item.path);
-    })?.path;
-  }, [pathname]);
+  const openSearch = () => {
+    window.dispatchEvent(new CustomEvent("open-search-overlay"));
+  };
+
+  const renderProfileAvatar = () =>
+    profileImageUrl ? (
+      <img
+        src={profileImageUrl}
+        alt={t("nav.profile", "Profile")}
+        className="h-8 w-8 rounded-full object-cover"
+        loading="lazy"
+        referrerPolicy="no-referrer"
+      />
+    ) : (
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+        {profileInitial}
+      </span>
+    );
 
   return (
     <header
@@ -218,200 +244,98 @@ export function UnifiedNav() {
         isScrolled && "scrolled",
       )}
     >
-      <div className="container mx-auto flex h-full items-center justify-between px-4 gap-4">
+      <div className="container mx-auto flex h-full items-center justify-between gap-3 px-3 sm:px-4 md:gap-4">
         <Link
           to="/"
-          className="flex items-center gap-3 group flex-shrink-0"
+          className="group flex flex-shrink-0 items-center gap-3"
           aria-label={t("common.appName", "CineTrekker")}
         >
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary transition-all duration-300 group-hover:shadow-[0_0_20px_hsl(358_94%_46%/0.5)]">
-            <span className="text-xl font-bold text-primary-foreground">
-              CT
+            <span className="text-xl font-bold text-primary-foreground">CT</span>
+          </div>
+          <div className="hidden min-w-0 sm:block">
+            <span className="block text-base font-bold text-foreground lg:text-xl">
+              {t("common.appName", "CineTrekker")}
             </span>
           </div>
-          <span className="text-xl font-bold text-foreground hidden lg:block">
-            {t("common.appName", "CineTrekker")}
-          </span>
         </Link>
 
         {!isSearchPage && (
-          <div className="hidden md:block flex-1 max-w-xl mx-4">
+          <div className="mx-4 hidden max-w-xl flex-1 md:block">
             <SearchDropdown />
           </div>
         )}
 
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden items-center gap-1 md:flex">
           <NotificationBell />
+
           {user ? (
             <>
               <Link
                 to="/profile"
                 className={cn(
-                  "inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent",
+                  "inline-flex min-h-[48px] min-w-[48px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent",
                   pathname.startsWith("/profile") && "text-primary",
                 )}
                 aria-label={t("nav.profile", "Profile")}
               >
-                {profileImageUrl ? (
-                  <img
-                    src={profileImageUrl}
-                    alt={t("nav.profile", "Profile")}
-                    className="h-8 w-8 rounded-full object-cover"
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <span className="h-8 w-8 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center">
-                    {profileInitial}
-                  </span>
-                )}
+                {renderProfileAvatar()}
               </Link>
 
               <Link
                 to="/settings"
-                className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent"
+                className="inline-flex min-h-[48px] min-w-[48px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent"
                 aria-label={t("nav.settings", "Settings")}
               >
                 <Settings className="h-5 w-5" />
               </Link>
-
-              <div className="relative" ref={desktopThemeMenuRef}>
-                {/* Explicit controlled menu: click opens list, selection applies theme */}
-                <button
-                  type="button"
-                  onClick={() => setIsThemeMenuOpen((prev) => !prev)}
-                  className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent"
-                  aria-label={t("nav.changeTheme", "Change theme")}
-                  title={`${t("nav.changeTheme", "Change theme")} (${theme.toUpperCase()})`}
-                >
-                  <Palette className="h-5 w-5" />
-                </button>
-
-                {isThemeMenuOpen && (
-                  <div className="absolute right-0 top-full z-50 mt-2 min-w-[140px] rounded-md border border-border/50 bg-popover/95 p-1 shadow-lg backdrop-blur-xl">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTheme("dark");
-                        setIsThemeMenuOpen(false);
-                      }}
-                      className={cn(
-                        "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
-                        theme === "dark" && "bg-accent",
-                      )}
-                    >
-                      {t("nav.themeDark", "Dark")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTheme("light");
-                        setIsThemeMenuOpen(false);
-                      }}
-                      className={cn(
-                        "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
-                        theme === "light" && "bg-accent",
-                      )}
-                    >
-                      {t("nav.themeLight", "Light")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTheme("oled");
-                        setIsThemeMenuOpen(false);
-                      }}
-                      className={cn(
-                        "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
-                        theme === "oled" && "bg-accent",
-                      )}
-                    >
-                      {t("nav.themeOled", "OLED")}
-                    </button>
-                  </div>
-                )}
-              </div>
             </>
           ) : (
-            <>
-              <Link
-                to="/settings"
-                className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent"
-                aria-label={t("nav.settings", "Settings")}
-              >
-                <Settings className="h-5 w-5" />
-              </Link>
-
-              <div className="relative" ref={desktopThemeMenuRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsThemeMenuOpen((prev) => !prev)}
-                  className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent"
-                  aria-label={t("nav.changeTheme", "Change theme")}
-                  title={`${t("nav.changeTheme", "Change theme")} (${theme.toUpperCase()})`}
-                >
-                  <Palette className="h-5 w-5" />
-                </button>
-
-                {isThemeMenuOpen && (
-                  <div className="absolute right-0 top-full z-50 mt-2 min-w-[140px] rounded-md border border-border/50 bg-popover/95 p-1 shadow-lg backdrop-blur-xl">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTheme("dark");
-                        setIsThemeMenuOpen(false);
-                      }}
-                      className={cn(
-                        "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
-                        theme === "dark" && "bg-accent",
-                      )}
-                    >
-                      {t("nav.themeDark", "Dark")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTheme("light");
-                        setIsThemeMenuOpen(false);
-                      }}
-                      className={cn(
-                        "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
-                        theme === "light" && "bg-accent",
-                      )}
-                    >
-                      {t("nav.themeLight", "Light")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTheme("oled");
-                        setIsThemeMenuOpen(false);
-                      }}
-                      className={cn(
-                        "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
-                        theme === "oled" && "bg-accent",
-                      )}
-                    >
-                      {t("nav.themeOled", "OLED")}
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <Link
-                to="/login"
-                className="inline-flex items-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-              >
-                <LogIn className="h-4 w-4 mr-2" />
-                {t("nav.signIn", "Sign In")}
-              </Link>
-            </>
+            <Link
+              to="/login"
+              className="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              <LogIn className="mr-2 h-4 w-4" />
+              {t("nav.signIn", "Sign In")}
+            </Link>
           )}
+
+          <div className="relative" ref={desktopThemeMenuRef}>
+            <button
+              type="button"
+              onClick={() => setIsThemeMenuOpen((prev) => !prev)}
+              className="inline-flex min-h-[48px] min-w-[48px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent"
+              aria-label={t("nav.changeTheme", "Change theme")}
+            >
+              <Palette className="h-5 w-5" />
+            </button>
+
+            {isThemeMenuOpen && (
+              <div className="absolute right-0 top-full z-50 mt-2 min-w-[140px] rounded-md border border-border/50 bg-popover/95 p-1 shadow-lg backdrop-blur-xl">
+                {THEME_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      setTheme(option.value);
+                      setIsThemeMenuOpen(false);
+                    }}
+                    className={cn(
+                      "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
+                      theme === option.value && "bg-accent",
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           <button
             ref={desktopToggleButtonRef}
             type="button"
-            className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground hover:bg-accent transition-colors"
+            className="inline-flex min-h-[48px] min-w-[48px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent"
             onClick={() => setIsMenuOpen((prev) => !prev)}
             aria-label={
               isMenuOpen
@@ -419,194 +343,42 @@ export function UnifiedNav() {
                 : t("nav.openMenu", "Open menu")
             }
           >
-            {isMenuOpen ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
+            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
 
-        <div className="md:hidden flex items-center gap-1">
-          <NotificationBell />
-          {user ? (
-            <>
-              <Link
-                to="/profile"
-                className={cn(
-                  "inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent",
-                  pathname.startsWith("/profile") && "text-primary",
-                )}
-                aria-label={t("nav.profile", "Profile")}
-              >
-                {profileImageUrl ? (
-                  <img
-                    src={profileImageUrl}
-                    alt={t("nav.profile", "Profile")}
-                    className="h-8 w-8 rounded-full object-cover"
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <span className="h-8 w-8 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center">
-                    {profileInitial}
-                  </span>
-                )}
-              </Link>
+        <div className="flex items-center gap-1 md:hidden">
+          <button
+            type="button"
+            onClick={openSearch}
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent"
+            aria-label={t("nav.search", "Search")}
+          >
+            <Search className="h-5 w-5" />
+          </button>
 
-              <Link
-                to="/settings"
-                className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent"
-                aria-label={t("nav.settings", "Settings")}
-              >
-                <Settings className="h-5 w-5" />
-              </Link>
-
-              <div className="relative" ref={mobileThemeMenuRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsThemeMenuOpen((prev) => !prev)}
-                  className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent"
-                  aria-label={t("nav.changeTheme", "Change theme")}
-                  title={`${t("nav.changeTheme", "Change theme")} (${theme.toUpperCase()})`}
-                >
-                  <Palette className="h-5 w-5" />
-                </button>
-
-                {isThemeMenuOpen && (
-                  <div className="absolute right-0 top-full z-50 mt-2 min-w-[140px] rounded-md border border-border/50 bg-popover/95 p-1 shadow-lg backdrop-blur-xl">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTheme("dark");
-                        setIsThemeMenuOpen(false);
-                      }}
-                      className={cn(
-                        "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
-                        theme === "dark" && "bg-accent",
-                      )}
-                    >
-                      {t("nav.themeDark", "Dark")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTheme("light");
-                        setIsThemeMenuOpen(false);
-                      }}
-                      className={cn(
-                        "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
-                        theme === "light" && "bg-accent",
-                      )}
-                    >
-                      {t("nav.themeLight", "Light")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTheme("oled");
-                        setIsThemeMenuOpen(false);
-                      }}
-                      className={cn(
-                        "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
-                        theme === "oled" && "bg-accent",
-                      )}
-                    >
-                      {t("nav.themeOled", "OLED")}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </>
-          ) : (
-            <>
-              <Link
-                to="/settings"
-                className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent"
-                aria-label={t("nav.settings", "Settings")}
-              >
-                <Settings className="h-5 w-5" />
-              </Link>
-
-              <div className="relative" ref={mobileThemeMenuRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsThemeMenuOpen((prev) => !prev)}
-                  className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent"
-                  aria-label={t("nav.changeTheme", "Change theme")}
-                  title={`${t("nav.changeTheme", "Change theme")} (${theme.toUpperCase()})`}
-                >
-                  <Palette className="h-5 w-5" />
-                </button>
-
-                {isThemeMenuOpen && (
-                  <div className="absolute right-0 top-full z-50 mt-2 min-w-[140px] rounded-md border border-border/50 bg-popover/95 p-1 shadow-lg backdrop-blur-xl">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTheme("dark");
-                        setIsThemeMenuOpen(false);
-                      }}
-                      className={cn(
-                        "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
-                        theme === "dark" && "bg-accent",
-                      )}
-                    >
-                      {t("nav.themeDark", "Dark")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTheme("light");
-                        setIsThemeMenuOpen(false);
-                      }}
-                      className={cn(
-                        "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
-                        theme === "light" && "bg-accent",
-                      )}
-                    >
-                      {t("nav.themeLight", "Light")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTheme("oled");
-                        setIsThemeMenuOpen(false);
-                      }}
-                      className={cn(
-                        "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
-                        theme === "oled" && "bg-accent",
-                      )}
-                    >
-                      {t("nav.themeOled", "OLED")}
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <Link
-                to="/login"
-                className="inline-flex items-center justify-center p-2 rounded-lg text-foreground hover:bg-accent transition-colors"
-                aria-label={t("nav.signIn", "Sign In")}
-              >
-                <LogIn className="h-5 w-5" />
-              </Link>
-            </>
-          )}
+          <button
+            type="button"
+            onClick={() => setIsMobileSheetOpen(true)}
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent"
+            aria-label={t("nav.openMenu", "Open menu")}
+          >
+            {user ? renderProfileAvatar() : <Menu className="h-5 w-5" />}
+          </button>
         </div>
       </div>
 
       <div
         ref={desktopMenuRef}
         className={cn(
-          "hidden md:block absolute right-4 top-[calc(4rem+env(safe-area-inset-top,0px)+0.4rem)] z-50 w-80 max-h-[calc(100vh-6.5rem)] overflow-y-auto overscroll-contain rounded-xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl transition-all duration-300 ease-out",
+          "absolute right-4 top-[calc(4rem+env(safe-area-inset-top,0px)+0.4rem)] z-50 hidden max-h-[calc(100vh-6.5rem)] w-80 overflow-y-auto overscroll-contain rounded-xl border border-border/50 bg-background/95 shadow-xl backdrop-blur-xl transition-all duration-300 ease-out md:block",
           isMenuOpen
-            ? "opacity-100 translate-y-0 pointer-events-auto"
-            : "opacity-0 -translate-y-2 pointer-events-none",
+            ? "pointer-events-auto translate-y-0 opacity-100"
+            : "pointer-events-none -translate-y-2 opacity-0",
         )}
       >
         <nav
-          className="p-3 grid grid-cols-2 gap-1"
+          className="grid grid-cols-2 gap-1 p-3"
           aria-label={t("nav.main", "Main navigation")}
         >
           {NAV_ITEMS.map((item) => {
@@ -619,14 +391,14 @@ export function UnifiedNav() {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "px-3 py-3 rounded-lg text-sm font-medium transition-colors min-h-[48px] flex items-center",
+                  "flex min-h-[48px] items-center rounded-lg px-3 py-3 text-sm font-medium transition-colors",
                   isActive
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-accent hover:text-foreground",
                 )}
                 aria-current={isActive ? "page" : undefined}
               >
-                <Icon className="h-4 w-4 mr-2" />
+                <Icon className="mr-2 h-4 w-4" />
                 {t(item.key, item.fallback)}
               </Link>
             );
@@ -640,21 +412,145 @@ export function UnifiedNav() {
                   signOut();
                   setIsMenuOpen(false);
                 }}
-                className="col-span-2 px-4 py-3 rounded-lg text-sm font-medium text-left text-destructive hover:bg-destructive/10 min-h-[48px]"
+                className="col-span-2 min-h-[48px] rounded-lg px-4 py-3 text-left text-sm font-medium text-destructive hover:bg-destructive/10"
               >
                 {t("nav.signOut", "Sign Out")}
               </button>
             ) : (
               <Link
                 to="/login"
-                className="col-span-2 px-4 py-3 rounded-lg text-sm font-medium min-h-[48px] flex items-center justify-center bg-primary text-primary-foreground"
+                className="col-span-2 flex min-h-[48px] items-center justify-center rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
               >
-                <LogIn className="h-4 w-4 mr-2" />
+                <LogIn className="mr-2 h-4 w-4" />
                 {t("nav.signIn", "Sign In")}
               </Link>
             ))}
         </nav>
       </div>
+
+      <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
+        <SheetContent side="right" className="w-[86vw] max-w-sm px-4 pb-8 pt-6 md:hidden">
+          <SheetHeader className="text-left">
+            <SheetTitle>{t("common.appName", "CineTrekker")}</SheetTitle>
+            <SheetDescription>
+              Browse quickly on phones and tablets without a crowded header.
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="mt-6 space-y-6">
+            <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card/70 p-3">
+              {user ? renderProfileAvatar() : <User className="h-8 w-8 text-muted-foreground" />}
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold text-foreground">
+                  {user?.email || "Guest"}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {user ? "Signed in" : "Sign in to sync your lists"}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  openSearch();
+                  setIsMobileSheetOpen(false);
+                }}
+                className="flex min-h-[56px] items-center justify-center gap-2 rounded-2xl border border-border/60 bg-card/70 text-sm font-medium"
+              >
+                <Search className="h-4 w-4" />
+                Search
+              </button>
+              <div className="flex min-h-[56px] items-center justify-center rounded-2xl border border-border/60 bg-card/70">
+                <NotificationBell />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                Theme
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {THEME_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setTheme(option.value)}
+                    className={cn(
+                      "rounded-xl border border-border/60 px-3 py-2 text-sm font-medium",
+                      theme === option.value
+                        ? "border-primary/40 bg-primary/10 text-primary"
+                        : "bg-card/60 text-foreground",
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <nav className="space-y-2" aria-label={t("nav.main", "Main navigation")}>
+              {NAV_ITEMS.map((item) => {
+                const Icon = item.icon;
+                const isActive = item.exact
+                  ? pathname === item.path
+                  : pathname.startsWith(item.path);
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setIsMobileSheetOpen(false)}
+                    className={cn(
+                      "flex min-h-[52px] items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors",
+                      isActive
+                        ? "bg-primary/10 text-primary"
+                        : "bg-card/60 text-foreground hover:bg-accent/50",
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {t(item.key, item.fallback)}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <div className="space-y-2">
+              <Link
+                to="/settings"
+                onClick={() => setIsMobileSheetOpen(false)}
+                className="flex min-h-[52px] items-center gap-3 rounded-2xl bg-card/60 px-4 py-3 text-sm font-medium text-foreground"
+              >
+                <Settings className="h-4 w-4" />
+                {t("nav.settings", "Settings")}
+              </Link>
+
+              {user ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    void signOut();
+                    setIsMobileSheetOpen(false);
+                  }}
+                  className="flex min-h-[52px] w-full items-center gap-3 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive"
+                >
+                  <LogOut className="h-4 w-4" />
+                  {t("nav.signOut", "Sign Out")}
+                </button>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={() => setIsMobileSheetOpen(false)}
+                  className="flex min-h-[52px] items-center gap-3 rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+                >
+                  <LogIn className="h-4 w-4" />
+                  {t("nav.signIn", "Sign In")}
+                </Link>
+              )}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </header>
   );
 }

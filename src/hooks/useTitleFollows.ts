@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import type { MediaDetails } from "@/types/media";
 
@@ -129,7 +129,7 @@ function normalizeMovieFollow(row: {
   movie_id: string;
   created_at: string;
   user_id: string;
-}) {
+}): FollowedTitle | null {
   const [mediaType, mediaIdText] = row.movie_id.split("-");
   const mediaId = Number(mediaIdText);
 
@@ -314,21 +314,18 @@ export function useTitleFollows() {
       }
 
       return dedupeTitles([
-        ...showsResult.data.map(
-          (show) =>
-            ({
-              id: createFollowKey("tv", show.show_id),
-              mediaId: show.show_id,
-              mediaType: "tv",
-              title: show.show_name,
-              posterPath: show.poster_path,
-              followedAt: show.followed_at,
-              userId: show.user_id,
-            }) satisfies FollowedTitle,
-        ),
+        ...showsResult.data.map((show): FollowedTitle => ({
+          id: createFollowKey("tv", show.show_id),
+          mediaId: show.show_id,
+          mediaType: "tv",
+          title: show.show_name,
+          posterPath: show.poster_path,
+          followedAt: show.followed_at,
+          userId: show.user_id,
+        })),
         ...moviesResult.data
           .map(normalizeMovieFollow)
-          .filter((item): item is FollowedTitle => Boolean(item)),
+          .filter((item): item is FollowedTitle => item !== null),
       ]);
     },
   });

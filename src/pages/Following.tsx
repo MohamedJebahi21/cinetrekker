@@ -2,18 +2,13 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Heart } from "lucide-react";
 import { useTitleFollows } from "@/hooks/useTitleFollows";
-import {
-  getMovieDetails,
-  getTVDetails,
-  getImageUrl,
-  getMediaTitle,
-} from "@/services/tmdb";
+import { getImageUrl, getMediaTitle } from "@/services/tmdb";
 import { Media } from "@/types/media";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import SEO from "@/components/SEO";
 import { EmptyState } from "@/components/EmptyStates";
-import { createFallbackMedia } from "@/lib/mediaFallback";
+import { enrichMediaItems } from "@/lib/mediaEnrichment";
 
 export default function Following() {
   const { t, i18n } = useTranslation();
@@ -27,35 +22,20 @@ export default function Following() {
       language,
     ],
     queryFn: async () => {
-      const results = await Promise.all(
-        followedTitles.map(async (followedTitle) => {
-          try {
-            const details =
-              followedTitle.mediaType === "movie"
-                ? await getMovieDetails(followedTitle.mediaId, language)
-                : await getTVDetails(followedTitle.mediaId, language);
-            return {
-              ...details,
-              media_type: followedTitle.mediaType,
-              followedAt: followedTitle.followedAt,
-            } as Media & { followedAt?: string };
-          } catch (error) {
-            return createFallbackMedia(
-              {
-                mediaId: followedTitle.mediaId,
-                mediaType: followedTitle.mediaType,
-              },
-              { followedAt: followedTitle.followedAt },
-            ) as Media & { followedAt?: string };
-          }
+      return enrichMediaItems(followedTitles, {
+        language,
+        getReference: (item) => ({
+          mediaId: item.mediaId,
+          mediaType: item.mediaType,
         }),
-      );
-      return results;
+        mapExtras: (item) => ({ followedAt: item.followedAt }),
+        logScope: "following",
+      }) as Promise<(Media & { followedAt?: string })[]>;
     },
     enabled: followedTitles.length > 0,
   });
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -63,12 +43,12 @@ export default function Following() {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.4, ease: "easeOut" },
+      transition: { duration: 0.4, ease: "easeOut" as const },
     },
   };
 
@@ -163,7 +143,9 @@ export default function Following() {
             )}
             action={{
               label: t("following.discoverShows", "Discover Titles"),
-              href: "/search",
+              onClick: () => {
+                window.location.href = "/search";
+              },
             }}
           />
         )}

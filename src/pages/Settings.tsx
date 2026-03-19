@@ -7,7 +7,8 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import {
   Settings as SettingsIcon,
   Lock,
@@ -23,7 +24,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/contexts/AuthContext";
 import { logger } from "@/lib/logger";
 import { profileService } from "@/services/profile";
 import { languages } from "@/i18n";
@@ -59,7 +60,7 @@ import {
   type SettingsState,
 } from "@/pages/settings.utils";
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -67,12 +68,12 @@ const containerVariants = {
   },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.4, ease: "easeOut" },
+    transition: { duration: 0.4, ease: "easeOut" as const },
   },
 };
 
@@ -370,7 +371,7 @@ export default function Settings() {
   }, []);
 
   useEffect(() => {
-    let subscription: { unsubscribe: () => Promise<void> | void } | null = null;
+    let subscription: RealtimeChannel | null = null;
     let isMounted = true;
 
     const loadSettings = async () => {

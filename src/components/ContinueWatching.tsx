@@ -1,15 +1,14 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Play, Clock, Calendar } from 'lucide-react';
-import { useUserLists } from '@/contexts/user-lists-context';
-import type { MediaDetails, Season } from '@/types/media';
-import { getTVDetails } from '@/services/tmdb';
+import { Play, Calendar } from 'lucide-react';
+import { useUserLists } from '@/contexts/UserListsContext';
+import type { MediaDetails } from '@/types/media';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useTranslation } from 'react-i18next';
-import { createFallbackMedia } from '@/lib/mediaFallback';
+import { enrichMediaItems } from '@/lib/mediaEnrichment';
 
 interface TVShowWithProgress extends MediaDetails {
   currentEpisode: number;
@@ -29,29 +28,17 @@ export function ContinueWatching() {
 
   const { data: showsDetails, isLoading } = useQuery({
     queryKey: ['continue-watching', watchingShows.map((s) => s.mediaId), language],
-    queryFn: async () => {
-      const results = await Promise.all(
-        watchingShows.map(async (item) => {
-          try {
-            const details = await getTVDetails(item.mediaId, language);
-            return {
-              ...details,
-              currentEpisode: 1,
-              currentSeason: 1,
-              lastWatched: item.addedAt,
-            } as TVShowWithProgress;
-          } catch {
-            return {
-              ...createFallbackMedia(item),
-              currentEpisode: 1,
-              currentSeason: 1,
-              lastWatched: item.addedAt,
-            } as TVShowWithProgress;
-          }
-        })
-      );
-      return results;
-    },
+    queryFn: () =>
+      enrichMediaItems(watchingShows, {
+        language,
+        getReference: (item) => item,
+        mapExtras: (item) => ({
+          currentEpisode: 1,
+          currentSeason: 1,
+          lastWatched: item.addedAt,
+        }),
+        logScope: 'continue-watching',
+      }) as Promise<TVShowWithProgress[]>,
     enabled: watchingShows.length > 0,
   });
 

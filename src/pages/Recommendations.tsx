@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Sparkles, EyeOff, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useUserLists } from '@/contexts/user-lists-context';
+import { useUserLists } from '@/contexts/UserListsContext';
 import { getRecommendations, getSimilar } from '@/services/tmdb';
 import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
 import { Media } from '@/types/media';
@@ -13,6 +13,8 @@ export default function Recommendations() {
   const { t, i18n } = useTranslation();
   const { watched, watchlist, isHiddenFromRecommendations, hideFromRecommendations } = useUserLists();
   const language = i18n.language;
+  const resolveMediaType = (media: Media): "movie" | "tv" =>
+    media.media_type === "tv" ? "tv" : "movie";
 
   // Get last 10 watched items
   const recentWatched = watched.slice(-10);
@@ -64,7 +66,7 @@ export default function Recommendations() {
       const key = `${media.media_type}-${media.id}`;
       return !watchedIds.has(key) && 
              !watchlistIds.has(key) && 
-             !isHiddenFromRecommendations(media.id, media.media_type || 'movie');
+             !isHiddenFromRecommendations(media.id, resolveMediaType(media));
     })
     .filter((media, index, self) => 
       index === self.findIndex(m => m.id === media.id && m.media_type === media.media_type)
@@ -106,7 +108,7 @@ export default function Recommendations() {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  hideFromRecommendations(media.id, media.media_type || 'movie');
+                  hideFromRecommendations(media.id, resolveMediaType(media));
                 }}
                 title={t('recommendations.hideTitle')}
               >

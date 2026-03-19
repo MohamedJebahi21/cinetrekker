@@ -1,16 +1,12 @@
+import { getRequiredServerEnv } from "./env.js";
+
 const fetch = globalThis.fetch;
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const DEFAULT_DYNAMIC_LIMIT = 60;
 
 async function fetchTmdb(pathname, params = {}) {
-  const apiKey = process.env.TMDB_API_KEY || process.env.VITE_TMDB_API_KEY;
-  if (!apiKey) {
-    throw new Error(
-      "TMDB_API_KEY or VITE_TMDB_API_KEY is required to generate dynamic sitemap routes.",
-    );
-  }
-
+  const apiKey = getRequiredServerEnv("TMDB_API_KEY");
   const query = new URLSearchParams({ api_key: apiKey, ...params });
   const response = await fetch(`${TMDB_BASE}${pathname}?${query.toString()}`);
 

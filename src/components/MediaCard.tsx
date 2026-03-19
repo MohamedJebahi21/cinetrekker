@@ -3,13 +3,13 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Star,
-  ChevronRight,
   Check,
   BookmarkCheck,
   Loader2,
+  Ellipsis,
 } from "lucide-react";
 import Plus from "lucide-react/dist/esm/icons/plus";
-import { Media, type UserMediaItem } from "@/types/media";
+import { Media } from "@/types/media";
 import {
   getImageUrl,
   getMediaTitle,
@@ -17,12 +17,9 @@ import {
   getMediaType,
 } from "@/services/tmdb";
 import { useInView } from "@/hooks/useInView";
-import { useUserLists } from "@/contexts/user-lists-context";
-import { useAuth } from "@/contexts/auth-context";
+import { useUserLists } from "@/contexts/UserListsContext";
+import { useAuth } from "@/contexts/AuthContext";
 import {
-  getWatchlistIds,
-  addToLocalWatchlist,
-  removeFromLocalWatchlist,
   toggleLocalWatchlist,
   isInLocalWatchlist,
 } from "@/lib/watchlist";
@@ -38,6 +35,12 @@ import { useWatchedEpisodes } from "@/hooks/useFollowedShows";
 import { useEffect } from "react";
 import { Image } from "@/components/ui/Image";
 import { cn } from "../lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export interface MediaCardProps {
   media: Media & { watchStatus?: string };
@@ -101,17 +104,17 @@ function PosterImage({
     >
       {inView ? (
         tiny || small || medium ? (
-          <Image
-            src={small || medium || ""}
-            srcSet={`${tiny ? `${tiny} 92w, ` : ""}${small ? `${small} 185w, ` : ""}${medium ? `${medium} 342w` : ""}`}
-            sizes="(max-width: 480px) calc(50vw - 24px), (max-width: 768px) calc(33vw - 20px), (max-width: 1024px) calc(25vw - 20px), 200px"
-            alt={alt}
-            width={185}
-            height={278}
-            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-            loading="lazy"
-            fetchPriority="low"
-          />
+            <Image
+              src={small || medium || ""}
+              srcSet={`${tiny ? `${tiny} 92w, ` : ""}${small ? `${small} 185w, ` : ""}${medium ? `${medium} 342w` : ""}`}
+              sizes="(max-width: 639px) calc(50vw - 16px), (max-width: 1023px) calc(33vw - 24px), (max-width: 1279px) calc(25vw - 24px), 220px"
+              alt={alt}
+              width={185}
+              height={278}
+              className="w-full h-full object-cover transition-transform duration-500 ease-out md:group-hover:scale-105"
+              loading="lazy"
+              fetchPriority="low"
+            />
         ) : (
           <div className="w-full h-full skeleton-shimmer" />
         )
@@ -154,10 +157,6 @@ export const MediaCard = React.memo(function MediaCard({
     () => mediaTypeProp ?? getMediaType(media),
     [mediaTypeProp, media],
   );
-  const posterUrl = useMemo(
-    () => getImageUrl(media.poster_path, "w342"),
-    [media.poster_path],
-  );
   const posterAlt = `${title} Poster`;
   const inWatchlist = user
     ? isInWatchlist(media.id, mediaType)
@@ -165,8 +164,6 @@ export const MediaCard = React.memo(function MediaCard({
   const watched = isWatched(media.id, mediaType);
   const watchStatus = media.watchStatus;
   const rating = media.vote_average;
-  const ratingClass =
-    rating >= 7 ? "rating-high" : rating >= 5 ? "rating-medium" : "rating-low";
 
   useEffect(() => {
     setOptimisticInWatchlist(inWatchlist);
@@ -286,7 +283,7 @@ export const MediaCard = React.memo(function MediaCard({
           <PosterImage posterPath={media.poster_path} alt={title} />
 
           {/* Enhanced gradient overlay - darker on hover */}
-          <div className="absolute inset-0 bg-gradient-to-t from-surface-dark-2 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="absolute inset-0 bg-gradient-to-t from-surface-dark-2/80 via-transparent to-transparent opacity-100 transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100" />
 
           {/* Status Badges - positioned above gradient */}
           <div className="absolute top-2 left-2 right-2 flex justify-between items-start z-10">
@@ -346,7 +343,7 @@ export const MediaCard = React.memo(function MediaCard({
 
           {/* Quick Action Buttons - 32x32px circles with blur background */}
           {user && (
-            <div className="absolute left-1/2 bottom-2 transform -translate-x-1/2 z-10 flex gap-1.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
+            <div className="absolute left-1/2 bottom-2 z-10 hidden -translate-x-1/2 gap-1.5 transition-opacity duration-200 md:flex md:opacity-0 md:group-hover:opacity-100">
               {/* Watchlist Button */}
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -443,10 +440,73 @@ export const MediaCard = React.memo(function MediaCard({
           <h3 className="title-display min-h-[3.5rem] line-clamp-2 text-base font-semibold transition-colors group-hover:text-primary md:text-lg">
             {title}
           </h3>
-          {year && (
-            <p className="mt-auto pt-1 text-xs text-muted-foreground">{year}</p>
-          )}
+          <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+            {year ? (
+              <p className="text-xs text-muted-foreground">{year}</p>
+            ) : (
+              <span />
+            )}
+            {!user && rating > 0 ? (
+              <span className="text-xs font-medium text-muted-foreground">
+                {rating.toFixed(1)}
+              </span>
+            ) : null}
+          </div>
         </div>
+
+        {user && (
+          <div className="border-t border-border/50 p-3 md:hidden">
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant={optimisticInWatchlist ? "default" : "outline"}
+                className="min-h-[44px] flex-1 justify-center"
+                onClick={(event) => void handleWatchlistClick(event)}
+              >
+                {isWatchlistPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : optimisticInWatchlist ? (
+                  <BookmarkCheck className="mr-2 h-4 w-4" />
+                ) : (
+                  <Plus className="mr-2 h-4 w-4" />
+                )}
+                {optimisticInWatchlist
+                  ? t("actions.removeFromWatchlist")
+                  : t("actions.addToWatchlist")}
+              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-[44px] min-w-[44px] px-3"
+                    aria-label="More actions"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                    }}
+                  >
+                    <Ellipsis className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuItem
+                    onClick={(event) => void handleWatchedClick(event)}
+                  >
+                    <Check className="mr-2 h-4 w-4" />
+                    {optimisticWatched
+                      ? t("actions.removeFromWatched")
+                      : t("actions.markAsWatched")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to={`/${mediaType}/${media.id}`}>View details</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        )}
       </Link>
 
       {/* Media preview removed */}

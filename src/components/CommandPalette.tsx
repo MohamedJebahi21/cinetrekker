@@ -11,8 +11,8 @@ import {
   CommandShortcut,
   CommandSeparator,
 } from "@/components/ui/command";
-import { useTheme } from "@/contexts/theme-context";
-import { useAuth } from "@/contexts/auth-context";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { searchMulti } from "@/services/tmdb";
 import { useCollections } from "@/hooks/useCollections";
 import { useContentPolicy } from "@/contexts/content-policy-context";
@@ -28,7 +28,8 @@ export default function CommandPalette() {
   const { signOut } = useAuth();
   const { strictFiltering, moderateFiltering } = useContentPolicy();
   const includeAdult = !(strictFiltering || moderateFiltering);
-  const { data: collections = [] } = useCollections();
+  const { data: collectionsResult } = useCollections();
+  const collections = collectionsResult?.data ?? [];
   const safeCollections = (
     Array.isArray(collections) ? (collections as unknown[]) : []
   ).filter((value) => {

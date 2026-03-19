@@ -252,14 +252,14 @@ export default function Index() {
             <h2 className="section-title mb-0">
               {t("home.topThisWeek") || "Top This Week"}
             </h2>
-            <div className="flex gap-2 bg-card/50 border border-white/5 rounded-lg p-1">
+            <div className="flex gap-2 rounded-lg border border-white/5 bg-card/50 p-1">
               <button
                 type="button"
                 onClick={() => setTopThisWeekType("movie")}
                 aria-label={
                   t("home.topMoviesWeek") || "Show top movies this week"
                 }
-                className={`px-4 py-2 rounded text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                className={`min-h-[44px] rounded px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   topThisWeekType === "movie"
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -273,7 +273,7 @@ export default function Index() {
                 aria-label={
                   t("home.topSeriesWeek") || "Show top series this week"
                 }
-                className={`px-4 py-2 rounded text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                className={`min-h-[44px] rounded px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   topThisWeekType === "tv"
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -307,12 +307,12 @@ export default function Index() {
             <h2 className="section-title mb-0">
               {t("home.topRated") || "Top Rated"}
             </h2>
-            <div className="flex gap-2 bg-card/50 border border-white/5 rounded-lg p-1">
+            <div className="flex gap-2 rounded-lg border border-white/5 bg-card/50 p-1">
               <button
                 type="button"
                 onClick={() => setTopRatedType("movie")}
                 aria-label={t("home.topRatedMovies") || "Show top rated movies"}
-                className={`px-4 py-2 rounded text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                className={`min-h-[44px] rounded px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   topRatedType === "movie"
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -324,7 +324,7 @@ export default function Index() {
                 type="button"
                 onClick={() => setTopRatedType("tv")}
                 aria-label={t("home.topRatedSeries") || "Show top rated series"}
-                className={`px-4 py-2 rounded text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                className={`min-h-[44px] rounded px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   topRatedType === "tv"
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -357,16 +357,16 @@ export default function Index() {
           <Tabs defaultValue="day" className="w-full">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
               <h2 className="section-title mb-0">{t("home.trending")}</h2>
-              <TabsList className="bg-card/50 border border-white/5">
+              <TabsList className="min-h-[44px] border border-white/5 bg-card/50">
                 <TabsTrigger
                   value="day"
-                  className="text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  className="min-h-[44px] px-4 text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                 >
                   {t("home.trendingToday")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="week"
-                  className="text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  className="min-h-[44px] px-4 text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                 >
                   {t("home.trendingWeek")}
                 </TabsTrigger>
@@ -405,12 +405,12 @@ export default function Index() {
             <h2 className="section-title mb-0">
               {t("home.popular") || "Popular"}
             </h2>
-            <div className="flex gap-2 bg-card/50 border border-white/5 rounded-lg p-1">
+            <div className="flex gap-2 rounded-lg border border-white/5 bg-card/50 p-1">
               <button
                 type="button"
                 onClick={() => setPopularType("movie")}
                 aria-label={t("home.popularMovies") || "Show popular movies"}
-                className={`px-4 py-2 rounded text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                className={`min-h-[44px] rounded px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   popularType === "movie"
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -422,7 +422,7 @@ export default function Index() {
                 type="button"
                 onClick={() => setPopularType("tv")}
                 aria-label={t("home.popularSeries") || "Show popular series"}
-                className={`px-4 py-2 rounded text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                className={`min-h-[44px] rounded px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   popularType === "tv"
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"

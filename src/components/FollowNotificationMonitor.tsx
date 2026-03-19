@@ -11,7 +11,7 @@ import {
   type FollowedTitleState,
   useTitleFollows,
 } from "@/hooks/useTitleFollows";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
 const GUEST_TITLE_STATE_KEY = "cinetrekker_guest_followed_title_state";

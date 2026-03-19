@@ -1,19 +1,14 @@
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Star } from "lucide-react";
-import { useUserLists } from "@/contexts/user-lists-context";
-import {
-  getMovieDetails,
-  getTVDetails,
-  getImageUrl,
-  getMediaTitle,
-} from "@/services/tmdb";
-import { Media } from "@/types/media";
+import { useUserLists } from "@/contexts/UserListsContext";
+import { getImageUrl, getMediaTitle } from "@/services/tmdb";
+import type { Media, MediaDetails } from "@/types/media";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import SEO from "@/components/SEO";
-import { createFallbackMedia } from "@/lib/mediaFallback";
+import { enrichMediaItems } from "@/lib/mediaEnrichment";
 
 export default function Watched() {
   const { t, i18n } = useTranslation();
@@ -28,42 +23,24 @@ export default function Watched() {
       language,
     ],
     queryFn: async () => {
-      const results = await Promise.all(
-        watched.map(async (item) => {
-          try {
-            const details =
-              item.mediaType === "movie"
-                ? await getMovieDetails(item.mediaId, language)
-                : await getTVDetails(item.mediaId, language);
-            return {
-              ...details,
-              media_type: item.mediaType,
-              userRating: item.rating,
-              userNote: item.note,
-              userStatus: item.status,
-              watchedAt: item.watchedAt,
-            } as Media & {
-              userRating?: number;
-              userNote?: string;
-              userStatus?: string;
-              watchedAt?: string;
-            };
-          } catch {
-            return createFallbackMedia(item, {
-              userRating: item.rating,
-              userNote: item.note,
-              userStatus: item.status,
-              watchedAt: item.watchedAt,
-            }) as Media & {
-              userRating?: number;
-              userNote?: string;
-              userStatus?: string;
-              watchedAt?: string;
-            };
-          }
+      return enrichMediaItems(watched, {
+        language,
+        getReference: (item) => item,
+        mapExtras: (item) => ({
+          userRating: item.rating,
+          userNote: item.note,
+          userStatus: item.status,
+          watchedAt: item.watchedAt,
         }),
-      );
-      return results;
+        logScope: "watched",
+      }) as Promise<
+        (Media & {
+          userRating?: number;
+          userNote?: string;
+          userStatus?: string;
+          watchedAt?: string;
+        })[]
+      >;
     },
     enabled: watched.length > 0,
   });
@@ -89,7 +66,12 @@ export default function Watched() {
           </div>
         ) : mediaDetails && mediaDetails.length > 0 ? (
           <div className="media-grid">
-            {mediaDetails.map((media: Media) => {
+            {mediaDetails.map((media: MediaDetails & {
+              userRating?: number;
+              userNote?: string;
+              userStatus?: string;
+              watchedAt?: string;
+            }) => {
               const title = getMediaTitle(media);
               const posterUrl = getImageUrl(media.poster_path, "w342");
               const year = (media.release_date || media.first_air_date)?.slice(

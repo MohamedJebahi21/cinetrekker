@@ -16,6 +16,7 @@ export interface Media {
   genre_ids?: number[];
   genres?: Genre[];
   media_type?: "movie" | "tv" | "person";
+  original_language?: string;
   adult?: boolean;
   runtime?: number;
   episode_run_time?: number[];
@@ -167,10 +168,11 @@ export interface Provider {
 }
 
 export interface WatchProviderDetails {
-  link: string | null;
+  link?: string | null;
   rent?: Provider[];
   buy?: Provider[];
   flatrate?: Provider[];
+  [key: string]: unknown;
 }
 
 export interface WatchProviders {
@@ -207,7 +209,7 @@ export interface EpisodeCollectionResult {
 
 // Provider data for utility functions
 export interface ProviderDataResult {
-  link?: string;
+  link?: string | null;
   rent?: Provider[];
   buy?: Provider[];
   flatrate?: Provider[];

@@ -269,9 +269,6 @@
     text-align: right;
   }
 
-  body {
-    overflow-x: hidden;
-  }
 }
 
 @layer components {
@@ -608,11 +605,11 @@
 
   /* Standardized 8px grid spacing */
   .page-container {
-    @apply container mx-auto px-4 py-8 max-w-7xl;
+    @apply container mx-auto max-w-7xl px-3 py-6 sm:px-4 md:px-6 md:py-8;
   }
 
   .section-title {
-    @apply text-2xl md:text-3xl font-bold mb-8 heading-cinematic;
+    @apply text-xl sm:text-2xl md:text-3xl font-bold mb-6 md:mb-8 heading-cinematic;
   }
 
   .heading-credits {
@@ -779,16 +776,29 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  @media (min-width: 768px) {
+  @media (min-width: 640px) {
     .media-grid {
-      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
     }
   }
 
-  @media (min-width: 1024px) {
+  @media (min-width: 768px) {
+    .media-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+  }
+
+  @media (min-width: 1024px) and (max-width: 1179px) {
+    .media-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1180px) {
     .media-grid {
       grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
+      gap: 18px;
     }
   }
 
@@ -811,7 +821,7 @@
 
   /* Phase 4: Horizontal scroll rows (Netflix style) */
   .scroll-row {
-    @apply flex gap-3 overflow-x-auto pb-4 -mx-4 px-4;
+    @apply flex gap-3 overflow-x-auto pb-4 -mx-3 px-3 sm:-mx-4 sm:px-4 md:gap-4 md:-mx-6 md:px-6;
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
@@ -991,7 +1001,10 @@
 /* Bottom navigation safe area for mobile */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .mobile-nav-safe {
-    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+    box-sizing: border-box;
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0.5rem);
   }
 }
 

@@ -54,8 +54,12 @@ export default function Notifications() {
             icon={Bell}
             title="No notifications yet"
             description="Follow movies and series to get notified about new episodes, season changes, releases, and more."
-            actionLabel="Browse titles"
-            actionLink="/"
+            action={{
+              label: "Browse titles",
+              onClick: () => {
+                window.location.href = "/";
+              },
+            }}
           />
         ) : (
           <ul className="space-y-2">

@@ -3,10 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Clock } from 'lucide-react';
 import { getRecentlyViewed } from '@/lib/recentlyViewed';
-import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
 import { useTranslation } from 'react-i18next';
-import { createFallbackMedia } from '@/lib/mediaFallback';
+import { enrichMediaItems } from '@/lib/mediaEnrichment';
 
 export function RecentlyViewed() {
   const { i18n } = useTranslation();
@@ -15,25 +14,15 @@ export function RecentlyViewed() {
 
   const { data: mediaDetails, isLoading } = useQuery({
     queryKey: ['recently-viewed', recentItems.map((i) => `${i.mediaType}-${i.id}`), language],
-    queryFn: async () => {
-      const results = await Promise.all(
-        recentItems.map(async (item) => {
-          try {
-            const details =
-              item.mediaType === 'movie'
-                ? await getMovieDetails(item.id, language)
-                : await getTVDetails(item.id, language);
-            return { ...details, media_type: item.mediaType };
-          } catch {
-            return createFallbackMedia({
-              mediaId: item.id,
-              mediaType: item.mediaType,
-            });
-          }
-        })
-      );
-      return results;
-    },
+    queryFn: () =>
+      enrichMediaItems(recentItems, {
+        language,
+        getReference: (item) => ({
+          mediaId: item.id,
+          mediaType: item.mediaType,
+        }),
+        logScope: 'recently-viewed',
+      }),
     enabled: recentItems.length > 0,
   });
 

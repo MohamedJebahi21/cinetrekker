@@ -10,18 +10,15 @@ import {
   WatchProviders,
 } from "@/types/media";
 import { SafetyLevel, type MaturityRating } from "@/lib/contentFilter";
-import { logger } from "@/lib/logger";
+import { createLogger } from "@/lib/logger";
+import { ENV, getTmdbProxyUrl } from "@/lib/envValidation";
 
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p";
-const TMDB_PROXY_PATH = "/functions/v1/tmdb-proxy";
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_API_KEY =
-  import.meta.env.VITE_SUPABASE_ANON_KEY ||
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const logger = createLogger("tmdb-client");
+const SUPABASE_URL = ENV.VITE_SUPABASE_URL;
+const SUPABASE_API_KEY = ENV.VITE_SUPABASE_ANON_KEY;
 const USE_SUPABASE_EDGE_PROXY = import.meta.env.DEV;
-const TMDB_PROXY_URL = USE_SUPABASE_EDGE_PROXY
-  ? TMDB_PROXY_PATH
-  : "/api/tmdb-proxy";
+const TMDB_PROXY_URL = getTmdbProxyUrl();
 
 const CONTENT_POLICY_STORAGE_KEY = "cinetrekker_content_policy";
 const TMDB_CACHE_MAX_ENTRIES = 300;
@@ -569,10 +566,13 @@ export const getMediaYear = (media: Media): string => {
 };
 
 export const getMediaType = (media: Media): "movie" | "tv" => {
-  if (media.media_type) return media.media_type;
+  if (media.media_type === "tv") return "tv";
+  if (media.media_type === "movie") return "movie";
   if ("title" in media && media.title) return "movie";
   return "tv";
 };
+
+export type { MediaDetails } from "@/types/media";
 
 // TV Season & Episode Types
 export interface TVEpisode {

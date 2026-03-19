@@ -1,7 +1,10 @@
 import { validateEnv } from "./_lib/validateEnv.js";
 import { fetchDynamicContentRoutes } from "./_lib/tmdbSitemap.js";
+import { getServerEnv } from "./_lib/env.js";
+import { createServerLogger } from "./_lib/logger.js";
 
-const BASE_URL = process.env.APP_BASE_URL || "https://cinetrekker.vercel.app";
+const BASE_URL = getServerEnv("APP_BASE_URL", "https://cinetrekker.vercel.app");
+const logger = createServerLogger("sitemap");
 
 const STATIC_ROUTES = [
   "/",
@@ -36,7 +39,7 @@ export default async function handler(_req, res) {
       urlSet.add(`${BASE_URL}${route}`);
     }
   } catch (error) {
-    console.warn(
+    logger.warn(
       "Sitemap dynamic route generation fallback:",
       error?.message || error,
     );

@@ -6,7 +6,7 @@ import {
   TRANSITION_CLASS,
   TRANSITION_MS,
 } from '@/lib/constants';
-import { ThemeContext } from '@/components/theme-context';
+import { ThemeContext } from '@/contexts/ThemeContext';
 
 function injectTransitionStyle() {
   if (typeof document === 'undefined') return;

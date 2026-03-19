@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MapPinned, Plus, Trash2, Route } from "lucide-react";
-import { useAuth } from "@/contexts/auth-context";
-import { useUserLists } from "@/contexts/user-lists-context";
+import { useAuth } from "@/contexts/AuthContext";
+import { useUserLists } from "@/contexts/UserListsContext";
 import { getMovieDetails, getTVDetails, getMediaTitle } from "@/services/tmdb";
 import type { Media } from "@/types/media";
 import SEO from "@/components/SEO";

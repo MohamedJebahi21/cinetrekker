@@ -50,6 +50,8 @@ export function EmptyState({
   );
 }
 
+export type { EmptyStateProps };
+
 /**
  * Empty search results
  */

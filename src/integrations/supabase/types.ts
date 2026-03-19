@@ -140,6 +140,81 @@ export type Database = {
         };
         Relationships: [];
       };
+      collections: {
+        Row: {
+          id: number;
+          user_id: string;
+          name: string;
+          description: string | null;
+          items: Json | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: number;
+          user_id: string;
+          name: string;
+          description?: string | null;
+          items?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: number;
+          user_id?: string;
+          name?: string;
+          description?: string | null;
+          items?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      collection_items: {
+        Row: {
+          id: number;
+          collection_id: number;
+          media_id: number;
+          media_type: string;
+          added_at: string;
+        };
+        Insert: {
+          id?: number;
+          collection_id: number;
+          media_id: number;
+          media_type: string;
+          added_at?: string;
+        };
+        Update: {
+          id?: number;
+          collection_id?: number;
+          media_id?: number;
+          media_type?: string;
+          added_at?: string;
+        };
+        Relationships: [];
+      };
+      new_episodes_cache: {
+        Row: {
+          id: string;
+          user_id: string;
+          episodes: Json | null;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          episodes?: Json | null;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          episodes?: Json | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           adult_content_enabled: boolean;

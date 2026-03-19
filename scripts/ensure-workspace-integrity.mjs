@@ -18,6 +18,12 @@ function runGit(args, allowFailure = false) {
       stdio: ["ignore", "pipe", "ignore"],
     }).trim();
   } catch (error) {
+    if (error?.code === "ENOENT") {
+      if (allowFailure) {
+        return null;
+      }
+      throw new Error("git is not available to the workspace doctor.");
+    }
     if (allowFailure) {
       return null;
     }
@@ -52,8 +58,19 @@ function restoreProtectedPublicFiles() {
   return missing;
 }
 
-const repairedHead = ensureHeadRef();
-const restoredFiles = restoreProtectedPublicFiles();
+let repairedHead = false;
+let restoredFiles = [];
+
+try {
+  repairedHead = ensureHeadRef();
+  restoredFiles = restoreProtectedPublicFiles();
+} catch (error) {
+  console.warn(
+    `Workspace doctor skipped git integrity checks: ${
+      error instanceof Error ? error.message : String(error)
+    }`,
+  );
+}
 
 if (repairedHead) {
   console.log("Repaired local git branch reference from origin/main.");

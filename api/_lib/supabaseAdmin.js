@@ -1,18 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
+import { getServerEnv } from "./env.js";
+import { createServerLogger } from "./logger.js";
 
 let adminClient;
-
-function getEnv(name) {
-  const value = process.env[name];
-  return typeof value === "string" ? value.trim() : "";
-}
+const logger = createServerLogger("supabase-admin");
 
 export function getSupabaseAdminClient() {
   if (adminClient) return adminClient;
 
-  const supabaseUrl = getEnv("SUPABASE_URL") || getEnv("VITE_SUPABASE_URL");
-  const serviceRoleKey =
-    getEnv("SUPABASE_SERVICE_ROLE_KEY") || getEnv("SUPABASE_SERVICE_KEY");
+  const supabaseUrl = getServerEnv("SUPABASE_URL");
+  const serviceRoleKey = getServerEnv("SUPABASE_SERVICE_ROLE_KEY");
 
   if (!supabaseUrl || !serviceRoleKey) {
     throw new Error("Supabase server configuration is missing.");
@@ -49,7 +46,12 @@ export async function authenticateRequest(req) {
     }
 
     return { ok: true, userId: data.user.id };
-  } catch {
-    return { ok: false, status: 500, error: "Authentication service unavailable." };
+  } catch (error) {
+    logger.error("Failed to authenticate request.", error);
+    return {
+      ok: false,
+      status: 500,
+      error: "Authentication service unavailable.",
+    };
   }
 }

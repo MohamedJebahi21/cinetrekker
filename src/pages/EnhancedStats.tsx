@@ -1,8 +1,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useUserLists } from "@/contexts/user-lists-context";
+import { useUserLists } from "@/contexts/UserListsContext";
 import { Genre } from "@/types/media";
-import { getMovieDetails, getTVDetails } from "@/services/tmdb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, Star, Film } from "lucide-react";
 import { GlassStatCard } from "@/components/GlassStatCard";
@@ -18,9 +17,9 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
 } from "recharts";
-import { createFallbackMedia } from "@/lib/mediaFallback";
+import { enrichMediaItems } from "@/lib/mediaEnrichment";
+import type { MediaDetails } from "@/types/media";
 
 interface GenreStats {
   name: string;
@@ -40,28 +39,22 @@ export default function EnhancedStats() {
       language,
     ],
     queryFn: async () => {
-      const results = await Promise.all(
-        watched.map(async (item) => {
-          try {
-            const details =
-              item.mediaType === "movie"
-                ? await getMovieDetails(item.mediaId, language)
-                : await getTVDetails(item.mediaId, language);
-            return {
-              ...details,
-              media_type: item.mediaType,
-              userRating: item.rating,
-              watchedAt: item.watchedAt || item.addedAt,
-            };
-          } catch {
-            return createFallbackMedia(item, {
-              userRating: item.rating,
-              watchedAt: item.watchedAt || item.addedAt,
-            });
-          }
+      return enrichMediaItems(watched, {
+        language,
+        getReference: (item) => item,
+        mapExtras: (item) => ({
+          userRating: item.rating,
+          watchedAt: item.watchedAt || item.addedAt,
         }),
-      );
-      return results;
+        logScope: "enhanced-stats",
+      }) as Promise<
+        Array<
+          MediaDetails & {
+            userRating?: number;
+            watchedAt?: string;
+          }
+        >
+      >;
     },
     enabled: watched.length > 0,
   });

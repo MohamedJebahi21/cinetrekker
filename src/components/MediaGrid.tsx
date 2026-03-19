@@ -16,15 +16,15 @@ interface MediaGridProps {
 }
 
 const gridColsMap = {
-  compact: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4',
+  compact: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5',
   normal: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4',
-  wide: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4',
+  wide: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
 };
 
 const gapMap = {
-  sm: 'gap-3 lg:gap-4',
+  sm: 'gap-2 sm:gap-3',
   md: 'gap-3 lg:gap-4',
-  lg: 'gap-3 lg:gap-4',
+  lg: 'gap-4 xl:gap-5',
 };
 
 export function MediaGrid({

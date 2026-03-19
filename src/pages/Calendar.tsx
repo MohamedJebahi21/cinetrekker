@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -14,8 +14,8 @@ import {
   isAfter,
 } from 'date-fns';
 import { CalendarIcon, ChevronLeft, ChevronRight, Film, Tv, Star, Filter, Clock } from 'lucide-react';
-import { useAuth } from '@/contexts/auth-context';
-import { useUserLists } from '@/contexts/user-lists-context';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserLists } from '@/contexts/UserListsContext';
 import { useFollowedShows } from '@/hooks/useFollowedShows';
 import { getUpcomingMovies, getOnTheAirTV, getImageUrl, getTVDetails } from '@/services/tmdb';
 import { Media } from '@/types/media';
@@ -315,7 +315,7 @@ export default function Calendar() {
             {/* Network/Channel */}
             {item.network && (
               <p className="text-xs text-muted-foreground/80 truncate">
-                📺 {item.network}
+                ðŸ“º {item.network}
               </p>
             )}
             
@@ -407,7 +407,7 @@ export default function Calendar() {
   return (
     <>
       <SEO 
-        title="Release Calendar — CineTrekker" 
+        title="Release Calendar â€” CineTrekker" 
         description="Upcoming movie and TV show releases this week"
         canonical="https://cinetrekker.vercel.app/calendar"
       />
@@ -585,3 +585,4 @@ export default function Calendar() {
     </>
   );
 }
+

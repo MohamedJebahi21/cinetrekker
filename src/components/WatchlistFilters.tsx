@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import {
   Select,
@@ -48,17 +48,17 @@ export function WatchlistFilters({
     { value: 'title-desc', label: t('sort.titleZA') || 'Title Z-A' },
   ];
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     initial: { height: 0, opacity: 0 },
     animate: {
       height: 'auto',
       opacity: 1,
-      transition: { duration: 0.3, ease: 'easeOut' },
+      transition: { duration: 0.3 },
     },
     exit: {
       height: 0,
       opacity: 0,
-      transition: { duration: 0.2, ease: 'easeIn' },
+      transition: { duration: 0.2 },
     },
   };
 

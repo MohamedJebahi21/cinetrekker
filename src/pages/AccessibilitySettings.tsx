@@ -31,7 +31,7 @@ import {
   saveFontSizePreference,
   saveReduceMotionPreference,
 } from "@/lib/accessibility-preferences";
-import { useTheme } from "@/contexts/theme-context";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const containerVariants = {
   hidden: { opacity: 0 },

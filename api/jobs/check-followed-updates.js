@@ -1,13 +1,11 @@
 import { json } from "../_lib/http.js";
 import { getSupabaseAdminClient } from "../_lib/supabaseAdmin.js";
+import { getServerEnv } from "../_lib/env.js";
+import { createServerLogger } from "../_lib/logger.js";
 
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const DEFAULT_BATCH_SIZE = 5;
-
-function getEnv(name) {
-  const value = process.env[name];
-  return typeof value === "string" ? value.trim() : "";
-}
+const logger = createServerLogger("check-followed-updates");
 
 function parseBearer(req) {
   const authHeader = req?.headers?.authorization;
@@ -17,7 +15,7 @@ function parseBearer(req) {
 }
 
 function isAuthorizedCronCall(req) {
-  const cronSecret = getEnv("CRON_SECRET");
+  const cronSecret = getServerEnv("CRON_SECRET");
   if (!cronSecret) return false;
 
   const cronHeader =
@@ -184,7 +182,7 @@ export default async function handler(req, res) {
     return json(res, 401, { error: "Unauthorized" });
   }
 
-  const tmdbApiKey = getEnv("TMDB_API_KEY") || getEnv("VITE_TMDB_API_KEY");
+  const tmdbApiKey = getServerEnv("TMDB_API_KEY");
   if (!tmdbApiKey) {
     return json(res, 500, {
       error: "TMDB_API_KEY or VITE_TMDB_API_KEY is missing.",
@@ -232,7 +230,7 @@ export default async function handler(req, res) {
       .in("user_id", followerUserIds)
       .in(
         "movie_id",
-        parsedKeys.map((p) => p.movieKey),
+        parsedKeys.map((parsed) => parsed.movieKey),
       );
 
     if (stateError) {
@@ -250,8 +248,8 @@ export default async function handler(req, res) {
     let notificationsCreated = 0;
     let errors = 0;
 
-    for (let i = 0; i < parsedKeys.length; i += DEFAULT_BATCH_SIZE) {
-      const batch = parsedKeys.slice(i, i + DEFAULT_BATCH_SIZE);
+    for (let index = 0; index < parsedKeys.length; index += DEFAULT_BATCH_SIZE) {
+      const batch = parsedKeys.slice(index, index + DEFAULT_BATCH_SIZE);
       const batchResults = await Promise.all(
         batch.map(async (parsed) => {
           try {
@@ -273,8 +271,6 @@ export default async function handler(req, res) {
             for (const follower of followers) {
               const stateKey = `${follower.user_id}|${parsed.movieKey}`;
               const prevSnapshot = stateByUserMovieId.get(stateKey) || null;
-
-              // First observation only seeds state; notifications start from subsequent runs.
               const events = prevSnapshot
                 ? createChangeEvents(prevSnapshot, nextSnapshot, title)
                 : [];
@@ -312,8 +308,8 @@ export default async function handler(req, res) {
             }
 
             return { processed: 1, inserted, error: 0 };
-          } catch (err) {
-            console.error(`Failed processing ${parsed.movieKey}`, err);
+          } catch (error) {
+            logger.error(`Failed processing ${parsed.movieKey}`, error);
             return { processed: 1, inserted: 0, error: 1 };
           }
         }),
@@ -334,7 +330,7 @@ export default async function handler(req, res) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("POST /api/jobs/check-followed-updates error", error);
+    logger.error("POST /api/jobs/check-followed-updates error", error);
     return json(res, 500, { error: "Internal server error." });
   }
 }

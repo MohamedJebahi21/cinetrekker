@@ -16,8 +16,8 @@ import {
   getMediaType,
 } from "@/services/tmdb";
 import { Button } from "@/components/ui/button";
-import { useUserLists } from "@/contexts/user-lists-context";
-import { useAuth } from "@/contexts/auth-context";
+import { useUserLists } from "@/contexts/UserListsContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { Image } from "@/components/ui/Image";
 import { useContentPolicy } from "@/contexts/content-policy-context";

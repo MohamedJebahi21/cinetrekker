@@ -9,7 +9,7 @@ import "./i18n";
 import {
   applyThemeToDocument,
   readStoredTheme,
-} from "@/contexts/theme-context";
+} from "@/contexts/ThemeContext";
 
 // Install chunk error recovery handlers
 import { installChunkErrorHandlers } from "@/lib/chunkErrorRecovery";

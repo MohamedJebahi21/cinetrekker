@@ -1,13 +1,13 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
   Users,
   LogOut,
   User as UserIcon,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -30,7 +30,7 @@ interface UserProfileDropdownProps {
   className?: string;
 }
 
-const dropdownVariants = {
+const dropdownVariants: Variants = {
   hidden: { opacity: 0, scale: 0.95, y: -10 },
   visible: {
     opacity: 1,
@@ -38,7 +38,7 @@ const dropdownVariants = {
     y: 0,
     transition: {
       duration: 0.2,
-      ease: 'easeOut',
+      ease: "easeOut" as const,
     },
   },
   exit: {
@@ -47,7 +47,7 @@ const dropdownVariants = {
     y: -10,
     transition: {
       duration: 0.15,
-      ease: 'easeIn',
+      ease: "easeIn" as const,
     },
   },
 };
@@ -132,7 +132,6 @@ export function UserProfileDropdown({
             initial="hidden"
             animate="visible"
             exit="exit"
-            forceMount
           >
             <DropdownMenuContent
               align="end"

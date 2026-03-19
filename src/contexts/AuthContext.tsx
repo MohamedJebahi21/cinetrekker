@@ -1,19 +1,43 @@
-import React, { useEffect, useState, ReactNode } from "react";
-import { User, Session } from "@supabase/supabase-js";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import type { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { AuthContext } from "@/contexts/auth-context";
 import { isSupabaseConfigured } from "@/lib/envValidation";
+import { createLogger } from "@/lib/logger";
+
+export interface AuthContextType {
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  signUp: (email: string, code: string) => Promise<{ error: Error | null }>;
+  signIn: (email: string, code: string) => Promise<{ error: Error | null }>;
+  signInWithProvider: (
+    provider: "google" | "facebook" | "apple",
+  ) => Promise<{ error: Error | null }>;
+  signOut: () => Promise<void>;
+}
+
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined,
+);
+
+const logger = createLogger("auth");
+const MISSING_ENV_AUTH_ERROR =
+  "Supabase environment is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local and restart the dev server.";
+let didWarnMissingSupabaseEnv = false;
 
 function toAuthError(error: unknown): Error {
   return error instanceof Error ? error : new Error(String(error));
 }
 
-const MISSING_ENV_AUTH_ERROR =
-  "Supabase environment is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local and restart the dev server.";
+export function useAuth(): AuthContextType {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+}
 
-let didWarnMissingSupabaseEnv = false;
-
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -25,8 +49,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       if (!didWarnMissingSupabaseEnv) {
         didWarnMissingSupabaseEnv = true;
-        console.warn(
-          "[Auth] Supabase env is missing. Auth requests are disabled until environment variables are configured.",
+        logger.warn(
+          "Supabase env is missing. Auth requests are disabled until environment variables are configured.",
         );
       }
       return;
@@ -62,10 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         applySession(currentSession);
       } catch (error) {
-        console.warn(
-          "[Auth] Failed to initialize session state",
-          toAuthError(error),
-        );
+        logger.warn("Failed to initialize session state.", toAuthError(error));
         applySession(null);
       } finally {
         if (isMounted) {
@@ -145,7 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
     } catch (error) {
-      console.warn("[Auth] Sign out failed", toAuthError(error));
+      logger.warn("Sign out failed.", toAuthError(error));
     }
   };
 

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { UserMediaItem } from '@/types/media';
 import { validateNote, validateRating } from '@/lib/validation';
@@ -51,12 +51,12 @@ export function useWatchedQuery() {
         } catch (error) {
           logSupabaseIssue('watched query fallback', error);
           const cached = localStorage.getItem(`${WATCHED_OFFLINE_CACHE_PREFIX}${user.id}`);
-          return cached ? JSON.parse(cached) : [];
+          return cached ? (JSON.parse(cached) as UserMediaItem[]) : [];
         }
       } else {
         // Fetch from localStorage
         const stored = localStorage.getItem(WATCHED_STORAGE_ID);
-        return stored ? JSON.parse(stored) : [];
+        return stored ? (JSON.parse(stored) as UserMediaItem[]) : [];
       }
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -129,7 +129,7 @@ export function useAddToWatched() {
       // Update localStorage if not authenticated
       if (!user) {
         const stored = localStorage.getItem(WATCHED_STORAGE_ID);
-        const list = stored ? JSON.parse(stored) : [];
+        const list: UserMediaItem[] = stored ? JSON.parse(stored) as UserMediaItem[] : [];
         const newList = list.filter((item: UserMediaItem) => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType));
         newList.push({
           id: `${params.mediaType}-${params.mediaId}`,
@@ -138,7 +138,7 @@ export function useAddToWatched() {
           userId: 'local',
           rating: validateRating(params.rating),
           note: validateNote(params.note),
-          status: params.status || 'completed',
+          status: (params.status as UserMediaItem['status']) || 'completed',
           addedAt: new Date().toISOString(),
           watchedAt: new Date().toISOString(),
         });
@@ -210,7 +210,7 @@ export function useRemoveFromWatched() {
       // Update localStorage if not authenticated
       if (!user) {
         const stored = localStorage.getItem(WATCHED_STORAGE_ID);
-        const list = stored ? JSON.parse(stored) : [];
+        const list: UserMediaItem[] = stored ? JSON.parse(stored) as UserMediaItem[] : [];
         const newList = list.filter((item: UserMediaItem) => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType));
         localStorage.setItem(WATCHED_STORAGE_ID, JSON.stringify(newList));
       }
@@ -301,7 +301,7 @@ export function useUpdateWatched() {
       // Update localStorage if not authenticated
       if (!user) {
         const stored = localStorage.getItem(WATCHED_STORAGE_ID);
-        const list = stored ? JSON.parse(stored) : [];
+        const list: UserMediaItem[] = stored ? JSON.parse(stored) as UserMediaItem[] : [];
         const newList = list.map((item: UserMediaItem) =>
           item.mediaId === params.mediaId && item.mediaType === params.mediaType
             ? { ...item, ...params.updates }
@@ -339,7 +339,7 @@ export function useUpdateWatched() {
  */
 export function useIsWatched(mediaId: number, mediaType: 'movie' | 'tv') {
   const { data: watched = [] } = useWatchedQuery();
-  return watched.some(item => item.mediaId === mediaId && item.mediaType === mediaType);
+  return watched.some((item: UserMediaItem) => item.mediaId === mediaId && item.mediaType === mediaType);
 }
 
 /**
@@ -347,5 +347,5 @@ export function useIsWatched(mediaId: number, mediaType: 'movie' | 'tv') {
  */
 export function useGetWatchedItem(mediaId: number, mediaType: 'movie' | 'tv') {
   const { data: watched = [] } = useWatchedQuery();
-  return watched.find(item => item.mediaId === mediaId && item.mediaType === mediaType);
+  return watched.find((item: UserMediaItem) => item.mediaId === mediaId && item.mediaType === mediaType);
 }

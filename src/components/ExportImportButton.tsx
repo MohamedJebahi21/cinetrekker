@@ -3,7 +3,7 @@ import { Download, Upload, FileText, FileJson } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
-import { useUserLists } from '@/contexts/user-lists-context';
+import { useUserLists } from '@/contexts/UserListsContext';
 import { UserMediaItem } from '@/types/media';
 
 export function ExportImportButton() {

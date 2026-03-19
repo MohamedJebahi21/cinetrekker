@@ -26,9 +26,9 @@ import {
 import { Media, Cast, Provider } from "@/types/media";
 import { getProviderUrlFromData } from "@/lib/providerMap";
 import { getProviderWatchUrl } from "@/lib/providerLinks";
-import { useUserLists } from "@/contexts/user-lists-context";
+import { useUserLists } from "@/contexts/UserListsContext";
 import { useWatchedEpisodes } from "@/hooks/useFollowedShows";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLastViewed } from "@/hooks/useLastViewed";
 import { addToRecentlyViewed } from "@/lib/recentlyViewed";
 import { MediaSection } from "@/components/MediaSection";
@@ -62,9 +62,7 @@ import { useContentPolicy } from "@/contexts/content-policy-context";
 import { isMediaAllowedBySafety } from "@/lib/contentFilter";
 import { Image } from "@/components/ui/Image";
 import { FollowUpdatesButton } from "@/components/FollowUpdatesButton";
-import { profileService } from "@/services/profile";
-
-import { normalizePinnedFavoriteKeys } from "@/utils/pinnedFavorites";
+import { usePinnedFavorites } from "@/hooks/usePinnedFavorites";
 import { logger } from "@/lib/logger";
 
 function getPolicyRatingTag(
@@ -175,9 +173,9 @@ export default function Details() {
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
   const [showFullOverview, setShowFullOverview] = useState(false);
   const [trailerOpen, setTrailerOpen] = useState(false);
-  const [pinnedFavoriteKeys, setPinnedFavoriteKeys] = useState<string[]>([]);
-
-  const pinnedFavoritesStorageKey = `cinetrekker_profile_favorites_${user?.id || "guest"}`;
+  const { pinnedFavoriteKeys, persistPinnedFavorites } = usePinnedFavorites({
+    userId: user?.id,
+  });
   const currentMediaKey = `${mediaType}-${mediaId}`;
 
   // Close open dialogs/overlays on global Escape event
@@ -192,52 +190,6 @@ export default function Details() {
     return () =>
       window.removeEventListener("app:escape", onAppEscape as EventListener);
   }, [episodesDialogOpen, statusDialogOpen, trailerOpen]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    let isMounted = true;
-
-    const loadPinnedFavorites = async () => {
-      try {
-        if (user?.id) {
-          const profile = await profileService.getProfile(user.id);
-          const normalized = normalizePinnedFavoriteKeys(
-            Array.isArray(profile?.favorite_titles)
-              ? profile.favorite_titles
-              : [],
-          );
-          if (!isMounted) return;
-          setPinnedFavoriteKeys(normalized);
-          localStorage.setItem(
-            pinnedFavoritesStorageKey,
-            JSON.stringify(normalized),
-          );
-          return;
-        }
-
-        const raw = localStorage.getItem(pinnedFavoritesStorageKey);
-        const parsed = raw ? (JSON.parse(raw) as string[]) : [];
-        const normalized = Array.isArray(parsed)
-          ? normalizePinnedFavoriteKeys(parsed)
-          : [];
-        if (!isMounted) return;
-        setPinnedFavoriteKeys(normalized);
-        localStorage.setItem(
-          pinnedFavoritesStorageKey,
-          JSON.stringify(normalized),
-        );
-      } catch {
-        if (isMounted) {
-          setPinnedFavoriteKeys([]);
-        }
-      }
-    };
-
-    void loadPinnedFavorites();
-    return () => {
-      isMounted = false;
-    };
-  }, [pinnedFavoritesStorageKey, user?.id]);
 
   const { isEpisodeWatched, markEpisodeWatched, removeEpisodeWatched } =
     useWatchedEpisodes(mediaId);
@@ -293,12 +245,12 @@ export default function Details() {
       const title = details.title || details.name || "";
       saveLastViewed(mediaId, title, mediaType);
       // Track recently viewed
-      addToRecentlyViewed({
-        id: mediaId,
-        mediaType,
-        title,
-        posterPath: details.poster_path,
-      });
+        addToRecentlyViewed({
+          id: mediaId,
+          mediaType,
+          title,
+          posterPath: details.poster_path || undefined,
+        });
     }
   }, [details, isBlockedByPolicy, mediaId, mediaType, saveLastViewed]);
 
@@ -520,7 +472,7 @@ export default function Details() {
   }: {
     rating: number;
     note: string;
-    status: string;
+    status: "watching" | "completed" | "dropped" | "plan_to_watch";
   }) => {
     if (watched) {
       updateWatchedItem(mediaId, mediaType, { rating, note, status });
@@ -550,44 +502,32 @@ export default function Details() {
   };
 
   const handleTogglePinnedFavorite = () => {
-    setPinnedFavoriteKeys((current) => {
-      const alreadyPinned = current.includes(currentMediaKey);
-      const typePrefix = `${mediaType}-`;
-      const currentTypeCount = current.filter((key) =>
-        key.startsWith(typePrefix),
-      ).length;
+    const alreadyPinned = pinnedFavoriteKeys.includes(currentMediaKey);
+    const typePrefix = `${mediaType}-`;
+    const currentTypeCount = pinnedFavoriteKeys.filter((key) =>
+      key.startsWith(typePrefix),
+    ).length;
 
-      if (!alreadyPinned && currentTypeCount >= 4) {
-        const label = mediaType === "movie" ? "movies" : "series";
-        toast({
-          title: "Favorites limit reached",
-          description: `You can pin up to 4 favorite ${label}.`,
-        });
-        return current;
-      }
-
-      const next = normalizePinnedFavoriteKeys(
-        alreadyPinned
-          ? current.filter((key) => key !== currentMediaKey)
-          : [...current, currentMediaKey],
-      );
-
-      if (typeof window !== "undefined") {
-        localStorage.setItem(pinnedFavoritesStorageKey, JSON.stringify(next));
-      }
-
-      if (user?.id) {
-        void profileService.updateProfile(user.id, { favorite_titles: next });
-      }
-
+    if (!alreadyPinned && currentTypeCount >= 4) {
+      const label = mediaType === "movie" ? "movies" : "series";
       toast({
-        title: alreadyPinned ? "Removed from favorites" : "Pinned to favorites",
-        description: alreadyPinned
-          ? "This title is no longer pinned."
-          : "This title was pinned to your profile favorites.",
+        title: "Favorites limit reached",
+        description: `You can pin up to 4 favorite ${label}.`,
       });
+      return;
+    }
 
-      return next;
+    const next = alreadyPinned
+      ? pinnedFavoriteKeys.filter((key) => key !== currentMediaKey)
+      : [...pinnedFavoriteKeys, currentMediaKey];
+
+    void persistPinnedFavorites(next);
+
+    toast({
+      title: alreadyPinned ? "Removed from favorites" : "Pinned to favorites",
+      description: alreadyPinned
+        ? "This title is no longer pinned."
+        : "This title was pinned to your profile favorites.",
     });
   };
 
@@ -1267,7 +1207,7 @@ export default function Details() {
             <MediaSection
               title={t("details.similar")}
               items={recommendedItems}
-              isLoading={false}
+              loading={false}
             />
           </div>
         )}

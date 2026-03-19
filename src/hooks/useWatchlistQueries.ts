@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { UserMediaItem } from '@/types/media';
 import { useToast } from '@/hooks/use-toast';
@@ -30,7 +30,7 @@ export function useWatchlistQuery() {
           if (error) {
             logSupabaseIssue("watchlist query fallback", error);
             const cached = localStorage.getItem(`${WATCHLIST_OFFLINE_CACHE_PREFIX}${user.id}`);
-            return cached ? JSON.parse(cached) : [];
+            return cached ? (JSON.parse(cached) as UserMediaItem[]) : [];
           }
 
           const mapped = (data || []).map(item => ({
@@ -50,12 +50,12 @@ export function useWatchlistQuery() {
         } catch (err) {
           logSupabaseIssue("watchlist fetch fallback", err);
           const cached = localStorage.getItem(`${WATCHLIST_OFFLINE_CACHE_PREFIX}${user.id}`);
-          return cached ? JSON.parse(cached) : [];
+          return cached ? (JSON.parse(cached) as UserMediaItem[]) : [];
         }
       } else {
         // Fetch from localStorage
         const stored = localStorage.getItem(WATCHLIST_STORAGE_ID);
-        return stored ? JSON.parse(stored) : [];
+        return stored ? (JSON.parse(stored) as UserMediaItem[]) : [];
       }
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -108,7 +108,7 @@ export function useAddToWatchlist() {
 
       if (!user) {
         const stored = localStorage.getItem(WATCHLIST_STORAGE_ID);
-        const list = stored ? JSON.parse(stored) : [];
+        const list: UserMediaItem[] = stored ? JSON.parse(stored) as UserMediaItem[] : [];
         const newList = list.filter((item: UserMediaItem) => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType));
         newList.push({
           id: `${params.mediaType}-${params.mediaId}`,
@@ -181,7 +181,7 @@ export function useRemoveFromWatchlist() {
 
       if (!user) {
         const stored = localStorage.getItem(WATCHLIST_STORAGE_ID);
-        const list = stored ? JSON.parse(stored) : [];
+        const list: UserMediaItem[] = stored ? JSON.parse(stored) as UserMediaItem[] : [];
         const newList = list.filter((item: UserMediaItem) => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType));
         localStorage.setItem(WATCHLIST_STORAGE_ID, JSON.stringify(newList));
       }
@@ -215,5 +215,5 @@ export function useRemoveFromWatchlist() {
  */
 export function useIsInWatchlist(mediaId: number, mediaType: 'movie' | 'tv') {
   const { data: watchlist = [] } = useWatchlistQuery();
-  return watchlist.some(item => item.mediaId === mediaId && item.mediaType === mediaType);
+  return watchlist.some((item: UserMediaItem) => item.mediaId === mediaId && item.mediaType === mediaType);
 }

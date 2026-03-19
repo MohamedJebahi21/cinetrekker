@@ -1,7 +1,10 @@
 import { json } from "./_lib/http.js";
+import { getServerEnv } from "./_lib/env.js";
+import { createServerLogger } from "./_lib/logger.js";
 
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const EXCLUDED_PARAMS = new Set(["endpoint", "maturity_level"]);
+const logger = createServerLogger("tmdb-proxy");
 
 function parseMaturityRating(rawValue) {
   if (rawValue === "strict" || rawValue === "moderate" || rawValue === "none") {
@@ -130,8 +133,7 @@ export default async function handler(req, res) {
     return json(res, 405, { error: "Method not allowed" });
   }
 
-  const tmdbApiKey =
-    process.env.TMDB_API_KEY || process.env.VITE_TMDB_API_KEY;
+  const tmdbApiKey = getServerEnv("TMDB_API_KEY");
   if (!tmdbApiKey) {
     return json(res, 500, {
       error: "TMDB API key is missing.",
@@ -197,6 +199,10 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const errorText = await response.text();
+      logger.warn("TMDB upstream error.", {
+        endpoint,
+        status: response.status,
+      });
       return json(res, response.status, {
         error: `TMDB API error: ${response.status}`,
         details: errorText,
@@ -210,6 +216,7 @@ export default async function handler(req, res) {
     res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
     return json(res, 200, data);
   } catch (error) {
+    logger.error("Failed to reach TMDB.", error);
     return json(res, 502, {
       error: "Failed to reach TMDB",
       details: error instanceof Error ? error.message : String(error),

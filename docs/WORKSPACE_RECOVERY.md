@@ -18,6 +18,3 @@ This check also runs automatically before the main local commands:
 - `npm run dev`
 - `npm run build`
 - `npm run preview`
-- `npm run dev:next`
-- `npm run build:next`
-- `npm run start:next`

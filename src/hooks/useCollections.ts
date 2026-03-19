@@ -1,15 +1,32 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { createLogger } from '@/lib/logger';
+import type { PostgrestError } from '@supabase/supabase-js';
+
+const logger = createLogger('collections');
+
+export type CollectionsFetchStatus =
+  | 'idle'
+  | 'ok'
+  | 'schema_missing'
+  | 'network_error';
+
+interface CollectionsQueryResult {
+  items: Array<Record<string, unknown>>;
+  fetchStatus: CollectionsFetchStatus;
+}
 
 export const useCollections = () => {
   const { user } = useAuth();
   return useQuery({
     queryKey: ['collections', user?.id],
     enabled: !!user,
-    queryFn: async () => {
-      if (!user) return [];
+    queryFn: async (): Promise<CollectionsQueryResult> => {
+      if (!user) {
+        return { items: [], fetchStatus: 'idle' };
+      }
       try {
         const { data, error } = await supabase
           .from('collections')
@@ -18,22 +35,27 @@ export const useCollections = () => {
           .order('created_at', { ascending: false });
 
         if (error) {
-          const errorCode = (error as Record<string, unknown>).code as string | undefined;
-          const errorMessage = (error as Record<string, unknown>).message as string | undefined;
+          const typedError = error as PostgrestError;
+          const errorCode = typedError.code;
+          const errorMessage = typedError.message;
           if (errorCode === 'PGRST205' || errorMessage?.includes("Could not find the table")) {
-            console.warn('Collections table missing in Supabase; returning empty list.');
-            return [];
+            logger.warn('Collections table missing in Supabase; returning empty list.');
+            return { items: [], fetchStatus: 'schema_missing' };
           }
-          console.error('Failed to fetch collections', error);
-          return [];
+          logger.error('Failed to fetch collections', error);
+          return { items: [], fetchStatus: 'network_error' };
         }
 
-        return data || [];
+        return { items: (data || []) as Array<Record<string, unknown>>, fetchStatus: 'ok' };
       } catch (err) {
-        console.error('Network error fetching collections', err);
-        return [];
+        logger.error('Network error fetching collections', err);
+        return { items: [], fetchStatus: 'network_error' };
       }
     },
+    select: (result) => ({
+      data: result.items,
+      fetchStatus: result.fetchStatus,
+    }),
     staleTime: 1000 * 60 * 5,
   });
 };
@@ -57,7 +79,7 @@ export const useCreateCollection = () => {
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['collections'] }),
     onError: (err) => {
-      console.error('Create collection failed', err);
+      logger.error('Create collection failed', err);
       toast({ title: 'Error creating collection', variant: 'destructive' });
     }
   });
@@ -82,7 +104,7 @@ export const useAddToCollection = () => {
       toast({ title: 'Added to collection' });
     },
     onError: (err) => {
-      console.error('Add to collection failed', err);
+      logger.error('Add to collection failed', err);
       toast({ title: 'Error adding to collection', variant: 'destructive' });
     }
   });
@@ -110,7 +132,7 @@ export const useRemoveFromCollection = () => {
       toast({ title: 'Removed from collection' });
     },
     onError: (err) => {
-      console.error('Remove from collection failed', err);
+      logger.error('Remove from collection failed', err);
       toast({ title: 'Error removing from collection', variant: 'destructive' });
     }
   });
@@ -128,13 +150,13 @@ export const useCollectionItems = (collectionId?: number) => {
           .eq('collection_id', collectionId);
 
         if (error) {
-          console.error('Failed to fetch collection items', error);
+          logger.error('Failed to fetch collection items', error);
           return [];
         }
 
         return (data || []).map((d: { media_id: number; media_type: string }) => ({ mediaId: d.media_id, mediaType: d.media_type }));
       } catch (err) {
-        console.error('Network error fetching collection items', err);
+        logger.error('Network error fetching collection items', err);
         return [];
       }
     },

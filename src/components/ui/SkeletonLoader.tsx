@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 
 interface SkeletonProps {
   count?: number;
@@ -23,11 +23,11 @@ export function Skeleton({
     line: 'w-full h-3 rounded',
   };
 
-  const animationVariants = {
+  const animationVariants: Variants = {
     initial: { backgroundPosition: '200% 0' },
     animate: active ? { 
       backgroundPosition: '-200% 0',
-      transition: { duration: 1.5, repeat: Infinity, ease: 'linear' }
+      transition: { duration: 1.5, repeat: Infinity, ease: "linear" as const }
     } : {},
   };
 
@@ -62,7 +62,7 @@ export function MediaGridSkeleton({ count = 12, columns = 6 }: MediaGridSkeleton
 
   const gridClass = gridColsMap[columns];
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     initial: { opacity: 0 },
     animate: {
       opacity: 1,
@@ -73,7 +73,7 @@ export function MediaGridSkeleton({ count = 12, columns = 6 }: MediaGridSkeleton
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     initial: { opacity: 0, y: 20 },
     animate: {
       opacity: 1,
@@ -106,7 +106,7 @@ interface ListSkeletonProps {
 }
 
 export function ListSkeleton({ count = 5, lines = 2 }: ListSkeletonProps) {
-  const containerVariants = {
+  const containerVariants: Variants = {
     initial: { opacity: 0 },
     animate: {
       opacity: 1,
@@ -116,7 +116,7 @@ export function ListSkeleton({ count = 5, lines = 2 }: ListSkeletonProps) {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     initial: { opacity: 0, x: -20 },
     animate: {
       opacity: 1,

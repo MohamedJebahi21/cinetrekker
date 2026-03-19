@@ -11,9 +11,9 @@ import {
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { AuthProvider } from "@/contexts/auth-context";
-import { UserListsProvider } from "@/contexts/user-lists-context";
-import { ThemeProvider } from "@/contexts/theme-context";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { UserListsProvider } from "@/contexts/UserListsContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ContentPolicyProvider } from "@/contexts/content-policy-context";
 import KeyboardShortcuts from "@/components/KeyboardShortcuts";
 import ScrollToTop from "@/components/ScrollToTop";

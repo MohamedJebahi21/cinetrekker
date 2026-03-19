@@ -2,8 +2,8 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Tv, Check, Clock, CalendarClock, RefreshCw } from 'lucide-react';
-import { useAuth } from '@/contexts/auth-context';
-import { useUserLists } from '@/contexts/user-lists-context';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserLists } from '@/contexts/UserListsContext';
 import { useWatchedEpisodes } from '@/hooks/useFollowedShows';
 import { getTVDetails, getImageUrl, getTVSeasonDetails, TVEpisode } from '@/services/tmdb';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +14,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getReleaseTimeInfo, hasBeenReleased } from '@/lib/timeUtils';
 import { differenceInHours, isSameDay } from 'date-fns';
 import { useState } from 'react';
+import type { TVEpisodeInfo } from '@/types/media';
+
+interface CachedEpisodeRow extends TVEpisodeInfo {
+  show_id: number;
+  show_name: string;
+  show_poster_path: string | null;
+  episode_name?: string;
+  episode_id?: number;
+}
 
 interface NewEpisodeFromWatched extends TVEpisode {
   showId: number;
@@ -53,7 +62,7 @@ export function WatchedShowsNewEpisodes() {
       if (cacheAge > maxAge) return null; // Cache is stale
 
       // Transform snake_case to camelCase for consistency
-      const transformedEpisodes = (data.episodes || []).map((ep: TVEpisodeInfo) => ({
+      const transformedEpisodes = ((data.episodes || []) as unknown as CachedEpisodeRow[]).map((ep) => ({
         ...ep,
         showId: ep.show_id,
         showName: ep.show_name,

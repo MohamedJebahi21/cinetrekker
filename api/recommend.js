@@ -7,51 +7,44 @@
 import fs from "node:fs";
 import path from "node:path";
 import { enforceRequestSecurity } from "./_lib/requestSecurity.js";
+import { getMissingServerEnv, getServerEnv } from "./_lib/env.js";
+import { createServerLogger } from "./_lib/logger.js";
 
 const fetch = globalThis.fetch;
+const logger = createServerLogger("recommend");
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const MAX_PROMPT_LENGTH = 500;
 const MAX_LIMIT = 20;
 const MIN_LIMIT = 1;
 
-// Validate required environment variables on module load
 const REQUIRED_ENV_VARS = ["OPENAI_API_KEY"];
-const missingVars = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
+const missingVars = getMissingServerEnv(REQUIRED_ENV_VARS);
 
 if (missingVars.length > 0 && process.env.NODE_ENV === "production") {
-  console.error(
-    `❌ Missing required environment variables: ${missingVars.join(", ")}`,
-  );
-  console.error(
-    "Configure these in Vercel Dashboard → Settings → Environment Variables",
+  logger.error(`Missing required environment variables: ${missingVars.join(", ")}`);
+  logger.error(
+    "Configure these in Vercel Dashboard -> Settings -> Environment Variables",
   );
 }
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
-  const origin = req.headers.origin;
-  if (!isAllowedOrigin(origin)) {
-    return res.status(403).send("Forbidden");
-  }
-
-  const clientKey = getClientIdentifier(req);
-  const limitCheck = await isRateLimitedDistributed(`recommend:${clientKey}`);
-  if (limitCheck.limited) {
-    res.setHeader("Retry-After", String(limitCheck.retryAfter));
-    return res
-      .status(429)
-      .json({ error: "Too many requests. Please try again later." });
+  const security = await enforceRequestSecurity(req, res, "recommend");
+  if (!security.ok) {
+    return res.status(security.status).json({ error: security.error });
   }
 
   const { prompt, language = "en", limit = 12 } = req.body || {};
-  if (!prompt || typeof prompt !== "string")
+  if (!prompt || typeof prompt !== "string") {
     return res.status(400).json({ error: "Missing prompt" });
+  }
 
   const normalizedPrompt = prompt.trim();
-  if (!normalizedPrompt)
+  if (!normalizedPrompt) {
     return res.status(400).json({ error: "Missing prompt" });
+  }
   if (normalizedPrompt.length > MAX_PROMPT_LENGTH) {
     return res
       .status(400)
@@ -62,16 +55,15 @@ export default async function handler(req, res) {
     ? Math.max(MIN_LIMIT, Math.min(MAX_LIMIT, Number(limit)))
     : 12;
 
-  const OPENAI_ID = process.env.OPENAI_API_KEY;
-  const TMDB_ID = process.env.TMDB_API_KEY || process.env.VITE_TMDB_API_KEY;
+  const openAiKey = getServerEnv("OPENAI_API_KEY");
+  const tmdbKey = getServerEnv("TMDB_API_KEY");
 
-  // Generic error to prevent enumeration of which services are configured
-  if (!OPENAI_ID || !TMDB_ID) {
+  if (!openAiKey || !tmdbKey) {
     return res.status(503).json({ error: "Service temporarily unavailable" });
   }
 
   try {
-    const system = `You are a helpful film expert. Given a short user prompt, return a strict JSON object with two keys: \"summary\" (a short 1-2 sentence summary as a film critic, no more than ~140 characters) and \"suggestions\" (an array of up to ${normalizedLimit} items). Each suggestion must be an object with keys: \"title\" (string), optionally \"year\" (number), and \"media_type\" which must be either \"movie\" or \"tv\". Do NOT include adult content. Output MUST be valid JSON and contain only the JSON object.`;
+    const system = `You are a helpful film expert. Given a short user prompt, return a strict JSON object with two keys: "summary" (a short 1-2 sentence summary as a film critic, no more than ~140 characters) and "suggestions" (an array of up to ${normalizedLimit} items). Each suggestion must be an object with keys: "title" (string), optionally "year" (number), and "media_type" which must be either "movie" or "tv". Do NOT include adult content. Output MUST be valid JSON and contain only the JSON object.`;
 
     const openaiRes = await fetch(
       "https://api.openai.com/v1/chat/completions",
@@ -79,7 +71,7 @@ export default async function handler(req, res) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${OPENAI_ID}`,
+          Authorization: `Bearer ${openAiKey}`,
         },
         body: JSON.stringify({
           model: "gpt-4o-mini",
@@ -105,7 +97,6 @@ export default async function handler(req, res) {
       openaiJson?.choices?.[0]?.text ||
       "";
 
-    // Attempt to parse JSON object { summary, suggestions }
     let parsed = { summary: "", suggestions: [] };
     try {
       const obj = JSON.parse(content);
@@ -115,8 +106,7 @@ export default async function handler(req, res) {
           ? obj.suggestions
           : [];
       }
-    } catch (e) {
-      // Fallback: try to extract JSON object or array
+    } catch {
       const objMatch = content.match(/\{[\s\S]*\}/);
       if (objMatch) {
         try {
@@ -125,7 +115,7 @@ export default async function handler(req, res) {
           parsed.suggestions = Array.isArray(obj.suggestions)
             ? obj.suggestions
             : [];
-        } catch (e2) {
+        } catch {
           parsed = { summary: content.slice(0, 140), suggestions: [] };
         }
       } else {
@@ -133,23 +123,21 @@ export default async function handler(req, res) {
       }
     }
 
-    // Limit and sanitize suggestions
     const suggestions = (parsed.suggestions || [])
       .slice(0, normalizedLimit)
       .filter(Boolean)
-      .map((s) => ({
-        title: (s.title || s.name || "").toString(),
-        year: s.year || s.y || null,
+      .map((suggestion) => ({
+        title: (suggestion.title || suggestion.name || "").toString(),
+        year: suggestion.year || suggestion.y || null,
         media_type:
-          s.media_type === "tv" || s.media_type === "movie"
-            ? s.media_type
-            : s.type === "tv"
+          suggestion.media_type === "tv" || suggestion.media_type === "movie"
+            ? suggestion.media_type
+            : suggestion.type === "tv"
               ? "tv"
               : "movie",
       }))
       .filter((item) => item.title && item.title.length > 0);
 
-    // Resolve suggestions to TMDB search results, filtering adult content and adding context-aware recommendations
     const resolved = [];
     const seen = new Set();
 
@@ -161,75 +149,76 @@ export default async function handler(req, res) {
       return true;
     };
 
-    for (const sug of suggestions) {
+    for (const suggestion of suggestions) {
       if (resolved.length >= normalizedLimit) break;
-      const media = sug.media_type === "tv" ? "tv" : "movie";
-      const searchUrl = `${TMDB_BASE}/search/${media}?query=${encodeURIComponent(sug.title)}&include_adult=false&language=${encodeURIComponent(language)}`;
+      const media = suggestion.media_type === "tv" ? "tv" : "movie";
+      const searchUrl = `${TMDB_BASE}/search/${media}?query=${encodeURIComponent(suggestion.title)}&include_adult=false&language=${encodeURIComponent(language)}`;
+
       try {
-        const sRes = await fetch(searchUrl, {
+        const searchResponse = await fetch(searchUrl, {
           headers: {
-            Authorization: `Bearer ${TMDB_ID}`,
+            Authorization: `Bearer ${tmdbKey}`,
           },
         });
-        if (!sRes.ok) continue;
-        const sJson = await sRes.json();
-        const first = (sJson.results || [])[0];
-        if (!first) continue;
-        if (first.adult) continue; // explicit filter
+
+        if (!searchResponse.ok) continue;
+
+        const searchJson = await searchResponse.json();
+        const first = (searchJson.results || [])[0];
+        if (!first || first.adult) continue;
 
         pushIfNew({
           id: first.id,
           media_type: media,
-          title: first.title || first.name || sug.title,
+          title: first.title || first.name || suggestion.title,
           poster_path: first.poster_path || null,
           overview: first.overview || "",
           vote_average: first.vote_average ?? 0,
         });
 
-        // Context awareness: fetch recommendations to include related tags/themes
         try {
-          const recUrl = `${TMDB_BASE}/${media}/${first.id}/recommendations?language=${encodeURIComponent(language)}`;
-          const recRes = await fetch(recUrl, {
+          const recommendationsUrl = `${TMDB_BASE}/${media}/${first.id}/recommendations?language=${encodeURIComponent(language)}`;
+          const recommendationsResponse = await fetch(recommendationsUrl, {
             headers: {
-              Authorization: `Bearer ${TMDB_ID}`,
+              Authorization: `Bearer ${tmdbKey}`,
             },
           });
-          if (recRes.ok) {
-            const recJson = await recRes.json();
-            for (const r of recJson.results || []) {
+
+          if (recommendationsResponse.ok) {
+            const recommendationsJson = await recommendationsResponse.json();
+            for (const recommendation of recommendationsJson.results || []) {
               if (resolved.length >= normalizedLimit) break;
-              if (r.adult) continue;
+              if (recommendation.adult) continue;
               pushIfNew({
-                id: r.id,
+                id: recommendation.id,
                 media_type: media,
-                title: r.title || r.name || "",
-                poster_path: r.poster_path || null,
-                overview: r.overview || "",
-                vote_average: r.vote_average ?? 0,
+                title: recommendation.title || recommendation.name || "",
+                poster_path: recommendation.poster_path || null,
+                overview: recommendation.overview || "",
+                vote_average: recommendation.vote_average ?? 0,
               });
             }
           }
-        } catch (e) {
-          // ignore recommendation errors
+        } catch {
+          // Recommendation expansion is best-effort only.
         }
-      } catch (err) {
-        // ignore and continue
+      } catch {
         continue;
       }
     }
 
-    // Hybrid fallback: if AI suggestions didn't resolve, perform a TMDB multi search using the raw prompt
     if (resolved.length === 0) {
       try {
         const searchUrl = `${TMDB_BASE}/search/multi?query=${encodeURIComponent(normalizedPrompt)}&include_adult=false&language=${encodeURIComponent(language)}`;
-        const sRes = await fetch(searchUrl, {
+        const searchResponse = await fetch(searchUrl, {
           headers: {
-            Authorization: `Bearer ${TMDB_ID}`,
+            Authorization: `Bearer ${tmdbKey}`,
           },
         });
-        if (sRes.ok) {
-          const sJson = await sRes.json();
-          for (const first of sJson.results || []) {
+
+        if (searchResponse.ok) {
+          const searchJson = await searchResponse.json();
+          for (const first of searchJson.results || []) {
             if (resolved.length >= normalizedLimit) break;
             if (first.adult) continue;
             const media = first.media_type === "tv" ? "tv" : "movie";
@@ -243,42 +232,44 @@ export default async function handler(req, res) {
             });
           }
         }
-      } catch (e) {
-        // ignore
+      } catch {
+        // Fall through to bundled fallback.
       }
     }
 
-    // Final fallback: static bundled suggestions to ensure UI never shows 0 results
     if (resolved.length === 0) {
       try {
-        // Read bundled static fallback from filesystem (server-side)
-        const p = path.join(process.cwd(), "public", "api", "recommend.json");
-        if (fs.existsSync(p)) {
-          const raw = fs.readFileSync(p, "utf8");
+        const fallbackPath = path.join(
+          process.cwd(),
+          "public",
+          "api",
+          "recommend.json",
+        );
+        if (fs.existsSync(fallbackPath)) {
+          const raw = fs.readFileSync(fallbackPath, "utf8");
           const data = JSON.parse(raw || "[]");
-          for (const d of data || []) {
+          for (const item of data || []) {
             if (resolved.length >= normalizedLimit) break;
             pushIfNew({
-              id: d.id,
-              media_type: d.media_type || "movie",
-              title: d.title || d.name || "",
-              poster_path: d.poster_path || null,
-              overview: d.overview || "",
-              vote_average: d.vote_average ?? 0,
+              id: item.id,
+              media_type: item.media_type || "movie",
+              title: item.title || item.name || "",
+              poster_path: item.poster_path || null,
+              overview: item.overview || "",
+              vote_average: item.vote_average ?? 0,
             });
           }
         }
-      } catch (e) {
-        // ignore; if still empty we'll return empty array
+      } catch {
+        // Still allow an empty result payload.
       }
     }
 
-    // Return summary and resolved suggestions
     return res
       .status(200)
       .json({ summary: parsed.summary || "", results: resolved });
-  } catch (err) {
-    console.error("recommend function error", err);
+  } catch (error) {
+    logger.error("Unhandled recommendation error.", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 }

@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLastViewed } from "@/hooks/useLastViewed";
-import { useUserLists } from "@/contexts/user-lists-context";
+import { useUserLists } from "@/contexts/UserListsContext";
 import { getRecommendations, getSimilar } from "@/services/tmdb";
 import { MediaCard, MediaCardSkeleton } from "./MediaCard";
 import { Button } from "@/components/ui/button";

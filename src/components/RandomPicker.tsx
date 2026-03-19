@@ -2,7 +2,7 @@ import React from 'react';
 import { Shuffle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useUserLists } from '@/contexts/user-lists-context';
+import { useUserLists } from '@/contexts/UserListsContext';
 import { UserMediaItem } from '@/types/media';
 import { useToast } from '@/hooks/use-toast';
 
