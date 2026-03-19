@@ -130,9 +130,13 @@ export default async function handler(req, res) {
     return json(res, 405, { error: "Method not allowed" });
   }
 
-  const tmdbApiKey = process.env.TMDB_API_KEY;
+  const tmdbApiKey =
+    process.env.TMDB_API_KEY || process.env.VITE_TMDB_API_KEY;
   if (!tmdbApiKey) {
-    return json(res, 500, { error: "TMDB_API_KEY is missing." });
+    return json(res, 500, {
+      error: "TMDB API key is missing.",
+      missing: ["TMDB_API_KEY", "VITE_TMDB_API_KEY"],
+    });
   }
 
   const endpoint = String(req.query?.endpoint || "");

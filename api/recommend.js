@@ -16,7 +16,7 @@ const MAX_LIMIT = 20;
 const MIN_LIMIT = 1;
 
 // Validate required environment variables on module load
-const REQUIRED_ENV_VARS = ["OPENAI_API_KEY", "TMDB_API_KEY"];
+const REQUIRED_ENV_VARS = ["OPENAI_API_KEY"];
 const missingVars = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
 
 if (missingVars.length > 0 && process.env.NODE_ENV === "production") {
@@ -63,7 +63,7 @@ export default async function handler(req, res) {
     : 12;
 
   const OPENAI_ID = process.env.OPENAI_API_KEY;
-  const TMDB_ID = process.env.TMDB_API_KEY;
+  const TMDB_ID = process.env.TMDB_API_KEY || process.env.VITE_TMDB_API_KEY;
 
   // Generic error to prevent enumeration of which services are configured
   if (!OPENAI_ID || !TMDB_ID) {

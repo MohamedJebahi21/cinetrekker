@@ -20,6 +20,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import { createFallbackMedia } from "@/lib/mediaFallback";
 
 interface GenreStats {
   name: string;
@@ -53,11 +54,14 @@ export default function EnhancedStats() {
               watchedAt: item.watchedAt || item.addedAt,
             };
           } catch {
-            return null;
+            return createFallbackMedia(item, {
+              userRating: item.rating,
+              watchedAt: item.watchedAt || item.addedAt,
+            });
           }
         }),
       );
-      return results.filter(Boolean);
+      return results;
     },
     enabled: watched.length > 0,
   });

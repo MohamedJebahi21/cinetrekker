@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SEO from '@/components/SEO';
+import { createFallbackMedia } from '@/lib/mediaFallback';
 
 export default function PrintWatchlist() {
   const { watchlist } = useUserLists();
@@ -24,11 +25,11 @@ export default function PrintWatchlist() {
                 : await getTVDetails(item.mediaId, language);
             return { ...details, media_type: item.mediaType };
           } catch {
-            return null;
+            return createFallbackMedia(item);
           }
         })
       );
-      return results.filter(Boolean);
+      return results;
     },
     enabled: watchlist.length > 0,
   });

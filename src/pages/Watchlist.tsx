@@ -29,6 +29,7 @@ import {
   WatchlistStatsLine,
 } from "@/components/WatchlistStats";
 import { Image } from "@/components/ui/Image";
+import { createFallbackMedia } from "@/lib/mediaFallback";
 
 const HERO_BACKDROP =
   "https://images.unsplash.com/photo-1526779259212-939e64788e3c?auto=format&fit=crop&w=2200&q=80&fm=webp";
@@ -81,20 +82,18 @@ export default function Watchlist() {
     queryFn: async () => {
       const results = await Promise.all(
         listItems.map(async (item) => {
+          const watchedItem = isSharedView
+            ? undefined
+            : watched.find(
+                (w) =>
+                  w.mediaId === item.mediaId && w.mediaType === item.mediaType,
+              );
+
           try {
             const details =
               item.mediaType === "movie"
                 ? await getMovieDetails(item.mediaId, language)
                 : await getTVDetails(item.mediaId, language);
-
-            // Get current watch status
-            const watchedItem = isSharedView
-              ? undefined
-              : watched.find(
-                  (w) =>
-                    w.mediaId === item.mediaId &&
-                    w.mediaType === item.mediaType,
-                );
 
             return {
               ...details,
@@ -103,11 +102,14 @@ export default function Watchlist() {
               userRating: watchedItem?.rating,
             } as Media & { watchStatus?: string; userRating?: number };
           } catch {
-            return null;
+            return createFallbackMedia(item, {
+              watchStatus: watchedItem?.status,
+              userRating: watchedItem?.rating,
+            }) as Media & { watchStatus?: string; userRating?: number };
           }
         }),
       );
-      return results.filter(Boolean) as (Media & { watchStatus?: string })[];
+      return results as (Media & { watchStatus?: string })[];
     },
     enabled: listItems.length > 0,
   });

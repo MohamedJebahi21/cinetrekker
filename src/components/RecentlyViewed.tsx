@@ -6,6 +6,7 @@ import { getRecentlyViewed } from '@/lib/recentlyViewed';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
 import { useTranslation } from 'react-i18next';
+import { createFallbackMedia } from '@/lib/mediaFallback';
 
 export function RecentlyViewed() {
   const { i18n } = useTranslation();
@@ -24,11 +25,14 @@ export function RecentlyViewed() {
                 : await getTVDetails(item.id, language);
             return { ...details, media_type: item.mediaType };
           } catch {
-            return null;
+            return createFallbackMedia({
+              mediaId: item.id,
+              mediaType: item.mediaType,
+            });
           }
         })
       );
-      return results.filter((r): r is NonNullable<typeof r> => r !== null);
+      return results;
     },
     enabled: recentItems.length > 0,
   });

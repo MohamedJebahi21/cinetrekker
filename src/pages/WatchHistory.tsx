@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { createFallbackMedia } from "@/lib/mediaFallback";
 
 export default function WatchHistory() {
   const { watched } = useUserLists();
@@ -55,14 +56,18 @@ export default function WatchHistory() {
   const { data: details } = useQuery({
     queryKey: ["watch-history", filtered.map((i) => i.mediaId).slice(0, 50)],
     queryFn: async () => {
-      const promises = filtered
-        .slice(0, 50)
-        .map((item) =>
-          item.mediaType === "movie"
-            ? getMovieDetails(item.mediaId)
-            : getTVDetails(item.mediaId),
-        );
-      return Promise.all(promises);
+      const items = filtered.slice(0, 50);
+      return Promise.all(
+        items.map(async (item) => {
+          try {
+            return item.mediaType === "movie"
+              ? await getMovieDetails(item.mediaId)
+              : await getTVDetails(item.mediaId);
+          } catch {
+            return createFallbackMedia(item);
+          }
+        }),
+      );
     },
     enabled: filtered.length > 0,
   });

@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import SEO from "@/components/SEO";
+import { createFallbackMedia } from "@/lib/mediaFallback";
 
 export default function Watched() {
   const { t, i18n } = useTranslation();
@@ -48,11 +49,21 @@ export default function Watched() {
               watchedAt?: string;
             };
           } catch {
-            return null;
+            return createFallbackMedia(item, {
+              userRating: item.rating,
+              userNote: item.note,
+              userStatus: item.status,
+              watchedAt: item.watchedAt,
+            }) as Media & {
+              userRating?: number;
+              userNote?: string;
+              userStatus?: string;
+              watchedAt?: string;
+            };
           }
         }),
       );
-      return results.filter(Boolean);
+      return results;
     },
     enabled: watched.length > 0,
   });

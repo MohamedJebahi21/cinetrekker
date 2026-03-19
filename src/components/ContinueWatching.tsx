@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useTranslation } from 'react-i18next';
+import { createFallbackMedia } from '@/lib/mediaFallback';
 
 interface TVShowWithProgress extends MediaDetails {
   currentEpisode: number;
@@ -40,11 +41,16 @@ export function ContinueWatching() {
               lastWatched: item.addedAt,
             } as TVShowWithProgress;
           } catch {
-            return null;
+            return {
+              ...createFallbackMedia(item),
+              currentEpisode: 1,
+              currentSeason: 1,
+              lastWatched: item.addedAt,
+            } as TVShowWithProgress;
           }
         })
       );
-      return results.filter((r): r is TVShowWithProgress => r !== null);
+      return results;
     },
     enabled: watchingShows.length > 0,
   });

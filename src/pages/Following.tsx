@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import SEO from "@/components/SEO";
 import { EmptyState } from "@/components/EmptyStates";
+import { createFallbackMedia } from "@/lib/mediaFallback";
 
 export default function Following() {
   const { t, i18n } = useTranslation();
@@ -39,15 +40,17 @@ export default function Following() {
               followedAt: followedTitle.followedAt,
             } as Media & { followedAt?: string };
           } catch (error) {
-            console.error(
-              `Failed to fetch details for title ${followedTitle.id}:`,
-              error,
-            );
-            return null;
+            return createFallbackMedia(
+              {
+                mediaId: followedTitle.mediaId,
+                mediaType: followedTitle.mediaType,
+              },
+              { followedAt: followedTitle.followedAt },
+            ) as Media & { followedAt?: string };
           }
         }),
       );
-      return results.filter(Boolean);
+      return results;
     },
     enabled: followedTitles.length > 0,
   });

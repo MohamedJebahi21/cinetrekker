@@ -184,9 +184,11 @@ export default async function handler(req, res) {
     return json(res, 401, { error: "Unauthorized" });
   }
 
-  const tmdbApiKey = getEnv("TMDB_API_KEY");
+  const tmdbApiKey = getEnv("TMDB_API_KEY") || getEnv("VITE_TMDB_API_KEY");
   if (!tmdbApiKey) {
-    return json(res, 500, { error: "TMDB_API_KEY is missing." });
+    return json(res, 500, {
+      error: "TMDB_API_KEY or VITE_TMDB_API_KEY is missing.",
+    });
   }
 
   try {
