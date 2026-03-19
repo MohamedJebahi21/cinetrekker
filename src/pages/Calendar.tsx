@@ -18,7 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserLists } from '@/contexts/UserListsContext';
 import { useFollowedShows } from '@/hooks/useFollowedShows';
 import { getUpcomingMovies, getOnTheAirTV, getImageUrl, getTVDetails } from '@/services/tmdb';
-import { Media } from '@/types/media';
+import { Media, TVShow } from '@/types/media';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -149,7 +149,7 @@ export default function Calendar() {
 
     // Add TV shows with episode info
     if (onAirTV && (mediaTypeFilter === 'all' || mediaTypeFilter === 'tv')) {
-      onAirTV.forEach((show: TVShow) => {
+      onAirTV.forEach((show) => {
         const nextEp = show.next_episode_to_air || show.last_episode_to_air;
         const airDate = nextEp?.air_date || show.first_air_date;
         
@@ -585,4 +585,6 @@ export default function Calendar() {
     </>
   );
 }
+
+
 
