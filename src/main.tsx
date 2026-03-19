@@ -18,14 +18,6 @@ import { installChunkErrorHandlers } from "@/lib/chunkErrorRecovery";
 installChunkErrorHandlers();
 applyThemeToDocument(readStoredTheme());
 
-if (import.meta.env.PROD && "serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/sw.js")
-      .catch((error) => console.warn("Service worker registration failed", error));
-  });
-}
-
 const rootElement = document.getElementById("root");
 if (!rootElement) {
   console.error("CRITICAL: Missing root element! Make sure index.html has <div id=\"root\"></div>");

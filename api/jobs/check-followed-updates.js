@@ -20,9 +20,10 @@ function isAuthorizedCronCall(req) {
   const cronSecret = getEnv("CRON_SECRET");
   if (!cronSecret) return false;
 
-  const cronHeader = typeof req?.headers?.["x-cron-secret"] === "string"
-    ? req.headers["x-cron-secret"].trim()
-    : "";
+  const cronHeader =
+    typeof req?.headers?.["x-cron-secret"] === "string"
+      ? req.headers["x-cron-secret"].trim()
+      : "";
   const bearer = parseBearer(req);
 
   return cronHeader === cronSecret || bearer === cronSecret;
@@ -47,7 +48,9 @@ async function fetchTmdbDetails(mediaType, tmdbId, tmdbApiKey) {
   );
 
   if (!response.ok) {
-    throw new Error(`TMDB request failed (${response.status}) for ${endpoint}-${tmdbId}`);
+    throw new Error(
+      `TMDB request failed (${response.status}) for ${endpoint}-${tmdbId}`,
+    );
   }
 
   return response.json();
@@ -85,26 +88,27 @@ function getSnapshotFromTmdb(parsed, details) {
     tmdb_id: parsed.tmdbId,
     release_date: toDateOnly(details?.first_air_date),
     status: typeof details?.status === "string" ? details.status : null,
-    number_of_seasons:
-      Number.isFinite(Number(details?.number_of_seasons))
-        ? Number(details.number_of_seasons)
-        : null,
+    number_of_seasons: Number.isFinite(Number(details?.number_of_seasons))
+      ? Number(details.number_of_seasons)
+      : null,
     last_episode_air_date: toDateOnly(lastEp?.air_date),
-    last_episode_season_number:
-      Number.isFinite(Number(lastEp?.season_number))
-        ? Number(lastEp.season_number)
-        : null,
-    last_episode_number:
-      Number.isFinite(Number(lastEp?.episode_number))
-        ? Number(lastEp.episode_number)
-        : null,
+    last_episode_season_number: Number.isFinite(Number(lastEp?.season_number))
+      ? Number(lastEp.season_number)
+      : null,
+    last_episode_number: Number.isFinite(Number(lastEp?.episode_number))
+      ? Number(lastEp.episode_number)
+      : null,
   };
 }
 
 function createChangeEvents(prev, next, title) {
   const events = [];
 
-  if (prev?.release_date && next.release_date && prev.release_date !== next.release_date) {
+  if (
+    prev?.release_date &&
+    next.release_date &&
+    prev.release_date !== next.release_date
+  ) {
     events.push({
       type: "release_date_changed",
       message: `${title} release date updated to ${next.release_date}.`,
@@ -138,13 +142,11 @@ function createChangeEvents(prev, next, title) {
     next.media_type === "tv" &&
     Number.isFinite(next.last_episode_season_number) &&
     Number.isFinite(next.last_episode_number) &&
-    (
-      !Number.isFinite(prev?.last_episode_season_number) ||
+    (!Number.isFinite(prev?.last_episode_season_number) ||
       !Number.isFinite(prev?.last_episode_number) ||
       next.last_episode_season_number > prev.last_episode_season_number ||
       (next.last_episode_season_number === prev.last_episode_season_number &&
-        next.last_episode_number > prev.last_episode_number)
-    );
+        next.last_episode_number > prev.last_episode_number));
 
   if (hasNewEpisode) {
     events.push({
@@ -226,7 +228,10 @@ export default async function handler(req, res) {
       .from("followed_title_state_user")
       .select("*")
       .in("user_id", followerUserIds)
-      .in("movie_id", parsedKeys.map((p) => p.movieKey));
+      .in(
+        "movie_id",
+        parsedKeys.map((p) => p.movieKey),
+      );
 
     if (stateError) {
       return json(res, 500, { error: "Failed to read title state." });
@@ -248,7 +253,11 @@ export default async function handler(req, res) {
       const batchResults = await Promise.all(
         batch.map(async (parsed) => {
           try {
-            const details = await fetchTmdbDetails(parsed.mediaType, parsed.tmdbId, tmdbApiKey);
+            const details = await fetchTmdbDetails(
+              parsed.mediaType,
+              parsed.tmdbId,
+              tmdbApiKey,
+            );
             const title =
               parsed.mediaType === "tv"
                 ? String(details?.name || `TV ${parsed.tmdbId}`)
@@ -287,7 +296,10 @@ export default async function handler(req, res) {
               stateByUserMovieId.set(stateKey, nextStateForUser);
             }
 
-            const inserted = await insertNotifications(supabase, notificationsToInsert);
+            const inserted = await insertNotifications(
+              supabase,
+              notificationsToInsert,
+            );
 
             const { error: upsertError } = await supabase
               .from("followed_title_state_user")

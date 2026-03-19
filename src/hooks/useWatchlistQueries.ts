@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { UserMediaItem } from '@/types/media';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
+import { logSupabaseIssue } from '@/lib/supabaseRuntime';
 
 const WATCHLIST_QUERY_ID = 'watchlist';
 const WATCHLIST_STORAGE_ID = 'mywatch_watchlist';
@@ -27,7 +28,7 @@ export function useWatchlistQuery() {
             .eq('user_id', user.id);
 
           if (error) {
-            console.error("Watchlist query error:", error);
+            logSupabaseIssue("watchlist query fallback", error);
             const cached = localStorage.getItem(`${WATCHLIST_OFFLINE_CACHE_PREFIX}${user.id}`);
             return cached ? JSON.parse(cached) : [];
           }
@@ -47,7 +48,7 @@ export function useWatchlistQuery() {
 
           return mapped;
         } catch (err) {
-          console.error("Critical error fetching watchlist:", err);
+          logSupabaseIssue("watchlist fetch fallback", err);
           const cached = localStorage.getItem(`${WATCHLIST_OFFLINE_CACHE_PREFIX}${user.id}`);
           return cached ? JSON.parse(cached) : [];
         }
@@ -58,6 +59,7 @@ export function useWatchlistQuery() {
       }
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: false,
   });
 }
 
@@ -124,7 +126,7 @@ export function useAddToWatchlist() {
       if (context?.previousWatchlist) {
         queryClient.setQueryData([WATCHLIST_QUERY_ID, user?.id], context.previousWatchlist);
       }
-      console.error('Failed to add to watchlist:', error);
+      logSupabaseIssue('failed to add to watchlist', error);
       toast({
         title: t('actions.error', 'Error'),
         description: t('actions.watchlistAddError', 'Failed to add to watchlist'),
@@ -190,7 +192,7 @@ export function useRemoveFromWatchlist() {
       if (context?.previousWatchlist) {
         queryClient.setQueryData([WATCHLIST_QUERY_ID, user?.id], context.previousWatchlist);
       }
-      console.error('Failed to remove from watchlist:', error);
+      logSupabaseIssue('failed to remove from watchlist', error);
       toast({
         title: t('actions.error', 'Error'),
         description: t('actions.watchlistRemoveError', 'Failed to remove from watchlist'),

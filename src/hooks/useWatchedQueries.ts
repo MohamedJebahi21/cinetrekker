@@ -5,6 +5,7 @@ import { UserMediaItem } from '@/types/media';
 import { validateNote, validateRating } from '@/lib/validation';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
+import { logSupabaseIssue } from '@/lib/supabaseRuntime';
 
 const WATCHED_QUERY_ID = 'watched';
 const WATCHED_STORAGE_ID = 'mywatch_watched';
@@ -48,7 +49,7 @@ export function useWatchedQuery() {
 
           return mapped;
         } catch (error) {
-          console.warn('Falling back to cached watched list while offline.', error);
+          logSupabaseIssue('watched query fallback', error);
           const cached = localStorage.getItem(`${WATCHED_OFFLINE_CACHE_PREFIX}${user.id}`);
           return cached ? JSON.parse(cached) : [];
         }
@@ -59,6 +60,7 @@ export function useWatchedQuery() {
       }
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: false,
   });
 }
 
@@ -149,7 +151,7 @@ export function useAddToWatched() {
       if (context?.previousWatched) {
         queryClient.setQueryData([WATCHED_QUERY_ID, user?.id], context.previousWatched);
       }
-      console.error('Failed to add to watched:', error);
+      logSupabaseIssue('failed to add to watched', error);
       toast({
         title: t('actions.error', 'Error'),
         description: t('actions.watchedAddError', 'Failed to mark as watched'),
@@ -219,7 +221,7 @@ export function useRemoveFromWatched() {
       if (context?.previousWatched) {
         queryClient.setQueryData([WATCHED_QUERY_ID, user?.id], context.previousWatched);
       }
-      console.error('Failed to remove from watched:', error);
+      logSupabaseIssue('failed to remove from watched', error);
       toast({
         title: t('actions.error', 'Error'),
         description: t('actions.watchedRemoveError', 'Failed to remove from watched'),
@@ -314,7 +316,7 @@ export function useUpdateWatched() {
       if (context?.previousWatched) {
         queryClient.setQueryData([WATCHED_QUERY_ID, user?.id], context.previousWatched);
       }
-      console.error('Failed to update watched item:', error);
+      logSupabaseIssue('failed to update watched item', error);
       toast({
         title: t('actions.error', 'Error'),
         description: t('actions.watchedUpdateError', 'Failed to update watched item'),

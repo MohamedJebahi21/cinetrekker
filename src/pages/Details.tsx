@@ -65,6 +65,7 @@ import { FollowUpdatesButton } from "@/components/FollowUpdatesButton";
 import { profileService } from "@/services/profile";
 
 import { normalizePinnedFavoriteKeys } from "@/utils/pinnedFavorites";
+import { logger } from "@/lib/logger";
 
 function getPolicyRatingTag(
   mediaType: "movie" | "tv",
@@ -381,7 +382,7 @@ export default function Details() {
   }
 
   if (isError || !details) {
-    console.warn("[Details] Error loading media data");
+    logger.warn("[Details] Error loading media data", error);
     const errorMessage = (error as Error)?.message || "";
 
     const isMissingRoute = errorMessage.includes("404");

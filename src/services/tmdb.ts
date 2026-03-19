@@ -10,6 +10,7 @@ import {
   WatchProviders,
 } from "@/types/media";
 import { SafetyLevel, type MaturityRating } from "@/lib/contentFilter";
+import { logger } from "@/lib/logger";
 
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p";
 const TMDB_PROXY_PATH = "/functions/v1/tmdb-proxy";
@@ -17,9 +18,10 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_API_KEY =
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-const TMDB_PROXY_URL = import.meta.env.DEV
+const USE_SUPABASE_EDGE_PROXY = import.meta.env.DEV;
+const TMDB_PROXY_URL = USE_SUPABASE_EDGE_PROXY
   ? TMDB_PROXY_PATH
-  : `${SUPABASE_URL}${TMDB_PROXY_PATH}`;
+  : "/api/tmdb-proxy";
 
 const CONTENT_POLICY_STORAGE_KEY = "cinetrekker_content_policy";
 const TMDB_CACHE_MAX_ENTRIES = 300;
@@ -124,7 +126,7 @@ const fetchTMDB = async <T>(
   language: string = "en",
   extraParams: Record<string, string> = {},
 ): Promise<T> => {
-  if (!SUPABASE_URL || !SUPABASE_API_KEY) {
+  if (USE_SUPABASE_EDGE_PROXY && (!SUPABASE_URL || !SUPABASE_API_KEY)) {
     throw new Error(
       "TMDB proxy not configured. Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env",
     );
@@ -158,38 +160,43 @@ const fetchTMDB = async <T>(
 
   try {
     const requestPromise = (async () => {
-      const response = await fetch(`${TMDB_PROXY_URL}?${params.toString()}`, {
-      headers: {
-        Authorization: `Bearer ${SUPABASE_API_KEY}`,
-        apikey: SUPABASE_API_KEY,
+      const headers: HeadersInit = {
         "Content-Type": "application/json",
-      },
-    });
+      };
 
-    // Explicit 401 handling - Stop retries immediately
-    if (response.status === 401) {
-      console.error(
-        "401 Unauthorized: Invalid Supabase API key or expired session",
-      );
-      throw new Error("AUTHENTICATION_ERROR");
-    }
+      if (USE_SUPABASE_EDGE_PROXY && SUPABASE_API_KEY) {
+        headers.Authorization = `Bearer ${SUPABASE_API_KEY}`;
+        headers.apikey = SUPABASE_API_KEY;
+      }
 
-      if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const statusText =
-        response.status === 404
-          ? "Unavailable - Invalid endpoint"
-          : response.status >= 500
-            ? "Server Error - TMDB or Supabase issue"
-            : `HTTP ${response.status}`;
-      console.error(`TMDB Proxy Error [${response.status}]:`, {
-        endpoint,
-        status: response.status,
-        statusText,
-        error: errorData,
+      const response = await fetch(`${TMDB_PROXY_URL}?${params.toString()}`, {
+        headers,
       });
 
-      throw new Error(errorData.error || `TMDB API error: ${statusText}`);
+      // Explicit 401 handling - Stop retries immediately
+      if (response.status === 401) {
+        logger.error(
+          "401 Unauthorized: Invalid Supabase API key or expired session",
+        );
+        throw new Error("AUTHENTICATION_ERROR");
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const statusText =
+          response.status === 404
+            ? "Unavailable - Invalid endpoint"
+            : response.status >= 500
+              ? "Server Error - TMDB proxy issue"
+              : `HTTP ${response.status}`;
+        logger.error(`TMDB Proxy Error [${response.status}]`, {
+          endpoint,
+          status: response.status,
+          statusText,
+          error: errorData,
+        });
+
+        throw new Error(errorData.error || `TMDB API error: ${statusText}`);
       }
 
       const data = await response.json();
