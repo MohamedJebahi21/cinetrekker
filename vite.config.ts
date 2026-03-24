@@ -119,13 +119,61 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 600,
       rollupOptions: {
         output: {
-          manualChunks: {
-            "vendor-react": ["react", "react-dom", "react-router-dom"],
-            "vendor-query": ["@tanstack/react-query"],
-            "vendor-motion": ["framer-motion"],
-            "vendor-icons": ["lucide-react"],
-            "vendor-i18n": ["i18next", "react-i18next"],
-            "vendor-supabase": ["@supabase/supabase-js"],
+          manualChunks(id) {
+            if (
+              id.includes("node_modules/recharts") ||
+              id.includes("node_modules/chart.js") ||
+              id.includes("node_modules/d3") ||
+              id.includes("node_modules/@nivo")
+            ) {
+              return "vendor-charts";
+            }
+
+            if (
+              id.includes("node_modules/react/") ||
+              id.includes("node_modules/react-dom/") ||
+              id.includes("node_modules/react-router-dom/")
+            ) {
+              return "vendor-react";
+            }
+
+            if (id.includes("node_modules/@tanstack/react-query")) {
+              return "vendor-query";
+            }
+
+            if (
+              id.includes("node_modules/@radix-ui/") ||
+              id.includes("node_modules/react-hook-form/") ||
+              id.includes("node_modules/cmdk/") ||
+              id.includes("node_modules/sonner/") ||
+              id.includes("node_modules/class-variance-authority/") ||
+              id.includes("node_modules/clsx/") ||
+              id.includes("node_modules/tailwind-merge/") ||
+              id.includes("node_modules/embla-carousel")
+            ) {
+              return "vendor-ui";
+            }
+
+            if (id.includes("node_modules/framer-motion")) {
+              return "vendor-motion";
+            }
+
+            if (id.includes("node_modules/lucide-react")) {
+              return "vendor-icons";
+            }
+
+            if (
+              id.includes("node_modules/i18next") ||
+              id.includes("node_modules/react-i18next")
+            ) {
+              return "vendor-i18n";
+            }
+
+            if (id.includes("node_modules/@supabase/supabase-js")) {
+              return "vendor-supabase";
+            }
+
+            return undefined;
           },
         },
       },

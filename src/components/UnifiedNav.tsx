@@ -248,7 +248,6 @@ export function UnifiedNav() {
         <Link
           to="/"
           className="group flex flex-shrink-0 items-center gap-3"
-          aria-label={t("common.appName", "CineTrekker")}
         >
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary transition-all duration-300 group-hover:shadow-[0_0_20px_hsl(358_94%_46%/0.5)]">
             <span className="text-xl font-bold text-primary-foreground">CT</span>

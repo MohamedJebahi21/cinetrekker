@@ -7,13 +7,6 @@ const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const DEFAULT_BATCH_SIZE = 5;
 const logger = createServerLogger("check-followed-updates");
 
-function parseBearer(req) {
-  const authHeader = req?.headers?.authorization;
-  if (typeof authHeader !== "string") return "";
-  const match = authHeader.match(/^Bearer\s+(.+)$/i);
-  return match?.[1]?.trim() || "";
-}
-
 function isAuthorizedCronCall(req) {
   const cronSecret = getServerEnv("CRON_SECRET");
   if (!cronSecret) return false;
@@ -22,9 +15,8 @@ function isAuthorizedCronCall(req) {
     typeof req?.headers?.["x-cron-secret"] === "string"
       ? req.headers["x-cron-secret"].trim()
       : "";
-  const bearer = parseBearer(req);
 
-  return cronHeader === cronSecret || bearer === cronSecret;
+  return cronHeader === cronSecret;
 }
 
 function parseMovieKey(movieId) {

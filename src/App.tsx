@@ -15,14 +15,12 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { UserListsProvider } from "@/contexts/UserListsContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ContentPolicyProvider } from "@/contexts/content-policy-context";
-import KeyboardShortcuts from "@/components/KeyboardShortcuts";
 import ScrollToTop from "@/components/ScrollToTop";
 import { UnifiedNav } from "@/components/UnifiedNav";
 import { Footer } from "@/components/Footer";
 import { BottomNav } from "@/components/BottomNav";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { GlobalLoader } from "@/components/GlobalLoader";
 import {
   Dialog,
   DialogContent,
@@ -31,14 +29,25 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { FollowNotificationMonitor } from "@/components/FollowNotificationMonitor";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import SEO from "@/components/SEO";
 import { websiteJsonLd } from "@/lib/schema";
 import { siteMetadata } from "@/lib/metadata";
 import { applyAccessibilityPreferencesToRoot } from "@/lib/accessibility-preferences";
-import Index from "./pages/Index";
+const Index = lazy(() => import("./pages/Index"));
+const KeyboardShortcuts = lazy(() => import("@/components/KeyboardShortcuts"));
+const GlobalLoader = lazy(() =>
+  import("@/components/GlobalLoader").then((mod) => ({
+    default: mod.GlobalLoader,
+  })),
+);
+const FollowNotificationMonitor = lazy(
+  () =>
+    import("@/components/FollowNotificationMonitor").then((mod) => ({
+      default: mod.FollowNotificationMonitor,
+    })),
+);
 
 const Auth = lazy(() => import("./pages/Auth"));
 const Login = lazy(() => import("./pages/Login"));
@@ -443,6 +452,35 @@ const App = () => {
   const navigate = useNavigate();
   const [enableEnhancements, setEnableEnhancements] = useState(false);
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
+  const refreshableQueryKeys = new Set([
+    "details",
+    "trending",
+    "trending-movies",
+    "trending-tv",
+    "popular",
+    "top-rated",
+    "nowPlaying",
+    "airingToday",
+    "videos",
+    "search",
+    "search-dropdown",
+    "search-overlay",
+    "genres",
+    "genre-media",
+    "watch-providers",
+    "watchProviders",
+    "tv-details",
+    "tv-seasons",
+    "season-details",
+    "home-critical",
+    "location-details",
+    "enriched-filming-locations",
+    "followed-titles-details",
+    "print-watchlist",
+    "recommendations",
+    "continue-watching",
+    "new-episodes",
+  ]);
 
   useEffect(() => {
     applyAccessibilityPreferencesToRoot();
@@ -495,7 +533,13 @@ const App = () => {
 
   const { handlers, containerRef } = usePullToRefresh({
     onRefresh: async () => {
-      await queryClient.invalidateQueries();
+      await queryClient.invalidateQueries({
+        predicate: (query) => {
+          const head = query.queryKey[0];
+          const key = typeof head === "string" ? head : "";
+          return refreshableQueryKeys.has(key);
+        },
+      });
     },
     threshold: 100,
     maxPull: 150,
@@ -506,37 +550,7 @@ const App = () => {
       predicate: (query) => {
         const head = query.queryKey[0];
         const key = typeof head === "string" ? head : "";
-
-        // Refetch common TMDB-backed queries across pages and widgets.
-        return [
-          "details",
-          "trending",
-          "trending-movies",
-          "trending-tv",
-          "popular",
-          "top-rated",
-          "nowPlaying",
-          "airingToday",
-          "videos",
-          "search",
-          "search-dropdown",
-          "search-overlay",
-          "genres",
-          "genre-media",
-          "watch-providers",
-          "watchProviders",
-          "tv-details",
-          "tv-seasons",
-          "season-details",
-          "home-critical",
-          "location-details",
-          "enriched-filming-locations",
-          "followed-titles-details",
-          "print-watchlist",
-          "recommendations",
-          "continue-watching",
-          "new-episodes",
-        ].includes(key);
+        return refreshableQueryKeys.has(key);
       },
     });
 
@@ -545,7 +559,7 @@ const App = () => {
       predicate: (query) => {
         const head = query.queryKey[0];
         const key = typeof head === "string" ? head : "";
-        return key.length > 0;
+        return refreshableQueryKeys.has(key);
       },
     });
   };
@@ -557,7 +571,11 @@ const App = () => {
           <ContentPolicyProvider>
             <UserListsProvider>
               <ErrorBoundary onRetry={handleBoundaryRetry}>
-                {enableEnhancements && <KeyboardShortcuts />}
+                {enableEnhancements && (
+                  <Suspense fallback={null}>
+                    <KeyboardShortcuts />
+                  </Suspense>
+                )}
                 <Sonner position="bottom-right" />
                 <SEO
                   jsonLd={websiteJsonLd({
@@ -568,9 +586,15 @@ const App = () => {
                   title={siteMetadata.title}
                   description={siteMetadata.description}
                 />
-                {enableEnhancements && <GlobalLoader />}
+                {enableEnhancements && (
+                  <Suspense fallback={null}>
+                    <GlobalLoader />
+                  </Suspense>
+                )}
                 {enableEnhancements && <NetworkMonitor />}
-                <FollowNotificationMonitor />
+                <Suspense fallback={null}>
+                  <FollowNotificationMonitor />
+                </Suspense>
                 <div className="flex min-h-[100dvh] flex-col">
                   <UnifiedNav />
                   <ScrollToTop />

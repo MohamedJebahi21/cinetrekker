@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
 import type { Media } from "@/types/media";
 import { getFilmingMapPoints } from "@/lib/filmingLocations";
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+type MapboxModule = typeof import("mapbox-gl");
 
 interface FilmingLocationsMapProps {
   items?: Media[];
@@ -21,9 +20,10 @@ interface FilmingLocationsMapProps {
 }
 
 export function FilmingLocationsMap({ items = [], points: customPoints }: FilmingLocationsMapProps) {
-  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const mapRef = useRef<import("mapbox-gl").Map | null>(null);
+  const mapboxRef = useRef<MapboxModule | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const markerRefs = useRef<mapboxgl.Marker[]>([]);
+  const markerRefs = useRef<import("mapbox-gl").Marker[]>([]);
   const [mapReady, setMapReady] = useState(false);
 
   const points = useMemo(
@@ -36,38 +36,54 @@ export function FilmingLocationsMap({ items = [], points: customPoints }: Filmin
       return;
     }
 
-    mapboxgl.accessToken = MAPBOX_TOKEN;
+    let cancelled = false;
 
-    const map = new mapboxgl.Map({
-      container: mapContainerRef.current,
-      style: "mapbox://styles/mapbox/dark-v11",
-      center: [6, 28],
-      zoom: 1.45,
-      projection: "globe",
-      attributionControl: false,
-    });
+    const initMap = async () => {
+      const mapbox = await import("mapbox-gl");
+      await import("mapbox-gl/dist/mapbox-gl.css");
 
-    map.addControl(
-      new mapboxgl.NavigationControl({ showCompass: false }),
-      "top-right",
-    );
+      if (cancelled || !mapContainerRef.current || mapRef.current) {
+        return;
+      }
 
-    map.on("style.load", () => {
-      map.setFog({
-        color: "rgb(8, 10, 18)",
-        "high-color": "rgb(20, 28, 42)",
-        "horizon-blend": 0.22,
+      mapboxRef.current = mapbox;
+      mapbox.default.accessToken = MAPBOX_TOKEN;
+
+      const map = new mapbox.default.Map({
+        container: mapContainerRef.current,
+        style: "mapbox://styles/mapbox/dark-v11",
+        center: [6, 28],
+        zoom: 1.45,
+        projection: "globe",
+        attributionControl: false,
       });
-      setMapReady(true);
-    });
 
-    mapRef.current = map;
+      map.addControl(
+        new mapbox.default.NavigationControl({ showCompass: false }),
+        "top-right",
+      );
+
+      map.on("style.load", () => {
+        map.setFog({
+          color: "rgb(8, 10, 18)",
+          "high-color": "rgb(20, 28, 42)",
+          "horizon-blend": 0.22,
+        });
+        setMapReady(true);
+      });
+
+      mapRef.current = map;
+    };
+
+    void initMap();
 
     return () => {
+      cancelled = true;
       markerRefs.current.forEach((marker) => marker.remove());
       markerRefs.current = [];
-      map.remove();
+      mapRef.current?.remove();
       mapRef.current = null;
+      mapboxRef.current = null;
       setMapReady(false);
     };
   }, []);
@@ -88,11 +104,14 @@ export function FilmingLocationsMap({ items = [], points: customPoints }: Filmin
         `Filming location for ${point.title}`,
       );
 
-      const popup = new mapboxgl.Popup({ offset: 18 }).setHTML(
+      const mapbox = mapboxRef.current;
+      if (!mapbox) return;
+
+      const popup = new mapbox.default.Popup({ offset: 18 }).setHTML(
         `<div class="ct-map-popup"><strong>${point.title}</strong><p>${point.label}</p><small>${point.scene}</small></div>`,
       );
 
-      const marker = new mapboxgl.Marker({
+      const marker = new mapbox.default.Marker({
         element: markerNode,
         anchor: "bottom",
       })

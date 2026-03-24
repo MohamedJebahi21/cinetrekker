@@ -46,7 +46,6 @@
     />
     <meta name="twitter:image" content="/og-image.png" />
     <meta name="twitter:image:alt" content="CineTrekker - Movie Tracking App" />
-    <meta name="theme-color" content="#E50914" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta
@@ -59,6 +58,26 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Merriweather:wght@300;400;700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Merriweather:wght@300;400;700&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Merriweather:wght@300;400;700&display=swap"
+      />
+    </noscript>
 
     <link rel="preconnect" href="https://image.tmdb.org" />
     <link
@@ -162,6 +181,7 @@
         align-items: center;
         padding: env(safe-area-inset-top, 0px) 1rem 0 1rem;
         background: rgba(248, 250, 252, 0.9);
+        -webkit-backdrop-filter: blur(10px);
         backdrop-filter: blur(10px);
         position: sticky;
         top: 0;
@@ -252,6 +272,20 @@
         border-radius: 4px;
       }
 
+      .text-skeleton-title {
+        width: 60%;
+        max-width: 280px;
+        height: 2rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .text-skeleton-subtitle {
+        width: 40%;
+        max-width: 200px;
+        height: 1rem;
+        margin-bottom: 2rem;
+      }
+
       /* Responsive Breakpoints */
       @media (min-width: 480px) {
         .loading-grid {
@@ -307,24 +341,8 @@
         </header>
 
         <main class="loading-content">
-          <div
-            class="text-skeleton skeleton"
-            style="
-              width: 60%;
-              max-width: 280px;
-              height: 2rem;
-              margin-bottom: 0.75rem;
-            "
-          ></div>
-          <div
-            class="text-skeleton skeleton"
-            style="
-              width: 40%;
-              max-width: 200px;
-              height: 1rem;
-              margin-bottom: 2rem;
-            "
-          ></div>
+          <div class="text-skeleton text-skeleton-title skeleton"></div>
+          <div class="text-skeleton text-skeleton-subtitle skeleton"></div>
 
           <div class="loading-grid" role="status" aria-label="Loading content">
             <div class="card-skeleton skeleton" aria-hidden="true"></div>

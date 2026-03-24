@@ -197,7 +197,7 @@ export default function Index() {
 
       <div className="page-container space-y-8 pb-24 md:pb-0">
         {criticalError && (
-          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          <div className="rounded-lg border border-red-300 bg-red-100 p-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
             {t(
               "common.error",
               "Something went wrong loading featured content. Please try again.",
@@ -256,9 +256,6 @@ export default function Index() {
               <button
                 type="button"
                 onClick={() => setTopThisWeekType("movie")}
-                aria-label={
-                  t("home.topMoviesWeek") || "Show top movies this week"
-                }
                 className={`min-h-[44px] rounded px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   topThisWeekType === "movie"
                     ? "bg-primary text-primary-foreground"
@@ -270,9 +267,6 @@ export default function Index() {
               <button
                 type="button"
                 onClick={() => setTopThisWeekType("tv")}
-                aria-label={
-                  t("home.topSeriesWeek") || "Show top series this week"
-                }
                 className={`min-h-[44px] rounded px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   topThisWeekType === "tv"
                     ? "bg-primary text-primary-foreground"
@@ -311,7 +305,6 @@ export default function Index() {
               <button
                 type="button"
                 onClick={() => setTopRatedType("movie")}
-                aria-label={t("home.topRatedMovies") || "Show top rated movies"}
                 className={`min-h-[44px] rounded px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   topRatedType === "movie"
                     ? "bg-primary text-primary-foreground"
@@ -323,7 +316,6 @@ export default function Index() {
               <button
                 type="button"
                 onClick={() => setTopRatedType("tv")}
-                aria-label={t("home.topRatedSeries") || "Show top rated series"}
                 className={`min-h-[44px] rounded px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   topRatedType === "tv"
                     ? "bg-primary text-primary-foreground"
@@ -409,7 +401,6 @@ export default function Index() {
               <button
                 type="button"
                 onClick={() => setPopularType("movie")}
-                aria-label={t("home.popularMovies") || "Show popular movies"}
                 className={`min-h-[44px] rounded px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   popularType === "movie"
                     ? "bg-primary text-primary-foreground"
@@ -421,7 +412,6 @@ export default function Index() {
               <button
                 type="button"
                 onClick={() => setPopularType("tv")}
-                aria-label={t("home.popularSeries") || "Show popular series"}
                 className={`min-h-[44px] rounded px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   popularType === "tv"
                     ? "bg-primary text-primary-foreground"

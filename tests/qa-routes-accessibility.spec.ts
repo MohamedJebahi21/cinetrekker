@@ -59,6 +59,19 @@ test.describe("accessibility focus and touch target checks", () => {
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
+    await expect(page.locator("main").first()).toBeVisible();
+
+    await expect
+      .poll(
+        async () =>
+          page
+            .locator(
+              "button:visible, [role='button']:visible, [role='tab']:visible, [role='switch']:visible, [data-radix-collection-item]:visible",
+            )
+            .count(),
+        { timeout: 10000 },
+      )
+      .toBeGreaterThan(0);
 
     const results = await page.evaluate(() => {
       const controls = Array.from(

@@ -1,6 +1,26 @@
-const RATE_LIMIT_WINDOW_MS = 60 * 1000;
-const MAX_REQUESTS_PER_WINDOW = 30;
 const RATE_LIMIT_CLEANUP_MS = 5 * 60 * 1000;
+const DEFAULT_RATE_LIMIT = {
+  windowMs: 60 * 1000,
+  maxRequests: 30,
+};
+const STATE_CHANGING_RATE_LIMIT = {
+  windowMs: 60 * 1000,
+  maxRequests: 12,
+};
+const STRICT_STATE_RATE_LIMIT = {
+  windowMs: 60 * 1000,
+  maxRequests: 8,
+};
+const FEEDBACK_RATE_LIMIT = {
+  windowMs: 5 * 60 * 1000,
+  maxRequests: 5,
+};
+const STATE_CHANGING_PREFIXES = new Set([
+  "follow",
+  "unfollow",
+  "notifications",
+  "notifications-mark-read",
+]);
 
 const requestStore = new Map();
 const fetch = globalThis.fetch;
@@ -22,14 +42,54 @@ export function getClientIP(req) {
   return req?.socket?.remoteAddress || "unknown";
 }
 
-export function getClientIdentifier(req) {
-  const ip = getClientIP(req);
-  const userAgent =
-    typeof req?.headers?.["user-agent"] === "string"
-      ? req.headers["user-agent"]
-      : "unknown-agent";
+function getRateLimitConfig(prefix) {
+  if (prefix === "feedback") {
+    return FEEDBACK_RATE_LIMIT;
+  }
 
-  return `${ip}:${userAgent.slice(0, 120)}`;
+  if (prefix === "notifications-mark-read") {
+    return STRICT_STATE_RATE_LIMIT;
+  }
+
+  if (STATE_CHANGING_PREFIXES.has(prefix)) {
+    return STATE_CHANGING_RATE_LIMIT;
+  }
+
+  return DEFAULT_RATE_LIMIT;
+}
+
+async function getAuthenticatedUserId(req) {
+  const authHeader = req?.headers?.authorization;
+  const tokenMatch =
+    typeof authHeader === "string"
+      ? authHeader.match(/^Bearer\s+(.+)$/i)
+      : null;
+  const accessToken = tokenMatch?.[1]?.trim();
+
+  if (!accessToken) {
+    return null;
+  }
+
+  try {
+    const { getSupabaseAdminClient } = await import("./supabaseAdmin.js");
+    const supabase = getSupabaseAdminClient();
+    const { data, error } = await supabase.auth.getUser(accessToken);
+    if (error || !data?.user?.id) {
+      return null;
+    }
+    return data.user.id;
+  } catch {
+    return null;
+  }
+}
+
+async function getRateLimitKey(req, prefix) {
+  const ip = getClientIP(req);
+  const userId = await getAuthenticatedUserId(req);
+  if (userId) {
+    return `${prefix}:user:${userId}:ip:${ip}`;
+  }
+  return `${prefix}:ip:${ip}`;
 }
 
 export function isAllowedOrigin(origin) {
@@ -50,12 +110,12 @@ export function isAllowedOrigin(origin) {
   return allowedOrigins.has(origin) || isPreview || isLocal;
 }
 
-function isRateLimitedInMemory(key) {
+function isRateLimitedInMemory(key, config) {
   const now = Date.now();
 
   if (now - lastCleanupAt > RATE_LIMIT_CLEANUP_MS) {
     for (const [storeKey, entry] of requestStore.entries()) {
-      if (now > entry.resetAt + RATE_LIMIT_WINDOW_MS) {
+      if (now > entry.resetAt) {
         requestStore.delete(storeKey);
       }
     }
@@ -64,12 +124,12 @@ function isRateLimitedInMemory(key) {
 
   const entry = requestStore.get(key);
   if (!entry || now > entry.resetAt) {
-    requestStore.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    requestStore.set(key, { count: 1, resetAt: now + config.windowMs });
     return { limited: false, retryAfter: 0 };
   }
 
   entry.count += 1;
-  if (entry.count > MAX_REQUESTS_PER_WINDOW) {
+  if (entry.count > config.maxRequests) {
     const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
     return { limited: true, retryAfter };
   }
@@ -77,17 +137,17 @@ function isRateLimitedInMemory(key) {
   return { limited: false, retryAfter: 0 };
 }
 
-async function isRateLimitedDistributed(key) {
+async function isRateLimitedDistributed(key, config) {
   if (typeof fetch !== "function") {
-    return isRateLimitedInMemory(key);
+    return isRateLimitedInMemory(key, config);
   }
 
   if (!UPSTASH_REDIS_REST_URL || !UPSTASH_REDIS_REST_TOKEN) {
-    return isRateLimitedInMemory(key);
+    return isRateLimitedInMemory(key, config);
   }
 
   try {
-    const windowSeconds = Math.ceil(RATE_LIMIT_WINDOW_MS / 1000);
+    const windowSeconds = Math.ceil(config.windowMs / 1000);
     const response = await fetch(`${UPSTASH_REDIS_REST_URL}/pipeline`, {
       method: "POST",
       headers: {
@@ -102,7 +162,7 @@ async function isRateLimitedDistributed(key) {
     });
 
     if (!response.ok) {
-      return isRateLimitedInMemory(key);
+      return isRateLimitedInMemory(key, config);
     }
 
     const payload = await response.json();
@@ -112,11 +172,11 @@ async function isRateLimitedDistributed(key) {
     const retryAfter = ttl > 0 ? ttl : windowSeconds;
 
     return {
-      limited: count > MAX_REQUESTS_PER_WINDOW,
+      limited: count > config.maxRequests,
       retryAfter,
     };
   } catch {
-    return isRateLimitedInMemory(key);
+    return isRateLimitedInMemory(key, config);
   }
 }
 
@@ -126,8 +186,9 @@ export async function enforceRequestSecurity(req, res, prefix) {
     return { ok: false, status: 403, error: "Forbidden origin" };
   }
 
-  const clientKey = getClientIdentifier(req);
-  const limitCheck = await isRateLimitedDistributed(`${prefix}:${clientKey}`);
+  const config = getRateLimitConfig(prefix);
+  const key = await getRateLimitKey(req, prefix);
+  const limitCheck = await isRateLimitedDistributed(key, config);
 
   if (limitCheck.limited) {
     res.setHeader("Retry-After", String(limitCheck.retryAfter));
