@@ -1,17 +1,131 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import SEO from '@/components/SEO';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
+declare global {
+  interface Window {
+    grecaptcha?: {
+      render: (
+        container: string | HTMLElement,
+        options: {
+          sitekey: string;
+          callback: (token: string) => void;
+          "expired-callback"?: () => void;
+          "error-callback"?: () => void;
+          theme?: "light" | "dark";
+        },
+      ) => string;
+      reset?: (widgetId: string) => void;
+    };
+    turnstile?: {
+      render: (
+        container: string | HTMLElement,
+        options: {
+          sitekey: string;
+          callback: (token: string) => void;
+          'expired-callback'?: () => void;
+          'error-callback'?: () => void;
+          theme?: 'light' | 'dark' | 'auto';
+        },
+      ) => string;
+      remove?: (widgetId: string) => void;
+      reset?: (widgetId: string) => void;
+    };
+  }
+}
+
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined;
+const CAPTCHA_PROVIDER = TURNSTILE_SITE_KEY ? 'turnstile' : RECAPTCHA_SITE_KEY ? 'recaptcha' : null;
+const CAPTCHA_SITE_KEY = TURNSTILE_SITE_KEY || RECAPTCHA_SITE_KEY || '';
+
 export default function Feedback() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
+  const [honeypot, setHoneypot] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
+  const turnstileWidgetIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!CAPTCHA_SITE_KEY || !turnstileContainerRef.current) return;
+
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      CAPTCHA_PROVIDER === 'turnstile'
+        ? 'script[data-turnstile-script="true"]'
+        : 'script[data-recaptcha-script="true"]',
+    );
+
+    const renderWidget = () => {
+      if (!turnstileContainerRef.current || turnstileWidgetIdRef.current) {
+        return;
+      }
+
+      if (CAPTCHA_PROVIDER === 'turnstile' && window.turnstile) {
+        turnstileWidgetIdRef.current = window.turnstile.render(
+          turnstileContainerRef.current,
+          {
+            sitekey: CAPTCHA_SITE_KEY,
+            theme: 'auto',
+            callback: (token) => setCaptchaToken(token),
+            'expired-callback': () => setCaptchaToken(''),
+            'error-callback': () => setCaptchaToken(''),
+          },
+        );
+      }
+
+      if (CAPTCHA_PROVIDER === 'recaptcha' && window.grecaptcha) {
+        turnstileWidgetIdRef.current = window.grecaptcha.render(
+          turnstileContainerRef.current,
+          {
+            sitekey: CAPTCHA_SITE_KEY,
+            theme: 'dark',
+            callback: (token) => setCaptchaToken(token),
+            'expired-callback': () => setCaptchaToken(''),
+            'error-callback': () => setCaptchaToken(''),
+          },
+        );
+      }
+    };
+
+    if (existingScript) {
+      renderWidget();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src =
+      CAPTCHA_PROVIDER === 'turnstile'
+        ? 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
+        : 'https://www.google.com/recaptcha/api.js?render=explicit';
+    script.async = true;
+    script.defer = true;
+    if (CAPTCHA_PROVIDER === 'turnstile') {
+      script.dataset.turnstileScript = 'true';
+    } else {
+      script.dataset.recaptchaScript = 'true';
+    }
+    script.onload = () => renderWidget();
+    document.head.appendChild(script);
+
+    return () => {
+      if (
+        CAPTCHA_PROVIDER === 'turnstile' &&
+        turnstileWidgetIdRef.current &&
+        window.turnstile?.remove
+      ) {
+        window.turnstile.remove(turnstileWidgetIdRef.current);
+        turnstileWidgetIdRef.current = null;
+      }
+    };
+  }, []);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -20,6 +134,11 @@ export default function Feedback() {
 
     if (!name.trim() || !email.trim() || !message.trim()) {
       setError('Please fill in all fields before sending feedback.');
+      return;
+    }
+
+    if (!captchaToken) {
+      setError('Please complete the bot protection check before sending feedback.');
       return;
     }
 
@@ -35,6 +154,8 @@ export default function Feedback() {
           name: name.trim(),
           email: email.trim(),
           message: message.trim(),
+          captchaToken,
+          website: honeypot,
         }),
       });
 
@@ -49,6 +170,14 @@ export default function Feedback() {
       setName('');
       setEmail('');
       setMessage('');
+      setHoneypot('');
+      setCaptchaToken('');
+      if (CAPTCHA_PROVIDER === 'turnstile' && turnstileWidgetIdRef.current && window.turnstile?.reset) {
+        window.turnstile.reset(turnstileWidgetIdRef.current);
+      }
+      if (CAPTCHA_PROVIDER === 'recaptcha' && turnstileWidgetIdRef.current && window.grecaptcha?.reset) {
+        window.grecaptcha.reset(turnstileWidgetIdRef.current);
+      }
     } catch {
       setError('Failed to send feedback. Please try again.');
     } finally {
@@ -101,6 +230,28 @@ export default function Feedback() {
               className="min-h-[140px]"
               required
             />
+          </div>
+
+          <div className="hidden" aria-hidden="true">
+            <Label htmlFor="feedback-website">Website</Label>
+            <Input
+              id="feedback-website"
+              tabIndex={-1}
+              autoComplete="off"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Bot Protection</Label>
+            {CAPTCHA_SITE_KEY ? (
+              <div ref={turnstileContainerRef} />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Bot protection is not configured for this environment.
+              </p>
+            )}
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}

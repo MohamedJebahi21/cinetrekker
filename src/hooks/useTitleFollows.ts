@@ -243,8 +243,14 @@ export function useTitleFollows() {
 
       if (statesToSync.length > 0) {
         const { error } = await supabase
-          .from("followed_title_state")
-          .upsert(statesToSync, { onConflict: "movie_id" });
+          .from("followed_title_state_user")
+          .upsert(
+            statesToSync.map((state) => ({
+              user_id: user.id,
+              ...state,
+            })),
+            { onConflict: "user_id,movie_id" },
+          );
 
         if (error) {
           throw error;
@@ -386,10 +392,16 @@ export function useTitleFollows() {
 
       if (initialState) {
         const { error } = await supabase
-          .from("followed_title_state")
-          .upsert(initialState, {
-            onConflict: "movie_id",
-          });
+          .from("followed_title_state_user")
+          .upsert(
+            {
+              user_id: user.id,
+              ...initialState,
+            },
+            {
+              onConflict: "user_id,movie_id",
+            },
+          );
 
         if (error) {
           throw error;
@@ -453,8 +465,9 @@ export function useTitleFollows() {
       }
 
       await supabase
-        .from("followed_title_state")
+        .from("followed_title_state_user")
         .delete()
+        .eq("user_id", user.id)
         .eq("movie_id", followId);
 
       return { followId, mediaType };

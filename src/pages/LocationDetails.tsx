@@ -14,6 +14,11 @@ import {
   getPrimaryVisitUrl,
   getTripAdvisorAffiliateUrl,
 } from "@/lib/travelAffiliate";
+import {
+  buildCanonicalUrl,
+  buildMediaPath,
+  toBreadcrumbJsonLd,
+} from "@/lib/seo";
 
 export default function LocationDetails() {
   const { id } = useParams<{ id: string }>();
@@ -47,7 +52,8 @@ export default function LocationDetails() {
 
   const filmingLocation = enrichedLocations[0] || getFilmingLocation(data as Media);
   const seoTitle = `Filming Locations for ${title} | CineTrekker`;
-  const canonical = `https://cinetrekker.vercel.app/${mediaType}/${mediaId}/locations`;
+  const detailsPath = buildMediaPath(mediaType, mediaId, title);
+  const canonical = buildCanonicalUrl(`/${mediaType}/${mediaId}/locations`);
 
   return (
     <>
@@ -57,11 +63,18 @@ export default function LocationDetails() {
         canonical={canonical}
         keywords={`${title}, filming locations, ${filmingLocation.country}, movie travel, cine tourism`}
         type={mediaType === "movie" ? "video.movie" : "video.tv_show"}
+        jsonLd={[
+          toBreadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: title, path: detailsPath },
+            { name: "Filming locations", path: `/${mediaType}/${mediaId}/locations` },
+          ]),
+        ]}
       />
 
       <div className="page-container pt-20 pb-24 md:pb-0">
         <Link
-          to={`/${mediaType}/${mediaId}`}
+          to={detailsPath}
           className="mb-4 inline-flex items-center gap-2 rounded-md border border-white/10 px-3 py-2 text-xs text-white/80 hover:bg-white/5"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -72,7 +85,7 @@ export default function LocationDetails() {
           <div className="overflow-hidden rounded-xl border border-white/10 bg-black/30">
             <Image
               src={getImageUrl(data.poster_path, "w342")}
-              alt={`${title} poster`}
+              alt={`${title} filming locations poster for movie tracker`}
               width={342}
               height={513}
               loading="eager"

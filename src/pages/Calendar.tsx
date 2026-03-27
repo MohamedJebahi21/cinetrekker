@@ -26,6 +26,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import SEO from '@/components/SEO';
+import { Image } from '@/components/ui/Image';
 import {
   Select,
   SelectContent,
@@ -243,12 +244,17 @@ export default function Calendar() {
           {/* Poster with aspect ratio */}
           <div className="relative aspect-[2/3] overflow-hidden">
               {item.posterPath ? (
-              <img
-                src={getImageUrl(item.posterPath, 'w342')}
-                alt={item.title}
-                className="w-full h-full object-cover transition-transform duration-300 md:group-hover:scale-105 active:scale-105 focus-visible:scale-105"
-                loading="lazy"
-              />
+                <Image
+                  src={getImageUrl(item.posterPath, 'w342')}
+                  srcSet={`${getImageUrl(item.posterPath, 'w185')} 185w, ${getImageUrl(item.posterPath, 'w342')} 342w, ${getImageUrl(item.posterPath, 'w500')} 500w`}
+                  sizes="(max-width: 639px) calc(50vw - 20px), (max-width: 1023px) calc(33vw - 24px), 260px"
+                  alt={`${item.title} poster`}
+                  width={342}
+                  height={513}
+                  className="w-full h-full object-cover transition-transform duration-300 md:group-hover:scale-105 active:scale-105 focus-visible:scale-105"
+                  loading="lazy"
+                  showSkeleton
+                />
             ) : (
               <div className="w-full h-full bg-muted flex items-center justify-center">
                 {item.type === 'movie' ? (
@@ -325,8 +331,9 @@ export default function Calendar() {
             
             {/* Network/Channel */}
             {item.network && (
-              <p className="text-xs text-muted-foreground/80 truncate">
-                ðŸ“º {item.network}
+              <p className="flex items-center gap-1 text-xs text-muted-foreground/80 truncate">
+                <Tv className="h-3 w-3 shrink-0" />
+                <span className="truncate">{item.network}</span>
               </p>
             )}
             
@@ -418,7 +425,7 @@ export default function Calendar() {
   return (
     <>
       <SEO 
-        title="Release Calendar â€” CineTrekker" 
+        title="Release Calendar - CineTrekker" 
         description="Upcoming movie and TV show releases this week"
         canonical="https://cinetrekker.vercel.app/calendar"
       />

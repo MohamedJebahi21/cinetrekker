@@ -1,8 +1,12 @@
 import { enforceRequestSecurity } from './_lib/requestSecurity.js';
+import { verifyBotProtection } from './_lib/botProtection.js';
+import { createServerLogger } from './_lib/logger.js';
+import { reportSecurityEvent } from './_lib/securityMonitor.js';
 
 const MAX_NAME_LENGTH = 120;
 const MAX_EMAIL_LENGTH = 254;
 const MAX_MESSAGE_LENGTH = 4000;
+const logger = createServerLogger("feedback");
 
 function normalizeText(value, maxLength) {
   if (typeof value !== 'string') return '';
@@ -40,6 +44,11 @@ export default async function handler(req, res) {
   const name = normalizeText(body?.name, MAX_NAME_LENGTH);
   const email = normalizeText(body?.email, MAX_EMAIL_LENGTH);
   const message = normalizeText(body?.message, MAX_MESSAGE_LENGTH);
+
+  const botCheck = await verifyBotProtection(req, body, "feedback");
+  if (!botCheck.ok) {
+    return res.status(botCheck.status).json({ error: botCheck.error });
+  }
 
   if (!name || !email || !message) {
     return res.status(400).json({ error: 'Name, email, and message are required.' });
@@ -84,6 +93,15 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
+      await reportSecurityEvent({
+        event: "feedback_delivery_failed",
+        severity: "error",
+        scope: "feedback",
+        message: "Feedback email delivery failed.",
+        req,
+        details: { status: response.status },
+        shouldAlert: true,
+      });
       return res.status(502).json({
         error: 'Failed to send feedback. Please try again later.',
       });
@@ -91,7 +109,16 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ ok: true });
   } catch (error) {
-    console.error('feedback function error', error);
+    logger.error('feedback function error', error);
+    await reportSecurityEvent({
+      event: "feedback_handler_error",
+      severity: "error",
+      scope: "feedback",
+      message: "Feedback handler threw an error.",
+      req,
+      details: error,
+      shouldAlert: true,
+    });
     return res.status(500).json({
       error: 'Internal feedback service error.',
     });

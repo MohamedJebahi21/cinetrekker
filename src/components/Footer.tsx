@@ -36,6 +36,18 @@ export function Footer() {
             </h3>
             <nav className="flex flex-col gap-3" aria-label="Explore links">
               <Link
+                to="/search"
+                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                Search
+              </Link>
+              <Link
+                to="/trending"
+                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                Live Trends
+              </Link>
+              <Link
                 to="/search?sort=popularity.desc"
                 className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
@@ -136,7 +148,7 @@ export function Footer() {
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             {/* Copyright */}
             <p className="text-center text-[0.84rem] text-[var(--text-secondary)] md:text-left">
-              (c) {currentYear} {t("common.appName")}.{" "}
+              © {currentYear} {t("common.appName")}.{" "}
               {t("footer.allRightsReserved", "All rights reserved.")}
             </p>
 
@@ -154,7 +166,7 @@ export function Footer() {
                 >
                   <img
                     src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg"
-                    alt="TMDB Logo"
+                    alt="TMDB logo for CineTrekker movie tracker data provider"
                     className="h-3 logo-image"
                     loading="lazy"
                     width="81"

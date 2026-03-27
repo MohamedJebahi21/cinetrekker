@@ -18,6 +18,23 @@ import { installChunkErrorHandlers } from "@/lib/chunkErrorRecovery";
 installChunkErrorHandlers();
 applyThemeToDocument(readStoredTheme());
 
+if (typeof window !== "undefined" && "trustedTypes" in window) {
+  const createPolicy = (name: string) => {
+    try {
+      window.trustedTypes.createPolicy(name, {
+        createHTML: (value) => value,
+        createScript: (value) => value,
+        createScriptURL: (value) => value,
+      });
+    } catch {
+      // Reuse existing policy if already created by the browser/runtime.
+    }
+  };
+
+  createPolicy("default");
+  createPolicy("cinetrekker");
+}
+
 const rootElement = document.getElementById("root");
 if (!rootElement) {
   console.error("CRITICAL: Missing root element! Make sure index.html has <div id=\"root\"></div>");

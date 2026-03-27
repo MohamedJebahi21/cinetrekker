@@ -5,6 +5,7 @@ import { ChevronRight, Play } from 'lucide-react';
 import { getAiringTodayTV, getImageUrl, getMediaTitle } from '@/services/tmdb';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Image } from '@/components/ui/Image';
 import { useContentPolicy } from '@/contexts/content-policy-context';
 import { applySafetyFilter } from '@/lib/contentFilter';
 import {
@@ -80,11 +81,16 @@ export function RecentlyAddedEpisodes() {
                   >
                     <div className="aspect-video relative">
                       {backdropUrl ? (
-                        <img
+                        <Image
                           src={backdropUrl}
-                          alt={title}
+                          srcSet={`${getImageUrl(show.backdrop_path || show.poster_path, 'w185')} 185w, ${getImageUrl(show.backdrop_path || show.poster_path, 'w342')} 342w, ${getImageUrl(show.backdrop_path || show.poster_path, 'w780')} 780w`}
+                          sizes="(max-width: 639px) 80vw, 320px"
+                          alt={`${title} backdrop`}
+                          width={342}
+                          height={192}
                           className="w-full h-full object-cover"
                           loading="lazy"
+                          showSkeleton
                         />
                       ) : (
                         <div className="w-full h-full bg-muted flex items-center justify-center text-xs text-muted-foreground">

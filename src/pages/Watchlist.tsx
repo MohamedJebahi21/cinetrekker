@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Bookmark, Printer, LayoutGrid, List } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -44,6 +44,7 @@ type WatchlistStatusFilter =
 export default function Watchlist() {
   const { t, i18n } = useTranslation();
   const { watchlist, watched } = useUserLists();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const language = i18n.language;
   const [statusFilter, setStatusFilter] =
@@ -404,12 +405,12 @@ export default function Watchlist() {
             title={t("watchlist.empty", "Your watchlist is empty")}
             description={t(
               "watchlist.emptyDesc",
-              "Start adding movies and TV shows you want to watch!",
+              "Your watchlist is empty. Add movies and shows you want to watch.",
             )}
             action={{
               label: t("common.discoverTrending", "Discover Trending"),
               onClick: () => {
-                window.location.href = "/search?sort=popularity.desc";
+                navigate("/search?sort=popularity.desc");
               },
             }}
           />

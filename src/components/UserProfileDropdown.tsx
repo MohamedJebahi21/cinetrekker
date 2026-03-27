@@ -9,6 +9,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { Image } from '@/components/ui/Image';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -108,10 +109,13 @@ export function UserProfileDropdown({
                 aria-label={t('nav.userMenu', 'User menu')}
               >
                 {profilePhoto ? (
-                  <img
+                  <Image
                     src={profilePhoto}
                     alt={userName}
+                    width={44}
+                    height={44}
                     className="w-full h-full rounded-full object-cover"
+                    loading="lazy"
                   />
                 ) : (
                   <UserIcon className="h-5 w-5" />
@@ -164,10 +168,13 @@ export function UserProfileDropdown({
                 >
                   <div className="relative">
                     {profilePhoto ? (
-                      <img
+                      <Image
                         src={profilePhoto}
                         alt={userName}
+                        width={40}
+                        height={40}
                         className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/30 group-hover:ring-primary/60 transition-all"
+                        loading="lazy"
                       />
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center ring-2 ring-primary/30 group-hover:ring-primary/60 transition-all">

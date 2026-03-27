@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /auth/callback
 
 Sitemap: https://cinetrekker.vercel.app/sitemap.xml

@@ -1,13 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { getMovieDetails, getTVDetails } from "@/services/tmdb";
+import { supabase } from "@/integrations/supabase/client";
 import {
   appendGuestNotifications,
   readGuestNotifications,
 } from "@/hooks/useNotifications";
 import {
   buildFollowedTitleState,
-  createFollowKey,
-  type FollowedTitle,
   type FollowedTitleState,
   useTitleFollows,
 } from "@/hooks/useTitleFollows";
@@ -162,7 +161,7 @@ export function FollowNotificationMonitor() {
       user?.id ?? "guest",
       followedTitles.map((item) => item.id).join("|"),
     ],
-    enabled: !user && followedTitles.length > 0,
+    enabled: followedTitles.length > 0,
     staleTime: 5 * 60_000,
     refetchInterval: 10 * 60_000,
     refetchOnWindowFocus: false,
@@ -189,48 +188,116 @@ export function FollowNotificationMonitor() {
         }),
       );
 
-      const previousById = readGuestTitleStates();
       const currentById = Object.fromEntries(
         currentStates.map((item) => [item.state.movie_id, item.state]),
       );
 
-      const guestNotifications = currentStates.flatMap(
-        ({ follow, title, state }) => {
-          const previous = previousById[state.movie_id];
-          return buildChangeNotifications(follow, title, previous, state).map(
+      if (!user) {
+        const previousById = readGuestTitleStates();
+        const guestNotifications = currentStates.flatMap(
+          ({ follow, title, state }) => {
+            const previous = previousById[state.movie_id];
+            return buildChangeNotifications(follow, title, previous, state).map(
+              (notification) => ({
+                id: notification.eventKey,
+                user_id: "guest",
+                movie_id: state.movie_id,
+                event_key: notification.eventKey,
+                type: notification.type,
+                message: notification.message,
+                created_at: new Date().toISOString(),
+                is_read: false,
+              }),
+            );
+          },
+        );
+
+        if (guestNotifications.length > 0) {
+          const existingKeys = new Set(
+            readGuestNotifications()
+              .map((item) => item.event_key)
+              .filter((item): item is string => Boolean(item)),
+          );
+          const nextNotifications = guestNotifications.filter(
+            (item) => item.event_key && !existingKeys.has(item.event_key),
+          );
+
+          if (nextNotifications.length > 0) {
+            appendGuestNotifications(nextNotifications);
+            nextNotifications.slice(0, 3).forEach((item) => {
+              toast({ title: "New update", description: item.message });
+            });
+          }
+        }
+
+        writeGuestTitleStates(currentById);
+        return null;
+      }
+
+      const movieIds = currentStates.map((item) => item.state.movie_id);
+      const { data: previousRows, error: previousError } = await supabase
+        .from("followed_title_state_user")
+        .select(
+          "movie_id, media_type, tmdb_id, release_date, status, number_of_seasons, last_episode_air_date, last_episode_season_number, last_episode_number, updated_at",
+        )
+        .eq("user_id", user.id)
+        .in("movie_id", movieIds);
+
+      if (previousError) {
+        throw previousError;
+      }
+
+      const previousById = Object.fromEntries(
+        (previousRows || []).map((row) => [row.movie_id, row]),
+      ) as Record<string, FollowedTitleState>;
+
+      const notificationsToInsert = currentStates.flatMap(
+        ({ follow, title, state }) =>
+          buildChangeNotifications(follow, title, previousById[state.movie_id], state).map(
             (notification) => ({
-              id: notification.eventKey,
-              user_id: "guest",
+              user_id: user.id,
               movie_id: state.movie_id,
               event_key: notification.eventKey,
               type: notification.type,
               message: notification.message,
-              created_at: new Date().toISOString(),
               is_read: false,
             }),
-          );
-        },
+          ),
       );
 
-      if (guestNotifications.length > 0) {
-        const existingKeys = new Set(
-          readGuestNotifications()
-            .map((item) => item.event_key)
-            .filter((item): item is string => Boolean(item)),
-        );
-        const nextNotifications = guestNotifications.filter(
-          (item) => item.event_key && !existingKeys.has(item.event_key),
-        );
-
-        if (nextNotifications.length > 0) {
-          appendGuestNotifications(nextNotifications);
-          nextNotifications.slice(0, 3).forEach((item) => {
-            toast({ title: "New update", description: item.message });
+      if (notificationsToInsert.length > 0) {
+        const { error: notificationError } = await supabase
+          .from("notifications")
+          .upsert(notificationsToInsert, {
+            onConflict: "user_id,event_key",
+            ignoreDuplicates: true,
           });
+
+        if (notificationError) {
+          throw notificationError;
         }
+
+        notificationsToInsert.slice(0, 3).forEach((item) => {
+          toast({ title: "New update", description: item.message });
+        });
       }
 
-      writeGuestTitleStates(currentById);
+      const { error: stateError } = await supabase
+        .from("followed_title_state_user")
+        .upsert(
+          currentStates.map(({ state }) => ({
+            user_id: user.id,
+            ...state,
+          })),
+          {
+            onConflict: "user_id,movie_id",
+          },
+        );
+
+      if (stateError) {
+        throw stateError;
+      }
+
       return null;
     },
   });

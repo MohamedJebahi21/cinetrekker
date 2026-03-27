@@ -5,6 +5,7 @@ import { ChevronRight, Calendar } from 'lucide-react';
 import { getNowPlayingMovies, getImageUrl, getMediaTitle } from '@/services/tmdb';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Image } from '@/components/ui/Image';
 import { useContentPolicy } from '@/contexts/content-policy-context';
 import { applySafetyFilter } from '@/lib/contentFilter';
 import {
@@ -83,11 +84,16 @@ export function RecentlyAddedMovies() {
                   >
                     <div className="w-16 h-24 rounded-md overflow-hidden flex-shrink-0">
                       {posterUrl ? (
-                        <img
+                        <Image
                           src={posterUrl}
-                          alt={title}
+                          srcSet={`${getImageUrl(movie.poster_path, 'w92')} 92w, ${getImageUrl(movie.poster_path, 'w185')} 185w, ${getImageUrl(movie.poster_path, 'w342')} 342w`}
+                          sizes="64px"
+                          alt={`${title} poster`}
+                          width={185}
+                          height={278}
                           className="w-full h-full object-cover"
                           loading="lazy"
+                          showSkeleton
                         />
                       ) : (
                         <div className="w-full h-full bg-muted flex items-center justify-center text-xs text-muted-foreground">

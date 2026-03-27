@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import SEO from "@/components/SEO";
 import { enrichMediaItems } from "@/lib/mediaEnrichment";
+import { Image } from "@/components/ui/Image";
 
 export default function Watched() {
   const { t, i18n } = useTranslation();
@@ -86,11 +87,16 @@ export default function Watched() {
                   className="group relative block overflow-hidden rounded-lg transition-all duration-300"
                 >
                   {posterUrl ? (
-                    <img
+                    <Image
                       src={posterUrl}
-                      alt={title}
+                      srcSet={`${getImageUrl(media.poster_path, "w185")} 185w, ${getImageUrl(media.poster_path, "w342")} 342w, ${getImageUrl(media.poster_path, "w500")} 500w`}
+                      sizes="(max-width: 639px) calc(50vw - 16px), (max-width: 1023px) calc(33vw - 24px), 220px"
+                      alt={`${title} poster`}
+                      width={342}
+                      height={513}
                       className="w-full h-auto object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                       loading="lazy"
+                      showSkeleton
                     />
                   ) : (
                     <div className="w-full bg-muted aspect-[2/3] flex items-center justify-center">
@@ -145,9 +151,14 @@ export default function Watched() {
         ) : (
           <div className="text-center py-16">
             <Check className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
-            <h2 className="text-xl font-semibold mb-2">{t("watched.empty")}</h2>
+            <h2 className="text-xl font-semibold mb-2">
+              {t("watched.empty", "Nothing here yet")}
+            </h2>
             <p className="text-muted-foreground mb-6">
-              {t("watched.emptyDesc")}
+              {t(
+                "watched.emptyDesc",
+                "Mark movies as watched to build your history.",
+              )}
             </p>
             <Link
               to="/search"

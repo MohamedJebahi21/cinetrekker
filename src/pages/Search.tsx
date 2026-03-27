@@ -8,6 +8,8 @@ import {
   SlidersHorizontal,
   X,
   TrendingUp,
+  Check,
+  ChevronDown,
 } from "lucide-react";
 import SEO from "@/components/SEO";
 import {
@@ -44,10 +46,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import { MediaType, Genre } from "@/types/media";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useContentPolicy } from "@/contexts/content-policy-context";
 import { applySafetyFilter } from "@/lib/contentFilter";
+import { FAQSection } from "@/components/FAQSection";
+import { InternalLinksSection } from "@/components/InternalLinksSection";
+import {
+  buildCanonicalUrl,
+  toBreadcrumbJsonLd,
+  toFaqJsonLd,
+} from "@/lib/seo";
+import { cn } from "@/lib/utils";
 
 const LANGUAGES = [
   { code: "en", key: "search.lang.english", fallback: "English" },
@@ -202,6 +218,131 @@ type PagedMedia = {
   results: Media[];
 };
 
+type MultiSelectOption = {
+  id: string;
+  label: string;
+};
+
+function parseMultiValue(value: string | null): string[] {
+  if (!value) return [];
+  return Array.from(
+    new Set(
+      value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
+function serializeMultiValue(values: string[]): string {
+  return values.join(",");
+}
+
+function toggleMultiValue(values: string[], value: string): string[] {
+  return values.includes(value)
+    ? values.filter((item) => item !== value)
+    : [...values, value];
+}
+
+function dedupeMedia(items: Media[]): Media[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const mediaType = item.media_type || ("title" in item ? "movie" : "tv");
+    const key = `${mediaType}-${item.id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function SearchMultiSelect({
+  label,
+  options,
+  selectedValues,
+  onChange,
+  allLabel,
+}: {
+  label: string;
+  options: MultiSelectOption[];
+  selectedValues: string[];
+  onChange: (values: string[]) => void;
+  allLabel: string;
+}) {
+  const selectedLabels = options
+    .filter((option) => selectedValues.includes(option.id))
+    .map((option) => option.label);
+
+  const summary =
+    selectedLabels.length === 0
+      ? allLabel
+      : selectedLabels.length <= 2
+        ? selectedLabels.join(", ")
+        : `${selectedLabels.slice(0, 2).join(", ")} +${selectedLabels.length - 2}`;
+
+  return (
+    <div className="space-y-1">
+      <label className="text-xs text-muted-foreground">{label}</label>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10 w-full justify-between bg-background/50 px-3 font-normal"
+          >
+            <span className="truncate text-left">{summary}</span>
+            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-[min(20rem,calc(100vw-2rem))] p-0">
+          <div className="border-b border-border/60 px-4 py-3">
+            <p className="text-sm font-semibold text-foreground">{label}</p>
+            <p className="text-xs text-muted-foreground">
+              Select one or more options.
+            </p>
+          </div>
+          <div className="max-h-72 space-y-1 overflow-y-auto p-2">
+            <button
+              type="button"
+              onClick={() => onChange([])}
+              className={cn(
+                "flex min-h-[44px] w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors",
+                selectedValues.length === 0 ? "bg-accent text-accent-foreground" : "hover:bg-accent/60",
+              )}
+            >
+              <div className="flex h-4 w-4 items-center justify-center rounded border border-border">
+                {selectedValues.length === 0 && <Check className="h-3 w-3" />}
+              </div>
+              <span>{allLabel}</span>
+            </button>
+            {options.map((option) => {
+              const checked = selectedValues.includes(option.id);
+              return (
+                <label
+                  key={option.id}
+                  className={cn(
+                    "flex min-h-[44px] cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                    checked ? "bg-accent text-accent-foreground" : "hover:bg-accent/60",
+                  )}
+                >
+                  <Checkbox
+                    checked={checked}
+                    onCheckedChange={() =>
+                      onChange(toggleMultiValue(selectedValues, option.id))
+                    }
+                    aria-label={`${checked ? "Remove" : "Select"} ${option.label}`}
+                  />
+                  <span className="flex-1">{option.label}</span>
+                </label>
+              );
+            })}
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
 export default function Search() {
   const { t, i18n } = useTranslation();
   const { strictFiltering, moderateFiltering } = useContentPolicy();
@@ -211,14 +352,14 @@ export default function Search() {
   // Initialize from URL params
   const initialQuery = searchParams.get("q") || searchParams.get("query") || "";
   const initialType = (searchParams.get("type") as MediaType) || "all";
-  const initialGenre = searchParams.get("genre") || "";
+  const initialGenres = parseMultiValue(searchParams.get("genre"));
   const initialYear = searchParams.get("year") || "";
-  const initialLang = searchParams.get("lang") || "";
+  const initialLanguages = parseMultiValue(searchParams.get("lang"));
   const initialSort = normalizeSortBy(
     searchParams.get("sort") || "popularity.desc",
   );
   const initialRuntime = searchParams.get("runtime") || "";
-  const initialStreaming = searchParams.get("streaming") || "";
+  const initialStreaming = parseMultiValue(searchParams.get("streaming"));
 
   const [query, setQuery] = useState(initialQuery);
   const debouncedQuery = useDebounce(query, 300);
@@ -228,13 +369,14 @@ export default function Search() {
   );
   const [mediaTypeFilter, setMediaTypeFilter] =
     useState<MediaType>(initialType);
-  const [genreFilter, setGenreFilter] = useState<string>(initialGenre);
+  const [genreFilters, setGenreFilters] = useState<string[]>(initialGenres);
   const [yearFilter, setYearFilter] = useState<string>(initialYear);
-  const [languageFilter, setLanguageFilter] = useState<string>(initialLang);
+  const [languageFilters, setLanguageFilters] =
+    useState<string[]>(initialLanguages);
   const [sortBy, setSortBy] = useState<SearchSortOption>(initialSort);
   const [runtimeFilter, setRuntimeFilter] = useState<string>(initialRuntime);
-  const [streamingFilter, setStreamingFilter] =
-    useState<string>(initialStreaming);
+  const [streamingFilters, setStreamingFilters] =
+    useState<string[]>(initialStreaming);
 
   // Quick preview modal removed - navigation to details is used instead
 
@@ -245,22 +387,26 @@ export default function Search() {
     const params: Record<string, string> = {};
     if (normalizedQuery) params.q = normalizedQuery;
     if (mediaTypeFilter !== "all") params.type = mediaTypeFilter;
-    if (genreFilter) params.genre = genreFilter;
+    if (genreFilters.length > 0) params.genre = serializeMultiValue(genreFilters);
     if (yearFilter) params.year = yearFilter;
-    if (languageFilter) params.lang = languageFilter;
+    if (languageFilters.length > 0) {
+      params.lang = serializeMultiValue(languageFilters);
+    }
     if (sortBy !== "popularity.desc") params.sort = sortBy;
     if (runtimeFilter) params.runtime = runtimeFilter;
-    if (streamingFilter) params.streaming = streamingFilter;
+    if (streamingFilters.length > 0) {
+      params.streaming = serializeMultiValue(streamingFilters);
+    }
     setSearchParams(params);
   }, [
     normalizedQuery,
     mediaTypeFilter,
-    genreFilter,
+    genreFilters,
     yearFilter,
-    languageFilter,
+    languageFilters,
     sortBy,
     runtimeFilter,
-    streamingFilter,
+    streamingFilters,
     setSearchParams,
   ]);
 
@@ -285,7 +431,11 @@ export default function Search() {
   }, [movieGenres, tvGenres]);
 
   // Use genre filter directly
-  const effectiveGenres = genreFilter || undefined;
+  const effectiveGenres =
+    genreFilters.length > 0 ? genreFilters.join("|") : undefined;
+  const effectiveLanguages = languageFilters.length > 0 ? languageFilters : [];
+  const effectiveStreaming =
+    streamingFilters.length > 0 ? streamingFilters.join("|") : undefined;
 
   // Get runtime params
   const runtimeConfig = runtimeFilter
@@ -295,11 +445,11 @@ export default function Search() {
   // Determine if we should use text search or discover API
   const hasFilters =
     mediaTypeFilter !== "all" ||
-    !!genreFilter ||
+    genreFilters.length > 0 ||
     !!yearFilter ||
-    !!languageFilter ||
+    languageFilters.length > 0 ||
     !!runtimeFilter ||
-    !!streamingFilter;
+    streamingFilters.length > 0;
   const useDiscoverMode = !normalizedQuery && hasFilters;
   const useSearchMode = normalizedQuery.length > 0;
   const showTrending = !useDiscoverMode && !useSearchMode;
@@ -321,13 +471,13 @@ export default function Search() {
     queryKey: [
       "discover",
       mediaTypeFilter,
-      effectiveGenres,
+      genreFilters.join("|"),
       yearFilter,
-      languageFilter,
+      languageFilters.join("|"),
       sortBy,
       runtimeConfig?.gte,
       runtimeConfig?.lte,
-      streamingFilter,
+      streamingFilters.join("|"),
       language,
       includeAdult,
     ],
@@ -335,88 +485,101 @@ export default function Search() {
       const page = pageParam as number;
       const common = {
         with_genres: effectiveGenres,
-        with_original_language: languageFilter || undefined,
         with_runtime_gte: runtimeConfig?.gte,
         with_runtime_lte: runtimeConfig?.lte,
-        with_watch_providers: streamingFilter || undefined,
-        watch_region: streamingFilter ? "US" : undefined,
+        with_watch_providers: effectiveStreaming,
+        watch_region: effectiveStreaming ? "US" : undefined,
       };
 
-      if (mediaTypeFilter === "movie") {
+      const selectedLanguages = effectiveLanguages.length > 0 ? effectiveLanguages : [undefined];
+
+      const fetchMovieResults = async (selectedLanguage?: string) => {
         const resp = await discoverMovies(
           {
             ...common,
             page,
             primary_release_year: yearFilter || undefined,
+            with_original_language: selectedLanguage,
             sort_by: getDiscoverSort(sortBy, "movie"),
             include_adult: includeAdult ? "true" : "false",
           },
           language,
         );
         return {
-          page: resp.page,
-          total_pages: resp.total_pages,
+          totalPages: resp.total_pages,
           results: resp.results.map((m) => ({
             ...m,
             media_type: "movie" as const,
           })),
         };
-      }
+      };
 
-      if (mediaTypeFilter === "tv") {
+      const fetchTVResults = async (selectedLanguage?: string) => {
         const resp = await discoverTV(
           {
             ...common,
             page,
             first_air_date_year: yearFilter || undefined,
+            with_original_language: selectedLanguage,
             sort_by: getDiscoverSort(sortBy, "tv"),
             include_adult: includeAdult ? "true" : "false",
           },
           language,
         );
         return {
-          page: resp.page,
-          total_pages: resp.total_pages,
-          results: resp.results.map((s) => ({
-            ...s,
+          totalPages: resp.total_pages,
+          results: resp.results.map((show) => ({
+            ...show,
             media_type: "tv" as const,
           })),
         };
+      };
+
+      if (mediaTypeFilter === "movie") {
+        const movieResponses = await Promise.all(
+          selectedLanguages.map((selectedLanguage) =>
+            fetchMovieResults(selectedLanguage),
+          ),
+        );
+        return {
+          page,
+          total_pages: Math.max(...movieResponses.map((response) => response.totalPages)),
+          results: dedupeMedia(
+            movieResponses.flatMap((response) => response.results),
+          ),
+        };
       }
 
-      const [moviesResp, tvResp] = await Promise.all([
-        discoverMovies(
-          {
-            ...common,
-            page,
-            primary_release_year: yearFilter || undefined,
-            sort_by: getDiscoverSort(sortBy, "movie"),
-            include_adult: includeAdult ? "true" : "false",
-          },
-          language,
-        ),
-        discoverTV(
-          {
-            ...common,
-            page,
-            first_air_date_year: yearFilter || undefined,
-            sort_by: getDiscoverSort(sortBy, "tv"),
-            include_adult: includeAdult ? "true" : "false",
-          },
-          language,
-        ),
-      ]);
+      if (mediaTypeFilter === "tv") {
+        const tvResponses = await Promise.all(
+          selectedLanguages.map((selectedLanguage) =>
+            fetchTVResults(selectedLanguage),
+          ),
+        );
+        return {
+          page,
+          total_pages: Math.max(...tvResponses.map((response) => response.totalPages)),
+          results: dedupeMedia(
+            tvResponses.flatMap((response) => response.results),
+          ),
+        };
+      }
+
+      const combinedResponses = await Promise.all(
+        selectedLanguages.flatMap((selectedLanguage) => [
+            fetchMovieResults(selectedLanguage),
+            fetchTVResults(selectedLanguage),
+          ]),
+      );
 
       return {
         page,
-        total_pages: Math.max(moviesResp.total_pages, tvResp.total_pages),
-        results: [
-          ...moviesResp.results.map((m) => ({
-            ...m,
-            media_type: "movie" as const,
-          })),
-          ...tvResp.results.map((s) => ({ ...s, media_type: "tv" as const })),
-        ],
+        total_pages: Math.max(
+          ...combinedResponses.map((response) => response.totalPages),
+        ),
+        results: dedupeMedia(
+          combinedResponses.flatMap((response) => response.results),
+        ),
       };
     },
     enabled: Boolean(useDiscoverMode),
@@ -442,9 +605,26 @@ export default function Search() {
       ? discoverQuery
       : trendingQuery;
   const isLoading = activeQuery.isLoading;
+  const isRefreshingResults =
+    (useSearchMode || useDiscoverMode) &&
+    activeQuery.isFetching &&
+    !activeQuery.isFetchingNextPage;
   const isError = activeQuery.isError;
   const activeError = activeQuery.error as Error | null;
   const hasMore = Boolean(activeQuery.hasNextPage);
+  const canonicalQuery = searchParams.toString();
+  const faqItems = [
+    {
+      question: "What can I search for in CineTrekker?",
+      answer:
+        "You can search for movies, TV shows, and people, then refine results with genre, year, language, runtime, and streaming filters.",
+    },
+    {
+      question: "Why use search inside a movie tracker?",
+      answer:
+        "Search is connected to watchlist actions, detail pages, follow tools, and saved progress, so every result is immediately useful instead of isolated.",
+    },
+  ];
 
   const handleLoadMore = () => {
     if (!activeQuery.hasNextPage || activeQuery.isFetchingNextPage) return;
@@ -468,18 +648,23 @@ export default function Search() {
         );
       }
 
-      if (genreFilter) {
-        const genreId = parseInt(genreFilter);
-        filtered = filtered.filter((item) => item.genre_ids?.includes(genreId));
+      if (genreFilters.length > 0) {
+        filtered = filtered.filter((item) =>
+          genreFilters.some((genreId) =>
+            item.genre_ids?.includes(Number.parseInt(genreId, 10)),
+          ),
+        );
       }
 
       if (yearFilter) {
         filtered = filtered.filter((item) => getMediaYear(item) === yearFilter);
       }
 
-      if (languageFilter) {
+      if (languageFilters.length > 0) {
         filtered = filtered.filter(
-          (item) => item.original_language === languageFilter,
+          (item) =>
+            !!item.original_language &&
+            languageFilters.includes(item.original_language),
         );
       }
 
@@ -508,9 +693,9 @@ export default function Search() {
     useSearchMode,
     useDiscoverMode,
     mediaTypeFilter,
-    genreFilter,
+    genreFilters,
     yearFilter,
-    languageFilter,
+    languageFilters,
     sortBy,
     strictFiltering,
     moderateFiltering,
@@ -518,12 +703,12 @@ export default function Search() {
 
   const clearFilters = () => {
     setMediaTypeFilter("all");
-    setGenreFilter("");
+    setGenreFilters([]);
     setYearFilter("");
-    setLanguageFilter("");
+    setLanguageFilters([]);
     setSortBy("popularity.desc");
     setRuntimeFilter("");
-    setStreamingFilter("");
+    setStreamingFilters([]);
   };
 
   const clearSearch = () => {
@@ -564,12 +749,25 @@ export default function Search() {
 
   const activeFiltersCount = [
     mediaTypeFilter !== "all",
-    genreFilter,
+    genreFilters.length > 0,
     yearFilter,
-    languageFilter,
+    languageFilters.length > 0,
     runtimeFilter,
-    streamingFilter,
+    streamingFilters.length > 0,
   ].filter(Boolean).length;
+
+  const genreOptions = allGenres.map((genre) => ({
+    id: genre.id.toString(),
+    label: genre.name,
+  }));
+  const languageOptions = LANGUAGES.map((lang) => ({
+    id: lang.code,
+    label: t(lang.key, lang.fallback),
+  }));
+  const streamingOptions = STREAMING_SERVICES.map((service) => ({
+    id: service.id,
+    label: t(service.key, service.fallback),
+  }));
 
   // Card click navigates via the card's Link; quick preview removed
 
@@ -624,27 +822,13 @@ export default function Search() {
         </div>
 
         {/* Genre Filter */}
-        <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">
-            {t("filters.genre")}
-          </label>
-          <Select
-            value={genreFilter || "__all__"}
-            onValueChange={(v) => setGenreFilter(v === "__all__" ? "" : v)}
-          >
-            <SelectTrigger className="bg-background/50">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">{t("common.all")}</SelectItem>
-              {allGenres.map((genre) => (
-                <SelectItem key={genre.id} value={genre.id.toString()}>
-                  {genre.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <SearchMultiSelect
+          label={t("filters.genre")}
+          options={genreOptions}
+          selectedValues={genreFilters}
+          onChange={setGenreFilters}
+          allLabel={t("common.all")}
+        />
 
         {/* Runtime Filter */}
         <div className="space-y-1">
@@ -670,27 +854,13 @@ export default function Search() {
         </div>
 
         {/* Streaming Service Filter */}
-        <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">
-            {t("filters.streaming") || "Streaming"}
-          </label>
-          <Select
-            value={streamingFilter || "__all__"}
-            onValueChange={(v) => setStreamingFilter(v === "__all__" ? "" : v)}
-          >
-            <SelectTrigger className="bg-background/50">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">{t("common.all")}</SelectItem>
-              {STREAMING_SERVICES.map((service) => (
-                <SelectItem key={service.id} value={service.id}>
-                  {t(service.key, service.fallback)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <SearchMultiSelect
+          label={t("filters.streaming") || "Streaming"}
+          options={streamingOptions}
+          selectedValues={streamingFilters}
+          onChange={setStreamingFilters}
+          allLabel={t("common.all")}
+        />
 
         {/* Year Filter */}
         <div className="space-y-1">
@@ -716,27 +886,13 @@ export default function Search() {
         </div>
 
         {/* Language Filter */}
-        <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">
-            {t("filters.language")}
-          </label>
-          <Select
-            value={languageFilter || "__all__"}
-            onValueChange={(v) => setLanguageFilter(v === "__all__" ? "" : v)}
-          >
-            <SelectTrigger className="bg-background/50">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">{t("common.all")}</SelectItem>
-              {LANGUAGES.map((lang) => (
-                <SelectItem key={lang.code} value={lang.code}>
-                  {t(lang.key, lang.fallback)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <SearchMultiSelect
+          label={t("filters.language")}
+          options={languageOptions}
+          selectedValues={languageFilters}
+          onChange={setLanguageFilters}
+          allLabel={t("common.all")}
+        />
 
         {/* Sort */}
         <div className="space-y-1 col-span-2 sm:col-span-1">
@@ -773,18 +929,33 @@ export default function Search() {
   return (
     <div className="page-container pt-20">
       <SEO
-        title={query ? `Search: ${query}` : "Search Movies & TV Shows"}
+        title={
+          query
+            ? `Search "${query}" | CineTrekker Movie Tracker`
+            : "Search Movies and TV Shows | CineTrekker Movie Tracker"
+        }
         description={
           query
-            ? `Search results for "${query}" - Find movies, TV shows, and actors on CineTrekker`
-            : "Search and discover movies and TV shows by genre, year, rating, and mood. Filter by streaming services and find your next watch."
+            ? `Search results for "${query}" in CineTrekker, the movie tracker for finding movies, TV shows, people, and watchlist-ready picks.`
+            : "Search and discover movies and TV shows by genre, year, rating, runtime, and streaming service in CineTrekker."
         }
         keywords={
           query
-            ? `${query}, movies, TV shows, search, streaming`
-            : "movie search, TV show search, genre filter, mood filter, streaming services"
+            ? `${query}, movie tracker search, movies, TV shows, streaming`
+            : "movie tracker search, TV show search, genre filter, streaming services, watchlist discovery"
         }
-        canonical={`https://cinetrekker.vercel.app/search${window.location.search}`}
+        canonical={
+          canonicalQuery
+            ? `${buildCanonicalUrl("/search")}?${canonicalQuery}`
+            : buildCanonicalUrl("/search")
+        }
+        jsonLd={[
+          toBreadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Search", path: "/search" },
+          ]),
+          toFaqJsonLd(faqItems),
+        ]}
       />
       {/* Search Header */}
       <div className="mb-8 bg-background/95 backdrop-blur-md border-b border-border/60 py-2">
@@ -824,6 +995,38 @@ export default function Search() {
           {t("search.filterHint")}
         </p>
       </div>
+
+      <section className="mb-8 rounded-3xl border border-border/40 bg-card/70 p-6 md:p-8">
+        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <article className="space-y-4">
+            <h2 className="text-2xl font-bold text-foreground md:text-3xl">
+              Search with structure, not guesswork
+            </h2>
+            <p className="text-sm leading-7 text-muted-foreground md:text-base">
+              CineTrekker search is built for people who want more than a plain
+              list of titles. This movie tracker helps you search by keyword,
+              filter by genre, narrow by language and runtime, and sort by
+              popularity or release signals so you can move from a vague idea to
+              a saved plan quickly.
+            </p>
+            <p className="text-sm leading-7 text-muted-foreground md:text-base">
+              Because every result connects to richer detail pages, watchlist
+              actions, and follow tools, the search page also acts as a guided
+              discovery system. That structure makes it easier for both visitors
+              and AI systems to understand how titles relate to the rest of the
+              site.
+            </p>
+          </article>
+          <aside className="rounded-3xl border border-border/40 bg-background/60 p-5 text-sm leading-7 text-muted-foreground">
+            <h3 className="text-lg font-semibold text-foreground">
+              Search ideas
+            </h3>
+            <p className="mt-3">Find a quick weekend movie under 90 minutes.</p>
+            <p>Browse a genre within one decade.</p>
+            <p>Filter by streaming provider before adding to your watchlist.</p>
+          </aside>
+        </div>
+      </section>
 
       {/* Advanced Filters (desktop) */}
       <div className="hidden md:block">
@@ -904,7 +1107,7 @@ export default function Search() {
       {/* Results Header */}
       <div className="mb-4">
         <p className="text-sm text-muted-foreground">
-          {isLoading ? (
+          {isLoading || isRefreshingResults ? (
             <>{t("common.loading")}</>
           ) : isError ? (
             <>{activeError?.message || t("common.error")}</>
@@ -924,7 +1127,7 @@ export default function Search() {
       </div>
 
       {/* Results */}
-      {isLoading ? (
+      {isLoading || isRefreshingResults ? (
         <div className="media-grid">
           {Array.from({ length: 18 }).map((_, i) => (
             <SkeletonCard key={i} />
@@ -988,7 +1191,31 @@ export default function Search() {
         </div>
       )}
 
-      {/* Media preview removed */}
+      <InternalLinksSection
+        title="Keep exploring"
+        links={[
+          {
+            to: "/trending",
+            title: "Trending titles",
+            description:
+              "Compare search results with the movies and series gaining traction right now.",
+          },
+          {
+            to: "/genres",
+            title: "Genre browser",
+            description:
+              "Move from keyword search into a more curated genre discovery flow.",
+          },
+          {
+            to: "/decades",
+            title: "Decade explorer",
+            description:
+              "Narrow your next search by era when you want a cleaner shortlist.",
+          },
+        ]}
+      />
+
+      <FAQSection title="Search FAQs" items={faqItems} />
     </div>
   );
 }

@@ -13,8 +13,8 @@ const cspPlugin = (): Plugin => {
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://vercel.live https://va.vercel-scripts.com",
     "script-src-elem 'self' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' data: https://fonts.gstatic.com https://r2cdn.perplexity.ai",
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self' data:",
     "img-src 'self' blob: data: https: https://image.tmdb.org https://www.themoviedb.org https://*.supabase.co",
     "media-src 'self' blob: https:",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.themoviedb.org https://vercel.live https://va.vercel-scripts.com wss://*.vercel.com",
@@ -25,6 +25,8 @@ const cspPlugin = (): Plugin => {
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
+    "require-trusted-types-for 'script'",
+    "trusted-types cinetrekker default dompurify",
     "upgrade-insecure-requests",
     "block-all-mixed-content",
   ].join("; ");
@@ -45,9 +47,8 @@ const cspPlugin = (): Plugin => {
         // VS Code Simple Browser renders pages in an iframe/webview.
         // When enabled, skip X-Frame-Options because DENY/SAMEORIGIN would block it.
         if (!allowVsCodeSimpleBrowser) {
-          res.setHeader("X-Frame-Options", "DENY");
+          res.setHeader("X-Frame-Options", "SAMEORIGIN");
         }
-        res.setHeader("X-XSS-Protection", "1; mode=block");
         res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
         res.setHeader(
           "Permissions-Policy",

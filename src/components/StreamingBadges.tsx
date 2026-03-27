@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getImageUrl } from '@/services/tmdb';
+import { Image } from '@/components/ui/Image';
 
 export interface StreamingProvider {
   provider_id: number;
@@ -66,10 +67,13 @@ export function StreamingBadges({
             <TooltipTrigger asChild>
               <div className={`${sizeClasses[size]} rounded-full overflow-hidden bg-muted flex items-center justify-center`}>
                 {provider.logo_path ? (
-                  <img
+                  <Image
                     src={getImageUrl(provider.logo_path, 'w92') || undefined}
                     alt={provider.provider_name}
+                    width={92}
+                    height={92}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 ) : (
                   <span className="text-xs font-bold text-white">

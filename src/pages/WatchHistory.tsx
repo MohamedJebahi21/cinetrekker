@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { Film, History, Star, Tv } from "lucide-react";
 import { useUserLists } from "@/contexts/UserListsContext";
 import { UserMediaItem } from "@/types/media";
 import SEO from "@/components/SEO";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { History } from "lucide-react";
-import { useState } from "react";
+import { Image } from "@/components/ui/Image";
 import {
   Select,
   SelectContent,
@@ -19,7 +20,7 @@ import {
   createMediaLookupKey,
   enrichMediaItems,
 } from "@/lib/mediaEnrichment";
-import { getMediaTitle } from "@/services/tmdb";
+import { getImageUrl, getMediaTitle } from "@/services/tmdb";
 
 export default function WatchHistory() {
   const { watched } = useUserLists();
@@ -28,13 +29,11 @@ export default function WatchHistory() {
   const [filter, setFilter] = useState<"all" | "movies" | "tv">("all");
   const [sortBy, setSortBy] = useState<"recent" | "oldest" | "alpha">("recent");
 
-  // Combine and sort watched items
   const allWatched = [
     ...watchedMovies.map((item) => ({ ...item, mediaType: "movie" as const })),
     ...watchedTV.map((item) => ({ ...item, mediaType: "tv" as const })),
   ];
 
-  // Apply filters
   let filtered = allWatched;
   if (filter !== "all") {
     filtered = filtered.filter(
@@ -74,15 +73,14 @@ export default function WatchHistory() {
       .localeCompare(getMediaTitle(bMedia).toLocaleLowerCase());
   });
 
-  // Group by month for timeline view
   const groupByMonth = (items: UserMediaItem[]) => {
     const groups: Record<string, UserMediaItem[]> = {};
 
     items.forEach((item) => {
       const watchedDateStr = item.watchedAt || item.addedAt;
       if (!watchedDateStr) {
-        if (!groups["Unknown"]) groups["Unknown"] = [];
-        groups["Unknown"].push(item);
+        if (!groups.Unknown) groups.Unknown = [];
+        groups.Unknown.push(item);
         return;
       }
 
@@ -116,7 +114,7 @@ export default function WatchHistory() {
             <History className="h-8 w-8 text-primary" />
             <div>
               <h1 className="text-3xl font-bold">Watch History</h1>
-              <p className="text-muted-foreground mt-1">
+              <p className="mt-1 text-muted-foreground">
                 {sortedItems.length} items in your timeline
               </p>
             </div>
@@ -157,24 +155,21 @@ export default function WatchHistory() {
 
         {sortedItems.length === 0 ? (
           <Card className="p-12 text-center">
-            <History className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+            <History className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
             <p className="text-muted-foreground">
               No watch history yet. Start watching to build your timeline!
             </p>
           </Card>
         ) : (
           <div className="relative">
-            {/* Timeline line */}
-            <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-border" />
+            <div className="absolute bottom-0 left-8 top-0 w-0.5 bg-border" />
 
-            {/* Timeline items */}
             <div className="space-y-8">
-              {months.map((month, monthIndex) => (
+              {months.map((month) => (
                 <div key={month} className="relative">
-                  {/* Month header */}
-                  <div className="flex items-center gap-4 mb-4 sticky top-20 z-10 bg-background/95 backdrop-blur-sm py-2">
-                    <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-lg">
-                      <span className="text-primary-foreground font-bold">
+                  <div className="sticky top-20 z-10 mb-4 flex items-center gap-4 bg-background/95 py-2 backdrop-blur-sm">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary shadow-lg">
+                      <span className="font-bold text-primary-foreground">
                         {new Date(month).toLocaleDateString("en-US", {
                           month: "short",
                         })}
@@ -186,9 +181,8 @@ export default function WatchHistory() {
                     </Badge>
                   </div>
 
-                  {/* Items for this month */}
-                    <div className="ml-24 space-y-4">
-                      {timelineGroups[month].map((item, idx) => {
+                  <div className="ml-24 space-y-4">
+                    {timelineGroups[month].map((item, idx) => {
                       const detail =
                         detailMap.get(
                           createMediaLookupKey(item.mediaType, item.mediaId),
@@ -202,46 +196,62 @@ export default function WatchHistory() {
                       return (
                         <Card
                           key={`${item.mediaId}-${idx}`}
-                          className="p-4 hover:shadow-lg transition-shadow"
+                          className="p-4 transition-shadow hover:shadow-lg"
                         >
                           <div className="flex gap-4">
-                            {detail?.poster_path && (
-                              <img
-                                src={`https://image.tmdb.org/t/p/w92${detail.poster_path}`}
-                                alt=""
-                                className="w-16 h-24 object-cover rounded"
+                            {detail?.poster_path ? (
+                              <Image
+                                src={getImageUrl(detail.poster_path, "w92")}
+                                srcSet={`${getImageUrl(detail.poster_path, "w92")} 92w, ${getImageUrl(detail.poster_path, "w185")} 185w`}
+                                sizes="64px"
+                                alt={`${title || "Title"} poster`}
+                                width={92}
+                                height={138}
+                                className="h-24 w-16 rounded object-cover"
+                                loading="lazy"
+                                showSkeleton
                               />
-                            )}
+                            ) : null}
                             <div className="flex-1">
                               <div className="flex items-start justify-between gap-2">
                                 <div>
-                                  <h3 className="font-semibold text-lg">
+                                  <h3 className="text-lg font-semibold">
                                     {title || "Loading..."}
                                   </h3>
-                                  <p className="text-sm text-muted-foreground">
-                                    {item.mediaType === "movie"
-                                      ? "🎬 Movie"
-                                      : "📺 TV Show"}
-                                    {detail && " · "}
-                                    {detail && vote && `⭐ ${vote.toFixed(1)}`}
-                                  </p>
+                                  <div className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
+                                    <span className="inline-flex items-center gap-1">
+                                      {item.mediaType === "movie" ? (
+                                        <Film className="h-3.5 w-3.5" />
+                                      ) : (
+                                        <Tv className="h-3.5 w-3.5" />
+                                      )}
+                                      {item.mediaType === "movie" ? "Movie" : "TV Show"}
+                                    </span>
+                                    {detail && vote ? (
+                                      <>
+                                        <span>•</span>
+                                        <span className="inline-flex items-center gap-1">
+                                          <Star className="h-3.5 w-3.5 fill-current" />
+                                          {vote.toFixed(1)}
+                                        </span>
+                                      </>
+                                    ) : null}
+                                  </div>
                                 </div>
-                                {watchedDateStr && (
+                                {watchedDateStr ? (
                                   <Badge variant="outline">
-                                    {new Date(
-                                      watchedDateStr,
-                                    ).toLocaleDateString("en-US", {
+                                    {new Date(watchedDateStr).toLocaleDateString("en-US", {
                                       month: "short",
                                       day: "numeric",
                                     })}
                                   </Badge>
-                                )}
+                                ) : null}
                               </div>
-                              {detail?.overview && (
-                                <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                              {detail?.overview ? (
+                                <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
                                   {detail.overview}
                                 </p>
-                              )}
+                              ) : null}
                             </div>
                           </div>
                         </Card>
@@ -251,59 +261,64 @@ export default function WatchHistory() {
                 </div>
               ))}
 
-              {/* Unknown date items */}
-              {timelineGroups["Unknown"] &&
-                timelineGroups["Unknown"].length > 0 && (
-                  <div className="relative">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                        <span className="text-muted-foreground font-bold">
-                          ?
-                        </span>
-                      </div>
-                      <h2 className="text-2xl font-bold">Date Unknown</h2>
-                      <Badge variant="secondary">
-                        {timelineGroups["Unknown"].length} items
-                      </Badge>
+              {timelineGroups.Unknown && timelineGroups.Unknown.length > 0 ? (
+                <div className="relative">
+                  <div className="mb-4 flex items-center gap-4">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                      <span className="font-bold text-muted-foreground">?</span>
                     </div>
-
-                    <div className="ml-24 space-y-4">
-                      {timelineGroups["Unknown"].map((item, idx) => {
-                        const detail =
-                          detailMap.get(
-                            createMediaLookupKey(item.mediaType, item.mediaId),
-                          ) || createFallbackMedia(item);
-                        const title = (detail?.title || detail?.name) as
-                          | string
-                          | undefined;
-
-                        return (
-                          <Card key={`${item.mediaId}-${idx}`} className="p-4">
-                            <div className="flex gap-4">
-                              {detail?.poster_path && (
-                                <img
-                                  src={`https://image.tmdb.org/t/p/w92${detail.poster_path}`}
-                                  alt=""
-                                  className="w-16 h-24 object-cover rounded"
-                                />
-                              )}
-                              <div>
-                                <h3 className="font-semibold">
-                                  {title || "Loading..."}
-                                </h3>
-                                <p className="text-sm text-muted-foreground">
-                                  {item.mediaType === "movie"
-                                    ? "🎬 Movie"
-                                    : "📺 TV Show"}
-                                </p>
-                              </div>
-                            </div>
-                          </Card>
-                        );
-                      })}
-                    </div>
+                    <h2 className="text-2xl font-bold">Date Unknown</h2>
+                    <Badge variant="secondary">
+                      {timelineGroups.Unknown.length} items
+                    </Badge>
                   </div>
-                )}
+
+                  <div className="ml-24 space-y-4">
+                    {timelineGroups.Unknown.map((item, idx) => {
+                      const detail =
+                        detailMap.get(
+                          createMediaLookupKey(item.mediaType, item.mediaId),
+                        ) || createFallbackMedia(item);
+                      const title = (detail?.title || detail?.name) as
+                        | string
+                        | undefined;
+
+                      return (
+                        <Card key={`${item.mediaId}-${idx}`} className="p-4">
+                          <div className="flex gap-4">
+                            {detail?.poster_path ? (
+                              <Image
+                                src={getImageUrl(detail.poster_path, "w92")}
+                                srcSet={`${getImageUrl(detail.poster_path, "w92")} 92w, ${getImageUrl(detail.poster_path, "w185")} 185w`}
+                                sizes="64px"
+                                alt={`${title || "Title"} poster`}
+                                width={92}
+                                height={138}
+                                className="h-24 w-16 rounded object-cover"
+                                loading="lazy"
+                                showSkeleton
+                              />
+                            ) : null}
+                            <div>
+                              <h3 className="font-semibold">
+                                {title || "Loading..."}
+                              </h3>
+                              <p className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+                                {item.mediaType === "movie" ? (
+                                  <Film className="h-3.5 w-3.5" />
+                                ) : (
+                                  <Tv className="h-3.5 w-3.5" />
+                                )}
+                                {item.mediaType === "movie" ? "Movie" : "TV Show"}
+                              </p>
+                            </div>
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
         )}

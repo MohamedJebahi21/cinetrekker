@@ -2,6 +2,13 @@
 import SEO from "@/components/SEO";
 import { Info, Sparkles, Database, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FAQSection } from "@/components/FAQSection";
+import { InternalLinksSection } from "@/components/InternalLinksSection";
+import {
+  buildCanonicalUrl,
+  toBreadcrumbJsonLd,
+  toFaqJsonLd,
+} from "@/lib/seo";
 
 export default function About() {
   const { t, i18n } = useTranslation();
@@ -10,16 +17,36 @@ export default function About() {
     month: "long",
     day: "numeric",
   });
+  const faqItems = [
+    {
+      question: "What makes CineTrekker different from a basic watchlist app?",
+      answer:
+        "CineTrekker combines movie tracker tools, richer detail pages, follow features, notifications, and structured discovery views so you can move from browsing to planning without a disconnected workflow.",
+    },
+    {
+      question: "Who is CineTrekker for?",
+      answer:
+        "It is designed for casual viewers, list builders, series followers, and film fans who want a faster way to track movies and TV shows across devices.",
+    },
+  ];
 
   return (
     <div className="page-container pt-20 pb-24 md:pb-10">
       <SEO
-        title={t("about.seoTitle", "About - CineTrekker")}
+        title={t("about.seoTitle", "About CineTrekker Movie Tracker")}
         description={t(
           "about.seoDescription",
-          "Learn what CineTrekker is, who it is for, and how recommendations and tracking work.",
+          "Learn what CineTrekker is, how the movie tracker works, and how watchlists, recommendations, and follow features fit together.",
         )}
-        canonical="https://cinetrekker.vercel.app/about"
+        canonical={buildCanonicalUrl("/about")}
+        keywords="about movie tracker, CineTrekker app, watchlist platform, track movies"
+        jsonLd={[
+          toBreadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "About", path: "/about" },
+          ]),
+          toFaqJsonLd(faqItems),
+        ]}
       />
       <div className="mx-auto max-w-4xl py-10 space-y-6">
         <header className="rounded-2xl border border-[color:hsl(var(--border))] bg-[var(--bg-card)] p-6 md:p-7">
@@ -37,12 +64,35 @@ export default function About() {
               <p className="max-w-2xl text-[var(--text-secondary)]">
                 {t(
                   "about.intro",
-                  "CineTrekker is a movie and TV companion for discovering what to watch, organizing your lists, and tracking your progress over time.",
+                  "CineTrekker is a movie tracker and TV companion for discovering what to watch, organizing your lists, and tracking your progress over time.",
                 )}
               </p>
             </div>
           </div>
         </header>
+
+        <section className="rounded-2xl border border-[color:hsl(var(--border))] bg-[var(--bg-card)] p-6 md:p-7">
+          <h2 className="text-2xl font-bold text-[var(--text-primary)]">
+            How the movie tracker experience works
+          </h2>
+          <div className="mt-4 space-y-4 text-[var(--text-secondary)]">
+            <p>
+              CineTrekker is built to reduce the friction between discovering a
+              title and remembering to come back to it later. The app combines
+              search, watchlist management, watched status, follow tools, and
+              recommendation surfaces so your browsing session produces a useful
+              record instead of disappearing when the tab closes.
+            </p>
+            <p>
+              That matters for both users and discovery systems. Human visitors
+              get a cleaner flow with mobile-friendly navigation, while search
+              engines and AI assistants get semantic content, structured data,
+              and stable internal links that explain what each page is about.
+              The goal is a movie tracker that feels lightweight in the browser
+              but still communicates clearly to modern search and AI pipelines.
+            </p>
+          </div>
+        </section>
 
         <Card className="border-[color:hsl(var(--border))] bg-[var(--bg-card)]">
           <CardHeader>
@@ -90,6 +140,35 @@ export default function About() {
             )}
           </CardContent>
         </Card>
+
+        <InternalLinksSection
+          title="Related pages"
+          links={[
+            {
+              to: "/search",
+              title: "Search movies and series",
+              description:
+                "Use the main movie tracker search to discover titles with filters and sorting.",
+            },
+            {
+              to: "/trending",
+              title: "Trending picks",
+              description:
+                "Browse the fastest-moving titles before adding them to your watchlist.",
+            },
+            {
+              to: "/privacy",
+              title: "Privacy policy",
+              description:
+                "Review how account and preference data is handled across sessions.",
+            },
+          ]}
+        />
+
+        <FAQSection
+          title="About CineTrekker FAQs"
+          items={faqItems}
+        />
       </div>
     </div>
   );

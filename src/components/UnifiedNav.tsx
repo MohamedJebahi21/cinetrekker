@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
@@ -22,10 +22,9 @@ import Award from "lucide-react/dist/esm/icons/award";
 import User from "lucide-react/dist/esm/icons/user";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Image } from "@/components/ui/Image";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { NotificationBell } from "@/components/NotificationBell";
-import { SearchDropdown } from "@/components/SearchDropdown";
 import { profileService } from "@/services/profile";
 import {
   Sheet,
@@ -34,6 +33,17 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+
+const NotificationBell = lazy(() =>
+  import("@/components/NotificationBell").then((mod) => ({
+    default: mod.NotificationBell,
+  })),
+);
+const SearchDropdown = lazy(() =>
+  import("@/components/SearchDropdown").then((mod) => ({
+    default: mod.SearchDropdown,
+  })),
+);
 
 interface NavItem {
   path: string;
@@ -223,9 +233,11 @@ export function UnifiedNav() {
 
   const renderProfileAvatar = () =>
     profileImageUrl ? (
-      <img
+      <Image
         src={profileImageUrl}
         alt={t("nav.profile", "Profile")}
+        width={32}
+        height={32}
         className="h-8 w-8 rounded-full object-cover"
         loading="lazy"
         referrerPolicy="no-referrer"
@@ -235,6 +247,20 @@ export function UnifiedNav() {
         {profileInitial}
       </span>
     );
+
+  const searchFallback = (
+    <div
+      aria-hidden="true"
+      className="h-10 w-full rounded-xl border border-border/50 bg-card/40"
+    />
+  );
+
+  const notificationFallback = (
+    <span
+      aria-hidden="true"
+      className="inline-flex min-h-[48px] min-w-[48px] rounded-lg border border-border/40 bg-card/30"
+    />
+  );
 
   return (
     <header
@@ -261,12 +287,16 @@ export function UnifiedNav() {
 
         {!isSearchPage && (
           <div className="mx-4 hidden max-w-xl flex-1 md:block">
-            <SearchDropdown />
+            <Suspense fallback={searchFallback}>
+              <SearchDropdown />
+            </Suspense>
           </div>
         )}
 
         <div className="hidden items-center gap-1 md:flex">
-          <NotificationBell />
+          <Suspense fallback={notificationFallback}>
+            <NotificationBell />
+          </Suspense>
 
           {user ? (
             <>
@@ -462,7 +492,9 @@ export function UnifiedNav() {
                 Search
               </button>
               <div className="flex min-h-[56px] items-center justify-center rounded-2xl border border-border/60 bg-card/70">
-                <NotificationBell />
+                <Suspense fallback={notificationFallback}>
+                  <NotificationBell />
+                </Suspense>
               </div>
             </div>
 

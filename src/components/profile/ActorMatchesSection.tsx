@@ -13,6 +13,7 @@ import {
 import { profileService } from "@/services/profile";
 import { useAuth } from "@/contexts/AuthContext";
 import { logger } from "@/lib/logger";
+import { Image } from "@/components/ui/Image";
 import {
   Tooltip,
   TooltipContent,
@@ -532,7 +533,7 @@ export default function ActorMatchesSection({
                 <div className="flex items-start gap-2.5">
                   <div className="h-28 w-20 shrink-0 overflow-hidden rounded-md border border-neutral-700 bg-neutral-800 sm:h-32 sm:w-24">
                     {person.profile_path ? (
-                      <img
+                      <Image
                         src={getImageUrl(person.profile_path, "w342") || ""}
                         srcSet={`${getImageUrl(person.profile_path, "w342")} 342w, ${getImageUrl(person.profile_path, "w500")} 500w`}
                         sizes="(max-width: 640px) 80px, 96px"

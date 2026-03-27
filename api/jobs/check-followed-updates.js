@@ -2,6 +2,7 @@ import { json } from "../_lib/http.js";
 import { getSupabaseAdminClient } from "../_lib/supabaseAdmin.js";
 import { getServerEnv } from "../_lib/env.js";
 import { createServerLogger } from "../_lib/logger.js";
+import { reportSecurityEvent } from "../_lib/securityMonitor.js";
 
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const DEFAULT_BATCH_SIZE = 5;
@@ -171,6 +172,19 @@ export default async function handler(req, res) {
   }
 
   if (!isAuthorizedCronCall(req)) {
+    await reportSecurityEvent({
+      event: "cron_access_denied",
+      severity: "critical",
+      scope: "check-followed-updates",
+      message: "Cron endpoint rejected unauthorized access.",
+      req,
+      details: {
+        hasCronHeader:
+          typeof req?.headers?.["x-cron-secret"] === "string" &&
+          req.headers["x-cron-secret"].trim().length > 0,
+      },
+      shouldAlert: true,
+    });
     return json(res, 401, { error: "Unauthorized" });
   }
 

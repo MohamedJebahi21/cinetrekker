@@ -1,5 +1,6 @@
 import React from 'react';
 import { getImageUrl } from '@/services/tmdb';
+import { Image } from '@/components/ui/Image';
 
 type Props = {
   backdrops?: Array<{ file_path: string }>;
@@ -30,7 +31,18 @@ function MediaGalleryInner({ backdrops = [], videos = [] }: Props) {
         <h3 className="text-lg font-semibold mb-2">Backdrops</h3>
         <div className="flex gap-3 overflow-x-auto hide-scrollbar">
           {backdrops.slice(0,8).map((b, i) => (
-            <img key={i} src={getImageUrl(b.file_path, 'w780')} alt={`backdrop-${i}`} className="w-72 h-40 object-cover rounded-md" />
+            <Image
+              key={i}
+              src={getImageUrl(b.file_path, 'w780')}
+              srcSet={`${getImageUrl(b.file_path, 'w342')} 342w, ${getImageUrl(b.file_path, 'w780')} 780w`}
+              sizes="288px"
+              alt={`Backdrop ${i + 1}`}
+              width={780}
+              height={439}
+              className="w-72 h-40 object-cover rounded-md"
+              loading="lazy"
+              showSkeleton
+            />
           ))}
         </div>
       </div>

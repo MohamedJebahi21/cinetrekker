@@ -1,10 +1,10 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import {
   getTrending,
-  getPopularMovies,
-  getPopularTV,
+  getNowPlayingMovies,
   getTopRatedMovies,
   getTopRatedTV,
 } from "@/services/tmdb";
@@ -15,6 +15,17 @@ import { HeroSection } from "@/components/HeroSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SEO from "@/components/SEO";
 import { useContentPolicy } from "@/contexts/content-policy-context";
+import { useAuth } from "@/contexts/AuthContext";
+import { useUserLists } from "@/contexts/UserListsContext";
+import { useLastViewed } from "@/hooks/useLastViewed";
+import { FAQSection } from "@/components/FAQSection";
+import { Button } from "@/components/ui/button";
+import {
+  buildCanonicalUrl,
+  toBreadcrumbJsonLd,
+  toFaqJsonLd,
+  toWebsiteSearchJsonLd,
+} from "@/lib/seo";
 
 const BecauseYouLiked = lazy(() =>
   import("@/components/BecauseYouLiked").then((mod) => ({
@@ -53,16 +64,20 @@ function TrendingSectionSkeleton() {
 
 export default function Index() {
   const { t, i18n } = useTranslation();
+  const { user } = useAuth();
+  const { watched, watchlist } = useUserLists();
+  const { lastViewed } = useLastViewed();
   const { strictFiltering, moderateFiltering } = useContentPolicy();
   const includeAdult = !(strictFiltering || moderateFiltering);
   const language = i18n.language;
+  const shouldGateRecommendations =
+    !user || (watched.length === 0 && watchlist.length === 0 && !lastViewed);
 
   // State for tab selections
-  const [topThisWeekType, setTopThisWeekType] = useState<"movie" | "tv">(
-    "movie",
-  );
+  const [discoverTab, setDiscoverTab] = useState<
+    "trending-day" | "trending-week" | "new-releases"
+  >("trending-day");
   const [topRatedType, setTopRatedType] = useState<"movie" | "tv">("movie");
-  const [popularType, setPopularType] = useState<"movie" | "tv">("movie");
 
   const [deferredEnabled, setDeferredEnabled] = useState(false);
 
@@ -73,13 +88,13 @@ export default function Index() {
   } = useQuery({
     queryKey: ["home-critical", language, includeAdult],
     queryFn: async () => {
-      const [popularMoviesData, trendingWeekData] = await Promise.all([
-        getPopularMovies(1, language, includeAdult),
+      const [newReleasesData, trendingWeekData] = await Promise.all([
+        getNowPlayingMovies(1, language, includeAdult),
         getTrending("all", "week", language, 1, includeAdult),
       ]);
 
       return {
-        popularMovies: popularMoviesData,
+        newReleases: newReleasesData,
         trendingWeek: trendingWeekData,
       };
     },
@@ -108,36 +123,6 @@ export default function Index() {
       }
     };
   }, [language]);
-
-  const {
-    data: trendingMoviesWeek,
-    isLoading: loadingMoviesWeek,
-    error: trendingMoviesWeekError,
-  } = useQuery({
-    queryKey: ["trending", "movie", "week", language, includeAdult],
-    queryFn: () => getTrending("movie", "week", language, 1, includeAdult),
-    enabled: deferredEnabled,
-  });
-
-  const {
-    data: trendingTVWeek,
-    isLoading: loadingTVWeek,
-    error: trendingTVWeekError,
-  } = useQuery({
-    queryKey: ["trending", "tv", "week", language, includeAdult],
-    queryFn: () => getTrending("tv", "week", language, 1, includeAdult),
-    enabled: deferredEnabled,
-  });
-
-  const {
-    data: popularTV,
-    isLoading: loadingPopularTV,
-    error: popularTVError,
-  } = useQuery({
-    queryKey: ["popular", "tv", language, includeAdult],
-    queryFn: () => getPopularTV(1, language, includeAdult),
-    enabled: deferredEnabled,
-  });
 
   const {
     data: topRatedMovies,
@@ -169,15 +154,28 @@ export default function Index() {
     enabled: deferredEnabled,
   });
 
-  const popularMovies = criticalData?.popularMovies;
+  const newReleases = criticalData?.newReleases;
   const trendingWeek = criticalData?.trendingWeek;
-  const loadingPopularMovies = loadingCritical;
   const loadingWeek = loadingCritical;
+  const faqItems = [
+    {
+      question: "What is CineTrekker movie tracker used for?",
+      answer:
+        "CineTrekker helps you track movies and TV shows, keep a personal watchlist, mark progress, and discover trending titles without losing context across devices.",
+    },
+    {
+      question: "Can I follow releases and episode updates?",
+      answer:
+        "Yes. The app includes follow and notification tools so you can monitor returning series, new episodes, and titles you want to revisit later.",
+    },
+    {
+      question: "Does CineTrekker work well on mobile?",
+      answer:
+        "Yes. The interface is designed mobile-first with responsive cards, touch-friendly controls, skeleton loading states, and fast lazy-loaded media.",
+    },
+  ];
 
   const hasDeferredErrors = Boolean(
-    trendingMoviesWeekError ||
-    trendingTVWeekError ||
-    popularTVError ||
     topRatedMoviesError ||
     topRatedTVError ||
     trendingDayError,
@@ -186,9 +184,15 @@ export default function Index() {
   return (
     <div className="min-h-screen">
       <SEO
-        title="CineTrekker - Track Your Movies & TV Shows"
-        description="Discover trending movies and TV shows, track your watchlist, and get personalized recommendations."
-        canonical="https://cinetrekker.vercel.app"
+        title="CineTrekker Movie Tracker | Track Movies, TV Shows, and Watchlists"
+        description="CineTrekker is a movie tracker for finding trending movies, managing your watchlist, following new releases, and organizing what to watch next."
+        canonical={buildCanonicalUrl("/")}
+        keywords="movie tracker, track movies, tv show tracker, watchlist app, discover trending movies, personalized recommendations"
+        jsonLd={[
+          toWebsiteSearchJsonLd(),
+          toBreadcrumbJsonLd([{ name: "Home", path: "/" }]),
+          toFaqJsonLd(faqItems),
+        ]}
       />
       {/* High-Conversion Hero Section */}
       <HeroSection />
@@ -214,8 +218,6 @@ export default function Index() {
           </div>
         )}
 
-        {/* Personalized Recommendations removed */}
-
         {/* Phase 3: "Because You Liked" personalized row */}
         {deferredEnabled && (
           <Suspense fallback={null}>
@@ -223,11 +225,30 @@ export default function Index() {
           </Suspense>
         )}
 
-        {/* Phase 3: "Because You Liked" personalized row */}
-        {deferredEnabled && (
-          <Suspense fallback={null}>
-            <BecauseYouLiked />
-          </Suspense>
+        {shouldGateRecommendations ? (
+          <section className="rounded-3xl border border-border/40 bg-card/70 p-6 md:p-8">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold text-foreground md:text-3xl">
+                  Personalized picks start after your first saves
+                </h2>
+                <p className="text-sm leading-7 text-muted-foreground md:text-base">
+                  Sign up to get recommendations based on what you've actually watched.
+                </p>
+              </div>
+              <Button asChild className="btn-primary-glow">
+                <Link to={user ? "/watchlist" : "/signup"}>
+                  {user ? "Build Your Watchlist" : "Create Free Account"}
+                </Link>
+              </Button>
+            </div>
+          </section>
+        ) : (
+          deferredEnabled && (
+            <Suspense fallback={null}>
+              <BecauseYouLiked />
+            </Suspense>
+          )
         )}
 
         {/* Did You Watch? - New episodes for watched TV shows */}
@@ -246,53 +267,77 @@ export default function Index() {
 
         {/* New Episodes Section removed per UI cleanup */}
 
-        {/* Top This Week - Movies/Series Toggle */}
         <section>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
-            <h2 className="section-title mb-0">
-              {t("home.topThisWeek") || "Top This Week"}
-            </h2>
-            <div className="flex gap-2 rounded-lg border border-white/5 bg-card/50 p-1">
-              <button
-                type="button"
-                onClick={() => setTopThisWeekType("movie")}
-                className={`min-h-[44px] rounded px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                  topThisWeekType === "movie"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t("common.movies")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setTopThisWeekType("tv")}
-                className={`min-h-[44px] rounded px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                  topThisWeekType === "tv"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t("common.tvShows")}
-              </button>
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="section-title mb-1">Discover</h2>
+              <p className="text-sm text-muted-foreground">
+                Fresh picks from TMDB, organized for quick browsing.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 rounded-lg border border-white/5 bg-card/50 p-1">
+              {[
+                { key: "trending-day", label: "Trending Today" },
+                { key: "trending-week", label: "Trending This Week" },
+                { key: "new-releases", label: "New Releases" },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() =>
+                    setDiscoverTab(
+                      tab.key as "trending-day" | "trending-week" | "new-releases",
+                    )
+                  }
+                  className={`min-h-[44px] rounded px-4 py-2 text-sm font-medium transition-all duration-300 ${
+                    discoverTab === tab.key
+                      ? "bg-primary text-primary-foreground shadow-lg"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
           </div>
-          {topThisWeekType === "movie" && (
-            <MediaCarousel
-              title={t("home.topMoviesWeek")}
-              items={trendingMoviesWeek?.results || []}
-              loading={!deferredEnabled || loadingMoviesWeek}
-              showMoreLink="/search?type=movie"
-            />
-          )}
-          {topThisWeekType === "tv" && (
-            <MediaCarousel
-              title={t("home.topSeriesWeek")}
-              items={trendingTVWeek?.results || []}
-              loading={!deferredEnabled || loadingTVWeek}
-              showMoreLink="/search?type=tv"
-            />
-          )}
+          <div
+            key={discoverTab}
+            className="animate-fade-in rounded-3xl border border-border/40 bg-card/50 p-4 md:p-6"
+          >
+            {discoverTab === "trending-day" &&
+              (!deferredEnabled || loadingDay ? (
+                <TrendingSectionSkeleton />
+              ) : (
+                <MediaCarousel
+                  title="Trending Today"
+                  items={trendingDay?.results || []}
+                  showMoreLink="/search?sort=popularity.desc"
+                />
+              ))}
+            {discoverTab === "trending-week" &&
+              (loadingWeek ? (
+                <TrendingSectionSkeleton />
+              ) : (
+                <MediaCarousel
+                  title="Trending This Week"
+                  items={trendingWeek?.results || []}
+                  showMoreLink="/search?sort=popularity.desc"
+                />
+              ))}
+            {discoverTab === "new-releases" &&
+              (loadingCritical ? (
+                <TrendingSectionSkeleton />
+              ) : (
+                <MediaCarousel
+                  title="New Releases"
+                  items={newReleases?.results || []}
+                  showMoreLink="/search?sort=primary_release_date.desc&type=movie"
+                />
+              ))}
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            This product uses the TMDB API but is not endorsed or certified by TMDB.
+          </p>
         </section>
 
         {/* Top Rated - Movies/Series Toggle */}
@@ -344,101 +389,11 @@ export default function Index() {
           )}
         </section>
 
-        {/* Trending Section with Tabs */}
-        <section>
-          <Tabs defaultValue="day" className="w-full">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
-              <h2 className="section-title mb-0">{t("home.trending")}</h2>
-              <TabsList className="min-h-[44px] border border-white/5 bg-card/50">
-                <TabsTrigger
-                  value="day"
-                  className="min-h-[44px] px-4 text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                >
-                  {t("home.trendingToday")}
-                </TabsTrigger>
-                <TabsTrigger
-                  value="week"
-                  className="min-h-[44px] px-4 text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                >
-                  {t("home.trendingWeek")}
-                </TabsTrigger>
-              </TabsList>
-            </div>
-
-            <TabsContent value="day" className="mt-0">
-              {!deferredEnabled || loadingDay ? (
-                <TrendingSectionSkeleton />
-              ) : (
-                <MediaSection
-                  title={t("home.trendingToday")}
-                  items={trendingDay?.results || []}
-                  showMoreLink="/search?sort=popularity.desc"
-                />
-              )}
-            </TabsContent>
-
-            <TabsContent value="week" className="mt-0">
-              {loadingWeek ? (
-                <TrendingSectionSkeleton />
-              ) : (
-                <MediaSection
-                  title={t("home.trendingWeek")}
-                  items={trendingWeek?.results || []}
-                  showMoreLink="/search?sort=popularity.desc"
-                />
-              )}
-            </TabsContent>
-          </Tabs>
-        </section>
-
-        {/* Popular - Movies/Series Toggle */}
-        <section>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
-            <h2 className="section-title mb-0">
-              {t("home.popular") || "Popular"}
-            </h2>
-            <div className="flex gap-2 rounded-lg border border-white/5 bg-card/50 p-1">
-              <button
-                type="button"
-                onClick={() => setPopularType("movie")}
-                className={`min-h-[44px] rounded px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                  popularType === "movie"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t("common.movies")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setPopularType("tv")}
-                className={`min-h-[44px] rounded px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                  popularType === "tv"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t("common.tvShows")}
-              </button>
-            </div>
-          </div>
-          {popularType === "movie" && (
-            <MediaCarousel
-              title={t("home.popularMovies")}
-              items={popularMovies?.results || []}
-              loading={loadingPopularMovies}
-              showMoreLink="/search?type=movie"
-            />
-          )}
-          {popularType === "tv" && (
-            <MediaCarousel
-              title={t("home.popularSeries")}
-              items={popularTV?.results || []}
-              loading={!deferredEnabled || loadingPopularTV}
-              showMoreLink="/search?type=tv"
-            />
-          )}
-        </section>
+        <FAQSection
+          title="Movie tracker FAQs"
+          intro="These quick answers are structured for search engines, AI assistants, and anyone deciding whether CineTrekker matches their movie and TV workflow."
+          items={faqItems}
+        />
       </div>
     </div>
   );

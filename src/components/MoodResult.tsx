@@ -12,6 +12,7 @@ import {
 } from "@/components/mood-result.utils";
 import type { Media } from "@/types/media";
 import { cn } from "../lib/utils";
+import { Image } from "@/components/ui/Image";
 
 type Props = {
   mood: MoodId;
@@ -97,10 +98,13 @@ export default function MoodResult({
         aria-live="polite"
       >
         {backdrop ? (
-          <img
+          <Image
             src={backdrop}
             alt={getMediaTitle(match)}
+            width={1280}
+            height={720}
             className="w-full h-full object-cover"
+            fetchPriority="high"
           />
         ) : (
           <div className="w-full h-full bg-muted" />

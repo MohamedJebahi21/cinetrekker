@@ -4,11 +4,9 @@ import { useTranslation } from "react-i18next";
 import {
   Star,
   Check,
-  BookmarkCheck,
   Loader2,
   Ellipsis,
 } from "lucide-react";
-import Plus from "lucide-react/dist/esm/icons/plus";
 import { Media } from "@/types/media";
 import {
   getImageUrl,
@@ -19,10 +17,6 @@ import {
 import { useInView } from "@/hooks/useInView";
 import { useUserLists } from "@/contexts/UserListsContext";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  toggleLocalWatchlist,
-  isInLocalWatchlist,
-} from "@/lib/watchlist";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -35,6 +29,7 @@ import { useWatchedEpisodes } from "@/hooks/useFollowedShows";
 import { useEffect } from "react";
 import { Image } from "@/components/ui/Image";
 import { cn } from "../lib/utils";
+import { buildMediaPath, getMediaAltText } from "@/lib/seo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,9 +74,11 @@ function PosterImage({
         className="w-full h-full aspect-[2/3] relative overflow-hidden bg-muted flex items-center justify-center"
       >
         <div className="text-center px-3">
-          <img
+          <Image
             src="/placeholder.svg"
             alt="Poster Not Found"
+            width={48}
+            height={64}
             className="mx-auto h-16 w-12 object-contain opacity-80"
             loading="lazy"
           />
@@ -143,7 +140,7 @@ export const MediaCard = React.memo(function MediaCard({
   } = useUserLists();
   const { markEpisodeWatched } = useWatchedEpisodes();
   const [localInWatchlist, setLocalInWatchlist] = useState<boolean>(() =>
-    isInLocalWatchlist(media.id),
+    false,
   );
   const [optimisticInWatchlist, setOptimisticInWatchlist] = useState(false);
   const [optimisticWatched, setOptimisticWatched] = useState(false);
@@ -157,7 +154,7 @@ export const MediaCard = React.memo(function MediaCard({
     () => mediaTypeProp ?? getMediaType(media),
     [mediaTypeProp, media],
   );
-  const posterAlt = `${title} Poster`;
+  const posterAlt = getMediaAltText(title, mediaType, "poster");
   const inWatchlist = user
     ? isInWatchlist(media.id, mediaType)
     : localInWatchlist;
@@ -191,8 +188,8 @@ export const MediaCard = React.memo(function MediaCard({
           try {
             if (typeof navigator !== "undefined" && "vibrate" in navigator)
               (navigator as Navigator).vibrate?.(10);
-          } catch (e) {
-            /* TODO: add optional debug logging for vibration API failures */
+          } catch {
+            // Ignore vibration API failures for unsupported devices/browsers.
           }
         } else {
           await removeFromWatchlist(media.id, mediaType);
@@ -203,23 +200,18 @@ export const MediaCard = React.memo(function MediaCard({
         setIsWatchlistPending(false);
       }
     } else {
-      const newState = toggleLocalWatchlist(media.id);
-      setLocalInWatchlist(newState);
-      setOptimisticInWatchlist(newState);
-      if (newState) {
-        try {
-          if (typeof navigator !== "undefined" && "vibrate" in navigator)
-            (navigator as Navigator).vibrate?.(10);
-        } catch (e) {
-          /* TODO: add optional debug logging for vibration API failures */
-        }
-      }
+      window.dispatchEvent(new CustomEvent("cinetrekker:auth-required"));
     }
   };
 
   const handleWatchedClick = async (e: PreventableEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!user) {
+      window.dispatchEvent(new CustomEvent("cinetrekker:auth-required"));
+      return;
+    }
+
     if (optimisticWatched) {
       setOptimisticWatched(false);
       setIsWatchedPending(true);
@@ -273,17 +265,49 @@ export const MediaCard = React.memo(function MediaCard({
   return (
     <>
       <Link
-        to={`/${mediaType}/${media.id}`}
+        to={buildMediaPath(mediaType, media.id, title)}
         className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-white/5 shadow-card transition-all duration-300 glass-card-hover hover:border-primary/20 hover:scale-[1.03] hover:-translate-y-1 focus-ring"
         aria-label={`${title} - open details`}
         tabIndex={0}
       >
         {/* Poster with gradient overlay for text readability */}
         <div className="aspect-[2/3] relative overflow-hidden rounded-t-xl bg-surface-dark-3">
-          <PosterImage posterPath={media.poster_path} alt={title} />
+          <PosterImage posterPath={media.poster_path} alt={posterAlt} />
 
           {/* Enhanced gradient overlay - darker on hover */}
           <div className="absolute inset-0 bg-gradient-to-t from-surface-dark-2/80 via-transparent to-transparent opacity-100 transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100" />
+          <div className="absolute inset-x-3 bottom-3 z-20 hidden translate-y-2 flex-col gap-2 opacity-0 transition-all duration-200 md:flex md:group-hover:translate-y-0 md:group-hover:opacity-100">
+            <Button
+              type="button"
+              size="sm"
+              className={cn(
+                "h-10 w-full justify-center gap-2 bg-black/80 text-white backdrop-blur-md hover:bg-[#E50914]",
+                optimisticInWatchlist && "bg-[#E50914] hover:bg-[#c50812]",
+              )}
+              onClick={(event) => void handleWatchlistClick(event)}
+            >
+              {isWatchlistPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : null}
+              {optimisticInWatchlist ? "In Watchlist" : "Watchlist"}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className={cn(
+                "h-10 w-full justify-center gap-2 border-white/20 bg-black/55 text-white backdrop-blur-md hover:bg-white/15",
+                optimisticWatched &&
+                  "border-emerald-400/50 bg-emerald-500/20 text-emerald-50 hover:bg-emerald-500/30",
+              )}
+              onClick={(event) => void handleWatchedClick(event)}
+            >
+              {isWatchedPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : null}
+              {optimisticWatched ? "Watched" : "Mark Watched"}
+            </Button>
+          </div>
 
           {/* Status Badges - positioned above gradient */}
           <div className="absolute top-2 left-2 right-2 flex justify-between items-start z-10">
@@ -341,97 +365,6 @@ export const MediaCard = React.memo(function MediaCard({
             </span>
           )}
 
-          {/* Quick Action Buttons - 32x32px circles with blur background */}
-          {user && (
-            <div className="absolute left-1/2 bottom-2 z-10 hidden -translate-x-1/2 gap-1.5 transition-opacity duration-200 md:flex md:opacity-0 md:group-hover:opacity-100">
-              {/* Watchlist Button */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={handleWatchlistClick}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        void handleWatchlistClick(e);
-                      }
-                    }}
-                    className={cn(
-                      "w-8 h-8 min-w-[48px] min-h-[48px] rounded-full flex items-center justify-center transform transition-all duration-200 ease-in-out cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-                      optimisticInWatchlist
-                        ? "bg-primary text-primary-foreground hover:scale-110"
-                        : "bg-background/80 backdrop-blur-md text-foreground hover:bg-[#E50914] hover:text-white hover:scale-110",
-                    )}
-                    aria-label={
-                      optimisticInWatchlist
-                        ? t("actions.removeFromWatchlist")
-                        : t("actions.addToWatchlist")
-                    }
-                  >
-                    {isWatchlistPending ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : optimisticInWatchlist ? (
-                      <BookmarkCheck className="w-3.5 h-3.5" />
-                    ) : (
-                      <Plus className="w-3.5 h-3.5" />
-                    )}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent
-                  side="top"
-                  className="bg-popover text-popover-foreground"
-                >
-                  {optimisticInWatchlist
-                    ? t("actions.removeFromWatchlist")
-                    : t("actions.addToWatchlist")}
-                </TooltipContent>
-              </Tooltip>
-
-              {/* Watched Button */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={handleWatchedClick}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        void handleWatchedClick(e);
-                      }
-                    }}
-                    className={cn(
-                      "w-8 h-8 min-w-[48px] min-h-[48px] rounded-full flex items-center justify-center transform transition-all duration-200 ease-in-out cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-                      optimisticWatched
-                        ? "bg-success text-success-foreground hover:scale-110"
-                        : "bg-background/80 backdrop-blur-md text-foreground hover:bg-success hover:text-success-foreground hover:scale-110",
-                    )}
-                    aria-label={
-                      optimisticWatched
-                        ? t("actions.removeFromWatched")
-                        : t("actions.markAsWatched")
-                    }
-                  >
-                    {isWatchedPending ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Check className="w-3.5 h-3.5" />
-                    )}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent
-                  side="top"
-                  className="bg-popover text-popover-foreground"
-                >
-                  {optimisticWatched
-                    ? t("actions.removeFromWatched")
-                    : t("actions.markAsWatched")}
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          )}
-
           {/* Quick preview removed; click card to open details */}
         </div>
 
@@ -454,27 +387,46 @@ export const MediaCard = React.memo(function MediaCard({
           </div>
         </div>
 
-        {user && (
-          <div className="border-t border-border/50 p-3 md:hidden">
-            <div className="flex items-center gap-2">
+        <div className="border-t border-border/50 p-3 md:hidden">
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant={optimisticWatched ? "secondary" : "outline"}
+              className="min-h-[44px] flex-1 justify-center"
+              onClick={(event) => void handleWatchedClick(event)}
+            >
+              {isWatchedPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              {optimisticWatched ? "Watched" : "Mark Watched"}
+            </Button>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex-1">
               <Button
                 type="button"
                 variant={optimisticInWatchlist ? "default" : "outline"}
-                className="min-h-[44px] flex-1 justify-center"
+                className="min-h-[44px] w-full justify-center"
                 onClick={(event) => void handleWatchlistClick(event)}
               >
                 {isWatchlistPending ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : optimisticInWatchlist ? (
-                  <BookmarkCheck className="mr-2 h-4 w-4" />
-                ) : (
-                  <Plus className="mr-2 h-4 w-4" />
-                )}
+                ) : null}
                 {optimisticInWatchlist
                   ? t("actions.removeFromWatchlist")
                   : t("actions.addToWatchlist")}
               </Button>
+                </div>
+              </TooltipTrigger>
+              {!user && (
+                <TooltipContent>
+                  Create a free account to save your watchlist.
+                </TooltipContent>
+              )}
+            </Tooltip>
 
+            {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -504,9 +456,9 @@ export const MediaCard = React.memo(function MediaCard({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </Link>
 
       {/* Media preview removed */}
@@ -575,3 +527,4 @@ export const MediaCardSkeleton = React.forwardRef<
   );
 });
 MediaCardSkeleton.displayName = "MediaCardSkeleton";
+

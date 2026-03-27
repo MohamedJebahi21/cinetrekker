@@ -4,15 +4,17 @@ import { Heart } from "lucide-react";
 import { useTitleFollows } from "@/hooks/useTitleFollows";
 import { getImageUrl, getMediaTitle } from "@/services/tmdb";
 import { Media } from "@/types/media";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, type Variants } from "framer-motion";
 import SEO from "@/components/SEO";
 import { EmptyState } from "@/components/EmptyStates";
 import { enrichMediaItems } from "@/lib/mediaEnrichment";
+import { Image } from "@/components/ui/Image";
 
 export default function Following() {
   const { t, i18n } = useTranslation();
   const { followedTitles } = useTitleFollows();
+  const navigate = useNavigate();
   const language = i18n.language;
 
   const { data: showDetails, isLoading } = useQuery({
@@ -110,11 +112,16 @@ export default function Following() {
                     className="group relative block overflow-hidden rounded-lg transition-all duration-300"
                   >
                     {posterUrl ? (
-                      <img
+                      <Image
                         src={posterUrl}
-                        alt={title}
+                        srcSet={`${getImageUrl(show.poster_path, "w185")} 185w, ${getImageUrl(show.poster_path, "w342")} 342w, ${getImageUrl(show.poster_path, "w500")} 500w`}
+                        sizes="(max-width: 639px) calc(50vw - 16px), (max-width: 1023px) calc(33vw - 24px), 220px"
+                        alt={`${title} poster`}
+                        width={342}
+                        height={513}
                         className="w-full h-auto object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                         loading="lazy"
+                        showSkeleton
                       />
                     ) : (
                       <div className="w-full bg-gradient-to-br from-primary/20 to-primary/5 aspect-[2/3] flex items-center justify-center">
@@ -144,7 +151,7 @@ export default function Following() {
             action={{
               label: t("following.discoverShows", "Discover Titles"),
               onClick: () => {
-                window.location.href = "/search";
+                navigate("/search");
               },
             }}
           />

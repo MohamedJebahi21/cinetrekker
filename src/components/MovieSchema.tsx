@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect, useId } from "react";
+import { sanitizeJsonLd, sanitizeMetaText } from "@/lib/seo";
 
 interface MovieSchemaProps {
+  schemaType?: "Movie" | "TVSeries";
   title: string;
   description?: string;
   image?: string;
@@ -11,6 +13,7 @@ interface MovieSchemaProps {
 }
 
 export default function MovieSchema({
+  schemaType = "Movie",
   title,
   description,
   image,
@@ -19,11 +22,12 @@ export default function MovieSchema({
   ratingCount,
   url,
 }: MovieSchemaProps) {
-  const jsonLd = {
+  const id = useId().replace(/:/g, "-");
+  const jsonLd = sanitizeJsonLd({
     '@context': 'https://schema.org',
-    '@type': 'Movie',
-    name: title,
-    description: description || undefined,
+    '@type': schemaType,
+    name: sanitizeMetaText(title, 180),
+    description: description ? sanitizeMetaText(description, 500) : undefined,
     image: image || undefined,
     url: url || undefined,
     datePublished: releaseDate || undefined,
@@ -39,15 +43,22 @@ export default function MovieSchema({
                 : 1,
           }
         : undefined,
-  };
+  });
 
-  // Escape < to \u003c to prevent </script> injection in JSON-LD blocks
-  const safeJson = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
+  useEffect(() => {
+    const scriptId = `movie-schema-${id}`;
+    const existing = document.getElementById(scriptId);
+    existing?.remove();
 
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: safeJson }}
-    />
-  );
+    const script = document.createElement("script");
+    script.id = scriptId;
+    script.type = "application/ld+json";
+    script.dataset.cinetrekkerJsonld = "true";
+    script.text = JSON.stringify(jsonLd).replace(/</g, "\\u003c");
+    document.head.appendChild(script);
+
+    return () => script.remove();
+  }, [id, jsonLd]);
+
+  return null;
 }

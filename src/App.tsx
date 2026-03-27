@@ -18,7 +18,6 @@ import { ContentPolicyProvider } from "@/contexts/content-policy-context";
 import ScrollToTop from "@/components/ScrollToTop";
 import { UnifiedNav } from "@/components/UnifiedNav";
 import { Footer } from "@/components/Footer";
-import { BottomNav } from "@/components/BottomNav";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
@@ -37,6 +36,11 @@ import { siteMetadata } from "@/lib/metadata";
 import { applyAccessibilityPreferencesToRoot } from "@/lib/accessibility-preferences";
 const Index = lazy(() => import("./pages/Index"));
 const KeyboardShortcuts = lazy(() => import("@/components/KeyboardShortcuts"));
+const BottomNav = lazy(() =>
+  import("@/components/BottomNav").then((mod) => ({
+    default: mod.BottomNav,
+  })),
+);
 const GlobalLoader = lazy(() =>
   import("@/components/GlobalLoader").then((mod) => ({
     default: mod.GlobalLoader,
@@ -154,7 +158,7 @@ function AnimatedRoutes() {
             }
           />
           <Route
-            path="/movie/:id"
+            path="/movie/:id/:slug?"
             element={
               <Suspense fallback={<RouteSpinner />}>
                 <Details />
@@ -170,7 +174,7 @@ function AnimatedRoutes() {
             }
           />
           <Route
-            path="/tv/:id"
+            path="/tv/:id/:slug?"
             element={
               <Suspense fallback={<RouteSpinner />}>
                 <Details />
@@ -186,7 +190,7 @@ function AnimatedRoutes() {
             }
           />
           <Route
-            path="/person/:id"
+            path="/person/:id/:slug?"
             element={
               <Suspense fallback={<RouteSpinner />}>
                 <Person />
@@ -452,6 +456,7 @@ const App = () => {
   const navigate = useNavigate();
   const [enableEnhancements, setEnableEnhancements] = useState(false);
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
+  const [shouldRenderBottomNav, setShouldRenderBottomNav] = useState(false);
   const refreshableQueryKeys = new Set([
     "details",
     "trending",
@@ -531,6 +536,20 @@ const App = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const syncBottomNav = () => setShouldRenderBottomNav(mediaQuery.matches);
+
+    syncBottomNav();
+    mediaQuery.addEventListener("change", syncBottomNav);
+
+    return () => {
+      mediaQuery.removeEventListener("change", syncBottomNav);
+    };
+  }, []);
+
   const { handlers, containerRef } = usePullToRefresh({
     onRefresh: async () => {
       await queryClient.invalidateQueries({
@@ -585,6 +604,7 @@ const App = () => {
                   })}
                   title={siteMetadata.title}
                   description={siteMetadata.description}
+                  keywords={siteMetadata.keywords}
                 />
                 {enableEnhancements && (
                   <Suspense fallback={null}>
@@ -592,9 +612,11 @@ const App = () => {
                   </Suspense>
                 )}
                 {enableEnhancements && <NetworkMonitor />}
-                <Suspense fallback={null}>
-                  <FollowNotificationMonitor />
-                </Suspense>
+                {enableEnhancements && (
+                  <Suspense fallback={null}>
+                    <FollowNotificationMonitor />
+                  </Suspense>
+                )}
                 <div className="flex min-h-[100dvh] flex-col">
                   <UnifiedNav />
                   <ScrollToTop />
@@ -609,17 +631,23 @@ const App = () => {
                       <AnimatedRoutes />
                     </ErrorBoundary>
                   </main>
-                  <BottomNav />
+                  {shouldRenderBottomNav && (
+                    <Suspense fallback={null}>
+                      <BottomNav />
+                    </Suspense>
+                  )}
                   <Footer />
                 </div>
 
                 <Dialog open={authPromptOpen} onOpenChange={setAuthPromptOpen}>
                   <DialogContent className="max-w-sm border-border bg-card text-card-foreground">
                     <DialogHeader>
-                      <DialogTitle>Sign in required</DialogTitle>
+                      <DialogTitle>
+                        Create a free account to save your watchlist
+                      </DialogTitle>
                       <DialogDescription className="text-muted-foreground">
-                        Sign in to sync your guest watchlist and watched history
-                        across devices.
+                        Save titles, mark them watched, and keep your progress
+                        synced across devices.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="mt-4 flex justify-end gap-2">
@@ -627,16 +655,25 @@ const App = () => {
                         variant="outline"
                         onClick={() => setAuthPromptOpen(false)}
                       >
-                        Cancel
+                        Not now
                       </Button>
                       <Button
-                        className="bg-primary text-primary-foreground hover:bg-primary/90"
+                        variant="outline"
                         onClick={() => {
                           setAuthPromptOpen(false);
                           navigate("/login");
                         }}
                       >
                         Sign In
+                      </Button>
+                      <Button
+                        className="bg-primary text-primary-foreground hover:bg-primary/90"
+                        onClick={() => {
+                          setAuthPromptOpen(false);
+                          navigate("/signup");
+                        }}
+                      >
+                        Create Account
                       </Button>
                     </div>
                   </DialogContent>

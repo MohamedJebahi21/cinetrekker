@@ -1,6 +1,10 @@
 import { json } from "../_lib/http.js";
 import { authenticateRequest, getSupabaseAdminClient } from "../_lib/supabaseAdmin.js";
-import { enforceRequestSecurity } from "../_lib/requestSecurity.js";
+import {
+  enforceAuthenticatedRequestSecurity,
+  enforceRequestSecurity,
+} from "../_lib/requestSecurity.js";
+import { reportSecurityEvent } from "../_lib/securityMonitor.js";
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -24,6 +28,16 @@ export default async function handler(req, res) {
     return json(res, auth.status, { error: auth.error });
   }
 
+  const authedSecurity = await enforceAuthenticatedRequestSecurity(
+    req,
+    res,
+    "user-followed",
+    auth.userId,
+  );
+  if (!authedSecurity.ok) {
+    return json(res, authedSecurity.status, { error: authedSecurity.error });
+  }
+
   const userId = normalizeString(req?.query?.user_id);
   if (!userId) {
     return json(res, 400, { error: "user_id query parameter is required." });
@@ -34,6 +48,18 @@ export default async function handler(req, res) {
   }
 
   if (auth.userId !== userId) {
+    await reportSecurityEvent({
+      event: "auth_user_id_mismatch",
+      severity: "warning",
+      scope: "user-followed",
+      message: "Rejected followed titles request due to user_id mismatch.",
+      req,
+      details: {
+        authenticatedUserId: auth.userId,
+        requestedUserId: userId,
+      },
+      shouldAlert: false,
+    });
     return json(res, 403, { error: "Forbidden: user_id does not match authenticated user." });
   }
 

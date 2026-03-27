@@ -170,13 +170,9 @@ serve(async (req) => {
       );
     }
 
-    const authHeader = req.headers.get("authorization") || "";
-    const bearerToken = authHeader.startsWith("Bearer ")
-      ? authHeader.slice(7).trim()
-      : "";
     const cronHeader = (req.headers.get("x-cron-secret") || "").trim();
 
-    if (cronHeader !== cronSecret && bearerToken !== cronSecret) {
+    if (cronHeader !== cronSecret) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 401,

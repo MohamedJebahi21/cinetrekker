@@ -42,6 +42,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Image } from "@/components/ui/Image";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -1408,10 +1409,13 @@ export default function Profile() {
                         <div className="absolute -inset-2 rounded-full bg-[#E50914]/70 blur-md opacity-75" />
                         <div className="relative h-36 w-36 sm:h-40 sm:w-40 overflow-hidden rounded-full border-[5px] border-[#E50914] bg-card shadow-[0_0_0_2px_rgba(255,255,255,0.08),0_0_40px_rgba(229,9,20,0.45)]">
                           {profilePhoto ? (
-                            <img
+                            <Image
                               src={profilePhoto}
                               alt="Profile"
+                              width={160}
+                              height={160}
                               className="h-full w-full object-cover"
+                              loading="lazy"
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center">
@@ -1900,14 +1904,19 @@ export default function Profile() {
                                     key={key}
                                     className="flex items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-900/70 p-2"
                                   >
-                                    <img
+                                    <Image
                                       src={getImageUrl(
                                         result.posterPath,
                                         "w154",
                                       )}
+                                      srcSet={`${getImageUrl(result.posterPath, "w92")} 92w, ${getImageUrl(result.posterPath, "w154")} 154w, ${getImageUrl(result.posterPath, "w342")} 342w`}
+                                      sizes="40px"
                                       alt={result.title}
+                                      width={154}
+                                      height={231}
                                       className="h-14 w-10 shrink-0 rounded object-cover"
                                       loading="lazy"
+                                      showSkeleton
                                     />
                                     <div className="min-w-0 flex-1">
                                       <p className="line-clamp-1 text-sm font-medium text-neutral-100">
@@ -1989,11 +1998,16 @@ export default function Profile() {
                           </div>
 
                           <div className="relative aspect-[2/3] overflow-hidden">
-                            <img
+                            <Image
                               src={getImageUrl(preview.posterPath, "w342")}
+                              srcSet={`${getImageUrl(preview.posterPath, "w154")} 154w, ${getImageUrl(preview.posterPath, "w342")} 342w, ${getImageUrl(preview.posterPath, "w500")} 500w`}
+                              sizes="(max-width: 640px) calc(50vw - 24px), 220px"
                               alt={preview.title}
+                              width={342}
+                              height={513}
                               loading="lazy"
                               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              showSkeleton
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
                           </div>
@@ -2082,14 +2096,19 @@ export default function Profile() {
                                     key={key}
                                     className="flex items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-900/70 p-2"
                                   >
-                                    <img
+                                    <Image
                                       src={getImageUrl(
                                         result.posterPath,
                                         "w154",
                                       )}
+                                      srcSet={`${getImageUrl(result.posterPath, "w92")} 92w, ${getImageUrl(result.posterPath, "w154")} 154w, ${getImageUrl(result.posterPath, "w342")} 342w`}
+                                      sizes="40px"
                                       alt={result.title}
+                                      width={154}
+                                      height={231}
                                       className="h-14 w-10 shrink-0 rounded object-cover"
                                       loading="lazy"
+                                      showSkeleton
                                     />
                                     <div className="min-w-0 flex-1">
                                       <p className="line-clamp-1 text-sm font-medium text-neutral-100">
@@ -2171,11 +2190,16 @@ export default function Profile() {
                           </div>
 
                           <div className="relative aspect-[2/3] overflow-hidden">
-                            <img
+                            <Image
                               src={getImageUrl(preview.posterPath, "w342")}
+                              srcSet={`${getImageUrl(preview.posterPath, "w154")} 154w, ${getImageUrl(preview.posterPath, "w342")} 342w, ${getImageUrl(preview.posterPath, "w500")} 500w`}
+                              sizes="(max-width: 640px) calc(50vw - 24px), 220px"
                               alt={preview.title}
+                              width={342}
+                              height={513}
                               loading="lazy"
                               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              showSkeleton
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
                           </div>

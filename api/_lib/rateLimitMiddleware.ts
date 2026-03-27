@@ -11,7 +11,18 @@
  * https://upstash.com/docs/redis/features/ratelimiting
  */
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+type VercelRequest = {
+  headers: Record<string, string | string[] | undefined>;
+  socket?: { remoteAddress?: string };
+  query?: Record<string, string | string[] | undefined>;
+};
+
+type VercelResponse = {
+  setHeader: (name: string, value: string) => void;
+  status: (code: number) => {
+    json: (payload: unknown) => void;
+  };
+};
 
 interface RateLimitEntry {
   count: number;

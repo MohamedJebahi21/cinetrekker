@@ -8,60 +8,23 @@ on:
 
 jobs:
   secret-scanning:
-    name: Scan for Secrets
+    name: Secret Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Check for hardcoded API keys (Stripe)
-        run: |
-          if grep -r "sk_live_" src api 2>/dev/null; then
-            echo "❌ ERROR: Found Stripe live API keys!"
-            exit 1
-          fi
-          if grep -r "sk_test_" src api 2>/dev/null; then
-            echo "⚠️ WARNING: Found Stripe test API keys (ensure they're not sensitive)"
-          fi
-          echo "✅ No hardcoded Stripe keys found"
-
-      - name: Check for hardcoded JWT tokens
-        run: |
-          if grep -rE "eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}" src api 2>/dev/null | grep -v "node_modules\|dist\|build"; then
-            echo "❌ ERROR: Found potential JWT tokens in code!"
-            exit 1
-          fi
-          echo "✅ No hardcoded JWT tokens found"
-
-      - name: Check for OpenAI API keys
-        run: |
-          if grep -r "sk_openai_\|sk-proj-\|openai.*key" src 2>/dev/null | grep -v "skip\|skeleton"; then
-            echo "⚠️ WARNING: Found potential OpenAI keys"
-            exit 1
-          fi
-          echo "✅ No hardcoded OpenAI keys found"
-
-      - name: Check for TMDB API keys
-        run: |
-          # TMDB API keys are long hex strings
-          if grep -rE "[a-f0-9]{32}" src 2>/dev/null | grep -v "node_modules\|dist\|*.test\|*.spec"; then
-            echo "⚠️ WARNING: Found potential API key patterns"
-          fi
-          echo "✅ API key scan complete"
-
-      - name: Verify .env files not committed
-        run: |
-          if git diff --cached --name-only | grep -E "\.env\." | grep -v "\.env\.example$" | grep -q . || \
-             git log -1 --name-only | grep -E "\.env\." | grep -v "\.env\.example$" | grep -q .; then
-            echo "❌ ERROR: Environment files detected in commit!"
-            exit 1
-          fi
-          echo "✅ No environment files committed"
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-validation:
-    name: Validate Build
+    name: Validate Build and Security Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -79,101 +42,14 @@ jobs:
       - name: Verify production build
         run: npm run build
 
-      - name: TypeScript strict check (non-blocking)
-        continue-on-error: true
-        run: |
-          npx tsc --noEmit --skipLibCheck || {
-            echo "⚠️ Strict TypeScript check failed (non-blocking)."
-          }
+      - name: Run API security tests
+        run: npm run test:security
 
-      - name: Check ESLint
-        run: npm run lint || echo "⚠️ Lint warnings detected (non-blocking)"
-
-  security-config:
-    name: Validate Security Configuration
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Verify vercel.json exists
-        run: |
-          if [ ! -f "vercel.json" ]; then
-            echo "❌ ERROR: vercel.json is missing!"
-            exit 1
-          fi
-          echo "✅ vercel.json exists"
-
-      - name: Validate vercel.json syntax
-        run: |
-          python3 -m json.tool vercel.json > /dev/null && \
-          echo "✅ vercel.json is valid JSON" || \
-          (echo "❌ ERROR: vercel.json has invalid syntax"; exit 1)
-
-      - name: Check for security headers in vercel.json
-        run: |
-          HEADERS=$(grep -c "X-Content-Type-Options\|X-Frame-Options\|Strict-Transport-Security" vercel.json || true)
-          if [ "$HEADERS" -lt 3 ]; then
-            echo "⚠️ WARNING: Not all security headers found in vercel.json"
-          fi
-          echo "✅ Security headers check complete"
-
-      - name: Verify CSP policy exists
-        run: |
-          if grep -q "Content-Security-Policy" vercel.json; then
-            echo "✅ Content-Security-Policy header configured"
-          else
-            echo "⚠️ WARNING: CSP header not found in vercel.json"
-          fi
-
-      - name: Verify .gitignore includes .env files
-        run: |
-          if grep -q "\.env" .gitignore; then
-            echo "✅ .env files are properly ignored"
-          else
-            echo "❌ ERROR: .env files not in .gitignore!"
-            exit 1
-          fi
-
-  auth-validation:
-    name: Validate Auth Implementation
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Check for authErrorHandler implementation
-        run: |
-          if [ -f "src/lib/authErrorHandler.ts" ]; then
-            echo "✅ authErrorHandler.ts exists"
-          else
-            echo "⚠️ WARNING: authErrorHandler.ts not found"
-          fi
-
-      - name: Check for generic error messages in Auth.tsx
-        run: |
-          if grep -q "sanitizeAuthError\|logAuthFailure" src/pages/Auth.tsx; then
-            echo "✅ Auth.tsx uses sanitized error messages"
-          else
-            echo "⚠️ WARNING: Auth.tsx may not use error sanitization"
-          fi
-
-      - name: Verify no account enumeration leaks
-        run: |
-          # Search TypeScript files for account enumeration messages, excluding authErrorHandler and test files
-          if grep -rl -e "User not found" -e "Incorrect password" -e "Email already exists" \
-             --include="*.ts" --include="*.tsx" \
-             --exclude="*authErrorHandler*" \
-             --exclude="*.test.*" --exclude="*.spec.*" \
-             --exclude-dir="node_modules" --exclude-dir="dist" --exclude-dir="build" \
-             src/ 2>/dev/null; then
-            echo "❌ ERROR: Found potential account enumeration messages!"
-            exit 1
-          fi
-          echo "✅ No obvious account enumeration messages found"
+      - name: Lint
+        run: npm run lint
 
   dependency-check:
-    name: Check Dependencies
+    name: Runtime Dependency Audit
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -188,73 +64,37 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run npm audit
-        continue-on-error: true
-        run: |
-          echo "🔍 Checking for vulnerabilities..."
-          npm audit --audit-level=moderate || {
-            echo "⚠️ Vulnerabilities found. Review with: npm audit"
-          }
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=moderate
 
-      - name: Check for dompurify installation
-        run: |
-          if grep -q "isomorphic-dompurify" package.json; then
-            echo "✅ DOMPurify is installed"
-          else
-            echo "⚠️ WARNING: DOMPurify not found in package.json"
-          fi
-
-  rate-limiting-check:
-    name: Validate Rate Limiting
+  security-config:
+    name: Verify Headers and CSP
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check for rate limiting middleware
-        run: |
-          if [ -f "api/_lib/rateLimitMiddleware.ts" ]; then
-            echo "✅ Rate limiting middleware exists"
-          else
-            echo "⚠️ WARNING: Rate limiting middleware not found"
-          fi
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
 
-      - name: Check search debounce value
-        run: |
-          if grep -q "debounceMs = 500\|debounceMs = 500" src/hooks/*.ts; then
-            echo "✅ Search debounce is set to 500ms"
-          else
-            echo "⚠️ WARNING: Search debounce may not be 500ms"
-          fi
+      - name: Verify security headers
+        run: node scripts/verify-security-config.mjs
 
   summary:
     name: Summary
     runs-on: ubuntu-latest
-    needs:
-      [
-        secret-scanning,
-        build-validation,
-        security-config,
-        auth-validation,
-        dependency-check,
-        rate-limiting-check,
-      ]
+    needs: [secret-scanning, build-validation, dependency-check, security-config]
     if: always()
     steps:
       - name: Check job status
         run: |
           if [ "${{ needs.secret-scanning.result }}" != "success" ] || \
              [ "${{ needs.build-validation.result }}" != "success" ] || \
+             [ "${{ needs.dependency-check.result }}" != "success" ] || \
              [ "${{ needs.security-config.result }}" != "success" ]; then
-            echo "❌ Some checks failed. Please review above."
+            echo "One or more deployment protection checks failed."
             exit 1
           fi
-          echo "✅ All critical checks passed!"
-          echo ""
-          echo "Deployment Protection Summary:"
-          echo "✅ No hardcoded secrets found"
-          echo "✅ Build validates successfully"
-          echo "✅ Security configuration verified"
-          echo "✅ Auth implementation validated"
-          echo "✅ Dependencies checked"
-          echo "✅ Rate limiting configured"
+          echo "All deployment protection checks passed."

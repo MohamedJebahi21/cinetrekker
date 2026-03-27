@@ -1,6 +1,9 @@
 import { json } from "./_lib/http.js";
 import { authenticateRequest, getSupabaseAdminClient } from "./_lib/supabaseAdmin.js";
-import { enforceRequestSecurity } from "./_lib/requestSecurity.js";
+import {
+  enforceAuthenticatedRequestSecurity,
+  enforceRequestSecurity,
+} from "./_lib/requestSecurity.js";
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 20;
@@ -25,6 +28,16 @@ export default async function handler(req, res) {
   const auth = await authenticateRequest(req);
   if (!auth.ok) {
     return json(res, auth.status, { error: auth.error });
+  }
+
+  const authedSecurity = await enforceAuthenticatedRequestSecurity(
+    req,
+    res,
+    "notifications-list",
+    auth.userId,
+  );
+  if (!authedSecurity.ok) {
+    return json(res, authedSecurity.status, { error: authedSecurity.error });
   }
 
   const page = parsePositiveInt(req?.query?.page, DEFAULT_PAGE);

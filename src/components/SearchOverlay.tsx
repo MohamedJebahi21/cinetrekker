@@ -8,6 +8,7 @@ import { X, Search, Film, Tv, User, ArrowRight } from "lucide-react";
 import type { Media } from "@/types/media";
 import { useContentPolicy } from "@/contexts/content-policy-context";
 import { applySafetyFilter } from "@/lib/contentFilter";
+import { Image } from "@/components/ui/Image";
 
 export default function SearchOverlay() {
   const { t, i18n } = useTranslation();
@@ -188,7 +189,7 @@ export default function SearchOverlay() {
                         >
                           <div className="w-12 h-16 rounded overflow-hidden bg-muted flex-shrink-0">
                             {getImageUrl(thumbPath, "w92") ? (
-                              <img
+                              <Image
                                 src={getImageUrl(thumbPath, "w92")!}
                                 srcSet={`${getImageUrl(thumbPath, "w92")!} 92w, ${getImageUrl(thumbPath, "w185")!} 185w`}
                                 sizes="48px"
@@ -200,6 +201,7 @@ export default function SearchOverlay() {
                                     : `${item.title || item.name} poster`
                                 }
                                 className="w-full h-full object-cover bg-muted"
+                                loading="lazy"
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-muted-foreground">

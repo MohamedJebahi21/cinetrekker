@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Image } from '@/components/ui/Image';
 
 interface NewEpisode extends TVEpisode {
   showId: number;
@@ -123,10 +124,16 @@ export function NewEpisodesSection() {
               <div className="flex gap-3">
                 <Link to={`/tv/${episode.showId}`} className="flex-shrink-0">
                   {episode.still_path || episode.showPosterPath ? (
-                    <img
+                    <Image
                       src={getImageUrl(episode.still_path || episode.showPosterPath, 'w185') || ''}
-                      alt={episode.name}
+                      srcSet={`${getImageUrl(episode.still_path || episode.showPosterPath, 'w185') || ''} 185w, ${getImageUrl(episode.still_path || episode.showPosterPath, 'w342') || ''} 342w`}
+                      sizes="96px"
+                      alt={`${episode.showName} episode still`}
+                      width={185}
+                      height={104}
                       className="w-24 h-16 object-cover rounded-md"
+                      loading="lazy"
+                      showSkeleton
                     />
                   ) : (
                     <div className="w-24 h-16 bg-muted rounded-md" />

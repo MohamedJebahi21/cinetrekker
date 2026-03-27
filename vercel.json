@@ -27,7 +27,11 @@
         },
         {
           "key": "X-Frame-Options",
-          "value": "DENY"
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
         },
         {
           "key": "Strict-Transport-Security",
@@ -35,11 +39,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'sha256-peSCvGN0s8L2qdKrHh1NWTnsE52QiHjZ8EXtEAP4XSw=' 'sha256-2ag62YCk4UGyT8EQwExyvluDdMwE/5htuBWYOTEBVeY=' https://vercel.live https://va.vercel-scripts.com; script-src-elem 'self' 'sha256-peSCvGN0s8L2qdKrHh1NWTnsE52QiHjZ8EXtEAP4XSw=' 'sha256-2ag62YCk4UGyT8EQwExyvluDdMwE/5htuBWYOTEBVeY=' https://vercel.live https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com https://r2cdn.perplexity.ai; img-src 'self' data: blob: https: https://image.tmdb.org https://www.themoviedb.org; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.themoviedb.org https://vercel.live https://va.vercel-scripts.com wss://*.vercel.com; media-src 'self' blob: https:; frame-src 'self' https://www.youtube.com https://player.vimeo.com https://vercel.live; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests; block-all-mixed-content"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
+          "value": "default-src 'self'; script-src 'self' https://vercel.live https://va.vercel-scripts.com; script-src-elem 'self' https://vercel.live https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://image.tmdb.org https://www.themoviedb.org https://*.supabase.co https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.themoviedb.org https://vercel.live https://va.vercel-scripts.com wss://*.vercel.com; media-src 'self' blob: https:; frame-src 'self' https://www.youtube.com https://player.vimeo.com https://vercel.live; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; require-trusted-types-for 'script'; trusted-types cinetrekker default dompurify; upgrade-insecure-requests; block-all-mixed-content"
         },
         {
           "key": "Referrer-Policy",
@@ -56,6 +56,10 @@
         {
           "key": "Cross-Origin-Resource-Policy",
           "value": "same-origin"
+        },
+        {
+          "key": "Server",
+          "value": ""
         }
       ]
     },
@@ -69,6 +73,10 @@
         {
           "key": "X-Frame-Options",
           "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
         },
         {
           "key": "Cache-Control",

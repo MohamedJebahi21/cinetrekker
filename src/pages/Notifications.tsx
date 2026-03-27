@@ -1,5 +1,5 @@
 import { Bell, Trash2, CheckCheck } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { useNotifications } from "@/hooks/useNotifications";
 import SEO from "@/components/SEO";
@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/EmptyStates";
 import { cn } from "@/lib/utils";
 
 export default function Notifications() {
+  const navigate = useNavigate();
   const {
     notifications,
     unreadCount,
@@ -57,7 +58,7 @@ export default function Notifications() {
             action={{
               label: "Browse titles",
               onClick: () => {
-                window.location.href = "/";
+                navigate("/");
               },
             }}
           />

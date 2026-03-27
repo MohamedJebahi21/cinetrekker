@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
 
 interface ImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   srcSet?: string;
@@ -45,12 +46,18 @@ export const Image: React.FC<ImageProps> = ({
   const avifSrc = modernFormats ? getModernFormatSource(resolvedSrc, 'avif') : null;
   const webpSrc = modernFormats ? getModernFormatSource(resolvedSrc, 'webp') : null;
 
+  React.useEffect(() => {
+    setIsLoaded(false);
+  }, [resolvedSrc]);
+
   return (
-    <>
+    <picture className={cn(showSkeleton && "relative block overflow-hidden")}>
       {showSkeleton && !isLoaded && (
-        <div aria-hidden="true" className="skeleton-shimmer h-full w-full" />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-[1] skeleton-shimmer"
+        />
       )}
-      <picture>
         {avifSrc ? <source srcSet={avifSrc} type="image/avif" /> : null}
         {webpSrc ? <source srcSet={webpSrc} type="image/webp" /> : null}
         <img
@@ -66,11 +73,13 @@ export const Image: React.FC<ImageProps> = ({
             setIsLoaded(true);
             onLoad?.(event);
           }}
+          onError={() => {
+            setIsLoaded(true);
+          }}
           className={className}
           {...fetchPriorityAttr}
           {...props}
         />
-      </picture>
-    </>
+    </picture>
   );
 };

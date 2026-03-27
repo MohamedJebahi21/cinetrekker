@@ -12,11 +12,17 @@ import {
   Clock3,
   Trash2,
 } from "lucide-react";
-import { searchMovies, searchPeople, getImageUrl } from "@/services/tmdb";
+import {
+  searchMovies,
+  searchPeople,
+  searchTV,
+  getImageUrl,
+} from "@/services/tmdb";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Image } from "@/components/ui/Image";
 import { useContentPolicy } from "@/contexts/content-policy-context";
 import { applySafetyFilter, type SafetyMedia } from "@/lib/contentFilter";
 import {
@@ -122,15 +128,18 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
       const q = debouncedQuery.trim();
       if (!q) return [] as SearchResult[];
 
-      // Efficient: fetch movies and people in parallel so suggestions include actors/directors immediately.
-      const [movieResponse, peopleResponse] = await Promise.all([
+      const [movieResponse, tvResponse, peopleResponse] = await Promise.all([
         searchMovies(q, 1, language, includeAdult),
+        searchTV(q, 1, language, includeAdult),
         searchPeople(q, 1, language),
       ]);
 
       const movies = ((movieResponse?.results || []) as SearchResult[])
-        .slice(0, 6)
+        .slice(0, 4)
         .map((item) => ({ ...item, media_type: "movie" as const }));
+      const shows = ((tvResponse?.results || []) as SearchResult[])
+        .slice(0, 4)
+        .map((item) => ({ ...item, media_type: "tv" as const }));
 
       const peopleRaw = (peopleResponse?.results || []) as SearchResult[];
       const peopleWithRole = peopleRaw
@@ -164,7 +173,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
         .filter((p) => p.person_role === "director")
         .slice(0, 3);
 
-      const merged = [...movies, ...actors, ...directors];
+      const merged = [...movies, ...shows, ...actors, ...directors];
       const deduped = merged.filter(
         (item, index, arr) =>
           arr.findIndex(
@@ -445,7 +454,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                         {/* Thumbnail */}
                         <div className="w-10 h-14 rounded overflow-hidden bg-muted flex-shrink-0">
                           {getItemImage(item) ? (
-                            <img
+                            <Image
                               src={
                                 getImageUrl(
                                   item.poster_path ?? item.profile_path ?? null,
@@ -456,9 +465,14 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                               sizes="40px"
                               width={92}
                               height={138}
-                              alt=""
+                              alt={
+                                item.media_type === "person"
+                                  ? `${getItemTitle(item)} profile`
+                                  : `${getItemTitle(item)} poster`
+                              }
                               className="w-full h-full object-cover bg-muted"
                               loading="lazy"
+                              showSkeleton
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">

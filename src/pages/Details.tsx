@@ -64,6 +64,13 @@ import { Image } from "@/components/ui/Image";
 import { FollowUpdatesButton } from "@/components/FollowUpdatesButton";
 import { usePinnedFavorites } from "@/hooks/usePinnedFavorites";
 import { logger } from "@/lib/logger";
+import {
+  buildCanonicalUrl,
+  buildMediaPath,
+  buildPersonPath,
+  getMediaAltText,
+  toBreadcrumbJsonLd,
+} from "@/lib/seo";
 
 function getPolicyRatingTag(
   mediaType: "movie" | "tv",
@@ -419,6 +426,11 @@ export default function Details() {
   };
 
   const handleMarkAsWatched = async () => {
+    if (!user) {
+      window.dispatchEvent(new CustomEvent("cinetrekker:auth-required"));
+      return;
+    }
+
     if (optimisticWatched) {
       setOptimisticWatched(false);
       setIsWatchedPending(true);
@@ -620,9 +632,17 @@ export default function Details() {
     watchProviders?.results?.[providerRegion] ||
     watchProviders?.results?.US ||
     null;
-  const flatrateProviders = providerData?.flatrate || [];
-  const rentProviders = providerData?.rent || [];
-  const buyProviders = providerData?.buy || [];
+  const dedupeProviders = (providers: Provider[] = []) => {
+    const seen = new Set<number>();
+    return providers.filter((provider) => {
+      if (seen.has(provider.provider_id)) return false;
+      seen.add(provider.provider_id);
+      return true;
+    });
+  };
+  const flatrateProviders = dedupeProviders(providerData?.flatrate || []);
+  const rentProviders = dedupeProviders(providerData?.rent || []);
+  const buyProviders = dedupeProviders(providerData?.buy || []);
 
   const seasons = details.number_of_seasons
     ? Array.from({ length: details.number_of_seasons }, (_, i) => i + 1)
@@ -637,7 +657,8 @@ export default function Details() {
     .join(" ")
     .slice(0, 160);
   const seoImage = getImageUrl(details.poster_path, "w500");
-  const seoCanonical = `https://cinetrekker.vercel.app/${mediaType}/${mediaId}`;
+  const detailPath = buildMediaPath(mediaType, mediaId, title);
+  const seoCanonical = buildCanonicalUrl(detailPath);
   const seoKeywords = [
     title,
     ...(details.genres?.map((g) => g.name) || []),
@@ -645,6 +666,7 @@ export default function Details() {
     year?.toString(),
     "streaming",
     "watch online",
+    "movie tracker",
   ]
     .filter(Boolean)
     .join(", ");
@@ -669,17 +691,23 @@ export default function Details() {
                     aria-label={p.provider_name}
                     title={`Watch on ${p.provider_name}`}
                   >
-                    <img
+                    <Image
                       src={getImageUrl(p.logo_path, "w92") || ""}
                       alt={p.provider_name}
+                      width={92}
+                      height={92}
                       className="h-8 w-auto object-contain provider-icon"
+                      loading="lazy"
                     />
                   </a>
                 ) : (
-                  <img
+                  <Image
                     src={getImageUrl(p.logo_path, "w92") || ""}
                     alt={p.provider_name}
+                    width={92}
+                    height={92}
                     className="h-8 w-auto object-contain provider-icon"
+                    loading="lazy"
                   />
                 )
               ) : href ? (
@@ -737,18 +765,24 @@ export default function Details() {
         type={mediaType === "movie" ? "video.movie" : "video.tv_show"}
         releaseDate={releaseDate || undefined}
         rating={rating || undefined}
+        jsonLd={[
+          toBreadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: mediaType === "movie" ? "Movies" : "TV Shows", path: "/search" },
+            { name: title, path: detailPath },
+          ]),
+        ]}
       />
-      {mediaType === "movie" && (
-        <MovieSchema
-          title={title}
-          description={overview}
-          image={posterUrl}
-          releaseDate={releaseDate || undefined}
-          rating={rating || undefined}
-          ratingCount={details.vote_count}
-          url={seoCanonical}
-        />
-      )}
+      <MovieSchema
+        schemaType={mediaType === "movie" ? "Movie" : "TVSeries"}
+        title={title}
+        description={overview}
+        image={posterUrl}
+        releaseDate={releaseDate || undefined}
+        rating={rating || undefined}
+        ratingCount={details.vote_count}
+        url={seoCanonical}
+      />
 
       <div className="relative h-[50vh] md:h-[70vh] overflow-hidden -mt-16">
         {backdropUrl && (
@@ -756,7 +790,7 @@ export default function Details() {
             src={backdropUrl}
             srcSet={backdropSrcSet || undefined}
             sizes="100vw"
-            alt={title}
+            alt={getMediaAltText(title, mediaType, "backdrop")}
             width={1280}
             height={720}
             fetchPriority="high"
@@ -785,7 +819,7 @@ export default function Details() {
                 src={posterUrl}
                 srcSet={posterSrcSet || undefined}
                 sizes="(max-width: 768px) 192px, 256px"
-                alt={title}
+                alt={getMediaAltText(title, mediaType, "poster")}
                 width={500}
                 height={750}
                 loading="lazy"
@@ -1171,7 +1205,7 @@ export default function Details() {
               {details.credits?.cast.slice(0, 10).map((person) => (
                 <Link
                   key={person.id}
-                  to={`/person/${person.id}`}
+                  to={buildPersonPath(person.id, person.name)}
                   className="flex-shrink-0 w-24 text-center group"
                 >
                   {person.profile_path ? (

@@ -122,8 +122,15 @@ export default function Recommendations() {
           <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
             <Sparkles className="w-10 h-10 text-primary" />
           </div>
-          <h2 className="text-2xl font-bold mb-3">{t('recommendations.empty')}</h2>
-          <p className="text-muted-foreground mb-6">{t('recommendations.emptyDesc')}</p>
+          <h2 className="text-2xl font-bold mb-3">
+            {t('recommendations.empty', "Recommendations aren't ready yet")}
+          </h2>
+          <p className="text-muted-foreground mb-6">
+            {t(
+              'recommendations.emptyDesc',
+              "Watch a few movies and we'll start learning your taste.",
+            )}
+          </p>
           <Link to="/search">
             <Button className="gap-2">
               <TrendingUp className="w-4 h-4" />
@@ -136,8 +143,15 @@ export default function Recommendations() {
           <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/20 flex items-center justify-center">
             <Sparkles className="w-10 h-10 text-muted-foreground" />
           </div>
-          <h2 className="text-xl font-semibold mb-3">{t('common.noResults')}</h2>
-          <p className="text-muted-foreground mb-6">{t('recommendations.watchMore')}</p>
+          <h2 className="text-xl font-semibold mb-3">
+            {t('common.noResults', 'No results available')}
+          </h2>
+          <p className="text-muted-foreground mb-6">
+            {t(
+              'recommendations.watchMore',
+              "Watch a few movies and we'll start learning your taste.",
+            )}
+          </p>
           <Link to="/">
             <Button variant="outline" className="gap-2">
               <TrendingUp className="w-4 h-4" />

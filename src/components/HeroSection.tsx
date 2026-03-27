@@ -6,6 +6,7 @@ import Bookmark from "lucide-react/dist/esm/icons/bookmark";
 import BookmarkCheck from "lucide-react/dist/esm/icons/bookmark-check";
 import Sparkles from "lucide-react/dist/esm/icons/sparkles";
 import Star from "lucide-react/dist/esm/icons/star";
+import Check from "lucide-react/dist/esm/icons/check";
 import { Link } from "react-router-dom";
 import {
   getTrending,
@@ -23,6 +24,7 @@ import { Image } from "@/components/ui/Image";
 import { useContentPolicy } from "@/contexts/content-policy-context";
 import { applySafetyFilter } from "@/lib/contentFilter";
 import type { Media } from "@/types/media";
+import { buildMediaPath, getMediaAltText } from "@/lib/seo";
 
 export function HeroSection() {
   const { t, i18n } = useTranslation();
@@ -120,7 +122,7 @@ export function HeroSection() {
           src={heroBackdropSrc}
           srcSet={heroBackdropSrcSet ?? undefined}
           sizes="100vw"
-          alt={getMediaTitle(heroMedia)}
+          alt={getMediaAltText(heroTitle, mediaType, "backdrop")}
           width={1280}
           height={720}
           fetchPriority="high"
@@ -176,13 +178,11 @@ export function HeroSection() {
       <div className="relative container mx-auto px-4 py-24 md:py-40 pt-20 md:pt-32 z-10">
         <div className="max-w-2xl">
           {/* Main Page Heading */}
-          <h1 className="mb-2 text-2xl font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.65)] md:text-3xl">
-            {user
-              ? t("home.welcome", "Hey there!")
-              : t("home.welcomeBack", "Welcome to CineTrekker!")}
+          <h1 className="mb-3 max-w-xl text-4xl font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.65)] md:text-6xl">
+            Never forget a movie again.
           </h1>
-          <p className="mb-4 text-base text-white/90 drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)] md:mb-6 md:text-lg">
-            {t("home.subtitle", "Ready to dive in?")}
+          <p className="mb-5 max-w-xl text-base text-white/90 drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)] md:mb-7 md:text-xl">
+            Track what you've watched, build your watchlist, discover what's next.
           </p>
 
           {/* Featured / Trending Badge */}
@@ -229,41 +229,40 @@ export function HeroSection() {
 
           {/* CTA Buttons - Side by side on mobile for vertical space savings */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 md:gap-3">
-            {/* Watch Trailer Button */}
-            {trailer && (
-              <Button
-                size="default"
-                onClick={() => setShowTrailer(true)}
-                className="btn-primary-glow gap-2 h-11 md:h-12 px-4 md:px-6 text-sm md:text-base w-full sm:w-auto bg-primary text-white"
-                aria-label={t("actions.watchTrailer", "Watch Trailer")}
-              >
-                <Play className="w-4 h-4 md:w-5 md:h-5 fill-current" />
-                <span className="hidden xs:inline">
-                  {t("actions.watchTrailer", "Watch Trailer")}
-                </span>
-                <span className="xs:hidden">Trailer</span>
-              </Button>
-            )}
-
-            {/* View Details Button */}
             <Button
               asChild
               size="default"
-              variant={trailer ? "outline" : "default"}
-              className={cn(
-                "gap-2 h-11 md:h-12 px-4 md:px-6 text-sm md:text-base w-full sm:w-auto",
-                trailer
-                  ? "border-[rgba(255,255,255,0.2)] hover:bg-white/10"
-                  : "btn-primary-glow",
-              )}
-              aria-label={`More about ${heroTitle}`}
+              className="btn-primary-glow h-11 w-full px-4 text-sm md:h-12 md:px-6 md:text-base sm:w-auto"
+              aria-label={user ? "Open your watchlist" : "Start your watchlist"}
             >
-              <Link to={`/${mediaType}/${heroMedia.id}`}>
-                {`More about ${heroTitle}`}
+              <Link to={user ? "/watchlist" : "/signup"}>
+                {user ? "Open Your Watchlist" : "Start Your Watchlist"}
               </Link>
             </Button>
 
-            {/* Add to Watchlist Button - Icon only on mobile */}
+            <Button
+              asChild
+              size="default"
+              variant="outline"
+              className="h-11 w-full border-white/20 bg-black/35 px-4 text-sm text-white hover:bg-white/10 md:h-12 md:px-6 md:text-base sm:w-auto"
+              aria-label="Browse movies"
+            >
+              <Link to="/search?type=movie">Browse Movies</Link>
+            </Button>
+
+            {trailer && (
+              <Button
+                size="default"
+                variant="outline"
+                onClick={() => setShowTrailer(true)}
+                className="gap-2 h-11 w-full border-white/20 bg-black/35 px-4 text-sm text-white hover:bg-white/10 md:h-12 md:px-6 md:text-base sm:w-auto"
+                aria-label={t("actions.watchTrailer", "Watch Trailer")}
+              >
+                <Play className="w-4 h-4 md:w-5 md:h-5 fill-current" />
+                {t("actions.watchTrailer", "Watch Trailer")}
+              </Button>
+            )}
+
             {user && (
               <Button
                 size="default"
@@ -297,9 +296,37 @@ export function HeroSection() {
                     </span>
                     <span className="sm:hidden">Watchlist</span>
                   </>
-                )}
+                  )}
               </Button>
             )}
+          </div>
+
+          <div className="mt-4">
+            <Link
+              to={buildMediaPath(mediaType, heroMedia.id, heroTitle)}
+              className="text-sm text-white/80 underline-offset-4 transition-colors hover:text-white hover:underline"
+            >
+              More about {heroTitle}
+            </Link>
+          </div>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            {[
+              { label: "Track Watched", icon: Check },
+              { label: "Build Watchlist", icon: Bookmark },
+              { label: "Discover New Favorites", icon: Sparkles },
+            ].map((feature) => {
+              const Icon = feature.icon;
+              return (
+                <div
+                  key={feature.label}
+                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white/90 backdrop-blur-sm"
+                >
+                  <Icon className="h-4 w-4 text-white" />
+                  <span>{feature.label}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

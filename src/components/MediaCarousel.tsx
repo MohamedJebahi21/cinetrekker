@@ -42,6 +42,8 @@ export function MediaCarousel({
   const [isHovered, setIsHovered] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScroll, setCanScroll] = useState({ left: false, right: true });
+  const [activePage, setActivePage] = useState(0);
+  const [pageCount, setPageCount] = useState(1);
   const filteredItems = applySafetyFilter(
     items,
     strictFiltering,
@@ -53,6 +55,18 @@ export function MediaCarousel({
     const container = scrollContainerRef.current;
     if (!container) return;
     const hasScroll = container.scrollWidth > container.clientWidth;
+    const totalPages = hasScroll
+      ? Math.max(1, Math.ceil(container.scrollWidth / container.clientWidth))
+      : 1;
+    const nextPage = hasScroll
+      ? Math.min(
+          totalPages - 1,
+          Math.round(container.scrollLeft / container.clientWidth),
+        )
+      : 0;
+
+    setPageCount(totalPages);
+    setActivePage(nextPage);
     setCanScroll({
       left: hasScroll && container.scrollLeft > 10,
       right:
@@ -126,19 +140,19 @@ export function MediaCarousel({
                 type="button"
                 onClick={() => handleManualScroll("left")}
                 disabled={!canScroll.left}
-                className="absolute -left-4 md:-left-6 top-1/3 z-10 hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="absolute -left-5 md:-left-7 top-1/3 z-10 hidden md:flex items-center justify-center h-12 w-12 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 aria-label={t("common.previous") || "Previous"}
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft className="h-6 w-6" />
               </button>
               <button
                 type="button"
                 onClick={() => handleManualScroll("right")}
                 disabled={!canScroll.right}
-                className="absolute -right-4 md:-right-6 top-1/3 z-10 hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="absolute -right-5 md:-right-7 top-1/3 z-10 hidden md:flex items-center justify-center h-12 w-12 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 aria-label={t("common.next") || "Next"}
               >
-                <ChevronRight className="w-5 h-5" />
+                <ChevronRight className="h-6 w-6" />
               </button>
             </>
           )}
@@ -170,6 +184,30 @@ export function MediaCarousel({
           <div
             className={`pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-background to-transparent md:hidden ${canScroll.right ? "opacity-100" : "opacity-0"}`}
           />
+          {pageCount > 1 && (
+            <div className="mt-4 flex items-center justify-center gap-2">
+              {Array.from({ length: pageCount }).map((_, index) => (
+                <button
+                  key={`${title}-page-${index}`}
+                  type="button"
+                  onClick={() => {
+                    const container = scrollContainerRef.current;
+                    if (!container) return;
+                    container.scrollTo({
+                      left: container.clientWidth * index,
+                      behavior: "smooth",
+                    });
+                  }}
+                  className={`h-2.5 rounded-full transition-all ${
+                    index === activePage
+                      ? "w-6 bg-primary"
+                      : "w-2.5 bg-muted-foreground/40 hover:bg-muted-foreground/70"
+                  }`}
+                  aria-label={`Go to carousel page ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       ) : (
         <div className="text-center py-12 text-muted-foreground">

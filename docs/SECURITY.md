@@ -266,6 +266,14 @@ Stored in Vercel Environment Variables (never exposed to browser):
 
 ## Changelog
 
+- **2026-03-24:** Abuse prevention and incident readiness update
+  - Split pre-auth IP rate limiting from post-auth per-user rate limiting
+  - Added structured security event logging and optional alert webhook delivery
+  - Added captcha + honeypot protection for feedback submissions
+  - Removed bearer-token cron fallback from scheduled episode checking
+  - Added API security tests for auth mismatch, invalid token flooding, cron bypass, and feedback spam
+  - Added deployment CI checks for production dependency audit, secret scan, and CSP/header verification
+  - Added incident response and recurring security review documentation
 - **2026-02-19:** Infrastructure hardening iteration 2
   - Created `/vercel.json` with comprehensive security headers
   - Enhanced CSP policy in vite.config.ts with block-all-mixed-content

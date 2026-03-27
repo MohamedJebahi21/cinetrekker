@@ -9,6 +9,7 @@ const logger = createServerLogger("sitemap");
 const STATIC_ROUTES = [
   "/",
   "/search",
+  "/trending",
   "/about",
   "/privacy",
   "/terms",

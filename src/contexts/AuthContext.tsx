@@ -13,6 +13,7 @@ export interface AuthContextType {
   signInWithProvider: (
     provider: "google" | "facebook" | "apple",
   ) => Promise<{ error: Error | null }>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -170,6 +171,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    if (!isSupabaseConfigured()) {
+      return { error: new Error(MISSING_ENV_AUTH_ERROR) };
+    }
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+      return { error: (error as Error | null) ?? null };
+    } catch (error) {
+      return { error: toAuthError(error) };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -179,6 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signUp,
         signIn,
         signInWithProvider,
+        resetPassword,
         signOut,
       }}
     >

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Image } from '@/components/ui/Image';
 import { getReleaseTimeInfo, hasBeenReleased } from '@/lib/timeUtils';
 import { differenceInHours, isSameDay } from 'date-fns';
 import { useState } from 'react';
@@ -318,15 +319,16 @@ export function WatchedShowsNewEpisodes() {
               className="group relative block overflow-hidden rounded-lg transition-all duration-300"
             >
               {episode.showPosterPath ? (
-                <img
+                <Image
                   src={getImageUrl(episode.showPosterPath, 'w185') || ''}
                   srcSet={`${getImageUrl(episode.showPosterPath, 'w185') || ''} 185w, ${getImageUrl(episode.showPosterPath, 'w342') || ''} 342w`}
                   sizes="(max-width: 480px) calc(50vw - 24px), (max-width: 768px) calc(33vw - 20px), (max-width: 1024px) calc(25vw - 20px), 200px"
-                  alt={episode.showName}
+                  alt={`${episode.showName} poster`}
                   width={185}
                   height={278}
                   className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                   loading="lazy"
+                  showSkeleton
                 />
               ) : (
                 <div className="w-full bg-muted aspect-[2/3] flex items-center justify-center">
