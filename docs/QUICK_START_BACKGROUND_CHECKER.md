@@ -11,7 +11,7 @@ Since Supabase CLI installation varies by platform, here's the easiest way to ge
 ### Step 1: Create the Cache Table
 
 1. Go to [Supabase Dashboard](https://supabase.com/dashboard)
-2. Select your project: **wzlcekvieglnidfempap**
+2. Select your project: **YOUR_PROJECT_ID**
 3. Go to **SQL Editor** (left sidebar)
 4. Click **New Query**
 5. Copy and paste this SQL:
@@ -129,7 +129,7 @@ cd "F:\My Own Games\CineTrekker\cinetrekker"
 supabase login
 
 # Link to your project
-supabase link --project-ref wzlcekvieglnidfempap
+supabase link --project-ref YOUR_PROJECT_ID
 
 # Apply migration
 supabase db push

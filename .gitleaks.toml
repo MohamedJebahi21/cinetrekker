@@ -1,0 +1,12 @@
+title = "CineTrekker Gitleaks Configuration"
+
+[extend]
+# Extend the default gitleaks ruleset
+useDefault = true
+
+[allowlist]
+description = "Ignore placeholder values in example and documentation files"
+paths = [
+  '''^\.env\.example$''',
+  '''^docs/.*$''',
+]
