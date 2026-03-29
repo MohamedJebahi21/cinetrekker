@@ -110,7 +110,12 @@ function EnhancedStats() {
 
   const totalHours = useMemo(() => {
     return filteredMedia.reduce((sum, item) => {
-      const mins = item.runtime || (item.episode_run_time?.[0] ?? 0);
+      let mins = 0;
+      if (item.media_type === "movie") {
+        mins = item.runtime || 0;
+      } else if (item.media_type === "tv") {
+        mins = (item.episode_run_time?.[0] ?? 45) * (item.number_of_episodes ?? 1);
+      }
       return sum + mins / 60;
     }, 0);
   }, [filteredMedia]);
@@ -124,7 +129,12 @@ function EnhancedStats() {
   const genreMap = useMemo(() => {
     const map = new Map<number, { name: string; count: number; hours: number }>();
     filteredMedia.forEach((item) => {
-      const mins = item.runtime || (item.episode_run_time?.[0] ?? 0);
+      let mins = 0;
+      if (item.media_type === "movie") {
+        mins = item.runtime || 0;
+      } else if (item.media_type === "tv") {
+        mins = (item.episode_run_time?.[0] ?? 45) * (item.number_of_episodes ?? 1);
+      }
       (item.genres ?? []).forEach((g: Genre) => {
         const existing = map.get(g.id);
         if (existing) {
