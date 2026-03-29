@@ -139,11 +139,7 @@ function EnhancedStats() {
     }, 0);
   }, [filteredMedia]);
 
-  const avgRating = useMemo(() => {
-    const rated = filteredMedia.filter((i) => i.userRating);
-    if (!rated.length) return 0;
-    return rated.reduce((sum, i) => sum + (i.userRating ?? 0), 0) / rated.length;
-  }, [filteredMedia]);
+  // Average rating calculation removed
 
   const genreMap = useMemo(() => {
     const map = new Map<number, { name: string; count: number; hours: number }>();
@@ -222,15 +218,7 @@ function EnhancedStats() {
             size="md"
             delay={0.15}
           />
-          <GlassStatCard
-            icon={Star}
-            label={t("stats.averageRating", "Average Rating")}
-            value={avgRating.toFixed(1)}
-            description={t("stats.outOfTen", "out of 10")}
-            variant="warning"
-            size="md"
-            delay={0.2}
-          />
+          {/* Average Rating card removed */}
         </div>
 
         {/* Filter Row */}
@@ -316,15 +304,7 @@ function EnhancedStats() {
             size="md"
             delay={0.1}
           />
-          <GlassStatCard
-            icon={Star}
-            label={t("stats.averageRating", "Average Rating")}
-            value={avgRating.toFixed(1)}
-            description={t("stats.outOfTen", "out of 10")}
-            variant="warning"
-            size="md"
-            delay={0.2}
-          />
+          {/* Average Rating card removed */}
         </div>
 
         {/* Genre Breakdown */}
