@@ -8,6 +8,17 @@
     }, 0);
   }, [filteredMedia]);
 import React, { useMemo, useState } from "react";
+// COLORS constant for recharts
+const COLORS = [
+  "#6366f1", // indigo
+  "#8b5cf6", // violet
+  "#f59e42", // orange
+  "#10b981", // emerald
+  "#f43f5e", // rose
+  "#fbbf24", // yellow
+  "#3b82f6", // blue
+  "#a21caf", // purple
+];
 // import { supabase } from "@/integrations/supabase/client";
 // import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -374,8 +385,6 @@ function EnhancedStats() {
             </Card>
           </div>
         )}
-      </div>
-    </>
   );
 }
 
