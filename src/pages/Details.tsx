@@ -687,7 +687,6 @@ export default function Details() {
                   <a
                     href={href}
                     target="_blank" rel="noopener noreferrer"
-                    rel="noopener noreferrer"
                     aria-label={p.provider_name}
                     title={`Watch on ${p.provider_name}`}
                   >
@@ -714,7 +713,6 @@ export default function Details() {
                 <a
                   href={href}
                   target="_blank" rel="noopener noreferrer"
-                  rel="noopener noreferrer"
                   className="text-sm provider-icon"
                   title={`Watch on ${p.provider_name}`}
                 >

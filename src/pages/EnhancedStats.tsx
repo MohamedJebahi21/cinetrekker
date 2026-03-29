@@ -221,12 +221,12 @@ function EnhancedStats() {
             delay={0.2}
           />
         </div>
-                {years.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {years.map((year) => (
+            <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
 
           {/* Type Filter */}
           <div className="min-w-[120px]">
