@@ -1,3 +1,12 @@
+  // Number of episodes watched (TV: number_of_episodes, Movie: 1)
+  const totalEpisodes = useMemo(() => {
+    return filteredMedia.reduce((sum, item) => {
+      if (item.media_type === "tv") {
+        return sum + (item.number_of_episodes ?? 1);
+      }
+      return sum + 1; // count each movie as 1 episode
+    }, 0);
+  }, [filteredMedia]);
 import React, { useMemo, useState } from "react";
 // import { supabase } from "@/integrations/supabase/client";
 // import { useAuth } from "@/contexts/AuthContext";
@@ -162,56 +171,56 @@ function EnhancedStats() {
     );
   }
 
-  if (mediaError) {
-    return (
-      <div className="flex items-center justify-center min-h-[40vh]">
-        <div className="bg-red-700 text-white px-6 py-4 rounded-lg shadow">
-          <div className="font-bold mb-2">Failed to load stats</div>
-          <div className="text-sm break-all">{String(mediaError)}</div>
+        {/* Overview Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mb-8">
+          <GlassStatCard
+            icon={Film}
+            label={t("stats.totalMovies", "Total Movies")}
+            value={totalMovies}
+            description={t("stats.moviesWatched", "Movies watched")}
+            variant="primary"
+            size="md"
+            delay={0}
+          />
+          <GlassStatCard
+            icon={Film}
+            label={t("stats.totalTVShows", "Total TV Shows")}
+            value={totalTV}
+            description={t("stats.tvShowsWatched", "TV shows watched")}
+            variant="primary"
+            size="md"
+            delay={0.05}
+          />
+          <GlassStatCard
+            icon={Film}
+            label={t("stats.episodesWatched", "Episodes Watched")}
+            value={totalEpisodes}
+            description={t("stats.episodesTotal", "Total episodes watched")}
+            variant="primary"
+            size="md"
+            delay={0.1}
+          />
+          <GlassStatCard
+            icon={Clock}
+            label={t("stats.hoursWatched", "Hours Watched")}
+            value={`${Math.round(totalHours)}h`}
+            description={t("stats.daysTotal", "{{count}} days total", {
+              count: Math.round(totalHours / 24),
+            })}
+            variant="success"
+            size="md"
+            delay={0.15}
+          />
+          <GlassStatCard
+            icon={Star}
+            label={t("stats.averageRating", "Average Rating")}
+            value={avgRating.toFixed(1)}
+            description={t("stats.outOfTen", "out of 10")}
+            variant="warning"
+            size="md"
+            delay={0.2}
+          />
         </div>
-      </div>
-    );
-  }
-
-  // ── Pie chart colors ──
-  const COLORS = [
-    "#8b5cf6",
-    "#ec4899",
-    "#3b82f6",
-    "#10b981",
-    "#f59e0b",
-    "#ef4444",
-    "#6366f1",
-    "#14b8a6",
-  ];
-
-  return (
-    <>
-      <SEO
-        title={t("stats.enhancedSeoTitle", "Enhanced Stats - CineTrekker")}
-        description={t(
-          "stats.enhancedSeoDescription",
-          "View detailed statistics about your watching habits",
-        )}
-        canonical="https://cinetrekker.vercel.app/enhanced-stats"
-      />
-      <div className="page-container pt-20 pb-24 md:pb-0">
-        <h1 className="section-title">{t("stats.yourStats", "Your Stats")}</h1>
-
-        {/* Filters */}
-        <div className="flex flex-wrap gap-4 mb-8 items-end">
-          {/* Year Filter */}
-          <div className="min-w-[120px]">
-            <label className="block text-xs font-semibold mb-1 text-neutral-400">Year</label>
-            <Select
-              value={selectedYear.toString()}
-              onValueChange={(v) => setSelectedYear(v === "all" ? "all" : Number(v))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="All years" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
                 {years.map((year) => (
                   <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
                 ))}
@@ -252,7 +261,16 @@ function EnhancedStats() {
         </div>
 
         {/* Overview Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+                    <GlassStatCard
+                      icon={Film}
+                      label={t("stats.episodesWatched", "Episodes Watched")}
+                      value={totalEpisodes}
+                      description={t("stats.episodesTotal", "Total episodes watched")}
+                      variant="info"
+                      size="md"
+                      delay={0.15}
+                    />
           <GlassStatCard
             icon={Film}
             label={t("stats.totalWatched", "Total Watched")}
@@ -318,7 +336,6 @@ function EnhancedStats() {
                 </ResponsiveContainer>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle>
