@@ -1,12 +1,3 @@
-  // Number of episodes watched (TV: number_of_episodes, Movie: 1)
-  const totalEpisodes = useMemo(() => {
-    return filteredMedia.reduce((sum, item) => {
-      if (item.media_type === "tv") {
-        return sum + (item.number_of_episodes ?? 1);
-      }
-      return sum + 1; // count each movie as 1 episode
-    }, 0);
-  }, [filteredMedia]);
 import React, { useMemo, useState } from "react";
 // COLORS constant for recharts
 const COLORS = [
@@ -49,8 +40,7 @@ import {
 } from "@/components/ui/select";
 
 function EnhancedStats() {
-  // ── All hooks must come first, before any early returns ──
-
+  // ── All hooks must come first
   const { watched } = useUserLists();
   const { i18n, t } = useTranslation();
   const language = i18n.language;
@@ -130,23 +120,32 @@ function EnhancedStats() {
     [filteredMedia]
   );
 
+  const totalEpisodes = useMemo(() => {
+    return filteredMedia.reduce((sum, item) => {
+      if (item.media_type === "tv") {
+        return sum + (item.number_of_episodes ?? 1);
+      }
+      return sum + 1; // count each movie as 1 episode
+    }, 0);
+  }, [filteredMedia]);
+
   const totalHours = useMemo(() => {
     return filteredMedia.reduce((sum, item) => {
-      const mins = item.media_type === "movie"
-        ? (item.runtime ?? 0)
-        : (item.episode_run_time?.[0] ?? item.runtime ?? 45) * (item.number_of_episodes ?? 1);
+      const mins =
+        item.media_type === "movie"
+          ? item.runtime ?? 0
+          : (item.episode_run_time?.[0] ?? item.runtime ?? 45) * (item.number_of_episodes ?? 1);
       return sum + mins / 60;
     }, 0);
   }, [filteredMedia]);
 
-  // Average rating calculation removed
-
   const genreMap = useMemo(() => {
     const map = new Map<number, { name: string; count: number; hours: number }>();
     filteredMedia.forEach((item) => {
-      const mins = item.media_type === "movie"
-        ? (item.runtime ?? 0)
-        : (item.episode_run_time?.[0] ?? item.runtime ?? 45) * (item.number_of_episodes ?? 1);
+      const mins =
+        item.media_type === "movie"
+          ? item.runtime ?? 0
+          : (item.episode_run_time?.[0] ?? item.runtime ?? 45) * (item.number_of_episodes ?? 1);
       (item.genres ?? []).forEach((g: Genre) => {
         const existing = map.get(g.id);
         if (existing) {
@@ -169,7 +168,6 @@ function EnhancedStats() {
   );
 
   // ── Early returns AFTER all hooks ──
-
   if (mediaLoading) {
     return (
       <div className="flex items-center justify-center min-h-[40vh]">
@@ -178,52 +176,54 @@ function EnhancedStats() {
     );
   }
 
-        {/* Overview Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mb-8">
-          <GlassStatCard
-            icon={Film}
-            label={t("stats.totalMovies", "Total Movies")}
-            value={totalMovies}
-            description={t("stats.moviesWatched", "Movies watched")}
-            variant="primary"
-            size="md"
-            delay={0}
-          />
-          <GlassStatCard
-            icon={Film}
-            label={t("stats.totalTVShows", "Total TV Shows")}
-            value={totalTV}
-            description={t("stats.tvShowsWatched", "TV shows watched")}
-            variant="primary"
-            size="md"
-            delay={0.05}
-          />
-          <GlassStatCard
-            icon={Film}
-            label={t("stats.episodesWatched", "Episodes Watched")}
-            value={totalEpisodes}
-            description={t("stats.episodesTotal", "Total episodes watched")}
-            variant="primary"
-            size="md"
-            delay={0.1}
-          />
-          <GlassStatCard
-            icon={Clock}
-            label={t("stats.hoursWatched", "Hours Watched")}
-            value={`${Math.round(totalHours)}h`}
-            description={t("stats.daysTotal", "{{count}} days total", {
-              count: Math.round(totalHours / 24),
-            })}
-            variant="success"
-            size="md"
-            delay={0.15}
-          />
-          {/* Average Rating card removed */}
-        </div>
+  return (
+    <>
+      {/* Overview Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mb-8">
+        <GlassStatCard
+          icon={Film}
+          label={t("stats.totalMovies", "Total Movies")}
+          value={totalMovies}
+          description={t("stats.moviesWatched", "Movies watched")}
+          variant="primary"
+          size="md"
+          delay={0}
+        />
+        <GlassStatCard
+          icon={Film}
+          label={t("stats.totalTVShows", "Total TV Shows")}
+          value={totalTV}
+          description={t("stats.tvShowsWatched", "TV shows watched")}
+          variant="primary"
+          size="md"
+          delay={0.05}
+        />
+        <GlassStatCard
+          icon={Film}
+          label={t("stats.episodesWatched", "Episodes Watched")}
+          value={totalEpisodes}
+          description={t("stats.episodesTotal", "Total episodes watched")}
+          variant="primary"
+          size="md"
+          delay={0.1}
+        />
+        <GlassStatCard
+          icon={Clock}
+          label={t("stats.hoursWatched", "Hours Watched")}
+          value={`${Math.round(totalHours)}h`}
+          description={t("stats.daysTotal", "{{count}} days total", {
+            count: Math.round(totalHours / 24),
+          })}
+          variant="success"
+          size="md"
+          delay={0.15}
+        />
+      </div>
 
-        {/* Filter Row */}
-        <div className="flex flex-wrap gap-4 mb-8">
-          <div className="min-w-[120px]">
+      {/* Filters */}
+      <div className="flex flex-wrap gap-4 mb-8">
+        {/* Year */}
+        <div className="min-w-[120px]">
           <label className="block text-xs font-semibold mb-1 text-neutral-400">Year</label>
           <Select
             value={selectedYear.toString()}
@@ -235,139 +235,124 @@ function EnhancedStats() {
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
               {years.map((year) => (
-                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                <SelectItem key={year} value={year.toString()}>
+                  {year}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-          {/* Type Filter */}
-          <div className="min-w-[120px]">
-            <label className="block text-xs font-semibold mb-1 text-neutral-400">Type</label>
-            <Select value={selectedType} onValueChange={(v) => setSelectedType(v as MediaTypeFilter)}>
-              <SelectTrigger>
-                <SelectValue placeholder="All types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="movie">Movie</SelectItem>
-                <SelectItem value="tv">TV</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Language Filter */}
-          <div className="min-w-[120px]">
-            <label className="block text-xs font-semibold mb-1 text-neutral-400">Language</label>
-            <Select value={selectedLang} onValueChange={setSelectedLang}>
-              <SelectTrigger>
-                <SelectValue placeholder="All languages" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                {languages.map((lang) => (
-                  <SelectItem key={lang} value={lang}>{lang}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        {/* Type */}
+        <div className="min-w-[120px]">
+          <label className="block text-xs font-semibold mb-1 text-neutral-400">Type</label>
+          <Select value={selectedType} onValueChange={(v) => setSelectedType(v as MediaTypeFilter)}>
+            <SelectTrigger>
+              <SelectValue placeholder="All types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="movie">Movie</SelectItem>
+              <SelectItem value="tv">TV</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Overview Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-                    <GlassStatCard
-                      icon={Film}
-                      label={t("stats.episodesWatched", "Episodes Watched")}
-                      value={totalEpisodes}
-                      description={t("stats.episodesTotal", "Total episodes watched")}
-                      variant="info"
-                      size="md"
-                      delay={0.15}
-                    />
-          <GlassStatCard
-            icon={Film}
-            label={t("stats.totalWatched", "Total Watched")}
-            value={filteredMedia.length}
-            description={`${totalMovies} ${t("common.movies", "Movies").toLowerCase()}, ${totalTV} ${t("common.tvShows", "TV Shows").toLowerCase()}`}
-            variant="primary"
-            size="md"
-            delay={0}
-          />
-          <GlassStatCard
-            icon={Clock}
-            label={t("stats.hoursWatched", "Hours Watched")}
-            value={`${Math.round(totalHours)}h`}
-            description={t("stats.daysTotal", "{{count}} days total", {
-              count: Math.round(totalHours / 24),
-            })}
-            variant="success"
-            size="md"
-            delay={0.1}
-          />
-          {/* Average Rating card removed */}
+        {/* Language */}
+        <div className="min-w-[120px]">
+          <label className="block text-xs font-semibold mb-1 text-neutral-400">Language</label>
+          <Select value={selectedLang} onValueChange={setSelectedLang}>
+            <SelectTrigger>
+              <SelectValue placeholder="All languages" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              {languages.map((lang) => (
+                <SelectItem key={lang} value={lang}>
+                  {lang}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-
-        {/* Genre Breakdown */}
-        {genreStats.length > 0 && (
-          <div className="grid gap-4 md:grid-cols-2 mb-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  {t("stats.genreDistribution", "Genre Distribution")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={genreStats}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={(entry) => `${entry.name} (${entry.count})`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="count"
-                    >
-                      {genreStats.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  {t("stats.hoursByGenre", "Hours by Genre")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={genreStats}>
-                    <XAxis
-                      dataKey="name"
-                      angle={-45}
-                      textAnchor="end"
-                      height={80}
-                    />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="hours" fill="#8b5cf6" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-          </div>
-        )}
       </div>
-    );
+
+      {/* Secondary Overview Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+        <GlassStatCard
+          icon={Film}
+          label={t("stats.totalWatched", "Total Watched")}
+          value={filteredMedia.length}
+          description={`${totalMovies} ${t("common.movies", "Movies").toLowerCase()}, ${totalTV} ${t(
+            "common.tvShows",
+            "TV Shows"
+          ).toLowerCase()}`}
+          variant="primary"
+          size="md"
+          delay={0}
+        />
+        <GlassStatCard
+          icon={Clock}
+          label={t("stats.hoursWatched", "Hours Watched")}
+          value={`${Math.round(totalHours)}h`}
+          description={t("stats.daysTotal", "{{count}} days total", {
+            count: Math.round(totalHours / 24),
+          })}
+          variant="success"
+          size="md"
+          delay={0.1}
+        />
+      </div>
+
+      {/* Genre Breakdown */}
+      {genreStats.length > 0 && (
+        <div className="grid gap-4 md:grid-cols-2 mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("stats.genreDistribution", "Genre Distribution")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={genreStats}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={(entry) => `${entry.name} (${entry.count})`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="count"
+                  >
+                    {genreStats.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("stats.hoursByGenre", "Hours by Genre")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={genreStats}>
+                  <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="hours" fill="#8b5cf6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </>
+  );
 }
 
 export default EnhancedStats;
