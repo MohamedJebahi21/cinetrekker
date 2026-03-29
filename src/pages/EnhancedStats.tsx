@@ -221,7 +221,10 @@ function EnhancedStats() {
             delay={0.2}
           />
         </div>
-        <div className="min-w-[120px]">
+
+        {/* Filter Row */}
+        <div className="flex flex-wrap gap-4 mb-8">
+          <div className="min-w-[120px]">
           <label className="block text-xs font-semibold mb-1 text-neutral-400">Year</label>
           <Select
             value={selectedYear.toString()}
