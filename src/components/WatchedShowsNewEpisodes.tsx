@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MediaCarouselEnhanced } from './MediaCarouselEnhanced';
 import { Image } from '@/components/ui/Image';
 import { getReleaseTimeInfo, hasBeenReleased } from '@/lib/timeUtils';
 import { differenceInHours, isSameDay } from 'date-fns';
@@ -194,38 +195,23 @@ export function WatchedShowsNewEpisodes() {
   
   if (loadingLists || loadingEpisodes) {
     return (
-      <section className="mb-8">
-        <div className="flex items-center gap-2 mb-4">
-          <Tv className="w-5 h-5 text-primary" />
-          <h2 className="section-title mb-0">{t('home.didYouWatch')}</h2>
-        </div>
-        <div className="media-grid">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-80 rounded-lg" />
-          ))}
-        </div>
-      </section>
+      <MediaCarouselEnhanced
+        title={t('home.didYouWatch')}
+        items={[]}
+        loading={true}
+      />
     );
   }
 
   // Show empty state if user has watched shows but no new episodes
   if (watchedTVShows.length > 0 && releasedUnwatchedEpisodes.length === 0) {
     return (
-      <section className="mb-8">
-        <div className="flex items-center gap-2 mb-4">
-          <Tv className="w-5 h-5 text-primary" />
-          <h2 className="section-title mb-0">{t('home.didYouWatch')}</h2>
-        </div>
-        <Card className="glass-card p-6 border-border/50 text-center">
-          <CalendarClock className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground text-sm">
-            {t('home.didYouWatchEmpty')}
-          </p>
-          <p className="text-muted-foreground/70 text-xs mt-1">
-            {t('home.didYouWatchEmptyDesc')}
-          </p>
-        </Card>
-      </section>
+      <MediaCarouselEnhanced
+        title={t('home.didYouWatch')}
+        items={[]}
+        loading={false}
+        emptyMessage={t('home.didYouWatchEmptyDesc')}
+      />
     );
   }
 
@@ -238,93 +224,40 @@ export function WatchedShowsNewEpisodes() {
   // Get release label for an episode
   const getReleaseBadge = (airDate: string | null) => {
     if (!airDate) return null;
-    
     const releaseInfo = getReleaseTimeInfo(airDate);
-    if (!releaseInfo || !releaseInfo.isPast) return null;
-    
-    const date = new Date(airDate);
-    const hoursAgo = differenceInHours(now, date);
-    
-    if (hoursAgo <= 2) {
-      return (
-        <Badge className="text-xs bg-green-500 text-white border-0 shadow-sm">
-          <Clock className="w-3 h-3 mr-1" />
-          {t('home.justReleased')}
-        </Badge>
-      );
-    }
-    
-    if (isSameDay(date, now)) {
-      if (hoursAgo <= 12) {
+    if (!releaseInfo) return null;
+    if (releaseInfo.isPast) {
+      // Already released
+      if (isSameDay(new Date(airDate), now)) {
         return (
-          <Badge className="text-xs bg-primary border-0 shadow-sm">
-            {t('home.releasedHoursAgo', { hours: hoursAgo })}
-          </Badge>
+          <Badge variant="success" className="text-xs px-2 py-0.5">{t('home.releasedToday', 'Today')}</Badge>
         );
       }
       return (
-        <Badge className="text-xs bg-primary border-0 shadow-sm">
-          {t('home.releasedToday')}
-        </Badge>
+        <Badge variant="secondary" className="text-xs px-2 py-0.5">{t('home.justReleased', 'Just released')}</Badge>
       );
-    }
-    
-    // Released in last 7 days
-    if (hoursAgo < 168) {
-      const daysAgo = Math.floor(hoursAgo / 24);
+    } else {
+      // Upcoming
       return (
-        <Badge variant="secondary" className="text-xs">
-          {daysAgo === 1 ? 'Yesterday' : `${daysAgo}d ago`}
-        </Badge>
+        <Badge variant="outline" className="text-xs px-2 py-0.5">{releaseInfo.relative}</Badge>
       );
     }
-    
-    return null;
   };
 
+  // Render episode cards
   return (
-    <section className="mb-8">
-      <div className="flex items-center gap-2 mb-4">
-        <Tv className="w-5 h-5 text-primary" />
-        <h2 className="section-title mb-0">{t('home.didYouWatch')}</h2>
-        
-        {/* 🚀 Cache indicator & manual refresh button */}
-        {cachedData && !forceRefresh && (
-          <Badge variant="secondary" className="ml-auto text-xs">
-            <Clock className="w-3 h-3 mr-1" />
-            {t('common.updated')} {new Date(cachedData.updatedAt).toLocaleDateString()}
-          </Badge>
-        )}
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          className="ml-auto gap-1.5"
-          onClick={() => setForceRefresh(true)}
-          disabled={loadingEpisodes && forceRefresh}
-        >
-          <RefreshCw className={`w-4 h-4 ${loadingEpisodes && forceRefresh ? 'animate-spin' : ''}`} />
-          <span className="text-xs">{t('common.refresh')}</span>
-        </Button>
-      </div>
-      
-      <div className="media-grid">
+    <section className="w-full">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {releasedUnwatchedEpisodes.map((episode) => {
           const releaseBadge = getReleaseBadge(episode.air_date);
-          
           return (
-            <Link
-              key={`watched-${episode.showId}-${episode.season_number}-${episode.episode_number}`}
-              to={`/tv/${episode.showId}`}
-              className="group relative block overflow-hidden rounded-lg transition-all duration-300"
-            >
+            <Card key={episode.episode_id || `${episode.showId}-${episode.season_number}-${episode.episode_number}`}
+              className="relative group overflow-hidden p-0">
               {episode.showPosterPath ? (
                 <Image
-                  src={getImageUrl(episode.showPosterPath, 'w185') || ''}
-                  srcSet={`${getImageUrl(episode.showPosterPath, 'w185') || ''} 185w, ${getImageUrl(episode.showPosterPath, 'w342') || ''} 342w`}
-                  sizes="(max-width: 480px) calc(50vw - 24px), (max-width: 768px) calc(33vw - 20px), (max-width: 1024px) calc(25vw - 20px), 200px"
-                  alt={`${episode.showName} poster`}
-                  width={185}
+                  src={getImageUrl(episode.showPosterPath, 342)}
+                  alt={episode.showName}
+                  width={182}
                   height={278}
                   className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                   loading="lazy"
@@ -335,7 +268,6 @@ export function WatchedShowsNewEpisodes() {
                   <Tv className="w-8 h-8 text-muted-foreground" />
                 </div>
               )}
-              
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                   <h4 className="font-semibold text-sm line-clamp-2 mb-1">{episode.showName}</h4>
@@ -363,7 +295,7 @@ export function WatchedShowsNewEpisodes() {
                   </Button>
                 </div>
               </div>
-            </Link>
+            </Card>
           );
         })}
       </div>

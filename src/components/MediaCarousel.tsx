@@ -18,15 +18,6 @@ interface MediaCarouselProps {
   scrollSnap?: "mandatory" | "proximity";
 }
 
-/**
- * Enhanced media carousel with scroll-snap support and manual navigation
- * Features:
- * - CSS scroll-snap for smooth native scrolling
- * - Manual left/right navigation with scroll detection
- * - Responsive sizing across breakpoints
- * - Touch-optimized smooth scrolling
- * - Disabled state for nav buttons at scroll boundaries
- */
 export function MediaCarousel({
   title,
   items,
@@ -38,19 +29,13 @@ export function MediaCarousel({
 }: MediaCarouselProps) {
   const { t } = useTranslation();
   const { strictFiltering, moderateFiltering } = useContentPolicy();
-  const includeAdult = !(strictFiltering || moderateFiltering);
   const [isHovered, setIsHovered] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScroll, setCanScroll] = useState({ left: false, right: true });
   const [activePage, setActivePage] = useState(0);
   const [pageCount, setPageCount] = useState(1);
-  const filteredItems = applySafetyFilter(
-    items,
-    strictFiltering,
-    moderateFiltering,
-  );
+  const filteredItems = applySafetyFilter(items, strictFiltering, moderateFiltering);
 
-  // Check if horizontal scrolling is possible and current position
   const checkScroll = () => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -59,24 +44,17 @@ export function MediaCarousel({
       ? Math.max(1, Math.ceil(container.scrollWidth / container.clientWidth))
       : 1;
     const nextPage = hasScroll
-      ? Math.min(
-          totalPages - 1,
-          Math.round(container.scrollLeft / container.clientWidth),
-        )
+      ? Math.min(totalPages - 1, Math.round(container.scrollLeft / container.clientWidth))
       : 0;
 
     setPageCount(totalPages);
     setActivePage(nextPage);
     setCanScroll({
       left: hasScroll && container.scrollLeft > 10,
-      right:
-        hasScroll &&
-        container.scrollLeft <
-          container.scrollWidth - container.clientWidth - 10,
+      right: hasScroll && container.scrollLeft < container.scrollWidth - container.clientWidth - 10,
     });
   };
 
-  // Initialize scroll state and listen for changes
   useEffect(() => {
     checkScroll();
     const container = scrollContainerRef.current;
@@ -94,14 +72,12 @@ export function MediaCarousel({
     };
   }, [filteredItems.length]);
 
-  // Manual scroll handler for navigation buttons
   const handleManualScroll = (direction: "left" | "right") => {
     const container = scrollContainerRef.current;
     if (!container) return;
     const scrollDistance = Math.floor(container.clientWidth * 0.9);
     const targetScroll =
-      container.scrollLeft +
-      (direction === "left" ? -scrollDistance : scrollDistance);
+      container.scrollLeft + (direction === "left" ? -scrollDistance : scrollDistance);
     container.scrollTo({ left: targetScroll, behavior: "smooth" });
   };
 
@@ -133,7 +109,6 @@ export function MediaCarousel({
         </div>
       ) : filteredItems.length > 0 ? (
         <div className="relative group/scroll">
-          {/* Manual scroll buttons - visible on hover (desktop only) */}
           {showManualNav && (
             <>
               <button
@@ -157,33 +132,41 @@ export function MediaCarousel({
             </>
           )}
 
-          {/* Scrollable container with CSS scroll-snap */}
+          {/* Scrollable container — scrollbar hidden */}
           <div
             ref={scrollContainerRef}
-            className="flex gap-4 overflow-x-auto scroll-smooth overscroll-contain pb-2"
+            className="flex gap-4 overflow-x-auto scroll-smooth overscroll-contain"
             style={{
               scrollSnapType: `x ${scrollSnap}`,
               WebkitOverflowScrolling: "touch",
               msOverflowStyle: "none",
               scrollbarWidth: "none",
             }}
+            onScroll={checkScroll}
           >
+            <style>{`
+              .hide-scrollbar::-webkit-scrollbar { display: none; }
+            `}</style>
             {filteredItems.map((item) => (
               <div
                 key={`${item.id}-${item.media_type || "unknown"}`}
-                className="flex-shrink-0 w-[160px] sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
+                className="flex-shrink-0 w-[140px] md:w-[160px] h-80"
                 style={{ scrollSnapAlign: "start", scrollSnapStop: "always" }}
               >
                 <MediaCard media={item} />
               </div>
             ))}
           </div>
+
+          {/* Edge fade gradients for mobile */}
           <div
-            className={`pointer-events-none absolute left-0 top-0 h-full w-8 bg-gradient-to-r from-background to-transparent md:hidden ${canScroll.left ? "opacity-100" : "opacity-0"}`}
+            className={`pointer-events-none absolute left-0 top-0 h-full w-8 bg-gradient-to-r from-background to-transparent md:hidden transition-opacity ${canScroll.left ? "opacity-100" : "opacity-0"}`}
           />
           <div
-            className={`pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-background to-transparent md:hidden ${canScroll.right ? "opacity-100" : "opacity-0"}`}
+            className={`pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-background to-transparent md:hidden transition-opacity ${canScroll.right ? "opacity-100" : "opacity-0"}`}
           />
+
+          {/* Pagination dots */}
           {pageCount > 1 && (
             <div className="mt-4 flex items-center justify-center gap-2">
               {Array.from({ length: pageCount }).map((_, index) => (

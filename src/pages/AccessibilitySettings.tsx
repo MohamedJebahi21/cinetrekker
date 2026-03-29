@@ -250,7 +250,7 @@ export default function AccessibilitySettings() {
                             : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
                         )}
                         onClick={() => setTheme(option)}
-                        aria-pressed={active}
+                        aria-pressed={theme === option}
                       >
                         {label}
                       </button>

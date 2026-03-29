@@ -132,7 +132,7 @@ function buildChangeNotifications(
     notifications.push({
       eventKey: `${follow.id}:episode:${current.last_episode_season_number ?? 0}:${current.last_episode_number ?? 0}:${current.last_episode_air_date}`,
       type: "new_episode",
-      message: `${title} has ${episodeLabel} available.`,
+      message: `${title} has ${episodeLabel.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase())} available.`,
     });
   }
 
@@ -144,7 +144,7 @@ function buildChangeNotifications(
     notifications.push({
       eventKey: `${follow.id}:status:${current.status.toLowerCase()}`,
       type: "status_change",
-      message: `${title} status changed to ${current.status}.`,
+      message: `${title} status changed to ${current.status.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase())}.`,
     });
   }
 
@@ -225,7 +225,7 @@ export function FollowNotificationMonitor() {
           if (nextNotifications.length > 0) {
             appendGuestNotifications(nextNotifications);
             nextNotifications.slice(0, 3).forEach((item) => {
-              toast({ title: "New update", description: item.message });
+              toast({ title: "New Update", description: item.message });
             });
           }
         }
@@ -234,22 +234,24 @@ export function FollowNotificationMonitor() {
         return null;
       }
 
-      const movieIds = currentStates.map((item) => item.state.movie_id);
-      const { data: previousRows, error: previousError } = await supabase
-        .from("followed_title_state_user")
-        .select(
-          "movie_id, media_type, tmdb_id, release_date, status, number_of_seasons, last_episode_air_date, last_episode_season_number, last_episode_number, updated_at",
-        )
-        .eq("user_id", user.id)
-        .in("movie_id", movieIds);
 
-      if (previousError) {
-        throw previousError;
+      const movieIds = currentStates.map((item) => item.state.movie_id).filter((id) => typeof id === "string" && id.length > 0);
+      let previousById: Record<string, FollowedTitleState> = {};
+      if (movieIds.length > 0) {
+        const { data: previousRows, error: previousError } = await supabase
+          .from("followed_title_state")
+          .select(
+            "movie_id, media_type, tmdb_id, release_date, status, number_of_seasons, last_episode_air_date, last_episode_season_number, last_episode_number, updated_at",
+          )
+          .eq("user_id", user.id)
+          .in("movie_id", movieIds);
+        if (previousError) {
+          throw previousError;
+        }
+        previousById = Object.fromEntries(
+          (previousRows || []).map((row) => [row.movie_id, row]),
+        ) as Record<string, FollowedTitleState>;
       }
-
-      const previousById = Object.fromEntries(
-        (previousRows || []).map((row) => [row.movie_id, row]),
-      ) as Record<string, FollowedTitleState>;
 
       const notificationsToInsert = currentStates.flatMap(
         ({ follow, title, state }) =>
@@ -283,7 +285,7 @@ export function FollowNotificationMonitor() {
       }
 
       const { error: stateError } = await supabase
-        .from("followed_title_state_user")
+        .from("followed_title_state")
         .upsert(
           currentStates.map(({ state }) => ({
             user_id: user.id,

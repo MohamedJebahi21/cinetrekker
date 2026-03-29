@@ -243,7 +243,7 @@ export function useTitleFollows() {
 
       if (statesToSync.length > 0) {
         const { error } = await supabase
-          .from("followed_title_state_user")
+          .from("followed_title_state")
           .upsert(
             statesToSync.map((state) => ({
               user_id: user.id,
@@ -267,7 +267,7 @@ export function useTitleFollows() {
       migrationUserRef.current = user.id;
       queryClient.invalidateQueries({ queryKey: ["title-follows"] });
       toast({
-        title: "Followed titles synced",
+        title: "Followed Titles Synced",
         description: `${guestItems.length} guest follow${guestItems.length === 1 ? "" : "s"} moved to your account.`,
       });
     };
@@ -279,7 +279,7 @@ export function useTitleFollows() {
 
       console.warn("[TitleFollows] Guest follow sync failed", error);
       toast({
-        title: "Guest follows not synced",
+        title: "Guest Follows Not Synced",
         description: error.message,
         variant: "destructive",
       });
@@ -392,7 +392,7 @@ export function useTitleFollows() {
 
       if (initialState) {
         const { error } = await supabase
-          .from("followed_title_state_user")
+          .from("followed_title_state")
           .upsert(
             {
               user_id: user.id,
@@ -465,7 +465,7 @@ export function useTitleFollows() {
       }
 
       await supabase
-        .from("followed_title_state_user")
+        .from("followed_title_state")
         .delete()
         .eq("user_id", user.id)
         .eq("movie_id", followId);

@@ -31,7 +31,10 @@
     "profile": "Perfil",
     "privacy": "Privacidad",
     "signIn": "Iniciar sesión",
-    "signOut": "Cerrar sesión"
+    "signOut": "Cerrar sesión",
+    "genres": "Géneros",
+    "decades": "Décadas",
+    "awards": "Premios"
   },
   "home": {
     "trending": "Tendencias",

@@ -233,19 +233,18 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                 </div>
 
                 <div className="space-y-2">
-                  {activeTab === "login" && (
-                    <div className="flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => void handleForgotPassword()}
-                        className="text-sm text-primary transition-colors hover:text-primary/80"
-                      >
-                        Forgot Password?
-                      </button>
-                    </div>
-                  )}
-
                   <div className="relative">
+                                      {activeTab === "login" && (
+                                        <div className="flex justify-end mt-2">
+                                          <button
+                                            type="button"
+                                            onClick={() => void handleForgotPassword()}
+                                            className="text-sm text-primary transition-colors hover:text-primary/80"
+                                          >
+                                            Forgot Password?
+                                          </button>
+                                        </div>
+                                      )}
                     <Input
                       type={showPassword ? "text" : "password"}
                       name="password"

@@ -31,7 +31,10 @@
     "profile": "Profil",
     "privacy": "Confidentialité",
     "signIn": "Connexion",
-    "signOut": "Déconnexion"
+    "signOut": "Déconnexion",
+    "genres": "Genres",
+    "decades": "Décennies",
+    "awards": "Récompenses"
   },
   "home": {
     "trending": "Tendances",

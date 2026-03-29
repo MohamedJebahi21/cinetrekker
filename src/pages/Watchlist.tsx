@@ -164,37 +164,7 @@ export default function Watchlist() {
         }
         canonical="https://cinetrekker.vercel.app/watchlist"
       />
-      <section className="relative min-h-[62vh] overflow-hidden pt-20">
-        <Image
-          src={HERO_BACKDROP}
-          alt="Golden desert dunes representing cinematic filming locations"
-          width={2200}
-          height={1200}
-          className="absolute inset-0 h-full w-full object-cover"
-          loading="eager"
-          priority
-          fetchPriority="high"
-        />
-        <Image
-          src={HERO_OVERLAY}
-          alt="Rainy city boulevard at night"
-          width={2200}
-          height={1200}
-          className="absolute inset-0 h-full w-full object-cover mix-blend-screen opacity-35"
-          loading="eager"
-          priority
-        />
-        <div className="watchlist-hero-mask absolute inset-0" />
-        <div className="relative page-container z-10 flex min-h-[62vh] items-end pb-10 md:pb-14">
-          <motion.div
-            initial={{ opacity: 0, y: 28 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45 }}
-            className="max-w-3xl"
-          />
-        </div>
-      </section>
-
+      {/* Removed large poster/hero section as requested */}
       <div className="page-container pb-24 pt-8 md:pb-0">
         {/* Header */}
         <motion.div

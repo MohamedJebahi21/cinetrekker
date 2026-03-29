@@ -140,7 +140,7 @@ export default function LocationDetails() {
                   <div className="mt-3 flex flex-wrap gap-2">
                     <a
                       href={getPrimaryVisitUrl(location)}
-                      target="_blank"
+                      target="_blank" rel="noopener noreferrer"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 rounded-md border border-[#f2c572]/35 bg-[#24180a] px-3 py-1.5 text-xs text-[#f7d499] hover:bg-[#2f1f0d]"
                     >
@@ -149,7 +149,7 @@ export default function LocationDetails() {
                     </a>
                     <a
                       href={getTripAdvisorAffiliateUrl(location)}
-                      target="_blank"
+                      target="_blank" rel="noopener noreferrer"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 rounded-md border border-white/20 px-3 py-1.5 text-xs text-white/75 hover:bg-white/10"
                     >
@@ -157,7 +157,7 @@ export default function LocationDetails() {
                     </a>
                     <a
                       href={getExpediaAffiliateUrl(location)}
-                      target="_blank"
+                      target="_blank" rel="noopener noreferrer"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 rounded-md border border-white/20 px-3 py-1.5 text-xs text-white/75 hover:bg-white/10"
                     >

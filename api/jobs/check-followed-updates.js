@@ -230,17 +230,21 @@ export default async function handler(req, res) {
       new Set(followRows.map((row) => row.user_id).filter(Boolean)),
     );
 
-    const { data: existingStates, error: stateError } = await supabase
-      .from("followed_title_state_user")
-      .select("*")
-      .in("user_id", followerUserIds)
-      .in(
-        "movie_id",
-        parsedKeys.map((parsed) => parsed.movieKey),
-      );
 
-    if (stateError) {
-      return json(res, 500, { error: "Failed to read title state." });
+    let existingStates = [];
+    let stateError = null;
+    const movieIdList = parsedKeys.map((parsed) => parsed.movieKey).filter((id) => typeof id === "string" && id.length > 0);
+    if (followerUserIds.length > 0 && movieIdList.length > 0) {
+      const result = await supabase
+        .from("followed_title_state")
+        .select("*")
+        .in("user_id", followerUserIds)
+        .in("movie_id", movieIdList);
+      existingStates = result.data;
+      stateError = result.error;
+      if (stateError) {
+        return json(res, 500, { error: "Failed to read title state." });
+      }
     }
 
     const stateByUserMovieId = new Map(
@@ -306,7 +310,7 @@ export default async function handler(req, res) {
             );
 
             const { error: upsertError } = await supabase
-              .from("followed_title_state_user")
+              .from("followed_title_state")
               .upsert(stateRowsToUpsert, { onConflict: "user_id,movie_id" });
 
             if (upsertError) {

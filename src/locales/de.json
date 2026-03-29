@@ -31,7 +31,10 @@
     "profile": "Profil",
     "privacy": "Datenschutz",
     "signIn": "Anmelden",
-    "signOut": "Abmelden"
+    "signOut": "Abmelden",
+    "genres": "Genres",
+    "decades": "Jahrzehnte",
+    "awards": "Auszeichnungen"
   },
   "home": {
     "trending": "Im Trend",

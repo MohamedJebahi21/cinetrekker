@@ -412,6 +412,27 @@ export default function Achievements() {
       },
     ];
 
+    const specialUnlocks: AchievementItem[] = [
+      {
+        id: "founder-badge",
+        icon: "🏅",
+        name: "Founder Badge",
+        description: "Early supporter of CineTrekker",
+        unlocked: false, // Set logic for real unlocks
+        progressLabel: "Invite-only",
+        unlockedLabel: null,
+      },
+      {
+        id: "marathon-night",
+        icon: "🌙",
+        name: "Marathon Night",
+        description: "Watched 5 movies in a single day",
+        unlocked: false, // Set logic for real unlocks
+        progressLabel: "0 / 5 movies in 1 day",
+        unlockedLabel: null,
+      },
+    ];
+
     return [
       {
         id: "watching",
@@ -421,6 +442,7 @@ export default function Achievements() {
       { id: "ratings", title: "⭐ Rating Milestones", items: ratingMilestones },
       { id: "genres", title: "🎭 Genre Explorer", items: genreExplorer },
       { id: "time", title: "🕐 Watch Time", items: watchTimeMilestones },
+      { id: "special", title: "✨ Special Unlocks", items: specialUnlocks },
     ];
   }, [
     genreProgress.count,
@@ -494,10 +516,12 @@ export default function Achievements() {
           </CardContent>
         </Card>
 
-        <div className="space-y-8">
+        <div className="space-y-10">
           {groups.map((group) => (
-            <section key={group.id} className="space-y-3">
-              <h2 className="text-xl font-bold">{group.title}</h2>
+            <section key={group.id} className="space-y-4">
+              <h2 className="text-xl font-bold tracking-tight text-neutral-100 border-b border-neutral-800 pb-2 mb-2">
+                {group.title}
+              </h2>
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 {group.items.map((item) => (
                   <Card

@@ -39,7 +39,7 @@ export const Image: React.FC<ImageProps> = ({
 
   const fetchPriorityAttr =
     finalFetchPriority && finalFetchPriority !== 'auto'
-      ? ({ fetchpriority: finalFetchPriority } as { fetchpriority: 'high' | 'low' })
+      ? ({ fetchPriority: finalFetchPriority } as { fetchPriority: 'high' | 'low' })
       : {};
 
   const resolvedSrc = typeof src === 'string' ? src : '';

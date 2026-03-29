@@ -4,10 +4,10 @@ import { useTranslation } from "react-i18next";
 export function Footer() {
   const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
-
   return (
-    <footer className="mt-auto safe-area-bottom border-t border-border/35 bg-[var(--bg-page)]">
+    <footer className="bg-background border-t border-border/40">
       <div className="container mx-auto px-4 py-8 md:py-10">
+        {/* GitHub link removed as requested */}
         {/* Main Footer Grid - 5 columns on desktop (Brand spans 2) */}
         <div className="grid grid-cols-1 gap-8 min-[400px]:grid-cols-2 md:grid-cols-5 md:gap-10">
           {/* Brand Column - takes 2 columns on desktop */}
@@ -67,7 +67,6 @@ export function Footer() {
               </Link>
             </nav>
           </div>
-
           {/* Support Column */}
           <div className="min-w-0">
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-primary)]/90">
@@ -81,8 +80,7 @@ export function Footer() {
             <nav className="flex flex-col gap-3" aria-label="Support links">
               <a
                 href="https://buymeacoffee.com/mohamed_jebahi"
-                target="_blank"
-                rel="noopener noreferrer"
+                target="_blank" rel="noopener noreferrer"
                 className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.buyMeACoffee", "Buy Me a Coffee")}
@@ -101,15 +99,13 @@ export function Footer() {
               </Link>
               <a
                 href="https://developer.themoviedb.org/docs"
-                target="_blank"
-                rel="noopener noreferrer"
+                target="_blank" rel="noopener noreferrer"
                 className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.tmdbApi", "TMDB API")}
               </a>
             </nav>
           </div>
-
           {/* Legal Column */}
           <div className="min-w-0">
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-primary)]/90">
@@ -142,7 +138,6 @@ export function Footer() {
             </nav>
           </div>
         </div>
-
         {/* Bottom Bar */}
         <div className="mt-8 border-t border-border/40 pt-5">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
@@ -151,7 +146,6 @@ export function Footer() {
               © {currentYear} {t("common.appName")}.{" "}
               {t("footer.allRightsReserved", "All rights reserved.")}
             </p>
-
             {/* TMDB Attribution */}
             <div className="min-w-0">
               <div className="flex items-center gap-2">
@@ -160,8 +154,7 @@ export function Footer() {
                 </span>
                 <a
                   href="https://www.themoviedb.org/"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  target="_blank" rel="noopener noreferrer"
                   className="transition-opacity hover:opacity-80"
                 >
                   <img
@@ -176,7 +169,6 @@ export function Footer() {
               </div>
             </div>
           </div>
-
           {/* TMDB Attribution Text */}
           <p className="mx-auto mt-3 max-w-3xl text-center text-[0.78rem] leading-relaxed text-[var(--text-secondary)]">
             {t(

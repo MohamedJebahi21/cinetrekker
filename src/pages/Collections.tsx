@@ -139,24 +139,39 @@ export default function Collections() {
                   </div>
 
                   {collection.items.length > 0 ? (
-                    <div className="text-xs text-muted-foreground pt-2">
-                      Starting with: {collection.items[0].title}
-                    </div>
+                    <>
+                      <div className="text-xs text-muted-foreground pt-2">
+                        Starting with: {collection.items[0].title}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="px-0"
+                      >
+                        Open Collection <ArrowRight className="ml-1 h-4 w-4" />
+                      </Button>
+                    </>
                   ) : (
-                    <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
-                      This collection is being curated. Open search to start
-                      building it.
+                    <div className="flex flex-col items-center justify-center gap-2 py-6">
+                      <div className="w-10 h-10 flex items-center justify-center rounded-full bg-muted">
+                        <Film className="w-6 h-6 text-muted-foreground" />
+                      </div>
+                      <div className="text-xs text-muted-foreground max-w-xs text-center">
+                        This collection is being curated. Open search to start building it.
+                      </div>
+                      <Button
+                        asChild
+                        variant="secondary"
+                        size="sm"
+                        className="mt-2"
+                      >
+                        <Link to={`/search?q=${encodeURIComponent(collection.title)}`}>
+                          Start Building <ArrowRight className="ml-1 h-4 w-4" />
+                        </Link>
+                      </Button>
                     </div>
                   )}
-
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="px-0"
-                  >
-                    Open Collection <ArrowRight className="ml-1 h-4 w-4" />
-                  </Button>
                 </CardContent>
               </Card>
             </Link>

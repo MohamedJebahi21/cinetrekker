@@ -1,3 +1,4 @@
+import React from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Star } from "lucide-react";
@@ -10,11 +11,35 @@ import { cn } from "@/lib/utils";
 import SEO from "@/components/SEO";
 import { enrichMediaItems } from "@/lib/mediaEnrichment";
 import { Image } from "@/components/ui/Image";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 
 export default function Watched() {
   const { t, i18n } = useTranslation();
   const { watched } = useUserLists();
   const language = i18n.language;
+
+  // --- Filter State ---
+  const [filterLang, setFilterLang] = React.useState<string>("");
+  const [filterType, setFilterType] = React.useState<string>("");
+  const [filterCountry, setFilterCountry] = React.useState<string>("");
+  const [filterYear, setFilterYear] = React.useState<[number, number]>([1900, new Date().getFullYear()]);
+
+  // --- Build filter options from watched list ---
+  const allLangs = React.useMemo(() => Array.from(new Set(watched.map(w => w.original_language).filter((v) => typeof v === "string" && v.trim() !== ""))), [watched]);
+  const allTypes = React.useMemo(() => Array.from(new Set(watched.map(w => w.media_type).filter((v) => typeof v === "string" && v.trim() !== ""))), [watched]);
+  const allCountries = React.useMemo(() => Array.from(new Set((watched.flatMap(w => (w.origin_country || (w.production_countries ? w.production_countries.map(c => c.iso_3166_1) : []))) ).filter((v) => typeof v === "string" && v.trim() !== ""))), [watched]);
+  const minYear = React.useMemo(() => Math.min(...watched.map(w => parseInt((w.release_date || w.first_air_date || "").slice(0,4)).toString()).filter(y => !isNaN(y))), [watched]);
+  const maxYear = React.useMemo(() => Math.max(...watched.map(w => parseInt((w.release_date || w.first_air_date || "").slice(0,4)).toString()).filter(y => !isNaN(y))), [watched]);
+  React.useEffect(() => {
+    if (Number.isFinite(minYear) && Number.isFinite(maxYear)) {
+      setFilterYear([minYear, maxYear]);
+    } else {
+      setFilterYear([1900, new Date().getFullYear()]);
+    }
+  }, [minYear, maxYear]);
+
 
   // Fetch details for all watched items
   const { data: mediaDetails, isLoading } = useQuery({
@@ -46,6 +71,19 @@ export default function Watched() {
     enabled: watched.length > 0,
   });
 
+  // --- Filtered list ---
+  const filteredMedia = React.useMemo(() => {
+    return (mediaDetails || []).filter(media => {
+      const year = parseInt((media.release_date || media.first_air_date || "").slice(0,4));
+      return (
+        (!filterLang || media.original_language === filterLang) &&
+        (!filterType || media.media_type === filterType) &&
+        (!filterCountry || (media.origin_country?.includes(filterCountry) || (media.production_countries?.some(c => c.iso_3166_1 === filterCountry))) ) &&
+        (!filterYear || (year >= filterYear[0] && year <= filterYear[1]))
+      );
+    });
+  }, [mediaDetails, filterLang, filterType, filterCountry, filterYear]);
+
   return (
     <>
       <SEO
@@ -56,6 +94,78 @@ export default function Watched() {
       <div className="page-container pt-20 pb-24 md:pb-0">
         <h1 className="section-title">{t("watched.title")}</h1>
 
+        {/* --- Filter Bar --- */}
+        <div className="flex flex-wrap gap-4 mb-8 items-end">
+          {/* Language Filter */}
+          <div className="w-40">
+            <label className="block text-xs font-semibold mb-1">Language</label>
+            <Select value={filterLang} onValueChange={setFilterLang}>
+              <SelectTrigger>
+                <SelectValue placeholder="All" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                {allLangs.map((lang) => (
+                  <SelectItem key={lang} value={lang}>{lang.toUpperCase()}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {/* Type Filter */}
+          <div className="w-40">
+            <label className="block text-xs font-semibold mb-1">Type</label>
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger>
+                <SelectValue placeholder="All" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                {allTypes.map((type) => (
+                  <SelectItem key={type} value={type}>{type === "movie" ? "Movie" : type === "tv" ? "Series" : type}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {/* Country Filter */}
+          <div className="w-40">
+            <label className="block text-xs font-semibold mb-1">Country</label>
+            <Select value={filterCountry} onValueChange={setFilterCountry}>
+              <SelectTrigger>
+                <SelectValue placeholder="All" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                {allCountries.map((country) => (
+                  <SelectItem key={country} value={country}>{country}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {/* Year Filter */}
+          <div className="flex flex-col w-56">
+            <label className="block text-xs font-semibold mb-1">Year Range</label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={Number.isFinite(minYear) ? minYear : 1900}
+                max={Number.isFinite(filterYear[1]) ? filterYear[1] : new Date().getFullYear()}
+                value={Number.isFinite(filterYear[0]) ? filterYear[0] : (Number.isFinite(minYear) ? minYear : 1900)}
+                onChange={e => setFilterYear([Number(e.target.value), filterYear[1]])}
+                className="w-20"
+              />
+              <span>-</span>
+              <Input
+                type="number"
+                min={Number.isFinite(filterYear[0]) ? filterYear[0] : (Number.isFinite(minYear) ? minYear : 1900)}
+                max={Number.isFinite(maxYear) ? maxYear : new Date().getFullYear()}
+                value={Number.isFinite(filterYear[1]) ? filterYear[1] : (Number.isFinite(maxYear) ? maxYear : new Date().getFullYear())}
+                onChange={e => setFilterYear([filterYear[0], Number(e.target.value)])}
+                className="w-20"
+              />
+            </div>
+          </div>
+        </div>
+
         {isLoading ? (
           <div className="media-grid">
             {Array.from({ length: 10 }).map((_, i) => (
@@ -65,9 +175,9 @@ export default function Watched() {
               />
             ))}
           </div>
-        ) : mediaDetails && mediaDetails.length > 0 ? (
+        ) : filteredMedia && filteredMedia.length > 0 ? (
           <div className="media-grid">
-            {mediaDetails.map((media: MediaDetails & {
+            {filteredMedia.map((media: MediaDetails & {
               userRating?: number;
               userNote?: string;
               userStatus?: string;
@@ -75,10 +185,7 @@ export default function Watched() {
             }) => {
               const title = getMediaTitle(media);
               const posterUrl = getImageUrl(media.poster_path, "w342");
-              const year = (media.release_date || media.first_air_date)?.slice(
-                0,
-                4,
-              );
+              const year = (media.release_date || media.first_air_date)?.slice(0, 4);
 
               return (
                 <Link

@@ -31,7 +31,10 @@
     "profile": "Profil",
     "privacy": "Gizlilik",
     "signIn": "Giriş Yap",
-    "signOut": "Çıkış Yap"
+    "signOut": "Çıkış Yap",
+    "genres": "Türler",
+    "decades": "Onyıllar",
+    "awards": "Ödüller"
   },
   "home": {
     "trending": "Trend",

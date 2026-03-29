@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
+import { MOVIE_GENRES, TV_GENRES } from "@/data/genres";
+import { discoverMovies, discoverTV } from "@/services/tmdb";
 import { Link } from "react-router-dom";
 import {
   getTrending,
@@ -9,7 +11,7 @@ import {
   getTopRatedTV,
 } from "@/services/tmdb";
 import { MediaSection } from "@/components/MediaSection";
-import { MediaCarousel } from "@/components/MediaCarousel";
+import { MediaCarouselEnhanced } from "@/components/MediaCarouselEnhanced";
 import { MediaCardSkeleton } from "@/components/MediaCard";
 import { HeroSection } from "@/components/HeroSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -62,14 +64,46 @@ function TrendingSectionSkeleton() {
   );
 }
 
+
 export default function Index() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { watched, watchlist } = useUserLists();
+  const language = i18n.language;
+
+  // --- More in this genre ---
+  const lastWatched = watched.length > 0 ? watched[watched.length - 1] : null;
+  const lastGenreId = lastWatched?.genre_ids?.[0] || null;
+  const lastGenreName = lastWatched?.media_type === "movie"
+    ? MOVIE_GENRES.find(g => g.id === lastGenreId)?.name
+    : TV_GENRES.find(g => g.id === lastGenreId)?.name;
+
+  const { data: moreInGenre, isLoading: loadingGenre } = useQuery({
+    queryKey: ["more-in-genre", lastGenreId, language],
+    queryFn: async () => {
+      if (!lastGenreId) return [];
+      const params = { with_genres: String(lastGenreId), sort_by: "popularity.desc", page: 1 };
+      const res = lastWatched.media_type === "movie"
+        ? await discoverMovies(params, language)
+        : await discoverTV(params, language);
+      return res.results || [];
+    },
+    enabled: !!lastGenreId,
+  });
+
+  // --- Trending in your country ---
+  const userCountry = (lastWatched?.origin_country?.[0]) || (lastWatched?.production_countries?.[0]?.iso_3166_1) || "US";
+  const { data: trendingCountry, isLoading: loadingCountry } = useQuery({
+    queryKey: ["trending-country", userCountry, language],
+    queryFn: async () => {
+      const res = await getTrending("all", "day", language, 1, includeAdult);
+      return (res.results || []).filter(m => (m.origin_country?.includes(userCountry) || m.production_countries?.some(c => c.iso_3166_1 === userCountry)));
+    },
+    enabled: !!userCountry,
+  });
   const { lastViewed } = useLastViewed();
   const { strictFiltering, moderateFiltering } = useContentPolicy();
   const includeAdult = !(strictFiltering || moderateFiltering);
-  const language = i18n.language;
   const shouldGateRecommendations =
     !user || (watched.length === 0 && watchlist.length === 0 && !lastViewed);
 
@@ -199,7 +233,7 @@ export default function Index() {
 
       {/* AI Movie Scout removed per request */}
 
-      <div className="page-container space-y-8 pb-24 md:pb-0">
+      <div className="page-container space-y-4 pb-16 md:pb-0">
         {criticalError && (
           <div className="rounded-lg border border-red-300 bg-red-100 p-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
             {t(
@@ -218,56 +252,72 @@ export default function Index() {
           </div>
         )}
 
-        {/* Phase 3: "Because You Liked" personalized row */}
-        {deferredEnabled && (
-          <Suspense fallback={null}>
-            <ContinueWatching />
-          </Suspense>
-        )}
 
-        {shouldGateRecommendations ? (
-          <section className="rounded-3xl border border-border/40 bg-card/70 p-6 md:p-8">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="space-y-2">
-                <h2 className="text-2xl font-bold text-foreground md:text-3xl">
+        {/* New layout: Based on Recent Activity on top, below it a 2-column row: Did You Watch (left), Recently Added Movies (right) */}
+        <div className="flex flex-col gap-8 mb-12">
+          {/* Top: Based on Your Recent Activity (or placeholder) */}
+          <div>
+            {shouldGateRecommendations ? (
+              <section className="rounded-3xl border border-border/40 bg-card/70 p-4 md:p-6 flex flex-col justify-center items-center min-h-[180px]">
+                <h2 className="text-lg font-bold text-foreground mb-2 text-center">
                   Personalized picks start after your first saves
                 </h2>
-                <p className="text-sm leading-7 text-muted-foreground md:text-base">
+                <p className="text-xs text-muted-foreground mb-3 text-center">
                   Sign up to get recommendations based on what you've actually watched.
                 </p>
-              </div>
-              <Button asChild className="btn-primary-glow">
-                <Link to={user ? "/watchlist" : "/signup"}>
-                  {user ? "Build Your Watchlist" : "Create Free Account"}
-                </Link>
-              </Button>
-            </div>
-          </section>
-        ) : (
-          deferredEnabled && (
-            <Suspense fallback={null}>
-              <BecauseYouLiked />
-            </Suspense>
-          )
-        )}
-
-        {/* Did You Watch? - New episodes for watched TV shows */}
-        {deferredEnabled && (
-          <Suspense fallback={null}>
-            <WatchedShowsNewEpisodes />
-          </Suspense>
-        )}
-
-        {/* Recently Added Movies */}
-        {deferredEnabled && (
-          <Suspense fallback={null}>
-            <RecentlyAddedMovies />
-          </Suspense>
-        )}
+                <Button asChild className="btn-primary-glow">
+                  <Link to={user ? "/watchlist" : "/signup"}>
+                    {user ? "Build Your Watchlist" : "Create Free Account"}
+                  </Link>
+                </Button>
+              </section>
+            ) : (
+              deferredEnabled && (
+                <Suspense fallback={null}>
+                  <BecauseYouLiked />
+                  {/* More in this genre */}
+                  {lastGenreId && (
+                    <MediaSection
+                      title={t("home.moreInGenre", { genre: lastGenreName || "Genre" })}
+                      items={moreInGenre?.filter(m => !watched.some(w => w.mediaId === m.id) && !watchlist.some(w => w.mediaId === m.id)).slice(0, 12) || []}
+                      loading={loadingGenre}
+                    />
+                  )}
+                  {/* Trending in your country */}
+                  {/* Trending in Your Country: show only if enough items, else hide */}
+                  {userCountry && trendingCountry && trendingCountry.filter(m => !watched.some(w => w.mediaId === m.id) && !watchlist.some(w => w.mediaId === m.id)).length >= 6 && (
+                    <MediaSection
+                      title={"Trending in Your Country"}
+                      items={trendingCountry.filter(m => !watched.some(w => w.mediaId === m.id) && !watchlist.some(w => w.mediaId === m.id)).slice(0, 12)}
+                      loading={loadingCountry}
+                    />
+                  )}
+                </Suspense>
+              )
+            )}
+          </div>
+          {/* Full-width: Did You Watch? */}
+          <div className="mb-12">
+            {deferredEnabled && (
+              <Suspense fallback={null}>
+                <WatchedShowsNewEpisodes />
+              </Suspense>
+            )}
+          </div>
+          {/* Full-width: Recently Added Movies */}
+          <div className="mb-12">
+            {deferredEnabled && (
+              <Suspense fallback={null}>
+                <RecentlyAddedMovies />
+              </Suspense>
+            )}
+          </div>
+        </div>
 
         {/* New Episodes Section removed per UI cleanup */}
 
-        <section>
+        {/* Discover section with top border and spacing */}
+        <section className="border-t border-border mt-12 pt-12 mb-16">
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="section-title mb-1">Discover</h2>
@@ -308,7 +358,7 @@ export default function Index() {
               (!deferredEnabled || loadingDay ? (
                 <TrendingSectionSkeleton />
               ) : (
-                <MediaCarousel
+                <MediaCarouselEnhanced
                   title="Trending Today"
                   items={trendingDay?.results || []}
                   showMoreLink="/search?sort=popularity.desc"
@@ -318,7 +368,7 @@ export default function Index() {
               (loadingWeek ? (
                 <TrendingSectionSkeleton />
               ) : (
-                <MediaCarousel
+                <MediaCarouselEnhanced
                   title="Trending This Week"
                   items={trendingWeek?.results || []}
                   showMoreLink="/search?sort=popularity.desc"
@@ -328,7 +378,7 @@ export default function Index() {
               (loadingCritical ? (
                 <TrendingSectionSkeleton />
               ) : (
-                <MediaCarousel
+                <MediaCarouselEnhanced
                   title="New Releases"
                   items={newReleases?.results || []}
                   showMoreLink="/search?sort=primary_release_date.desc&type=movie"
@@ -340,60 +390,9 @@ export default function Index() {
           </p>
         </section>
 
-        {/* Top Rated - Movies/Series Toggle */}
-        <section>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
-            <h2 className="section-title mb-0">
-              {t("home.topRated") || "Top Rated"}
-            </h2>
-            <div className="flex gap-2 rounded-lg border border-white/5 bg-card/50 p-1">
-              <button
-                type="button"
-                onClick={() => setTopRatedType("movie")}
-                className={`min-h-[44px] rounded px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                  topRatedType === "movie"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t("common.movies")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setTopRatedType("tv")}
-                className={`min-h-[44px] rounded px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                  topRatedType === "tv"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t("common.tvShows")}
-              </button>
-            </div>
-          </div>
-          {topRatedType === "movie" && (
-            <MediaSection
-              title={t("home.topRatedMovies") || "Top Rated Movies"}
-              items={topRatedMovies?.results || []}
-              loading={!deferredEnabled || loadingTopRatedMovies}
-              showMoreLink="/search?sort=vote_average.desc&type=movie"
-            />
-          )}
-          {topRatedType === "tv" && (
-            <MediaSection
-              title={t("home.topRatedSeries") || "Top Rated Series"}
-              items={topRatedTV?.results || []}
-              loading={!deferredEnabled || loadingTopRatedTV}
-              showMoreLink="/search?sort=vote_average.desc&type=tv"
-            />
-          )}
-        </section>
+        {/* Top Rated section removed per request. Optionally, add a more personal section here. */}
 
-        <FAQSection
-          title="Movie tracker FAQs"
-          intro="These quick answers are structured for search engines, AI assistants, and anyone deciding whether CineTrekker matches their movie and TV workflow."
-          items={faqItems}
-        />
+        {/* FAQSection removed as requested */}
       </div>
     </div>
   );

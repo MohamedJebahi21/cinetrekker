@@ -996,37 +996,7 @@ export default function Search() {
         </p>
       </div>
 
-      <section className="mb-8 rounded-3xl border border-border/40 bg-card/70 p-6 md:p-8">
-        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <article className="space-y-4">
-            <h2 className="text-2xl font-bold text-foreground md:text-3xl">
-              Search with structure, not guesswork
-            </h2>
-            <p className="text-sm leading-7 text-muted-foreground md:text-base">
-              CineTrekker search is built for people who want more than a plain
-              list of titles. This movie tracker helps you search by keyword,
-              filter by genre, narrow by language and runtime, and sort by
-              popularity or release signals so you can move from a vague idea to
-              a saved plan quickly.
-            </p>
-            <p className="text-sm leading-7 text-muted-foreground md:text-base">
-              Because every result connects to richer detail pages, watchlist
-              actions, and follow tools, the search page also acts as a guided
-              discovery system. That structure makes it easier for both visitors
-              and AI systems to understand how titles relate to the rest of the
-              site.
-            </p>
-          </article>
-          <aside className="rounded-3xl border border-border/40 bg-background/60 p-5 text-sm leading-7 text-muted-foreground">
-            <h3 className="text-lg font-semibold text-foreground">
-              Search ideas
-            </h3>
-            <p className="mt-3">Find a quick weekend movie under 90 minutes.</p>
-            <p>Browse a genre within one decade.</p>
-            <p>Filter by streaming provider before adding to your watchlist.</p>
-          </aside>
-        </div>
-      </section>
+      {/* Intro, search ideas, and help/FAQ blocks removed as requested */}
 
       {/* Advanced Filters (desktop) */}
       <div className="hidden md:block">
@@ -1191,31 +1161,7 @@ export default function Search() {
         </div>
       )}
 
-      <InternalLinksSection
-        title="Keep exploring"
-        links={[
-          {
-            to: "/trending",
-            title: "Trending titles",
-            description:
-              "Compare search results with the movies and series gaining traction right now.",
-          },
-          {
-            to: "/genres",
-            title: "Genre browser",
-            description:
-              "Move from keyword search into a more curated genre discovery flow.",
-          },
-          {
-            to: "/decades",
-            title: "Decade explorer",
-            description:
-              "Narrow your next search by era when you want a cleaner shortlist.",
-          },
-        ]}
-      />
-
-      <FAQSection title="Search FAQs" items={faqItems} />
+      {/* InternalLinksSection and FAQSection removed as requested */}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import Play from "lucide-react/dist/esm/icons/play";
@@ -34,6 +35,22 @@ export function HeroSection() {
   const includeAdult = !(strictFiltering || moderateFiltering);
   const language = i18n.language;
   const [showTrailer, setShowTrailer] = useState(false);
+  // Prevent background scroll when trailer is open
+  useEffect(() => {
+    if (showTrailer) {
+      document.body.style.overflow = 'hidden';
+      const handleEsc = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setShowTrailer(false);
+      };
+      window.addEventListener('keydown', handleEsc);
+      return () => {
+        document.body.style.overflow = '';
+        window.removeEventListener('keydown', handleEsc);
+      };
+    } else {
+      document.body.style.overflow = '';
+    }
+  }, [showTrailer]);
   const [allowTrailerFetch, setAllowTrailerFetch] = useState(false);
 
   useEffect(() => {
@@ -142,48 +159,64 @@ export function HeroSection() {
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/62 to-transparent" />
 
       {/* Trailer Overlay */}
-      {showTrailer && trailer && (
-        <div className="absolute inset-0 z-20 bg-black/95 flex items-center justify-center">
-          <button
+      {showTrailer && trailer && createPortal(
+        <>
+          {/* Blurred overlay, pointer-events only for closing */}
+          <div
+            className="fixed inset-0 z-[1000] backdrop-blur-md bg-black/40"
+            // style removed: pointerEvents: 'auto' is default for div
             onClick={() => setShowTrailer(false)}
-            className="absolute top-4 right-4 z-30 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-            aria-label={t("actions.close", "Close")}
+          />
+          {/* Trailer player, always above overlay, pointer-events enabled */}
+          <div
+            className="fixed inset-0 z-[1010] flex items-center justify-center"
+            // style removed: pointerEvents: 'none' replaced with class
+            className="fixed inset-0 z-[1010] flex items-center justify-center pointer-events-none"
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+            <div
+              className="w-full max-w-5xl aspect-video mx-4 relative"
+              // style removed: pointerEvents: 'auto' is default for div
+              onClick={e => e.stopPropagation()}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
+              <iframe
+                src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&rel=0`}
+                title={trailer.name}
+                className="w-full h-full rounded-xl"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                // style removed: background, replaced with Tailwind class
+                className="w-full h-full rounded-xl bg-black"
               />
-            </svg>
-          </button>
-          <div className="w-full max-w-5xl aspect-video mx-4">
-            <iframe
-              src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&rel=0`}
-              title={trailer.name}
-              className="w-full h-full rounded-xl"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
+              <button
+                onClick={() => setShowTrailer(false)}
+                className="absolute top-4 right-4 z-20 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                aria-label={t("actions.close", "Close")}
+                // style removed: pointerEvents: 'auto' is default for button
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
-        </div>
+        </>,
+        document.body
       )}
 
       <div className="relative container mx-auto px-4 py-24 md:py-40 pt-20 md:pt-32 z-10">
         <div className="max-w-2xl">
           {/* Main Page Heading */}
-          <h1 className="mb-3 max-w-xl text-4xl font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.65)] md:text-6xl">
-            Never forget a movie again.
-          </h1>
-          <p className="mb-5 max-w-xl text-base text-white/90 drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)] md:mb-7 md:text-xl">
-            Track what you've watched, build your watchlist, discover what's next.
-          </p>
+          {/* Removed marketing tagline */}
 
           {/* Featured / Trending Badge */}
           <div className="flex items-center gap-2 mb-3 md:mb-4">
@@ -233,21 +266,11 @@ export function HeroSection() {
               asChild
               size="default"
               className="btn-primary-glow h-11 w-full px-4 text-sm md:h-12 md:px-6 md:text-base sm:w-auto"
-              aria-label={user ? "Open your watchlist" : "Start your watchlist"}
+              aria-label="See Details"
             >
-              <Link to={user ? "/watchlist" : "/signup"}>
-                {user ? "Open Your Watchlist" : "Start Your Watchlist"}
+              <Link to={user ? `/details/${heroMedia?.id}` : "/signup"}>
+                See Details
               </Link>
-            </Button>
-
-            <Button
-              asChild
-              size="default"
-              variant="outline"
-              className="h-11 w-full border-white/20 bg-black/35 px-4 text-sm text-white hover:bg-white/10 md:h-12 md:px-6 md:text-base sm:w-auto"
-              aria-label="Browse movies"
-            >
-              <Link to="/search?type=movie">Browse Movies</Link>
             </Button>
 
             {trailer && (
@@ -296,38 +319,29 @@ export function HeroSection() {
                     </span>
                     <span className="sm:hidden">Watchlist</span>
                   </>
-                  )}
+                )}
+              </Button>
+            )}
+
+            {/* Add to Watched button placeholder */}
+            {user && (
+              <Button
+                size="default"
+                variant="outline"
+                onClick={() => {/* TODO: Implement add to watched */}}
+                className="w-full sm:w-auto gap-2 h-11 md:h-12 px-3 md:px-6 text-sm md:text-base border backdrop-blur-sm shadow-sm transition-all border-green-400/60 bg-green-500/20 text-green-100 hover:bg-green-500/28 hover:border-green-300/80"
+                aria-label="Add to Watched"
+              >
+                <Check className="w-4 h-4 md:w-5 md:h-5" />
+                <span className="hidden sm:inline">Add to Watched</span>
+                <span className="sm:hidden">Watched</span>
               </Button>
             )}
           </div>
 
-          <div className="mt-4">
-            <Link
-              to={buildMediaPath(mediaType, heroMedia.id, heroTitle)}
-              className="text-sm text-white/80 underline-offset-4 transition-colors hover:text-white hover:underline"
-            >
-              More about {heroTitle}
-            </Link>
-          </div>
+          {/* 'More about ...' link removed as requested */}
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            {[
-              { label: "Track Watched", icon: Check },
-              { label: "Build Watchlist", icon: Bookmark },
-              { label: "Discover New Favorites", icon: Sparkles },
-            ].map((feature) => {
-              const Icon = feature.icon;
-              return (
-                <div
-                  key={feature.label}
-                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white/90 backdrop-blur-sm"
-                >
-                  <Icon className="h-4 w-4 text-white" />
-                  <span>{feature.label}</span>
-                </div>
-              );
-            })}
-          </div>
+          {/* Feature buttons removed as requested */}
         </div>
       </div>
     </section>

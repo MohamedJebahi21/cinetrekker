@@ -293,21 +293,17 @@ function AnimatedRoutes() {
           <Route
             path="/watchlist"
             element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteSpinner />}>
-                  <Watchlist />
-                </Suspense>
-              </ProtectedRoute>
+              <Suspense fallback={<RouteSpinner />}>
+                <Watchlist />
+              </Suspense>
             }
           />
           <Route
             path="/watched"
             element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteSpinner />}>
-                  <Watched />
-                </Suspense>
-              </ProtectedRoute>
+              <Suspense fallback={<RouteSpinner />}>
+                <Watched />
+              </Suspense>
             }
           />
           <Route

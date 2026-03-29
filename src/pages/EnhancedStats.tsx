@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useUserLists } from "@/contexts/UserListsContext";
 import { Genre } from "@/types/media";
@@ -18,101 +18,152 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
-import { enrichMediaItems } from "@/lib/mediaEnrichment";
-import type { MediaDetails } from "@/types/media";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
 
-interface GenreStats {
-  name: string;
-  count: number;
-  hours: number;
-}
+function EnhancedStats() {
+  // ── All hooks must come first, before any early returns ──
 
-export default function EnhancedStats() {
   const { watched } = useUserLists();
   const { i18n, t } = useTranslation();
   const language = i18n.language;
 
-  const { data: mediaDetails } = useQuery({
+  const [selectedYear, setSelectedYear] = useState<number | "all">("all");
+  const [selectedType, setSelectedType] = useState<"all" | "movie" | "tv">("all");
+  const [selectedLang, setSelectedLang] = useState<string>("all");
+
+  const {
+    data: mediaDetails,
+    isLoading: mediaLoading,
+    error: mediaError,
+  } = useQuery({
     queryKey: [
-      "stats-details",
+      "enhanced-stats-details",
       watched.map((i) => `${i.mediaType}-${i.mediaId}`),
       language,
     ],
     queryFn: async () => {
+      const { enrichMediaItems } = await import("@/lib/mediaEnrichment");
       return enrichMediaItems(watched, {
         language,
         getReference: (item) => item,
         mapExtras: (item) => ({
           userRating: item.rating,
-          watchedAt: item.watchedAt || item.addedAt,
+          userNote: item.note,
+          userStatus: item.status,
+          watchedAt: item.watchedAt,
         }),
         logScope: "enhanced-stats",
-      }) as Promise<
-        Array<
-          MediaDetails & {
-            userRating?: number;
-            watchedAt?: string;
-          }
-        >
-      >;
+      });
     },
     enabled: watched.length > 0,
   });
 
-  // Calculate stats
-  const totalMovies =
-    mediaDetails?.filter((m) => m.media_type === "movie").length || 0;
-  const totalTV =
-    mediaDetails?.filter((m) => m.media_type === "tv").length || 0;
+  const safeMediaDetails = Array.isArray(mediaDetails) ? mediaDetails : [];
 
-  const totalHours =
-    mediaDetails?.reduce((acc, item) => {
-      const runtime =
-        item.runtime ||
-        (item.episode_run_time && item.episode_run_time[0]) ||
-        0;
-      const episodes =
-        item.media_type === "tv" ? item.number_of_episodes || 1 : 1;
-      return acc + (runtime * episodes) / 60;
-    }, 0) || 0;
+  const years = useMemo(() => {
+    const allYears = safeMediaDetails
+      .map((item) => {
+        const date = item.watchedAt || item.addedAt || item.release_date || item.first_air_date;
+        return date ? new Date(date).getFullYear() : null;
+      })
+      .filter((y): y is number => !!y);
+    return Array.from(new Set(allYears)).sort((a, b) => b - a);
+  }, [safeMediaDetails]);
 
-  const avgRating =
-    mediaDetails && mediaDetails.length > 0
-      ? mediaDetails.reduce((acc, item) => acc + (item.vote_average || 0), 0) /
-        mediaDetails.length
-      : 0;
+  const languages = useMemo(() => {
+    const all = safeMediaDetails
+      .map((item) => item.original_language)
+      .filter((l): l is string => !!l);
+    return Array.from(new Set(all)).sort();
+  }, [safeMediaDetails]);
 
-  // Genre breakdown
-  const genreMap = new Map<
-    number,
-    { name: string; count: number; hours: number }
-  >();
-  mediaDetails?.forEach((item) => {
-    const runtime =
-      item.runtime || (item.episode_run_time && item.episode_run_time[0]) || 0;
-    const episodes =
-      item.media_type === "tv" ? item.number_of_episodes || 1 : 1;
-    const hours = (runtime * episodes) / 60;
+  const filteredMedia = useMemo(() => {
+    return safeMediaDetails.filter((item) => {
+      if (selectedType !== "all" && item.media_type !== selectedType) return false;
+      if (selectedLang !== "all" && item.original_language !== selectedLang) return false;
+      if (selectedYear !== "all") {
+        const date = item.watchedAt || item.addedAt || item.release_date || item.first_air_date;
+        if (!date || new Date(date).getFullYear() !== selectedYear) return false;
+      }
+      return true;
+    });
+  }, [safeMediaDetails, selectedType, selectedLang, selectedYear]);
 
-    item.genres?.forEach((genre: Genre) => {
-      const existing = genreMap.get(genre.id) || {
-        name: genre.name,
-        count: 0,
-        hours: 0,
-      };
-      genreMap.set(genre.id, {
-        name: genre.name,
-        count: existing.count + 1,
-        hours: existing.hours + hours,
+  const totalMovies = useMemo(
+    () => filteredMedia.filter((i) => i.media_type === "movie").length,
+    [filteredMedia]
+  );
+  const totalTV = useMemo(
+    () => filteredMedia.filter((i) => i.media_type === "tv").length,
+    [filteredMedia]
+  );
+
+  const totalHours = useMemo(() => {
+    return filteredMedia.reduce((sum, item) => {
+      const mins = item.runtime || (item.episode_run_time?.[0] ?? 0);
+      return sum + mins / 60;
+    }, 0);
+  }, [filteredMedia]);
+
+  const avgRating = useMemo(() => {
+    const rated = filteredMedia.filter((i) => i.userRating);
+    if (!rated.length) return 0;
+    return rated.reduce((sum, i) => sum + (i.userRating ?? 0), 0) / rated.length;
+  }, [filteredMedia]);
+
+  const genreMap = useMemo(() => {
+    const map = new Map<number, { name: string; count: number; hours: number }>();
+    filteredMedia.forEach((item) => {
+      const mins = item.runtime || (item.episode_run_time?.[0] ?? 0);
+      (item.genres ?? []).forEach((g: Genre) => {
+        const existing = map.get(g.id);
+        if (existing) {
+          existing.count += 1;
+          existing.hours += mins / 60;
+        } else {
+          map.set(g.id, { name: g.name, count: 1, hours: mins / 60 });
+        }
       });
     });
-  });
+    return map;
+  }, [filteredMedia]);
 
-  const genreStats = Array.from(genreMap.values())
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 8);
+  const genreStats = useMemo(
+    () =>
+      Array.from(genreMap.values())
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 8),
+    [genreMap]
+  );
 
-  // Pie chart colors
+  // ── Early returns AFTER all hooks ──
+
+  if (mediaLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh]">
+        <span className="text-lg text-neutral-400">Loading stats...</span>
+      </div>
+    );
+  }
+
+  if (mediaError) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh]">
+        <div className="bg-red-700 text-white px-6 py-4 rounded-lg shadow">
+          <div className="font-bold mb-2">Failed to load stats</div>
+          <div className="text-sm break-all">{String(mediaError)}</div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Pie chart colors ──
   const COLORS = [
     "#8b5cf6",
     "#ec4899",
@@ -137,18 +188,70 @@ export default function EnhancedStats() {
       <div className="page-container pt-20 pb-24 md:pb-0">
         <h1 className="section-title">{t("stats.yourStats", "Your Stats")}</h1>
 
+        {/* Filters */}
+        <div className="flex flex-wrap gap-4 mb-8 items-end">
+          {/* Year Filter */}
+          <div className="min-w-[120px]">
+            <label className="block text-xs font-semibold mb-1 text-neutral-400">Year</label>
+            <Select
+              value={selectedYear.toString()}
+              onValueChange={(v) => setSelectedYear(v === "all" ? "all" : Number(v))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All years" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                {years.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Type Filter */}
+          <div className="min-w-[120px]">
+            <label className="block text-xs font-semibold mb-1 text-neutral-400">Type</label>
+            <Select value={selectedType} onValueChange={(v) => setSelectedType(v as any)}>
+              <SelectTrigger>
+                <SelectValue placeholder="All types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="movie">Movie</SelectItem>
+                <SelectItem value="tv">TV</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Language Filter */}
+          <div className="min-w-[120px]">
+            <label className="block text-xs font-semibold mb-1 text-neutral-400">Language</label>
+            <Select value={selectedLang} onValueChange={setSelectedLang}>
+              <SelectTrigger>
+                <SelectValue placeholder="All languages" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                {languages.map((lang) => (
+                  <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         {/* Overview Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
           <GlassStatCard
             icon={Film}
             label={t("stats.totalWatched", "Total Watched")}
-            value={watched.length}
+            value={filteredMedia.length}
             description={`${totalMovies} ${t("common.movies", "Movies").toLowerCase()}, ${totalTV} ${t("common.tvShows", "TV Shows").toLowerCase()}`}
             variant="primary"
             size="md"
             delay={0}
           />
-
           <GlassStatCard
             icon={Clock}
             label={t("stats.hoursWatched", "Hours Watched")}
@@ -160,7 +263,6 @@ export default function EnhancedStats() {
             size="md"
             delay={0.1}
           />
-
           <GlassStatCard
             icon={Star}
             label={t("stats.averageRating", "Average Rating")}
@@ -235,3 +337,5 @@ export default function EnhancedStats() {
     </>
   );
 }
+
+export default EnhancedStats;

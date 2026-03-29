@@ -18,7 +18,6 @@ const STATIC_ROUTES = [
   "/signup",
   "/genres",
   "/decades",
-  "/advanced-search",
   "/collections",
   "/awards",
   "/accessibility",

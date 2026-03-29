@@ -39,8 +39,8 @@ export function EmptyState({
       <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
         <Icon className="w-8 h-8 text-primary" />
       </div>
-      <h3 className="text-xl font-bold mb-2 title-display">{title}</h3>
-      {description && <p className="text-muted-foreground mb-6 leading-relaxed max-w-md">{description}</p>}
+      <h3 className="text-2xl font-bold mb-2 title-display">{title}</h3>
+      {description && <p className="text-base text-muted-foreground mb-6 leading-relaxed max-w-md">{description}</p>}
       {action && (
         <Button onClick={action.onClick} className="gap-2">
           {action.label}

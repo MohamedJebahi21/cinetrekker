@@ -39,6 +39,8 @@
     "refresh": "Refresh",
     "episode_one": "{{count}} episode",
     "episode_other": "{{count}} episodes"
+    ,"close": "Close"
+    ,"apply": "Apply"
   },
   "nav": {
     "home": "Home",
@@ -61,9 +63,15 @@
     "themeLight": "Light",
     "themeOled": "OLED",
     "achievements": "Achievements",
+    "trending": "Trending",
+    "following": "Following",
+    "yearInReview": "Year In Review",
     "closeMenu": "Close menu",
     "openMenu": "Open menu",
-    "main": "Main navigation"
+    "main": "Main navigation",
+    "genres": "Genres",
+    "decades": "Decades",
+    "awards": "Awards"
   },
   "calendar": {
     "title": "Release Calendar",
@@ -144,6 +152,10 @@
     "noResults": "No results found for \"{{query}}\"",
     "tryDifferent": "Try different keywords or check spelling",
     "clearSearch": "Clear search"
+    ,"lang": "Language"
+    ,"streaming": "Streaming"
+    ,"openFilters": "Open Filters"
+    ,"runtime": "Runtime"
   },
   "stats": {
     "signInToView": "Sign in to view your watching statistics",
@@ -181,6 +193,10 @@
     "noGenresPopulate": "No genres yet - watch some titles to populate this chart.",
     "daysTotal": "{{count}} days total",
     "outOfTen": "out of 10"
+    ,"total": "Total"
+    ,"watching": "Watching"
+    ,"completed": "Completed"
+    ,"planToWatch": "Plan to Watch"
   },
   "details": {
     "overview": "Overview",
@@ -205,6 +221,7 @@
     "followShow": "Follow Show",
     "unfollowShow": "Unfollow",
     "following": "Following"
+    ,"watchTrailer": "Watch Trailer"
   },
   "actions": {
     "addToWatchlist": "Add to Watchlist",
@@ -236,6 +253,11 @@
     "watchedAddError": "Failed to mark as watched",
     "watchedRemoveError": "Failed to remove from watched",
     "watchedUpdateError": "Failed to update watched item"
+    ,"rateAndReview": "Rate & Review"
+    ,"watchStatus": "Watch Status"
+    ,"yourRating": "Your Rating"
+    ,"yourThoughts": "Your Thoughts"
+    ,"notePlaceholder": "Write your thoughts here..."
   },
   "watchlist": {
     "title": "My Watchlist",
@@ -436,7 +458,20 @@
       "rating": "Rating",
       "newest": "Newest",
       "title": "Title"
+      ,"recentlyAdded": "Recently Added"
+      ,"highestRated": "Highest Rated"
+      ,"lowestRated": "Lowest Rated"
+      ,"titleAZ": "Title A-Z"
+      ,"titleZA": "Title Z-A"
     }
+    ,"all": "All"
+    ,"watching": "Watching"
+    ,"planToWatch": "Plan to Watch"
+    ,"completed": "Completed"
+    ,"dropped": "Dropped"
+    ,"title": "Title"
+    ,"status": "Status"
+    ,"sortBy": "Sort By"
   },
   "randomTrek": {
     "button": "Random Trek",

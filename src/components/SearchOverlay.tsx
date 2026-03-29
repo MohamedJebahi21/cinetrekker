@@ -139,7 +139,7 @@ export default function SearchOverlay() {
           >
             <div className="flex items-center gap-2 p-3">
               <Search className="w-5 h-5 text-muted-foreground ml-2" />
-              <div role="combobox" className="flex-1">
+              <div role="combobox" aria-expanded="false" aria-controls="search-results-list" className="flex-1">
                 <input
                   ref={inputRef}
                   type="text"
@@ -155,6 +155,7 @@ export default function SearchOverlay() {
               <button
                 onClick={() => setOpen(false)}
                 className="text-muted-foreground hover:text-foreground"
+                title="Close search overlay"
               >
                 <X className="w-5 h-5" />
               </button>

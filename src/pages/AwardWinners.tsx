@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { discoverMovies, discoverTV } from "@/services/tmdb";
 import { MediaCard } from "@/components/MediaCard";
@@ -6,9 +7,17 @@ import SEO from "@/components/SEO";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Award } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useContentPolicy } from "@/contexts/content-policy-context";
 import { applySafetyFilter } from "@/lib/contentFilter";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
+import { getMovieGenres, getTVGenres, searchPeople } from "@/services/tmdb";
 
 export default function AwardWinners() {
   const [selectedYear, setSelectedYear] = useState(
@@ -17,7 +26,45 @@ export default function AwardWinners() {
   const { strictFiltering, moderateFiltering } = useContentPolicy();
   const includeAdult = !(strictFiltering || moderateFiltering);
 
+
+  // Category filter (Oscar, Emmy, Golden Globe, etc.)
+  const [selectedCategory, setSelectedCategory] = useState<string>("oscar");
+  const categoryOptions = [
+    { value: "oscar", label: "Oscar" },
+    { value: "emmy", label: "Emmy" },
+    { value: "golden_globe", label: "Golden Globe" },
+    { value: "bafta", label: "BAFTA" },
+  ];
+
+  // Ceremony filter (for demo, just year for now)
   const years = Array.from({ length: 20 }, (_, i) => selectedYear - i);
+  const [selectedCeremony, setSelectedCeremony] = useState<number>(selectedYear);
+
+  // Actor filter (searchable)
+  const [actorQuery, setActorQuery] = useState("");
+  const [selectedActor, setSelectedActor] = useState<string>("");
+  const [actorOptions, setActorOptions] = useState<{ id: number; name: string }[]>([]);
+
+  // Fetch genres for category filter (optional, not shown in UI for now)
+  // const { data: movieGenres } = useQuery(["movie-genres"], () => getMovieGenres());
+  // const { data: tvGenres } = useQuery(["tv-genres"], () => getTVGenres());
+
+  // Actor search effect
+  React.useEffect(() => {
+    let ignore = false;
+    if (actorQuery.length < 2) {
+      setActorOptions([]);
+      return;
+    }
+    searchPeople(actorQuery).then((res) => {
+      if (!ignore) {
+        setActorOptions(res.results.map((p) => ({ id: p.id, name: p.name })));
+      }
+    });
+    return () => {
+      ignore = true;
+    };
+  }, [actorQuery]);
 
   // Fetch Oscar-nominated movies (using high vote average + vote count as proxy)
   const { data: oscarMovies, isLoading: loadingOscar } = useQuery({
@@ -93,18 +140,63 @@ export default function AwardWinners() {
           </div>
         </div>
 
-        {/* Year Selector */}
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-          {years.map((year) => (
-            <Badge
-              key={year}
-              variant={selectedYear === year ? "default" : "outline"}
-              className="cursor-pointer whitespace-nowrap"
-              onClick={() => setSelectedYear(year)}
-            >
-              {year}
-            </Badge>
-          ))}
+
+        {/* Filters */}
+        <div className="flex flex-wrap gap-4 mb-6 items-end">
+          {/* Category Filter */}
+          <div className="min-w-[160px]">
+            <label className="block text-xs font-semibold mb-1 text-neutral-400">Category</label>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categoryOptions.map((cat) => (
+                  <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {/* Ceremony Filter (Year) */}
+          <div className="min-w-[120px]">
+            <label className="block text-xs font-semibold mb-1 text-neutral-400">Ceremony</label>
+            <Select value={selectedCeremony.toString()} onValueChange={(v) => { setSelectedCeremony(Number(v)); setSelectedYear(Number(v)); }}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select year" />
+              </SelectTrigger>
+              <SelectContent>
+                {years.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {/* Actor Filter */}
+          <div className="min-w-[200px]">
+            <label className="block text-xs font-semibold mb-1 text-neutral-400">Actor</label>
+            <Select value={selectedActor} onValueChange={setSelectedActor}>
+              <SelectTrigger>
+                <SelectValue placeholder="Search actor" />
+              </SelectTrigger>
+              <SelectContent>
+                <div className="px-2 py-1">
+                  <input
+                    className="w-full px-2 py-1 rounded bg-neutral-800 text-sm text-white mb-1"
+                    placeholder="Type to search..."
+                    value={actorQuery}
+                    onChange={(e) => setActorQuery(e.target.value)}
+                  />
+                </div>
+                {actorOptions.length === 0 && actorQuery.length >= 2 ? (
+                  <div className="px-2 py-1 text-xs text-neutral-400">No results</div>
+                ) : (
+                  actorOptions.map((actor) => (
+                    <SelectItem key={actor.id} value={actor.id.toString()}>{actor.name}</SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <Tabs defaultValue="oscars" className="w-full">

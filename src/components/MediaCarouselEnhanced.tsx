@@ -89,11 +89,11 @@ export function MediaCarouselEnhanced({
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl md:text-2xl font-bold">{title}</h2>
+        <h2 className="text-xl md:text-2xl font-bold">{typeof title === 'string' ? title.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase()) : title}</h2>
         {showMoreLink && (
           <Link to={showMoreLink}>
             <Button variant="ghost" size="sm" className="gap-1">
-              {t('common.seeAll')}
+              {t('common.seeAll').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase())}
               <ChevronRight className="w-4 h-4" />
             </Button>
           </Link>
@@ -117,7 +117,7 @@ export function MediaCarouselEnhanced({
                 onClick={() => handleManualScroll('left')}
                 disabled={!canScroll.left}
                 className="absolute -left-4 md:-left-6 top-1/3 z-10 hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 group-hover/scroll:opacity-100"
-                aria-label={t('common.previous') || 'Previous'}
+                aria-label={t('common.previous') ? t('common.previous').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase()) : 'Previous'}
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
@@ -125,7 +125,7 @@ export function MediaCarouselEnhanced({
                 onClick={() => handleManualScroll('right')}
                 disabled={!canScroll.right}
                 className="absolute -right-4 md:-right-6 top-1/3 z-10 hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 group-hover/scroll:opacity-100"
-                aria-label={t('common.next') || 'Next'}
+                aria-label={t('common.next') ? t('common.next').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase()) : 'Next'}
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
@@ -135,12 +135,13 @@ export function MediaCarouselEnhanced({
           {/* Scrollable container with scroll-snap */}
           <div
             ref={scrollContainerRef}
-            className="flex gap-4 overflow-x-auto scroll-smooth overscroll-contain pb-2"
+            className="flex gap-4 overflow-x-auto scroll-smooth overscroll-contain hide-scrollbar"
             style={{
               scrollSnapType: `x ${scrollSnap}`,
               WebkitOverflowScrolling: 'touch',
               msOverflowStyle: 'none', // Hide scrollbar in IE/Edge
               scrollbarWidth: 'none', // Hide scrollbar in Firefox
+              paddingBottom: 0,
             }}
             onScroll={checkScroll}
           >
@@ -167,7 +168,7 @@ export function MediaCarouselEnhanced({
         </div>
       ) : (
         <div className="text-center py-12 text-muted-foreground">
-          {emptyMessage || t('common.noResults')}
+          {(emptyMessage || t('common.noResults')).replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase())}
         </div>
       )}
     </section>
