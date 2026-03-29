@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+// import { supabase } from "@/integrations/supabase/client";
+// import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { useUserLists } from "@/contexts/UserListsContext";
 import { Genre } from "@/types/media";
@@ -34,20 +34,6 @@ function EnhancedStats() {
   const { watched } = useUserLists();
   const { i18n, t } = useTranslation();
   const language = i18n.language;
-
-  const { user } = useAuth();
-  const { data: watchedEpisodesData } = useQuery({
-    queryKey: ["watched-episodes-count", user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("watched_episodes")
-        .select("show_id, season_number, episode_number")
-        .eq("user_id", user!.id);
-      if (error) throw error;
-      return data ?? [];
-    },
-    enabled: !!user?.id,
-  });
 
   const [selectedYear, setSelectedYear] = useState<number | "all">("all");
   type MediaTypeFilter = "all" | "movie" | "tv";
@@ -126,17 +112,12 @@ function EnhancedStats() {
 
   const totalHours = useMemo(() => {
     return filteredMedia.reduce((sum, item) => {
-      if (item.media_type === "movie") {
-        return sum + (item.runtime ?? 0) / 60;
-      } else {
-        const episodeRuntime = item.episode_run_time?.[0] ?? 45;
-        const episodeCount = (watchedEpisodesData ?? []).filter(
-          (ep) => ep.show_id === item.mediaId
-        ).length;
-        return sum + (episodeCount * episodeRuntime) / 60;
-      }
+      const mins = item.media_type === "movie"
+        ? (item.runtime ?? 0)
+        : (item.episode_run_time?.[0] ?? item.runtime ?? 45) * (item.number_of_episodes ?? 1);
+      return sum + mins / 60;
     }, 0);
-  }, [filteredMedia, watchedEpisodesData]);
+  }, [filteredMedia]);
 
   const avgRating = useMemo(() => {
     const rated = filteredMedia.filter((i) => i.userRating);
@@ -147,16 +128,9 @@ function EnhancedStats() {
   const genreMap = useMemo(() => {
     const map = new Map<number, { name: string; count: number; hours: number }>();
     filteredMedia.forEach((item) => {
-      let mins = 0;
-      if (item.media_type === "movie") {
-        mins = item.runtime || 0;
-      } else if (item.media_type === "tv") {
-        const episodeRuntime = item.episode_run_time?.[0] ?? 45;
-        const episodeCount = (watchedEpisodesData ?? []).filter(
-          (ep) => ep.show_id === item.mediaId
-        ).length;
-        mins = episodeCount * episodeRuntime;
-      }
+      const mins = item.media_type === "movie"
+        ? (item.runtime ?? 0)
+        : (item.episode_run_time?.[0] ?? item.runtime ?? 45) * (item.number_of_episodes ?? 1);
       (item.genres ?? []).forEach((g: Genre) => {
         const existing = map.get(g.id);
         if (existing) {
@@ -168,7 +142,7 @@ function EnhancedStats() {
       });
     });
     return map;
-  }, [filteredMedia, watchedEpisodesData]);
+  }, [filteredMedia]);
 
   const genreStats = useMemo(
     () =>
