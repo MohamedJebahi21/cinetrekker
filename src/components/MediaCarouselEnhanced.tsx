@@ -136,13 +136,7 @@ export function MediaCarouselEnhanced({
           <div
             ref={scrollContainerRef}
             className="flex gap-4 overflow-x-auto scroll-smooth overscroll-contain hide-scrollbar"
-            style={{
-              scrollSnapType: `x ${scrollSnap}`,
-              WebkitOverflowScrolling: 'touch',
-              msOverflowStyle: 'none', // Hide scrollbar in IE/Edge
-              scrollbarWidth: 'none', // Hide scrollbar in Firefox
-              paddingBottom: 0,
-            }}
+            // ...existing code...
             onScroll={checkScroll}
           >
             {/* Hide scrollbar in Webkit browsers */}
@@ -159,7 +153,7 @@ export function MediaCarouselEnhanced({
               <div
                 key={`${item.id}-${item.media_type || 'unknown'}`}
                 className="flex-shrink-0 w-[160px] sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
-                style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
+                // ...existing code...
               >
                 <MediaCard media={item} />
               </div>

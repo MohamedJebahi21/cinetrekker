@@ -136,12 +136,7 @@ export function MediaCarousel({
           <div
             ref={scrollContainerRef}
             className="flex gap-4 overflow-x-auto scroll-smooth overscroll-contain"
-            style={{
-              scrollSnapType: `x ${scrollSnap}`,
-              WebkitOverflowScrolling: "touch",
-              msOverflowStyle: "none",
-              scrollbarWidth: "none",
-            }}
+            // ...existing code...
             onScroll={checkScroll}
           >
             <style>{`
@@ -151,7 +146,7 @@ export function MediaCarousel({
               <div
                 key={`${item.id}-${item.media_type || "unknown"}`}
                 className="flex-shrink-0 w-[140px] md:w-[160px] h-80"
-                style={{ scrollSnapAlign: "start", scrollSnapStop: "always" }}
+                // ...existing code...
               >
                 <MediaCard media={item} />
               </div>
