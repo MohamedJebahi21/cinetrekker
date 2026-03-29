@@ -34,7 +34,8 @@ function EnhancedStats() {
   const language = i18n.language;
 
   const [selectedYear, setSelectedYear] = useState<number | "all">("all");
-  const [selectedType, setSelectedType] = useState<"all" | "movie" | "tv">("all");
+  type MediaTypeFilter = "all" | "movie" | "tv";
+  const [selectedType, setSelectedType] = useState<MediaTypeFilter>("all");
   const [selectedLang, setSelectedLang] = useState<string>("all");
 
   const {
@@ -64,7 +65,10 @@ function EnhancedStats() {
     enabled: watched.length > 0,
   });
 
-  const safeMediaDetails = Array.isArray(mediaDetails) ? mediaDetails : [];
+  const safeMediaDetails = useMemo(
+    () => (Array.isArray(mediaDetails) ? mediaDetails : []),
+    [mediaDetails]
+  );
 
   const years = useMemo(() => {
     const allYears = safeMediaDetails
@@ -212,7 +216,7 @@ function EnhancedStats() {
           {/* Type Filter */}
           <div className="min-w-[120px]">
             <label className="block text-xs font-semibold mb-1 text-neutral-400">Type</label>
-            <Select value={selectedType} onValueChange={(v) => setSelectedType(v as any)}>
+            <Select value={selectedType} onValueChange={(v) => setSelectedType(v as MediaTypeFilter)}>
               <SelectTrigger>
                 <SelectValue placeholder="All types" />
               </SelectTrigger>
