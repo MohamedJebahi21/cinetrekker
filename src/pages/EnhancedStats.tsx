@@ -221,12 +221,23 @@ function EnhancedStats() {
             delay={0.2}
           />
         </div>
-          {years.map((year) => (
-            <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+        <div className="min-w-[120px]">
+          <label className="block text-xs font-semibold mb-1 text-neutral-400">Year</label>
+          <Select
+            value={selectedYear.toString()}
+            onValueChange={(v) => setSelectedYear(v === "all" ? "all" : Number(v))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All years" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              {years.map((year) => (
+                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
           {/* Type Filter */}
           <div className="min-w-[120px]">
