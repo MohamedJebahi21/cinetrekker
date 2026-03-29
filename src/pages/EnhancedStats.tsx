@@ -383,9 +383,11 @@ function EnhancedStats() {
                 </ResponsiveContainer>
               </CardContent>
             </Card>
+
           </div>
         )}
-  );
+      </div>
+    );
 }
 
 export default EnhancedStats;
