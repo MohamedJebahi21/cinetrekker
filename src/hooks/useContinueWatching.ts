@@ -132,7 +132,11 @@ export function useContinueWatching(language: string) {
       );
 
       return items
-        .filter((item) => item.nextEpisode || item.lastWatchedEpisode)
+        .filter(
+          (item) =>
+            item.progressPercent < 100 &&
+            (item.nextEpisode || item.lastWatchedEpisode),
+        )
         .sort((a, b) => {
           const aDate =
             a.nextEpisode?.air_date ??

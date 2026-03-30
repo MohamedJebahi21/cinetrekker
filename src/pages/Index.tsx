@@ -56,11 +56,8 @@ export default function Index() {
     deferredEnabled,
     lastGenreId,
     lastGenreName,
-    userCountry,
     filteredGenreItems,
-    filteredCountryItems,
     moreInGenreQuery,
-    trendingCountryQuery,
     criticalDataQuery,
     trendingDayQuery,
     watchlistPreviewQuery,
@@ -78,7 +75,7 @@ export default function Index() {
     criticalDataQuery.isLoading || trendingDayQuery.isLoading,
   );
   const personalizedTimedOut = useLoadingTimeout(
-    moreInGenreQuery.isLoading || trendingCountryQuery.isLoading,
+    moreInGenreQuery.isLoading,
   );
 
   const faqItems = [
@@ -100,7 +97,7 @@ export default function Index() {
   ];
 
   const personalizedHasError = Boolean(
-    moreInGenreQuery.error || trendingCountryQuery.error,
+    moreInGenreQuery.error,
   );
 
   return (
@@ -150,13 +147,12 @@ export default function Index() {
               title="Personalized Recommendations"
               loading={
                 deferredEnabled &&
-                (moreInGenreQuery.isLoading || trendingCountryQuery.isLoading)
+                moreInGenreQuery.isLoading
               }
               timedOut={personalizedTimedOut}
               error={personalizedHasError ? new Error("recommendations") : null}
               onRetry={() => {
                 void moreInGenreQuery.refetch();
-                void trendingCountryQuery.refetch();
               }}
               skeleton={<TrendingSectionSkeleton />}
             >
@@ -185,14 +181,6 @@ export default function Index() {
                       items={filteredGenreItems}
                       loading={moreInGenreQuery.isLoading}
                       emptyMessage="We need a bit more watch history before this row fills in."
-                    />
-                  ) : null}
-
-                  {userCountry && filteredCountryItems.length > 0 ? (
-                    <MediaSection
-                      title="Trending in Your Country"
-                      items={filteredCountryItems}
-                      loading={trendingCountryQuery.isLoading}
                     />
                   ) : null}
                 </div>

@@ -80,7 +80,6 @@ const EnhancedStats = lazy(() => import("./pages/EnhancedStats"));
 const GenreBrowser = lazy(() => import("./pages/GenreBrowser"));
 const DecadeExplorer = lazy(() => import("./pages/DecadeExplorer"));
 const Achievements = lazy(() => import("./pages/Achievements"));
-const Collections = lazy(() => import("./pages/Collections"));
 const PrintWatchlist = lazy(() => import("./pages/PrintWatchlist"));
 const AwardWinners = lazy(() => import("./pages/AwardWinners"));
 const YearInReview = lazy(() => import("./pages/YearInReview"));
@@ -385,14 +384,7 @@ function AnimatedRoutes() {
               </Suspense>
             }
           />
-          <Route
-            path="/collections"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Collections />
-              </Suspense>
-            }
-          />
+          <Route path="/collections" element={<Navigate to="/" replace />} />
           <Route path="/trek-lists" element={<Navigate to="/" replace />} />
           <Route
             path="/awards"

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Dice5, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getTrending, getPopularMovies } from '@/services/tmdb';
 import { Media } from '@/types/media';
@@ -86,11 +86,7 @@ export function RandomTrekButton({ className, variant = 'default' }: RandomTrekB
             className
           )}
         >
-          {isPicking ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <Dice5 className="w-5 h-5" />
-          )}
+          {isPicking ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
           🎲 Surprise Me
         </Button>
 
@@ -111,11 +107,7 @@ export function RandomTrekButton({ className, variant = 'default' }: RandomTrekB
           className
         )}
       >
-        {isPicking ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <Dice5 className="w-4 h-4" />
-        )}
+        {isPicking ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
         🎲 Surprise Me
       </Button>
 

@@ -63,11 +63,6 @@ export function useHomePageData({
       ? MOVIE_GENRES.find((genre) => genre.id === lastGenreId)?.name
       : TV_GENRES.find((genre) => genre.id === lastGenreId)?.name;
 
-  const userCountry =
-    lastWatched?.origin_country?.[0] ||
-    lastWatched?.production_countries?.[0]?.iso_3166_1 ||
-    "US";
-
   const shouldGateRecommendations =
     !user || (watched.length === 0 && watchlist.length === 0 && !lastViewed);
 
@@ -119,21 +114,6 @@ export function useHomePageData({
       return response.results || [];
     },
     enabled: !!lastGenreId,
-  });
-
-  const trendingCountryQuery = useQuery({
-    queryKey: ["trending-country", userCountry, language, includeAdult],
-    queryFn: async () => {
-      const response = await getTrending("all", "day", language, 1, includeAdult);
-      return (response.results || []).filter(
-        (media) =>
-          media.origin_country?.includes(userCountry) ||
-          media.production_countries?.some(
-            (country) => country.iso_3166_1 === userCountry,
-          ),
-      );
-    },
-    enabled: !!userCountry,
   });
 
   const criticalDataQuery = useQuery({
@@ -201,14 +181,6 @@ export function useHomePageData({
     [excludedIds, moreInGenreQuery.data],
   );
 
-  const filteredCountryItems = useMemo(
-    () =>
-      ((trendingCountryQuery.data as Media[] | undefined) || [])
-        .filter((media) => !excludedIds.has(media.id))
-        .slice(0, 12),
-    [excludedIds, trendingCountryQuery.data],
-  );
-
   const hasDeferredErrors = Boolean(
     topRatedMoviesQuery.error ||
       topRatedTVQuery.error ||
@@ -223,11 +195,8 @@ export function useHomePageData({
     deferredEnabled,
     lastGenreId,
     lastGenreName,
-    userCountry,
     filteredGenreItems,
-    filteredCountryItems,
     moreInGenreQuery,
-    trendingCountryQuery,
     criticalDataQuery,
     watchlistPreviewQuery,
     topRatedMoviesQuery,
