@@ -287,7 +287,7 @@ export const MediaCard = React.memo(function MediaCard({
               {isWatchlistPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : null}
-              {optimisticInWatchlist ? "In Watchlist" : "Watchlist"}
+              {optimisticInWatchlist ? "✓ In Watchlist" : "+ Watchlist"}
             </Button>
             <Button
               type="button"
@@ -407,9 +407,7 @@ export const MediaCard = React.memo(function MediaCard({
                 {isWatchlistPending ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
-                {optimisticInWatchlist
-                  ? t("actions.removeFromWatchlist")
-                  : t("actions.addToWatchlist")}
+                {optimisticInWatchlist ? "✓ In Watchlist" : "+ Watchlist"}
               </Button>
                 </div>
               </TooltipTrigger>

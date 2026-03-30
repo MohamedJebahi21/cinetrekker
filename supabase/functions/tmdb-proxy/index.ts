@@ -50,6 +50,23 @@ const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const EXCLUDED_PARAMS = new Set(["endpoint", "maturity_level"]);
 type MaturityRating = "strict" | "moderate" | "none";
 
+function getCacheControlHeader(endpoint: string): string {
+  if (endpoint.startsWith("/trending")) {
+    return "public, max-age=300, s-maxage=300, stale-while-revalidate=600";
+  }
+
+  if (
+    /^\/(?:movie|tv)\/\d+$/.test(endpoint) ||
+    /^\/(?:movie|tv)\/\d+\/(?:credits|similar|recommendations|release_dates|content_ratings|watch\/providers|videos)$/.test(
+      endpoint,
+    )
+  ) {
+    return "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800";
+  }
+
+  return "public, max-age=300, s-maxage=300, stale-while-revalidate=600";
+}
+
 function parseMaturityRating(rawValue: string | null): MaturityRating {
   if (rawValue === "strict" || rawValue === "moderate" || rawValue === "none") {
     return rawValue;
@@ -318,7 +335,11 @@ serve(async (req) => {
 
     // 4. Return Response
     return new Response(JSON.stringify(data), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+        "Cache-Control": getCacheControlHeader(endpoint),
+      },
     });
   } catch (error: unknown) {
     const errorMessage =

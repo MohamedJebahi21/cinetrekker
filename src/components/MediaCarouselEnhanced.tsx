@@ -130,13 +130,13 @@ export function MediaCarouselEnhanced({
           {/* Scrollable container with scroll-snap */}
           <div
             ref={scrollContainerRef}
-            className="flex gap-4 overflow-x-auto scroll-smooth overscroll-contain hide-scrollbar"
+            className="hide-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 scroll-smooth overscroll-contain touch-pan-x"
             onScroll={checkScroll}
           >
             {items.map((item) => (
               <div
                 key={`${item.id}-${item.media_type || 'unknown'}`}
-                className="flex-shrink-0 w-[160px] sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
+                className="w-[160px] flex-shrink-0 snap-start sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
               >
                 <MediaCard media={item} />
               </div>

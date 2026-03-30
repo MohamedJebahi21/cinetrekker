@@ -12,6 +12,7 @@ import {
 import { useContentPolicy } from "@/contexts/content-policy-context";
 import { useLastViewed } from "@/hooks/useLastViewed";
 import type { Media } from "@/types/media";
+import { enrichMediaItems } from "@/lib/mediaEnrichment";
 
 type UserListEntry = {
   mediaId: number;
@@ -150,6 +151,25 @@ export function useHomePageData({
     },
   });
 
+  const watchlistPreviewQuery = useQuery({
+    queryKey: [
+      "home-watchlist-preview",
+      watchlist.map((item) => `${item.mediaType ?? item.media_type}-${item.mediaId}`),
+      language,
+    ],
+    queryFn: async () => {
+      return enrichMediaItems(watchlist.slice(0, 10), {
+        language,
+        getReference: (item) => ({
+          mediaId: item.mediaId,
+          mediaType: item.mediaType ?? item.media_type ?? "movie",
+        }),
+        logScope: "home-watchlist-preview",
+      }) as Promise<Media[]>;
+    },
+    enabled: Boolean(user) && watchlist.length > 0,
+  });
+
   const topRatedMoviesQuery = useQuery({
     queryKey: ["top-rated", "movie", language, includeAdult],
     queryFn: () => getTopRatedMovies(1, language, includeAdult),
@@ -209,6 +229,7 @@ export function useHomePageData({
     moreInGenreQuery,
     trendingCountryQuery,
     criticalDataQuery,
+    watchlistPreviewQuery,
     topRatedMoviesQuery,
     topRatedTVQuery,
     trendingDayQuery,

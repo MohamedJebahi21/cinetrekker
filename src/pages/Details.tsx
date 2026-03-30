@@ -8,6 +8,7 @@ import {
   Calendar,
   Bookmark,
   Check,
+  Plus,
   Pin,
   MessageSquare,
   ChevronLeft,
@@ -217,7 +218,7 @@ export default function Details() {
       return result;
     },
     enabled: isValidId && !!mediaType,
-    retry: 1,
+    retry: 3,
   });
 
   const { data: seasonDetails } = useQuery({
@@ -230,7 +231,7 @@ export default function Details() {
     queryKey: ["watch-providers", mediaType, mediaId, language],
     queryFn: () => getWatchProviders(mediaType, mediaId),
     enabled: !!mediaId,
-    retry: 1,
+    retry: 3,
   });
 
   const isBlockedByPolicy =
@@ -923,19 +924,17 @@ export default function Details() {
                 {isWatchlistPending ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    {optimisticInWatchlist
-                      ? t("actions.inWatchlist")
-                      : t("actions.addToWatchlist")}
+                    {optimisticInWatchlist ? "✓ In Watchlist" : "+ Watchlist"}
                   </>
                 ) : optimisticInWatchlist ? (
                   <>
                     <Bookmark className="w-4 h-4 fill-current" />
-                    {t("actions.inWatchlist")}
+                    ✓ In Watchlist
                   </>
                 ) : (
                   <>
                     <Plus className="w-4 h-4" />
-                    {t("actions.addToWatchlist")}
+                    + Watchlist
                   </>
                 )}
               </Button>

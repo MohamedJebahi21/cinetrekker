@@ -6,6 +6,23 @@ const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const EXCLUDED_PARAMS = new Set(["endpoint", "maturity_level"]);
 const logger = createServerLogger("tmdb-proxy");
 
+function getCacheControlHeader(endpoint) {
+  if (endpoint.startsWith("/trending")) {
+    return "s-maxage=300, stale-while-revalidate=600";
+  }
+
+  if (
+    /^\/(?:movie|tv)\/\d+$/.test(endpoint) ||
+    /^\/(?:movie|tv)\/\d+\/(?:credits|similar|recommendations|release_dates|content_ratings|watch\/providers|videos)$/.test(
+      endpoint,
+    )
+  ) {
+    return "s-maxage=86400, stale-while-revalidate=604800";
+  }
+
+  return "s-maxage=300, stale-while-revalidate=600";
+}
+
 function parseMaturityRating(rawValue) {
   if (rawValue === "strict" || rawValue === "moderate" || rawValue === "none") {
     return rawValue;
@@ -213,7 +230,7 @@ export default async function handler(req, res) {
       await response.json(),
       maturityRating,
     );
-    res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
+    res.setHeader("Cache-Control", getCacheControlHeader(endpoint));
     return json(res, 200, data);
   } catch (error) {
     logger.error("Failed to reach TMDB.", error);

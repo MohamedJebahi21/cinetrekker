@@ -1,0 +1,102 @@
+import type { ReactNode } from "react";
+import { RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+
+type HomeSectionStateProps = {
+  title: string;
+  description?: string;
+  children: ReactNode;
+  skeleton?: ReactNode;
+  loading?: boolean;
+  timedOut?: boolean;
+  error?: Error | null;
+  onRetry?: () => void;
+};
+
+function HomeSectionFallback({
+  title,
+  description,
+  onRetry,
+  retryLabel = "Try again",
+}: {
+  title: string;
+  description: string;
+  onRetry?: () => void;
+  retryLabel?: string;
+}) {
+  return (
+    <section className="ct-panel p-6 text-center">
+      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+      {onRetry ? (
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-4 gap-2"
+          onClick={onRetry}
+        >
+          <RefreshCw className="h-4 w-4" />
+          {retryLabel}
+        </Button>
+      ) : null}
+    </section>
+  );
+}
+
+export function HomeSectionState({
+  title,
+  description,
+  children,
+  skeleton,
+  loading = false,
+  timedOut = false,
+  error = null,
+  onRetry,
+}: HomeSectionStateProps) {
+  if (error) {
+    return (
+      <HomeSectionFallback
+        title={title}
+        description={
+          description ||
+          "We couldn't load this section right now. Please try again."
+        }
+        onRetry={onRetry}
+      />
+    );
+  }
+
+  if (timedOut) {
+    return (
+      <HomeSectionFallback
+        title={title}
+        description="This section is taking longer than expected. Retry to refresh it."
+        onRetry={onRetry}
+        retryLabel="Retry section"
+      />
+    );
+  }
+
+  if (loading) {
+    return skeleton ?? null;
+  }
+
+  return (
+    <ErrorBoundary
+      fallback={
+        <HomeSectionFallback
+          title={title}
+          description={
+            description ||
+            "Something went wrong rendering this section. Please try again."
+          }
+          onRetry={onRetry}
+        />
+      }
+      onRetry={onRetry}
+    >
+      {children}
+    </ErrorBoundary>
+  );
+}

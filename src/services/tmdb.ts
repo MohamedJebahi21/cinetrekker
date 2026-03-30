@@ -22,14 +22,18 @@ const TMDB_PROXY_URL = getTmdbProxyUrl();
 
 const CONTENT_POLICY_STORAGE_KEY = "cinetrekker_content_policy";
 const TMDB_CACHE_MAX_ENTRIES = 300;
+const TMDB_REQUEST_TIMEOUT_MS = 12_000;
 const tmdbResponseCache = new Map<string, { expiresAt: number; data: unknown }>();
 const tmdbInFlight = new Map<string, Promise<unknown>>();
 
 function getCacheTTL(endpoint: string): number {
-  if (endpoint.startsWith('/trending')) return 60_000; // 1 min for near-real-time sections
+  if (endpoint.startsWith('/trending')) return 5 * 60_000; // 5 min
   if (endpoint.startsWith('/search')) return 30_000; // short-lived search cache
-  if (endpoint.startsWith('/movie/') || endpoint.startsWith('/tv/') || endpoint.startsWith('/person/')) {
-    return 5 * 60_000; // details can be cached longer
+  if (endpoint.startsWith('/movie/') || endpoint.startsWith('/tv/')) {
+    return 24 * 60 * 60_000; // 24 hours for media details
+  }
+  if (endpoint.startsWith('/person/')) {
+    return 24 * 60 * 60_000;
   }
   return 2 * 60_000;
 }
@@ -157,6 +161,11 @@ const fetchTMDB = async <T>(
 
   try {
     const requestPromise = (async () => {
+      const controller = new AbortController();
+      const timeoutId = globalThis.setTimeout(() => {
+        controller.abort();
+      }, TMDB_REQUEST_TIMEOUT_MS);
+
       const headers: HeadersInit = {
         "Content-Type": "application/json",
       };
@@ -168,6 +177,9 @@ const fetchTMDB = async <T>(
 
       const response = await fetch(`${TMDB_PROXY_URL}?${params.toString()}`, {
         headers,
+        signal: controller.signal,
+      }).finally(() => {
+        globalThis.clearTimeout(timeoutId);
       });
 
       // Explicit 401 handling - Stop retries immediately
@@ -207,6 +219,9 @@ const fetchTMDB = async <T>(
     return result as T;
   } catch (error) {
     tmdbInFlight.delete(cacheKey);
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("Request timed out. Please try again.");
+    }
     // Ensure authentication errors propagate with correct type
     if (error instanceof Error && error.message === "AUTHENTICATION_ERROR") {
       throw error;

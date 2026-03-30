@@ -1,15 +1,20 @@
 import { lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { HeroSection } from "@/components/HeroSection";
+import { MediaCardSkeleton } from "@/components/MediaCard";
 import { MediaSection } from "@/components/MediaSection";
 import { MediaCarouselEnhanced } from "@/components/MediaCarouselEnhanced";
-import { MediaCardSkeleton } from "@/components/MediaCard";
-import { HeroSection } from "@/components/HeroSection";
+import { ContinueWatching } from "@/components/ContinueWatching";
 import SEO from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserLists } from "@/contexts/UserListsContext";
-import { Button } from "@/components/ui/button";
 import { useHomePageData } from "@/hooks/useHomePageData";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
+import { HomeSectionState } from "@/components/home/HomeSectionState";
+import { HomeStatsSnapshot } from "@/components/home/HomeStatsSnapshot";
+import { HomeWatchlistSkeleton } from "@/components/home/HomeWatchlistSkeleton";
 import {
   buildCanonicalUrl,
   toBreadcrumbJsonLd,
@@ -22,31 +27,22 @@ const BecauseYouLiked = lazy(() =>
     default: mod.BecauseYouLiked,
   })),
 );
-const WatchedShowsNewEpisodes = lazy(() =>
-  import("@/components/WatchedShowsNewEpisodes").then((mod) => ({
-    default: mod.WatchedShowsNewEpisodes,
-  })),
-);
-const RecentlyAddedMovies = lazy(() =>
-  import("@/components/RecentlyAddedMovies").then((mod) => ({
-    default: mod.RecentlyAddedMovies,
-  })),
-);
 
 function TrendingSectionSkeleton() {
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
-      {Array.from({ length: 6 }).map((_, index) => (
-        <MediaCardSkeleton
-          key={index}
-          delay={index * 70}
-          className="border-white/5 bg-card/40"
-        />
-      ))}
-    </div>
+    <section className="ct-panel p-4 md:p-6">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <MediaCardSkeleton
+            key={index}
+            delay={index * 70}
+            className="border-white/5 bg-card/40"
+          />
+        ))}
+      </div>
+    </section>
   );
 }
-
 
 export default function Index() {
   const { t, i18n } = useTranslation();
@@ -67,7 +63,7 @@ export default function Index() {
     trendingCountryQuery,
     criticalDataQuery,
     trendingDayQuery,
-    hasDeferredErrors,
+    watchlistPreviewQuery,
   } = useHomePageData({
     language,
     user,
@@ -77,8 +73,14 @@ export default function Index() {
 
   const newReleases = criticalDataQuery.data?.newReleases;
   const trendingWeek = criticalDataQuery.data?.trendingWeek;
-  const loadingWeek = criticalDataQuery.isLoading;
-  const loadingCritical = criticalDataQuery.isLoading;
+  const watchlistTimedOut = useLoadingTimeout(watchlistPreviewQuery.isLoading);
+  const discoveryTimedOut = useLoadingTimeout(
+    criticalDataQuery.isLoading || trendingDayQuery.isLoading,
+  );
+  const personalizedTimedOut = useLoadingTimeout(
+    moreInGenreQuery.isLoading || trendingCountryQuery.isLoading,
+  );
+
   const faqItems = [
     {
       question: "What is CineTrekker movie tracker used for?",
@@ -97,6 +99,10 @@ export default function Index() {
     },
   ];
 
+  const personalizedHasError = Boolean(
+    moreInGenreQuery.error || trendingCountryQuery.error,
+  );
+
   return (
     <div className="ct-page-shell min-h-screen">
       <SEO
@@ -110,101 +116,117 @@ export default function Index() {
           toFaqJsonLd(faqItems),
         ]}
       />
-      {/* High-Conversion Hero Section */}
+
       <HeroSection />
 
-      {/* AI Movie Scout removed per request */}
+      <div className="page-container space-y-8 pb-16 pt-8 md:pb-0">
+        {user ? (
+          <>
+            <ContinueWatching />
 
-      <div className="page-container space-y-4 pb-16 md:pb-0">
-        {criticalDataQuery.error && (
-          <div className="rounded-lg border border-red-300 bg-red-100 p-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
-            {t(
-              "common.error",
-              "Something went wrong loading featured content. Please try again.",
-            )}
-          </div>
-        )}
+            <HomeSectionState
+              title="Watchlist"
+              loading={watchlistPreviewQuery.isLoading}
+              timedOut={watchlistTimedOut}
+              error={
+                watchlistPreviewQuery.error instanceof Error
+                  ? watchlistPreviewQuery.error
+                  : null
+              }
+              onRetry={() => {
+                void watchlistPreviewQuery.refetch();
+              }}
+              skeleton={<HomeWatchlistSkeleton />}
+            >
+              <MediaSection
+                title="Watchlist"
+                items={watchlistPreviewQuery.data || []}
+                emptyMessage="Save a few titles and they will show up here for quick access."
+                showMoreLink="/watchlist"
+              />
+            </HomeSectionState>
 
-        {hasDeferredErrors && (
-          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-200">
-            {t(
-              "common.error",
-              "Some sections failed to load. You can keep browsing and retry shortly.",
-            )}
-          </div>
-        )}
+            <HomeSectionState
+              title="Personalized Recommendations"
+              loading={
+                deferredEnabled &&
+                (moreInGenreQuery.isLoading || trendingCountryQuery.isLoading)
+              }
+              timedOut={personalizedTimedOut}
+              error={personalizedHasError ? new Error("recommendations") : null}
+              onRetry={() => {
+                void moreInGenreQuery.refetch();
+                void trendingCountryQuery.refetch();
+              }}
+              skeleton={<TrendingSectionSkeleton />}
+            >
+              {shouldGateRecommendations ? (
+                <section className="ct-panel flex min-h-[180px] flex-col items-center justify-center p-6 text-center">
+                  <h2 className="text-xl font-semibold text-foreground">
+                    Personalized picks start after your first saves
+                  </h2>
+                  <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+                    Add a few movies or series to your watchlist so CineTrekker
+                    can put your next best watch ahead of the global feed.
+                  </p>
+                  <Button asChild className="btn-primary-glow mt-4">
+                    <Link to="/watchlist">Build My Watchlist</Link>
+                  </Button>
+                </section>
+              ) : (
+                <div className="space-y-8">
+                  <Suspense fallback={<TrendingSectionSkeleton />}>
+                    <BecauseYouLiked />
+                  </Suspense>
 
-
-        {/* New layout: Based on Recent Activity on top, below it a 2-column row: Did You Watch (left), Recently Added Movies (right) */}
-        <div className="flex flex-col gap-8 mb-12">
-          {/* Top: Based on Your Recent Activity (or placeholder) */}
-          <div>
-            {shouldGateRecommendations ? (
-              <section className="ct-panel flex min-h-[180px] flex-col items-center justify-center p-4 md:p-6">
-                <h2 className="text-lg font-bold text-foreground mb-2 text-center">
-                  Personalized picks start after your first saves
-                </h2>
-                <p className="text-xs text-muted-foreground mb-3 text-center">
-                  Sign up to get recommendations based on what you've actually watched.
-                </p>
-                <Button asChild className="btn-primary-glow">
-                  <Link to={user ? "/watchlist" : "/signup"}>
-                    {user ? "Build Your Watchlist" : "Create Free Account"}
-                  </Link>
-                </Button>
-              </section>
-            ) : (
-              deferredEnabled && (
-                <Suspense fallback={null}>
-                  <BecauseYouLiked />
-                  {/* More in this genre */}
-                  {lastGenreId && (
+                  {lastGenreId ? (
                     <MediaSection
-                      title={t("home.moreInGenre", { genre: lastGenreName || "Genre" })}
+                      title={`More in ${lastGenreName || "this genre"}`}
                       items={filteredGenreItems}
                       loading={moreInGenreQuery.isLoading}
+                      emptyMessage="We need a bit more watch history before this row fills in."
                     />
-                  )}
-                  {/* Trending in your country */}
-                  {/* Trending in Your Country: show only if enough items, else hide */}
-                  {userCountry && filteredCountryItems.length >= 6 && (
+                  ) : null}
+
+                  {userCountry && filteredCountryItems.length > 0 ? (
                     <MediaSection
-                      title={"Trending in Your Country"}
+                      title="Trending in Your Country"
                       items={filteredCountryItems}
                       loading={trendingCountryQuery.isLoading}
                     />
-                  )}
-                </Suspense>
-              )
-            )}
-          </div>
-          {/* Full-width: Did You Watch? */}
-          <div className="mb-12">
-            {deferredEnabled && (
-              <Suspense fallback={null}>
-                <WatchedShowsNewEpisodes />
-              </Suspense>
-            )}
-          </div>
-          {/* Full-width: Recently Added Movies */}
-          <div className="mb-12">
-            {deferredEnabled && (
-              <Suspense fallback={null}>
-                <RecentlyAddedMovies />
-              </Suspense>
-            )}
-          </div>
-        </div>
+                  ) : null}
+                </div>
+              )}
+            </HomeSectionState>
 
-        {/* New Episodes Section removed per UI cleanup */}
+            <HomeStatsSnapshot watched={watched} watchlist={watchlist} />
+          </>
+        ) : (
+          <section className="ct-panel flex min-h-[180px] flex-col items-center justify-center p-6 text-center">
+            <h2 className="text-xl font-semibold text-foreground">
+              Make every visit personal
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              Create a free account to keep your watchlist, progress, ratings,
+              and recommendations synced across devices.
+            </p>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <Button asChild className="btn-primary-glow">
+                <Link to="/signup">Create Free Account</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/search">Explore Trending Titles</Link>
+              </Button>
+            </div>
+          </section>
+        )}
 
-        {/* Discover section with top border and spacing */}
-        <section className="border-t border-border mt-12 pt-12 mb-16">
+        <section className="border-t border-border pt-10">
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="section-title mb-1">Discover</h2>
+              <h2 className="section-title mb-1">Trending Now</h2>
               <p className="text-sm text-muted-foreground">
-                Fresh picks from TMDB, organized for quick browsing.
+                Global discovery stays here so your personal library comes first.
               </p>
             </div>
             <div className="ct-toggle-group">
@@ -232,41 +254,49 @@ export default function Index() {
               ))}
             </div>
           </div>
-          <div
-            key={discoverTab}
-            className="ct-panel animate-fade-in p-4 md:p-6"
+
+          <HomeSectionState
+            title="Trending Now"
+            loading={!deferredEnabled || criticalDataQuery.isLoading || trendingDayQuery.isLoading}
+            timedOut={discoveryTimedOut}
+            error={
+              criticalDataQuery.error instanceof Error
+                ? criticalDataQuery.error
+                : trendingDayQuery.error instanceof Error
+                  ? trendingDayQuery.error
+                  : null
+            }
+            onRetry={() => {
+              void criticalDataQuery.refetch();
+              void trendingDayQuery.refetch();
+            }}
+            skeleton={<TrendingSectionSkeleton />}
           >
-            {discoverTab === "trending-day" &&
-              (!deferredEnabled || trendingDayQuery.isLoading ? (
-                <TrendingSectionSkeleton />
-              ) : (
+            <div key={discoverTab} className="animate-fade-in">
+              {discoverTab === "trending-day" ? (
                 <MediaCarouselEnhanced
                   title="Trending Today"
                   items={trendingDayQuery.data?.results || []}
                   showMoreLink="/search?sort=popularity.desc"
                 />
-              ))}
-            {discoverTab === "trending-week" &&
-              (loadingWeek ? (
-                <TrendingSectionSkeleton />
-              ) : (
+              ) : null}
+              {discoverTab === "trending-week" ? (
                 <MediaCarouselEnhanced
                   title="Trending This Week"
                   items={trendingWeek?.results || []}
                   showMoreLink="/search?sort=popularity.desc"
                 />
-              ))}
-            {discoverTab === "new-releases" &&
-              (loadingCritical ? (
-                <TrendingSectionSkeleton />
-              ) : (
+              ) : null}
+              {discoverTab === "new-releases" ? (
                 <MediaCarouselEnhanced
                   title="New Releases"
                   items={newReleases?.results || []}
                   showMoreLink="/search?sort=primary_release_date.desc&type=movie"
                 />
-              ))}
-          </div>
+              ) : null}
+            </div>
+          </HomeSectionState>
+
           <p className="mt-3 text-xs text-muted-foreground">
             This product uses the TMDB API but is not endorsed or certified by TMDB.
           </p>
