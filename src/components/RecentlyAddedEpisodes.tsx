@@ -11,6 +11,7 @@ import { applySafetyFilter } from '@/lib/contentFilter';
 import {
   Carousel,
   CarouselContent,
+  CarouselDots,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
@@ -118,6 +119,7 @@ export function RecentlyAddedEpisodes() {
           </CarouselContent>
           <CarouselPrevious className="hidden md:flex -left-4 bg-background/80 backdrop-blur-sm border-border" />
           <CarouselNext className="hidden md:flex -right-4 bg-background/80 backdrop-blur-sm border-border" />
+          <CarouselDots />
         </Carousel>
       )}
     </section>

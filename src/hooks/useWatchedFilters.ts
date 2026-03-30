@@ -23,57 +23,6 @@ export function useWatchedFilters(language: string) {
     new Date().getFullYear(),
   ]);
 
-  const filterOptions = useMemo(() => {
-    const langs = Array.from(
-      new Set(
-        watched
-          .map((item) => item.original_language ?? item.originalLanguage)
-          .filter(
-            (entry): entry is string =>
-              typeof entry === "string" && entry.trim() !== "",
-          ),
-      ),
-    ).sort();
-
-    const types = Array.from(
-      new Set(
-        watched
-          .map((item) => item.media_type ?? item.mediaType)
-          .filter(
-            (entry): entry is string =>
-              typeof entry === "string" && entry.trim() !== "",
-          ),
-      ),
-    ).sort();
-
-    const countries = Array.from(
-      new Set(watched.flatMap((item) => getEnrichedMediaCountries(item as EnrichedUserMedia))),
-    ).sort();
-
-    const years = watched
-      .map((item) => getEnrichedMediaYear(item as EnrichedUserMedia))
-      .filter((year): year is number => year !== null);
-
-    return {
-      langs,
-      types,
-      countries,
-      minYear: years.length ? Math.min(...years) : 1900,
-      maxYear: years.length ? Math.max(...years) : new Date().getFullYear(),
-    };
-  }, [watched]);
-
-  useEffect(() => {
-    setFilterYear([filterOptions.minYear, filterOptions.maxYear]);
-  }, [filterOptions.maxYear, filterOptions.minYear]);
-
-  const clearFilters = () => {
-    setFilterLang(ALL);
-    setFilterType(ALL);
-    setFilterCountry(ALL);
-    setFilterYear([filterOptions.minYear, filterOptions.maxYear]);
-  };
-
   const detailsQuery = useQuery({
     queryKey: [
       "watched-details",
@@ -105,6 +54,65 @@ export function useWatchedFilters(language: string) {
     () => (Array.isArray(detailsQuery.data) ? detailsQuery.data : []),
     [detailsQuery.data],
   );
+
+  const filterOptions = useMemo(() => {
+    const sourceItems =
+      mediaDetails.length > 0
+        ? mediaDetails
+        : (watched as unknown as EnrichedUserMedia[]);
+
+    const langs = Array.from(
+      new Set(
+        sourceItems
+          .map((item) => getEnrichedMediaLanguage(item))
+          .filter(
+            (entry): entry is string =>
+              typeof entry === "string" && entry.trim() !== "",
+          ),
+      ),
+    ).sort();
+
+    const types = Array.from(
+      new Set(
+        sourceItems
+          .map((item) => getEnrichedMediaType(item))
+          .filter(
+            (entry): entry is string =>
+              typeof entry === "string" && entry.trim() !== "",
+          ),
+      ),
+    ).sort();
+
+    const countries = Array.from(
+      new Set(sourceItems.flatMap((item) => getEnrichedMediaCountries(item))),
+    ).sort();
+
+    const years = sourceItems
+      .map((item) => getEnrichedMediaYear(item))
+      .filter((year): year is number => year !== null);
+
+    return {
+      langs,
+      types,
+      countries,
+      minYear: years.length ? Math.min(...years) : 1900,
+      maxYear: years.length ? Math.max(...years) : new Date().getFullYear(),
+    };
+  }, [mediaDetails, watched]);
+
+  useEffect(() => {
+    if (watched.length === 0) {
+      return;
+    }
+    setFilterYear([filterOptions.minYear, filterOptions.maxYear]);
+  }, [filterOptions.maxYear, filterOptions.minYear, watched.length]);
+
+  const clearFilters = () => {
+    setFilterLang(ALL);
+    setFilterType(ALL);
+    setFilterCountry(ALL);
+    setFilterYear([filterOptions.minYear, filterOptions.maxYear]);
+  };
 
   const filteredMedia = useMemo(() => {
     return mediaDetails

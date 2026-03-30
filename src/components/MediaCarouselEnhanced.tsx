@@ -35,12 +35,23 @@ export function MediaCarouselEnhanced({
   const { t } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScroll, setCanScroll] = useState({ left: false, right: true });
+  const [activePage, setActivePage] = useState(0);
+  const [pageCount, setPageCount] = useState(1);
 
   // Check if horizontal scrolling is possible and current position
   const checkScroll = () => {
     const container = scrollContainerRef.current;
     if (!container) return;
     const hasScroll = container.scrollWidth > container.clientWidth;
+    const totalPages = hasScroll
+      ? Math.max(1, Math.ceil(container.scrollWidth / container.clientWidth))
+      : 1;
+    const nextPage = hasScroll
+      ? Math.min(totalPages - 1, Math.round(container.scrollLeft / container.clientWidth))
+      : 0;
+
+    setPageCount(totalPages);
+    setActivePage(nextPage);
     setCanScroll({
       left: hasScroll && container.scrollLeft > 10,
       right: hasScroll && container.scrollLeft < container.scrollWidth - container.clientWidth - 10,
@@ -142,6 +153,32 @@ export function MediaCarouselEnhanced({
               </div>
             ))}
           </div>
+
+          {pageCount > 1 && (
+            <div className="mt-4 flex items-center justify-center gap-2">
+              {Array.from({ length: pageCount }).map((_, index) => (
+                <button
+                  key={`${title}-page-${index}`}
+                  type="button"
+                  onClick={() => {
+                    const container = scrollContainerRef.current;
+                    if (!container) return;
+                    container.scrollTo({
+                      left: container.clientWidth * index,
+                      behavior: "smooth",
+                    });
+                  }}
+                  className={`rounded-full transition-all ${
+                    index === activePage
+                      ? "h-2.5 w-6 bg-primary"
+                      : "h-2.5 w-2.5 bg-primary/30 hover:bg-primary/55"
+                  }`}
+                  aria-label={`Go to carousel page ${index + 1}`}
+                  aria-pressed={index === activePage}
+                />
+              ))}
+            </div>
+          )}
         </div>
       ) : (
         <div className="text-center py-12 text-muted-foreground">

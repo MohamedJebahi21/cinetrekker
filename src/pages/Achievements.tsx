@@ -247,17 +247,17 @@ export default function Achievements() {
         canonical="https://cinetrekker.vercel.app/achievements"
       />
 
-      <div className="min-h-screen bg-gradient-to-br from-[#18181b] via-[#232946] to-[#0f172a] px-4 py-10">
+      <div className="ct-page-shell min-h-screen px-4 py-10">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-4xl font-bold tracking-tight">Achievements</h1>
-              <p className="text-neutral-400 mt-1">Your cinematic milestones</p>
+              <h1 className="text-4xl font-bold tracking-tight text-foreground">Achievements</h1>
+              <p className="mt-1 text-muted-foreground">Your cinematic milestones</p>
             </div>
             <Link
               to="/profile"
-              className="flex items-center gap-2 text-sm text-neutral-400 hover:text-white transition-colors"
+              className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Profile
@@ -265,16 +265,16 @@ export default function Achievements() {
           </div>
 
           {/* Progress Overview */}
-          <Card className="mb-10 border-white/10 bg-white/5 backdrop-blur-xl">
+          <Card className="ct-panel mb-10">
             <CardContent className="pt-6">
               <div className="flex justify-between items-center mb-4">
                 <p className="font-semibold">Overall Progress</p>
-                <p className="text-sm text-neutral-400">
+                <p className="text-sm text-muted-foreground">
                   {unlockedAchievements} / {totalAchievements} unlocked
                 </p>
               </div>
-              <Progress value={completionPercent} className="h-2.5 bg-white/10" />
-              <p className="text-right text-xs text-neutral-500 mt-2">{completionPercent}% Complete</p>
+              <Progress value={completionPercent} className="h-2.5 bg-muted/40" />
+              <p className="mt-2 text-right text-xs text-muted-foreground">{completionPercent}% Complete</p>
             </CardContent>
           </Card>
 
@@ -282,7 +282,7 @@ export default function Achievements() {
           <div className="space-y-12">
             {groups.map((group) => (
               <section key={group.id}>
-                <h2 className="text-2xl font-semibold mb-6 text-white tracking-tight border-b border-white/10 pb-3">
+                <h2 className="mb-6 border-b border-border/40 pb-3 text-2xl font-semibold tracking-tight text-foreground">
                   {group.title}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -292,16 +292,16 @@ export default function Achievements() {
                       className={cn(
                         "relative overflow-hidden border transition-all duration-300 group",
                         item.unlocked 
-                          ? "border-emerald-500/50 bg-emerald-950/30 shadow-lg shadow-emerald-500/10" 
-                          : "border-white/10 bg-white/5 hover:bg-white/10"
+                          ? "border-primary/35 bg-primary/10 shadow-lg shadow-primary/10"
+                          : "border-border/50 bg-card/70 hover:bg-card/85"
                       )}
                     >
                       {item.unlocked ? (
-                        <div className="absolute top-4 right-4 text-emerald-400">
+                        <div className="absolute top-4 right-4 text-primary">
                           <Trophy className="h-5 w-5" />
                         </div>
                       ) : (
-                        <div className="absolute top-4 right-4 text-neutral-500">
+                        <div className="absolute top-4 right-4 text-muted-foreground">
                           <Lock className="h-4 w-4" />
                         </div>
                       )}
@@ -314,15 +314,15 @@ export default function Achievements() {
                       </CardHeader>
 
                       <CardContent className="space-y-3">
-                        <p className="text-neutral-300 text-sm leading-relaxed">
+                        <p className="text-sm leading-relaxed text-muted-foreground">
                           {item.description}
                         </p>
                         {item.unlocked ? (
-                          <p className="text-emerald-400 text-sm font-medium">
+                          <p className="text-sm font-medium text-primary">
                             Unlocked {item.unlockedLabel || "Recently"}
                           </p>
                         ) : (
-                          <p className="text-neutral-400 text-sm">
+                          <p className="text-sm text-muted-foreground">
                             {item.progressLabel}
                           </p>
                         )}

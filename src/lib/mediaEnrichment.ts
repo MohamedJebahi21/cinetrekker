@@ -72,6 +72,31 @@ export async function enrichMediaItems<
     items.map((item) => fetchMediaDetailsByReference(getReference(item), language)),
   );
 
+  const fallbackEntries = settled.flatMap((result, index) => {
+    if (result.status === "fulfilled") {
+      return [];
+    }
+
+    const reference = getReference(items[index]);
+    return [
+      {
+        mediaType: reference.mediaType,
+        mediaId: reference.mediaId,
+        message:
+          result.reason instanceof Error
+            ? result.reason.message
+            : String(result.reason),
+      },
+    ];
+  });
+
+  if (fallbackEntries.length > 0) {
+    enrichmentLogger.warn(`${logScope}: fallback`, {
+      count: fallbackEntries.length,
+      items: fallbackEntries.slice(0, 5),
+    });
+  }
+
   return settled.map((result, index) => {
     const item = items[index];
     const reference = getReference(item);
@@ -86,15 +111,6 @@ export async function enrichMediaItems<
         ...extras,
       } as Media & TExtra;
     }
-
-    enrichmentLogger.warn(`${logScope}: fallback`, {
-      mediaType: reference.mediaType,
-      mediaId: reference.mediaId,
-      message:
-        result.reason instanceof Error
-          ? result.reason.message
-          : String(result.reason),
-    });
 
     return createFallbackMedia(reference, extras) as Media & TExtra;
   });

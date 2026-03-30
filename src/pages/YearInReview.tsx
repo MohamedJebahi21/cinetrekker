@@ -20,7 +20,7 @@ import {
 } from "recharts";
 import { useTranslation } from "react-i18next";
 
-const COLORS = ["#E50914", "#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A"];
+const COLORS = ["#E50914", "#ff6b73", "#f97316", "#f59e0b", "#fb7185"];
 
 type MovieDetails = Awaited<ReturnType<typeof getMovieDetails>>;
 type TVDetails = Awaited<ReturnType<typeof getTVDetails>>;
@@ -146,11 +146,11 @@ export default function YearInReview() {
     return (
       <>
         <SEO title={`${currentYear} Year in Review`} />
-        <div className="min-h-screen bg-gradient-to-br from-[#18181b] via-[#232946] to-[#0f172a] flex items-center justify-center px-4">
-          <Card className="max-w-md text-center p-12 bg-white/5 border-white/10">
-            <Calendar className="h-12 w-12 mx-auto text-neutral-400 mb-4" />
-            <h2 className="text-2xl font-semibold mb-2">No Activity Yet</h2>
-            <p className="text-neutral-400">
+        <div className="ct-page-shell flex min-h-screen items-center justify-center px-4">
+          <Card className="ct-panel max-w-md p-12 text-center">
+            <Calendar className="mx-auto mb-4 h-12 w-12 text-primary" />
+            <h2 className="mb-2 text-2xl font-semibold text-foreground">No Activity Yet</h2>
+            <p className="text-muted-foreground">
               Start watching in {currentYear} to see your Year in Review!
             </p>
           </Card>
@@ -167,67 +167,67 @@ export default function YearInReview() {
         canonical="https://cinetrekker.vercel.app/year-in-review"
       />
 
-      <div className="min-h-screen bg-gradient-to-br from-[#18181b] via-[#232946] to-[#0f172a] px-4 py-10">
+      <div className="ct-page-shell min-h-screen px-4 py-10">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="flex items-center gap-4 mb-10">
-            <div className="p-3 bg-white/10 rounded-2xl">
-              <Calendar className="h-9 w-9 text-amber-400" />
+            <div className="rounded-2xl bg-primary/12 p-3">
+              <Calendar className="h-9 w-9 text-primary" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold tracking-tight">{currentYear} Year in Review</h1>
-              <p className="text-neutral-400 text-lg">Your cinematic journey this year</p>
+              <h1 className="text-4xl font-bold tracking-tight text-foreground">{currentYear} Year in Review</h1>
+              <p className="text-lg text-muted-foreground">Your cinematic journey this year</p>
             </div>
           </div>
 
           {/* Overview Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            <Card className="bg-white/5 border-white/10 p-6 rounded-3xl backdrop-blur-xl">
+            <Card className="ct-panel rounded-3xl p-6">
               <div className="flex items-center gap-3 mb-4">
-                <TrendingUp className="h-6 w-6 text-emerald-400" />
+                <TrendingUp className="h-6 w-6 text-primary" />
                 <h3 className="font-semibold text-lg">Total Watched</h3>
               </div>
-              <p className="text-5xl font-bold text-white">{totalWatched}</p>
-              <p className="text-neutral-400 mt-1">
+              <p className="text-5xl font-bold text-foreground">{totalWatched}</p>
+              <p className="mt-1 text-muted-foreground">
                 {thisYearMovies.length} movies • {thisYearTV.length} TV shows
               </p>
             </Card>
 
-            <Card className="bg-white/5 border-white/10 p-6 rounded-3xl backdrop-blur-xl">
+            <Card className="ct-panel rounded-3xl p-6">
               <div className="flex items-center gap-3 mb-4">
-                <Clock className="h-6 w-6 text-amber-400" />
+                <Clock className="h-6 w-6 text-primary" />
                 <h3 className="font-semibold text-lg">Time Invested</h3>
               </div>
-              <p className="text-5xl font-bold text-white">{totalHours}h</p>
+              <p className="text-5xl font-bold text-foreground">{totalHours}h</p>
               <p className="text-neutral-400 mt-1">≈ {totalDays} days of content</p>
             </Card>
 
-            <Card className="bg-white/5 border-white/10 p-6 rounded-3xl backdrop-blur-xl">
+            <Card className="ct-panel rounded-3xl p-6">
               <div className="flex items-center gap-3 mb-4">
-                <Award className="h-6 w-6 text-violet-400" />
+                <Award className="h-6 w-6 text-primary" />
                 <h3 className="font-semibold text-lg">Favorite Genre</h3>
               </div>
-              <p className="text-3xl font-bold text-white truncate">
+              <p className="text-3xl font-bold text-foreground truncate">
                 {genreData[0]?.name || "—"}
               </p>
-              <p className="text-neutral-400 mt-1">
+              <p className="mt-1 text-muted-foreground">
                 {genreData[0]?.value || 0} titles
               </p>
             </Card>
 
-            <Card className="bg-white/5 border-white/10 p-6 rounded-3xl backdrop-blur-xl">
+            <Card className="ct-panel rounded-3xl p-6">
               <div className="flex items-center gap-3 mb-4">
-                <Flame className="h-6 w-6 text-orange-400" />
+                <Flame className="h-6 w-6 text-primary" />
                 <h3 className="font-semibold text-lg">Busiest Month</h3>
               </div>
-              <p className="text-3xl font-bold text-white">{busiestMonth.month}</p>
-              <p className="text-neutral-400 mt-1">{busiestMonth.count} titles watched</p>
+              <p className="text-3xl font-bold text-foreground">{busiestMonth.month}</p>
+              <p className="mt-1 text-muted-foreground">{busiestMonth.count} titles watched</p>
             </Card>
           </div>
 
           {/* Tabs Section */}
           <Tabs defaultValue="genres" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-white/5 border border-white/10 rounded-2xl p-1">
+            <TabsList className="grid w-full grid-cols-3 rounded-2xl border border-border/50 bg-card/70 p-1">
               <TabsTrigger value="genres" className="rounded-xl">Genres</TabsTrigger>
               <TabsTrigger value="timeline" className="rounded-xl">Activity</TabsTrigger>
               <TabsTrigger value="highlights" className="rounded-xl">Top Rated</TabsTrigger>
@@ -235,7 +235,7 @@ export default function YearInReview() {
 
             {/* Genre Breakdown */}
             <TabsContent value="genres" className="mt-6">
-              <Card className="bg-white/5 border-white/10 rounded-3xl p-8 backdrop-blur-xl">
+              <Card className="ct-panel rounded-3xl p-8">
                 <CardHeader className="px-0 pb-6">
                   <CardTitle>Your Favorite Genres</CardTitle>
                 </CardHeader>
@@ -264,7 +264,7 @@ export default function YearInReview() {
 
             {/* Monthly Timeline */}
             <TabsContent value="timeline" className="mt-6">
-              <Card className="bg-white/5 border-white/10 rounded-3xl p-8 backdrop-blur-xl">
+              <Card className="ct-panel rounded-3xl p-8">
                 <CardHeader className="px-0 pb-6">
                   <CardTitle>Monthly Watching Activity</CardTitle>
                 </CardHeader>
@@ -283,7 +283,7 @@ export default function YearInReview() {
 
             {/* Top Rated Highlights */}
             <TabsContent value="highlights" className="mt-6">
-              <Card className="bg-white/5 border-white/10 rounded-3xl p-8 backdrop-blur-xl">
+              <Card className="ct-panel rounded-3xl p-8">
                 <CardHeader className="px-0 pb-6">
                   <CardTitle>Top Rated This Year</CardTitle>
                 </CardHeader>

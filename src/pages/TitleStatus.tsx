@@ -30,7 +30,7 @@ const TitleStatus = () => {
         description="The requested resource is unavailable."
       />
 
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="flex min-h-screen items-center justify-center">
         <div className="page-container py-24 pb-24 text-center md:pb-0">
           <div className="mb-6 inline-flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/10 shadow-glow">
             <Film className="h-12 w-12 text-primary" />

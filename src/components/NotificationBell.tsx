@@ -42,7 +42,6 @@ export function NotificationBell() {
             <button
               type="button"
               onClick={() => markAllRead()}
-              aria-label="Mark all notifications as read"
               className="rounded-sm px-1 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               Mark all read
@@ -60,11 +59,6 @@ export function NotificationBell() {
             <button
               key={n.id}
               type="button"
-              aria-label={
-                n.is_read
-                  ? `Notification: ${n.message}`
-                  : `Unread notification: ${n.message}`
-              }
               className={cn(
                 "flex w-full items-start gap-2 px-3 py-2 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
                 !n.is_read && "bg-primary/5",

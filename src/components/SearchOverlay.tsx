@@ -155,6 +155,7 @@ export default function SearchOverlay() {
               <button
                 onClick={() => setOpen(false)}
                 className="text-muted-foreground hover:text-foreground"
+                aria-label={t("common.close", "Close")}
                 title="Close search overlay"
               >
                 <X className="w-5 h-5" />
@@ -192,18 +193,14 @@ export default function SearchOverlay() {
                             {getImageUrl(thumbPath, "w92") ? (
                               <Image
                                 src={getImageUrl(thumbPath, "w92")!}
-                                srcSet={`${getImageUrl(thumbPath, "w92")!} 92w, ${getImageUrl(thumbPath, "w185")!} 185w`}
-                                sizes="48px"
-                                width={48}
-                                height={64}
-                                alt={
-                                  item.media_type === "person"
-                                    ? `${item.name} profile`
-                                    : `${item.title || item.name} poster`
-                                }
-                                className="w-full h-full object-cover bg-muted"
-                                loading="lazy"
-                              />
+                              srcSet={`${getImageUrl(thumbPath, "w92")!} 92w, ${getImageUrl(thumbPath, "w185")!} 185w`}
+                              sizes="48px"
+                              width={48}
+                              height={64}
+                              alt=""
+                              className="w-full h-full object-cover bg-muted"
+                              loading="lazy"
+                            />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                                 {item.media_type === "person" ? (

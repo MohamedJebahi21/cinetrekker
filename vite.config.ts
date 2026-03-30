@@ -174,6 +174,14 @@ export default defineConfig(({ mode }) => {
               return "vendor-supabase";
             }
 
+            if (
+              id.includes("node_modules/mapbox-gl") ||
+              id.includes("/src/components/FilmingLocationsMap.tsx") ||
+              id.includes("/src/pages/LocationDetails.tsx")
+            ) {
+              return "location-map";
+            }
+
             return undefined;
           },
         },

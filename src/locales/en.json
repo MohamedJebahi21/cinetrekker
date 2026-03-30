@@ -38,7 +38,8 @@
     "updated": "Updated",
     "refresh": "Refresh",
     "episode_one": "{{count}} episode",
-    "episode_other": "{{count}} episodes"
+    "episode_other": "{{count}} episodes",
+    "readMore": "Read More"
     ,"close": "Close"
     ,"apply": "Apply"
   },
@@ -160,6 +161,36 @@
     ,"streaming": "Streaming"
     ,"openFilters": "Open Filters"
     ,"runtime": "Runtime"
+    ,"langOptions": {
+      "english": "English",
+      "spanish": "Spanish",
+      "french": "French",
+      "german": "German",
+      "italian": "Italian",
+      "portuguese": "Portuguese",
+      "japanese": "Japanese",
+      "korean": "Korean",
+      "chinese": "Chinese",
+      "arabic": "Arabic",
+      "hindi": "Hindi",
+      "turkish": "Turkish",
+      "russian": "Russian"
+    }
+    ,"streamingOptions": {
+      "netflix": "Netflix",
+      "amazonPrime": "Amazon Prime",
+      "disneyPlus": "Disney+",
+      "max": "Max",
+      "hulu": "Hulu",
+      "appleTv": "Apple TV+",
+      "paramount": "Paramount+",
+      "peacock": "Peacock"
+    }
+    ,"runtimeOptions": {
+      "short": "Quick Watch (< 90 min)",
+      "medium": "Standard (90-120 min)",
+      "long": "Epic (2h+)"
+    }
   },
   "stats": {
     "signInToView": "Sign in to view your watching statistics",
@@ -197,6 +228,12 @@
     "noGenresPopulate": "No genres yet - watch some titles to populate this chart.",
     "daysTotal": "{{count}} days total",
     "outOfTen": "out of 10"
+    ,"totalMovies": "Total Movies"
+    ,"moviesWatched": "Movies watched"
+    ,"totalTVShows": "Total TV Shows"
+    ,"tvShowsWatched": "TV shows watched"
+    ,"episodesWatched": "Episodes Watched"
+    ,"episodesTotal": "Total episodes watched"
     ,"total": "Total"
     ,"watching": "Watching"
     ,"completed": "Completed"
@@ -281,6 +318,9 @@
     "emptyDesc": "Watch more titles to get personalized recommendations",
     "hideTitle": "Hide from Recommendations",
     "watchMore": "Keep watching to discover more personalized recommendations."
+  },
+  "following": {
+    "followedShows": "you're tracking"
   },
   "profile": {
     "title": "Profile",
@@ -476,6 +516,13 @@
     ,"title": "Title"
     ,"status": "Status"
     ,"sortBy": "Sort By"
+  },
+  "sort": {
+    "recentlyAdded": "Recently Added",
+    "highestRated": "Highest Rated",
+    "lowestRated": "Lowest Rated",
+    "titleAZ": "Title A-Z",
+    "titleZA": "Title Z-A"
   },
   "randomTrek": {
     "button": "Random Trek",

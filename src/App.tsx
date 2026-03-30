@@ -10,7 +10,6 @@ import {
 } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { UserListsProvider } from "@/contexts/UserListsContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -124,15 +123,8 @@ function AnimatedRoutes() {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={location.pathname}
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.22, ease: "easeOut" }}
-      >
-        <Routes location={location}>
+    <div key={location.pathname}>
+      <Routes location={location}>
           <Route
             path="/"
             element={
@@ -441,9 +433,8 @@ function AnimatedRoutes() {
               </Suspense>
             }
           />
-        </Routes>
-      </motion.div>
-    </AnimatePresence>
+      </Routes>
+    </div>
   );
 }
 
@@ -613,7 +604,7 @@ const App = () => {
                     <FollowNotificationMonitor />
                   </Suspense>
                 )}
-                <div className="flex min-h-[100dvh] flex-col">
+                <div className="ct-page-shell flex min-h-[100dvh] flex-col">
                   <UnifiedNav />
                   <ScrollToTop />
                   <main

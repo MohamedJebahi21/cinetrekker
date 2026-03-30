@@ -1,11 +1,21 @@
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import net from "node:net";
 import path from "node:path";
 
 const root = process.cwd();
 const tempDir = path.join(root, ".tmp", "lighthouse");
 const reportDir = path.join(root, "lighthouse-desktop-report");
+const latestReportBase = path.join(reportDir, "report");
 const PREVIEW_START_TIMEOUT_MS = 45_000;
 const LIGHTHOUSE_TIMEOUT_MS = 180_000;
 mkdirSync(tempDir, { recursive: true });
@@ -30,7 +40,7 @@ function toWindowsCommand(command, args) {
 
 function run(command, args, options = {}) {
   return new Promise((resolve, reject) => {
-    const { timeoutMs = 0, env } = options;
+    const { timeoutMs = 0, env, captureOutput = false } = options;
     const spawnConfig = isWindows
       ? toWindowsCommand(command, args)
       : { command, args };
@@ -40,9 +50,24 @@ function run(command, args, options = {}) {
     let timedOut = false;
 
     const child = spawn(spawnConfig.command, spawnConfig.args, {
-      stdio: "inherit",
+      stdio: captureOutput ? ["ignore", "pipe", "pipe"] : "inherit",
       env,
     });
+    let stdout = "";
+    let stderr = "";
+
+    if (captureOutput) {
+      child.stdout?.on("data", (chunk) => {
+        const text = chunk.toString();
+        stdout += text;
+        process.stdout.write(text);
+      });
+      child.stderr?.on("data", (chunk) => {
+        const text = chunk.toString();
+        stderr += text;
+        process.stderr.write(text);
+      });
+    }
 
     let timer;
     if (timeoutMs > 0) {
@@ -66,6 +91,15 @@ function run(command, args, options = {}) {
       }
 
       console.log(`< ${commandLabel} (code ${code ?? 1}, ${elapsedMs}ms)`);
+      if (captureOutput) {
+        resolve({
+          code: code ?? 1,
+          stdout,
+          stderr,
+        });
+        return;
+      }
+
       resolve(code ?? 1);
     });
   });
@@ -139,14 +173,107 @@ function startPreview(env, port) {
 }
 
 function reportArtifactsSummary() {
-  const htmlPath = path.join(reportDir, "report.report.html");
-  const jsonPath = path.join(reportDir, "report.report.json");
+  const htmlPath = `${latestReportBase}.report.html`;
+  const jsonPath = `${latestReportBase}.report.json`;
   const hasHtml = existsSync(htmlPath) || existsSync(path.join(reportDir, "report.html"));
   const hasJson = existsSync(jsonPath) || existsSync(path.join(reportDir, "report.json"));
 
   console.log(
     `Lighthouse artifacts: html=${hasHtml ? "yes" : "no"}, json=${hasJson ? "yes" : "no"}`,
   );
+}
+
+function safeRemove(filePath) {
+  try {
+    rmSync(filePath, { force: true });
+  } catch {
+    // Ignore stale artifact cleanup issues and let the fresh run proceed.
+  }
+}
+
+function clearLatestArtifacts() {
+  [
+    `${latestReportBase}.report.html`,
+    `${latestReportBase}.report.json`,
+    path.join(reportDir, "report.html"),
+    path.join(reportDir, "report.json"),
+    path.join(reportDir, "latest-run.json"),
+  ].forEach(safeRemove);
+}
+
+function findLatestDefaultHtmlReport(minMtimeMs = 0) {
+  const candidate = readdirSync(root)
+    .filter((name) => /^127\.0\.0\.1_.*\.report\.html$/i.test(name))
+    .map((name) => {
+      const filePath = path.join(root, name);
+      const stats = statSync(filePath);
+      return { filePath, mtimeMs: stats.mtimeMs };
+    })
+    .filter((entry) => entry.mtimeMs >= minMtimeMs)
+    .sort((a, b) => b.mtimeMs - a.mtimeMs)[0];
+
+  return candidate?.filePath ?? null;
+}
+
+function getGeneratedArtifactPaths(runBase) {
+  const runHtml = `${runBase}.report.html`;
+  const runJson = `${runBase}.report.json`;
+  const legacyHtml = path.join(reportDir, "report.html");
+  const legacyJson = path.join(reportDir, "report.json");
+
+  return {
+    html: existsSync(runHtml) ? runHtml : legacyHtml,
+    json: existsSync(runJson) ? runJson : legacyJson,
+  };
+}
+
+function extractJsonFromHtmlReport(htmlPath, jsonPath) {
+  if (!existsSync(htmlPath)) {
+    return false;
+  }
+
+  const html = readFileSync(htmlPath, "utf8");
+  const match = html.match(/window\.__LIGHTHOUSE_JSON__ = (.*?);<\/script>/s);
+  if (!match?.[1]) {
+    return false;
+  }
+
+  const parsed = JSON.parse(match[1]);
+  writeFileSync(jsonPath, `${JSON.stringify(parsed, null, 2)}\n`);
+  return true;
+}
+
+function publishLatestArtifacts(runBase, metadata) {
+  const { html, json } = getGeneratedArtifactPaths(runBase);
+  if (!existsSync(html) || !existsSync(json)) {
+    return false;
+  }
+
+  copyFileSync(html, `${latestReportBase}.report.html`);
+  copyFileSync(json, `${latestReportBase}.report.json`);
+
+  const htmlStat = statSync(`${latestReportBase}.report.html`);
+  const jsonStat = statSync(`${latestReportBase}.report.json`);
+
+  writeFileSync(
+    path.join(reportDir, "latest-run.json"),
+    JSON.stringify(
+      {
+        ...metadata,
+        latestHtml: path.relative(root, `${latestReportBase}.report.html`),
+        latestJson: path.relative(root, `${latestReportBase}.report.json`),
+        htmlMtime: htmlStat.mtime.toISOString(),
+        jsonMtime: jsonStat.mtime.toISOString(),
+      },
+      null,
+      2,
+    ),
+  );
+
+  console.log(`Latest Lighthouse HTML: ${path.relative(root, `${latestReportBase}.report.html`)}`);
+  console.log(`Latest Lighthouse JSON: ${path.relative(root, `${latestReportBase}.report.json`)}`);
+  console.log(`Latest Lighthouse JSON mtime: ${jsonStat.mtime.toISOString()}`);
+  return true;
 }
 
 async function main() {
@@ -159,11 +286,13 @@ async function main() {
 
   let preview;
   let port;
-
+  const runId = new Date().toISOString().replaceAll(":", "-").replaceAll(".", "-");
+  const runBase = path.join(reportDir, `report-${runId}`);
   let exitCode = 1;
 
   try {
     console.log("Starting desktop Lighthouse audit...");
+    clearLatestArtifacts();
     port = await reserveAvailablePort();
     preview = startPreview(env, port);
     console.log(`Reserved preview port: ${port}`);
@@ -187,6 +316,7 @@ async function main() {
       throw new Error(`wait-on failed with code ${waitCode}`);
     }
 
+    const lighthouseStartedAt = Date.now();
     exitCode = await run(
       "npx",
       [
@@ -195,21 +325,26 @@ async function main() {
         "--preset=desktop",
         "--only-categories=performance,accessibility,best-practices,seo",
         "--output=html",
-        "--output=json",
-        "--output-path=./lighthouse-desktop-report/report",
         "--chrome-flags=--headless=new --no-sandbox --disable-gpu",
       ],
       { env, timeoutMs: LIGHTHOUSE_TIMEOUT_MS },
     );
 
+    const defaultHtmlReport = findLatestDefaultHtmlReport(lighthouseStartedAt);
+    if (defaultHtmlReport) {
+      copyFileSync(defaultHtmlReport, `${runBase}.report.html`);
+      extractJsonFromHtmlReport(`${runBase}.report.html`, `${runBase}.report.json`);
+      safeRemove(defaultHtmlReport);
+    }
+
     // Work around known Windows lighthouse temp cleanup EPERM by accepting runs
     // where report artifacts are successfully generated.
     if (exitCode !== 0) {
-      const hasHtml = existsSync(path.join(reportDir, "report.report.html"));
-      const hasJson = existsSync(path.join(reportDir, "report.report.json"));
-      const hasLegacyHtml = existsSync(path.join(reportDir, "report.html"));
-      const hasLegacyJson = existsSync(path.join(reportDir, "report.json"));
-      if ((hasHtml || hasLegacyHtml) && (hasJson || hasLegacyJson)) {
+      const generatedArtifacts = getGeneratedArtifactPaths(runBase);
+      if (
+        existsSync(generatedArtifacts.html) &&
+        existsSync(generatedArtifacts.json)
+      ) {
         console.warn(
           "Lighthouse exited non-zero but reports were generated; continuing.",
         );
@@ -217,6 +352,14 @@ async function main() {
       }
     }
 
+    publishLatestArtifacts(runBase, {
+      runId,
+      port,
+      requestedUrl: `http://127.0.0.1:${port}/`,
+      generatedHtml: path.relative(root, `${runBase}.report.html`),
+      generatedJson: path.relative(root, `${runBase}.report.json`),
+      completedAt: new Date().toISOString(),
+    });
     reportArtifactsSummary();
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));

@@ -1,19 +1,32 @@
-# Audit TODO (Mobile + Desktop)
+# Audit TODO (Full Audit Alignment)
 
-## Applied
+Source of truth:
+- `docs/FULL_AUDIT_REPORT_2026-03-23.md`
+- `C:\Users\DELL\Downloads\CineTrekker_Full_Audit.pdf`
 
-- [x] Fix mojibake text in UI strings (SEO title, card labels, copyright).
-- [x] Replace broken status icons with text-only badges.
-- [x] Remove invalid Link > Button nesting by using `Button asChild`.
-- [x] Improve mobile hero CTA layout to prevent cramped buttons.
-- [x] Make section headers wrap on small screens.
-- [x] Improve carousel scroll distance based on viewport width.
-- [x] Add subtle mobile scroll edge hints to carousels.
-- [x] Make mobile menu scrollable with dynamic max height.
-- [x] Use `100dvh` for full-height layout on mobile browsers.
-- [x] Prevent logo distortion via `.logo-image` utility.
+Status summary:
+- [x] 1. Fix Lighthouse runner port accuracy and remove fragile fixed-port assumptions.
+- [x] 2. Lazy-load `mapbox-gl` for filming-location flows.
+- [ ] 3. Reduce render-blocking font and CSS impact.
+- [ ] 4. Tighten initial-load bundle usage and shared chunking.
+- [x] 5. Fix accessible-name mismatches for visible controls.
+- [x] 6. Improve destructive/error contrast.
+- [x] 7. Replace bypass-prone rate-limit identity strategy.
+- [x] 8. Remove `shell: true` from audit tooling.
 
-## Follow-ups (Optional)
+Verification notes:
+- [x] Lighthouse runner now reserves an available localhost port and passes it through `wait-on` and Lighthouse dynamically.
+- [x] Lighthouse runner now publishes fresh timestamped HTML/JSON artifacts plus `lighthouse-desktop-report/latest-run.json` even when Windows cleanup throws a post-run `EPERM`.
+- [x] `FilmingLocationsMap` now loads `mapbox-gl` and its stylesheet via dynamic import instead of a static top-level import.
+- [x] Navigation and search controls use visible text as their accessible name where possible, avoiding conflicting `aria-label` values.
+- [x] Rate limiting is keyed by IP and authenticated user identity, with endpoint-specific thresholds.
+- [x] Audit tooling uses direct process spawning instead of `shell: true`.
+- [x] Vite chunking now isolates `mapbox-gl` into a dedicated vendor chunk to keep the locations payload from leaking into unrelated routes.
+- [x] Fresh desktop Lighthouse run on 2026-03-30 now scores Accessibility 100, Best Practices 100, and SEO 100.
+- [x] Fresh desktop Lighthouse run on 2026-03-30 confirms `label-content-name-mismatch` and `color-contrast` are passing.
+- [x] Initial-load performance work removed route-transition motion from the app shell and reduced Lighthouse unused JavaScript from about 161 KiB to about 131 KiB on the guest homepage path.
 
-- [x] Run a visual QA pass on key routes (home, search, details, profile) across common breakpoints.
-- [x] Validate accessibility focus states and touch targets on emulated mobile/desktop devices.
+Remaining performance work from the fresh 2026-03-30 desktop audit:
+- [ ] Reduce initial JavaScript further. Current audit still reports estimated unused JS in `vendor-ui`, `vendor-supabase`, `vendor-react`, and `index`, with Performance sitting at 56 in the latest desktop run.
+- [ ] Reduce initial CSS further. Current audit still reports about 21 KiB of unused CSS in the homepage path.
+- [ ] Revisit font delivery only if custom webfonts are reintroduced. The current app declares cinematic font stacks in CSS but does not yet ship an explicit preload/async font-loading strategy in `index.html`.

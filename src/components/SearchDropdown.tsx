@@ -388,7 +388,6 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                   <button
                     type="button"
                     onClick={handleClearRecentSearches}
-                    aria-label="Clear recent searches"
                     className="rounded-sm px-1 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                   >
                     Clear
@@ -401,7 +400,6 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                         <button
                           type="button"
                           onClick={() => handleRecentSearchClick(item.query)}
-                          aria-label={`Search again for ${item.query}`}
                           className="flex min-h-[44px] flex-1 items-center gap-3 rounded-md py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                         >
                           <Clock3 className="h-4 w-4 text-muted-foreground" />
@@ -443,7 +441,6 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                       <button
                         type="button"
                         onClick={() => handleItemClick(item)}
-                        aria-label={`Open ${getItemTitle(item)} ${getItemTypeLabel(item)} details`}
                         className={cn(
                           "w-full flex items-center gap-3 px-4 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
                           selectedIndex === index
@@ -465,11 +462,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                               sizes="40px"
                               width={92}
                               height={138}
-                              alt={
-                                item.media_type === "person"
-                                  ? `${getItemTitle(item)} profile`
-                                  : `${getItemTitle(item)} poster`
-                              }
+                              alt=""
                               className="w-full h-full object-cover bg-muted"
                               loading="lazy"
                               showSkeleton

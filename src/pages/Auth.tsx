@@ -185,7 +185,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
         description="Access your CineTrekker account to sync watchlists, ratings, and recommendations."
         canonical="https://cinetrekker.vercel.app/auth"
       />
-      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="flex min-h-screen items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>CineTrekker</CardTitle>
@@ -299,7 +299,6 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                   <Checkbox
                     checked={rememberMe}
                     onCheckedChange={(checked) => setRememberMe(checked === true)}
-                    aria-label="Remember me"
                   />
                   <span>Remember Me</span>
                 </label>

@@ -52,7 +52,7 @@ export interface WatchStatusConfig {
 }
 
 const STATUS_CONFIG: Record<string, WatchStatusConfig> = {
-  watching: { icon: "", label: "Watching", color: "bg-blue-500" },
+  watching: { icon: "", label: "Watching", color: "bg-primary" },
   completed: { icon: "", label: "Completed", color: "bg-green-500" },
   dropped: { icon: "", label: "Dropped", color: "bg-red-500" },
   plan_to_watch: { icon: "", label: "Plan to Watch", color: "bg-yellow-500" },

@@ -66,40 +66,40 @@ import {
 import { cn } from "@/lib/utils";
 
 const LANGUAGES = [
-  { code: "en", key: "search.lang.english", fallback: "English" },
-  { code: "es", key: "search.lang.spanish", fallback: "Spanish" },
-  { code: "fr", key: "search.lang.french", fallback: "French" },
-  { code: "de", key: "search.lang.german", fallback: "German" },
-  { code: "it", key: "search.lang.italian", fallback: "Italian" },
-  { code: "pt", key: "search.lang.portuguese", fallback: "Portuguese" },
-  { code: "ja", key: "search.lang.japanese", fallback: "Japanese" },
-  { code: "ko", key: "search.lang.korean", fallback: "Korean" },
-  { code: "zh", key: "search.lang.chinese", fallback: "Chinese" },
-  { code: "ar", key: "search.lang.arabic", fallback: "Arabic" },
-  { code: "hi", key: "search.lang.hindi", fallback: "Hindi" },
-  { code: "tr", key: "search.lang.turkish", fallback: "Turkish" },
-  { code: "ru", key: "search.lang.russian", fallback: "Russian" },
+  { code: "en", key: "search.langOptions.english", fallback: "English" },
+  { code: "es", key: "search.langOptions.spanish", fallback: "Spanish" },
+  { code: "fr", key: "search.langOptions.french", fallback: "French" },
+  { code: "de", key: "search.langOptions.german", fallback: "German" },
+  { code: "it", key: "search.langOptions.italian", fallback: "Italian" },
+  { code: "pt", key: "search.langOptions.portuguese", fallback: "Portuguese" },
+  { code: "ja", key: "search.langOptions.japanese", fallback: "Japanese" },
+  { code: "ko", key: "search.langOptions.korean", fallback: "Korean" },
+  { code: "zh", key: "search.langOptions.chinese", fallback: "Chinese" },
+  { code: "ar", key: "search.langOptions.arabic", fallback: "Arabic" },
+  { code: "hi", key: "search.langOptions.hindi", fallback: "Hindi" },
+  { code: "tr", key: "search.langOptions.turkish", fallback: "Turkish" },
+  { code: "ru", key: "search.langOptions.russian", fallback: "Russian" },
 ];
 
 // Runtime options
 const RUNTIMES = [
   {
     id: "short",
-    key: "search.runtime.short",
+    key: "search.runtimeOptions.short",
     fallback: "Quick Watch (< 90 min)",
     gte: "0",
     lte: "90",
   },
   {
     id: "medium",
-    key: "search.runtime.medium",
+    key: "search.runtimeOptions.medium",
     fallback: "Standard (90-120 min)",
     gte: "90",
     lte: "120",
   },
   {
     id: "long",
-    key: "search.runtime.long",
+    key: "search.runtimeOptions.long",
     fallback: "Epic (2h+)",
     gte: "120",
     lte: "500",
@@ -108,14 +108,14 @@ const RUNTIMES = [
 
 // Streaming services (common provider IDs)
 const STREAMING_SERVICES = [
-  { id: "8", key: "search.streaming.netflix", fallback: "Netflix" },
-  { id: "9", key: "search.streaming.amazonPrime", fallback: "Amazon Prime" },
-  { id: "337", key: "search.streaming.disneyPlus", fallback: "Disney+" },
-  { id: "1899", key: "search.streaming.max", fallback: "Max" },
-  { id: "15", key: "search.streaming.hulu", fallback: "Hulu" },
-  { id: "350", key: "search.streaming.appleTv", fallback: "Apple TV+" },
-  { id: "531", key: "search.streaming.paramount", fallback: "Paramount+" },
-  { id: "387", key: "search.streaming.peacock", fallback: "Peacock" },
+  { id: "8", key: "search.streamingOptions.netflix", fallback: "Netflix" },
+  { id: "9", key: "search.streamingOptions.amazonPrime", fallback: "Amazon Prime" },
+  { id: "337", key: "search.streamingOptions.disneyPlus", fallback: "Disney+" },
+  { id: "1899", key: "search.streamingOptions.max", fallback: "Max" },
+  { id: "15", key: "search.streamingOptions.hulu", fallback: "Hulu" },
+  { id: "350", key: "search.streamingOptions.appleTv", fallback: "Apple TV+" },
+  { id: "531", key: "search.streamingOptions.paramount", fallback: "Paramount+" },
+  { id: "387", key: "search.streamingOptions.peacock", fallback: "Peacock" },
 ];
 
 const currentYear = new Date().getFullYear();

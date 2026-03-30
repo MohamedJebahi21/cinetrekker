@@ -38,6 +38,21 @@ export default function Watched() {
     hasActiveFilters,
   } = useWatchedFilters(language);
 
+  const languageDisplayNames =
+    typeof Intl !== "undefined" && "DisplayNames" in Intl
+      ? new Intl.DisplayNames([language], { type: "language" })
+      : null;
+  const regionDisplayNames =
+    typeof Intl !== "undefined" && "DisplayNames" in Intl
+      ? new Intl.DisplayNames([language], { type: "region" })
+      : null;
+
+  const getLanguageLabel = (code: string) =>
+    languageDisplayNames?.of(code) || code.toUpperCase();
+
+  const getCountryLabel = (code: string) =>
+    regionDisplayNames?.of(code) || code;
+
   return (
     <>
       <SEO
@@ -77,8 +92,8 @@ export default function Watched() {
                   <SelectContent>
                     <SelectItem value={ALL}>All Languages</SelectItem>
                     {filterOptions.langs.map((lang) => (
-                      <SelectItem key={lang} value={lang}>
-                        {lang.toUpperCase()}
+                    <SelectItem key={lang} value={lang}>
+                        {getLanguageLabel(lang)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -112,7 +127,7 @@ export default function Watched() {
                     <SelectItem value={ALL}>All Countries</SelectItem>
                     {filterOptions.countries.map((country) => (
                       <SelectItem key={country} value={country}>
-                        {country}
+                        {getCountryLabel(country)}
                       </SelectItem>
                     ))}
                   </SelectContent>

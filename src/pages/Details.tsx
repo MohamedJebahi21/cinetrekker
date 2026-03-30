@@ -1,7 +1,7 @@
 import { useParams, Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Star,
   Clock,
@@ -134,6 +134,7 @@ export default function Details() {
   const language = i18n.language;
   const mediaId = Number(id);
   const isValidId = Number.isFinite(mediaId) && mediaId > 0;
+  const castScrollRef = useRef<HTMLDivElement>(null);
   // Infer media type from the URL path (e.g., /movie/123 or /tv/456)
   const mediaType: "movie" | "tv" = location.pathname.startsWith("/tv")
     ? "tv"
@@ -180,6 +181,8 @@ export default function Details() {
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
   const [showFullOverview, setShowFullOverview] = useState(false);
   const [trailerOpen, setTrailerOpen] = useState(false);
+  const [activeCastPage, setActiveCastPage] = useState(0);
+  const [castPageCount, setCastPageCount] = useState(1);
   const { pinnedFavoriteKeys, persistPinnedFavorites } = usePinnedFavorites({
     userId: user?.id,
   });
@@ -260,6 +263,34 @@ export default function Details() {
         });
     }
   }, [details, isBlockedByPolicy, mediaId, mediaType, saveLastViewed]);
+
+  useEffect(() => {
+    const container = castScrollRef.current;
+    if (!container || !(details?.credits?.cast?.length > 0)) return;
+
+    const updateCastPaging = () => {
+      const hasScroll = container.scrollWidth > container.clientWidth;
+      const totalPages = hasScroll
+        ? Math.max(1, Math.ceil(container.scrollWidth / container.clientWidth))
+        : 1;
+      const nextPage = hasScroll
+        ? Math.min(totalPages - 1, Math.round(container.scrollLeft / container.clientWidth))
+        : 0;
+
+      setCastPageCount(totalPages);
+      setActiveCastPage(nextPage);
+    };
+
+    updateCastPaging();
+    const resizeObserver = new ResizeObserver(updateCastPaging);
+    resizeObserver.observe(container);
+    container.addEventListener("scroll", updateCastPaging, { passive: true });
+
+    return () => {
+      resizeObserver.disconnect();
+      container.removeEventListener("scroll", updateCastPaging);
+    };
+  }, [details?.credits?.cast?.length]);
 
   // SEO / document title: compute early and set document title via hook
   const _title = details ? details.title || details.name || "" : "";
@@ -1241,12 +1272,15 @@ export default function Details() {
         {details.credits?.cast && details.credits.cast.length > 0 && (
           <section className="mt-12">
             <h2 className="section-title">{t("details.cast")}</h2>
-            <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
+            <div
+              ref={castScrollRef}
+              className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar scroll-smooth snap-x snap-mandatory"
+            >
               {details.credits?.cast.slice(0, 10).map((person) => (
                 <Link
                   key={person.id}
                   to={buildPersonPath(person.id, person.name)}
-                  className="flex-shrink-0 w-24 text-center group"
+                  className="flex-shrink-0 w-24 text-center group snap-start"
                 >
                   {person.profile_path ? (
                     <Image
@@ -1273,6 +1307,30 @@ export default function Details() {
                 </Link>
               ))}
             </div>
+            {castPageCount > 1 && (
+              <div className="mt-1 flex items-center justify-center gap-2">
+                {Array.from({ length: castPageCount }).map((_, index) => (
+                  <button
+                    key={`cast-page-${index}`}
+                    type="button"
+                    onClick={() =>
+                      castScrollRef.current?.scrollTo({
+                        left: (castScrollRef.current?.clientWidth || 0) * index,
+                        behavior: "smooth",
+                      })
+                    }
+                    className={cn(
+                      "rounded-full transition-all",
+                      index === activeCastPage
+                        ? "h-2.5 w-6 bg-primary"
+                        : "h-2.5 w-2.5 bg-primary/30 hover:bg-primary/55",
+                    )}
+                    aria-label={`Go to cast page ${index + 1}`}
+                    aria-pressed={index === activeCastPage}
+                  />
+                ))}
+              </div>
+            )}
           </section>
         )}
 

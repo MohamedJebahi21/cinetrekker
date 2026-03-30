@@ -1,0 +1,341 @@
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import type { HiddenRecommendation, UserMediaItem } from "@/types/media";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { validateNote, validateRating } from "@/lib/validation";
+import {
+  useWatchlistQuery,
+  useAddToWatchlist as useAddToWatchlistMutation,
+  useRemoveFromWatchlist as useRemoveFromWatchlistMutation,
+} from "@/hooks/useWatchlistQueries";
+import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import {
+  clearGuestWatchlist,
+  clearGuestWatched,
+  readGuestWatchlist,
+  readGuestWatched,
+  useGuestWatchlist,
+  useGuestWatched,
+} from "@/hooks/useGuestMediaLists";
+import {
+  useWatchedQuery,
+  useAddToWatched as useAddToWatchedMutation,
+  useRemoveFromWatched as useRemoveFromWatchedMutation,
+  useUpdateWatched as useUpdateWatchedMutation,
+} from "@/hooks/useWatchedQueries";
+import {
+  UserListsContext,
+  type UserListsContextType,
+} from "@/contexts/UserListsContext";
+import { createLogger } from "@/lib/logger";
+import { STORAGE_KEYS } from "@/contexts/userListsStorageKeys";
+
+const logger = createLogger("user-lists");
+
+export function AuthenticatedUserListsProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { user } = useAuth();
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  const { data: watchlistData = [], isLoading: watchlistLoading } =
+    useWatchlistQuery();
+  const { data: watchedData = [], isLoading: watchedLoading } =
+    useWatchedQuery();
+
+  const addToWatchlistMutation = useAddToWatchlistMutation();
+  const removeFromWatchlistMutation = useRemoveFromWatchlistMutation();
+  const addToWatchedMutation = useAddToWatchedMutation();
+  const removeFromWatchedMutation = useRemoveFromWatchedMutation();
+  const updateWatchedMutation = useUpdateWatchedMutation();
+  const guestWatchlist = useGuestWatchlist();
+  const guestWatched = useGuestWatched();
+
+  const [hiddenRecommendations, setHiddenRecommendations] = useState<
+    HiddenRecommendation[]
+  >([]);
+
+  const watchlist = useMemo(
+    () => (user ? watchlistData || [] : guestWatchlist.items),
+    [guestWatchlist.items, user, watchlistData],
+  );
+  const watched = useMemo(
+    () => (user ? watchedData || [] : guestWatched.items),
+    [guestWatched.items, user, watchedData],
+  );
+  const loading = user ? Boolean(watchlistLoading || watchedLoading) : false;
+
+  useEffect(() => {
+    const storageKey = user
+      ? `${STORAGE_KEYS.hidden}_${user.id}`
+      : STORAGE_KEYS.hidden;
+    const storedHidden = localStorage.getItem(storageKey);
+    if (storedHidden) {
+      setHiddenRecommendations(JSON.parse(storedHidden));
+      return;
+    }
+
+    setHiddenRecommendations([]);
+  }, [user]);
+
+  useEffect(() => {
+    const storageKey = user
+      ? `${STORAGE_KEYS.hidden}_${user.id}`
+      : STORAGE_KEYS.hidden;
+    localStorage.setItem(storageKey, JSON.stringify(hiddenRecommendations));
+  }, [hiddenRecommendations, user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const syncLocalToServer = async () => {
+      try {
+        const guestWatchlistItems = readGuestWatchlist();
+        const guestWatchedItems = readGuestWatched();
+
+        if (guestWatchlistItems.length > 0) {
+          const rows = guestWatchlistItems.map((item) => ({
+            user_id: user.id,
+            media_id: item.mediaId,
+            media_type: item.mediaType,
+            added_at: item.addedAt || new Date().toISOString(),
+          }));
+
+          try {
+            const { error } = await supabase
+              .from("user_watchlist")
+              .upsert(rows, { onConflict: "user_id,media_id,media_type" });
+            if (error) {
+              logger.error("Error upserting watchlist during sync.", error);
+            }
+          } catch (error) {
+            logger.error("Watchlist sync failed.", error);
+          }
+        }
+
+        if (guestWatchedItems.length > 0) {
+          const rows = guestWatchedItems.map((item) => ({
+            user_id: user.id,
+            media_id: item.mediaId,
+            media_type: item.mediaType,
+            rating: item.rating ?? null,
+            note: item.note ?? null,
+            status: item.status ?? "completed",
+            watched_at:
+              item.watchedAt || item.addedAt || new Date().toISOString(),
+          }));
+
+          try {
+            const { error } = await supabase
+              .from("user_watched")
+              .upsert(rows, { onConflict: "user_id,media_id,media_type" });
+            if (error) {
+              logger.error("Error upserting watched during sync.", error);
+            }
+          } catch (error) {
+            logger.error("Watched sync failed.", error);
+          }
+        }
+
+        clearGuestWatchlist();
+        clearGuestWatched();
+        await queryClient.invalidateQueries({
+          queryKey: ["watchlist", user.id],
+        });
+        await queryClient.invalidateQueries({ queryKey: ["watched", user.id] });
+      } catch (error) {
+        logger.error("Sync local to server failed.", error);
+      }
+    };
+
+    void syncLocalToServer();
+  }, [queryClient, user]);
+
+  const addToWatchlist = useCallback(
+    async (mediaId: number, mediaType: "movie" | "tv") => {
+      if (user) {
+        await addToWatchlistMutation.mutateAsync({ mediaId, mediaType });
+        return;
+      }
+
+      guestWatchlist.addToGuestWatchlist(mediaId, mediaType);
+      toast("Added to Watchlist (guest)");
+    },
+    [addToWatchlistMutation, guestWatchlist, user],
+  );
+
+  const removeFromWatchlist = useCallback(
+    async (mediaId: number, mediaType: "movie" | "tv") => {
+      if (user) {
+        await removeFromWatchlistMutation.mutateAsync({ mediaId, mediaType });
+        return;
+      }
+
+      guestWatchlist.removeFromGuestWatchlist(mediaId, mediaType);
+      toast(t("actions.watchlistRemoved", "Removed from watchlist"));
+    },
+    [guestWatchlist, removeFromWatchlistMutation, t, user],
+  );
+
+  const addToWatched = useCallback(
+    async (
+      mediaId: number,
+      mediaType: "movie" | "tv",
+      rating?: number,
+      note?: string,
+      status?: string,
+    ) => {
+      if (user) {
+        await addToWatchedMutation.mutateAsync({
+          mediaId,
+          mediaType,
+          rating,
+          note,
+          status,
+        });
+        return;
+      }
+
+      guestWatched.addToGuestWatched(mediaId, mediaType, {
+        rating: validateRating(rating),
+        note: validateNote(note),
+        status: status as UserMediaItem["status"],
+      });
+      toast(t("actions.watchedAdded", "Saved locally"), {
+        description: t(
+          "actions.watchedAddedGuest",
+          "Marked as watched on this device. Sign in later to sync it to your account.",
+        ),
+      });
+    },
+    [addToWatchedMutation, guestWatched, t, user],
+  );
+
+  const removeFromWatched = useCallback(
+    async (mediaId: number, mediaType: "movie" | "tv") => {
+      if (user) {
+        await removeFromWatchedMutation.mutateAsync({ mediaId, mediaType });
+        return;
+      }
+
+      guestWatched.removeFromGuestWatched(mediaId, mediaType);
+      toast(t("actions.watchedRemoved", "Removed from watched"));
+    },
+    [guestWatched, removeFromWatchedMutation, t, user],
+  );
+
+  const updateWatchedItem = useCallback(
+    (
+      mediaId: number,
+      mediaType: "movie" | "tv",
+      updates: Partial<UserMediaItem>,
+    ) => {
+      updateWatchedMutation.mutate({ mediaId, mediaType, updates });
+    },
+    [updateWatchedMutation],
+  );
+
+  const isInWatchlist = useCallback(
+    (mediaId: number, mediaType: "movie" | "tv") =>
+      watchlist.some(
+        (item: UserMediaItem) =>
+          item.mediaId === mediaId && item.mediaType === mediaType,
+      ),
+    [watchlist],
+  );
+
+  const isWatched = useCallback(
+    (mediaId: number, mediaType: "movie" | "tv") =>
+      watched.some(
+        (item: UserMediaItem) =>
+          item.mediaId === mediaId && item.mediaType === mediaType,
+      ),
+    [watched],
+  );
+
+  const getWatchedItem = useCallback(
+    (mediaId: number, mediaType: "movie" | "tv") =>
+      watched.find(
+        (item: UserMediaItem) =>
+          item.mediaId === mediaId && item.mediaType === mediaType,
+      ),
+    [watched],
+  );
+
+  const hideFromRecommendations = useCallback(
+    (mediaId: number, mediaType: "movie" | "tv") => {
+      const newItem: HiddenRecommendation = {
+        id: `${mediaType}-${mediaId}`,
+        mediaId,
+        mediaType,
+        userId: user?.id || "local",
+        hiddenAt: new Date().toISOString(),
+      };
+
+      setHiddenRecommendations((prev) => {
+        const next = [...prev, newItem];
+        try {
+          toast(t("recommendations.hidden", "Hidden from recommendations"));
+        } catch (error) {
+          logger.warn("Failed to show hidden recommendation toast.", error);
+        }
+        return next;
+      });
+    },
+    [t, user],
+  );
+
+  const isHiddenFromRecommendations = useCallback(
+    (mediaId: number, mediaType: "movie" | "tv") =>
+      hiddenRecommendations.some(
+        (item) => item.mediaId === mediaId && item.mediaType === mediaType,
+      ),
+    [hiddenRecommendations],
+  );
+
+  const value = useMemo<UserListsContextType>(
+    () => ({
+      watchlist,
+      watched,
+      hiddenRecommendations,
+      addToWatchlist,
+      removeFromWatchlist,
+      addToWatched,
+      removeFromWatched,
+      updateWatchedItem,
+      isInWatchlist,
+      isWatched,
+      getWatchedItem,
+      hideFromRecommendations,
+      isHiddenFromRecommendations,
+      loading,
+    }),
+    [
+      addToWatchlist,
+      addToWatched,
+      getWatchedItem,
+      hiddenRecommendations,
+      hideFromRecommendations,
+      isHiddenFromRecommendations,
+      isInWatchlist,
+      isWatched,
+      loading,
+      removeFromWatchlist,
+      removeFromWatched,
+      updateWatchedItem,
+      watchlist,
+      watched,
+    ],
+  );
+
+  return (
+    <UserListsContext.Provider value={value}>
+      {children}
+    </UserListsContext.Provider>
+  );
+}

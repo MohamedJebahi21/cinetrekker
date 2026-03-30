@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import type { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
 import { isSupabaseConfigured } from "@/lib/envValidation";
 import { createLogger } from "@/lib/logger";
 
@@ -17,7 +16,7 @@ export interface AuthContextType {
   signOut: () => Promise<void>;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(
+const AuthContext = createContext<AuthContextType | undefined>(
   undefined,
 );
 
@@ -28,6 +27,11 @@ let didWarnMissingSupabaseEnv = false;
 
 function toAuthError(error: unknown): Error {
   return error instanceof Error ? error : new Error(String(error));
+}
+
+async function getSupabaseClient() {
+  const { supabase } = await import("@/integrations/supabase/client");
+  return supabase;
 }
 
 export function useAuth(): AuthContextType {
@@ -58,6 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     let isMounted = true;
+    let unsubscribe = () => undefined;
 
     const applySession = (nextSession: Session | null) => {
       if (!isMounted) return;
@@ -65,17 +70,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(nextSession?.user ?? null);
     };
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      applySession(nextSession);
-      if (isMounted) {
-        setLoading(false);
-      }
-    });
-
-    const initSession = async () => {
+    void (async () => {
       try {
+        const supabase = await getSupabaseClient();
+        if (!isMounted) {
+          return;
+        }
+
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+          applySession(nextSession);
+          if (isMounted) {
+            setLoading(false);
+          }
+        });
+
+        unsubscribe = () => subscription.unsubscribe();
+
         const {
           data: { session: currentSession },
           error,
@@ -94,13 +106,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoading(false);
         }
       }
-    };
-
-    void initSession();
+    })();
 
     return () => {
       isMounted = false;
-      subscription.unsubscribe();
+      unsubscribe();
     };
   }, []);
 
@@ -110,6 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      const supabase = await getSupabaseClient();
       const { error } = await supabase.auth.signUp({
         email,
         password: code,
@@ -126,6 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      const supabase = await getSupabaseClient();
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password: code,
@@ -144,6 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      const supabase = await getSupabaseClient();
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
@@ -162,6 +175,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      const supabase = await getSupabaseClient();
       const { error } = await supabase.auth.signOut();
       if (error) {
         throw error;
@@ -177,6 +191,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      const supabase = await getSupabaseClient();
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth`,
       });

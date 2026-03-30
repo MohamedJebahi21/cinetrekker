@@ -51,7 +51,7 @@ export function FollowUpdatesButton({
       className="gap-2"
       disabled={isPending}
       onClick={handleClick}
-      aria-label={followed ? "Unfollow updates" : "Follow updates"}
+      aria-label={followed ? "Following updates" : "Follow Updates"}
     >
       {isPending ? (
         <>

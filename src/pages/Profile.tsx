@@ -1239,7 +1239,7 @@ export default function Profile() {
         id: "50-movies",
         icon: <Award className="h-5 w-5 text-neutral-300" />,
         colorClass:
-          "border-blue-400/30 bg-blue-400/10 text-blue-400 shadow-[0_0_15px_rgba(96,165,250,0.1)]",
+          "border-primary/30 bg-primary/10 text-primary shadow-[0_0_15px_rgba(229,9,20,0.12)]",
         shortLabel: "50 Movies",
         fullLabel: "50 Movies Watched",
         condition: "Watch 50 movies",

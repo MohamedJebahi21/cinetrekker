@@ -1,38 +1,23 @@
 import React, {
+  Suspense,
   createContext,
+  lazy,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
 } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import type { HiddenRecommendation, UserMediaItem } from "@/types/media";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { validateNote, validateRating } from "@/lib/validation";
-import {
-  useWatchlistQuery,
-  useAddToWatchlist as useAddToWatchlistMutation,
-  useRemoveFromWatchlist as useRemoveFromWatchlistMutation,
-} from "@/hooks/useWatchlistQueries";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import {
-  useWatchedQuery,
-  useAddToWatched as useAddToWatchedMutation,
-  useRemoveFromWatched as useRemoveFromWatchedMutation,
-  useUpdateWatched as useUpdateWatchedMutation,
-} from "@/hooks/useWatchedQueries";
-import {
-  clearGuestWatchlist,
-  clearGuestWatched,
-  readGuestWatchlist,
-  readGuestWatched,
   useGuestWatchlist,
   useGuestWatched,
 } from "@/hooks/useGuestMediaLists";
-import { createLogger } from "@/lib/logger";
+import { STORAGE_KEYS } from "@/contexts/userListsStorageKeys";
 
 export interface UserListsContextType {
   watchlist: UserMediaItem[];
@@ -73,17 +58,15 @@ export interface UserListsContextType {
   loading: boolean;
 }
 
-export const STORAGE_KEYS = {
-  watchlist: "mywatch_watchlist",
-  watched: "mywatch_watched",
-  hidden: "mywatch_hidden_recommendations",
-};
-
 export const UserListsContext = createContext<UserListsContextType | undefined>(
   undefined,
 );
 
-const logger = createLogger("user-lists");
+const AuthenticatedUserListsProvider = lazy(() =>
+  import("./AuthenticatedUserListsProvider").then((mod) => ({
+    default: mod.AuthenticatedUserListsProvider,
+  })),
+);
 
 export function useUserLists(): UserListsContextType {
   const context = useContext(UserListsContext);
@@ -93,155 +76,54 @@ export function useUserLists(): UserListsContextType {
   return context;
 }
 
-export function UserListsProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
-  const { t } = useTranslation();
-  const queryClient = useQueryClient();
-
-  const { data: watchlistData = [], isLoading: watchlistLoading } =
-    useWatchlistQuery();
-  const { data: watchedData = [], isLoading: watchedLoading } =
-    useWatchedQuery();
-
-  const addToWatchlistMutation = useAddToWatchlistMutation();
-  const removeFromWatchlistMutation = useRemoveFromWatchlistMutation();
-  const addToWatchedMutation = useAddToWatchedMutation();
-  const removeFromWatchedMutation = useRemoveFromWatchedMutation();
-  const updateWatchedMutation = useUpdateWatchedMutation();
-  const guestWatchlist = useGuestWatchlist();
-  const guestWatched = useGuestWatched();
-
+function useHiddenRecommendations(userId?: string) {
+  const storageKey = userId ? `${STORAGE_KEYS.hidden}_${userId}` : STORAGE_KEYS.hidden;
   const [hiddenRecommendations, setHiddenRecommendations] = useState<
     HiddenRecommendation[]
   >([]);
 
-  const watchlist = useMemo(
-    () => (user ? watchlistData || [] : guestWatchlist.items),
-    [guestWatchlist.items, user, watchlistData],
-  );
-  const watched = useMemo(
-    () => (user ? watchedData || [] : guestWatched.items),
-    [guestWatched.items, user, watchedData],
-  );
-  const loading = user ? Boolean(watchlistLoading || watchedLoading) : false;
-
   useEffect(() => {
-    const loadHidden = () => {
-      if (user) {
-        const storedHidden = localStorage.getItem(
-          `${STORAGE_KEYS.hidden}_${user.id}`,
-        );
-        if (storedHidden) setHiddenRecommendations(JSON.parse(storedHidden));
-      } else {
-        const storedHidden = localStorage.getItem(STORAGE_KEYS.hidden);
-        if (storedHidden) setHiddenRecommendations(JSON.parse(storedHidden));
-      }
-    };
-    loadHidden();
-  }, [user]);
-
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem(
-        `${STORAGE_KEYS.hidden}_${user.id}`,
-        JSON.stringify(hiddenRecommendations),
-      );
-    } else {
-      localStorage.setItem(
-        STORAGE_KEYS.hidden,
-        JSON.stringify(hiddenRecommendations),
-      );
+    const storedHidden = localStorage.getItem(storageKey);
+    if (storedHidden) {
+      setHiddenRecommendations(JSON.parse(storedHidden));
+      return;
     }
-  }, [hiddenRecommendations, user]);
+
+    setHiddenRecommendations([]);
+  }, [storageKey]);
 
   useEffect(() => {
-    if (!user) return;
+    localStorage.setItem(storageKey, JSON.stringify(hiddenRecommendations));
+  }, [hiddenRecommendations, storageKey]);
 
-    const syncLocalToServer = async () => {
-      try {
-        const guestWatchlistItems = readGuestWatchlist();
-        const guestWatchedItems = readGuestWatched();
+  return {
+    hiddenRecommendations,
+    setHiddenRecommendations,
+  };
+}
 
-        if (guestWatchlistItems.length > 0) {
-          const rows = guestWatchlistItems.map((item) => ({
-            user_id: user.id,
-            media_id: item.mediaId,
-            media_type: item.mediaType,
-            added_at: item.addedAt || new Date().toISOString(),
-          }));
-
-          try {
-            const { error } = await supabase
-              .from("user_watchlist")
-              .upsert(rows, { onConflict: "user_id,media_id,media_type" });
-            if (error) {
-              logger.error("Error upserting watchlist during sync.", error);
-            }
-          } catch (error) {
-            logger.error("Watchlist sync failed.", error);
-          }
-        }
-
-        if (guestWatchedItems.length > 0) {
-          const rows = guestWatchedItems.map((item) => ({
-            user_id: user.id,
-            media_id: item.mediaId,
-            media_type: item.mediaType,
-            rating: item.rating ?? null,
-            note: item.note ?? null,
-            status: item.status ?? "completed",
-            watched_at:
-              item.watchedAt || item.addedAt || new Date().toISOString(),
-          }));
-
-          try {
-            const { error } = await supabase
-              .from("user_watched")
-              .upsert(rows, { onConflict: "user_id,media_id,media_type" });
-            if (error) {
-              logger.error("Error upserting watched during sync.", error);
-            }
-          } catch (error) {
-            logger.error("Watched sync failed.", error);
-          }
-        }
-
-        clearGuestWatchlist();
-        clearGuestWatched();
-        await queryClient.invalidateQueries({
-          queryKey: ["watchlist", user.id],
-        });
-        await queryClient.invalidateQueries({ queryKey: ["watched", user.id] });
-      } catch (error) {
-        logger.error("Sync local to server failed.", error);
-      }
-    };
-
-    void syncLocalToServer();
-  }, [queryClient, user]);
+function GuestUserListsProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const guestWatchlist = useGuestWatchlist();
+  const guestWatched = useGuestWatched();
+  const { hiddenRecommendations, setHiddenRecommendations } =
+    useHiddenRecommendations(user?.id);
 
   const addToWatchlist = useCallback(
     async (mediaId: number, mediaType: "movie" | "tv") => {
-      if (user) {
-        await addToWatchlistMutation.mutateAsync({ mediaId, mediaType });
-      } else {
-        guestWatchlist.addToGuestWatchlist(mediaId, mediaType);
-        toast("Added to Watchlist (guest)");
-      }
+      guestWatchlist.addToGuestWatchlist(mediaId, mediaType);
+      toast("Added to Watchlist (guest)");
     },
-    [addToWatchlistMutation, guestWatchlist, user],
+    [guestWatchlist],
   );
 
   const removeFromWatchlist = useCallback(
     async (mediaId: number, mediaType: "movie" | "tv") => {
-      if (user) {
-        await removeFromWatchlistMutation.mutateAsync({ mediaId, mediaType });
-      } else {
-        guestWatchlist.removeFromGuestWatchlist(mediaId, mediaType);
-        toast(t("actions.watchlistRemoved", "Removed from watchlist"));
-      }
+      guestWatchlist.removeFromGuestWatchlist(mediaId, mediaType);
+      toast(t("actions.watchlistRemoved", "Removed from watchlist"));
     },
-    [guestWatchlist, removeFromWatchlistMutation, t, user],
+    [guestWatchlist, t],
   );
 
   const addToWatched = useCallback(
@@ -250,84 +132,57 @@ export function UserListsProvider({ children }: { children: React.ReactNode }) {
       mediaType: "movie" | "tv",
       rating?: number,
       note?: string,
-      status?: string,
+      status?: "watching" | "completed" | "dropped" | "plan_to_watch",
     ) => {
-      if (user) {
-        await addToWatchedMutation.mutateAsync({
-          mediaId,
-          mediaType,
-          rating,
-          note,
-          status,
-        });
-      } else {
-        guestWatched.addToGuestWatched(mediaId, mediaType, {
-          rating: validateRating(rating),
-          note: validateNote(note),
-          status: status as UserMediaItem["status"],
-        });
-        toast(t("actions.watchedAdded", "Saved locally"), {
-          description: t(
-            "actions.watchedAddedGuest",
-            "Marked as watched on this device. Sign in later to sync it to your account.",
-          ),
-        });
-      }
+      guestWatched.addToGuestWatched(mediaId, mediaType, {
+        rating: validateRating(rating),
+        note: validateNote(note),
+        status,
+      });
+      toast(t("actions.watchedAdded", "Saved locally"), {
+        description: t(
+          "actions.watchedAddedGuest",
+          "Marked as watched on this device. Sign in later to sync it to your account.",
+        ),
+      });
     },
-    [addToWatchedMutation, guestWatched, t, user],
+    [guestWatched, t],
   );
 
   const removeFromWatched = useCallback(
     async (mediaId: number, mediaType: "movie" | "tv") => {
-      if (user) {
-        await removeFromWatchedMutation.mutateAsync({ mediaId, mediaType });
-      } else {
-        guestWatched.removeFromGuestWatched(mediaId, mediaType);
-        toast(t("actions.watchedRemoved", "Removed from watched"));
-      }
+      guestWatched.removeFromGuestWatched(mediaId, mediaType);
+      toast(t("actions.watchedRemoved", "Removed from watched"));
     },
-    [guestWatched, removeFromWatchedMutation, t, user],
+    [guestWatched, t],
   );
 
-  const updateWatchedItem = useCallback(
-    (
-      mediaId: number,
-      mediaType: "movie" | "tv",
-      updates: Partial<UserMediaItem>,
-    ) => {
-      updateWatchedMutation.mutate({ mediaId, mediaType, updates });
-    },
-    [updateWatchedMutation],
-  );
+  const updateWatchedItem = useCallback(() => {
+    // Guest watched updates are not persisted beyond add/remove today.
+  }, []);
 
   const isInWatchlist = useCallback(
-    (mediaId: number, mediaType: "movie" | "tv") => {
-      return watchlist.some(
-        (item: UserMediaItem) =>
-          item.mediaId === mediaId && item.mediaType === mediaType,
-      );
-    },
-    [watchlist],
+    (mediaId: number, mediaType: "movie" | "tv") =>
+      guestWatchlist.items.some(
+        (item) => item.mediaId === mediaId && item.mediaType === mediaType,
+      ),
+    [guestWatchlist.items],
   );
 
   const isWatched = useCallback(
-    (mediaId: number, mediaType: "movie" | "tv") => {
-      return watched.some(
-        (item: UserMediaItem) =>
-          item.mediaId === mediaId && item.mediaType === mediaType,
-      );
-    },
-    [watched],
+    (mediaId: number, mediaType: "movie" | "tv") =>
+      guestWatched.items.some(
+        (item) => item.mediaId === mediaId && item.mediaType === mediaType,
+      ),
+    [guestWatched.items],
   );
 
   const getWatchedItem = useCallback(
-    (mediaId: number, mediaType: "movie" | "tv") => {
-      return watched.find(
-        (item: UserMediaItem) =>
-          item.mediaId === mediaId && item.mediaType === mediaType,
-      );
-    },
-    [watched],
+    (mediaId: number, mediaType: "movie" | "tv") =>
+      guestWatched.items.find(
+        (item) => item.mediaId === mediaId && item.mediaType === mediaType,
+      ),
+    [guestWatched.items],
   );
 
   const hideFromRecommendations = useCallback(
@@ -339,64 +194,119 @@ export function UserListsProvider({ children }: { children: React.ReactNode }) {
         userId: user?.id || "local",
         hiddenAt: new Date().toISOString(),
       };
+
       setHiddenRecommendations((prev) => {
         const next = [...prev, newItem];
-        try {
-          if (!user) {
-            toast(t("recommendations.hidden", "Hidden from recommendations"), {
-              description: t(
-                "recommendations.hiddenGuest",
-                "Hidden locally. Sign in to persist across devices.",
+        toast(t("recommendations.hidden", "Hidden from recommendations"), {
+          description: t(
+            "recommendations.hiddenGuest",
+            "Hidden locally. Sign in to persist across devices.",
+          ),
+          action: {
+            label: t("common.undo", "Undo"),
+            onClick: () =>
+              setHiddenRecommendations((prev2) =>
+                prev2.filter((hidden) => hidden.id !== newItem.id),
               ),
-              action: {
-                label: t("common.undo", "Undo"),
-                onClick: () =>
-                  setHiddenRecommendations((prev2) =>
-                    prev2.filter((hidden) => hidden.id !== newItem.id),
-                  ),
-              },
-            });
-          } else {
-            toast(t("recommendations.hidden", "Hidden from recommendations"));
-          }
-        } catch (error) {
-          logger.warn("Failed to show hidden recommendation toast.", error);
-        }
+          },
+        });
         return next;
       });
     },
-    [t, user],
+    [setHiddenRecommendations, t, user?.id],
   );
 
   const isHiddenFromRecommendations = useCallback(
-    (mediaId: number, mediaType: "movie" | "tv") => {
-      return hiddenRecommendations.some(
+    (mediaId: number, mediaType: "movie" | "tv") =>
+      hiddenRecommendations.some(
         (item) => item.mediaId === mediaId && item.mediaType === mediaType,
-      );
-    },
+      ),
     [hiddenRecommendations],
   );
 
+  const value = useMemo<UserListsContextType>(
+    () => ({
+      watchlist: guestWatchlist.items,
+      watched: guestWatched.items,
+      hiddenRecommendations,
+      addToWatchlist,
+      removeFromWatchlist,
+      addToWatched,
+      removeFromWatched,
+      updateWatchedItem,
+      isInWatchlist,
+      isWatched,
+      getWatchedItem,
+      hideFromRecommendations,
+      isHiddenFromRecommendations,
+      loading: false,
+    }),
+    [
+      addToWatchlist,
+      addToWatched,
+      getWatchedItem,
+      guestWatchlist.items,
+      guestWatched.items,
+      hiddenRecommendations,
+      hideFromRecommendations,
+      isHiddenFromRecommendations,
+      isInWatchlist,
+      isWatched,
+      removeFromWatchlist,
+      removeFromWatched,
+      updateWatchedItem,
+    ],
+  );
+
   return (
-    <UserListsContext.Provider
-      value={{
-        watchlist,
-        watched,
-        hiddenRecommendations,
-        addToWatchlist,
-        removeFromWatchlist,
-        addToWatched,
-        removeFromWatched,
-        updateWatchedItem,
-        isInWatchlist,
-        isWatched,
-        getWatchedItem,
-        hideFromRecommendations,
-        isHiddenFromRecommendations,
-        loading,
-      }}
-    >
+    <UserListsContext.Provider value={value}>
       {children}
     </UserListsContext.Provider>
+  );
+}
+
+function AuthenticatedUserListsFallback({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const value = useMemo<UserListsContextType>(
+    () => ({
+      watchlist: [],
+      watched: [],
+      hiddenRecommendations: [],
+      addToWatchlist: async () => undefined,
+      removeFromWatchlist: async () => undefined,
+      addToWatched: async () => undefined,
+      removeFromWatched: async () => undefined,
+      updateWatchedItem: () => undefined,
+      isInWatchlist: () => false,
+      isWatched: () => false,
+      getWatchedItem: () => undefined,
+      hideFromRecommendations: () => undefined,
+      isHiddenFromRecommendations: () => false,
+      loading: true,
+    }),
+    [],
+  );
+
+  return (
+    <UserListsContext.Provider value={value}>
+      {children}
+    </UserListsContext.Provider>
+  );
+}
+
+export function UserListsProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+
+  if (!user) {
+    return <GuestUserListsProvider>{children}</GuestUserListsProvider>;
+  }
+
+  return (
+    <Suspense fallback={<AuthenticatedUserListsFallback>{children}</AuthenticatedUserListsFallback>}>
+      <AuthenticatedUserListsProvider>{children}</AuthenticatedUserListsProvider>
+    </Suspense>
   );
 }

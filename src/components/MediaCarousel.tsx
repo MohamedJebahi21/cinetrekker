@@ -179,9 +179,10 @@ export function MediaCarousel({
                   className={`h-2.5 rounded-full transition-all ${
                     index === activePage
                       ? "w-6 bg-primary"
-                      : "w-2.5 bg-muted-foreground/40 hover:bg-muted-foreground/70"
+                      : "w-2.5 bg-primary/30 hover:bg-primary/55"
                   }`}
                   aria-label={`Go to carousel page ${index + 1}`}
+                  aria-pressed={index === activePage}
                 />
               ))}
             </div>
