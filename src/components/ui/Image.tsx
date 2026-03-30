@@ -51,7 +51,12 @@ export const Image: React.FC<ImageProps> = ({
   }, [resolvedSrc]);
 
   return (
-    <picture className={cn(showSkeleton && "relative block overflow-hidden")}>
+    <picture
+      className={cn(
+        "block max-w-full",
+        showSkeleton && "relative overflow-hidden",
+      )}
+    >
       {showSkeleton && !isLoaded && (
         <span
           aria-hidden="true"
@@ -76,7 +81,7 @@ export const Image: React.FC<ImageProps> = ({
           onError={() => {
             setIsLoaded(true);
           }}
-          className={className}
+          className={cn("block h-auto max-w-full", className)}
           {...fetchPriorityAttr}
           {...props}
         />

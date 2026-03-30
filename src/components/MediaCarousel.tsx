@@ -135,18 +135,13 @@ export function MediaCarousel({
           {/* Scrollable container — scrollbar hidden */}
           <div
             ref={scrollContainerRef}
-            className="flex gap-4 overflow-x-auto scroll-smooth overscroll-contain"
-            // ...existing code...
+            className="hide-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 scroll-smooth overscroll-contain touch-pan-x"
             onScroll={checkScroll}
           >
-            <style>{`
-              .hide-scrollbar::-webkit-scrollbar { display: none; }
-            `}</style>
             {filteredItems.map((item) => (
               <div
                 key={`${item.id}-${item.media_type || "unknown"}`}
-                className="h-72 w-[132px] flex-shrink-0 sm:h-80 sm:w-[140px] md:w-[160px]"
-                // ...existing code...
+                className="h-72 w-[132px] flex-shrink-0 snap-start sm:h-80 sm:w-[140px] md:w-[160px]"
               >
                 <MediaCard media={item} />
               </div>

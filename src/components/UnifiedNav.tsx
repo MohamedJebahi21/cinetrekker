@@ -316,6 +316,8 @@ export function UnifiedNav() {
             onClick={() => setIsMobileSheetOpen(true)}
             className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent"
             aria-label={t("nav.openMenu", "Open menu")}
+            aria-expanded={isMobileSheetOpen}
+            aria-controls="mobile-nav-sheet"
           >
             {user ? renderProfileAvatar() : <Menu className="h-5 w-5" />}
           </button>
@@ -397,7 +399,11 @@ export function UnifiedNav() {
 
       {/* ── Mobile Sheet ── */}
       <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
-        <SheetContent side="right" className="w-[86vw] max-w-sm px-4 pb-8 pt-6 md:hidden">
+        <SheetContent
+          id="mobile-nav-sheet"
+          side="right"
+          className="safe-area-insets w-full border-l border-border/60 bg-background/98 px-4 pb-8 pt-6 backdrop-blur-2xl md:hidden sm:max-w-sm"
+        >
           <SheetHeader className="text-left">
             <SheetTitle>{t("common.appName", "CineTrekker")}</SheetTitle>
             <SheetDescription>

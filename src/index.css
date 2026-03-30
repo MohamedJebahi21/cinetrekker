@@ -1051,6 +1051,9 @@
 
 /* Improved object-fit for all images to prevent distortion */
 img {
+  display: block;
+  max-width: 100%;
+  height: auto;
   object-fit: cover;
 }
 
