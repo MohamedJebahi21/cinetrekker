@@ -995,9 +995,6 @@ export default function Search() {
           {t("search.filterHint")}
         </p>
       </div>
-
-      {/* Intro, search ideas, and help/FAQ blocks removed as requested */}
-
       {/* Advanced Filters (desktop) */}
       <div className="hidden md:block">
         <div className="glass-card p-5 mb-8">
@@ -1160,8 +1157,6 @@ export default function Search() {
           )}
         </div>
       )}
-
-      {/* InternalLinksSection and FAQSection removed as requested */}
     </div>
   );
 }

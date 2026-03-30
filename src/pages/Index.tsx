@@ -1,27 +1,15 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
-import { MOVIE_GENRES, TV_GENRES } from "@/data/genres";
-import { discoverMovies, discoverTV } from "@/services/tmdb";
 import { Link } from "react-router-dom";
-import {
-  getTrending,
-  getNowPlayingMovies,
-  getTopRatedMovies,
-  getTopRatedTV,
-} from "@/services/tmdb";
 import { MediaSection } from "@/components/MediaSection";
 import { MediaCarouselEnhanced } from "@/components/MediaCarouselEnhanced";
 import { MediaCardSkeleton } from "@/components/MediaCard";
 import { HeroSection } from "@/components/HeroSection";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SEO from "@/components/SEO";
-import { useContentPolicy } from "@/contexts/content-policy-context";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserLists } from "@/contexts/UserListsContext";
-import { useLastViewed } from "@/hooks/useLastViewed";
-import { FAQSection } from "@/components/FAQSection";
 import { Button } from "@/components/ui/button";
+import { useHomePageData } from "@/hooks/useHomePageData";
 import {
   buildCanonicalUrl,
   toBreadcrumbJsonLd,
@@ -32,11 +20,6 @@ import {
 const BecauseYouLiked = lazy(() =>
   import("@/components/BecauseYouLiked").then((mod) => ({
     default: mod.BecauseYouLiked,
-  })),
-);
-const ContinueWatching = lazy(() =>
-  import("@/components/ContinueWatching").then((mod) => ({
-    default: mod.ContinueWatching,
   })),
 );
 const WatchedShowsNewEpisodes = lazy(() =>
@@ -70,127 +53,32 @@ export default function Index() {
   const { user } = useAuth();
   const { watched, watchlist } = useUserLists();
   const language = i18n.language;
-
-  // --- More in this genre ---
-  const lastWatched = watched.length > 0 ? watched[watched.length - 1] : null;
-  const lastGenreId = lastWatched?.genre_ids?.[0] || null;
-  const lastGenreName = lastWatched?.media_type === "movie"
-    ? MOVIE_GENRES.find(g => g.id === lastGenreId)?.name
-    : TV_GENRES.find(g => g.id === lastGenreId)?.name;
-
-  const { data: moreInGenre, isLoading: loadingGenre } = useQuery({
-    queryKey: ["more-in-genre", lastGenreId, language],
-    queryFn: async () => {
-      if (!lastGenreId) return [];
-      const params = { with_genres: String(lastGenreId), sort_by: "popularity.desc", page: 1 };
-      const res = lastWatched.media_type === "movie"
-        ? await discoverMovies(params, language)
-        : await discoverTV(params, language);
-      return res.results || [];
-    },
-    enabled: !!lastGenreId,
-  });
-
-  // --- Trending in your country ---
-  const userCountry = (lastWatched?.origin_country?.[0]) || (lastWatched?.production_countries?.[0]?.iso_3166_1) || "US";
-  const { data: trendingCountry, isLoading: loadingCountry } = useQuery({
-    queryKey: ["trending-country", userCountry, language],
-    queryFn: async () => {
-      const res = await getTrending("all", "day", language, 1, includeAdult);
-      return (res.results || []).filter(m => (m.origin_country?.includes(userCountry) || m.production_countries?.some(c => c.iso_3166_1 === userCountry)));
-    },
-    enabled: !!userCountry,
-  });
-  const { lastViewed } = useLastViewed();
-  const { strictFiltering, moderateFiltering } = useContentPolicy();
-  const includeAdult = !(strictFiltering || moderateFiltering);
-  const shouldGateRecommendations =
-    !user || (watched.length === 0 && watchlist.length === 0 && !lastViewed);
-
-  // State for tab selections
-  const [discoverTab, setDiscoverTab] = useState<
-    "trending-day" | "trending-week" | "new-releases"
-  >("trending-day");
-  const [topRatedType, setTopRatedType] = useState<"movie" | "tv">("movie");
-
-  const [deferredEnabled, setDeferredEnabled] = useState(false);
-
   const {
-    data: criticalData,
-    isLoading: loadingCritical,
-    error: criticalError,
-  } = useQuery({
-    queryKey: ["home-critical", language, includeAdult],
-    queryFn: async () => {
-      const [newReleasesData, trendingWeekData] = await Promise.all([
-        getNowPlayingMovies(1, language, includeAdult),
-        getTrending("all", "week", language, 1, includeAdult),
-      ]);
-
-      return {
-        newReleases: newReleasesData,
-        trendingWeek: trendingWeekData,
-      };
-    },
+    shouldGateRecommendations,
+    discoverTab,
+    setDiscoverTab,
+    deferredEnabled,
+    lastGenreId,
+    lastGenreName,
+    userCountry,
+    filteredGenreItems,
+    filteredCountryItems,
+    moreInGenreQuery,
+    trendingCountryQuery,
+    criticalDataQuery,
+    trendingDayQuery,
+    hasDeferredErrors,
+  } = useHomePageData({
+    language,
+    user,
+    watched,
+    watchlist,
   });
 
-  useEffect(() => {
-    setDeferredEnabled(false);
-
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
-    let idleId: number | undefined;
-
-    const enableDeferred = () => setDeferredEnabled(true);
-
-    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      idleId = window.requestIdleCallback(enableDeferred, { timeout: 1200 });
-    } else {
-      timeoutId = globalThis.setTimeout(enableDeferred, 0);
-    }
-
-    return () => {
-      if (idleId !== undefined && "cancelIdleCallback" in window) {
-        window.cancelIdleCallback(idleId);
-      }
-      if (timeoutId !== undefined) {
-        globalThis.clearTimeout(timeoutId);
-      }
-    };
-  }, [language]);
-
-  const {
-    data: topRatedMovies,
-    isLoading: loadingTopRatedMovies,
-    error: topRatedMoviesError,
-  } = useQuery({
-    queryKey: ["top-rated", "movie", language, includeAdult],
-    queryFn: () => getTopRatedMovies(1, language, includeAdult),
-    enabled: deferredEnabled,
-  });
-
-  const {
-    data: topRatedTV,
-    isLoading: loadingTopRatedTV,
-    error: topRatedTVError,
-  } = useQuery({
-    queryKey: ["top-rated", "tv", language, includeAdult],
-    queryFn: () => getTopRatedTV(1, language, includeAdult),
-    enabled: deferredEnabled,
-  });
-
-  const {
-    data: trendingDay,
-    isLoading: loadingDay,
-    error: trendingDayError,
-  } = useQuery({
-    queryKey: ["trending", "day", language, includeAdult],
-    queryFn: () => getTrending("all", "day", language, 1, includeAdult),
-    enabled: deferredEnabled,
-  });
-
-  const newReleases = criticalData?.newReleases;
-  const trendingWeek = criticalData?.trendingWeek;
-  const loadingWeek = loadingCritical;
+  const newReleases = criticalDataQuery.data?.newReleases;
+  const trendingWeek = criticalDataQuery.data?.trendingWeek;
+  const loadingWeek = criticalDataQuery.isLoading;
+  const loadingCritical = criticalDataQuery.isLoading;
   const faqItems = [
     {
       question: "What is CineTrekker movie tracker used for?",
@@ -209,14 +97,8 @@ export default function Index() {
     },
   ];
 
-  const hasDeferredErrors = Boolean(
-    topRatedMoviesError ||
-    topRatedTVError ||
-    trendingDayError,
-  );
-
   return (
-    <div className="min-h-screen">
+    <div className="ct-page-shell min-h-screen">
       <SEO
         title="CineTrekker Movie Tracker | Track Movies, TV Shows, and Watchlists"
         description="CineTrekker is a movie tracker for finding trending movies, managing your watchlist, following new releases, and organizing what to watch next."
@@ -234,7 +116,7 @@ export default function Index() {
       {/* AI Movie Scout removed per request */}
 
       <div className="page-container space-y-4 pb-16 md:pb-0">
-        {criticalError && (
+        {criticalDataQuery.error && (
           <div className="rounded-lg border border-red-300 bg-red-100 p-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
             {t(
               "common.error",
@@ -258,7 +140,7 @@ export default function Index() {
           {/* Top: Based on Your Recent Activity (or placeholder) */}
           <div>
             {shouldGateRecommendations ? (
-              <section className="rounded-3xl border border-border/40 bg-card/70 p-4 md:p-6 flex flex-col justify-center items-center min-h-[180px]">
+              <section className="ct-panel flex min-h-[180px] flex-col items-center justify-center p-4 md:p-6">
                 <h2 className="text-lg font-bold text-foreground mb-2 text-center">
                   Personalized picks start after your first saves
                 </h2>
@@ -279,17 +161,17 @@ export default function Index() {
                   {lastGenreId && (
                     <MediaSection
                       title={t("home.moreInGenre", { genre: lastGenreName || "Genre" })}
-                      items={moreInGenre?.filter(m => !watched.some(w => w.mediaId === m.id) && !watchlist.some(w => w.mediaId === m.id)).slice(0, 12) || []}
-                      loading={loadingGenre}
+                      items={filteredGenreItems}
+                      loading={moreInGenreQuery.isLoading}
                     />
                   )}
                   {/* Trending in your country */}
                   {/* Trending in Your Country: show only if enough items, else hide */}
-                  {userCountry && trendingCountry && trendingCountry.filter(m => !watched.some(w => w.mediaId === m.id) && !watchlist.some(w => w.mediaId === m.id)).length >= 6 && (
+                  {userCountry && filteredCountryItems.length >= 6 && (
                     <MediaSection
                       title={"Trending in Your Country"}
-                      items={trendingCountry.filter(m => !watched.some(w => w.mediaId === m.id) && !watchlist.some(w => w.mediaId === m.id)).slice(0, 12)}
-                      loading={loadingCountry}
+                      items={filteredCountryItems}
+                      loading={trendingCountryQuery.isLoading}
                     />
                   )}
                 </Suspense>
@@ -325,7 +207,7 @@ export default function Index() {
                 Fresh picks from TMDB, organized for quick browsing.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2 rounded-lg border border-white/5 bg-card/50 p-1">
+            <div className="ct-toggle-group">
               {[
                 { key: "trending-day", label: "Trending Today" },
                 { key: "trending-week", label: "Trending This Week" },
@@ -339,10 +221,10 @@ export default function Index() {
                       tab.key as "trending-day" | "trending-week" | "new-releases",
                     )
                   }
-                  className={`min-h-[44px] rounded px-4 py-2 text-sm font-medium transition-all duration-300 ${
+                  className={`ct-toggle-button min-h-[44px] ${
                     discoverTab === tab.key
-                      ? "bg-primary text-primary-foreground shadow-lg"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "ct-toggle-button-active"
+                      : "hover:text-foreground"
                   }`}
                 >
                   {tab.label}
@@ -352,15 +234,15 @@ export default function Index() {
           </div>
           <div
             key={discoverTab}
-            className="animate-fade-in rounded-3xl border border-border/40 bg-card/50 p-4 md:p-6"
+            className="ct-panel animate-fade-in p-4 md:p-6"
           >
             {discoverTab === "trending-day" &&
-              (!deferredEnabled || loadingDay ? (
+              (!deferredEnabled || trendingDayQuery.isLoading ? (
                 <TrendingSectionSkeleton />
               ) : (
                 <MediaCarouselEnhanced
                   title="Trending Today"
-                  items={trendingDay?.results || []}
+                  items={trendingDayQuery.data?.results || []}
                   showMoreLink="/search?sort=popularity.desc"
                 />
               ))}
@@ -389,10 +271,6 @@ export default function Index() {
             This product uses the TMDB API but is not endorsed or certified by TMDB.
           </p>
         </section>
-
-        {/* Top Rated section removed per request. Optionally, add a more personal section here. */}
-
-        {/* FAQSection removed as requested */}
       </div>
     </div>
   );

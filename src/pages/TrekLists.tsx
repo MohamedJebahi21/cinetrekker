@@ -174,7 +174,7 @@ export default function TrekLists() {
                 rows={3}
                 className="mt-2 w-full resize-none rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-sm text-white placeholder:text-white/35 focus:outline-none focus:ring-2 focus:ring-[#f2c572]/45"
               />
-              <Button onClick={handleCreate} className="mt-3 w-full gap-2 bg-[#8d1e24] text-white hover:bg-[#a1252d]">
+              <Button onClick={handleCreate} className="mt-3 w-full gap-2">
                 <Plus className="h-4 w-4" />
                 Create List
               </Button>
@@ -196,7 +196,7 @@ export default function TrekLists() {
                   rows={3}
                   className="mt-2 w-full resize-none rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-sm text-white placeholder:text-white/35 focus:outline-none focus:ring-2 focus:ring-[#f2c572]/45"
                 />
-                <Button onClick={handleSaveEdit} className="mt-3 w-full gap-2 bg-[#8d1e24] text-white hover:bg-[#a1252d]">
+                <Button onClick={handleSaveEdit} className="mt-3 w-full gap-2">
                   Save Changes
                 </Button>
               </div>
@@ -227,14 +227,16 @@ export default function TrekLists() {
                       <p className="heading-credits text-xl text-white">{list.title}</p>
                       <p className="mt-1 text-xs text-white/60">{list.itemKeys.length} titles</p>
                     </button>
-                    <button
+                    <Button
                       type="button"
                       onClick={() => handleDelete(list.id)}
-                      className="rounded-md p-1 text-white/65 hover:bg-white/10 hover:text-white"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-white/65 hover:text-white"
                       aria-label={`Delete ${list.title}`}
                     >
                       <Trash2 className="h-4 w-4" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ))}

@@ -7,10 +7,7 @@ export function Footer() {
   return (
     <footer className="bg-background border-t border-border/40">
       <div className="container mx-auto px-4 py-8 md:py-10">
-        {/* GitHub link removed as requested */}
-        {/* Main Footer Grid - 5 columns on desktop (Brand spans 2) */}
         <div className="grid grid-cols-1 gap-8 min-[400px]:grid-cols-2 md:grid-cols-5 md:gap-10">
-          {/* Brand Column - takes 2 columns on desktop */}
           <div className="col-span-1 min-[400px]:col-span-2 md:col-span-2 min-w-0">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary shadow-[0_8px_20px_hsl(358_94%_46%/0.2)]">
@@ -18,50 +15,49 @@ export function Footer() {
                   CT
                 </span>
               </div>
-              <span className="text-[1.85rem] font-semibold leading-none text-[var(--text-primary)]">
+              <span className="text-[1.85rem] font-semibold leading-none text-foreground">
                 {t("common.appName")}
               </span>
             </div>
-            <p className="max-w-sm text-[0.95rem] leading-relaxed text-[var(--text-secondary)]">
+            <p className="max-w-sm text-[0.95rem] leading-relaxed text-muted-foreground">
               {t(
                 "footer.tagline",
                 "Your personal movie and TV show tracker. Discover, track, and share your cinematic journey.",
               )}
             </p>
           </div>
-          {/* Explore Column */}
           <div className="min-w-0">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-primary)]/90">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-foreground/90">
               {t("footer.explore", "Explore")}
             </h3>
             <nav className="flex flex-col gap-3" aria-label="Explore links">
               <Link
                 to="/search"
-                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 Search
               </Link>
               <Link
                 to="/trending"
-                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 Live Trends
               </Link>
               <Link
                 to="/search?sort=popularity.desc"
-                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.trending", "Trending")}
               </Link>
               <Link
                 to="/search?sort=primary_release_date.desc"
-                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.upcoming", "Upcoming")}
               </Link>
               <Link
                 to="/search?sort=vote_average.desc"
-                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.topRated", "Top Rated")}
               </Link>
@@ -69,7 +65,7 @@ export function Footer() {
           </div>
           {/* Support Column */}
           <div className="min-w-0">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-primary)]/90">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-foreground/90">
               <Link
                 to="/about"
                 className="hover:text-primary transition-colors"
@@ -81,26 +77,26 @@ export function Footer() {
               <a
                 href="https://buymeacoffee.com/mohamed_jebahi"
                 target="_blank" rel="noopener noreferrer"
-                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.buyMeACoffee", "Buy Me a Coffee")}
               </a>
               <Link
                 to="/about"
-                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.about", "About")}
               </Link>
               <Link
                 to="/feedback"
-                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.feedback", "Feedback")}
               </Link>
               <a
                 href="https://developer.themoviedb.org/docs"
                 target="_blank" rel="noopener noreferrer"
-                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.tmdbApi", "TMDB API")}
               </a>
@@ -108,7 +104,7 @@ export function Footer() {
           </div>
           {/* Legal Column */}
           <div className="min-w-0">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-primary)]/90">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-foreground/90">
               <Link
                 to="/privacy"
                 className="hover:text-primary transition-colors"
@@ -119,19 +115,19 @@ export function Footer() {
             <nav className="flex flex-col gap-3" aria-label="Legal links">
               <Link
                 to="/privacy"
-                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("nav.privacy", "Privacy Policy")}
               </Link>
               <Link
                 to="/terms"
-                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.terms", "Terms of Service")}
               </Link>
               <Link
                 to="/cookies"
-                className="break-words rounded-sm text-[0.92rem] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.cookies", "Cookie Policy")}
               </Link>
@@ -142,14 +138,14 @@ export function Footer() {
         <div className="mt-8 border-t border-border/40 pt-5">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             {/* Copyright */}
-            <p className="text-center text-[0.84rem] text-[var(--text-secondary)] md:text-left">
+            <p className="text-center text-[0.84rem] text-muted-foreground md:text-left">
               © {currentYear} {t("common.appName")}.{" "}
               {t("footer.allRightsReserved", "All rights reserved.")}
             </p>
             {/* TMDB Attribution */}
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-[0.84rem] text-[var(--text-secondary)]">
+                <span className="text-[0.84rem] text-muted-foreground">
                   {t("footer.poweredBy", "Powered by")}
                 </span>
                 <a
@@ -170,7 +166,7 @@ export function Footer() {
             </div>
           </div>
           {/* TMDB Attribution Text */}
-          <p className="mx-auto mt-3 max-w-3xl text-center text-[0.78rem] leading-relaxed text-[var(--text-secondary)]">
+          <p className="mx-auto mt-3 max-w-3xl text-center text-[0.78rem] leading-relaxed text-muted-foreground">
             {t(
               "footer.attribution",
               "This product uses the TMDB API but is not endorsed or certified by TMDB. All movie and TV show data, including images and metadata, is provided by The Movie Database (TMDB).",

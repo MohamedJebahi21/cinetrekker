@@ -280,10 +280,8 @@ export const MediaCard = React.memo(function MediaCard({
             <Button
               type="button"
               size="sm"
-              className={cn(
-                "h-10 w-full justify-center gap-2 bg-black/80 text-white backdrop-blur-md hover:bg-[#E50914]",
-                optimisticInWatchlist && "bg-[#E50914] hover:bg-[#c50812]",
-              )}
+              variant={optimisticInWatchlist ? "default" : "outline"}
+              className="h-10 w-full justify-center gap-2 border-white/20 bg-background/80 text-foreground backdrop-blur-md"
               onClick={(event) => void handleWatchlistClick(event)}
             >
               {isWatchlistPending ? (
@@ -294,12 +292,8 @@ export const MediaCard = React.memo(function MediaCard({
             <Button
               type="button"
               size="sm"
-              variant="outline"
-              className={cn(
-                "h-10 w-full justify-center gap-2 border-white/20 bg-black/55 text-white backdrop-blur-md hover:bg-white/15",
-                optimisticWatched &&
-                  "border-emerald-400/50 bg-emerald-500/20 text-emerald-50 hover:bg-emerald-500/30",
-              )}
+              variant={optimisticWatched ? "secondary" : "outline"}
+              className="h-10 w-full justify-center gap-2 border-white/20 bg-background/70 text-foreground backdrop-blur-md"
               onClick={(event) => void handleWatchedClick(event)}
             >
               {isWatchedPending ? (

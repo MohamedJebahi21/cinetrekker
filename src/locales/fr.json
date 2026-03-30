@@ -257,5 +257,9 @@
     "skip": "Passer",
     "start": "Commencer"
   },
-  "comingSoon": "Bientôt"
+  "comingSoon": "Bientôt",
+  "notFound": {
+    "returnHome": "Retour à l'accueil",
+    "search": "Rechercher"
+  }
 }

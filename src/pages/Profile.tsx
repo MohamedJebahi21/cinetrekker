@@ -1357,7 +1357,7 @@ export default function Profile() {
         canonical="https://cinetrekker.vercel.app/profile"
       />
       <motion.div
-        className="profile-page page-container max-w-full overflow-x-hidden pt-20 pb-24 md:pb-0"
+        className="profile-page page-container ct-page-shell max-w-full overflow-x-hidden pt-20 pb-24 md:pb-0"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -1374,7 +1374,7 @@ export default function Profile() {
               <motion.section variants={itemVariants} className="mb-8">
                 <Card
                   className={cn(
-                    "relative overflow-hidden shadow-2xl",
+                    "ct-panel-strong relative overflow-hidden shadow-2xl",
                     isLightTheme
                       ? "border-border/70 bg-card"
                       : "border-border/60 bg-card/95",
@@ -1586,7 +1586,7 @@ export default function Profile() {
                   >
                     <div className="mb-4 flex items-center justify-between">
                       <h2 className="flex items-center gap-2 text-xl font-bold">
-                        <User className="h-5 w-5 text-blue-400" />
+                        <User className="h-5 w-5 text-primary" />
                         {text("profile.profileDetails", "Profile Details")}
                       </h2>
                       {!isEditMode ? (
@@ -1600,7 +1600,7 @@ export default function Profile() {
                       ) : null}
                     </div>
 
-                    <Card className="border-border/60 bg-card/80 backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl">
+                    <Card className="ct-panel transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl">
                       <CardContent className="space-y-6 pt-6">
                         {!isEditMode ? (
                           <div className="space-y-4">
@@ -1859,14 +1859,17 @@ export default function Profile() {
                 <div className="space-y-8">
                   <motion.section variants={itemVariants} className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold">Favorite Movies</h3>
+                      <h3 className="flex items-center gap-2 text-lg font-semibold">
+                        <Film className="h-4 w-4 text-primary" />
+                        Favorite Movies
+                      </h3>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {pinnedMovieCount}/4 movies pinned
                     </p>
 
                     {isFavoritesPickerOpen && favoriteSearchType === "movie" ? (
-                      <Card className="border-neutral-800/60 bg-neutral-900/55">
+                      <Card className="ct-panel">
                         <CardContent className="space-y-3 pt-6">
                           <div className="relative">
                             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
@@ -1902,7 +1905,7 @@ export default function Profile() {
                                 return (
                                   <div
                                     key={key}
-                                    className="flex items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-900/70 p-2"
+                                    className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card/85 p-2 backdrop-blur-sm"
                                   >
                                     <Image
                                       src={getImageUrl(
@@ -1919,7 +1922,7 @@ export default function Profile() {
                                       showSkeleton
                                     />
                                     <div className="min-w-0 flex-1">
-                                      <p className="line-clamp-1 text-sm font-medium text-neutral-100">
+                                      <p className="line-clamp-1 text-sm font-medium text-foreground">
                                         {result.title}
                                       </p>
                                       <p className="text-xs text-muted-foreground">
@@ -1978,7 +1981,7 @@ export default function Profile() {
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
                           whileHover={{ y: -4 }}
-                          className="group relative w-full overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/40 shadow-xl transition-all duration-300"
+                          className="group relative w-full overflow-hidden rounded-[1.4rem] border border-border/60 bg-card/70 shadow-xl backdrop-blur-md transition-all duration-300"
                         >
                           <div className="absolute right-2 top-2 z-20 opacity-100 transition-all duration-300 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
                             <button
@@ -2026,7 +2029,7 @@ export default function Profile() {
                         <button
                           key={`favorite-movie-slot-${index}`}
                           type="button"
-                          className="group flex aspect-[2/3] w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-neutral-800/60 bg-neutral-900/20 text-neutral-600 transition-all duration-300 hover:border-red-500/40 hover:bg-red-500/5 hover:text-red-400"
+                          className="group flex aspect-[2/3] w-full flex-col items-center justify-center gap-3 rounded-[1.4rem] border-2 border-dashed border-border/60 bg-card/50 text-muted-foreground transition-all duration-300 hover:border-primary/45 hover:bg-primary/6 hover:text-primary"
                           onClick={() => {
                             setFavoriteSearchType("movie");
                             setIsFavoritesPickerOpen(
@@ -2034,7 +2037,7 @@ export default function Profile() {
                             );
                           }}
                         >
-                          <div className="rounded-full border border-neutral-800 bg-neutral-900 shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:bg-red-500/10 group-hover:border-red-500/20 p-3">
+                          <div className="rounded-full border border-border/60 bg-card/90 p-3 shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:border-primary/25 group-hover:bg-primary/10">
                             <Plus className="h-6 w-6 transition-transform group-hover:rotate-90" />
                           </div>
                           <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 group-hover:opacity-100">
@@ -2051,14 +2054,17 @@ export default function Profile() {
                     className="space-y-3"
                   >
                     <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold">Favorite Series</h3>
+                      <h3 className="flex items-center gap-2 text-lg font-semibold">
+                        <Sparkles className="h-4 w-4 text-primary" />
+                        Favorite Series
+                      </h3>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {pinnedSeriesCount}/4 series pinned
                     </p>
 
                     {isFavoritesPickerOpen && favoriteSearchType === "tv" ? (
-                      <Card className="border-neutral-800/60 bg-neutral-900/55">
+                      <Card className="ct-panel">
                         <CardContent className="space-y-3 pt-6">
                           <div className="relative">
                             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
@@ -2094,7 +2100,7 @@ export default function Profile() {
                                 return (
                                   <div
                                     key={key}
-                                    className="flex items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-900/70 p-2"
+                                    className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card/85 p-2 backdrop-blur-sm"
                                   >
                                     <Image
                                       src={getImageUrl(
@@ -2111,7 +2117,7 @@ export default function Profile() {
                                       showSkeleton
                                     />
                                     <div className="min-w-0 flex-1">
-                                      <p className="line-clamp-1 text-sm font-medium text-neutral-100">
+                                      <p className="line-clamp-1 text-sm font-medium text-foreground">
                                         {result.title}
                                       </p>
                                       <p className="text-xs text-muted-foreground">
@@ -2170,7 +2176,7 @@ export default function Profile() {
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
                           whileHover={{ y: -4 }}
-                          className="group relative w-full overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/40 shadow-xl transition-all duration-300"
+                          className="group relative w-full overflow-hidden rounded-[1.4rem] border border-border/60 bg-card/70 shadow-xl backdrop-blur-md transition-all duration-300"
                         >
                           <div className="absolute right-2 top-2 z-20 opacity-100 transition-all duration-300 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
                             <button
@@ -2218,7 +2224,7 @@ export default function Profile() {
                         <button
                           key={`favorite-series-slot-${index}`}
                           type="button"
-                          className="group flex aspect-[2/3] w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-neutral-800/60 bg-neutral-900/20 text-neutral-600 transition-all duration-300 hover:border-blue-500/40 hover:bg-blue-500/5 hover:text-blue-400"
+                          className="group flex aspect-[2/3] w-full flex-col items-center justify-center gap-3 rounded-[1.4rem] border-2 border-dashed border-border/60 bg-card/50 text-muted-foreground transition-all duration-300 hover:border-primary/45 hover:bg-primary/6 hover:text-primary"
                           onClick={() => {
                             setFavoriteSearchType("tv");
                             setIsFavoritesPickerOpen(
@@ -2226,7 +2232,7 @@ export default function Profile() {
                             );
                           }}
                         >
-                          <div className="rounded-full border border-neutral-800 bg-neutral-900 shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:bg-blue-500/10 group-hover:border-blue-500/20 p-3">
+                          <div className="rounded-full border border-border/60 bg-card/90 p-3 shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:border-primary/25 group-hover:bg-primary/10">
                             <Plus className="h-6 w-6 transition-transform group-hover:rotate-90" />
                           </div>
                           <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 group-hover:opacity-100">
@@ -2244,7 +2250,7 @@ export default function Profile() {
                     <p className="mb-4 text-sm text-neutral-400">
                       {favoriteGenres.length} genres selected
                     </p>
-                    <Card className="border-border/60 bg-card/80 backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl">
+                    <Card className="ct-panel transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl">
                       <CardContent className="pt-6">
                         <div className="flex flex-wrap gap-2">
                           {genres.map((genre) => {
@@ -2260,7 +2266,7 @@ export default function Profile() {
                                       "cursor-pointer px-3 py-1.5 transition-all duration-200 hover:scale-105",
                                       selected
                                         ? "border-primary bg-primary text-primary-foreground"
-                                        : "border-neutral-700 text-neutral-200 hover:border-primary/60 hover:text-white",
+                                        : "border-border/70 text-foreground/85 hover:border-primary/60 hover:text-foreground",
                                     )}
                                     onClick={() => toggleGenre(genre.id)}
                                   >
@@ -2290,7 +2296,7 @@ export default function Profile() {
                       <BarChart3 className="h-4 w-4 text-[#E50914]" />
                       Rating Distribution
                     </h3>
-                    <Card className="w-full border-neutral-800/60 bg-neutral-900/55">
+                    <Card className="ct-panel w-full">
                       <CardContent className="space-y-4 pt-6">
                         {ratingDistribution.map((entry) => {
                           const max = Math.max(

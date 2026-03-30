@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
@@ -13,7 +13,6 @@ interface MediaCarouselProps {
   showMoreLink?: string;
   emptyMessage?: string;
   showManualNav?: boolean;
-  scrollSnap?: 'mandatory' | 'proximity';
 }
 
 /**
@@ -32,10 +31,8 @@ export function MediaCarouselEnhanced({
   showMoreLink,
   emptyMessage,
   showManualNav = true,
-  scrollSnap = 'proximity',
 }: MediaCarouselProps) {
   const { t } = useTranslation();
-  const [isHovered, setIsHovered] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScroll, setCanScroll] = useState({ left: false, right: true });
 
@@ -83,11 +80,7 @@ export function MediaCarouselEnhanced({
   };
 
   return (
-    <section 
-      className="animate-fade-in group/carousel"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+    <section className="animate-fade-in group/carousel">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl md:text-2xl font-bold">{typeof title === 'string' ? title.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase()) : title}</h2>
         {showMoreLink && (
@@ -116,6 +109,7 @@ export function MediaCarouselEnhanced({
               <button
                 onClick={() => handleManualScroll('left')}
                 disabled={!canScroll.left}
+                type="button"
                 className="absolute -left-4 md:-left-6 top-1/3 z-10 hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 group-hover/scroll:opacity-100"
                 aria-label={t('common.previous') ? t('common.previous').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase()) : 'Previous'}
               >
@@ -124,6 +118,7 @@ export function MediaCarouselEnhanced({
               <button
                 onClick={() => handleManualScroll('right')}
                 disabled={!canScroll.right}
+                type="button"
                 className="absolute -right-4 md:-right-6 top-1/3 z-10 hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 group-hover/scroll:opacity-100"
                 aria-label={t('common.next') ? t('common.next').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase()) : 'Next'}
               >
@@ -136,24 +131,12 @@ export function MediaCarouselEnhanced({
           <div
             ref={scrollContainerRef}
             className="flex gap-4 overflow-x-auto scroll-smooth overscroll-contain hide-scrollbar"
-            // ...existing code...
             onScroll={checkScroll}
           >
-            {/* Hide scrollbar in Webkit browsers */}
-            <style>{`
-              div[style*="scroll-snap-type"] {
-                scrollbar-width: none;
-              }
-              div[style*="scroll-snap-type"]::-webkit-scrollbar {
-                display: none;
-              }
-            `}</style>
-
             {items.map((item) => (
               <div
                 key={`${item.id}-${item.media_type || 'unknown'}`}
                 className="flex-shrink-0 w-[160px] sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
-                // ...existing code...
               >
                 <MediaCard media={item} />
               </div>

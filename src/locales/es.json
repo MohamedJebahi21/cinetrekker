@@ -248,5 +248,13 @@
     "note": "Nota",
     "notePlaceholder": "Añade tus impresiones sobre este título..."
   },
-  "comingSoon": "Próximamente"
+  "comingSoon": "Próximamente",
+  "status": {
+    "message": "Mensaje de estado aquí",
+    "help": "Texto de ayuda aquí"
+  },
+  "notFound": {
+    "returnHome": "Volver al inicio",
+    "search": "Buscar"
+  }
 }

@@ -5,9 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import Play from "lucide-react/dist/esm/icons/play";
 import Bookmark from "lucide-react/dist/esm/icons/bookmark";
 import BookmarkCheck from "lucide-react/dist/esm/icons/bookmark-check";
+import Check from "lucide-react/dist/esm/icons/check";
 import Sparkles from "lucide-react/dist/esm/icons/sparkles";
 import Star from "lucide-react/dist/esm/icons/star";
-import Check from "lucide-react/dist/esm/icons/check";
 import { Link } from "react-router-dom";
 import {
   getTrending,
@@ -30,7 +30,14 @@ import { buildMediaPath, getMediaAltText } from "@/lib/seo";
 export function HeroSection() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
-  const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useUserLists();
+  const {
+    isInWatchlist,
+    addToWatchlist,
+    removeFromWatchlist,
+    isWatched,
+    addToWatched,
+    removeFromWatched,
+  } = useUserLists();
   const { strictFiltering, moderateFiltering } = useContentPolicy();
   const includeAdult = !(strictFiltering || moderateFiltering);
   const language = i18n.language;
@@ -113,13 +120,23 @@ export function HeroSection() {
   const inWatchlist = heroMedia
     ? isInWatchlist(heroMedia.id, mediaType)
     : false;
+  const watched = heroMedia ? isWatched(heroMedia.id, mediaType) : false;
 
   const handleWatchlist = () => {
-    if (!heroMedia || !user) return;
+    if (!heroMedia) return;
     if (inWatchlist) {
-      removeFromWatchlist(heroMedia.id, mediaType);
+      void removeFromWatchlist(heroMedia.id, mediaType);
     } else {
-      addToWatchlist(heroMedia.id, mediaType);
+      void addToWatchlist(heroMedia.id, mediaType);
+    }
+  };
+
+  const handleWatched = () => {
+    if (!heroMedia) return;
+    if (watched) {
+      void removeFromWatched(heroMedia.id, mediaType);
+    } else {
+      void addToWatched(heroMedia.id, mediaType);
     }
   };
 
@@ -169,8 +186,6 @@ export function HeroSection() {
           />
           {/* Trailer player, always above overlay, pointer-events enabled */}
           <div
-            className="fixed inset-0 z-[1010] flex items-center justify-center"
-            // style removed: pointerEvents: 'none' replaced with class
             className="fixed inset-0 z-[1010] flex items-center justify-center pointer-events-none"
           >
             <div
@@ -181,10 +196,8 @@ export function HeroSection() {
               <iframe
                 src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&rel=0`}
                 title={trailer.name}
-                className="w-full h-full rounded-xl"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
-                // style removed: background, replaced with Tailwind class
                 className="w-full h-full rounded-xl bg-black"
               />
               <button
@@ -268,7 +281,9 @@ export function HeroSection() {
               className="btn-primary-glow h-11 w-full px-4 text-sm md:h-12 md:px-6 md:text-base sm:w-auto"
               aria-label="See Details"
             >
-              <Link to={user ? `/details/${heroMedia?.id}` : "/signup"}>
+              <Link
+                to={user ? buildMediaPath(heroMedia.id, mediaType) : "/signup"}
+              >
                 See Details
               </Link>
             </Button>
@@ -286,62 +301,73 @@ export function HeroSection() {
               </Button>
             )}
 
-            {user && (
-              <Button
-                size="default"
-                variant="outline"
-                onClick={handleWatchlist}
-                className={cn(
-                  "action-bounce w-full sm:w-auto gap-2 h-11 md:h-12 px-3 md:px-6 text-sm md:text-base border backdrop-blur-sm shadow-sm transition-all",
-                  inWatchlist
-                    ? "border-red-400/60 bg-red-500/20 text-red-100 hover:bg-red-500/28 hover:border-red-300/80 shadow-[0_0_20px_rgba(229,9,20,0.25)]"
-                    : "border-white/25 bg-black/20 text-white/90 hover:bg-white/15",
-                )}
-                aria-label={
-                  inWatchlist
-                    ? t("actions.removeFromWatchlist")
-                    : t("actions.addToWatchlist")
-                }
-              >
-                {inWatchlist ? (
-                  <>
-                    <BookmarkCheck className="w-4 h-4 md:w-5 md:h-5" />
-                    <span className="hidden sm:inline">
-                      {t("actions.inWatchlist", "In Watchlist")}
-                    </span>
-                    <span className="sm:hidden">Saved</span>
-                  </>
-                ) : (
-                  <>
-                    <Bookmark className="w-4 h-4 md:w-5 md:h-5" />
-                    <span className="hidden sm:inline">
-                      {t("actions.addToWatchlist")}
-                    </span>
-                    <span className="sm:hidden">Watchlist</span>
-                  </>
-                )}
-              </Button>
+            {heroMedia && (
+              <>
+                <Button
+                  size="default"
+                  variant="outline"
+                  onClick={handleWatchlist}
+                  className={cn(
+                    "action-bounce w-full sm:w-auto gap-2 h-11 md:h-12 px-3 md:px-6 text-sm md:text-base border backdrop-blur-sm shadow-sm transition-all",
+                    inWatchlist
+                      ? "border-red-400/60 bg-red-500/20 text-red-100 hover:bg-red-500/28 hover:border-red-300/80 shadow-[0_0_20px_rgba(229,9,20,0.25)]"
+                      : "border-white/25 bg-black/20 text-white/90 hover:bg-white/15",
+                  )}
+                  aria-label={
+                    inWatchlist
+                      ? t("actions.removeFromWatchlist")
+                      : t("actions.addToWatchlist")
+                  }
+                >
+                  {inWatchlist ? (
+                    <>
+                      <BookmarkCheck className="w-4 h-4 md:w-5 md:h-5" />
+                      <span className="hidden sm:inline">
+                        {t("actions.inWatchlist", "In Watchlist")}
+                      </span>
+                      <span className="sm:hidden">Saved</span>
+                    </>
+                  ) : (
+                    <>
+                      <Bookmark className="w-4 h-4 md:w-5 md:h-5" />
+                      <span className="hidden sm:inline">
+                        {t("actions.addToWatchlist")}
+                      </span>
+                      <span className="sm:hidden">Watchlist</span>
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  size="default"
+                  variant="outline"
+                  onClick={handleWatched}
+                  className={cn(
+                    "action-bounce w-full sm:w-auto gap-2 h-11 md:h-12 px-3 md:px-6 text-sm md:text-base border backdrop-blur-sm shadow-sm transition-all",
+                    watched
+                      ? "border-emerald-400/55 bg-emerald-500/18 text-emerald-50 hover:bg-emerald-500/28 hover:border-emerald-300/75 shadow-[0_0_20px_rgba(16,185,129,0.18)]"
+                      : "border-white/25 bg-black/20 text-white/90 hover:bg-white/15",
+                  )}
+                  aria-label={
+                    watched
+                      ? t("actions.markAsUnwatched")
+                      : t("actions.markAsWatched")
+                  }
+                >
+                  <Check className="w-4 h-4 md:w-5 md:h-5" />
+                  <span className="hidden sm:inline">
+                    {watched
+                      ? t("actions.watched", "Watched")
+                      : t("actions.markAsWatched", "Mark as Watched")}
+                  </span>
+                  <span className="sm:hidden">
+                    {watched ? t("actions.watched", "Watched") : "Watched"}
+                  </span>
+                </Button>
+              </>
             )}
 
-            {/* Add to Watched button placeholder */}
-            {user && (
-              <Button
-                size="default"
-                variant="outline"
-                onClick={() => {/* TODO: Implement add to watched */}}
-                className="w-full sm:w-auto gap-2 h-11 md:h-12 px-3 md:px-6 text-sm md:text-base border backdrop-blur-sm shadow-sm transition-all border-green-400/60 bg-green-500/20 text-green-100 hover:bg-green-500/28 hover:border-green-300/80"
-                aria-label="Add to Watched"
-              >
-                <Check className="w-4 h-4 md:w-5 md:h-5" />
-                <span className="hidden sm:inline">Add to Watched</span>
-                <span className="sm:hidden">Watched</span>
-              </Button>
-            )}
           </div>
-
-          {/* 'More about ...' link removed as requested */}
-
-          {/* Feature buttons removed as requested */}
         </div>
       </div>
     </section>

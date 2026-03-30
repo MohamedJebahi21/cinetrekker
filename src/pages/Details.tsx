@@ -8,7 +8,6 @@ import {
   Calendar,
   Bookmark,
   Check,
-  Plus,
   Pin,
   MessageSquare,
   ChevronLeft,
@@ -942,6 +941,7 @@ export default function Details() {
               </Button>
 
               <Button
+
                 variant={optimisticWatched ? "secondary" : "outline"}
                 className="gap-2"
                 onClick={handleMarkAsWatched}

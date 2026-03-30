@@ -53,19 +53,9 @@ export default function Achievements() {
       const key = `${item.mediaType}-${item.mediaId}`;
       const existing = map.get(key);
 
-      if (!existing) {
-        map.set(key, item);
-        return;
-      }
-
-      const existingTime = new Date(
-        existing.watchedAt || existing.addedAt || 0,
-      ).getTime();
-      const currentTime = new Date(
-        item.watchedAt || item.addedAt || 0,
-      ).getTime();
-
-      if (currentTime >= existingTime) {
+      if (!existing || 
+          new Date(item.watchedAt || item.addedAt || 0).getTime() >= 
+          new Date(existing.watchedAt || existing.addedAt || 0).getTime()) {
         map.set(key, item);
       }
     });
@@ -162,27 +152,20 @@ export default function Achievements() {
       }
     });
 
-    return {
-      count: seen.size,
-      dateAt5,
-      dateAt10,
-      dateAtAll,
-    };
+    return { count: seen.size, dateAt5, dateAt10, dateAtAll };
   }, [sortedInsights]);
 
   const watchTimeProgress = useMemo(() => {
     const thresholds = [10, 50, 100, 500] as const;
     const thresholdDates: Record<(typeof thresholds)[number], Date | null> = {
-      10: null,
-      50: null,
-      100: null,
-      500: null,
+      10: null, 50: null, 100: null, 500: null,
     };
 
     let totalMinutes = 0;
     sortedInsights.forEach((item) => {
       totalMinutes += item.runtimeMinutes;
       const totalHours = totalMinutes / 60;
+
       thresholds.forEach((threshold) => {
         if (!thresholdDates[threshold] && totalHours >= threshold) {
           thresholdDates[threshold] = item.watchedAt;
@@ -196,279 +179,65 @@ export default function Achievements() {
     };
   }, [sortedInsights]);
 
-  const groups = useMemo<AchievementGroup[]>(() => {
-    const watchingMilestones: AchievementItem[] = [
-      {
-        id: "watch-first",
-        icon: "🎬",
-        name: "First Movie Logged",
-        description: "Watch your first movie",
-        unlocked: movieCount >= 1,
-        progressLabel: `${Math.min(movieCount, 1)} / 1 movies`,
-        unlockedLabel: formatUnlockMonthYear(
-          getThresholdDate(movieMilestoneDates, 1),
-        ),
-      },
-      {
-        id: "watch-10",
-        icon: "🎬",
-        name: "10 Movies Watched",
-        description: "Watch 10 movies",
-        unlocked: movieCount >= 10,
-        progressLabel: `${Math.min(movieCount, 10)} / 10 movies`,
-        unlockedLabel: formatUnlockMonthYear(
-          getThresholdDate(movieMilestoneDates, 10),
-        ),
-      },
-      {
-        id: "watch-50",
-        icon: "🎬",
-        name: "50 Movies Watched",
-        description: "Watch 50 movies",
-        unlocked: movieCount >= 50,
-        progressLabel: `${Math.min(movieCount, 50)} / 50 movies`,
-        unlockedLabel: formatUnlockMonthYear(
-          getThresholdDate(movieMilestoneDates, 50),
-        ),
-      },
-      {
-        id: "watch-100",
-        icon: "🎬",
-        name: "100 Movies Watched",
-        description: "Watch 100 movies",
-        unlocked: movieCount >= 100,
-        progressLabel: `${Math.min(movieCount, 100)} / 100 movies`,
-        unlockedLabel: formatUnlockMonthYear(
-          getThresholdDate(movieMilestoneDates, 100),
-        ),
-      },
-      {
-        id: "watch-250",
-        icon: "🎬",
-        name: "250 Movies Watched",
-        description: "Watch 250 movies",
-        unlocked: movieCount >= 250,
-        progressLabel: `${Math.min(movieCount, 250)} / 250 movies`,
-        unlockedLabel: formatUnlockMonthYear(
-          getThresholdDate(movieMilestoneDates, 250),
-        ),
-      },
-      {
-        id: "watch-500",
-        icon: "🎬",
-        name: "500 Movies Watched",
-        description: "Watch 500 movies",
-        unlocked: movieCount >= 500,
-        progressLabel: `${Math.min(movieCount, 500)} / 500 movies`,
-        unlockedLabel: formatUnlockMonthYear(
-          getThresholdDate(movieMilestoneDates, 500),
-        ),
-      },
-    ];
+  const groups = useMemo<AchievementGroup[]>(() => [
+    {
+      id: "watching",
+      title: "🎬 Watching Milestones",
+      items: [
+        { id: "watch-first", icon: "🎬", name: "First Movie Logged", description: "Watch your first movie", unlocked: movieCount >= 1, progressLabel: `${Math.min(movieCount, 1)} / 1`, unlockedLabel: formatUnlockMonthYear(getThresholdDate(movieMilestoneDates, 1)) },
+        { id: "watch-10", icon: "🎬", name: "10 Movies Watched", description: "Watch 10 movies", unlocked: movieCount >= 10, progressLabel: `${Math.min(movieCount, 10)} / 10`, unlockedLabel: formatUnlockMonthYear(getThresholdDate(movieMilestoneDates, 10)) },
+        { id: "watch-50", icon: "🎬", name: "50 Movies Watched", description: "Watch 50 movies", unlocked: movieCount >= 50, progressLabel: `${Math.min(movieCount, 50)} / 50`, unlockedLabel: formatUnlockMonthYear(getThresholdDate(movieMilestoneDates, 50)) },
+        { id: "watch-100", icon: "🎬", name: "100 Movies Watched", description: "Watch 100 movies", unlocked: movieCount >= 100, progressLabel: `${Math.min(movieCount, 100)} / 100`, unlockedLabel: formatUnlockMonthYear(getThresholdDate(movieMilestoneDates, 100)) },
+        { id: "watch-250", icon: "🎬", name: "250 Movies Watched", description: "Watch 250 movies", unlocked: movieCount >= 250, progressLabel: `${Math.min(movieCount, 250)} / 250`, unlockedLabel: formatUnlockMonthYear(getThresholdDate(movieMilestoneDates, 250)) },
+        { id: "watch-500", icon: "🎬", name: "500 Movies Watched", description: "Watch 500 movies", unlocked: movieCount >= 500, progressLabel: `${Math.min(movieCount, 500)} / 500`, unlockedLabel: formatUnlockMonthYear(getThresholdDate(movieMilestoneDates, 500)) },
+      ],
+    },
+    {
+      id: "ratings",
+      title: "⭐ Rating Milestones",
+      items: [
+        { id: "rate-first", icon: "⭐", name: "First Rating Given", description: "Rate your first title", unlocked: ratingsCount >= 1, progressLabel: `${Math.min(ratingsCount, 1)} / 1`, unlockedLabel: formatUnlockMonthYear(getThresholdDate(ratingMilestoneDates, 1)) },
+        { id: "rate-25", icon: "⭐", name: "25 Ratings", description: "Give 25 ratings", unlocked: ratingsCount >= 25, progressLabel: `${Math.min(ratingsCount, 25)} / 25`, unlockedLabel: formatUnlockMonthYear(getThresholdDate(ratingMilestoneDates, 25)) },
+        { id: "rate-50", icon: "⭐", name: "50 Ratings", description: "Give 50 ratings", unlocked: ratingsCount >= 50, progressLabel: `${Math.min(ratingsCount, 50)} / 50`, unlockedLabel: formatUnlockMonthYear(getThresholdDate(ratingMilestoneDates, 50)) },
+        { id: "rate-100", icon: "⭐", name: "100 Ratings", description: "Give 100 ratings", unlocked: ratingsCount >= 100, progressLabel: `${Math.min(ratingsCount, 100)} / 100`, unlockedLabel: formatUnlockMonthYear(getThresholdDate(ratingMilestoneDates, 100)) },
+        { id: "rate-200", icon: "⭐", name: "200 Ratings", description: "Give 200 ratings", unlocked: ratingsCount >= 200, progressLabel: `${Math.min(ratingsCount, 200)} / 200`, unlockedLabel: formatUnlockMonthYear(getThresholdDate(ratingMilestoneDates, 200)) },
+        { id: "rate-500", icon: "⭐", name: "500 Ratings", description: "Give 500 ratings", unlocked: ratingsCount >= 500, progressLabel: `${Math.min(ratingsCount, 500)} / 500`, unlockedLabel: formatUnlockMonthYear(getThresholdDate(ratingMilestoneDates, 500)) },
+      ],
+    },
+    {
+      id: "genres",
+      title: "🎭 Genre Explorer",
+      items: [
+        { id: "genre-5", icon: "🎭", name: "5 Genres Watched", description: "Watched a movie in 5 different genres", unlocked: genreProgress.count >= 5, progressLabel: `${Math.min(genreProgress.count, 5)} / 5`, unlockedLabel: formatUnlockMonthYear(genreProgress.dateAt5) },
+        { id: "genre-10", icon: "🎭", name: "10 Genres Watched", description: "Watched a movie in 10 different genres", unlocked: genreProgress.count >= 10, progressLabel: `${Math.min(genreProgress.count, 10)} / 10`, unlockedLabel: formatUnlockMonthYear(genreProgress.dateAt10) },
+        { id: "genre-all", icon: "🎭", name: "All Genres Watched", description: "Watched a movie in all available genres", unlocked: genreProgress.count >= ALL_AVAILABLE_GENRES_TARGET, progressLabel: `${Math.min(genreProgress.count, ALL_AVAILABLE_GENRES_TARGET)} / ${ALL_AVAILABLE_GENRES_TARGET}`, unlockedLabel: formatUnlockMonthYear(genreProgress.dateAtAll) },
+      ],
+    },
+    {
+      id: "time",
+      title: "🕐 Watch Time",
+      items: [
+        { id: "time-10", icon: "🕐", name: "10 Hours Watched", description: "Watch 10 hours of content", unlocked: watchTimeProgress.totalHours >= 10, progressLabel: `${Math.min(watchTimeProgress.totalHours, 10)} / 10`, unlockedLabel: formatUnlockMonthYear(watchTimeProgress.thresholdDates[10]) },
+        { id: "time-50", icon: "🕐", name: "50 Hours Watched", description: "Watch 50 hours of content", unlocked: watchTimeProgress.totalHours >= 50, progressLabel: `${Math.min(watchTimeProgress.totalHours, 50)} / 50`, unlockedLabel: formatUnlockMonthYear(watchTimeProgress.thresholdDates[50]) },
+        { id: "time-100", icon: "🕐", name: "100 Hours Watched", description: "Watch 100 hours of content", unlocked: watchTimeProgress.totalHours >= 100, progressLabel: `${Math.min(watchTimeProgress.totalHours, 100)} / 100`, unlockedLabel: formatUnlockMonthYear(watchTimeProgress.thresholdDates[100]) },
+        { id: "time-500", icon: "🕐", name: "500 Hours Watched", description: "Watch 500 hours of content", unlocked: watchTimeProgress.totalHours >= 500, progressLabel: `${Math.min(watchTimeProgress.totalHours, 500)} / 500`, unlockedLabel: formatUnlockMonthYear(watchTimeProgress.thresholdDates[500]) },
+      ],
+    },
+    {
+      id: "special",
+      title: "✨ Special Unlocks",
+      items: [
+        { id: "founder-badge", icon: "🏅", name: "Founder Badge", description: "Early supporter of CineTrekker", unlocked: false, progressLabel: "Invite-only", unlockedLabel: null },
+        { id: "marathon-night", icon: "🌙", name: "Marathon Night", description: "Watched 5 movies in a single day", unlocked: false, progressLabel: "0 / 5 movies in 1 day", unlockedLabel: null },
+      ],
+    },
+  ], [movieCount, ratingsCount, genreProgress, watchTimeProgress, movieMilestoneDates, ratingMilestoneDates]);
 
-    const ratingMilestones: AchievementItem[] = [
-      {
-        id: "rate-first",
-        icon: "⭐",
-        name: "First Rating Given",
-        description: "Rate your first title",
-        unlocked: ratingsCount >= 1,
-        progressLabel: `${Math.min(ratingsCount, 1)} / 1 ratings`,
-        unlockedLabel: formatUnlockMonthYear(
-          getThresholdDate(ratingMilestoneDates, 1),
-        ),
-      },
-      {
-        id: "rate-25",
-        icon: "⭐",
-        name: "25 Ratings",
-        description: "Give 25 ratings",
-        unlocked: ratingsCount >= 25,
-        progressLabel: `${Math.min(ratingsCount, 25)} / 25 ratings`,
-        unlockedLabel: formatUnlockMonthYear(
-          getThresholdDate(ratingMilestoneDates, 25),
-        ),
-      },
-      {
-        id: "rate-50",
-        icon: "⭐",
-        name: "50 Ratings",
-        description: "Give 50 ratings",
-        unlocked: ratingsCount >= 50,
-        progressLabel: `${Math.min(ratingsCount, 50)} / 50 ratings`,
-        unlockedLabel: formatUnlockMonthYear(
-          getThresholdDate(ratingMilestoneDates, 50),
-        ),
-      },
-      {
-        id: "rate-100",
-        icon: "⭐",
-        name: "100 Ratings",
-        description: "Give 100 ratings",
-        unlocked: ratingsCount >= 100,
-        progressLabel: `${Math.min(ratingsCount, 100)} / 100 ratings`,
-        unlockedLabel: formatUnlockMonthYear(
-          getThresholdDate(ratingMilestoneDates, 100),
-        ),
-      },
-      {
-        id: "rate-200",
-        icon: "⭐",
-        name: "200 Ratings",
-        description: "Give 200 ratings",
-        unlocked: ratingsCount >= 200,
-        progressLabel: `${Math.min(ratingsCount, 200)} / 200 ratings`,
-        unlockedLabel: formatUnlockMonthYear(
-          getThresholdDate(ratingMilestoneDates, 200),
-        ),
-      },
-      {
-        id: "rate-500",
-        icon: "⭐",
-        name: "500 Ratings",
-        description: "Give 500 ratings",
-        unlocked: ratingsCount >= 500,
-        progressLabel: `${Math.min(ratingsCount, 500)} / 500 ratings`,
-        unlockedLabel: formatUnlockMonthYear(
-          getThresholdDate(ratingMilestoneDates, 500),
-        ),
-      },
-    ];
-
-    const genreExplorer: AchievementItem[] = [
-      {
-        id: "genre-5",
-        icon: "🎭",
-        name: "5 Genres Watched",
-        description: "Watched a movie in 5 different genres",
-        unlocked: genreProgress.count >= 5,
-        progressLabel: `${Math.min(genreProgress.count, 5)} / 5 genres`,
-        unlockedLabel: formatUnlockMonthYear(genreProgress.dateAt5),
-      },
-      {
-        id: "genre-10",
-        icon: "🎭",
-        name: "10 Genres Watched",
-        description: "Watched a movie in 10 different genres",
-        unlocked: genreProgress.count >= 10,
-        progressLabel: `${Math.min(genreProgress.count, 10)} / 10 genres`,
-        unlockedLabel: formatUnlockMonthYear(genreProgress.dateAt10),
-      },
-      {
-        id: "genre-all",
-        icon: "🎭",
-        name: "All Genres Watched",
-        description: "Watched a movie in all available genres",
-        unlocked: genreProgress.count >= ALL_AVAILABLE_GENRES_TARGET,
-        progressLabel: `${Math.min(genreProgress.count, ALL_AVAILABLE_GENRES_TARGET)} / ${ALL_AVAILABLE_GENRES_TARGET} genres`,
-        unlockedLabel: formatUnlockMonthYear(genreProgress.dateAtAll),
-      },
-    ];
-
-    const watchTimeMilestones: AchievementItem[] = [
-      {
-        id: "time-10",
-        icon: "🕐",
-        name: "10 Hours Watched",
-        description: "Watch 10 hours of content",
-        unlocked: watchTimeProgress.totalHours >= 10,
-        progressLabel: `${Math.min(watchTimeProgress.totalHours, 10)} / 10 hours`,
-        unlockedLabel: formatUnlockMonthYear(
-          watchTimeProgress.thresholdDates[10],
-        ),
-      },
-      {
-        id: "time-50",
-        icon: "🕐",
-        name: "50 Hours Watched",
-        description: "Watch 50 hours of content",
-        unlocked: watchTimeProgress.totalHours >= 50,
-        progressLabel: `${Math.min(watchTimeProgress.totalHours, 50)} / 50 hours`,
-        unlockedLabel: formatUnlockMonthYear(
-          watchTimeProgress.thresholdDates[50],
-        ),
-      },
-      {
-        id: "time-100",
-        icon: "🕐",
-        name: "100 Hours Watched",
-        description: "Watch 100 hours of content",
-        unlocked: watchTimeProgress.totalHours >= 100,
-        progressLabel: `${Math.min(watchTimeProgress.totalHours, 100)} / 100 hours`,
-        unlockedLabel: formatUnlockMonthYear(
-          watchTimeProgress.thresholdDates[100],
-        ),
-      },
-      {
-        id: "time-500",
-        icon: "🕐",
-        name: "500 Hours Watched",
-        description: "Watch 500 hours of content",
-        unlocked: watchTimeProgress.totalHours >= 500,
-        progressLabel: `${Math.min(watchTimeProgress.totalHours, 500)} / 500 hours`,
-        unlockedLabel: formatUnlockMonthYear(
-          watchTimeProgress.thresholdDates[500],
-        ),
-      },
-    ];
-
-    const specialUnlocks: AchievementItem[] = [
-      {
-        id: "founder-badge",
-        icon: "🏅",
-        name: "Founder Badge",
-        description: "Early supporter of CineTrekker",
-        unlocked: false, // Set logic for real unlocks
-        progressLabel: "Invite-only",
-        unlockedLabel: null,
-      },
-      {
-        id: "marathon-night",
-        icon: "🌙",
-        name: "Marathon Night",
-        description: "Watched 5 movies in a single day",
-        unlocked: false, // Set logic for real unlocks
-        progressLabel: "0 / 5 movies in 1 day",
-        unlockedLabel: null,
-      },
-    ];
-
-    return [
-      {
-        id: "watching",
-        title: "🎬 Watching Milestones",
-        items: watchingMilestones,
-      },
-      { id: "ratings", title: "⭐ Rating Milestones", items: ratingMilestones },
-      { id: "genres", title: "🎭 Genre Explorer", items: genreExplorer },
-      { id: "time", title: "🕐 Watch Time", items: watchTimeMilestones },
-      { id: "special", title: "✨ Special Unlocks", items: specialUnlocks },
-    ];
-  }, [
-    genreProgress.count,
-    genreProgress.dateAt10,
-    genreProgress.dateAt5,
-    genreProgress.dateAtAll,
-    movieCount,
-    movieMilestoneDates,
-    ratingMilestoneDates,
-    ratingsCount,
-    watchTimeProgress.thresholdDates,
-    watchTimeProgress.totalHours,
-  ]);
-
-  const totalAchievements = groups.reduce(
-    (total, group) => total + group.items.length,
-    0,
+  const totalAchievements = groups.reduce((total, group) => total + group.items.length, 0);
+  const unlockedAchievements = groups.reduce((total, group) => 
+    total + group.items.filter((item) => item.unlocked).length, 0
   );
-  const unlockedAchievements = groups.reduce(
-    (total, group) =>
-      total + group.items.filter((item) => item.unlocked).length,
-    0,
-  );
-  const completionPercent = totalAchievements
-    ? Math.round((unlockedAchievements / totalAchievements) * 100)
-    : 0;
+  const completionPercent = totalAchievements ? Math.round((unlockedAchievements / totalAchievements) * 100) : 0;
 
   return (
     <>
@@ -478,99 +247,92 @@ export default function Achievements() {
         canonical="https://cinetrekker.vercel.app/achievements"
       />
 
-      <div className="page-container max-w-full overflow-x-hidden pt-20 pb-24 md:pb-0">
-        <div className="mb-6 flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-black tracking-tight">Achievements</h1>
-            <p className="mt-1 text-sm text-neutral-400">
-              Your cinematic milestones
-            </p>
-          </div>
-          <Link
-            to="/profile"
-            className="inline-flex items-center gap-1 rounded-md border border-neutral-700 px-3 py-1.5 text-sm text-neutral-200 transition-colors hover:border-neutral-500 hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Link>
-        </div>
-
-        <Card className="mb-8 border-neutral-800/60 bg-neutral-900/60">
-          <CardContent className="space-y-3 pt-6">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-neutral-100">
-                Progress Summary
-              </p>
-              <p className="text-sm text-neutral-300">
-                {unlockedAchievements} Achievements Unlocked /{" "}
-                {totalAchievements} Total
-              </p>
+      <div className="min-h-screen bg-gradient-to-br from-[#18181b] via-[#232946] to-[#0f172a] px-4 py-10">
+        <div className="max-w-5xl mx-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-4xl font-bold tracking-tight">Achievements</h1>
+              <p className="text-neutral-400 mt-1">Your cinematic milestones</p>
             </div>
-            <Progress
-              value={completionPercent}
-              className="h-3 bg-muted [&>div]:bg-primary"
-            />
-            <p className="text-xs text-neutral-400">
-              {completionPercent}% complete
-            </p>
-          </CardContent>
-        </Card>
+            <Link
+              to="/profile"
+              className="flex items-center gap-2 text-sm text-neutral-400 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Profile
+            </Link>
+          </div>
 
-        <div className="space-y-10">
-          {groups.map((group) => (
-            <section key={group.id} className="space-y-4">
-              <h2 className="text-xl font-bold tracking-tight text-neutral-100 border-b border-neutral-800 pb-2 mb-2">
-                {group.title}
-              </h2>
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                {group.items.map((item) => (
-                  <Card
-                    key={item.id}
-                    className={cn(
-                      "relative border transition-all duration-200",
-                      item.unlocked
-                        ? "border-primary/60 bg-primary/10 shadow-[0_0_18px_hsl(var(--primary)/0.25)]"
-                        : "border-neutral-700 bg-neutral-900/70 opacity-70",
-                    )}
-                  >
-                    {!item.unlocked ? (
-                      <span className="absolute right-3 top-3 rounded-full border border-neutral-600 bg-black/70 p-1 text-neutral-300">
-                        <Lock className="h-3.5 w-3.5" />
-                      </span>
-                    ) : (
-                      <span className="absolute right-3 top-3 text-primary">
-                        <Trophy className="h-4 w-4" />
-                      </span>
-                    )}
-
-                    <CardHeader className="pb-2">
-                      <CardTitle className="flex items-start gap-3 text-base">
-                        <span className="text-2xl leading-none">
-                          {item.icon}
-                        </span>
-                        <span>{item.name}</span>
-                      </CardTitle>
-                    </CardHeader>
-
-                    <CardContent className="space-y-2">
-                      <p className="text-sm text-neutral-300">
-                        {item.description}
-                      </p>
-                      {item.unlocked ? (
-                        <p className="text-xs text-primary">
-                          Unlocked {item.unlockedLabel ?? "Recently"}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-neutral-400">
-                          {item.progressLabel}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+          {/* Progress Overview */}
+          <Card className="mb-10 border-white/10 bg-white/5 backdrop-blur-xl">
+            <CardContent className="pt-6">
+              <div className="flex justify-between items-center mb-4">
+                <p className="font-semibold">Overall Progress</p>
+                <p className="text-sm text-neutral-400">
+                  {unlockedAchievements} / {totalAchievements} unlocked
+                </p>
               </div>
-            </section>
-          ))}
+              <Progress value={completionPercent} className="h-2.5 bg-white/10" />
+              <p className="text-right text-xs text-neutral-500 mt-2">{completionPercent}% Complete</p>
+            </CardContent>
+          </Card>
+
+          {/* Achievement Groups */}
+          <div className="space-y-12">
+            {groups.map((group) => (
+              <section key={group.id}>
+                <h2 className="text-2xl font-semibold mb-6 text-white tracking-tight border-b border-white/10 pb-3">
+                  {group.title}
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {group.items.map((item) => (
+                    <Card
+                      key={item.id}
+                      className={cn(
+                        "relative overflow-hidden border transition-all duration-300 group",
+                        item.unlocked 
+                          ? "border-emerald-500/50 bg-emerald-950/30 shadow-lg shadow-emerald-500/10" 
+                          : "border-white/10 bg-white/5 hover:bg-white/10"
+                      )}
+                    >
+                      {item.unlocked ? (
+                        <div className="absolute top-4 right-4 text-emerald-400">
+                          <Trophy className="h-5 w-5" />
+                        </div>
+                      ) : (
+                        <div className="absolute top-4 right-4 text-neutral-500">
+                          <Lock className="h-4 w-4" />
+                        </div>
+                      )}
+
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-3 text-lg">
+                          <span className="text-3xl">{item.icon}</span>
+                          <span>{item.name}</span>
+                        </CardTitle>
+                      </CardHeader>
+
+                      <CardContent className="space-y-3">
+                        <p className="text-neutral-300 text-sm leading-relaxed">
+                          {item.description}
+                        </p>
+                        {item.unlocked ? (
+                          <p className="text-emerald-400 text-sm font-medium">
+                            Unlocked {item.unlockedLabel || "Recently"}
+                          </p>
+                        ) : (
+                          <p className="text-neutral-400 text-sm">
+                            {item.progressLabel}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
         </div>
       </div>
     </>

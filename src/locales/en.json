@@ -73,6 +73,10 @@
     "decades": "Decades",
     "awards": "Awards"
   },
+  "notFound": {
+    "returnHome": "Return Home",
+    "search": "Search"
+  },
   "calendar": {
     "title": "Release Calendar",
     "subtitle": "Upcoming movies and TV shows this week",
@@ -482,6 +486,8 @@
     "viewDetails": "View Details"
   },
   "status": {
+    "message": "Status unavailable.",
+    "help": "Try returning home or using the search.",
     "watching": "Watching",
     "completed": "Completed",
     "dropped": "Dropped",

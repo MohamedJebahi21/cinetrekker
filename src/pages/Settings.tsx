@@ -176,10 +176,8 @@ function SettingsSwitchRow({
       }
       transition={{ duration: 0.45, ease: "easeOut" }}
       className={cn(
-        "flex items-center justify-between gap-4 rounded-xl border px-4 py-4 transition-all duration-300",
-        checked
-          ? "border-[color:hsl(var(--border))] bg-[var(--bg-row)]"
-          : "border-[color:hsl(var(--border))] bg-[var(--bg-row)] hover:border-white/20",
+        "flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-card/70 px-4 py-4 transition-all duration-300",
+        !checked && "hover:border-white/20",
         disabled && "opacity-60",
       )}
     >
@@ -188,11 +186,11 @@ function SettingsSwitchRow({
           htmlFor={id}
           id={labelId}
           className={cn(
-            "flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]",
+            "flex items-center gap-2 text-sm font-semibold text-foreground",
             disabled ? "cursor-not-allowed" : "cursor-pointer",
           )}
         >
-          <Icon className="h-4 w-4 shrink-0 text-[var(--text-secondary)]" />
+          <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
           <span className="inline-flex items-center gap-1.5">
             {title}
             {tooltipText && (
@@ -203,14 +201,14 @@ function SettingsSwitchRow({
                   aria-label={
                     tooltipAriaLabel ?? `More information about ${title}`
                   }
-                  className="inline-flex items-center rounded-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-row)]"
+                  className="inline-flex items-center rounded-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60 focus-visible:ring-offset-1 focus-visible:ring-offset-card"
                 >
                   <Info className="h-3.5 w-3.5" />
                 </button>
                 <span
                   id={tooltipId}
                   role="tooltip"
-                  className="pointer-events-none absolute left-0 top-full z-30 mt-2 w-64 rounded-md border border-[color:hsl(var(--border))] bg-[var(--bg-card)] px-3 py-2 text-xs font-normal normal-case tracking-normal text-[var(--text-primary)] opacity-0 shadow-lg transition-opacity duration-150 group-hover/tooltip:opacity-100 group-focus-within/tooltip:opacity-100"
+                  className="pointer-events-none absolute left-0 top-full z-30 mt-2 w-64 rounded-md border border-border/60 bg-card px-3 py-2 text-xs font-normal normal-case tracking-normal text-foreground opacity-0 shadow-lg transition-opacity duration-150 group-hover/tooltip:opacity-100 group-focus-within/tooltip:opacity-100"
                 >
                   {tooltipText}
                 </span>
@@ -218,11 +216,11 @@ function SettingsSwitchRow({
             )}
           </span>
         </Label>
-        <p id={descriptionId} className="mt-1 text-sm text-[var(--text-secondary)]">
+        <p id={descriptionId} className="mt-1 text-sm text-muted-foreground">
           {description}
         </p>
         {disabledHint && (
-          <p id={disabledHintId} className="mt-1 text-xs text-[var(--text-secondary)]">
+          <p id={disabledHintId} className="mt-1 text-xs text-muted-foreground">
             {disabledHint}
           </p>
         )}
@@ -257,11 +255,11 @@ function SettingsSection({
 
   return (
     <div id={id} className={cn(className)}>
-      <p className="mb-3 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+      <p className="ct-kicker mb-3 inline-flex items-center gap-2">
         <SectionIcon className={cn("h-3.5 w-3.5", sectionIconClass)} />
         {sectionLabel}
       </p>
-      <Card className="border-[color:hsl(var(--border))] bg-[var(--bg-card)] backdrop-blur-sm">
+      <Card className="ct-panel">
         <CardHeader
           className={cn(
             isMobileCollapsible &&
@@ -595,13 +593,13 @@ export default function Settings() {
         canonical="https://cinetrekker.vercel.app/settings"
       />
       <motion.div
-        className="page-container max-w-4xl bg-[var(--bg-page)] pt-20 pb-24 md:pb-10"
+        className="page-container ct-page-shell max-w-4xl pt-20 pb-24 md:pb-10"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
         <motion.section variants={itemVariants} className="mb-8">
-          <Card className="relative overflow-hidden border-[color:hsl(var(--border))] bg-[var(--bg-card)] backdrop-blur-md shadow-2xl">
+          <Card className="ct-panel-strong relative overflow-hidden shadow-2xl">
             <div className="absolute inset-0 bg-gradient-to-br from-red-900/10 via-transparent to-red-500/5 pointer-events-none" />
 
             <CardContent className="pt-8 pb-6 relative z-10">
@@ -610,10 +608,10 @@ export default function Settings() {
                   <SettingsIcon className="w-7 h-7 text-red-400" />
                 </div>
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold">
+                  <h1 className="section-title mb-0 text-2xl md:text-3xl">
                     {text("nav.settings", "Settings")}
                   </h1>
-                  <p className="text-[var(--text-secondary)]">
+                  <p className="text-muted-foreground">
                     {text(
                       "settings.heroDescription",
                       "Adjust your account, privacy, and content safety controls.",
@@ -663,16 +661,16 @@ export default function Settings() {
                     : undefined
                 }
               >
-                <div className="flex flex-col gap-3 rounded-xl border border-[color:hsl(var(--border))] bg-[var(--bg-row)] p-4 sm:flex-row sm:items-center sm:gap-4">
+                <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/70 p-4 sm:flex-row sm:items-center sm:gap-4">
                   <div className="min-w-0 flex-1">
                     <Label
                       htmlFor="language"
-                      className="flex items-center gap-2 text-[var(--text-primary)]"
+                      className="flex items-center gap-2 text-foreground"
                     >
-                      <Languages className="h-4 w-4 text-[var(--text-secondary)]" />
+                      <Languages className="h-4 w-4 text-muted-foreground" />
                       {text("settings.language", "Language")}
                     </Label>
-                    <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {text(
                         "settings.languageOptionDesc",
                         "Pick the language used for buttons, labels, and menus.",
@@ -685,7 +683,7 @@ export default function Settings() {
                   >
                     <SelectTrigger
                       id="language"
-                      className="w-full border-[color:hsl(var(--border))] bg-[var(--bg-row)] focus:border-red-500 focus:ring-red-500/20 sm:max-w-xs"
+                      className="w-full border-border/60 bg-card/80 focus:border-red-500 focus:ring-red-500/20 sm:max-w-xs"
                     >
                       <SelectValue />
                     </SelectTrigger>
@@ -873,8 +871,8 @@ export default function Settings() {
                   )}
                 />
 
-                <div className="rounded-lg border border-[color:hsl(var(--border))] bg-[var(--bg-row)] px-4 py-3">
-                  <p className="text-xs text-[var(--text-secondary)]">
+                <div className="rounded-lg border border-border/60 bg-card/70 px-4 py-3">
+                  <p className="text-xs text-muted-foreground">
                     {text("contentPolicy.hierarchyHint", "Filtering hierarchy")}
                     :{" "}
                     {text(
@@ -882,7 +880,7 @@ export default function Settings() {
                       "Family Friendly includes Teen Safe filtering.",
                     )}
                   </p>
-                  <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {text("contentPolicy.ageStatus", "Age verified")}:{" "}
                     {ageLabel}
                   </p>
@@ -893,12 +891,12 @@ export default function Settings() {
             {/* Accessibility shortcut section */}
             <motion.div id="settings-accessibility" variants={itemVariants}>
               <div>
-                <p className="mb-3 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+                <p className="ct-kicker mb-3 inline-flex items-center gap-2">
                   <Accessibility className="h-3.5 w-3.5 text-red-400" />
                   {text("settings.accessibilitySection", "Accessibility")}
                 </p>
                 <div
-                  className="flex cursor-pointer items-center justify-between rounded-xl border border-[color:hsl(var(--border))] bg-[var(--bg-card)] px-5 py-4 backdrop-blur-sm transition-all duration-200 hover:border-white/20 hover:bg-[var(--bg-row)]"
+                  className="flex cursor-pointer items-center justify-between rounded-xl border border-border/60 bg-card/75 px-5 py-4 backdrop-blur-sm transition-all duration-200 hover:border-white/20 hover:bg-card"
                   onClick={() => navigate("/accessibility")}
                   role="link"
                   tabIndex={0}
@@ -914,15 +912,15 @@ export default function Settings() {
                       <Accessibility className="h-5 w-5 text-red-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-[var(--text-primary)]">
+                      <p className="text-sm font-semibold text-foreground">
                         Accessibility Options
                       </p>
-                      <p className="text-sm text-[var(--text-secondary)]">
+                      <p className="text-sm text-muted-foreground">
                         Adjust text size, theme, and motion preferences for easier viewing.
                       </p>
                     </div>
                   </div>
-                  <ChevronRight className="h-5 w-5 shrink-0 text-[var(--text-secondary)]" />
+                  <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
                 </div>
               </div>
             </motion.div>

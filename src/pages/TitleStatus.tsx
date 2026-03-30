@@ -1,33 +1,41 @@
-import { useLocation, Link } from "react-router-dom";
-import { useEffect } from "react";
+import { Link, Navigate, useLocation } from "react-router-dom";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { Film } from "lucide-react";
+
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import { Film } from "lucide-react";
 
 const TitleStatus = () => {
   const location = useLocation();
   const { t } = useTranslation();
 
   const label = "Not Found";
+  const normalizedLegacyPath = useMemo(() => {
+    const match = location.pathname.match(/^\/(\d+)\/(movie|tv)\/?$/);
+    if (!match) return null;
 
-  useEffect(() => {
-    console.warn(`[Status] Path issue: ${location.pathname}`);
+    const [, id, mediaType] = match;
+    return `/${mediaType}/${id}`;
   }, [location.pathname]);
+
+  if (normalizedLegacyPath) {
+    return <Navigate to={normalizedLegacyPath} replace />;
+  }
 
   return (
     <>
       <SEO
-        title={`${label} — CineTrekker`}
+        title={`${label} - CineTrekker`}
         description="The requested resource is unavailable."
       />
 
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="page-container text-center py-24 pb-24 md:pb-0">
-          <div className="inline-flex items-center justify-center w-28 h-28 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 mb-6 shadow-glow">
-            <Film className="w-12 h-12 text-primary" />
+        <div className="page-container py-24 pb-24 text-center md:pb-0">
+          <div className="mb-6 inline-flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/10 shadow-glow">
+            <Film className="h-12 w-12 text-primary" />
           </div>
-          <h1 className="mb-4 text-6xl font-bold text-primary heading-cinematic">
+          <h1 className="heading-cinematic mb-4 text-6xl font-bold text-primary">
             404
           </h1>
           <p className="mb-4 text-lg text-muted-foreground">
@@ -41,7 +49,7 @@ const TitleStatus = () => {
             <Button asChild size="lg">
               <Link to="/">{t("notFound.returnHome", "Return to Home")}</Link>
             </Button>
-            <Button asChild variant="outline" size="lg">
+            <Button asChild size="lg" variant="outline">
               <Link to="/search">{t("notFound.search", "Search")}</Link>
             </Button>
           </div>

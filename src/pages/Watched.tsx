@@ -1,280 +1,248 @@
-import React from "react";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
-import { Check, Star } from "lucide-react";
-import { useUserLists } from "@/contexts/UserListsContext";
-import { getImageUrl, getMediaTitle } from "@/services/tmdb";
-import type { Media, MediaDetails } from "@/types/media";
+import { Check, Star, X } from "lucide-react";
 import { Link } from "react-router-dom";
+import { getImageUrl, getMediaTitle } from "@/services/tmdb";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import SEO from "@/components/SEO";
-import { enrichMediaItems } from "@/lib/mediaEnrichment";
 import { Image } from "@/components/ui/Image";
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import { useWatchedFilters } from "@/hooks/useWatchedFilters";
+import { getEnrichedMediaType } from "@/types/enriched-media";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
 
 export default function Watched() {
   const { t, i18n } = useTranslation();
-  const { watched } = useUserLists();
   const language = i18n.language;
-
-  // --- Filter State ---
-  const [filterLang, setFilterLang] = React.useState<string>("");
-  const [filterType, setFilterType] = React.useState<string>("");
-  const [filterCountry, setFilterCountry] = React.useState<string>("");
-  const [filterYear, setFilterYear] = React.useState<[number, number]>([1900, new Date().getFullYear()]);
-
-  // --- Build filter options from watched list ---
-  const allLangs = React.useMemo(() => Array.from(new Set(watched.map(w => w.original_language).filter((v) => typeof v === "string" && v.trim() !== ""))), [watched]);
-  const allTypes = React.useMemo(() => Array.from(new Set(watched.map(w => w.media_type).filter((v) => typeof v === "string" && v.trim() !== ""))), [watched]);
-  const allCountries = React.useMemo(() => Array.from(new Set((watched.flatMap(w => (w.origin_country || (w.production_countries ? w.production_countries.map(c => c.iso_3166_1) : []))) ).filter((v) => typeof v === "string" && v.trim() !== ""))), [watched]);
-  const minYear = React.useMemo(() => Math.min(...watched.map(w => parseInt((w.release_date || w.first_air_date || "").slice(0,4)).toString()).filter(y => !isNaN(y))), [watched]);
-  const maxYear = React.useMemo(() => Math.max(...watched.map(w => parseInt((w.release_date || w.first_air_date || "").slice(0,4)).toString()).filter(y => !isNaN(y))), [watched]);
-  React.useEffect(() => {
-    if (Number.isFinite(minYear) && Number.isFinite(maxYear)) {
-      setFilterYear([minYear, maxYear]);
-    } else {
-      setFilterYear([1900, new Date().getFullYear()]);
-    }
-  }, [minYear, maxYear]);
-
-
-  // Fetch details for all watched items
-  const { data: mediaDetails, isLoading } = useQuery({
-    queryKey: [
-      "watched-details",
-      watched.map((i) => `${i.mediaType}-${i.mediaId}`),
-      language,
-    ],
-    queryFn: async () => {
-      return enrichMediaItems(watched, {
-        language,
-        getReference: (item) => item,
-        mapExtras: (item) => ({
-          userRating: item.rating,
-          userNote: item.note,
-          userStatus: item.status,
-          watchedAt: item.watchedAt,
-        }),
-        logScope: "watched",
-      }) as Promise<
-        (Media & {
-          userRating?: number;
-          userNote?: string;
-          userStatus?: string;
-          watchedAt?: string;
-        })[]
-      >;
-    },
-    enabled: watched.length > 0,
-  });
-
-  // --- Filtered list ---
-  const filteredMedia = React.useMemo(() => {
-    return (mediaDetails || []).filter(media => {
-      const year = parseInt((media.release_date || media.first_air_date || "").slice(0,4));
-      return (
-        (!filterLang || media.original_language === filterLang) &&
-        (!filterType || media.media_type === filterType) &&
-        (!filterCountry || (media.origin_country?.includes(filterCountry) || (media.production_countries?.some(c => c.iso_3166_1 === filterCountry))) ) &&
-        (!filterYear || (year >= filterYear[0] && year <= filterYear[1]))
-      );
-    });
-  }, [mediaDetails, filterLang, filterType, filterCountry, filterYear]);
+  const {
+    ALL,
+    filterLang,
+    setFilterLang,
+    filterType,
+    setFilterType,
+    filterCountry,
+    setFilterCountry,
+    filterYear,
+    setFilterYear,
+    filterOptions,
+    clearFilters,
+    isLoading,
+    filteredMedia,
+    hasActiveFilters,
+  } = useWatchedFilters(language);
 
   return (
     <>
       <SEO
-        title="Watched History — CineTrekker"
+        title="Watched History - CineTrekker"
         description="Movies and TV shows you've watched with ratings and notes"
         canonical="https://cinetrekker.vercel.app/watched"
       />
-      <div className="page-container pt-20 pb-24 md:pb-0">
-        <h1 className="section-title">{t("watched.title")}</h1>
 
-        {/* --- Filter Bar --- */}
-        <div className="flex flex-wrap gap-4 mb-8 items-end">
-          {/* Language Filter */}
-          <div className="w-40">
-            <label className="block text-xs font-semibold mb-1">Language</label>
-            <Select value={filterLang} onValueChange={setFilterLang}>
-              <SelectTrigger>
-                <SelectValue placeholder="All" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                {allLangs.map((lang) => (
-                  <SelectItem key={lang} value={lang}>{lang.toUpperCase()}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <div className="ct-page-shell min-h-screen">
+        <div className="page-container pt-20 pb-24 md:pb-10">
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="ct-kicker mb-2">Watched Archive</p>
+              <h1 className="section-title mb-0">{t("watched.title")}</h1>
+            </div>
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="gap-2"
+              >
+                <X className="h-4 w-4" />
+                Clear Filters
+              </Button>
+            )}
           </div>
-          {/* Type Filter */}
-          <div className="w-40">
-            <label className="block text-xs font-semibold mb-1">Type</label>
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger>
-                <SelectValue placeholder="All" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                {allTypes.map((type) => (
-                  <SelectItem key={type} value={type}>{type === "movie" ? "Movie" : type === "tv" ? "Series" : type}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {/* Country Filter */}
-          <div className="w-40">
-            <label className="block text-xs font-semibold mb-1">Country</label>
-            <Select value={filterCountry} onValueChange={setFilterCountry}>
-              <SelectTrigger>
-                <SelectValue placeholder="All" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                {allCountries.map((country) => (
-                  <SelectItem key={country} value={country}>{country}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {/* Year Filter */}
-          <div className="flex flex-col w-56">
-            <label className="block text-xs font-semibold mb-1">Year Range</label>
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                min={Number.isFinite(minYear) ? minYear : 1900}
-                max={Number.isFinite(filterYear[1]) ? filterYear[1] : new Date().getFullYear()}
-                value={Number.isFinite(filterYear[0]) ? filterYear[0] : (Number.isFinite(minYear) ? minYear : 1900)}
-                onChange={e => setFilterYear([Number(e.target.value), filterYear[1]])}
-                className="w-20"
-              />
-              <span>-</span>
-              <Input
-                type="number"
-                min={Number.isFinite(filterYear[0]) ? filterYear[0] : (Number.isFinite(minYear) ? minYear : 1900)}
-                max={Number.isFinite(maxYear) ? maxYear : new Date().getFullYear()}
-                value={Number.isFinite(filterYear[1]) ? filterYear[1] : (Number.isFinite(maxYear) ? maxYear : new Date().getFullYear())}
-                onChange={e => setFilterYear([filterYear[0], Number(e.target.value)])}
-                className="w-20"
-              />
+
+          <div className="ct-panel mb-8 p-4 md:p-5">
+            <div className="grid gap-4 lg:grid-cols-4">
+              <div className="ct-filter-field">
+                <label className="ct-filter-label">Language</label>
+                <Select value={filterLang} onValueChange={setFilterLang}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Languages" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL}>All Languages</SelectItem>
+                    {filterOptions.langs.map((lang) => (
+                      <SelectItem key={lang} value={lang}>
+                        {lang.toUpperCase()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="ct-filter-field">
+                <label className="ct-filter-label">Type</label>
+                <Select value={filterType} onValueChange={setFilterType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL}>All Types</SelectItem>
+                    {filterOptions.types.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type === "movie" ? "Movie" : "TV Series"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="ct-filter-field">
+                <label className="ct-filter-label">Country</label>
+                <Select value={filterCountry} onValueChange={setFilterCountry}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Countries" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL}>All Countries</SelectItem>
+                    {filterOptions.countries.map((country) => (
+                      <SelectItem key={country} value={country}>
+                        {country}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="ct-filter-field">
+                <label className="ct-filter-label">Year Range</label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="number"
+                    value={filterYear[0]}
+                    onChange={(event) =>
+                      setFilterYear([Number(event.target.value), filterYear[1]])
+                    }
+                    min={filterOptions.minYear}
+                    max={filterYear[1]}
+                    className="w-24"
+                  />
+                  <span className="text-muted-foreground">-</span>
+                  <Input
+                    type="number"
+                    value={filterYear[1]}
+                    onChange={(event) =>
+                      setFilterYear([filterYear[0], Number(event.target.value)])
+                    }
+                    min={filterYear[0]}
+                    max={filterOptions.maxYear}
+                    className="w-24"
+                  />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {isLoading ? (
-          <div className="media-grid">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div
-                key={i}
-                className="aspect-[2/3] bg-muted rounded-lg animate-pulse"
-              />
-            ))}
-          </div>
-        ) : filteredMedia && filteredMedia.length > 0 ? (
-          <div className="media-grid">
-            {filteredMedia.map((media: MediaDetails & {
-              userRating?: number;
-              userNote?: string;
-              userStatus?: string;
-              watchedAt?: string;
-            }) => {
-              const title = getMediaTitle(media);
-              const posterUrl = getImageUrl(media.poster_path, "w342");
-              const year = (media.release_date || media.first_air_date)?.slice(0, 4);
+          {isLoading ? (
+            <div className="media-grid">
+              {Array.from({ length: 12 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="aspect-[2/3] rounded-xl bg-muted animate-pulse"
+                />
+              ))}
+            </div>
+          ) : filteredMedia.length > 0 ? (
+            <div className="media-grid">
+              {filteredMedia.map((media) => {
+                const title = getMediaTitle(media);
+                const posterUrl = getImageUrl(media.poster_path, "w342");
+                const year = (
+                  media.release_date || media.first_air_date
+                )?.slice(0, 4);
 
-              return (
-                <Link
-                  key={`${media.id}-${media.media_type}`}
-                  to={`/${media.media_type}/${media.id}`}
-                  className="group relative block overflow-hidden rounded-lg transition-all duration-300"
-                >
-                  {posterUrl ? (
-                    <Image
-                      src={posterUrl}
-                      srcSet={`${getImageUrl(media.poster_path, "w185")} 185w, ${getImageUrl(media.poster_path, "w342")} 342w, ${getImageUrl(media.poster_path, "w500")} 500w`}
-                      sizes="(max-width: 639px) calc(50vw - 16px), (max-width: 1023px) calc(33vw - 24px), 220px"
-                      alt={`${title} poster`}
-                      width={342}
-                      height={513}
-                      className="w-full h-auto object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-                      loading="lazy"
-                      showSkeleton
-                    />
-                  ) : (
-                    <div className="w-full bg-muted aspect-[2/3] flex items-center justify-center">
-                      <Star className="w-8 h-8 text-muted-foreground" />
-                    </div>
-                  )}
+                return (
+                  <Link
+                    key={`${getEnrichedMediaType(media)}-${media.id}`}
+                    to={`/${getEnrichedMediaType(media)}/${media.id}`}
+                    className="group relative block overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1"
+                  >
+                    {posterUrl ? (
+                      <Image
+                        src={posterUrl}
+                        srcSet={`${getImageUrl(media.poster_path, "w185")} 185w, ${getImageUrl(media.poster_path, "w342")} 342w, ${getImageUrl(media.poster_path, "w500")} 500w`}
+                        sizes="(max-width: 639px) calc(50vw - 16px), (max-width: 1023px) calc(33vw - 24px), 220px"
+                        alt={title}
+                        width={342}
+                        height={513}
+                        className="w-full aspect-[2/3] object-cover transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                        showSkeleton
+                      />
+                    ) : (
+                      <div className="flex aspect-[2/3] items-center justify-center rounded-2xl bg-muted">
+                        <Star className="h-12 w-12 text-muted-foreground/50" />
+                      </div>
+                    )}
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                      <h3 className="font-semibold text-sm line-clamp-2 mb-1">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+
+                    <div className="absolute bottom-0 left-0 right-0 p-4 text-white opacity-0 transition-all duration-300 group-hover:opacity-100">
+                      <h3 className="mb-1 line-clamp-2 text-base font-semibold">
                         {title}
                       </h3>
-                      <div className="flex items-center gap-2 mb-2 text-xs">
+                      <div className="mb-3 flex items-center gap-2 text-xs">
                         <Badge
-                          variant="outline"
-                          className="text-xs bg-black/50 border-white/20"
+                          variant="secondary"
+                          className="border-0 bg-white/10 text-white"
                         >
-                          {media.media_type === "movie"
+                          {getEnrichedMediaType(media) === "movie"
                             ? t("common.movie")
                             : t("common.tvShow")}
                         </Badge>
-                        {year && <span className="text-gray-300">{year}</span>}
+                        {year && <span className="text-white/80">{year}</span>}
                       </div>
 
                       {media.userRating && (
                         <div
                           className={cn(
-                            "text-sm font-semibold mb-2 flex items-center gap-1",
-                            (media.userRating || 0) >= 7
-                              ? "text-green-400"
-                              : (media.userRating || 0) >= 5
+                            "flex items-center gap-1 text-sm font-semibold",
+                            media.userRating >= 8
+                              ? "text-emerald-400"
+                              : media.userRating >= 6
                                 ? "text-yellow-400"
-                                : "text-red-400",
+                                : "text-orange-400",
                           )}
                         >
-                          <Star className="w-3 h-3 fill-current" />
+                          <Star className="h-4 w-4 fill-current" />
                           {media.userRating}/10
                         </div>
                       )}
-
-                      {media.userStatus && (
-                        <Badge className="bg-primary/80 text-white text-xs capitalize">
-                          {t(`status.${media.userStatus}`)}
-                        </Badge>
-                      )}
                     </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <Check className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
-            <h2 className="text-xl font-semibold mb-2">
-              {t("watched.empty", "Nothing here yet")}
-            </h2>
-            <p className="text-muted-foreground mb-6">
-              {t(
-                "watched.emptyDesc",
-                "Mark movies as watched to build your history.",
-              )}
-            </p>
-            <Link
-              to="/search"
-              className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              Find something to watch
-            </Link>
-          </div>
-        )}
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="ct-panel py-20 text-center">
+              <Check className="mx-auto mb-6 h-20 w-20 text-muted-foreground/30" />
+              <h2 className="mb-3 text-2xl font-semibold">
+                {t("watched.empty", "Nothing here yet")}
+              </h2>
+              <p className="mx-auto max-w-md text-muted-foreground">
+                {t(
+                  "watched.emptyDesc",
+                  "Mark movies and shows as watched to build your history.",
+                )}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );

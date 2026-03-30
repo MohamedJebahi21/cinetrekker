@@ -31,7 +31,8 @@ export default function About() {
   ];
 
   return (
-    <div className="page-container pt-20 pb-24 md:pb-10">
+    <div className="ct-page-shell min-h-screen">
+      <div className="page-container pt-20 pb-24 md:pb-10">
       <SEO
         title={t("about.seoTitle", "About CineTrekker Movie Tracker")}
         description={t(
@@ -49,19 +50,19 @@ export default function About() {
         ]}
       />
       <div className="mx-auto max-w-4xl py-10 space-y-6">
-        <header className="rounded-2xl border border-[color:hsl(var(--border))] bg-[var(--bg-card)] p-6 md:p-7">
+        <header className="ct-panel-strong p-6 md:p-7">
           <div className="flex items-start gap-4">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15">
               <Info className="h-5 w-5 text-primary" />
             </div>
             <div className="space-y-2">
-              <h1 className="text-3xl font-bold text-[var(--text-primary)]">
+              <h1 className="section-title mb-0">
                 {t("about.title", "About CineTrekker")}
               </h1>
-              <p className="text-sm text-[var(--text-secondary)]">
+              <p className="text-sm text-muted-foreground">
                 {t("common.updated", "Updated")} {currentDate}
               </p>
-              <p className="max-w-2xl text-[var(--text-secondary)]">
+              <p className="max-w-2xl text-muted-foreground">
                 {t(
                   "about.intro",
                   "CineTrekker is a movie tracker and TV companion for discovering what to watch, organizing your lists, and tracking your progress over time.",
@@ -71,11 +72,11 @@ export default function About() {
           </div>
         </header>
 
-        <section className="rounded-2xl border border-[color:hsl(var(--border))] bg-[var(--bg-card)] p-6 md:p-7">
-          <h2 className="text-2xl font-bold text-[var(--text-primary)]">
+        <section className="ct-panel p-6 md:p-7">
+          <h2 className="text-2xl font-bold text-foreground">
             How the movie tracker experience works
           </h2>
-          <div className="mt-4 space-y-4 text-[var(--text-secondary)]">
+          <div className="editorial-copy mt-4 space-y-4 text-muted-foreground">
             <p>
               CineTrekker is built to reduce the friction between discovering a
               title and remembering to come back to it later. The app combines
@@ -94,15 +95,15 @@ export default function About() {
           </div>
         </section>
 
-        <Card className="border-[color:hsl(var(--border))] bg-[var(--bg-card)]">
+        <Card className="ct-panel">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[var(--text-primary)]">
+            <CardTitle className="flex items-center gap-2 text-foreground">
               <Sparkles className="h-5 w-5 text-primary" />
               {t("about.whatYouCanDo", "What You Can Do")}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="list-disc pl-5 space-y-2 text-[var(--text-secondary)]">
+            <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
               <li>{t("about.feature1", "Search and explore trending, popular, upcoming, and top-rated titles.")}</li>
               <li>{t("about.feature2", "Create watchlists, mark items as watched, and rate what you finish.")}</li>
               <li>{t("about.feature3", "Review your watch history and personal viewing insights.")}</li>
@@ -111,14 +112,14 @@ export default function About() {
           </CardContent>
         </Card>
 
-        <Card className="border-[color:hsl(var(--border))] bg-[var(--bg-card)]">
+        <Card className="ct-panel">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[var(--text-primary)]">
+            <CardTitle className="flex items-center gap-2 text-foreground">
               <Database className="h-5 w-5 text-primary" />
               {t("about.dataSources", "Data Sources and Accounts")}
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-[var(--text-secondary)] leading-relaxed">
+          <CardContent className="text-muted-foreground leading-relaxed">
             {t(
               "about.dataSourcesDesc",
               "Movie and TV metadata, artwork, and related information are provided by TMDB. If you create an account, your lists and preferences are saved so your experience is available across sessions and devices.",
@@ -126,14 +127,14 @@ export default function About() {
           </CardContent>
         </Card>
 
-        <Card className="border-[color:hsl(var(--border))] bg-[var(--bg-card)]">
+        <Card className="ct-panel">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[var(--text-primary)]">
+            <CardTitle className="flex items-center gap-2 text-foreground">
               <ShieldCheck className="h-5 w-5 text-primary" />
               {t("about.productGoal", "Product Goal")}
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-[var(--text-secondary)] leading-relaxed">
+          <CardContent className="text-muted-foreground leading-relaxed">
             {t(
               "about.productGoalDesc",
               "CineTrekker is built to make movie and TV discovery simple, structured, and personal while keeping controls clear and respectful of user preferences.",
@@ -169,6 +170,7 @@ export default function About() {
           title="About CineTrekker FAQs"
           items={faqItems}
         />
+      </div>
       </div>
     </div>
   );
