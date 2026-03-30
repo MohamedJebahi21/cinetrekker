@@ -92,11 +92,11 @@ export function MediaCarouselEnhanced({
 
   return (
     <section className="animate-fade-in group/carousel">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl md:text-2xl font-bold">{typeof title === 'string' ? title.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase()) : title}</h2>
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-xl font-bold md:text-2xl">{typeof title === 'string' ? title.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase()) : title}</h2>
         {showMoreLink && (
           <Link to={showMoreLink}>
-            <Button variant="ghost" size="sm" className="gap-1">
+            <Button variant="ghost" size="sm" className="w-full gap-1 sm:w-auto">
               {t('common.seeAll').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase())}
               <ChevronRight className="w-4 h-4" />
             </Button>
@@ -107,7 +107,7 @@ export function MediaCarouselEnhanced({
       {loading ? (
         <div className="flex gap-4 overflow-hidden">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="min-w-[160px] md:min-w-[180px]">
+            <div key={i} className="min-w-[132px] sm:min-w-[160px] md:min-w-[180px]">
               <MediaCardSkeleton />
             </div>
           ))}
@@ -147,7 +147,7 @@ export function MediaCarouselEnhanced({
             {items.map((item) => (
               <div
                 key={`${item.id}-${item.media_type || 'unknown'}`}
-                className="w-[160px] flex-shrink-0 snap-start sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
+                className="w-[132px] flex-shrink-0 snap-start sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
               >
                 <MediaCard media={item} />
               </div>

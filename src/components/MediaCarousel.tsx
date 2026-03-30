@@ -87,10 +87,10 @@ export function MediaCarousel({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl md:text-2xl font-bold">{title}</h2>
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-xl font-bold md:text-2xl">{title}</h2>
         {showMoreLink && (
-          <Button asChild variant="ghost" size="sm" className="gap-1">
+          <Button asChild variant="ghost" size="sm" className="w-full gap-1 sm:w-auto">
             <Link to={showMoreLink}>
               {t("common.seeAll")}
               <ChevronRight className="w-4 h-4" />
@@ -102,7 +102,7 @@ export function MediaCarousel({
       {loading ? (
         <div className="flex gap-4 overflow-hidden">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="min-w-[160px] md:min-w-[180px]">
+            <div key={i} className="min-w-[132px] sm:min-w-[160px] md:min-w-[180px]">
               <MediaCardSkeleton />
             </div>
           ))}
@@ -145,7 +145,7 @@ export function MediaCarousel({
             {filteredItems.map((item) => (
               <div
                 key={`${item.id}-${item.media_type || "unknown"}`}
-                className="flex-shrink-0 w-[140px] md:w-[160px] h-80"
+                className="h-72 w-[132px] flex-shrink-0 sm:h-80 sm:w-[140px] md:w-[160px]"
                 // ...existing code...
               >
                 <MediaCard media={item} />

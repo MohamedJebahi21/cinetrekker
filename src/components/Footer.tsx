@@ -15,7 +15,7 @@ export function Footer() {
                   CT
                 </span>
               </div>
-              <span className="text-[1.85rem] font-semibold leading-none text-foreground">
+              <span className="text-[1.45rem] font-semibold leading-none text-foreground sm:text-[1.85rem]">
                 {t("common.appName")}
               </span>
             </div>

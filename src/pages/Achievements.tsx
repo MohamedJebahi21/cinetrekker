@@ -247,17 +247,17 @@ export default function Achievements() {
         canonical="https://cinetrekker.vercel.app/achievements"
       />
 
-      <div className="ct-page-shell min-h-screen px-4 py-10">
+      <div className="ct-page-shell min-h-screen px-4 py-8 sm:py-10">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-4xl font-bold tracking-tight text-foreground">Achievements</h1>
-              <p className="mt-1 text-muted-foreground">Your cinematic milestones</p>
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Achievements</h1>
+              <p className="mt-1 text-sm text-muted-foreground sm:text-base">Your cinematic milestones</p>
             </div>
             <Link
               to="/profile"
-              className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              className="inline-flex min-h-[44px] items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Profile
@@ -267,7 +267,7 @@ export default function Achievements() {
           {/* Progress Overview */}
           <Card className="ct-panel mb-10">
             <CardContent className="pt-6">
-              <div className="flex justify-between items-center mb-4">
+              <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <p className="font-semibold">Overall Progress</p>
                 <p className="text-sm text-muted-foreground">
                   {unlockedAchievements} / {totalAchievements} unlocked
@@ -306,12 +306,12 @@ export default function Achievements() {
                         </div>
                       )}
 
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-3 text-lg">
-                          <span className="text-3xl">{item.icon}</span>
-                          <span>{item.name}</span>
-                        </CardTitle>
-                      </CardHeader>
+                        <CardHeader className="pb-4">
+                          <CardTitle className="flex items-start gap-3 text-base sm:text-lg">
+                            <span className="text-3xl leading-none">{item.icon}</span>
+                            <span className="min-w-0 leading-snug">{item.name}</span>
+                          </CardTitle>
+                        </CardHeader>
 
                       <CardContent className="space-y-3">
                         <p className="text-sm leading-relaxed text-muted-foreground">

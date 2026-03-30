@@ -24,7 +24,6 @@ import { Media, TVEpisodeInfo, TVNetwork } from '@/types/media';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import {
@@ -345,9 +344,9 @@ export default function Calendar() {
     }, [items]);
 
     return (
-      <div className="flex-1 min-w-[260px] md:min-w-0 flex flex-col">
+      <div className="flex min-w-0 flex-1 flex-col md:min-w-[260px]">
         <div
-          className={`sticky top-0 z-20 p-4 border-b border-border backdrop-blur-md transition-colors ${
+          className={`z-20 border-b border-border p-4 backdrop-blur-md transition-colors md:sticky md:top-0 ${
             isCurrentDay ? 'bg-primary/10' : isPastDay ? 'bg-muted/60' : 'bg-card'
           }`}
         >
@@ -364,7 +363,7 @@ export default function Calendar() {
           <div className="text-xs text-muted-foreground mt-1">{format(day, 'MMM')}</div>
         </div>
 
-        <div className={`flex-1 p-3 space-y-3 min-h-[420px] ${isCurrentDay ? 'bg-primary/5' : isPastDay ? 'bg-muted/30' : 'bg-background'}`}>
+        <div className={`flex-1 space-y-3 p-3 min-h-[280px] md:min-h-[420px] ${isCurrentDay ? 'bg-primary/5' : isPastDay ? 'bg-muted/30' : 'bg-background'}`}>
           {sortedItems.length > 0 ? (
             sortedItems.map((item) => <CalendarCard key={`${item.type}-${item.id}`} item={item} />)
           ) : (
@@ -387,37 +386,37 @@ export default function Calendar() {
       />
 
       <div className="ct-page-shell min-h-screen">
-        <div className="page-container pt-20 py-8 pb-24 md:pb-8">
+        <div className="page-container pt-20 py-6 pb-24 md:py-8 md:pb-8">
         {/* Header & Controls */}
         <div className="mb-8">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="ct-panel flex items-center justify-center rounded-2xl p-3">
+          <div className="mb-6 flex items-start gap-3 sm:items-center sm:gap-4">
+            <div className="ct-panel flex shrink-0 items-center justify-center rounded-2xl p-3">
               <CalendarIcon className="w-7 h-7 text-primary" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="ct-kicker mb-2">Release Timeline</p>
-              <h1 className="text-3xl font-bold tracking-tight">{t('calendar.title')}</h1>
-              <p className="text-muted-foreground mt-1">{t('calendar.subtitle')}</p>
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{t('calendar.title')}</h1>
+              <p className="mt-1 text-sm text-muted-foreground sm:text-base">{t('calendar.subtitle')}</p>
             </div>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
-            <div className="ct-toolbar gap-2">
+          <div className="flex flex-col items-stretch gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="ct-toolbar w-full justify-between gap-2 sm:w-auto sm:justify-start">
               <Button variant="ghost" size="icon" onClick={goToPreviousWeek} className="h-10 w-10">
                 <ChevronLeft className="h-5 w-5" />
               </Button>
-              <div className="min-w-[180px] text-center font-medium text-sm px-4">{weekRange}</div>
+              <div className="min-w-0 flex-1 px-2 text-center text-sm font-medium sm:min-w-[180px] sm:px-4">{weekRange}</div>
               <Button variant="ghost" size="icon" onClick={goToNextWeek} className="h-10 w-10">
                 <ChevronRight className="h-5 w-5" />
               </Button>
-              <Button variant="secondary" size="sm" onClick={goToToday} className="ml-2">
+              <Button variant="secondary" size="sm" onClick={goToToday} className="w-full sm:ml-2 sm:w-auto">
                 {t('calendar.today')}
               </Button>
             </div>
 
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center lg:w-auto">
               <Select value={mediaTypeFilter} onValueChange={(v) => setMediaTypeFilter(v as 'all' | 'movie' | 'tv')}>
-                <SelectTrigger className="w-40 rounded-2xl">
+                <SelectTrigger className="w-full rounded-2xl sm:w-40">
                   <Filter className="mr-2 h-4 w-4" />
                   <SelectValue />
                 </SelectTrigger>
@@ -429,7 +428,7 @@ export default function Calendar() {
               </Select>
 
               {user && (
-                <div className="ct-toolbar px-4 py-2.5">
+                <div className="ct-toolbar w-full px-4 py-2.5 sm:w-auto">
                   <Switch id="followed" checked={showOnlyFollowed} onCheckedChange={setShowOnlyFollowed} />
                   <Label htmlFor="followed" className="cursor-pointer text-sm font-medium">
                     {t('calendar.onlyFollowed')}
@@ -464,21 +463,16 @@ export default function Calendar() {
             </div>
 
             {/* Mobile View */}
-            <div className="md:hidden">
-              <ScrollArea className="w-full whitespace-nowrap">
-                <div className="flex gap-4 pb-6">
-                  {weekDays.map((day) => {
-                    const dateKey = format(day, 'yyyy-MM-dd');
-                    const dayItems = itemsByDate.get(dateKey) || [];
-                    return (
-                      <div key={dateKey} className="flex-shrink-0 w-[300px]">
-                        <DayColumn day={day} items={dayItems} />
-                      </div>
-                    );
-                  })}
-                </div>
-                <ScrollBar orientation="horizontal" />
-              </ScrollArea>
+            <div className="space-y-4 md:hidden">
+              {weekDays.map((day) => {
+                const dateKey = format(day, 'yyyy-MM-dd');
+                const dayItems = itemsByDate.get(dateKey) || [];
+                return (
+                  <div key={dateKey} className="ct-panel overflow-hidden">
+                    <DayColumn day={day} items={dayItems} />
+                  </div>
+                );
+              })}
             </div>
           </>
         )}

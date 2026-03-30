@@ -167,75 +167,75 @@ export default function YearInReview() {
         canonical="https://cinetrekker.vercel.app/year-in-review"
       />
 
-      <div className="ct-page-shell min-h-screen px-4 py-10">
+      <div className="ct-page-shell min-h-screen px-4 py-8 sm:py-10">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="flex items-center gap-4 mb-10">
+          <div className="mb-8 flex items-start gap-3 sm:mb-10 sm:items-center sm:gap-4">
             <div className="rounded-2xl bg-primary/12 p-3">
               <Calendar className="h-9 w-9 text-primary" />
             </div>
-            <div>
-              <h1 className="text-4xl font-bold tracking-tight text-foreground">{currentYear} Year in Review</h1>
-              <p className="text-lg text-muted-foreground">Your cinematic journey this year</p>
+            <div className="min-w-0">
+              <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{currentYear} Year in Review</h1>
+              <p className="text-sm text-muted-foreground sm:text-lg">Your cinematic journey this year</p>
             </div>
           </div>
 
           {/* Overview Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            <Card className="ct-panel rounded-3xl p-6">
+            <Card className="ct-panel rounded-3xl p-5 sm:p-6">
               <div className="flex items-center gap-3 mb-4">
                 <TrendingUp className="h-6 w-6 text-primary" />
                 <h3 className="font-semibold text-lg">Total Watched</h3>
               </div>
-              <p className="text-5xl font-bold text-foreground">{totalWatched}</p>
-              <p className="mt-1 text-muted-foreground">
+              <p className="text-4xl font-bold text-foreground sm:text-5xl">{totalWatched}</p>
+              <p className="mt-1 text-sm text-muted-foreground sm:text-base">
                 {thisYearMovies.length} movies • {thisYearTV.length} TV shows
               </p>
             </Card>
 
-            <Card className="ct-panel rounded-3xl p-6">
+            <Card className="ct-panel rounded-3xl p-5 sm:p-6">
               <div className="flex items-center gap-3 mb-4">
                 <Clock className="h-6 w-6 text-primary" />
                 <h3 className="font-semibold text-lg">Time Invested</h3>
               </div>
-              <p className="text-5xl font-bold text-foreground">{totalHours}h</p>
+              <p className="text-4xl font-bold text-foreground sm:text-5xl">{totalHours}h</p>
               <p className="text-neutral-400 mt-1">≈ {totalDays} days of content</p>
             </Card>
 
-            <Card className="ct-panel rounded-3xl p-6">
+            <Card className="ct-panel rounded-3xl p-5 sm:p-6">
               <div className="flex items-center gap-3 mb-4">
                 <Award className="h-6 w-6 text-primary" />
                 <h3 className="font-semibold text-lg">Favorite Genre</h3>
               </div>
-              <p className="text-3xl font-bold text-foreground truncate">
+              <p className="text-2xl font-bold text-foreground truncate sm:text-3xl">
                 {genreData[0]?.name || "—"}
               </p>
-              <p className="mt-1 text-muted-foreground">
+              <p className="mt-1 text-sm text-muted-foreground sm:text-base">
                 {genreData[0]?.value || 0} titles
               </p>
             </Card>
 
-            <Card className="ct-panel rounded-3xl p-6">
+            <Card className="ct-panel rounded-3xl p-5 sm:p-6">
               <div className="flex items-center gap-3 mb-4">
                 <Flame className="h-6 w-6 text-primary" />
                 <h3 className="font-semibold text-lg">Busiest Month</h3>
               </div>
-              <p className="text-3xl font-bold text-foreground">{busiestMonth.month}</p>
-              <p className="mt-1 text-muted-foreground">{busiestMonth.count} titles watched</p>
+              <p className="text-2xl font-bold text-foreground sm:text-3xl">{busiestMonth.month}</p>
+              <p className="mt-1 text-sm text-muted-foreground sm:text-base">{busiestMonth.count} titles watched</p>
             </Card>
           </div>
 
           {/* Tabs Section */}
           <Tabs defaultValue="genres" className="w-full">
             <TabsList className="grid w-full grid-cols-3 rounded-2xl border border-border/50 bg-card/70 p-1">
-              <TabsTrigger value="genres" className="rounded-xl">Genres</TabsTrigger>
-              <TabsTrigger value="timeline" className="rounded-xl">Activity</TabsTrigger>
-              <TabsTrigger value="highlights" className="rounded-xl">Top Rated</TabsTrigger>
+              <TabsTrigger value="genres" className="rounded-xl px-2 text-xs sm:text-sm">Genres</TabsTrigger>
+              <TabsTrigger value="timeline" className="rounded-xl px-2 text-xs sm:text-sm">Activity</TabsTrigger>
+              <TabsTrigger value="highlights" className="rounded-xl px-2 text-xs sm:text-sm">Top Rated</TabsTrigger>
             </TabsList>
 
             {/* Genre Breakdown */}
             <TabsContent value="genres" className="mt-6">
-              <Card className="ct-panel rounded-3xl p-8">
+              <Card className="ct-panel rounded-3xl p-5 sm:p-8">
                 <CardHeader className="px-0 pb-6">
                   <CardTitle>Your Favorite Genres</CardTitle>
                 </CardHeader>
@@ -264,7 +264,7 @@ export default function YearInReview() {
 
             {/* Monthly Timeline */}
             <TabsContent value="timeline" className="mt-6">
-              <Card className="ct-panel rounded-3xl p-8">
+              <Card className="ct-panel rounded-3xl p-5 sm:p-8">
                 <CardHeader className="px-0 pb-6">
                   <CardTitle>Monthly Watching Activity</CardTitle>
                 </CardHeader>
@@ -283,7 +283,7 @@ export default function YearInReview() {
 
             {/* Top Rated Highlights */}
             <TabsContent value="highlights" className="mt-6">
-              <Card className="ct-panel rounded-3xl p-8">
+              <Card className="ct-panel rounded-3xl p-5 sm:p-8">
                 <CardHeader className="px-0 pb-6">
                   <CardTitle>Top Rated This Year</CardTitle>
                 </CardHeader>
@@ -291,7 +291,7 @@ export default function YearInReview() {
                   {topRated.map((item, index) => (
                     <div
                       key={item.id}
-                      className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/10 hover:border-white/20 transition-colors"
+                      className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 transition-colors hover:border-white/20 sm:gap-4 sm:p-4"
                     >
                       <Badge variant="secondary" className="w-9 h-9 rounded-full flex items-center justify-center text-lg font-bold">
                         {index + 1}

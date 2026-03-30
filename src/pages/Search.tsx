@@ -958,8 +958,8 @@ export default function Search() {
         ]}
       />
       {/* Search Header */}
-      <div className="mb-8 bg-background/95 backdrop-blur-md border-b border-border/60 py-2">
-        <div className="flex items-center justify-between mb-4">
+      <div className="mb-8 border-b border-border/60 bg-background/95 py-2 backdrop-blur-md">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="section-title mb-0">{t("nav.search")}</h1>
           <RandomTrekButton />
         </div>

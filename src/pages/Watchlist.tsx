@@ -187,7 +187,7 @@ export default function Watchlist() {
           >
             <div>
               <p className="ct-kicker mb-2">Curated Queue</p>
-              <h1 className="mb-2 text-4xl font-bold tracking-tight">
+              <h1 className="mb-2 text-3xl font-bold tracking-tight sm:text-4xl">
                 {isSharedView ? "Shared Watchlist" : t("watchlist.title")}
               </h1>
               <WatchlistStatsLine
@@ -227,14 +227,14 @@ export default function Watchlist() {
                 size="sm"
               />
 
-              <div className="ct-toggle-group">
+              <div className="ct-toggle-group w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={() => setViewMode("grid")}
-                  className={`ct-toggle-button flex items-center gap-1.5 ${
-                    viewMode === "grid"
-                      ? "ct-toggle-button-active"
-                      : "hover:text-foreground"
+                    className={`ct-toggle-button flex flex-1 items-center justify-center gap-1.5 sm:flex-none ${
+                      viewMode === "grid"
+                        ? "ct-toggle-button-active"
+                        : "hover:text-foreground"
                   }`}
                 >
                   <LayoutGrid className="h-4 w-4" />
@@ -243,10 +243,10 @@ export default function Watchlist() {
                 <button
                   type="button"
                   onClick={() => setViewMode("list")}
-                  className={`ct-toggle-button flex items-center gap-1.5 ${
-                    viewMode === "list"
-                      ? "ct-toggle-button-active"
-                      : "hover:text-foreground"
+                    className={`ct-toggle-button flex flex-1 items-center justify-center gap-1.5 sm:flex-none ${
+                      viewMode === "list"
+                        ? "ct-toggle-button-active"
+                        : "hover:text-foreground"
                   }`}
                 >
                   <List className="h-4 w-4" />
@@ -325,7 +325,7 @@ export default function Watchlist() {
                     <Link
                       key={`${mediaType}-${media.id}`}
                       to={`/${mediaType}/${media.id}`}
-                      className="ct-list-row group"
+                      className="ct-list-row group items-start gap-4 p-4 sm:items-center sm:gap-5 sm:p-5"
                     >
                       <div className="h-24 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-muted">
                         {poster ? (
@@ -343,8 +343,8 @@ export default function Watchlist() {
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-3">
-                          <h3 className="truncate text-lg font-semibold transition-colors group-hover:text-primary">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                          <h3 className="min-w-0 flex-1 text-base font-semibold transition-colors group-hover:text-primary sm:text-lg">
                             {title}
                           </h3>
                           <Badge
@@ -355,7 +355,7 @@ export default function Watchlist() {
                           </Badge>
                         </div>
 
-                        <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                           {year && <span>{year}</span>}
                           {media.vote_average > 0 && (
                             <span>★ {media.vote_average.toFixed(1)}</span>

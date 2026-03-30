@@ -24,30 +24,32 @@ export function HeroSection() {
   return (
     <section className="relative overflow-hidden border-b border-border/40 bg-background">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(229,9,20,0.22),transparent_32%),radial-gradient(circle_at_80%_20%,rgba(245,158,11,0.14),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.03),transparent_42%)]" />
-      <div className="page-container relative grid gap-10 py-16 md:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] md:items-center md:py-24">
+      <div className="page-container relative grid gap-8 py-12 sm:py-14 md:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] md:items-center md:gap-10 md:py-24">
         <div className="max-w-3xl">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
+          <div className="mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-2 text-xs font-medium text-primary sm:px-4 sm:text-sm">
             <Sparkles className="h-4 w-4" />
-            Track movies, series, and your next watch in one place
+            <span className="truncate sm:whitespace-normal">
+              Track movies, series, and your next watch in one place
+            </span>
           </div>
 
-          <h1 className="max-w-3xl text-4xl font-black tracking-tight text-foreground md:text-6xl">
+          <h1 className="max-w-3xl text-3xl font-black tracking-tight text-foreground sm:text-4xl md:text-6xl">
             Your personal movie &amp; TV tracker
           </h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
+          <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7 md:text-lg">
             Save what you want to watch, mark progress episode by episode, rate
             what you finish, and jump back into your next title without digging
             through global feeds first.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button asChild size="lg" className="btn-primary-glow gap-2">
+            <Button asChild size="lg" className="btn-primary-glow w-full gap-2 sm:w-auto">
               <Link to={user ? "/watchlist" : "/signup"}>
                 {user ? "Open My Watchlist" : "Start Tracking Free"}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline">
+            <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
               <Link to="/search">Browse Movies &amp; TV</Link>
             </Button>
           </div>
