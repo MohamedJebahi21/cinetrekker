@@ -256,6 +256,8 @@ export const MediaCard = React.memo(function MediaCard({
         episodeNumber: ep.episode,
         episodeName: undefined,
         airDate: undefined,
+        showName: title,
+        posterPath: media.poster_path,
       });
     }
   };

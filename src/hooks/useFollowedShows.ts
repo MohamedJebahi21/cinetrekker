@@ -138,13 +138,17 @@ export function useWatchedEpisodes(showId?: number) {
       seasonNumber, 
       episodeNumber, 
       episodeName, 
-      airDate 
+      airDate,
+      showName,
+      posterPath,
     }: { 
       showId: number; 
       seasonNumber: number; 
       episodeNumber: number; 
       episodeName?: string; 
       airDate?: string;
+      showName?: string;
+      posterPath?: string | null;
     }) => {
       if (!user) throw new Error('Not authenticated');
       
@@ -164,19 +168,45 @@ export function useWatchedEpisodes(showId?: number) {
       
       if (error) throw error;
 
-      // Update last watched in followed_shows
+      const validatedShowName = validateShowName(showName);
+
+      if (validatedShowName) {
+        await supabase
+          .from('followed_shows')
+          .upsert({
+            user_id: user.id,
+            show_id: showId,
+            show_name: validatedShowName,
+            poster_path: posterPath ?? null,
+            last_watched_season: seasonNumber,
+            last_watched_episode: episodeNumber,
+          }, { onConflict: 'user_id,show_id' });
+      } else {
+        await supabase
+          .from('followed_shows')
+          .update({
+            last_watched_season: seasonNumber,
+            last_watched_episode: episodeNumber,
+          })
+          .eq('user_id', user.id)
+          .eq('show_id', showId);
+      }
+
       await supabase
-        .from('followed_shows')
-        .update({
-          last_watched_season: seasonNumber,
-          last_watched_episode: episodeNumber,
-        })
-        .eq('user_id', user.id)
-        .eq('show_id', showId);
+        .from('user_watched')
+        .upsert({
+          user_id: user.id,
+          media_id: showId,
+          media_type: 'tv',
+          status: 'watching',
+          watched_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,media_id,media_type' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['watched-episodes'] });
       queryClient.invalidateQueries({ queryKey: ['followed-shows'] });
+      queryClient.invalidateQueries({ queryKey: ['watched', user?.id] });
+      toast({ title: 'Episode marked as watched' });
     },
     onError: (error: Error) => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -199,6 +229,8 @@ export function useWatchedEpisodes(showId?: number) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['watched-episodes'] });
+      queryClient.invalidateQueries({ queryKey: ['followed-shows'] });
+      toast({ title: 'Episode removed from progress' });
     },
     onError: (error: Error) => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });

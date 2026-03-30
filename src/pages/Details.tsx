@@ -509,6 +509,8 @@ export default function Details() {
         episodeNumber,
         episodeName,
         airDate: airDate || undefined,
+        showName: title,
+        posterPath: details?.poster_path,
       });
     }
   };
@@ -1113,7 +1115,7 @@ export default function Details() {
                 {t("details.watchTrailer", "Watch Trailer")}
               </Button>
 
-              {optimisticWatched && (
+              {user && (
                 <Button
                   variant="outline"
                   className="gap-2"
@@ -1126,8 +1128,8 @@ export default function Details() {
                 >
                   <MessageSquare className="w-4 h-4" />
                   {watchedItem?.rating
-                    ? `${watchedItem.rating}/10`
-                    : t("actions.rateTitle")}
+                    ? `${watchedItem.rating}/10 Review`
+                    : "Add Rating & Review"}
                 </Button>
               )}
             </div>
@@ -1148,6 +1150,55 @@ export default function Details() {
               open={trailerOpen}
               onClose={() => setTrailerOpen(false)}
             />
+
+            <div className="ct-panel p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground">
+                    Your Rating &amp; Review
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {user
+                      ? "Keep a personal score and short note for this title."
+                      : "Sign in to rate this title and save a personal review."}
+                  </p>
+                </div>
+
+                {user ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="gap-2"
+                    onClick={handleOpenStatusDialog}
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    {watchedItem ? "Edit Rating & Review" : "Add Rating & Review"}
+                  </Button>
+                ) : (
+                  <Button asChild variant="outline">
+                    <Link to="/login">Sign In to Review</Link>
+                  </Button>
+                )}
+              </div>
+
+              {user && watchedItem ? (
+                <div className="mt-4 rounded-2xl border border-border/60 bg-background/40 p-4">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Badge variant="secondary">{watchedItem.status || "completed"}</Badge>
+                    {typeof watchedItem.rating === "number" ? (
+                      <Badge variant="outline">{watchedItem.rating}/10</Badge>
+                    ) : (
+                      <Badge variant="outline">No rating yet</Badge>
+                    )}
+                  </div>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    {watchedItem.note?.trim()
+                      ? watchedItem.note
+                      : "No note yet. Add a short review so you remember what stood out."}
+                  </p>
+                </div>
+              ) : null}
+            </div>
 
             {mediaType === "tv" && !user && (
               <div className="glass-card p-4 text-sm text-muted-foreground">
@@ -1184,14 +1235,6 @@ export default function Details() {
               )}
             </div>
 
-            {watchedItem?.note && (
-              <div className="glass-card p-4">
-                <h3 className="text-sm font-medium mb-2">{t("rating.note")}</h3>
-                <p className="text-muted-foreground text-sm">
-                  {watchedItem.note}
-                </p>
-              </div>
-            )}
           </div>
         </div>
 
