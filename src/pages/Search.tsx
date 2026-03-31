@@ -435,6 +435,7 @@ export default function Search() {
     if (nextStreaming.join("|") !== streamingFilters.join("|")) {
       setStreamingFilters(nextStreaming);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     location.search,
   ]);

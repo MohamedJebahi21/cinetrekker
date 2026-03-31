@@ -329,6 +329,19 @@ export default function Details() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [details?.seasons, mediaType, seasons, todayDateKey]);
 
+  // Must be called unconditionally before any early return (Rules of Hooks)
+  useEffect(() => {
+    if (mediaType !== "tv") return;
+    if (selectedSeason && availableSeasonNumbers.includes(selectedSeason)) return;
+    if (availableSeasonNumbers.length > 0) {
+      setSelectedSeason(availableSeasonNumbers[0]);
+      return;
+    }
+    if (!selectedSeason && seasons.length > 0) {
+      setSelectedSeason(seasons[seasons.length - 1]);
+    }
+  }, [availableSeasonNumbers, mediaType, seasons, selectedSeason]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen">
@@ -698,18 +711,6 @@ export default function Details() {
           (episode) => episode.air_date && episode.air_date <= todayDateKey,
         )
       : [];
-
-  useEffect(() => {
-    if (mediaType !== "tv") return;
-    if (selectedSeason && availableSeasonNumbers.includes(selectedSeason)) return;
-    if (availableSeasonNumbers.length > 0) {
-      setSelectedSeason(availableSeasonNumbers[0]);
-      return;
-    }
-    if (!selectedSeason && seasons.length > 0) {
-      setSelectedSeason(seasons[seasons.length - 1]);
-    }
-  }, [availableSeasonNumbers, mediaType, seasons, selectedSeason]);
 
   const seoDescription = [
     details.overview || "",
