@@ -19,7 +19,15 @@ installChunkErrorHandlers();
 applyThemeToDocument(readStoredTheme());
 
 if (typeof window !== "undefined") {
-  const tt = (window as unknown as { trustedTypes?: { createPolicy: (name: string, rules: any) => void } }).trustedTypes;
+  const tt = (window as unknown as { 
+    trustedTypes?: { 
+      createPolicy: (name: string, rules: {
+        createHTML?: (value: string) => string;
+        createScript?: (value: string) => string;
+        createScriptURL?: (value: string) => string;
+      }) => void 
+    } 
+  }).trustedTypes;
   if (tt) {
     const createPolicy = (name: string) => {
       try {
