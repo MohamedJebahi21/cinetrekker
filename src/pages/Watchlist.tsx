@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Bookmark, LayoutGrid, List, Printer } from "lucide-react";
+import { Bookmark, CheckSquare, LayoutGrid, List, Printer, Square, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUserLists } from "@/contexts/UserListsContext";
 import {
@@ -49,7 +49,7 @@ type WatchlistMedia = Media & {
 
 export default function Watchlist() {
   const { t, i18n } = useTranslation();
-  const { watchlist, watched } = useUserLists();
+  const { watchlist, watched, addToWatched, removeFromWatchlist } = useUserLists();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const language = i18n.language;
@@ -59,6 +59,8 @@ export default function Watchlist() {
   const [sortBy, setSortBy] = useState("added-desc");
   const [filterExpanded, setFilterExpanded] = useState(true);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
 
   const sharedParam = searchParams.get("share") || "";
   const sharedItems: SharedListItem[] = sharedParam
@@ -72,7 +74,7 @@ export default function Watchlist() {
             (mediaType === "movie" || mediaType === "tv") &&
             Number.isFinite(parsedId)
           ) {
-            return { mediaType, mediaId: parsedId, addedAt: undefined };
+            return { mediaType, mediaId: parsedId } as SharedListItem;
           }
 
           return null;
@@ -162,6 +164,51 @@ export default function Watchlist() {
       : mediaDetails.filter((media) => media.watchStatus === "dropped").length,
   };
 
+  const selectedCount = selectedKeys.size;
+  const selectedWatchlistItems = useMemo(
+    () =>
+      listItems.filter((item) =>
+        selectedKeys.has(`${item.mediaType}-${item.mediaId}`),
+      ),
+    [listItems, selectedKeys],
+  );
+
+  const toggleSelect = (mediaId: number, mediaType: "movie" | "tv") => {
+    const key = `${mediaType}-${mediaId}`;
+    setSelectedKeys((current) => {
+      const next = new Set(current);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedKeys(new Set());
+    setSelectionMode(false);
+  };
+
+  const handleBulkMarkWatched = async () => {
+    await Promise.all(
+      selectedWatchlistItems.map((item) =>
+        addToWatched(item.mediaId, item.mediaType),
+      ),
+    );
+    clearSelection();
+  };
+
+  const handleBulkRemove = async () => {
+    await Promise.all(
+      selectedWatchlistItems.map((item) =>
+        removeFromWatchlist(item.mediaId, item.mediaType),
+      ),
+    );
+    clearSelection();
+  };
+
   return (
     <>
       <SEO
@@ -198,71 +245,94 @@ export default function Watchlist() {
               />
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <RandomPicker
-                source="watchlist"
-                variant="outline"
-                size="sm"
-                label="Random"
-              />
+            {listItems.length > 0 && (
+              <div className="flex flex-wrap items-center gap-3">
+                <RandomPicker
+                  source="watchlist"
+                  variant="outline"
+                  size="sm"
+                  label="Random"
+                />
 
-              <ShareButton
-                title={
-                  isSharedView
-                    ? "Shared CineTrekker Watchlist"
-                    : "My CineTrekker Watchlist"
-                }
-                url={
-                  isSharedView
-                    ? window.location.href
-                    : `${window.location.origin}/watchlist?share=${encodeURIComponent(
-                        listItems
-                          .slice(0, 100)
-                          .map((item) => `${item.mediaType}:${item.mediaId}`)
-                          .join(","),
-                      )}`
-                }
-                text={`Check out this watchlist with ${listItems.length} titles!`}
-                variant="ghost"
-                size="sm"
-              />
+                <ShareButton
+                  title={
+                    isSharedView
+                      ? "Shared CineTrekker Watchlist"
+                      : "My CineTrekker Watchlist"
+                  }
+                  url={
+                    isSharedView
+                      ? window.location.href
+                      : `${window.location.origin}/watchlist?share=${encodeURIComponent(
+                          listItems
+                            .slice(0, 100)
+                            .map((item) => `${item.mediaType}:${item.mediaId}`)
+                            .join(","),
+                        )}`
+                  }
+                  text={`Check out this watchlist with ${listItems.length} titles!`}
+                  variant="ghost"
+                  size="sm"
+                />
 
-              <div className="ct-toggle-group w-full sm:w-auto">
-                <button
-                  type="button"
-                  onClick={() => setViewMode("grid")}
-                    className={`ct-toggle-button flex flex-1 items-center justify-center gap-1.5 sm:flex-none ${
-                      viewMode === "grid"
-                        ? "ct-toggle-button-active"
-                        : "hover:text-foreground"
-                  }`}
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                  Grid
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode("list")}
-                    className={`ct-toggle-button flex flex-1 items-center justify-center gap-1.5 sm:flex-none ${
-                      viewMode === "list"
-                        ? "ct-toggle-button-active"
-                        : "hover:text-foreground"
-                  }`}
-                >
-                  <List className="h-4 w-4" />
-                  List
-                </button>
+                <div className="ct-toggle-group w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("grid")}
+                      className={`ct-toggle-button flex flex-1 items-center justify-center gap-1.5 sm:flex-none ${
+                        viewMode === "grid"
+                          ? "ct-toggle-button-active"
+                          : "hover:text-foreground"
+                    }`}
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                    Grid
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("list")}
+                      className={`ct-toggle-button flex flex-1 items-center justify-center gap-1.5 sm:flex-none ${
+                        viewMode === "list"
+                          ? "ct-toggle-button-active"
+                          : "hover:text-foreground"
+                    }`}
+                  >
+                    <List className="h-4 w-4" />
+                    List
+                  </button>
+                </div>
+
+                <ExportImportButton />
+
+                {!isSharedView && mediaDetails.length > 0 && (
+                  <Button
+                    variant={selectionMode ? "secondary" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      if (selectionMode) {
+                        clearSelection();
+                      } else {
+                        setSelectionMode(true);
+                      }
+                    }}
+                  >
+                    {selectionMode ? (
+                      <CheckSquare className="mr-2 h-4 w-4" />
+                    ) : (
+                      <Square className="mr-2 h-4 w-4" />
+                    )}
+                    {selectionMode ? "Done" : "Bulk Select"}
+                  </Button>
+                )}
+
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/print-watchlist">
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print
+                  </Link>
+                </Button>
               </div>
-
-              <ExportImportButton />
-
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/print-watchlist">
-                  <Printer className="mr-2 h-4 w-4" />
-                  Print
-                </Link>
-              </Button>
-            </div>
+            )}
           </motion.div>
 
           {isSharedView && (
@@ -308,11 +378,62 @@ export default function Watchlist() {
             </motion.div>
           )}
 
+          {!isSharedView && selectionMode && mediaDetails.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 rounded-2xl border border-border/60 bg-card/80 p-4 backdrop-blur-sm"
+            >
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    {selectedCount === 0
+                      ? "Select titles to manage them together"
+                      : `${selectedCount} title${selectedCount === 1 ? "" : "s"} selected`}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Mark selected titles as watched or remove them from your watchlist in one pass.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={selectedCount === 0}
+                    onClick={() => void handleBulkMarkWatched()}
+                  >
+                    <CheckSquare className="mr-2 h-4 w-4" />
+                    Mark Watched
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    disabled={selectedCount === 0}
+                    onClick={() => void handleBulkRemove()}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Remove
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={clearSelection}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {isLoading ? (
             <MediaGrid items={[]} isLoading columns="normal" gap="md" />
           ) : filteredMedia.length > 0 ? (
             viewMode === "grid" ? (
-              <MediaGrid items={filteredMedia} columns="normal" gap="md" />
+              <MediaGrid
+                items={filteredMedia}
+                columns="normal"
+                gap="md"
+                selectable={selectionMode}
+                selectedKeys={selectedKeys}
+                onToggleSelect={toggleSelect}
+              />
             ) : (
               <div className="ct-list-surface divide-y divide-border/60">
                 {filteredMedia.map((media) => {
@@ -327,6 +448,32 @@ export default function Watchlist() {
                       to={`/${mediaType}/${media.id}`}
                       className="ct-list-row group items-start gap-4 p-4 sm:items-center sm:gap-5 sm:p-5"
                     >
+                      {selectionMode && (
+                        <button
+                          type="button"
+                          className={`mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${
+                            selectedKeys.has(`${mediaType}-${media.id}`)
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border/60 bg-card text-muted-foreground"
+                          }`}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            toggleSelect(media.id, mediaType);
+                          }}
+                          aria-pressed={selectedKeys.has(`${mediaType}-${media.id}`)}
+                          aria-label={
+                            selectedKeys.has(`${mediaType}-${media.id}`)
+                              ? "Deselect title"
+                              : "Select title"
+                          }
+                        >
+                          {selectedKeys.has(`${mediaType}-${media.id}`) ? (
+                            <CheckSquare className="h-4 w-4" />
+                          ) : (
+                            <Square className="h-4 w-4" />
+                          )}
+                        </button>
+                      )}
                       <div className="h-24 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-muted">
                         {poster ? (
                           <Image
@@ -402,6 +549,10 @@ export default function Watchlist() {
                   onClick: () => navigate("/search?sort=popularity.desc"),
                 }}
               />
+              <p className="mt-2 text-center text-sm text-muted-foreground">
+                Browse search, trending, or title pages and tap the bookmark to
+                start building your queue.
+              </p>
             </div>
           )}
         </div>

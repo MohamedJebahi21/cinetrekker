@@ -114,18 +114,25 @@ export function useContinueWatching(language: string) {
             showEpisodes,
             language,
           );
-          const totalEpisodes = Math.max(details.number_of_episodes ?? 0, 1);
           const watchedEpisodeCount = showEpisodes.length;
-          const progressPercent = Math.min(
-            100,
-            Math.round((watchedEpisodeCount / totalEpisodes) * 100),
-          );
+          
+          // If there's no next episode, or the only next episode is upcoming, 
+          // the user has watched all currently released episodes.
+          const isCaughtUp = !nextEpisode || ('isUpcoming' in nextEpisode && nextEpisode.isUpcoming);
+          
+          const totalEpisodes = isCaughtUp 
+            ? watchedEpisodeCount 
+            : Math.max(details.number_of_episodes ?? 0, 1);
+            
+          const progressPercent = isCaughtUp 
+            ? 100 
+            : Math.min(100, Math.round((watchedEpisodeCount / totalEpisodes) * 100));
 
           return {
             details,
             watchedEpisodeCount,
             progressPercent,
-            nextEpisode,
+            nextEpisode: nextEpisode as ContinueWatchingEpisode | null,
             lastWatchedEpisode,
           } satisfies ContinueWatchingItem;
         }),

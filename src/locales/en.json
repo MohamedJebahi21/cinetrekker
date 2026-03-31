@@ -156,7 +156,8 @@
     "popularGenres": "Popular Genres",
     "noResults": "No results found for \"{{query}}\"",
     "tryDifferent": "Try different keywords or check spelling",
-    "clearSearch": "Clear search"
+    "clearSearch": "Clear search",
+    "loadMore": "Load more"
     ,"lang": "Language"
     ,"streaming": "Streaming"
     ,"openFilters": "Open Filters"

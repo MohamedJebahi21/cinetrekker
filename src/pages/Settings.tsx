@@ -21,15 +21,25 @@ import {
   Languages,
   Accessibility,
   ChevronRight,
+  Download,
+  Trash2,
+  Database,
+  ShieldAlert,
+  Type,
+  Eye,
+  RotateCcw,
+  Check,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { logger } from "@/lib/logger";
 import { profileService } from "@/services/profile";
 import { languages } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { StickySaveBar } from "@/components/StickySaveBar";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectContent,
@@ -56,9 +66,29 @@ import {
   normalizeSettingsState,
   readStoredProfileData,
   readStoredSettings,
-  shouldHandleAccessibilityShortcutKey,
   type SettingsState,
 } from "@/pages/settings.utils";
+import { useUserLists } from "@/contexts/UserListsContext";
+import { STORAGE_KEYS } from "@/contexts/userListsStorageKeys";
+import { clearGuestWatchlist, clearGuestWatched } from "@/hooks/useGuestMediaLists";
+import { supabase } from "@/integrations/supabase/client";
+import { useTheme } from "@/contexts/ThemeContext";
+import {
+  applyAccessibilityPreferencesToRoot,
+  readAccessibilityPreferences,
+  saveFontSizePreference,
+  saveReduceMotionPreference,
+} from "@/lib/accessibility-preferences";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -310,11 +340,17 @@ function SettingsSection({
 }
 
 export default function Settings() {
+  const MIN_FONT_SIZE = 80;
+  const MAX_FONT_SIZE = 150;
+  const FONT_SIZE_STEP = 10;
   const { t, i18n } = useTranslation();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { maturityRating, setMaturityRating, isAgeKnown } = useContentPolicy();
   const { toast } = useToast();
+  const { watchlist, watched, hiddenRecommendations } = useUserLists();
+  const { theme, setTheme } = useTheme();
 
   const profileKey = useMemo(
     () => `cinetrekker_profile_${user?.id || "guest"}`,
@@ -327,10 +363,24 @@ export default function Settings() {
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [pulseRowId, setPulseRowId] = useState<string | null>(null);
   const [isMobileSectionCollapse, setIsMobileSectionCollapse] = useState(false);
+  const [isExportingData, setIsExportingData] = useState(false);
+  const [isDeletingData, setIsDeletingData] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [confirmResetAccessibilityOpen, setConfirmResetAccessibilityOpen] =
+    useState(false);
+  const resetAccessibilityButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [fontSize, setFontSize] = useState<number>(
+    () => readAccessibilityPreferences().fontSize,
+  );
+  const [reduceMotion, setReduceMotion] = useState<boolean>(
+    () => readAccessibilityPreferences().reduceMotion,
+  );
   const [mobileExpandedSections, setMobileExpandedSections] = useState({
     account: true,
+    accessibility: true,
     privacy: true,
     contentSafety: true,
+    dataManagement: true,
   });
 
   const text = useCallback(
@@ -467,12 +517,54 @@ export default function Settings() {
     }
   }, [isLoadingSettings, hasSettingsChangedMemo]);
 
+  useEffect(() => {
+    if (!location.hash) return;
+    const id = location.hash.replace("#", "");
+    const target = document.getElementById(id);
+    if (!target) return;
+    window.setTimeout(() => {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 40);
+  }, [location.hash]);
+
+  useEffect(() => {
+    const clamped = saveFontSizePreference(fontSize);
+    if (clamped !== fontSize) {
+      setFontSize(clamped);
+      return;
+    }
+    applyAccessibilityPreferencesToRoot();
+  }, [fontSize]);
+
+  useEffect(() => {
+    saveReduceMotionPreference(reduceMotion);
+    applyAccessibilityPreferencesToRoot();
+  }, [reduceMotion]);
+
   const triggerRowPulse = (rowId: string) => {
     setPulseRowId(rowId);
     window.setTimeout(
       () => setPulseRowId((active) => (active === rowId ? null : active)),
       520,
     );
+  };
+
+  const decreaseFontSize = () => {
+    setFontSize((current) => Math.max(MIN_FONT_SIZE, current - FONT_SIZE_STEP));
+  };
+
+  const increaseFontSize = () => {
+    setFontSize((current) => Math.min(MAX_FONT_SIZE, current + FONT_SIZE_STEP));
+  };
+
+  const resetAccessibilitySettings = () => {
+    setFontSize(100);
+    setReduceMotion(false);
+    setTheme("dark");
+    toast({
+      title: "Accessibility reset",
+      description: "Theme, text size, and motion preferences are back to defaults.",
+    });
   };
 
   const updateProfileSetting = (
@@ -585,6 +677,122 @@ export default function Settings() {
     });
   };
 
+  const exportData = async () => {
+    setIsExportingData(true);
+
+    try {
+      const storedProfile = readStoredProfileData(localStorage.getItem(profileKey));
+      const remoteProfile = user?.id ? await profileService.getProfile(user.id) : null;
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        app: "CineTrekker",
+        version: "settings-export-v1",
+        account: user
+          ? {
+              userId: user.id,
+              email: user.email ?? null,
+            }
+          : {
+              userId: "guest",
+              email: null,
+            },
+        profile: remoteProfile ?? storedProfile,
+        settings,
+        contentSafety: {
+          maturityRating,
+          isAgeKnown,
+        },
+        watchlist,
+        watched,
+        hiddenRecommendations,
+      };
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `cinetrekker-account-export-${new Date().toISOString().split("T")[0]}.json`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Export ready",
+        description: "Your profile, settings, and list data were downloaded as JSON.",
+      });
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      toast({
+        title: "Export failed",
+        description: "Could not generate your data export. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExportingData(false);
+    }
+  };
+
+  const clearLocalAccountData = useCallback(() => {
+    localStorage.removeItem(profileKey);
+    localStorage.removeItem(`cinetrekker_profile_favorites_${user?.id || "guest"}`);
+    localStorage.removeItem(
+      user?.id ? `${STORAGE_KEYS.hidden}_${user.id}` : STORAGE_KEYS.hidden,
+    );
+
+    clearGuestWatchlist();
+    clearGuestWatched();
+    localStorage.setItem(
+      user?.id ? `${STORAGE_KEYS.hidden}_${user.id}` : STORAGE_KEYS.hidden,
+      JSON.stringify([]),
+    );
+  }, [profileKey, user?.id]);
+
+  const deleteAccountData = async () => {
+    setIsDeletingData(true);
+
+    try {
+      clearLocalAccountData();
+
+      if (user?.id) {
+        const deleteRequests = await Promise.all([
+          supabase.from("user_watchlist").delete().eq("user_id", user.id),
+          supabase.from("user_watched").delete().eq("user_id", user.id),
+          supabase.from("profiles").delete().eq("user_id", user.id),
+        ]);
+
+        const deletionError = deleteRequests.find((result) => result.error)?.error;
+        if (deletionError) {
+          throw deletionError;
+        }
+
+        await supabase.storage.from("avatars").remove([`${user.id}/avatar.jpg`]);
+        await signOut();
+      }
+
+      toast({
+        title: "Account data deleted",
+        description: user?.id
+          ? "Your CineTrekker profile data was removed and you were signed out."
+          : "This device's CineTrekker data was cleared.",
+      });
+
+      navigate(user?.id ? "/auth" : "/");
+    } catch (error) {
+      console.error("Error deleting account data:", error);
+      toast({
+        title: "Deletion failed",
+        description: "We could not remove all account data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeletingData(false);
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
   return (
     <>
       <SEO
@@ -673,7 +881,7 @@ export default function Settings() {
                     <p className="mt-1 text-sm text-muted-foreground">
                       {text(
                         "settings.languageOptionDesc",
-                        "Pick the language used for buttons, labels, and menus.",
+                        "Pick the language used for buttons, labels, and menus. Six languages are available today.",
                       )}
                     </p>
                   </div>
@@ -718,6 +926,171 @@ export default function Settings() {
                   }
                   isPulsing={pulseRowId === "allowRecommendations"}
                 />
+              </SettingsSection>
+            </motion.div>
+
+            <motion.div id="settings-accessibility" variants={itemVariants}>
+              <SettingsSection
+                id="settings-accessibility-panel"
+                sectionLabel={text("settings.accessibilitySection", "Accessibility")}
+                sectionIcon={Accessibility}
+                sectionIconClass="text-red-400"
+                title="Accessibility & display"
+                description="Adjust readability, theme, and motion in the same place you manage the rest of your preferences."
+                headerIcon={Accessibility}
+                headerIconClass="text-red-400"
+                isOpen={
+                  isMobileSectionCollapse
+                    ? mobileExpandedSections.accessibility
+                    : true
+                }
+                onToggle={
+                  isMobileSectionCollapse
+                    ? () =>
+                        setMobileExpandedSections((prev) => ({
+                          ...prev,
+                          accessibility: !prev.accessibility,
+                        }))
+                    : undefined
+                }
+              >
+                <div className="rounded-xl border border-border/60 bg-card/70 p-4">
+                  <div className="flex flex-col gap-5">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                        <Type className="h-4 w-4 text-muted-foreground" />
+                        Text size
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Increase or decrease text size throughout the app.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 shrink-0 border-border/60 bg-card/80 text-foreground hover:bg-card"
+                        onClick={decreaseFontSize}
+                        aria-label="Decrease font size"
+                        disabled={fontSize <= MIN_FONT_SIZE}
+                      >
+                        -
+                      </Button>
+                      <Slider
+                        value={[fontSize]}
+                        onValueChange={(value) => setFontSize(value[0])}
+                        min={MIN_FONT_SIZE}
+                        max={MAX_FONT_SIZE}
+                        step={FONT_SIZE_STEP}
+                        className="flex-1"
+                        aria-label="Font size"
+                        aria-valuemin={MIN_FONT_SIZE}
+                        aria-valuemax={MAX_FONT_SIZE}
+                        aria-valuenow={fontSize}
+                        aria-valuetext={`${fontSize}%`}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 shrink-0 border-border/60 bg-card/80 text-foreground hover:bg-card"
+                        onClick={increaseFontSize}
+                        aria-label="Increase font size"
+                        disabled={fontSize >= MAX_FONT_SIZE}
+                      >
+                        +
+                      </Button>
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg bg-background/40 px-4 py-3">
+                      <p className="text-sm text-muted-foreground">
+                        Current size
+                      </p>
+                      <p className="text-lg font-bold text-foreground">
+                        {fontSize}%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border/60 bg-card/70 p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-foreground">
+                        App theme
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Choose Dark, Light, or OLED mode for the full interface.
+                      </p>
+                    </div>
+                    <div className="ct-toggle-group">
+                      {(["dark", "light", "oled"] as const).map((option) => {
+                        const active = theme === option;
+                        const label =
+                          option === "oled"
+                            ? "OLED"
+                            : option[0].toUpperCase() + option.slice(1);
+                        return (
+                          <button
+                            key={option}
+                            type="button"
+                            className={cn(
+                              "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
+                              active
+                                ? "ct-toggle-button-active"
+                                : "ct-toggle-button hover:text-foreground",
+                            )}
+                            onClick={() => setTheme(option)}
+                            aria-pressed={theme === option}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  className={cn(
+                    "flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-card/70 px-4 py-4 transition-all duration-300",
+                  )}
+                >
+                  <div className="min-w-0 flex-1">
+                    <Label
+                      htmlFor="reduceMotion"
+                      id="reduceMotion-label"
+                      className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-foreground"
+                    >
+                      <Eye className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      Reduce motion
+                    </Label>
+                    <p
+                      id="reduceMotion-description"
+                      className="mt-1 text-sm text-muted-foreground"
+                    >
+                      Minimize animations and transitions across the app.
+                    </p>
+                  </div>
+                  <Switch
+                    id="reduceMotion"
+                    checked={reduceMotion}
+                    onCheckedChange={setReduceMotion}
+                    aria-labelledby="reduceMotion-label"
+                    aria-describedby="reduceMotion-description"
+                  />
+                </div>
+
+                <Button
+                  ref={resetAccessibilityButtonRef}
+                  type="button"
+                  onClick={() => setConfirmResetAccessibilityOpen(true)}
+                  variant="outline"
+                  className="w-full gap-2 border border-red-500/70 bg-transparent text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Reset accessibility defaults
+                </Button>
               </SettingsSection>
             </motion.div>
 
@@ -888,41 +1261,95 @@ export default function Settings() {
               </SettingsSection>
             </motion.div>
 
-            {/* Accessibility shortcut section */}
-            <motion.div id="settings-accessibility" variants={itemVariants}>
-              <div>
-                <p className="ct-kicker mb-3 inline-flex items-center gap-2">
-                  <Accessibility className="h-3.5 w-3.5 text-red-400" />
-                  {text("settings.accessibilitySection", "Accessibility")}
-                </p>
-                <div
-                  className="flex cursor-pointer items-center justify-between rounded-xl border border-border/60 bg-card/75 px-5 py-4 backdrop-blur-sm transition-all duration-200 hover:border-white/20 hover:bg-card"
-                  onClick={() => navigate("/accessibility")}
-                  role="link"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (!shouldHandleAccessibilityShortcutKey(e.key)) return;
-                    e.preventDefault();
-                    navigate("/accessibility");
-                  }}
-                  aria-label="Go to Accessibility Settings"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-red-500/20 to-red-700/20">
-                      <Accessibility className="h-5 w-5 text-red-400" />
-                    </div>
-                    <div>
+            <motion.div variants={itemVariants}>
+              <SettingsSection
+                id="settings-data-management"
+                sectionLabel="Data Management"
+                sectionIcon={Database}
+                sectionIconClass="text-red-400"
+                title="Data management"
+                description="Export a copy of your data or remove your CineTrekker profile data from this app."
+                headerIcon={Database}
+                headerIconClass="text-red-400"
+                isOpen={
+                  isMobileSectionCollapse
+                    ? mobileExpandedSections.dataManagement
+                    : true
+                }
+                onToggle={
+                  isMobileSectionCollapse
+                    ? () =>
+                        setMobileExpandedSections((prev) => ({
+                          ...prev,
+                          dataManagement: !prev.dataManagement,
+                        }))
+                    : undefined
+                }
+              >
+                <div className="rounded-xl border border-border/60 bg-card/70 p-4">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-foreground">
-                        Accessibility Options
+                        Download your CineTrekker data
                       </p>
-                      <p className="text-sm text-muted-foreground">
-                        Adjust text size, theme, and motion preferences for easier viewing.
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Export your profile, settings, content-safety state,
+                        watchlist, watched history, and hidden recommendations
+                        in one JSON file.
                       </p>
                     </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="md:self-start"
+                      onClick={() => void exportData()}
+                      disabled={isExportingData}
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      {isExportingData ? "Preparing export..." : "Export data"}
+                    </Button>
                   </div>
-                  <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
                 </div>
-              </div>
+
+                <div className="rounded-xl border border-red-500/25 bg-red-500/5 p-4">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                        <ShieldAlert className="h-4 w-4 text-red-400" />
+                        Danger zone
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Delete your CineTrekker profile data, saved preferences,
+                        watchlist, watched history, favorites, and local backups
+                        from this app.
+                      </p>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Full identity-provider account removal may still require
+                        a separate privacy request. You can review the policy or
+                        contact the team from the links below.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button asChild size="sm" variant="ghost">
+                          <Link to="/privacy">Privacy policy</Link>
+                        </Button>
+                        <Button asChild size="sm" variant="ghost">
+                          <Link to="/feedback">Feedback page</Link>
+                        </Button>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      className="md:self-start"
+                      onClick={() => setIsDeleteDialogOpen(true)}
+                      disabled={isDeletingData}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      {user ? "Delete account" : "Clear this device"}
+                    </Button>
+                  </div>
+                </div>
+              </SettingsSection>
             </motion.div>
             </div>
 
@@ -933,10 +1360,76 @@ export default function Settings() {
               onCancel={handleCancelChanges}
               saveLabel={text("settings.saveChanges", "Save Changes")}
               cancelLabel={text("common.cancel", "Cancel")}
-            />
+              className="border-t-red-500/10"
+            >
+              Save your pending settings changes from anywhere on the page.
+            </StickySaveBar>
           </>
         )}
       </motion.div>
+      <AlertDialog
+        open={confirmResetAccessibilityOpen}
+        onOpenChange={setConfirmResetAccessibilityOpen}
+      >
+        <AlertDialogContent
+          className="border-border bg-background"
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            resetAccessibilityButtonRef.current?.focus();
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Reset accessibility settings?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will restore theme, text size, and motion preferences to
+              their default values.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 text-white hover:bg-red-700"
+              onClick={resetAccessibilitySettings}
+            >
+              Confirm reset
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent className="border-border bg-background">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete CineTrekker account?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes your profile data from CineTrekker, including saved
+              settings, watch history, watchlist, pinned favorites, and local
+              backups. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingData}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                void deleteAccountData();
+              }}
+              disabled={isDeletingData}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeletingData ? "Deleting..." : "Delete account"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

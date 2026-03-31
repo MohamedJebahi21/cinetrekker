@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
@@ -33,7 +33,7 @@ import {
   getTrending,
 } from "@/services/tmdb";
 import { Media } from "@/types/media";
-import { InfiniteMediaGrid } from "@/components/MediaGrid";
+import { LoadMoreMediaGrid } from "@/components/MediaGrid";
 import SkeletonCard from "@/components/ui/SkeletonCard";
 import { RandomTrekButton } from "@/components/RandomTrekButton";
 import { Input } from "@/components/ui/input";
@@ -122,6 +122,8 @@ const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 50 }, (_, i) =>
   (currentYear - i).toString(),
 );
+
+const PENDING_SEARCH_QUERY_KEY = "cinetrekker_pending_search_query";
 
 type SearchSortOption =
   | "popularity.desc"
@@ -347,10 +349,27 @@ export default function Search() {
   const { t, i18n } = useTranslation();
   const { strictFiltering, moderateFiltering } = useContentPolicy();
   const includeAdult = !(strictFiltering || moderateFiltering);
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const fallbackSubmittedQueryRef = useRef(
+    (
+      location.state as
+        | {
+            submittedQuery?: string;
+          }
+        | undefined
+    )?.submittedQuery ||
+      (typeof window !== "undefined"
+        ? window.sessionStorage.getItem(PENDING_SEARCH_QUERY_KEY) || ""
+        : ""),
+  );
 
   // Initialize from URL params
-  const initialQuery = searchParams.get("q") || searchParams.get("query") || "";
+  const initialQuery =
+    searchParams.get("q") ||
+    searchParams.get("query") ||
+    fallbackSubmittedQueryRef.current ||
+    "";
   const initialType = (searchParams.get("type") as MediaType) || "all";
   const initialGenres = parseMultiValue(searchParams.get("genre"));
   const initialYear = searchParams.get("year") || "";
@@ -363,6 +382,10 @@ export default function Search() {
 
   const [query, setQuery] = useState(initialQuery);
   const debouncedQuery = useDebounce(query, 300);
+  const normalizedInputQuery = useMemo(
+    () => query.normalize("NFKC").trim(),
+    [query],
+  );
   const normalizedQuery = useMemo(
     () => debouncedQuery.normalize("NFKC").trim(),
     [debouncedQuery],
@@ -377,6 +400,71 @@ export default function Search() {
   const [runtimeFilter, setRuntimeFilter] = useState<string>(initialRuntime);
   const [streamingFilters, setStreamingFilters] =
     useState<string[]>(initialStreaming);
+  const normalizedLocationSearch = useMemo(
+    () => new URLSearchParams(location.search).toString(),
+    [location.search],
+  );
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const nextQuery =
+      params.get("q") ||
+      params.get("query") ||
+      "";
+    const nextType = (params.get("type") as MediaType) || "all";
+    const nextGenres = parseMultiValue(params.get("genre"));
+    const nextYear = params.get("year") || "";
+    const nextLanguages = parseMultiValue(params.get("lang"));
+    const nextSort = normalizeSortBy(
+      params.get("sort") || "popularity.desc",
+    );
+    const nextRuntime = params.get("runtime") || "";
+    const nextStreaming = parseMultiValue(params.get("streaming"));
+
+    if (nextQuery !== query) setQuery(nextQuery);
+    if (nextType !== mediaTypeFilter) setMediaTypeFilter(nextType);
+    if (nextGenres.join("|") !== genreFilters.join("|")) {
+      setGenreFilters(nextGenres);
+    }
+    if (nextYear !== yearFilter) setYearFilter(nextYear);
+    if (nextLanguages.join("|") !== languageFilters.join("|")) {
+      setLanguageFilters(nextLanguages);
+    }
+    if (nextSort !== sortBy) setSortBy(nextSort);
+    if (nextRuntime !== runtimeFilter) setRuntimeFilter(nextRuntime);
+    if (nextStreaming.join("|") !== streamingFilters.join("|")) {
+      setStreamingFilters(nextStreaming);
+    }
+  }, [
+    location.search,
+  ]);
+
+  useEffect(() => {
+    const hasUrlQuery = Boolean(
+      searchParams.get("q") || searchParams.get("query"),
+    );
+    const fallbackQuery = fallbackSubmittedQueryRef.current.trim();
+
+    if (!hasUrlQuery && fallbackQuery) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.set("q", fallbackQuery);
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
+  useEffect(() => {
+    if (normalizedInputQuery) {
+      window.sessionStorage.setItem(
+        PENDING_SEARCH_QUERY_KEY,
+        normalizedInputQuery,
+      );
+      return;
+    }
+
+    if (location.pathname === "/search") {
+      window.sessionStorage.removeItem(PENDING_SEARCH_QUERY_KEY);
+    }
+  }, [location.pathname, normalizedInputQuery]);
 
   // Quick preview modal removed - navigation to details is used instead
 
@@ -397,7 +485,12 @@ export default function Search() {
     if (streamingFilters.length > 0) {
       params.streaming = serializeMultiValue(streamingFilters);
     }
-    setSearchParams(params);
+    const nextParams = new URLSearchParams(params);
+    const nextParamsString = nextParams.toString();
+
+    if (normalizedLocationSearch !== nextParamsString) {
+      setSearchParams(nextParams, { replace: true });
+    }
   }, [
     normalizedQuery,
     mediaTypeFilter,
@@ -407,6 +500,7 @@ export default function Search() {
     sortBy,
     runtimeFilter,
     streamingFilters,
+    normalizedLocationSearch,
     setSearchParams,
   ]);
 
@@ -578,7 +672,7 @@ export default function Search() {
           ...combinedResponses.map((response) => response.totalPages),
         ),
         results: dedupeMedia(
-          combinedResponses.flatMap((response) => response.results),
+          combinedResponses.flatMap((response) => response.results) as Media[],
         ),
       };
     },
@@ -968,7 +1062,7 @@ export default function Search() {
         <div className="relative max-w-2xl">
           <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input
-            type="search"
+            type="text"
             inputMode="search"
             enterKeyHint="search"
             autoComplete="off"
@@ -1114,10 +1208,11 @@ export default function Search() {
           </p>
         </div>
       ) : results.length > 0 ? (
-        <InfiniteMediaGrid
+        <LoadMoreMediaGrid
           items={results}
           hasMore={hasMore}
           onLoadMore={handleLoadMore}
+          isLoadingMore={activeQuery.isFetchingNextPage}
           columns="normal"
           gap="md"
         />

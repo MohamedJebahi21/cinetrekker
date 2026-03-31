@@ -32,6 +32,7 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
+  SheetTrigger,
 } from "@/components/ui/sheet";
 
 const NotificationBell = lazy(() =>
@@ -311,16 +312,19 @@ export function UnifiedNav() {
           >
             <Search className="h-5 w-5" />
           </button>
-          <button
-            type="button"
-            onClick={() => setIsMobileSheetOpen(true)}
-            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent"
-            aria-label={t("nav.openMenu", "Open menu")}
-            aria-expanded={isMobileSheetOpen}
-            aria-controls="mobile-nav-sheet"
-          >
-            {user ? renderProfileAvatar() : <Menu className="h-5 w-5" />}
-          </button>
+          <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
+            <SheetTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent"
+                aria-label={t("nav.openMenu", "Open menu")}
+                aria-expanded={isMobileSheetOpen}
+                aria-controls="mobile-nav-sheet"
+              >
+                {user ? renderProfileAvatar() : <Menu className="h-5 w-5" />}
+              </button>
+            </SheetTrigger>
+          </Sheet>
         </div>
       </div>
 
@@ -402,7 +406,7 @@ export function UnifiedNav() {
         <SheetContent
           id="mobile-nav-sheet"
           side="right"
-          className="safe-area-insets w-full border-l border-border/60 bg-background/98 px-4 pb-8 pt-6 backdrop-blur-2xl md:hidden sm:max-w-sm"
+          className="safe-area-insets w-[85vw] max-w-sm border-l border-border/60 bg-background/95 px-4 pb-8 pt-6 backdrop-blur-2xl md:hidden overflow-y-auto smooth-scroll"
         >
           <SheetHeader className="text-left">
             <SheetTitle>{t("common.appName", "CineTrekker")}</SheetTitle>
@@ -465,7 +469,7 @@ export function UnifiedNav() {
                     to={item.path}
                     onClick={() => setIsMobileSheetOpen(false)}
                     className={cn(
-                      "flex min-h-[52px] items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors",
+                      "flex min-h-[56px] items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors",
                       isActive ? "bg-primary/10 text-primary" : "bg-card/60 text-foreground hover:bg-accent/50",
                     )}
                   >
@@ -480,7 +484,7 @@ export function UnifiedNav() {
               <Link
                 to="/settings"
                 onClick={() => setIsMobileSheetOpen(false)}
-                className="flex min-h-[52px] items-center gap-3 rounded-2xl bg-card/60 px-4 py-3 text-sm font-medium text-foreground"
+                className="flex min-h-[56px] items-center gap-3 rounded-2xl bg-card/60 px-4 py-3 text-sm font-medium text-foreground"
               >
                 <Settings className="h-4 w-4" />
                 {t("nav.settings", "Settings")}
@@ -490,7 +494,7 @@ export function UnifiedNav() {
                 <button
                   type="button"
                   onClick={() => { void signOut(); setIsMobileSheetOpen(false); }}
-                  className="flex min-h-[52px] w-full items-center gap-3 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive"
+                  className="flex min-h-[56px] w-full items-center gap-3 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive"
                 >
                   <LogOut className="h-4 w-4" />
                   {t("nav.signOut", "Sign Out")}
@@ -499,7 +503,7 @@ export function UnifiedNav() {
                 <Link
                   to="/login"
                   onClick={() => setIsMobileSheetOpen(false)}
-                  className="flex min-h-[52px] items-center gap-3 rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+                  className="flex min-h-[56px] items-center gap-3 rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
                 >
                   <LogIn className="h-4 w-4" />
                   {t("nav.signIn", "Sign In")}

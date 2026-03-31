@@ -387,18 +387,22 @@ export default function ActorMatchesSection({
     const progress = (cappedRatings / 20) * 100;
 
     return (
-      <Card className="border-neutral-800/60 bg-gradient-to-br from-neutral-900/70 to-neutral-800/50 backdrop-blur-sm">
-        <CardContent className="space-y-3 pt-6 text-center">
-          <Sparkles className="mx-auto mb-2 h-6 w-6 text-yellow-500" />
-          <p className="text-sm font-medium text-neutral-200">
-            {t("profile.actorMatchesWaiting", "Actor Matches are waiting")}
-          </p>
-          <p className="text-xs text-neutral-400">
-            {t(
-              "profile.actorMatchesUnlockHint",
-              "Rate 20+ movies to unlock Actor Matches",
-            )}
-          </p>
+        <Card className="border-neutral-800/60 bg-gradient-to-br from-neutral-900/70 to-neutral-800/50 backdrop-blur-sm">
+          <CardContent className="space-y-3 pt-6 text-center">
+            <Sparkles className="mx-auto mb-2 h-6 w-6 text-yellow-500" />
+            <p className="text-sm font-medium text-neutral-200">
+              {t("profile.actorMatchesWaiting", "Actor Matches are waiting")}
+            </p>
+            <p className="text-xs text-neutral-300">
+              Actor Matches compare your favorite genres and rated titles with
+              performers who share a similar cinematic lane.
+            </p>
+            <p className="text-xs text-neutral-400">
+              {t(
+                "profile.actorMatchesUnlockHint",
+                "Rate 20+ movies to unlock Actor Matches",
+              )}
+            </p>
           <div className="mx-auto w-full max-w-xs space-y-1">
             <Progress
               value={progress}
@@ -415,18 +419,22 @@ export default function ActorMatchesSection({
 
   if (!dateOfBirth || userAge === null || !hasPreferences) {
     return (
-      <Card className="border-neutral-800/60 bg-gradient-to-br from-neutral-900/70 to-neutral-800/50 backdrop-blur-sm">
-        <CardContent className="pt-6 text-center">
-          <Sparkles className="mx-auto mb-2 h-6 w-6 text-yellow-500" />
-          <p className="text-sm font-medium text-neutral-200">
-            {t("profile.actorMatchesWaiting", "Actor Matches are waiting")}
-          </p>
-          <p className="mt-1 text-xs text-neutral-400">
-            {t(
-              "profile.actorMatchesSetupHint",
-              "Add your age and at least one favorite genre to discover matching actors.",
-            )}
-          </p>
+        <Card className="border-neutral-800/60 bg-gradient-to-br from-neutral-900/70 to-neutral-800/50 backdrop-blur-sm">
+          <CardContent className="pt-6 text-center">
+            <Sparkles className="mx-auto mb-2 h-6 w-6 text-yellow-500" />
+            <p className="text-sm font-medium text-neutral-200">
+              {t("profile.actorMatchesWaiting", "Actor Matches are waiting")}
+            </p>
+            <p className="mt-1 text-xs text-neutral-300">
+              This feature uses your age range plus favorite genres to surface
+              performers with a similar taste profile.
+            </p>
+            <p className="mt-1 text-xs text-neutral-400">
+              {t(
+                "profile.actorMatchesSetupHint",
+                "Add your age and at least one favorite genre to discover matching actors.",
+              )}
+            </p>
         </CardContent>
       </Card>
     );

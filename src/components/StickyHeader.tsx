@@ -17,6 +17,8 @@ interface StickyHeaderProps {
   searchPlaceholder?: string;
 }
 
+const PENDING_SEARCH_QUERY_KEY = 'cinetrekker_pending_search_query';
+
 export function StickyHeader({
   onSearch,
   searchPlaceholder = 'Search movies, shows, people...',
@@ -55,7 +57,10 @@ export function StickyHeader({
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      sessionStorage.setItem(PENDING_SEARCH_QUERY_KEY, searchQuery.trim());
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`, {
+        state: { submittedQuery: searchQuery.trim() },
+      });
       setSearchQuery('');
     }
   };
@@ -84,7 +89,10 @@ export function StickyHeader({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
-              type="search"
+              type="text"
+              inputMode="search"
+              enterKeyHint="search"
+              autoComplete="off"
               placeholder={searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

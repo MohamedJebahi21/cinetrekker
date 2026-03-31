@@ -98,7 +98,19 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
       if (error) throw error;
     } catch (error: unknown) {
       const { userMessage } = processAuthError(error);
-      setMessage({ type: "error", text: userMessage });
+      const providerLabel =
+        provider === "google"
+          ? "Google"
+          : provider === "facebook"
+            ? "Facebook"
+            : "Apple";
+      setMessage({
+        type: "error",
+        text:
+          userMessage === GENERIC_AUTH_ERROR
+            ? `${providerLabel} sign-in is not available right now. Please try email login instead.`
+            : userMessage,
+      });
       setIsLoading(false);
     }
   };
@@ -234,18 +246,32 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
 
                 <div className="space-y-2">
                   <div className="relative">
-                                      {activeTab === "login" && (
-                                        <div className="flex justify-end mt-2">
-                                          <button
-                                            type="button"
-                                            onClick={() => void handleForgotPassword()}
-                                            className="text-sm text-primary transition-colors hover:text-primary/80"
-                                          >
-                                            Forgot Password?
-                                          </button>
-                                        </div>
-                                      )}
+                    <div className="mb-2 flex items-center justify-between">
+                      <label
+                        htmlFor="auth-password"
+                        className="text-sm font-medium text-foreground"
+                      >
+                        Password
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((current) => !current)}
+                        className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                        aria-pressed={showPassword}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-3.5 w-3.5" />
+                        ) : (
+                          <Eye className="h-3.5 w-3.5" />
+                        )}
+                        {showPassword ? "Hide" : "Show"}
+                      </button>
+                    </div>
                     <Input
+                      id="auth-password"
                       type={showPassword ? "text" : "password"}
                       name="password"
                       autoComplete={
@@ -278,6 +304,18 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                       )}
                     </button>
                   </div>
+
+                  {activeTab === "login" && (
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => void handleForgotPassword()}
+                        className="text-sm text-primary transition-colors hover:text-primary/80"
+                      >
+                        Forgot Password?
+                      </button>
+                    </div>
+                  )}
 
                   {fieldErrors.password && (
                     <p className="text-sm text-destructive">
@@ -328,6 +366,11 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                     </span>
                   </div>
                 </div>
+
+                <p className="text-center text-xs text-muted-foreground">
+                  Google is the fastest option. Facebook and Apple may depend on
+                  your browser or provider configuration.
+                </p>
 
                 <div className="space-y-2">
                   <Button

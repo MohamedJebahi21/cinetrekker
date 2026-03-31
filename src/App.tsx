@@ -83,9 +83,6 @@ const Achievements = lazy(() => import("./pages/Achievements"));
 const PrintWatchlist = lazy(() => import("./pages/PrintWatchlist"));
 const AwardWinners = lazy(() => import("./pages/AwardWinners"));
 const YearInReview = lazy(() => import("./pages/YearInReview"));
-const AccessibilitySettings = lazy(
-  () => import("./pages/AccessibilitySettings"),
-);
 const isVercelHost =
   typeof window !== "undefined" &&
   /(?:^|\.)vercel\.app$/i.test(window.location.hostname);
@@ -101,8 +98,19 @@ const Analytics = shouldLoadVercelAnalytics
   : null;
 
 function NetworkMonitor() {
-  useNetworkStatus();
-  return null;
+  const { isOnline } = useNetworkStatus();
+
+  if (isOnline) return null;
+
+  return (
+    <div
+      className="sticky top-0 z-[90] border-b border-amber-500/25 bg-amber-500/10 px-4 py-2 text-center text-sm text-amber-100 backdrop-blur-sm"
+      role="status"
+      aria-live="polite"
+    >
+      You&apos;re offline. Browsing still works, but syncing actions may be delayed.
+    </div>
+  );
 }
 
 function RouteSpinner() {
@@ -326,11 +334,17 @@ function AnimatedRoutes() {
           <Route
             path="/calendar"
             element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteSpinner />}>
-                  <Calendar />
-                </Suspense>
-              </ProtectedRoute>
+              <Suspense fallback={<RouteSpinner />}>
+                <Calendar />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/upcoming"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Calendar />
+              </Suspense>
             }
           />
           <Route
@@ -410,11 +424,7 @@ function AnimatedRoutes() {
           />
           <Route
             path="/accessibility"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <AccessibilitySettings />
-              </Suspense>
-            }
+            element={<Navigate to="/settings#settings-accessibility" replace />}
           />
 
           <Route
@@ -597,6 +607,12 @@ const App = () => {
                   </Suspense>
                 )}
                 <div className="ct-page-shell flex min-h-[100dvh] flex-col">
+                  <a
+                    href="#main"
+                    className="skip-link rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground shadow-lg"
+                  >
+                    Skip to content
+                  </a>
                   <UnifiedNav />
                   <ScrollToTop />
                   <main

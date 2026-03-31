@@ -43,6 +43,9 @@ export interface MediaCardProps {
   showType?: boolean;
   showStatus?: boolean;
   onAction?: () => void;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (mediaId: number, mediaType: "movie" | "tv") => void;
 }
 
 export interface WatchStatusConfig {
@@ -127,6 +130,9 @@ export const MediaCard = React.memo(function MediaCard({
   mediaType: mediaTypeProp,
   showType = true,
   showStatus = false,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
 }: MediaCardProps) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
@@ -262,6 +268,12 @@ export const MediaCard = React.memo(function MediaCard({
     }
   };
 
+  const handleToggleSelect = (e: PreventableEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onToggleSelect?.(media.id, mediaType);
+  };
+
   // Quick view removed - card links to details page via the surrounding <Link>
 
   return (
@@ -278,6 +290,21 @@ export const MediaCard = React.memo(function MediaCard({
 
           {/* Enhanced gradient overlay - darker on hover */}
           <div className="absolute inset-0 bg-gradient-to-t from-surface-dark-2/80 via-transparent to-transparent opacity-100 transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100" />
+          {selectable ? (
+            <div className="absolute right-2 top-2 z-20">
+              <Button
+                type="button"
+                variant={selected ? "default" : "secondary"}
+                size="sm"
+                className="h-8 rounded-full px-2.5 text-xs shadow-lg"
+                onClick={(event) => void handleToggleSelect(event)}
+                aria-pressed={selected}
+                aria-label={selected ? "Deselect title" : "Select title"}
+              >
+                {selected ? <Check className="h-3.5 w-3.5" /> : "Select"}
+              </Button>
+            </div>
+          ) : null}
           <div className="absolute inset-x-3 bottom-3 z-20 hidden translate-y-2 flex-col gap-2 opacity-0 transition-all duration-200 md:flex md:group-hover:translate-y-0 md:group-hover:opacity-100">
             <Button
               type="button"
@@ -381,21 +408,35 @@ export const MediaCard = React.memo(function MediaCard({
               </span>
             ) : null}
           </div>
+          {!user ? (
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              Sign in to save, track, and review this title.
+            </p>
+          ) : null}
         </div>
 
         <div className="border-t border-border/50 p-3 md:hidden">
           <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant={optimisticWatched ? "secondary" : "outline"}
-              className="min-h-[44px] flex-1 justify-center"
-              onClick={(event) => void handleWatchedClick(event)}
-            >
-              {isWatchedPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant={optimisticWatched ? "secondary" : "outline"}
+                  className="min-h-[44px] flex-1 justify-center"
+                  onClick={(event) => void handleWatchedClick(event)}
+                >
+                  {isWatchedPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : null}
+                  {optimisticWatched ? "Watched" : "Mark Watched"}
+                </Button>
+              </TooltipTrigger>
+              {!user ? (
+                <TooltipContent>
+                  Sign in to save watched history and reviews.
+                </TooltipContent>
               ) : null}
-              {optimisticWatched ? "Watched" : "Mark Watched"}
-            </Button>
+            </Tooltip>
 
             <Tooltip>
               <TooltipTrigger asChild>

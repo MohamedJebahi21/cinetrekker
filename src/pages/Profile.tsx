@@ -31,6 +31,8 @@ import {
   EyeOff,
   X,
   Award,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useUserLists } from "@/contexts/UserListsContext";
@@ -48,6 +50,13 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -60,6 +69,7 @@ import { humanizeUiText } from "@/lib/humanize-ui-text";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePinnedFavorites } from "@/hooks/usePinnedFavorites";
 import { normalizePinnedFavoriteKeys } from "@/utils/pinnedFavorites";
+import { absoluteSiteUrl } from "@/lib/siteUrl";
 import {
   getImageUrl,
   getMovieDetails,
@@ -109,6 +119,48 @@ type PinnedFavoriteRef = {
   mediaId: number;
   mediaType: "movie" | "tv";
 };
+
+type CarouselState = {
+  canScrollLeft: boolean;
+  canScrollRight: boolean;
+  activePage: number;
+  pageCount: number;
+};
+
+const DEFAULT_CAROUSEL_STATE: CarouselState = {
+  canScrollLeft: false,
+  canScrollRight: true,
+  activePage: 0,
+  pageCount: 1,
+};
+
+function getCarouselState(
+  container: HTMLDivElement | null,
+): CarouselState {
+  if (!container) {
+    return DEFAULT_CAROUSEL_STATE;
+  }
+
+  const hasScroll = container.scrollWidth > container.clientWidth;
+  const pageCount = hasScroll
+    ? Math.max(1, Math.ceil(container.scrollWidth / container.clientWidth))
+    : 1;
+  const activePage = hasScroll
+    ? Math.min(
+        pageCount - 1,
+        Math.round(container.scrollLeft / container.clientWidth),
+      )
+    : 0;
+
+  return {
+    canScrollLeft: hasScroll && container.scrollLeft > 10,
+    canScrollRight:
+      hasScroll &&
+      container.scrollLeft < container.scrollWidth - container.clientWidth - 10,
+    activePage,
+    pageCount,
+  };
+}
 
 function useCountUp(target: number, durationMs: number, reduceMotion: boolean) {
   const [value, setValue] = useState(reduceMotion ? target : 0);
@@ -166,12 +218,20 @@ export default function Profile() {
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isAvatarDragActive, setIsAvatarDragActive] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [isFavoritesPickerOpen, setIsFavoritesPickerOpen] = useState(false);
   const [favoriteSearchQuery, setFavoriteSearchQuery] = useState("");
+  const favoriteMoviesCarouselRef = useRef<HTMLDivElement>(null);
+  const favoriteSeriesCarouselRef = useRef<HTMLDivElement>(null);
+  const [favoriteMoviesCarouselState, setFavoriteMoviesCarouselState] =
+    useState<CarouselState>(DEFAULT_CAROUSEL_STATE);
+  const [favoriteSeriesCarouselState, setFavoriteSeriesCarouselState] =
+    useState<CarouselState>(DEFAULT_CAROUSEL_STATE);
   const [favoriteSearchType, setFavoriteSearchType] = useState<
     "all" | "movie" | "tv"
   >("all");
+  const profilePhotoInputRef = useRef<HTMLInputElement | null>(null);
   const {
     pinnedFavoriteKeys,
     pinnedFavoritesStorageKey,
@@ -581,88 +641,92 @@ export default function Profile() {
     setIsEditMode(false);
   };
 
+  const handlePhotoFile = useCallback(
+    async (file: File) => {
+      if (!file) return;
+
+      if (!user?.id) {
+        toast({
+          title: "Sign in required",
+          description: "You must be signed in to upload a profile photo.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const ALLOWED_TYPES = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/jpg",
+      ];
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: "Only JPEG, PNG, and WebP images are allowed.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: "Image too large",
+          description: "Please select an image smaller than 2MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      try {
+        const filePath = `${user.id}/avatar.jpg`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(filePath, file, {
+            upsert: true,
+            contentType: file.type,
+          });
+
+        if (uploadError) throw uploadError;
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("avatars").getPublicUrl(filePath);
+
+        const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`;
+        setProfilePhoto(urlWithCacheBust);
+        setHasUnsavedChanges(true);
+
+        toast({
+          title: "Photo uploaded",
+          description: "Click 'Save Changes' to finalize your profile.",
+        });
+      } catch (error) {
+        console.error("Avatar upload error:", error);
+        toast({
+          title: "Upload failed",
+          description: "Could not upload photo. Please try again.",
+          variant: "destructive",
+        });
+      }
+    },
+    [toast, user?.id],
+  );
+
   const handlePhotoChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!user?.id) {
-      toast({
-        title: "Sign in required",
-        description: "You must be signed in to upload a profile photo.",
-        variant: "destructive",
-      });
-      event.target.value = "";
-      return;
-    }
-
-    // Validate MIME type
-    const ALLOWED_TYPES = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/jpg",
-    ];
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      toast({
-        title: "Invalid file type",
-        description: "Only JPEG, PNG, and WebP images are allowed.",
-        variant: "destructive",
-      });
-      event.target.value = "";
-      return;
-    }
-
-    // Validate file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      toast({
-        title: "Image too large",
-        description: "Please select an image smaller than 2MB.",
-        variant: "destructive",
-      });
-      event.target.value = "";
-      return;
-    }
-
-    try {
-      const filePath = `${user.id}/avatar.jpg`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file, {
-          upsert: true,
-          contentType: file.type,
-        });
-
-      if (uploadError) throw uploadError;
-
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("avatars").getPublicUrl(filePath);
-
-      const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`;
-      setProfilePhoto(urlWithCacheBust);
-      setHasUnsavedChanges(true);
-
-      toast({
-        title: "Photo uploaded",
-        description: "Click 'Save Changes' to finalize your profile.",
-      });
-    } catch (error) {
-      console.error("Avatar upload error:", error);
-      toast({
-        title: "Upload failed",
-        description: "Could not upload photo. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      event.target.value = "";
-    }
+    await handlePhotoFile(file);
+    event.target.value = "";
   };
 
   const handlePhotoRemove = () => {
     setProfilePhoto(null);
+    setHasUnsavedChanges(true);
   };
 
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1031,6 +1095,36 @@ export default function Profile() {
     [pinnedFavoriteBase, previewMap],
   );
 
+  const syncFavoriteMoviesCarousel = useCallback(() => {
+    setFavoriteMoviesCarouselState(
+      getCarouselState(favoriteMoviesCarouselRef.current),
+    );
+  }, []);
+
+  const syncFavoriteSeriesCarousel = useCallback(() => {
+    setFavoriteSeriesCarouselState(
+      getCarouselState(favoriteSeriesCarouselRef.current),
+    );
+  }, []);
+
+  const scrollFavoriteCarousel = useCallback(
+    (
+      ref: { current: HTMLDivElement | null },
+      direction: "left" | "right",
+    ) => {
+      const container = ref.current;
+      if (!container) return;
+      const scrollDistance = 400;
+      container.scrollTo({
+        left:
+          container.scrollLeft +
+          (direction === "left" ? -scrollDistance : scrollDistance),
+        behavior: "smooth",
+      });
+    },
+    [],
+  );
+
   const pinnedMovieCount = useMemo(
     () => pinnedFavoriteKeys.filter((key) => key.startsWith("movie-")).length,
     [pinnedFavoriteKeys],
@@ -1040,6 +1134,50 @@ export default function Profile() {
     () => pinnedFavoriteKeys.filter((key) => key.startsWith("tv-")).length,
     [pinnedFavoriteKeys],
   );
+
+  useEffect(() => {
+    syncFavoriteMoviesCarousel();
+    const container = favoriteMoviesCarouselRef.current;
+    if (!container) return;
+
+    const handleScroll = () => syncFavoriteMoviesCarousel();
+    const handleResize = () => syncFavoriteMoviesCarousel();
+    const resizeObserver = new ResizeObserver(() =>
+      syncFavoriteMoviesCarousel(),
+    );
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleResize);
+    resizeObserver.observe(container);
+
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
+      resizeObserver.disconnect();
+    };
+  }, [favoriteMovies.length, syncFavoriteMoviesCarousel]);
+
+  useEffect(() => {
+    syncFavoriteSeriesCarousel();
+    const container = favoriteSeriesCarouselRef.current;
+    if (!container) return;
+
+    const handleScroll = () => syncFavoriteSeriesCarousel();
+    const handleResize = () => syncFavoriteSeriesCarousel();
+    const resizeObserver = new ResizeObserver(() =>
+      syncFavoriteSeriesCarousel(),
+    );
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleResize);
+    resizeObserver.observe(container);
+
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
+      resizeObserver.disconnect();
+    };
+  }, [favoriteSeries.length, syncFavoriteSeriesCarousel]);
 
   const favoriteSearchTerm = favoriteSearchQuery.trim();
 
@@ -1114,12 +1252,7 @@ export default function Profile() {
     displayName ||
     user?.email?.split("@")[0] ||
     t("common.appName", "CineTrekker");
-  const usernameSlug = userName
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  const shareProfileLink = `https://cinetrekker.app/u/${usernameSlug || "viewer"}`;
+  const shareProfileLink = absoluteSiteUrl("/profile");
 
   const watchedThisMonth = useMemo(() => {
     const now = new Date();
@@ -1280,7 +1413,18 @@ export default function Profile() {
   const countWatchHours = useCountUp(totalWatchHours, 1300, !!reduceMotion);
 
   const handleCopyProfileLink = async () => {
+    const shareTitle = `${userName}'s CineTrekker profile`;
+
     try {
+      if (navigator.share) {
+        await navigator.share({
+          title: shareTitle,
+          text: "Check out this CineTrekker profile.",
+          url: shareProfileLink,
+        });
+        return;
+      }
+
       await navigator.clipboard.writeText(shareProfileLink);
       setShareCopied(true);
       toast({
@@ -1298,25 +1442,21 @@ export default function Profile() {
     }
   };
 
+  const openFavoritesPicker = useCallback(
+    (type: "movie" | "tv") => {
+      setFavoriteSearchType(type);
+      setFavoriteSearchQuery("");
+      setIsFavoritesPickerOpen(true);
+    },
+    [],
+  );
+
   const pinFavorite = useCallback(
     (mediaId: number, mediaType: "movie" | "tv", title: string) => {
       const key = `${mediaType}-${mediaId}`;
 
       setPinnedFavoriteKeys((current) => {
         if (current.includes(key)) return current;
-        const typeCount = current.filter((entry) =>
-          entry.startsWith(`${mediaType}-`),
-        ).length;
-
-        if (typeCount >= 4) {
-          const label = mediaType === "movie" ? "movies" : "series";
-          toast({
-            title: "Favorites limit reached",
-            description: `You can pin up to 4 favorite ${label}.`,
-          });
-          return current;
-        }
-
         const next = [...current, key];
         void persistPinnedFavorites(next);
         toast({
@@ -1397,31 +1537,87 @@ export default function Profile() {
 
                   <CardContent className="relative z-10 pt-8 pb-7">
                     <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-                      <div className="relative group">
+                      <div
+                        className="flex w-full flex-col items-center sm:w-[21rem] sm:min-w-[21rem]"
+                      >
                         <div
-                          className={cn(
-                            "pointer-events-none absolute -inset-5 rounded-full",
-                            isLightTheme
-                              ? "bg-[radial-gradient(circle,rgba(229,9,20,0.22)_0%,rgba(229,9,20,0.08)_40%,rgba(0,0,0,0)_76%)]"
-                              : "bg-[radial-gradient(circle,rgba(0,0,0,0.62)_0%,rgba(0,0,0,0.28)_40%,rgba(0,0,0,0)_76%)]",
-                          )}
-                        />
-                        <div className="absolute -inset-2 rounded-full bg-[#E50914]/70 blur-md opacity-75" />
-                        <div className="relative h-36 w-36 sm:h-40 sm:w-40 overflow-hidden rounded-full border-[5px] border-[#E50914] bg-card shadow-[0_0_0_2px_rgba(255,255,255,0.08),0_0_40px_rgba(229,9,20,0.45)]">
-                          {profilePhoto ? (
-                            <Image
-                              src={profilePhoto}
-                              alt="Profile"
-                              width={160}
-                              height={160}
-                              className="h-full w-full object-cover"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center">
-                              <User className="h-16 w-16 text-neutral-600" />
+                        className="relative group"
+                        onDragOver={(event) => {
+                          event.preventDefault();
+                          setIsAvatarDragActive(true);
+                        }}
+                        onDragLeave={(event) => {
+                          if (
+                            event.currentTarget.contains(
+                              event.relatedTarget as Node | null,
+                            )
+                          ) {
+                            return;
+                          }
+                          setIsAvatarDragActive(false);
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          setIsAvatarDragActive(false);
+                          const file = event.dataTransfer.files?.[0];
+                          if (!file) return;
+                          void handlePhotoFile(file);
+                        }}
+                        >
+                          <div
+                            className={cn(
+                              "pointer-events-none absolute -inset-3 rounded-full",
+                              isLightTheme
+                                ? "bg-[radial-gradient(circle,rgba(229,9,20,0.16)_0%,rgba(229,9,20,0.06)_48%,rgba(255,255,255,0)_76%)]"
+                                : "bg-[radial-gradient(circle,rgba(229,9,20,0.18)_0%,rgba(229,9,20,0.08)_46%,rgba(0,0,0,0)_72%)]",
+                            )}
+                          />
+                          <div
+                            className={cn(
+                              "pointer-events-none absolute -inset-1 rounded-full blur-xl",
+                              isLightTheme
+                                ? "bg-[#ff4d57]/25 opacity-80"
+                                : "bg-[#E50914]/30 opacity-75",
+                            )}
+                          />
+                          <div
+                            className={cn(
+                              "relative h-36 w-36 overflow-hidden rounded-full border-[5px] border-[#E50914] bg-card shadow-[0_0_0_2px_rgba(255,255,255,0.08),0_0_40px_rgba(229,9,20,0.45)] sm:h-40 sm:w-40",
+                              isAvatarDragActive &&
+                                "scale-[1.02] border-[#ff6b73] shadow-[0_0_0_2px_rgba(255,255,255,0.16),0_0_50px_rgba(229,9,20,0.6)]",
+                            )}
+                          >
+                            {profilePhoto ? (
+                              <Image
+                                src={profilePhoto}
+                                alt="Profile"
+                                width={160}
+                                height={160}
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center">
+                                <User className="h-16 w-16 text-neutral-600" />
+                              </div>
+                            )}
+                            <div
+                              className={cn(
+                                "absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/65 px-4 text-center text-white transition-opacity",
+                                isAvatarDragActive
+                                  ? "opacity-100"
+                                  : "opacity-0 group-hover:opacity-100",
+                              )}
+                            >
+                              <Camera className="h-6 w-6" />
+                              <p className="text-xs font-semibold">
+                                Drop a photo to upload
+                              </p>
+                              <p className="text-[11px] text-white/70">
+                                JPG, PNG, or WebP up to 2MB
+                              </p>
                             </div>
-                          )}
+                          </div>
                         </div>
 
                         <Input
@@ -1429,26 +1625,46 @@ export default function Profile() {
                           accept="image/*"
                           className="hidden"
                           id="profile-photo-input"
+                          ref={profilePhotoInputRef}
                           onChange={handlePhotoChange}
                         />
-                        <Tooltip>
-                          <TooltipTrigger asChild>
+                        <div className="mt-4 grid w-full max-w-[21rem] grid-cols-2 gap-3">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                className={cn(
+                                  "h-14 w-full justify-center rounded-full px-4 text-base font-semibold",
+                                  !profilePhoto && "col-span-2",
+                                )}
+                                onClick={() => profilePhotoInputRef.current?.click()}
+                                type="button"
+                              >
+                                <Camera className="mr-2 h-4 w-4" />
+                                {profilePhoto ? "Change photo" : "Upload photo"}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Click or drop an image to update your avatar
+                            </TooltipContent>
+                          </Tooltip>
+                          {profilePhoto ? (
                             <Button
-                              variant="ghost"
-                              size="icon"
-                              className="absolute bottom-1 right-0 h-11 w-11 rounded-full border border-border bg-card/95 transition-all duration-200 hover:scale-105 hover:bg-accent"
-                              onClick={() =>
-                                document
-                                  .getElementById("profile-photo-input")
-                                  ?.click()
-                              }
                               type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-14 w-full justify-center rounded-full px-4 text-base font-semibold"
+                              onClick={handlePhotoRemove}
                             >
-                              <Camera className="h-4 w-4" />
+                              <X className="mr-2 h-4 w-4" />
+                              Remove
                             </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Change avatar</TooltipContent>
-                        </Tooltip>
+                          ) : null}
+                        </div>
+                        <p className="mt-3 max-w-[21rem] text-center text-[11px] text-muted-foreground">
+                          Drag and drop a profile picture or choose a file.
+                        </p>
                       </div>
 
                       <div className="flex-1">
@@ -1720,7 +1936,7 @@ export default function Profile() {
                               <Button
                                 type="button"
                                 variant="outline"
-                                onClick={() => setIsEditMode(false)}
+                                onClick={handleCancelChanges}
                                 disabled={isSaving}
                               >
                                 Cancel
@@ -1819,10 +2035,16 @@ export default function Profile() {
                   </motion.section>
 
                   <motion.section variants={itemVariants}>
-                    <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
-                      <Sparkles className="h-5 w-5 text-yellow-500" />
-                      {t("profile.actorMatches")}
-                    </h2>
+                    <div className="mb-4 space-y-1">
+                      <h2 className="flex items-center gap-2 text-xl font-bold">
+                        <Sparkles className="h-5 w-5 text-yellow-500" />
+                        {t("profile.actorMatches")}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        Discover performers whose age range and genre footprint
+                        line up with the movies you rate most.
+                      </p>
+                    </div>
                     <Suspense
                       fallback={
                         <div className="grid grid-cols-1 gap-3">
@@ -1858,17 +2080,43 @@ export default function Profile() {
 
                 <div className="space-y-8">
                   <motion.section variants={itemVariants} className="space-y-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       <h3 className="flex items-center gap-2 text-lg font-semibold">
                         <Film className="h-4 w-4 text-primary" />
                         Favorite Movies
                       </h3>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {pinnedMovieCount}/4 movies pinned
+                      {pinnedMovieCount} movie{pinnedMovieCount === 1 ? "" : "s"} pinned
                     </p>
+                    {favoriteMovies.length === 0 ? (
+                      <Card className="border-border/60 bg-card/55">
+                        <CardContent className="flex flex-col gap-3 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">
+                              Start your essentials shelf
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Pin your first favorite films and keep building the shelf as long as you want.
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={() => openFavoritesPicker("movie")}
+                            >
+                              Add a movie
+                            </Button>
+                            <Button asChild size="sm" variant="outline">
+                              <Link to="/search">Browse films</Link>
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ) : null}
 
-                    {isFavoritesPickerOpen && favoriteSearchType === "movie" ? (
+                    {false && isFavoritesPickerOpen && favoriteSearchType === "movie" ? (
                       <Card className="ct-panel">
                         <CardContent className="space-y-3 pt-6">
                           <div className="relative">
@@ -1973,79 +2221,144 @@ export default function Profile() {
                       </Card>
                     ) : null}
 
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                      {favoriteMovies.map(({ item, preview }) => (
-                        <motion.div
-                          key={`favorite-${item.mediaType}-${item.mediaId}`}
-                          layout
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          whileHover={{ y: -4 }}
-                          className="group relative w-full overflow-hidden rounded-[1.4rem] border border-border/60 bg-card/70 shadow-xl backdrop-blur-md transition-all duration-300"
+                    {favoriteMovies.length > 0 ? (
+                      <div className="relative group/scroll">
+                        <button
+                          onClick={() =>
+                            scrollFavoriteCarousel(
+                              favoriteMoviesCarouselRef,
+                              "left",
+                            )
+                          }
+                          disabled={!favoriteMoviesCarouselState.canScrollLeft}
+                          type="button"
+                          className="absolute -left-4 md:-left-6 top-1/3 z-10 hidden h-10 w-10 items-center justify-center rounded-full border border-border bg-background/90 shadow-lg backdrop-blur-sm transition-all duration-200 group-hover/scroll:opacity-100 disabled:cursor-not-allowed disabled:opacity-50 md:flex"
+                          aria-label="Previous favorite movies"
                         >
-                          <div className="absolute right-2 top-2 z-20 opacity-100 transition-all duration-300 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
+                          <ChevronLeft className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() =>
+                            scrollFavoriteCarousel(
+                              favoriteMoviesCarouselRef,
+                              "right",
+                            )
+                          }
+                          disabled={!favoriteMoviesCarouselState.canScrollRight}
+                          type="button"
+                          className="absolute -right-4 md:-right-6 top-1/3 z-10 hidden h-10 w-10 items-center justify-center rounded-full border border-border bg-background/90 shadow-lg backdrop-blur-sm transition-all duration-200 group-hover/scroll:opacity-100 disabled:cursor-not-allowed disabled:opacity-50 md:flex"
+                          aria-label="Next favorite movies"
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                        </button>
+
+                        <div
+                          ref={favoriteMoviesCarouselRef}
+                          className="hide-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 scroll-smooth overscroll-contain touch-pan-x"
+                        >
+                          {favoriteMovies.map(({ item, preview }) => (
+                            <div
+                              key={`favorite-${item.mediaType}-${item.mediaId}`}
+                              className="w-[132px] flex-shrink-0 snap-start sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
+                            >
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                whileHover={{ y: -4 }}
+                                className="group relative w-full overflow-hidden rounded-[1.4rem] border border-border/60 bg-card/70 shadow-xl backdrop-blur-md transition-all duration-300"
+                              >
+                                <div className="absolute right-2 top-2 z-20 opacity-100 transition-all duration-300 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
+                                  <button
+                                    type="button"
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background/90 text-foreground/75 shadow-sm backdrop-blur-md transition-all hover:scale-105 hover:bg-red-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    onClick={() =>
+                                      unpinFavorite(
+                                        item.mediaId,
+                                        item.mediaType,
+                                        preview.title,
+                                      )
+                                    }
+                                    aria-label={`Remove ${preview.title} from favorites`}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                </div>
+
+                                <div className="relative aspect-[2/3] overflow-hidden">
+                                  <Image
+                                    src={getImageUrl(preview.posterPath, "w342")}
+                                    srcSet={`${getImageUrl(preview.posterPath, "w154")} 154w, ${getImageUrl(preview.posterPath, "w342")} 342w, ${getImageUrl(preview.posterPath, "w500")} 500w`}
+                                    sizes="(max-width: 640px) 132px, (max-width: 768px) 180px, (max-width: 1024px) 200px, (max-width: 1280px) 220px, 240px"
+                                    alt={preview.title}
+                                    width={342}
+                                    height={513}
+                                    loading="lazy"
+                                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                    showSkeleton
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent opacity-80 transition-opacity group-hover:opacity-90" />
+                                </div>
+
+                                <div className="absolute inset-x-0 bottom-0 p-3">
+                                  <p className="line-clamp-2 text-xs font-bold tracking-tight text-white drop-shadow-md">
+                                    {preview.title}
+                                  </p>
+                                </div>
+                              </motion.div>
+                            </div>
+                          ))}
+
+                          <div className="w-[132px] flex-shrink-0 snap-start sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]">
                             <button
                               type="button"
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background/90 text-foreground/75 shadow-sm backdrop-blur-md transition-all hover:scale-105 hover:bg-red-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                              onClick={() =>
-                                unpinFavorite(
-                                  item.mediaId,
-                                  item.mediaType,
-                                  preview.title,
-                                )
-                              }
-                              aria-label={`Remove ${preview.title} from favorites`}
+                              className="group flex aspect-[2/3] w-full flex-col items-center justify-center gap-3 rounded-[1.4rem] border-2 border-dashed border-border/60 bg-card/50 text-muted-foreground transition-all duration-300 hover:border-primary/45 hover:bg-primary/6 hover:text-primary"
+                              onClick={() => openFavoritesPicker("movie")}
                             >
-                              <X className="h-4 w-4" />
+                              <div className="rounded-full border border-border/60 bg-card/90 p-3 shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:border-primary/25 group-hover:bg-primary/10">
+                                <Plus className="h-6 w-6 transition-transform group-hover:rotate-90" />
+                              </div>
+                              <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 group-hover:opacity-100">
+                                Add Movie
+                              </span>
                             </button>
                           </div>
+                        </div>
 
-                          <div className="relative aspect-[2/3] overflow-hidden">
-                            <Image
-                              src={getImageUrl(preview.posterPath, "w342")}
-                              srcSet={`${getImageUrl(preview.posterPath, "w154")} 154w, ${getImageUrl(preview.posterPath, "w342")} 342w, ${getImageUrl(preview.posterPath, "w500")} 500w`}
-                              sizes="(max-width: 640px) calc(50vw - 24px), 220px"
-                              alt={preview.title}
-                              width={342}
-                              height={513}
-                              loading="lazy"
-                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                              showSkeleton
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+                        {favoriteMoviesCarouselState.pageCount > 1 ? (
+                          <div className="mt-4 flex items-center justify-center gap-2">
+                            {Array.from({
+                              length: favoriteMoviesCarouselState.pageCount,
+                            }).map((_, index) => (
+                              <button
+                                key={`favorite-movies-page-${index}`}
+                                type="button"
+                                onClick={() => {
+                                  const container =
+                                    favoriteMoviesCarouselRef.current;
+                                  if (!container) return;
+                                  container.scrollTo({
+                                    left: container.clientWidth * index,
+                                    behavior: "smooth",
+                                  });
+                                }}
+                                className={
+                                  index ===
+                                  favoriteMoviesCarouselState.activePage
+                                    ? "h-2.5 w-6 rounded-full bg-primary transition-all"
+                                    : "h-2.5 w-2.5 rounded-full bg-primary/30 transition-all hover:bg-primary/55"
+                                }
+                                aria-label={`Go to favorite movies page ${index + 1}`}
+                                aria-pressed={
+                                  index ===
+                                  favoriteMoviesCarouselState.activePage
+                                }
+                              />
+                            ))}
                           </div>
-
-                          <div className="absolute inset-x-0 bottom-0 p-3">
-                            <p className="line-clamp-2 text-xs font-bold tracking-tight text-white drop-shadow-md">
-                              {preview.title}
-                            </p>
-                          </div>
-                        </motion.div>
-                      ))}
-
-                      {Array.from({
-                        length: Math.max(0, 4 - favoriteMovies.length),
-                      }).map((_, index) => (
-                        <button
-                          key={`favorite-movie-slot-${index}`}
-                          type="button"
-                          className="group flex aspect-[2/3] w-full flex-col items-center justify-center gap-3 rounded-[1.4rem] border-2 border-dashed border-border/60 bg-card/50 text-muted-foreground transition-all duration-300 hover:border-primary/45 hover:bg-primary/6 hover:text-primary"
-                          onClick={() => {
-                            setFavoriteSearchType("movie");
-                            setIsFavoritesPickerOpen(
-                              (open) => !open || favoriteSearchType !== "movie",
-                            );
-                          }}
-                        >
-                          <div className="rounded-full border border-border/60 bg-card/90 p-3 shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:border-primary/25 group-hover:bg-primary/10">
-                            <Plus className="h-6 w-6 transition-transform group-hover:rotate-90" />
-                          </div>
-                          <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 group-hover:opacity-100">
-                            Add Movie
-                          </span>
-                        </button>
-                      ))}
-                    </div>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </motion.section>
 
                   <motion.section
@@ -2053,17 +2366,43 @@ export default function Profile() {
                     id="favorite-series"
                     className="space-y-3"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       <h3 className="flex items-center gap-2 text-lg font-semibold">
                         <Sparkles className="h-4 w-4 text-primary" />
                         Favorite Series
                       </h3>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {pinnedSeriesCount}/4 series pinned
+                      {pinnedSeriesCount} series pinned
                     </p>
+                    {favoriteSeries.length === 0 ? (
+                      <Card className="border-border/60 bg-card/55">
+                        <CardContent className="flex flex-col gap-3 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">
+                              Spotlight the shows you always recommend
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Pin the shows you always recommend and keep the row growing over time.
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={() => openFavoritesPicker("tv")}
+                            >
+                              Add a series
+                            </Button>
+                            <Button asChild size="sm" variant="outline">
+                              <Link to="/search">Browse shows</Link>
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ) : null}
 
-                    {isFavoritesPickerOpen && favoriteSearchType === "tv" ? (
+                    {false && isFavoritesPickerOpen && favoriteSearchType === "tv" ? (
                       <Card className="ct-panel">
                         <CardContent className="space-y-3 pt-6">
                           <div className="relative">
@@ -2168,80 +2507,310 @@ export default function Profile() {
                       </Card>
                     ) : null}
 
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                      {favoriteSeries.map(({ item, preview }) => (
-                        <motion.div
-                          key={`favorite-series-${item.mediaType}-${item.mediaId}`}
-                          layout
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          whileHover={{ y: -4 }}
-                          className="group relative w-full overflow-hidden rounded-[1.4rem] border border-border/60 bg-card/70 shadow-xl backdrop-blur-md transition-all duration-300"
+                    {favoriteSeries.length > 0 ? (
+                      <div className="relative group/scroll">
+                        <button
+                          onClick={() =>
+                            scrollFavoriteCarousel(
+                              favoriteSeriesCarouselRef,
+                              "left",
+                            )
+                          }
+                          disabled={!favoriteSeriesCarouselState.canScrollLeft}
+                          type="button"
+                          className="absolute -left-4 md:-left-6 top-1/3 z-10 hidden h-10 w-10 items-center justify-center rounded-full border border-border bg-background/90 shadow-lg backdrop-blur-sm transition-all duration-200 group-hover/scroll:opacity-100 disabled:cursor-not-allowed disabled:opacity-50 md:flex"
+                          aria-label="Previous favorite series"
                         >
-                          <div className="absolute right-2 top-2 z-20 opacity-100 transition-all duration-300 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
+                          <ChevronLeft className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() =>
+                            scrollFavoriteCarousel(
+                              favoriteSeriesCarouselRef,
+                              "right",
+                            )
+                          }
+                          disabled={!favoriteSeriesCarouselState.canScrollRight}
+                          type="button"
+                          className="absolute -right-4 md:-right-6 top-1/3 z-10 hidden h-10 w-10 items-center justify-center rounded-full border border-border bg-background/90 shadow-lg backdrop-blur-sm transition-all duration-200 group-hover/scroll:opacity-100 disabled:cursor-not-allowed disabled:opacity-50 md:flex"
+                          aria-label="Next favorite series"
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                        </button>
+
+                        <div
+                          ref={favoriteSeriesCarouselRef}
+                          className="hide-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 scroll-smooth overscroll-contain touch-pan-x"
+                        >
+                          {favoriteSeries.map(({ item, preview }) => (
+                            <div
+                              key={`favorite-series-${item.mediaType}-${item.mediaId}`}
+                              className="w-[132px] flex-shrink-0 snap-start sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
+                            >
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                whileHover={{ y: -4 }}
+                                className="group relative w-full overflow-hidden rounded-[1.4rem] border border-border/60 bg-card/70 shadow-xl backdrop-blur-md transition-all duration-300"
+                              >
+                                <div className="absolute right-2 top-2 z-20 opacity-100 transition-all duration-300 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
+                                  <button
+                                    type="button"
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background/90 text-foreground/75 shadow-sm backdrop-blur-md transition-all hover:scale-105 hover:bg-red-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    onClick={() =>
+                                      unpinFavorite(
+                                        item.mediaId,
+                                        item.mediaType,
+                                        preview.title,
+                                      )
+                                    }
+                                    aria-label={`Remove ${preview.title} from favorites`}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                </div>
+
+                                <div className="relative aspect-[2/3] overflow-hidden">
+                                  <Image
+                                    src={getImageUrl(preview.posterPath, "w342")}
+                                    srcSet={`${getImageUrl(preview.posterPath, "w154")} 154w, ${getImageUrl(preview.posterPath, "w342")} 342w, ${getImageUrl(preview.posterPath, "w500")} 500w`}
+                                    sizes="(max-width: 640px) 132px, (max-width: 768px) 180px, (max-width: 1024px) 200px, (max-width: 1280px) 220px, 240px"
+                                    alt={preview.title}
+                                    width={342}
+                                    height={513}
+                                    loading="lazy"
+                                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                    showSkeleton
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent opacity-80 transition-opacity group-hover:opacity-90" />
+                                </div>
+
+                                <div className="absolute inset-x-0 bottom-0 p-3">
+                                  <p className="line-clamp-2 text-xs font-bold tracking-tight text-white drop-shadow-md">
+                                    {preview.title}
+                                  </p>
+                                </div>
+                              </motion.div>
+                            </div>
+                          ))}
+
+                          <div className="w-[132px] flex-shrink-0 snap-start sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]">
                             <button
                               type="button"
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background/90 text-foreground/75 shadow-sm backdrop-blur-md transition-all hover:scale-105 hover:bg-red-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                              onClick={() =>
-                                unpinFavorite(
-                                  item.mediaId,
-                                  item.mediaType,
-                                  preview.title,
-                                )
-                              }
-                              aria-label={`Remove ${preview.title} from favorites`}
+                              className="group flex aspect-[2/3] w-full flex-col items-center justify-center gap-3 rounded-[1.4rem] border-2 border-dashed border-border/60 bg-card/50 text-muted-foreground transition-all duration-300 hover:border-primary/45 hover:bg-primary/6 hover:text-primary"
+                              onClick={() => openFavoritesPicker("tv")}
                             >
-                              <X className="h-4 w-4" />
+                              <div className="rounded-full border border-border/60 bg-card/90 p-3 shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:border-primary/25 group-hover:bg-primary/10">
+                                <Plus className="h-6 w-6 transition-transform group-hover:rotate-90" />
+                              </div>
+                              <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 group-hover:opacity-100">
+                                Add Series
+                              </span>
                             </button>
                           </div>
+                        </div>
 
-                          <div className="relative aspect-[2/3] overflow-hidden">
-                            <Image
-                              src={getImageUrl(preview.posterPath, "w342")}
-                              srcSet={`${getImageUrl(preview.posterPath, "w154")} 154w, ${getImageUrl(preview.posterPath, "w342")} 342w, ${getImageUrl(preview.posterPath, "w500")} 500w`}
-                              sizes="(max-width: 640px) calc(50vw - 24px), 220px"
-                              alt={preview.title}
-                              width={342}
-                              height={513}
-                              loading="lazy"
-                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                              showSkeleton
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+                        {favoriteSeriesCarouselState.pageCount > 1 ? (
+                          <div className="mt-4 flex items-center justify-center gap-2">
+                            {Array.from({
+                              length: favoriteSeriesCarouselState.pageCount,
+                            }).map((_, index) => (
+                              <button
+                                key={`favorite-series-page-${index}`}
+                                type="button"
+                                onClick={() => {
+                                  const container =
+                                    favoriteSeriesCarouselRef.current;
+                                  if (!container) return;
+                                  container.scrollTo({
+                                    left: container.clientWidth * index,
+                                    behavior: "smooth",
+                                  });
+                                }}
+                                className={
+                                  index ===
+                                  favoriteSeriesCarouselState.activePage
+                                    ? "h-2.5 w-6 rounded-full bg-primary transition-all"
+                                    : "h-2.5 w-2.5 rounded-full bg-primary/30 transition-all hover:bg-primary/55"
+                                }
+                                aria-label={`Go to favorite series page ${index + 1}`}
+                                aria-pressed={
+                                  index ===
+                                  favoriteSeriesCarouselState.activePage
+                                }
+                              />
+                            ))}
                           </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </motion.section>
 
-                          <div className="absolute inset-x-0 bottom-0 p-3">
-                            <p className="line-clamp-2 text-xs font-bold tracking-tight text-white drop-shadow-md">
-                              {preview.title}
+                  <Dialog
+                    open={isFavoritesPickerOpen}
+                    onOpenChange={(open) => {
+                      setIsFavoritesPickerOpen(open);
+                      if (!open) {
+                        setFavoriteSearchQuery("");
+                      }
+                    }}
+                  >
+                    <DialogContent
+                      className="max-w-3xl border-border/70 bg-[#09090b]/95 p-0 text-foreground shadow-2xl backdrop-blur-xl sm:rounded-3xl"
+                      aria-describedby="favorites-picker-description"
+                    >
+                      <DialogHeader className="border-b border-border/50 bg-[radial-gradient(circle_at_top,rgba(229,9,20,0.16),transparent_46%),linear-gradient(180deg,rgba(255,255,255,0.03),transparent)] px-6 py-6 text-left">
+                        <DialogTitle className="flex items-center gap-3 text-2xl font-black tracking-tight">
+                          <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[#E50914]/30 bg-[#E50914]/12 text-[#ff6b73] shadow-[0_0_30px_rgba(229,9,20,0.18)]">
+                            {favoriteSearchType === "movie" ? (
+                              <Film className="h-5 w-5" />
+                            ) : (
+                              <Sparkles className="h-5 w-5" />
+                            )}
+                          </span>
+                          {favoriteSearchType === "movie"
+                            ? "Choose Favorite Movies"
+                            : "Choose Favorite Series"}
+                        </DialogTitle>
+                        <DialogDescription
+                          id="favorites-picker-description"
+                          className="max-w-2xl text-sm text-muted-foreground"
+                        >
+                          Search TMDB and pin the titles that define your taste.
+                          Favorites are saved to your profile shelf right away.
+                        </DialogDescription>
+                      </DialogHeader>
+
+                      <div className="space-y-4 px-6 pb-6 pt-2">
+                        <div className="relative">
+                          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
+                          <Input
+                            value={favoriteSearchQuery}
+                            onChange={(event) =>
+                              setFavoriteSearchQuery(event.target.value)
+                            }
+                            placeholder={
+                              favoriteSearchType === "movie"
+                                ? "Search movies"
+                                : "Search TV series"
+                            }
+                            className="h-14 rounded-2xl border-border/60 bg-background/60 pl-11 pr-4 text-base shadow-inner"
+                            autoFocus
+                          />
+                        </div>
+
+                        {favoriteSearchTerm.length < 2 ? (
+                          <div className="rounded-2xl border border-dashed border-border/60 bg-card/35 px-5 py-8 text-center">
+                            <p className="text-base font-semibold text-foreground">
+                              Start typing to search
+                            </p>
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              Enter at least 2 characters to find{" "}
+                              {favoriteSearchType === "movie"
+                                ? "movies"
+                                : "series"}
+                              .
                             </p>
                           </div>
-                        </motion.div>
-                      ))}
-
-                      {Array.from({
-                        length: Math.max(0, 4 - favoriteSeries.length),
-                      }).map((_, index) => (
-                        <button
-                          key={`favorite-series-slot-${index}`}
-                          type="button"
-                          className="group flex aspect-[2/3] w-full flex-col items-center justify-center gap-3 rounded-[1.4rem] border-2 border-dashed border-border/60 bg-card/50 text-muted-foreground transition-all duration-300 hover:border-primary/45 hover:bg-primary/6 hover:text-primary"
-                          onClick={() => {
-                            setFavoriteSearchType("tv");
-                            setIsFavoritesPickerOpen(
-                              (open) => !open || favoriteSearchType !== "tv",
-                            );
-                          }}
-                        >
-                          <div className="rounded-full border border-border/60 bg-card/90 p-3 shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:border-primary/25 group-hover:bg-primary/10">
-                            <Plus className="h-6 w-6 transition-transform group-hover:rotate-90" />
+                        ) : isSearchingFavorites ? (
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            {Array.from({ length: 4 }).map((_, index) => (
+                              <div
+                                key={`favorite-picker-skeleton-${index}`}
+                                className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card/50 p-3"
+                              >
+                                <div className="h-16 w-12 rounded-md skeleton-shimmer" />
+                                <div className="min-w-0 flex-1 space-y-2">
+                                  <div className="h-4 w-3/4 rounded skeleton-shimmer" />
+                                  <div className="h-3 w-1/2 rounded skeleton-shimmer" />
+                                </div>
+                                <div className="h-9 w-20 rounded-full skeleton-shimmer" />
+                              </div>
+                            ))}
                           </div>
-                          <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 group-hover:opacity-100">
-                            Add Series
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </motion.section>
+                        ) : favoriteSearchResults.length === 0 ? (
+                          <div className="rounded-2xl border border-dashed border-border/60 bg-card/35 px-5 py-8 text-center">
+                            <p className="text-base font-semibold text-foreground">
+                              No matches found
+                            </p>
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              Try a different title, year, or spelling.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            {favoriteSearchResults.map((result) => {
+                              const key = `${result.mediaType}-${result.id}`;
+                              const isPinned =
+                                pinnedFavoriteKeys.includes(key);
+
+                              return (
+                                <div
+                                  key={key}
+                                  className="group flex items-center gap-3 rounded-2xl border border-border/60 bg-card/70 p-3 transition-all duration-200 hover:border-primary/40 hover:bg-card"
+                                >
+                                  <Image
+                                    src={getImageUrl(result.posterPath, "w154")}
+                                    srcSet={`${getImageUrl(result.posterPath, "w92")} 92w, ${getImageUrl(result.posterPath, "w154")} 154w, ${getImageUrl(result.posterPath, "w342")} 342w`}
+                                    sizes="48px"
+                                    alt={result.title}
+                                    width={154}
+                                    height={231}
+                                    className="h-16 w-12 shrink-0 rounded-md object-cover shadow-md"
+                                    loading="lazy"
+                                    showSkeleton
+                                  />
+                                  <div className="min-w-0 flex-1">
+                                    <p className="line-clamp-1 text-sm font-semibold text-foreground">
+                                      {result.title}
+                                    </p>
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                      {result.mediaType === "movie"
+                                        ? "Movie"
+                                        : "Series"}
+                                      {result.year ? ` • ${result.year}` : ""}
+                                    </p>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant={isPinned ? "secondary" : "outline"}
+                                    className="min-w-[88px] rounded-full"
+                                    onClick={() =>
+                                      isPinned
+                                        ? unpinFavorite(
+                                            result.id,
+                                            result.mediaType,
+                                            result.title,
+                                          )
+                                        : pinFavorite(
+                                            result.id,
+                                            result.mediaType,
+                                            result.title,
+                                          )
+                                    }
+                                  >
+                                    {isPinned ? (
+                                      <>
+                                        <Check className="mr-1 h-3.5 w-3.5" />
+                                        Pinned
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Plus className="mr-1 h-3.5 w-3.5" />
+                                        Add
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
 
                   <motion.section variants={itemVariants}>
                     <h2 className="mb-2 text-xl font-bold">
@@ -2336,6 +2905,25 @@ export default function Profile() {
                             ? `Most frequent rating: ${mostUsedRating.rating} stars`
                             : "No ratings yet"}
                         </p>
+                        {ratingsCount === 0 ? (
+                          <div className="rounded-xl border border-dashed border-border/70 bg-background/30 p-4">
+                            <p className="text-sm font-medium text-foreground">
+                              You have not rated anything yet
+                            </p>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              Rate a few titles to unlock recommendations,
+                              actor matches, and a full ratings breakdown.
+                            </p>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <Button asChild size="sm">
+                                <Link to="/search">Browse movies to rate</Link>
+                              </Button>
+                              <Button asChild size="sm" variant="outline">
+                                <Link to="/watched">Open watched list</Link>
+                              </Button>
+                            </div>
+                          </div>
+                        ) : null}
                       </CardContent>
                     </Card>
                   </motion.section>

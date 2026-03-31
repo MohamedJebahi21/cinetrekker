@@ -548,19 +548,6 @@ export default function Details() {
 
   const handleTogglePinnedFavorite = () => {
     const alreadyPinned = pinnedFavoriteKeys.includes(currentMediaKey);
-    const typePrefix = `${mediaType}-`;
-    const currentTypeCount = pinnedFavoriteKeys.filter((key) =>
-      key.startsWith(typePrefix),
-    ).length;
-
-    if (!alreadyPinned && currentTypeCount >= 4) {
-      const label = mediaType === "movie" ? "movies" : "series";
-      toast({
-        title: "Favorites limit reached",
-        description: `You can pin up to 4 favorite ${label}.`,
-      });
-      return;
-    }
 
     const next = alreadyPinned
       ? pinnedFavoriteKeys.filter((key) => key !== currentMediaKey)
@@ -680,6 +667,39 @@ export default function Details() {
   const seasons = details.number_of_seasons
     ? Array.from({ length: details.number_of_seasons }, (_, i) => i + 1)
     : [];
+  const todayDateKey = new Date().toISOString().slice(0, 10);
+  const availableSeasonNumbers =
+    mediaType === "tv"
+      ? (
+          details.seasons
+            ?.map((season) => season.season_number)
+            .filter(
+              (seasonNumber, index) =>
+                seasonNumber > 0 &&
+                (details.seasons?.[index]?.air_date
+                  ? details.seasons[index].air_date! <= todayDateKey
+                  : true),
+            ) || seasons
+        ).sort((a, b) => b - a)
+      : [];
+  const publishedEpisodes =
+    mediaType === "tv" && seasonDetails?.episodes
+      ? seasonDetails.episodes.filter(
+          (episode) => episode.air_date && episode.air_date <= todayDateKey,
+        )
+      : [];
+
+  useEffect(() => {
+    if (mediaType !== "tv") return;
+    if (selectedSeason && availableSeasonNumbers.includes(selectedSeason)) return;
+    if (availableSeasonNumbers.length > 0) {
+      setSelectedSeason(availableSeasonNumbers[0]);
+      return;
+    }
+    if (!selectedSeason && seasons.length > 0) {
+      setSelectedSeason(seasons[seasons.length - 1]);
+    }
+  }, [availableSeasonNumbers, mediaType, seasons, selectedSeason]);
 
   const seoDescription = [
     details.overview || "",
@@ -1013,6 +1033,13 @@ export default function Details() {
                 details={details}
               />
 
+              {!user ? (
+                <div className="w-full rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                  Save to watchlist, mark watched, and leave ratings after you
+                  sign in. You can still browse every public title now.
+                </div>
+              ) : null}
+
               {mediaType === "tv" && seasons.length > 0 && user && (
                 <Dialog
                   open={episodesDialogOpen}
@@ -1193,6 +1220,12 @@ export default function Details() {
                       ? "Keep a personal score and short note for this title."
                       : "Sign in to rate this title and save a personal review."}
                   </p>
+                  {user && watchedItem ? (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Your saved entry is shown below. Edit it any time to
+                      update the score, note, or watch status.
+                    </p>
+                  ) : null}
                 </div>
 
                 {user ? (
@@ -1203,7 +1236,9 @@ export default function Details() {
                     onClick={handleOpenStatusDialog}
                   >
                     <MessageSquare className="h-4 w-4" />
-                    {watchedItem ? "Edit Rating & Review" : "Add Rating & Review"}
+                    {watchedItem
+                      ? "Edit Saved Rating & Review"
+                      : "Add Rating & Review"}
                   </Button>
                 ) : (
                   <Button asChild variant="outline">
@@ -1265,6 +1300,96 @@ export default function Details() {
                 </div>
               )}
             </div>
+
+            {mediaType === "tv" && seasons.length > 0 ? (
+              <section className="ct-panel p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">
+                      Available Episodes
+                    </h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Browse published episodes and read each episode summary
+                      directly from the series page.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(availableSeasonNumbers.length > 0
+                      ? availableSeasonNumbers
+                      : seasons.slice().reverse()
+                    ).map((seasonNum) => (
+                      <Button
+                        key={`season-chip-${seasonNum}`}
+                        type="button"
+                        size="sm"
+                        variant={
+                          selectedSeason === seasonNum ? "secondary" : "outline"
+                        }
+                        onClick={() => setSelectedSeason(seasonNum)}
+                      >
+                        Season {seasonNum}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  {!selectedSeason ? (
+                    <p className="text-sm text-muted-foreground">
+                      Select a season to view released episodes.
+                    </p>
+                  ) : !seasonDetails ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading season episodes...
+                    </div>
+                  ) : publishedEpisodes.length === 0 ? (
+                    <div className="rounded-2xl border border-border/60 bg-background/30 px-4 py-5 text-sm text-muted-foreground">
+                      No published episodes are available for this season yet.
+                    </div>
+                  ) : (
+                    <Accordion type="single" collapsible className="w-full">
+                      {publishedEpisodes.map((episode) => (
+                        <AccordionItem
+                          key={`available-episode-${episode.id}`}
+                          value={`episode-${episode.id}`}
+                        >
+                          <AccordionTrigger className="gap-4 text-left md:hover:no-underline">
+                            <div className="min-w-0">
+                              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                                S{episode.season_number}E{episode.episode_number}
+                              </p>
+                              <p className="mt-1 text-sm font-semibold text-foreground">
+                                {episode.name}
+                              </p>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                {episode.air_date
+                                  ? new Date(
+                                      episode.air_date,
+                                    ).toLocaleDateString(language)
+                                  : "Release date unavailable"}
+                                {episode.runtime
+                                  ? ` • ${episode.runtime} ${t("details.minutes")}`
+                                  : ""}
+                              </p>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="rounded-2xl border border-border/50 bg-background/30 p-4">
+                              <p className="text-sm leading-relaxed text-muted-foreground">
+                                {episode.overview?.trim()
+                                  ? episode.overview
+                                  : "No description is available for this episode yet."}
+                              </p>
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  )}
+                </div>
+              </section>
+            ) : null}
 
           </div>
         </div>

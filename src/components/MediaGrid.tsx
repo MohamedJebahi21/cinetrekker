@@ -13,6 +13,9 @@ interface MediaGridProps {
   gap?: 'sm' | 'md' | 'lg';
   /** Number of skeleton items to show while loading */
   skeletonCount?: number;
+  selectable?: boolean;
+  selectedKeys?: Set<string>;
+  onToggleSelect?: (mediaId: number, mediaType: "movie" | "tv") => void;
 }
 
 const gridColsMap = {
@@ -34,6 +37,9 @@ export function MediaGrid({
   className = '',
   gap = 'md',
   skeletonCount = 12,
+  selectable = false,
+  selectedKeys,
+  onToggleSelect,
 }: MediaGridProps) {
   const { t } = useTranslation();
 
@@ -92,53 +98,51 @@ export function MediaGrid({
           variants={itemVariants}
           className="h-full"
         >
-          <MediaCard media={media} />
+          <MediaCard
+            media={media}
+            selectable={selectable}
+            selected={
+              selectedKeys?.has(
+                `${(media.media_type ?? media.mediaType ?? "movie") as "movie" | "tv"}-${media.id}`,
+              ) ?? false
+            }
+            onToggleSelect={onToggleSelect}
+          />
         </motion.div>
       ))}
     </motion.div>
   );
 }
 
-interface InfiniteMediaGridProps extends Omit<MediaGridProps, 'items'> {
+interface LoadMoreMediaGridProps extends Omit<MediaGridProps, 'items'> {
   items: (Media & { watchStatus?: string })[];
   hasMore?: boolean;
   onLoadMore?: () => void;
+  isLoadingMore?: boolean;
 }
 
-export function InfiniteMediaGrid({
+export function LoadMoreMediaGrid({
   items,
   hasMore = false,
   onLoadMore,
+  isLoadingMore = false,
   ...props
-}: InfiniteMediaGridProps) {
+}: LoadMoreMediaGridProps) {
   const { t } = useTranslation();
-  const observerTarget = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    if (!hasMore || !onLoadMore) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          onLoadMore();
-        }
-      },
-      { rootMargin: '100px' }
-    );
-
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
-    }
-
-    return () => observer.disconnect();
-  }, [hasMore, onLoadMore]);
 
   return (
     <>
       <MediaGrid items={items} {...props} />
       {hasMore && (
-        <div ref={observerTarget} className="h-20 flex items-center justify-center">
-          <div className="animate-pulse text-muted-foreground">{t('common.loading', 'Loading...')}</div>
+        <div className="mt-8 flex justify-center pb-8">
+          <button
+            type="button"
+            onClick={onLoadMore}
+            disabled={isLoadingMore}
+            className="rounded-xl border border-border/50 bg-secondary/80 px-8 py-3 text-sm font-medium text-foreground backdrop-blur-md transition-all hover:bg-secondary hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50"
+          >
+            {isLoadingMore ? t('common.loading', 'Loading...') : t('search.loadMore', 'Load More')}
+          </button>
         </div>
       )}
     </>

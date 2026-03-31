@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -65,6 +65,8 @@ interface SearchDropdownProps {
   className?: string;
   onNavigate?: () => void;
 }
+
+const PENDING_SEARCH_QUERY_KEY = "cinetrekker_pending_search_query";
 
 export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
   const { t, i18n } = useTranslation();
@@ -203,7 +205,10 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
 
       addToSearchHistory(normalizedQuery);
       refreshRecentSearches();
-      navigate(`/search?q=${encodeURIComponent(normalizedQuery)}`);
+      sessionStorage.setItem(PENDING_SEARCH_QUERY_KEY, normalizedQuery);
+      navigate(`/search?q=${encodeURIComponent(normalizedQuery)}`, {
+        state: { submittedQuery: normalizedQuery },
+      });
       setIsOpen(false);
       onNavigate?.();
     },
@@ -334,7 +339,10 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           ref={inputRef}
-          type="search"
+          type="text"
+          inputMode="search"
+          enterKeyHint="search"
+          autoComplete="off"
           placeholder={t("search.placeholder")}
           value={query}
           onChange={(e) => {
@@ -499,18 +507,16 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                 </ul>
 
                 {/* View All Results */}
-                <Link
-                  to={`/search?q=${encodeURIComponent(query)}`}
-                  onClick={() => {
-                    submitSearch(query);
-                  }}
-                  className="flex items-center justify-between px-4 py-3 border-t border-border/50 text-sm text-primary hover:bg-accent/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                <button
+                  type="button"
+                  onClick={() => submitSearch(query)}
+                  className="flex w-full items-center justify-between border-t border-border/50 px-4 py-3 text-left text-sm text-primary transition-colors hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
                 >
                   <span>
                     {t("common.seeAll")} results for "{query}"
                   </span>
                   <ArrowRight className="w-4 h-4" />
-                </Link>
+                </button>
               </>
             ) : (
               <div className="py-8 px-4 text-center">

@@ -245,12 +245,8 @@ export default function Feedback() {
 
           <div className="space-y-2">
             <Label>Bot Protection</Label>
-            {CAPTCHA_SITE_KEY ? (
+            {CAPTCHA_SITE_KEY && (
               <div ref={turnstileContainerRef} />
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Bot protection is not configured for this environment.
-              </p>
             )}
           </div>
 

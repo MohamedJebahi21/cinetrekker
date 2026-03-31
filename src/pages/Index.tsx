@@ -31,7 +31,7 @@ const BecauseYouLiked = lazy(() =>
 function TrendingSectionSkeleton() {
   return (
     <section className="ct-panel p-4 md:p-6">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
+      <div className="media-grid">
         {Array.from({ length: 6 }).map((_, index) => (
           <MediaCardSkeleton
             key={index}
@@ -116,7 +116,7 @@ export default function Index() {
 
       <HeroSection />
 
-      <div className="page-container space-y-8 pb-16 pt-8 md:pb-0">
+      <main className="page-container space-y-8 pb-16 pt-8 md:pb-0">
         {user ? (
           <>
             <ContinueWatching />
@@ -289,7 +289,7 @@ export default function Index() {
             This product uses the TMDB API but is not endorsed or certified by TMDB.
           </p>
         </section>
-      </div>
+      </main>
     </div>
   );
 }

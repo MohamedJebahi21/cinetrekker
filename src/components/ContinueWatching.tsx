@@ -48,6 +48,8 @@ export function ContinueWatching() {
   const { markEpisodeWatched } = useWatchedEpisodes();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [hasOverflow, setHasOverflow] = useState(false);
+  const [pageCount, setPageCount] = useState(1);
 
   const updateActiveIndex = () => {
     const container = scrollContainerRef.current;
@@ -55,6 +57,14 @@ export function ContinueWatching() {
 
     const cards = Array.from(container.children) as HTMLElement[];
     if (cards.length === 0) return;
+
+    const nextHasOverflow = container.scrollWidth > container.clientWidth + 4;
+    const nextPageCount = nextHasOverflow
+      ? Math.max(1, Math.ceil(container.scrollWidth / container.clientWidth))
+      : 1;
+
+    setHasOverflow(nextHasOverflow);
+    setPageCount(nextPageCount);
 
     const scrollLeft = container.scrollLeft;
     let nearestIndex = 0;
@@ -91,11 +101,10 @@ export function ContinueWatching() {
 
   const scrollToCard = (index: number) => {
     const container = scrollContainerRef.current;
-    const target = container?.children[index] as HTMLElement | undefined;
-    if (!container || !target) return;
+    if (!container) return;
 
     container.scrollTo({
-      left: target.offsetLeft - container.offsetLeft,
+      left: container.clientWidth * index,
       behavior: "smooth",
     });
     setActiveIndex(index);
@@ -273,11 +282,11 @@ export function ContinueWatching() {
         })}
       </div>
 
-      {data.length > 1 ? (
+      {hasOverflow && pageCount > 1 ? (
         <div className="mt-4 flex justify-center gap-2">
-          {data.map((item, index) => (
+          {Array.from({ length: pageCount }).map((_, index) => (
             <button
-              key={item.details.id}
+              key={`continue-watching-page-${index}`}
               type="button"
               onClick={() => scrollToCard(index)}
               className={`rounded-full transition-all ${
