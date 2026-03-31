@@ -227,19 +227,17 @@ export function WatchedShowsNewEpisodes() {
     const releaseInfo = getReleaseTimeInfo(airDate);
     if (!releaseInfo) return null;
     if (releaseInfo.isPast) {
-      // Already released
       if (isSameDay(new Date(airDate), now)) {
         return (
-          <Badge variant="success" className="text-xs px-2 py-0.5">{t('home.releasedToday', 'Today')}</Badge>
+          <Badge variant="default" className="text-xs px-2 py-0.5">{t('home.releasedToday', 'Today')}</Badge>
         );
       }
       return (
         <Badge variant="secondary" className="text-xs px-2 py-0.5">{t('home.justReleased', 'Just released')}</Badge>
       );
     } else {
-      // Upcoming
       return (
-        <Badge variant="outline" className="text-xs px-2 py-0.5">{releaseInfo.relative}</Badge>
+        <Badge variant="outline" className="text-xs px-2 py-0.5">{releaseInfo.relativeTime}</Badge>
       );
     }
   };
@@ -251,11 +249,11 @@ export function WatchedShowsNewEpisodes() {
         {releasedUnwatchedEpisodes.map((episode) => {
           const releaseBadge = getReleaseBadge(episode.air_date);
           return (
-            <Card key={episode.episode_id || `${episode.showId}-${episode.season_number}-${episode.episode_number}`}
+            <Card key={episode.id || `${episode.showId}-${episode.season_number}-${episode.episode_number}`}
               className="relative group overflow-hidden p-0">
               {episode.showPosterPath ? (
                 <Image
-                  src={getImageUrl(episode.showPosterPath, 342)}
+                  src={getImageUrl(episode.showPosterPath, "w342")}
                   alt={episode.showName}
                   width={182}
                   height={278}

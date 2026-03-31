@@ -266,7 +266,7 @@ export default function Details() {
 
   useEffect(() => {
     const container = castScrollRef.current;
-    if (!container || !(details?.credits?.cast?.length > 0)) return;
+    if (!container || !((details?.credits?.cast?.length ?? 0) > 0)) return;
 
     const updateCastPaging = () => {
       const hasScroll = container.scrollWidth > container.clientWidth;

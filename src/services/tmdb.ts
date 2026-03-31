@@ -622,6 +622,8 @@ export interface PersonCredit extends Media {
 }
 
 export interface PersonDetails {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
   id: number;
   name: string;
   biography: string;

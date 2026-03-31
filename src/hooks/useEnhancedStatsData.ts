@@ -9,7 +9,7 @@ import {
   getEnrichedMediaType,
 } from "@/types/enriched-media";
 
-type MediaTypeFilter = "all" | "movie" | "tv";
+export type MediaTypeFilter = "all" | "movie" | "tv";
 
 type GenreRecord = {
   id: number;

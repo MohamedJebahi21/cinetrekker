@@ -9,6 +9,7 @@ import {
   getEnrichedMediaLanguage,
   getEnrichedMediaType,
   getEnrichedMediaYear,
+  type EnrichedMediaType,
 } from "@/types/enriched-media";
 
 const ALL = "all";
@@ -28,7 +29,7 @@ export function useWatchedFilters(language: string) {
       "watched-details",
       watched.map(
         (item) =>
-          `${item.mediaType || item.media_type}-${item.mediaId || item.id}`,
+          `${item.mediaType}-${item.mediaId || item.id}`,
       ),
       language,
     ],
@@ -77,8 +78,8 @@ export function useWatchedFilters(language: string) {
         sourceItems
           .map((item) => getEnrichedMediaType(item))
           .filter(
-            (entry): entry is string =>
-              typeof entry === "string" && entry.trim() !== "",
+            (entry): entry is EnrichedMediaType =>
+              entry === "movie" || entry === "tv" || entry === "person",
           ),
       ),
     ).sort();

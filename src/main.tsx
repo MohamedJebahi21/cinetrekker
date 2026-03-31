@@ -18,21 +18,24 @@ import { installChunkErrorHandlers } from "@/lib/chunkErrorRecovery";
 installChunkErrorHandlers();
 applyThemeToDocument(readStoredTheme());
 
-if (typeof window !== "undefined" && "trustedTypes" in window) {
-  const createPolicy = (name: string) => {
-    try {
-      window.trustedTypes.createPolicy(name, {
-        createHTML: (value) => value,
-        createScript: (value) => value,
-        createScriptURL: (value) => value,
-      });
-    } catch {
-      // Reuse existing policy if already created by the browser/runtime.
-    }
-  };
+if (typeof window !== "undefined") {
+  const tt = (window as unknown as { trustedTypes?: { createPolicy: (name: string, rules: any) => void } }).trustedTypes;
+  if (tt) {
+    const createPolicy = (name: string) => {
+      try {
+        tt.createPolicy(name, {
+          createHTML: (value: string) => value,
+          createScript: (value: string) => value,
+          createScriptURL: (value: string) => value,
+        });
+      } catch {
+        // Reuse existing policy if already created by the browser/runtime.
+      }
+    };
 
-  createPolicy("default");
-  createPolicy("cinetrekker");
+    createPolicy("default");
+    createPolicy("cinetrekker");
+  }
 }
 
 const rootElement = document.getElementById("root");

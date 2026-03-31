@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GlassStatCard } from "@/components/GlassStatCard";
-import { useEnhancedStatsData } from "@/hooks/useEnhancedStatsData";
+import { useEnhancedStatsData, type MediaTypeFilter } from "@/hooks/useEnhancedStatsData";
 
 const CINEMATIC_CHART_COLORS = [
   "#E50914",

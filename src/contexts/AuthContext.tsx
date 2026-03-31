@@ -62,7 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     let isMounted = true;
-    let unsubscribe = () => undefined;
+    let unsubscribe: () => void = () => {};
 
     const applySession = (nextSession: Session | null) => {
       if (!isMounted) return;

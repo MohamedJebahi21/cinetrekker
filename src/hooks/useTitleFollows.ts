@@ -464,9 +464,10 @@ export function useTitleFollows() {
         }
       }
 
-      await supabase
+      await (supabase
         .from("followed_title_state")
-        .delete()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .delete() as any)
         .eq("user_id", user.id)
         .eq("movie_id", followId);
 

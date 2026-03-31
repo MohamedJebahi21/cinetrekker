@@ -168,7 +168,7 @@ export function useWatchedEpisodes(showId?: number) {
       
       if (error) throw error;
 
-      const validatedShowName = validateShowName(showName);
+      const validatedShowName = showName ? validateShowName(showName) : undefined;
 
       if (validatedShowName) {
         await supabase

@@ -31,7 +31,7 @@ const ImportSchema = z.object({
     .optional(),
 });
 
-function dedupeByKey(items, getKey) {
+function dedupeByKey<T>(items: T[], getKey: (item: T) => string): T[] {
   const seen = new Set();
   const result = [];
   for (const item of items) {
@@ -118,7 +118,7 @@ export function ExportImportButton() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = async (e) => {
+    reader.onload = async (e: ProgressEvent<FileReader>) => {
       try {
         const content = e.target?.result as string;
         const parsed = ImportSchema.parse(JSON.parse(content));

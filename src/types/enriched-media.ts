@@ -1,4 +1,7 @@
 import type { Media } from "@/types/media";
+ 
+export type EnrichedMediaType = "movie" | "tv" | "person";
+
 
 export type ProductionCountry =
   | string
@@ -25,8 +28,8 @@ export type EnrichedMediaExtras = {
 
 export type EnrichedUserMedia = Media & EnrichedMediaExtras;
 
-export function getEnrichedMediaType(media: EnrichedUserMedia): "movie" | "tv" | undefined {
-  return media.media_type ?? media.mediaType;
+export function getEnrichedMediaType(media: EnrichedUserMedia): EnrichedMediaType | undefined {
+  return (media.media_type ?? media.mediaType) as EnrichedMediaType | undefined;
 }
 
 export function getEnrichedMediaLanguage(media: EnrichedUserMedia): string | undefined {
@@ -66,14 +69,18 @@ export function getEnrichedMediaCountries(media: EnrichedUserMedia): string[] {
   }
 
   if (Array.isArray(media.production_countries)) {
-    media.production_countries.forEach((country) => {
+    (media.production_countries as ProductionCountry[]).forEach((country) => {
       if (typeof country === "string") {
-        if (country.trim()) countries.add(country);
+        const trimmed = country.trim();
+        if (trimmed) countries.add(trimmed);
         return;
       }
-
-      if (country.iso_3166_1) countries.add(country.iso_3166_1);
-      else if (country.iso31661) countries.add(country.iso31661);
+ 
+      if (country && typeof country === "object") {
+        const iso = (country as { iso_3166_1?: string; iso31661?: string }).iso_3166_1 ?? 
+                    (country as { iso_3166_1?: string; iso31661?: string }).iso31661;
+        if (iso) countries.add(iso);
+      }
     });
   }
 

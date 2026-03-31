@@ -130,7 +130,8 @@ export const profileService = {
         // Update
         result = await supabase
           .from("profiles")
-          .update(profileData)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .update(profileData as any)
           .eq("user_id", userId)
           .select()
           .single();
@@ -144,7 +145,8 @@ export const profileService = {
 
         result = await supabase
           .from("profiles")
-          .insert([insertData])
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .insert([insertData as any])
           .select()
           .single();
       }
@@ -178,7 +180,8 @@ export const profileService = {
 
       const { data, error } = await supabase
         .from("profiles")
-        .insert([insertData])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert([insertData as any])
         .select()
         .single();
 

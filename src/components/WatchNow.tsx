@@ -15,8 +15,7 @@ export default function WatchNow({ movieTitle }: WatchNowProps) {
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         <a
           href={`https://www.amazon.com/s?k=${encodedTitle}&tag=YOUR_AMAZON_TAG`}
-          target="_blank" rel="noopener noreferrer"
-          rel="noopener noreferrer sponsored"
+          target="_blank" rel="noopener noreferrer sponsored"
           className="inline-flex items-center justify-center rounded-xl bg-amber-500 px-4 py-3 text-sm font-semibold text-black transition hover:scale-[1.02] hover:bg-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-300"
         >
           Rent on Amazon
@@ -24,8 +23,7 @@ export default function WatchNow({ movieTitle }: WatchNowProps) {
 
         <a
           href={`https://www.fandango.com/search?q=${encodedTitle}&cmp=YOUR_FANDANGO_ID`}
-          target="_blank" rel="noopener noreferrer"
-          rel="noopener noreferrer sponsored"
+          target="_blank" rel="noopener noreferrer sponsored"
           className="inline-flex items-center justify-center rounded-xl border border-red-500/70 bg-red-600/90 px-4 py-3 text-sm font-semibold text-white transition hover:scale-[1.02] hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-300"
         >
           Buy Tickets on Fandango

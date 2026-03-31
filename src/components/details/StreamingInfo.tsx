@@ -25,7 +25,6 @@ export default function StreamingInfo({
               key={p.provider_id}
               href={href}
               target="_blank" rel="noopener noreferrer"
-              rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-md p-1 bg-background/60 hover:opacity-90"
             >
               {p.icon_url ? (

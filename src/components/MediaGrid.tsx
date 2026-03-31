@@ -103,7 +103,7 @@ export function MediaGrid({
             selectable={selectable}
             selected={
               selectedKeys?.has(
-                `${(media.media_type ?? media.mediaType ?? "movie") as "movie" | "tv"}-${media.id}`,
+                `${(media.media_type ?? "movie") as "movie" | "tv"}-${media.id}`,
               ) ?? false
             }
             onToggleSelect={onToggleSelect}

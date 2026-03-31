@@ -7,6 +7,7 @@ import {
 } from "@/hooks/useNotifications";
 import {
   buildFollowedTitleState,
+  type FollowedTitle,
   type FollowedTitleState,
   useTitleFollows,
 } from "@/hooks/useTitleFollows";
@@ -238,18 +239,19 @@ export function FollowNotificationMonitor() {
       const movieIds = currentStates.map((item) => item.state.movie_id).filter((id) => typeof id === "string" && id.length > 0);
       let previousById: Record<string, FollowedTitleState> = {};
       if (movieIds.length > 0) {
-        const { data: previousRows, error: previousError } = await supabase
+        const { data: previousRows, error: previousError } = await (supabase
           .from("followed_title_state")
           .select(
             "movie_id, media_type, tmdb_id, release_date, status, number_of_seasons, last_episode_air_date, last_episode_season_number, last_episode_number, updated_at",
-          )
+          ) as any) // eslint-disable-line @typescript-eslint/no-explicit-any
           .eq("user_id", user.id)
           .in("movie_id", movieIds);
         if (previousError) {
           throw previousError;
         }
         previousById = Object.fromEntries(
-          (previousRows || []).map((row) => [row.movie_id, row]),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (previousRows || []).map((row: any) => [row.movie_id, row]),
         ) as Record<string, FollowedTitleState>;
       }
 

@@ -673,7 +673,8 @@ export default function Search() {
           ...combinedResponses.map((response) => response.totalPages),
         ),
         results: dedupeMedia(
-          combinedResponses.flatMap((response) => response.results) as Media[],
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (combinedResponses.flatMap((response) => response.results) as any),
         ),
       };
     },
