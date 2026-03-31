@@ -1,7 +1,7 @@
 import { useParams, Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Star,
   Clock,
@@ -300,6 +300,34 @@ export default function Details() {
   const _year = _releaseDate ? new Date(_releaseDate).getFullYear() : null;
   const seoTitle = _title ? `${_title} | CineTrekker` : undefined;
   useDocumentTitle(seoTitle);
+
+  // Compute seasons/availableSeasonNumbers unconditionally (before any early return)
+  // so they can safely appear in the useEffect dependency array below.
+  const seasons = useMemo(
+    () =>
+      details?.number_of_seasons
+        ? Array.from({ length: details.number_of_seasons }, (_, i) => i + 1)
+        : [],
+    [details?.number_of_seasons],
+  );
+
+  const todayDateKey = new Date().toISOString().slice(0, 10);
+
+  const availableSeasonNumbers = useMemo(() => {
+    if (mediaType !== "tv") return [];
+    return (
+      details?.seasons
+        ?.map((season) => season.season_number)
+        .filter(
+          (seasonNumber, index) =>
+            seasonNumber > 0 &&
+            (details.seasons?.[index]?.air_date
+              ? details.seasons[index].air_date! <= todayDateKey
+              : true),
+        ) ?? seasons
+    ).sort((a, b) => b - a);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [details?.seasons, mediaType, seasons, todayDateKey]);
 
   if (isLoading) {
     return (
@@ -664,24 +692,6 @@ export default function Details() {
   const rentProviders = dedupeProviders(providerData?.rent || []);
   const buyProviders = dedupeProviders(providerData?.buy || []);
 
-  const seasons = details.number_of_seasons
-    ? Array.from({ length: details.number_of_seasons }, (_, i) => i + 1)
-    : [];
-  const todayDateKey = new Date().toISOString().slice(0, 10);
-  const availableSeasonNumbers =
-    mediaType === "tv"
-      ? (
-          details.seasons
-            ?.map((season) => season.season_number)
-            .filter(
-              (seasonNumber, index) =>
-                seasonNumber > 0 &&
-                (details.seasons?.[index]?.air_date
-                  ? details.seasons[index].air_date! <= todayDateKey
-                  : true),
-            ) || seasons
-        ).sort((a, b) => b - a)
-      : [];
   const publishedEpisodes =
     mediaType === "tv" && seasonDetails?.episodes
       ? seasonDetails.episodes.filter(
