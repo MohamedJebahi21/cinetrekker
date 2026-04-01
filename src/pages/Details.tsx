@@ -326,7 +326,6 @@ export default function Details() {
               : true),
         ) ?? seasons
     ).sort((a, b) => b - a);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [details?.seasons, mediaType, seasons, todayDateKey]);
 
   // Must be called unconditionally before any early return (Rules of Hooks)

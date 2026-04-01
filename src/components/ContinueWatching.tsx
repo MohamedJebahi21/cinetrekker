@@ -139,7 +139,39 @@ export function ContinueWatching() {
   }
 
   if (!data || data.length === 0) {
-    return null;
+    return (
+      <section className="ct-panel min-h-[420px] p-5 md:min-h-[460px] md:p-6">
+        <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <Play className="h-5 w-5 text-primary" />
+              <h2 className="section-title mb-0">Continue Watching</h2>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Pick up the next released episode without hunting through your library.
+            </p>
+          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/watched">View Watching List</Link>
+          </Button>
+        </div>
+
+        <div className="flex h-[320px] items-center justify-center rounded-3xl border border-dashed border-border/60 bg-background/30 p-6 text-center">
+          <div className="max-w-md space-y-3">
+            <Tv className="mx-auto h-10 w-10 text-primary" />
+            <h3 className="text-lg font-semibold text-foreground">
+              Nothing to continue yet
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Once you start a series, the next episode will appear here for fast access.
+            </p>
+            <Button asChild className="btn-primary-glow mt-2">
+              <Link to="/search">Find a show to start</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (
@@ -295,7 +327,6 @@ export function ContinueWatching() {
                   : "h-2.5 w-2.5 bg-primary/30 hover:bg-primary/55"
               }`}
               aria-label={`Go to continue watching item ${index + 1}`}
-              aria-pressed={index === activeIndex}
             />
           ))}
         </div>

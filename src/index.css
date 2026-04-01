@@ -255,6 +255,29 @@
 }
 
 @layer components {
+  .home-section-shell {
+    content-visibility: visible;
+  }
+
+  .media-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  @media (min-width: 768px) {
+    .media-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .media-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1rem;
+    }
+  }
+
   /* Phase 1: Glassmorphic navigation - Enhanced blur and border for premium feel */
   .glass-nav {
     /* Use sticky positioning so it naturally scrolls with content

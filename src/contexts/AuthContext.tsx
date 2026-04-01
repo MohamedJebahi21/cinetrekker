@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import type { User, Session } from "@supabase/supabase-js";
 import { isSupabaseConfigured } from "@/lib/envValidation";
 import { createLogger } from "@/lib/logger";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface AuthContextType {
   user: User | null;
@@ -27,11 +28,6 @@ let didWarnMissingSupabaseEnv = false;
 
 function toAuthError(error: unknown): Error {
   return error instanceof Error ? error : new Error(String(error));
-}
-
-async function getSupabaseClient() {
-  const { supabase } = await import("@/integrations/supabase/client");
-  return supabase;
 }
 
 export function useAuth(): AuthContextType {
@@ -72,7 +68,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     void (async () => {
       try {
-        const supabase = await getSupabaseClient();
         if (!isMounted) {
           return;
         }
@@ -120,7 +115,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const supabase = await getSupabaseClient();
       const { error } = await supabase.auth.signUp({
         email,
         password: code,
@@ -137,7 +131,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const supabase = await getSupabaseClient();
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password: code,
@@ -156,7 +149,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const supabase = await getSupabaseClient();
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
@@ -175,7 +167,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const supabase = await getSupabaseClient();
       const { error } = await supabase.auth.signOut();
       if (error) {
         throw error;
@@ -191,7 +182,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const supabase = await getSupabaseClient();
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth`,
       });

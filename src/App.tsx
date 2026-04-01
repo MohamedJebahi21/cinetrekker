@@ -33,7 +33,7 @@ import SEO from "@/components/SEO";
 import { websiteJsonLd } from "@/lib/schema";
 import { siteMetadata } from "@/lib/metadata";
 import { applyAccessibilityPreferencesToRoot } from "@/lib/accessibility-preferences";
-const Index = lazy(() => import("./pages/Index"));
+import Index from "./pages/Index";
 const KeyboardShortcuts = lazy(() => import("@/components/KeyboardShortcuts"));
 const BottomNav = lazy(() =>
   import("@/components/BottomNav").then((mod) => ({
@@ -134,11 +134,7 @@ function AnimatedRoutes() {
       <Routes location={location}>
           <Route
             path="/"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Index />
-              </Suspense>
-            }
+            element={<Index />}
           />
           <Route
             path="/search"
@@ -292,9 +288,11 @@ function AnimatedRoutes() {
           <Route
             path="/watchlist"
             element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Watchlist />
-              </Suspense>
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Watchlist />
+                </Suspense>
+              </ProtectedRoute>
             }
           />
           <Route

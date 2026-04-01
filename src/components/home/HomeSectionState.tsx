@@ -26,20 +26,22 @@ function HomeSectionFallback({
   retryLabel?: string;
 }) {
   return (
-    <section className="ct-panel p-6 text-center">
-      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-      {onRetry ? (
-        <Button
-          type="button"
-          variant="outline"
-          className="mt-4 gap-2"
-          onClick={onRetry}
-        >
-          <RefreshCw className="h-4 w-4" />
-          {retryLabel}
-        </Button>
-      ) : null}
+    <section className="home-section-shell">
+      <div className="ct-panel min-h-[420px] p-6 text-center sm:min-h-[520px]">
+        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+        {onRetry ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-4 gap-2"
+            onClick={onRetry}
+          >
+            <RefreshCw className="h-4 w-4" />
+            {retryLabel}
+          </Button>
+        ) : null}
+      </div>
     </section>
   );
 }
@@ -79,24 +81,30 @@ export function HomeSectionState({
   }
 
   if (loading) {
-    return skeleton ?? null;
+    return (
+      <section className="home-section-shell min-h-[900px]">
+        {skeleton ?? null}
+      </section>
+    );
   }
 
   return (
     <ErrorBoundary
       fallback={
-        <HomeSectionFallback
-          title={title}
-          description={
-            description ||
-            "Something went wrong rendering this section. Please try again."
-          }
-          onRetry={onRetry}
-        />
+        <section className="home-section-shell">
+          <HomeSectionFallback
+            title={title}
+            description={
+              description ||
+              "Something went wrong rendering this section. Please try again."
+            }
+            onRetry={onRetry}
+          />
+        </section>
       }
       onRetry={onRetry}
     >
-      {children}
+      <section className="home-section-shell">{children}</section>
     </ErrorBoundary>
   );
 }

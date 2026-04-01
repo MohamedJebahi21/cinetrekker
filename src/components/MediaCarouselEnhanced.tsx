@@ -105,12 +105,23 @@ export function MediaCarouselEnhanced({
       </div>
 
       {loading ? (
-        <div className="flex gap-4 overflow-hidden">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="min-w-[132px] sm:min-w-[160px] md:min-w-[180px]">
-              <MediaCardSkeleton />
-            </div>
-          ))}
+        <div className="min-h-[420px] sm:min-h-[520px]">
+          <div className="flex gap-4 overflow-hidden">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="min-w-[132px] sm:min-w-[180px] md:min-w-[200px] lg:min-w-[220px] xl:min-w-[240px]">
+                <MediaCardSkeleton />
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 flex items-center justify-center gap-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <span
+                key={i}
+                className={`h-2.5 rounded-full ${i === 0 ? 'w-6 bg-primary' : 'w-2.5 bg-primary/30'}`}
+                aria-hidden="true"
+              />
+            ))}
+          </div>
         </div>
       ) : items.length > 0 ? (
         <div className="relative group/scroll">
@@ -174,15 +185,16 @@ export function MediaCarouselEnhanced({
                       : "h-2.5 w-2.5 bg-primary/30 hover:bg-primary/55"
                   }`}
                   aria-label={`Go to carousel page ${index + 1}`}
-                  aria-pressed={index === activePage}
                 />
               ))}
             </div>
           )}
         </div>
       ) : (
-        <div className="text-center py-12 text-muted-foreground">
-          {(emptyMessage || t('common.noResults')).replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase())}
+        <div className="flex min-h-[420px] items-center justify-center text-center text-muted-foreground sm:min-h-[520px]">
+          <p className="max-w-md px-4">
+            {(emptyMessage || t('common.noResults')).replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase())}
+          </p>
         </div>
       )}
     </section>
