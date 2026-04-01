@@ -134,7 +134,7 @@ export default function MoodResult({
 
         <div className="mt-6 flex flex-wrap gap-3">
           <Button onClick={handleAdd} className="gap-2">
-            {t("mood.addToWatchlist", "Add to Watchlist")}
+            Watchlist
           </Button>
           <Button
             onClick={handleTryAnother}

@@ -412,7 +412,7 @@ export default function Watchlist() {
                     onClick={() => void handleBulkMarkWatched()}
                   >
                     <CheckSquare className="mr-2 h-4 w-4" />
-                    Mark Watched
+                    Watched
                   </Button>
                   <Button
                     size="sm"
@@ -469,7 +469,11 @@ export default function Watchlist() {
                             event.preventDefault();
                             toggleSelect(media.id, mediaType);
                           }}
-                          aria-pressed={selectedKeys.has(`${mediaType}-${media.id}`)}
+                          aria-current={
+                            selectedKeys.has(`${mediaType}-${media.id}`)
+                              ? "true"
+                              : undefined
+                          }
                           aria-label={
                             selectedKeys.has(`${mediaType}-${media.id}`)
                               ? "Deselect title"

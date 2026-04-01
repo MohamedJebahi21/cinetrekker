@@ -969,12 +969,17 @@ export default function Details() {
                 }
               >
                 <Pin className="w-4 h-4" />
-                {isPinnedFavorite ? "Pinned to Favorites" : "Pin to Favorites"}
+                {isPinnedFavorite ? "Pinned" : "Pin"}
               </Button>
 
               <Button
-                variant={optimisticInWatchlist ? "secondary" : "default"}
-                className="gap-2"
+                variant="outline"
+                className={cn(
+                  "w-full gap-2 sm:w-auto",
+                  optimisticInWatchlist
+                    ? "border-red-500/70 bg-red-600 text-white hover:bg-red-700"
+                    : "border-border bg-background text-foreground hover:bg-accent",
+                )}
                 onClick={handleAddToWatchlist}
                 disabled={isWatchlistPending}
                 aria-busy={isWatchlistPending}
@@ -987,25 +992,29 @@ export default function Details() {
                 {isWatchlistPending ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    {optimisticInWatchlist ? "✓ In Watchlist" : "+ Watchlist"}
+                    Watchlist
                   </>
                 ) : optimisticInWatchlist ? (
                   <>
                     <Bookmark className="w-4 h-4 fill-current" />
-                    ✓ In Watchlist
+                    Watchlist
                   </>
                 ) : (
                   <>
                     <Plus className="w-4 h-4" />
-                    + Watchlist
+                    Watchlist
                   </>
                 )}
               </Button>
 
               <Button
-
-                variant={optimisticWatched ? "secondary" : "outline"}
-                className="gap-2"
+                variant="outline"
+                className={cn(
+                  "w-full gap-2 sm:w-auto",
+                  optimisticWatched
+                    ? "border-emerald-500/70 bg-emerald-600 text-white hover:bg-emerald-700"
+                    : "border-border bg-background text-foreground hover:bg-accent",
+                )}
                 onClick={handleMarkAsWatched}
                 disabled={isWatchedPending}
                 aria-busy={isWatchedPending}
@@ -1018,19 +1027,17 @@ export default function Details() {
                 {isWatchedPending ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    {optimisticWatched
-                      ? t("actions.watched")
-                      : t("actions.markAsWatched")}
+                    Watched
                   </>
                 ) : optimisticWatched ? (
                   <>
                     <Check className="w-4 h-4" />
-                    {t("actions.watched")}
+                    Watched
                   </>
                 ) : (
                   <>
                     <Check className="w-4 h-4" />
-                    {t("actions.markAsWatched")}
+                    Watched
                   </>
                 )}
               </Button>
@@ -1461,7 +1468,7 @@ export default function Details() {
                         : "h-2.5 w-2.5 bg-primary/30 hover:bg-primary/55",
                     )}
                     aria-label={`Go to cast page ${index + 1}`}
-                    aria-pressed={index === activeCastPage}
+                    aria-current={index === activeCastPage ? "true" : undefined}
                   />
                 ))}
               </div>

@@ -16,21 +16,25 @@ export default function ActionButtons({ inWatchlist, watched, onAddToWatchlist, 
   const isMobile = useIsMobile();
   const { t } = useTranslation();
 
-  const mainClass = "bg-red-600 text-white hover:bg-red-700";
-  const secondaryClass = "bg-background/10 border border-border text-foreground hover:bg-background/20";
+  const watchlistClass = inWatchlist
+    ? "bg-red-600 border border-red-500/70 text-white hover:bg-red-700"
+    : "bg-background/10 border border-border text-foreground hover:bg-background/20";
+  const watchedClass = watched
+    ? "bg-emerald-600 border border-emerald-500/70 text-white hover:bg-emerald-700"
+    : "bg-background/10 border border-border text-foreground hover:bg-background/20";
 
   // Mobile: fixed bottom sheet / FAB
   if (isMobile) {
     return (
       <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 z-50 w-[92%] mobile-nav-safe">
-        <div className="rounded-xl backdrop-blur-sm md:backdrop-blur-md bg-black/60 p-3 flex items-center justify-between gap-3">
-          <Button size="sm" onClick={onAddToWatchlist} className={`flex-1 min-h-11 ${mainClass}`}>
-            <Bookmark className="w-4 h-4 mr-2" />{inWatchlist ? t('actions.inWatchlist') : t('actions.watchlist')}
+        <div className="rounded-xl backdrop-blur-sm md:backdrop-blur-md bg-black/60 p-3 flex flex-col gap-2">
+          <Button size="sm" onClick={onAddToWatchlist} className={`w-full min-h-11 ${watchlistClass}`}>
+            <Bookmark className="w-4 h-4 mr-2" />Watchlist
           </Button>
-          <Button size="sm" onClick={onMarkAsWatched} className={`flex-1 min-h-11 ${secondaryClass}`}>
-            <Check className="w-4 h-4 mr-2" />{watched ? t('actions.watched') : t('actions.mark')}
+          <Button size="sm" onClick={onMarkAsWatched} className={`w-full min-h-11 ${watchedClass}`}>
+            <Check className="w-4 h-4 mr-2" />Watched
           </Button>
-          <Button size="sm" variant="ghost" onClick={onShare} className="px-3 min-h-11 min-w-11">
+          <Button size="sm" variant="ghost" onClick={onShare} className="w-full min-h-11 justify-center">
             <Share2 className="w-4 h-4" />
           </Button>
         </div>
@@ -40,11 +44,11 @@ export default function ActionButtons({ inWatchlist, watched, onAddToWatchlist, 
 
   return (
     <div className="flex items-center gap-3">
-      <Button onClick={onAddToWatchlist} className={`${mainClass} gap-2`}>
-        <Bookmark className="w-4 h-4" />{inWatchlist ? t('actions.inWatchlist') : t('actions.addToWatchlist')}
+      <Button onClick={onAddToWatchlist} className={`${watchlistClass} gap-2`}>
+        <Bookmark className="w-4 h-4" />Watchlist
       </Button>
-      <Button onClick={onMarkAsWatched} className={`${secondaryClass} gap-2`}>
-        <Check className="w-4 h-4" />{watched ? t('actions.watched') : t('actions.markAsWatched')}
+      <Button onClick={onMarkAsWatched} className={`${watchedClass} gap-2`}>
+        <Check className="w-4 h-4" />Watched
       </Button>
       <Button variant="ghost" onClick={onShare} className="gap-2">
         <Share2 className="w-4 h-4" />{t('actions.share')}

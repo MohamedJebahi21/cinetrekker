@@ -605,12 +605,6 @@ const App = () => {
                   </Suspense>
                 )}
                 <div className="ct-page-shell flex min-h-[100dvh] flex-col">
-                  <a
-                    href="#main"
-                    className="skip-link rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground shadow-lg"
-                  >
-                    Skip to content
-                  </a>
                   <UnifiedNav />
                   <ScrollToTop />
                   <main

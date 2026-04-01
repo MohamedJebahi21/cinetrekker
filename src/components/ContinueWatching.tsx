@@ -210,13 +210,13 @@ export function ContinueWatching() {
             >
               <CardContent className="p-0">
                 <div className="flex h-full flex-col sm:flex-row">
-                  <div className="h-48 w-full overflow-hidden bg-muted sm:h-auto sm:w-32 md:w-36">
+                  <div className="aspect-[2/3] w-full overflow-hidden bg-muted/40 sm:aspect-auto sm:h-auto sm:w-32 md:w-36">
                     <Image
                       src={getImageUrl(item.details.poster_path, "w342")}
                       alt={title}
                       width={342}
                       height={513}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-contain sm:object-cover"
                       loading="lazy"
                       showSkeleton
                     />

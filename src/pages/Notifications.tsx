@@ -6,6 +6,8 @@ import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyStates";
 import { cn } from "@/lib/utils";
+import { getNotificationTarget } from "@/lib/notificationLinks";
+import { NotificationMediaThumb } from "@/components/NotificationMediaThumb";
 
 export default function Notifications() {
   const navigate = useNavigate();
@@ -17,6 +19,17 @@ export default function Notifications() {
     markAllRead,
     deleteNotification,
   } = useNotifications();
+
+  const handleNotificationClick = (id: string, movieId: string, isRead: boolean) => {
+    if (!isRead) {
+      void markRead(id);
+    }
+
+    const target = getNotificationTarget(movieId);
+    if (target) {
+      navigate(target);
+    }
+  };
 
   return (
     <>
@@ -74,28 +87,20 @@ export default function Notifications() {
                 )}
               >
                 <button
-                  className="flex-1 text-left"
-                  onClick={() => !n.is_read && markRead(n.id)}
+                  className="flex flex-1 items-start gap-3 text-left"
+                  onClick={() => handleNotificationClick(n.id, n.movie_id, n.is_read)}
                 >
-                  <div className="flex items-start gap-2">
-                    <span
-                      className={cn(
-                        "mt-1 h-2 w-2 rounded-full shrink-0",
-                        !n.is_read
-                          ? "bg-primary"
-                          : "bg-transparent border border-muted-foreground/30",
-                      )}
-                      aria-hidden="true"
-                    />
+                  <NotificationMediaThumb movieId={n.movie_id} alt={n.message} className="h-14 w-10 shrink-0 rounded-md border border-border/60 object-cover" />
+                  <div>
                     <p className={cn("text-sm", !n.is_read && "font-medium")}>
                       {n.message}
                     </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(n.created_at), {
+                        addSuffix: true,
+                      })}
+                    </p>
                   </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(n.created_at), {
-                      addSuffix: true,
-                    })}
-                  </p>
                 </button>
                 <Button
                   variant="ghost"

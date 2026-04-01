@@ -1,5 +1,5 @@
 import { Bell } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useNotifications } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,13 +9,27 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { getNotificationTarget } from "@/lib/notificationLinks";
+import { NotificationMediaThumb } from "@/components/NotificationMediaThumb";
 import { formatDistanceToNow } from "date-fns";
 
 export function NotificationBell() {
+  const navigate = useNavigate();
   const { notifications, unreadCount, markRead, markAllRead } =
     useNotifications();
 
   const recent = notifications.slice(0, 5);
+
+  const handleNotificationClick = (id: string, movieId: string, isRead: boolean) => {
+    if (!isRead) {
+      void markRead(id);
+    }
+
+    const target = getNotificationTarget(movieId);
+    if (target) {
+      navigate(target);
+    }
+  };
 
   return (
     <Popover>
@@ -60,22 +74,16 @@ export function NotificationBell() {
               key={n.id}
               type="button"
               className={cn(
-                "flex w-full items-start gap-2 px-3 py-2 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
+                "flex w-full items-start gap-3 px-3 py-2 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
                 !n.is_read && "bg-primary/5",
               )}
-              onClick={() => !n.is_read && markRead(n.id)}
+              onClick={() => handleNotificationClick(n.id, n.movie_id, n.is_read)}
             >
-              <span
-                className={cn(
-                  "mt-1 h-2 w-2 rounded-full shrink-0",
-                  !n.is_read
-                    ? "bg-primary"
-                    : "bg-transparent border border-muted-foreground/30",
-                )}
-                aria-hidden="true"
-              />
+              <NotificationMediaThumb movieId={n.movie_id} alt={n.message} />
               <span className="flex-1">
-                <span className="block text-sm leading-snug">{n.message}</span>
+                <span className={cn("block text-sm leading-snug", !n.is_read && "font-medium")}>
+                  {n.message}
+                </span>
                 <span className="block text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(n.created_at), {
                     addSuffix: true,

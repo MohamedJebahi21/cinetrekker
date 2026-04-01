@@ -5,7 +5,6 @@ import {
   Star,
   Check,
   Loader2,
-  Ellipsis,
 } from "lucide-react";
 import { Media } from "@/types/media";
 import {
@@ -30,12 +29,6 @@ import { useEffect } from "react";
 import { Image } from "@/components/ui/Image";
 import { cn } from "../lib/utils";
 import { buildMediaPath, getMediaAltText } from "@/lib/seo";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 export interface MediaCardProps {
   media: Media & { watchStatus?: string };
@@ -309,26 +302,36 @@ export const MediaCard = React.memo(function MediaCard({
             <Button
               type="button"
               size="sm"
-              variant={optimisticInWatchlist ? "default" : "outline"}
-              className="h-10 w-full justify-center gap-2 border-white/20 bg-background/80 text-foreground backdrop-blur-md"
+              variant="outline"
+              className={cn(
+                "h-10 w-full justify-center gap-2 backdrop-blur-md",
+                optimisticInWatchlist
+                  ? "border-red-500/70 bg-red-600 text-white hover:bg-red-700"
+                  : "border-white/20 bg-background/80 text-foreground",
+              )}
               onClick={(event) => void handleWatchlistClick(event)}
             >
               {isWatchlistPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : null}
-              {optimisticInWatchlist ? "✓ In Watchlist" : "+ Watchlist"}
+              Watchlist
             </Button>
             <Button
               type="button"
               size="sm"
-              variant={optimisticWatched ? "secondary" : "outline"}
-              className="h-10 w-full justify-center gap-2 border-white/20 bg-background/70 text-foreground backdrop-blur-md"
+              variant="outline"
+              className={cn(
+                "h-10 w-full justify-center gap-2 backdrop-blur-md",
+                optimisticWatched
+                  ? "border-emerald-500/70 bg-emerald-600 text-white hover:bg-emerald-700"
+                  : "border-white/20 bg-background/70 text-foreground",
+              )}
               onClick={(event) => void handleWatchedClick(event)}
             >
               {isWatchedPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : null}
-              {optimisticWatched ? "Watched" : "Mark Watched"}
+              Watched
             </Button>
           </div>
 
@@ -416,42 +419,26 @@ export const MediaCard = React.memo(function MediaCard({
         </div>
 
         <div className="border-t border-border/50 p-3 md:hidden">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant={optimisticWatched ? "secondary" : "outline"}
-                  className="min-h-[44px] flex-1 justify-center"
-                  onClick={(event) => void handleWatchedClick(event)}
-                >
-                  {isWatchedPending ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : null}
-                  {optimisticWatched ? "Watched" : "Mark Watched"}
-                </Button>
-              </TooltipTrigger>
-              {!user ? (
-                <TooltipContent>
-                  Sign in to save watched history and reviews.
-                </TooltipContent>
-              ) : null}
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex-1">
-              <Button
-                type="button"
-                variant={optimisticInWatchlist ? "default" : "outline"}
-                className="min-h-[44px] w-full justify-center"
-                onClick={(event) => void handleWatchlistClick(event)}
-              >
-                {isWatchlistPending ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : null}
-                {optimisticInWatchlist ? "✓ In Watchlist" : "+ Watchlist"}
-              </Button>
+                <div className="w-full">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={cn(
+                      "min-h-[44px] w-full justify-center backdrop-blur-md",
+                      optimisticInWatchlist
+                        ? "border-red-500/70 bg-red-600 text-white hover:bg-red-700"
+                        : "border-white/20 bg-gradient-to-b from-background/90 to-background/65 text-foreground",
+                    )}
+                    onClick={(event) => void handleWatchlistClick(event)}
+                  >
+                    {isWatchlistPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
+                    Watchlist
+                  </Button>
                 </div>
               </TooltipTrigger>
               {!user && (
@@ -461,37 +448,31 @@ export const MediaCard = React.memo(function MediaCard({
               )}
             </Tooltip>
 
-            {user && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="min-h-[44px] min-w-[44px] px-3"
-                    aria-label="More actions"
-                    onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                    }}
-                  >
-                    <Ellipsis className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52">
-                  <DropdownMenuItem
-                    onClick={(event) => void handleWatchedClick(event)}
-                  >
-                    <Check className="mr-2 h-4 w-4" />
-                    {optimisticWatched
-                      ? t("actions.removeFromWatched")
-                      : t("actions.markAsWatched")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to={`/${mediaType}/${media.id}`}>View details</Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn(
+                    "min-h-[44px] w-full justify-center backdrop-blur-md",
+                    optimisticWatched
+                      ? "border-emerald-500/70 bg-emerald-600 text-white hover:bg-emerald-700"
+                      : "border-white/20 bg-gradient-to-b from-background/90 to-background/65 text-foreground",
+                  )}
+                  onClick={(event) => void handleWatchedClick(event)}
+                >
+                  {isWatchedPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : null}
+                  Watched
+                </Button>
+              </TooltipTrigger>
+              {!user ? (
+                <TooltipContent>
+                  Sign in to save watched history and reviews.
+                </TooltipContent>
+              ) : null}
+            </Tooltip>
           </div>
         </div>
       </Link>

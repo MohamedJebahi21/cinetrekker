@@ -29,7 +29,6 @@ import { profileService } from "@/services/profile";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -312,16 +311,42 @@ export function UnifiedNav() {
           >
             <Search className="h-5 w-5" />
           </button>
+
+          {user ? (
+            <Suspense fallback={notificationFallback}>
+              <NotificationBell />
+            </Suspense>
+          ) : null}
+
+          {user ? (
+            <Link
+              to="/profile"
+              className={cn(
+                "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent",
+                pathname.startsWith("/profile") && "text-primary",
+              )}
+              aria-label={t("nav.profile", "Profile")}
+            >
+              {renderProfileAvatar()}
+            </Link>
+          ) : (
+            <Link
+              to="/login"
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent"
+              aria-label={t("nav.signIn", "Sign In")}
+            >
+              <User className="h-5 w-5" />
+            </Link>
+          )}
+
           <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
             <SheetTrigger asChild>
               <button
                 type="button"
                 className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent"
                 aria-label={t("nav.openMenu", "Open menu")}
-                aria-expanded={isMobileSheetOpen}
-                aria-controls="mobile-nav-sheet"
               >
-                {user ? renderProfileAvatar() : <Menu className="h-5 w-5" />}
+                <Menu className="h-5 w-5" />
               </button>
             </SheetTrigger>
           </Sheet>
@@ -332,18 +357,21 @@ export function UnifiedNav() {
       <div
         ref={desktopMenuRef}
         className={cn(
-          "absolute right-0 top-[calc(4rem+env(safe-area-inset-top,0px)+0.4rem)] z-50 hidden w-full border-t border-border/40 bg-background shadow-2xl backdrop-blur-xl transition-all duration-200 ease-out md:block",
+          "absolute right-0 top-[calc(4rem+env(safe-area-inset-top,0px)+0.4rem)] z-50 hidden w-full border-t border-border/40 bg-gradient-to-b from-background via-background/95 to-background/90 shadow-2xl backdrop-blur-xl transition-all duration-200 ease-out md:block",
           isMenuOpen
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none -translate-y-1 opacity-0",
         )}
       >
-        <div className="container mx-auto px-6 py-8">
-          <div className="grid grid-cols-3 gap-10">
+        <div className="container mx-auto px-6 py-7">
+          <div className="grid grid-cols-3 gap-6">
             {MEGA_MENU_COLUMNS.map((col) => (
-              <div key={col.heading}>
+              <div
+                key={col.heading}
+                className="rounded-2xl border border-border/45 bg-card/55 p-4 shadow-[0_8px_30px_rgba(0,0,0,0.18)]"
+              >
                 {/* Column heading */}
-                <p className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                <p className="mb-3 flex items-center gap-2 border-b border-border/40 pb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
                   {col.heading}
                 </p>
                 <ul className="space-y-1">
@@ -357,14 +385,23 @@ export function UnifiedNav() {
                         <Link
                           to={item.path}
                           className={cn(
-                            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                            "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                             isActive
-                              ? "bg-primary/10 text-primary"
-                              : "text-foreground/80 hover:bg-accent hover:text-foreground",
+                              ? "bg-primary/12 text-primary"
+                              : "text-foreground/80 hover:bg-accent/80 hover:text-foreground",
                           )}
                           aria-current={isActive ? "page" : undefined}
                         >
-                          <Icon className="h-4 w-4 flex-shrink-0 opacity-70" />
+                          <span
+                            className={cn(
+                              "flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg border",
+                              isActive
+                                ? "border-primary/35 bg-primary/15"
+                                : "border-border/50 bg-background/50 group-hover:border-border/80",
+                            )}
+                          >
+                            <Icon className="h-4 w-4 opacity-80" />
+                          </span>
                           {t(item.key, item.fallback)}
                         </Link>
                       </li>
@@ -377,12 +414,12 @@ export function UnifiedNav() {
 
           {/* Bottom bar — sign out / sign in */}
           {!loading && (
-            <div className="mt-8 border-t border-border/40 pt-5">
+            <div className="mt-6 border-t border-border/40 pt-5">
               {user ? (
                 <button
                   type="button"
                   onClick={() => { signOut(); setIsMenuOpen(false); }}
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+                  className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
                 >
                   <LogOut className="h-4 w-4" />
                   {t("nav.signOut", "Sign Out")}
@@ -390,7 +427,7 @@ export function UnifiedNav() {
               ) : (
                 <Link
                   to="/login"
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                 >
                   <LogIn className="h-4 w-4" />
                   {t("nav.signIn", "Sign In")}
@@ -406,37 +443,18 @@ export function UnifiedNav() {
         <SheetContent
           id="mobile-nav-sheet"
           side="right"
-          className="safe-area-insets w-[85vw] max-w-sm border-l border-border/60 bg-background/95 px-4 pb-8 pt-6 backdrop-blur-2xl md:hidden overflow-y-auto smooth-scroll"
+          className="safe-area-insets w-[85vw] max-w-sm border-l border-border/60 bg-gradient-to-b from-background via-background/95 to-background/90 px-4 pb-8 pt-6 backdrop-blur-2xl md:hidden overflow-y-auto smooth-scroll"
         >
           <SheetHeader className="text-left">
             <SheetTitle>{t("common.appName", "CineTrekker")}</SheetTitle>
-            <SheetDescription>
-              Browse quickly on phones and tablets without a crowded header.
-            </SheetDescription>
           </SheetHeader>
 
           <div className="mt-6 space-y-6">
-            <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card/70 p-3">
+            <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card/70 p-3 shadow-[0_8px_20px_rgba(0,0,0,0.12)]">
               {user ? renderProfileAvatar() : <User className="h-8 w-8 text-muted-foreground" />}
               <div className="min-w-0">
                 <div className="truncate text-sm font-semibold text-foreground">{user?.email || "Guest"}</div>
                 <div className="text-xs text-muted-foreground">{user ? "Signed in" : "Sign in to sync your lists"}</div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => { openSearch(); setIsMobileSheetOpen(false); }}
-                className="flex min-h-[56px] items-center justify-center gap-2 rounded-2xl border border-border/60 bg-card/70 text-sm font-medium"
-              >
-                <Search className="h-4 w-4" />
-                Search
-              </button>
-              <div className="flex min-h-[56px] items-center justify-center rounded-2xl border border-border/60 bg-card/70">
-                <Suspense fallback={notificationFallback}>
-                  <NotificationBell />
-                </Suspense>
               </div>
             </div>
 
@@ -460,6 +478,7 @@ export function UnifiedNav() {
             </div>
 
             <nav className="space-y-2" aria-label={t("nav.main", "Main navigation")}>
+              <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Browse</p>
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const isActive = item.exact ? pathname === item.path : pathname.startsWith(item.path);
@@ -470,10 +489,19 @@ export function UnifiedNav() {
                     onClick={() => setIsMobileSheetOpen(false)}
                     className={cn(
                       "flex min-h-[56px] items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors",
-                      isActive ? "bg-primary/10 text-primary" : "bg-card/60 text-foreground hover:bg-accent/50",
+                      isActive
+                        ? "border border-primary/25 bg-primary/10 text-primary"
+                        : "border border-border/40 bg-card/60 text-foreground hover:bg-accent/50",
                     )}
                   >
-                    <Icon className="h-4 w-4" />
+                    <span
+                      className={cn(
+                        "flex h-8 w-8 items-center justify-center rounded-lg",
+                        isActive ? "bg-primary/15" : "bg-background/60",
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </span>
                     {t(item.key, item.fallback)}
                   </Link>
                 );
@@ -481,10 +509,11 @@ export function UnifiedNav() {
             </nav>
 
             <div className="space-y-2">
+              <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Account</p>
               <Link
                 to="/settings"
                 onClick={() => setIsMobileSheetOpen(false)}
-                className="flex min-h-[56px] items-center gap-3 rounded-2xl bg-card/60 px-4 py-3 text-sm font-medium text-foreground"
+                className="flex min-h-[56px] items-center gap-3 rounded-2xl border border-border/40 bg-card/60 px-4 py-3 text-sm font-medium text-foreground"
               >
                 <Settings className="h-4 w-4" />
                 {t("nav.settings", "Settings")}
