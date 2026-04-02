@@ -12,6 +12,7 @@ import {
 import { SafetyLevel, type MaturityRating } from "@/lib/contentFilter";
 import { createLogger } from "@/lib/logger";
 import { ENV, getTmdbProxyUrl } from "@/lib/envValidation";
+import { toDisplayTitle } from "@/lib/displayTitle";
 
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p";
 const logger = createLogger("tmdb-client");
@@ -572,7 +573,7 @@ export const getTVGenres = async (
 };
 
 export const getMediaTitle = (media: Media): string => {
-  return media.title || media.name || "Unknown Title";
+  return toDisplayTitle(media.title || media.name || "Unknown Title");
 };
 
 export const getMediaYear = (media: Media): string => {

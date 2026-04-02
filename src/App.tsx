@@ -298,17 +298,21 @@ function AnimatedRoutes() {
           <Route
             path="/watched"
             element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Watched />
-              </Suspense>
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Watched />
+                </Suspense>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/following"
             element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Following />
-              </Suspense>
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Following />
+                </Suspense>
+              </ProtectedRoute>
             }
           />
           <Route
@@ -332,18 +336,32 @@ function AnimatedRoutes() {
           <Route
             path="/calendar"
             element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Calendar />
-              </Suspense>
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Calendar />
+                </Suspense>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/upcoming"
             element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Calendar />
-              </Suspense>
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Calendar />
+                </Suspense>
+              </ProtectedRoute>
             }
+          />
+
+          <Route
+            path="/movies"
+            element={<Navigate to="/search?type=movie&sort=popularity.desc" replace />}
+          />
+
+          <Route
+            path="/tv"
+            element={<Navigate to="/search?type=tv&sort=popularity.desc" replace />}
           />
           <Route
             path="/stats"

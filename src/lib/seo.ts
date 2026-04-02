@@ -49,14 +49,14 @@ export function getMediaAltText(
   const safeTitle = createSafeTextContent(title) || "Untitled";
   switch (variant) {
     case "backdrop":
-      return `${safeTitle} ${typeLabel} backdrop image for movie tracker`;
+      return `Backdrop of ${safeTitle} (${typeLabel})`;
     case "still":
       return `${safeTitle} ${typeLabel} still image for movie tracker`;
     case "logo":
       return `${safeTitle} ${typeLabel} logo`;
     case "poster":
     default:
-      return `${safeTitle} ${typeLabel} poster for movie tracker`;
+      return `Poster of ${safeTitle} (${typeLabel})`;
   }
 }
 

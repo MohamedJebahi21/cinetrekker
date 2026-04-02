@@ -171,6 +171,19 @@ export function UnifiedNav() {
     setIsMobileSheetOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const previousOverflow = document.body.style.overflow;
+    if (isMobileSheetOpen) {
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isMobileSheetOpen]);
+
   const openSearch = () => window.dispatchEvent(new CustomEvent("open-search-overlay"));
 
   const renderProfileAvatar = () =>
@@ -302,55 +315,177 @@ export function UnifiedNav() {
         </div>
 
         {/* Mobile controls */}
-        <div className="flex items-center gap-1 md:hidden">
-          <button
-            type="button"
-            onClick={openSearch}
-            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent"
-            aria-label={t("nav.search", "Search")}
-          >
-            <Search className="h-5 w-5" />
-          </button>
-
-          {user ? (
-            <Suspense fallback={notificationFallback}>
-              <NotificationBell />
-            </Suspense>
-          ) : null}
-
-          {user ? (
-            <Link
-              to="/profile"
-              className={cn(
-                "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent",
-                pathname.startsWith("/profile") && "text-primary",
-              )}
-              aria-label={t("nav.profile", "Profile")}
-            >
-              {renderProfileAvatar()}
-            </Link>
-          ) : (
-            <Link
-              to="/login"
+        <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
+          <div className="flex items-center gap-1 md:hidden">
+            <button
+              type="button"
+              onClick={openSearch}
               className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent"
-              aria-label={t("nav.signIn", "Sign In")}
+              aria-label={t("nav.search", "Search")}
             >
-              <User className="h-5 w-5" />
-            </Link>
-          )}
+              <Search className="h-5 w-5" />
+            </button>
 
-          <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
+            {user ? (
+              <Suspense fallback={notificationFallback}>
+                <NotificationBell />
+              </Suspense>
+            ) : null}
+
+            {user ? (
+              <Link
+                to="/profile"
+                className={cn(
+                  "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent",
+                  pathname.startsWith("/profile") && "text-primary",
+                )}
+                aria-label={t("nav.profile", "Profile")}
+              >
+                {renderProfileAvatar()}
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent"
+                aria-label={t("nav.signIn", "Sign In")}
+              >
+                <User className="h-5 w-5" />
+              </Link>
+            )}
+
             <SheetTrigger asChild>
               <button
                 type="button"
+                onClick={(event) => {
+                  event.currentTarget.blur();
+                }}
                 className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent"
                 aria-label={t("nav.openMenu", "Open menu")}
               >
                 <Menu className="h-5 w-5" />
               </button>
             </SheetTrigger>
-          </Sheet>
-        </div>
+          </div>
+
+          <SheetContent
+            id="mobile-nav-sheet"
+            side="right"
+            closeIcon={<Menu className="h-5 w-5" />}
+            closeAriaLabel={t("nav.closeMenu", "Close menu")}
+            onOpenAutoFocus={(event) => {
+              event.preventDefault();
+              const closeButton = event.currentTarget.querySelector<HTMLButtonElement>("[data-sheet-close]");
+              closeButton?.focus();
+            }}
+            className="safe-area-insets w-full max-w-none border-l-0 bg-background px-0 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(1rem,env(safe-area-inset-top,0px))] md:hidden overflow-y-auto smooth-scroll sm:w-3/4 sm:max-w-sm sm:border-l"
+          >
+            <div className="w-full px-4 sm:px-5">
+              <SheetHeader className="rounded-2xl border border-border/60 bg-card/60 px-4 py-4 text-left shadow-[0_8px_20px_rgba(0,0,0,0.08)]">
+                <SheetTitle className="text-xl leading-tight">{t("common.appName", "CineTrekker")}</SheetTitle>
+                <div className="text-sm text-muted-foreground">
+                  Explore, track, and manage your lists
+                </div>
+              </SheetHeader>
+
+              <div className="mt-5 space-y-5 pb-2">
+                <Link
+                  to={user ? "/profile" : "/login"}
+                  onClick={() => setIsMobileSheetOpen(false)}
+                  className="flex min-h-[56px] items-center gap-3 rounded-2xl border border-border/60 bg-card/70 p-4 shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  aria-label={user ? t("nav.profile", "Profile") : t("nav.signIn", "Sign In")}
+                >
+                  {user ? renderProfileAvatar() : <User className="h-8 w-8 text-muted-foreground" />}
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-foreground">{user?.email || "Guest"}</div>
+                    <div className="text-xs text-muted-foreground">{user ? "Signed in" : "Sign in to sync your lists"}</div>
+                  </div>
+                </Link>
+
+                <div className="space-y-2 border-t border-border/50 pt-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Theme</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {THEME_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setTheme(option.value)}
+                        className={cn(
+                          "rounded-xl border border-border/60 px-3 py-2 text-sm font-medium",
+                          theme === option.value ? "border-primary/40 bg-primary/10 text-primary" : "bg-card/60 text-foreground",
+                        )}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <nav className="space-y-2 border-t border-border/50 pt-4" aria-label={t("nav.main", "Main navigation")}>
+                  <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Browse</p>
+                  {NAV_ITEMS.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = item.exact ? pathname === item.path : pathname.startsWith(item.path);
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => setIsMobileSheetOpen(false)}
+                        className={cn(
+                          "flex min-h-[56px] min-w-0 items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors",
+                          isActive
+                            ? "border border-primary/25 bg-primary/10 text-primary"
+                            : "border border-border/40 bg-card/60 text-foreground hover:bg-accent/50",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+                            isActive ? "bg-primary/15" : "bg-background/60",
+                          )}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </span>
+                        <span className="min-w-0 break-words leading-5">{t(item.key, item.fallback)}</span>
+                      </Link>
+                    );
+                  })}
+                </nav>
+
+                <div className="space-y-2 border-t border-border/50 pt-4">
+                  <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Account</p>
+                  <Link
+                    to="/settings"
+                    onClick={() => setIsMobileSheetOpen(false)}
+                    className="flex min-h-[56px] min-w-0 items-center gap-3 rounded-2xl border border-border/40 bg-card/60 px-4 py-3 text-sm font-medium text-foreground"
+                  >
+                    <Settings className="h-4 w-4 shrink-0" />
+                    <span className="min-w-0 break-words leading-5">{t("nav.settings", "Settings")}</span>
+                  </Link>
+
+                  {user ? (
+                    <button
+                      type="button"
+                      onClick={() => { void signOut(); setIsMobileSheetOpen(false); }}
+                      className="flex min-h-[56px] w-full min-w-0 items-center gap-3 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive"
+                    >
+                      <LogOut className="h-4 w-4 shrink-0" />
+                      <span className="min-w-0 break-words leading-5">{t("nav.signOut", "Sign Out")}</span>
+                    </button>
+                  ) : (
+                    <Link
+                      to="/login"
+                      onClick={() => setIsMobileSheetOpen(false)}
+                      className="flex min-h-[56px] min-w-0 items-center gap-3 rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+                    >
+                      <LogIn className="h-4 w-4 shrink-0" />
+                      <span className="min-w-0 break-words leading-5">{t("nav.signIn", "Sign In")}</span>
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
 
       {/* ── Desktop Mega Menu ── */}
@@ -438,110 +573,6 @@ export function UnifiedNav() {
         </div>
       </div>
 
-      {/* ── Mobile Sheet ── */}
-      <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
-        <SheetContent
-          id="mobile-nav-sheet"
-          side="right"
-          className="safe-area-insets w-[85vw] max-w-sm border-l border-border/60 bg-gradient-to-b from-background via-background/95 to-background/90 px-4 pb-8 pt-6 backdrop-blur-2xl md:hidden overflow-y-auto smooth-scroll"
-        >
-          <SheetHeader className="text-left">
-            <SheetTitle>{t("common.appName", "CineTrekker")}</SheetTitle>
-          </SheetHeader>
-
-          <div className="mt-6 space-y-6">
-            <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card/70 p-3 shadow-[0_8px_20px_rgba(0,0,0,0.12)]">
-              {user ? renderProfileAvatar() : <User className="h-8 w-8 text-muted-foreground" />}
-              <div className="min-w-0">
-                <div className="truncate text-sm font-semibold text-foreground">{user?.email || "Guest"}</div>
-                <div className="text-xs text-muted-foreground">{user ? "Signed in" : "Sign in to sync your lists"}</div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Theme</p>
-              <div className="grid grid-cols-3 gap-2">
-                {THEME_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setTheme(option.value)}
-                    className={cn(
-                      "rounded-xl border border-border/60 px-3 py-2 text-sm font-medium",
-                      theme === option.value ? "border-primary/40 bg-primary/10 text-primary" : "bg-card/60 text-foreground",
-                    )}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <nav className="space-y-2" aria-label={t("nav.main", "Main navigation")}>
-              <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Browse</p>
-              {NAV_ITEMS.map((item) => {
-                const Icon = item.icon;
-                const isActive = item.exact ? pathname === item.path : pathname.startsWith(item.path);
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setIsMobileSheetOpen(false)}
-                    className={cn(
-                      "flex min-h-[56px] items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors",
-                      isActive
-                        ? "border border-primary/25 bg-primary/10 text-primary"
-                        : "border border-border/40 bg-card/60 text-foreground hover:bg-accent/50",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "flex h-8 w-8 items-center justify-center rounded-lg",
-                        isActive ? "bg-primary/15" : "bg-background/60",
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    {t(item.key, item.fallback)}
-                  </Link>
-                );
-              })}
-            </nav>
-
-            <div className="space-y-2">
-              <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Account</p>
-              <Link
-                to="/settings"
-                onClick={() => setIsMobileSheetOpen(false)}
-                className="flex min-h-[56px] items-center gap-3 rounded-2xl border border-border/40 bg-card/60 px-4 py-3 text-sm font-medium text-foreground"
-              >
-                <Settings className="h-4 w-4" />
-                {t("nav.settings", "Settings")}
-              </Link>
-
-              {user ? (
-                <button
-                  type="button"
-                  onClick={() => { void signOut(); setIsMobileSheetOpen(false); }}
-                  className="flex min-h-[56px] w-full items-center gap-3 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive"
-                >
-                  <LogOut className="h-4 w-4" />
-                  {t("nav.signOut", "Sign Out")}
-                </button>
-              ) : (
-                <Link
-                  to="/login"
-                  onClick={() => setIsMobileSheetOpen(false)}
-                  className="flex min-h-[56px] items-center gap-3 rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
-                >
-                  <LogIn className="h-4 w-4" />
-                  {t("nav.signIn", "Sign In")}
-                </Link>
-              )}
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
     </header>
   );
 }

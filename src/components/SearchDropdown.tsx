@@ -352,7 +352,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          className="pl-9 pr-16 h-10 bg-card/50 border-white/10 rounded-lg focus:border-primary focus:ring-primary/20 transition-all"
+          className="h-11 rounded-lg border-white/10 bg-card/50 pl-9 pr-16 transition-all focus:border-primary focus:ring-primary/20 sm:h-10"
           aria-label={t("search.placeholder")}
           role="combobox"
           aria-autocomplete="list"
@@ -385,7 +385,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
         (debouncedQuery.trim().length >= 1 || shouldShowRecentSearches) && (
           <div
             id="search-dropdown-results"
-            className="absolute top-full left-0 right-0 mt-2 bg-popover/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl overflow-y-auto max-h-screen z-50 animate-fade-in"
+            className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[72vh] overflow-y-auto rounded-xl border border-border/50 bg-popover/95 shadow-2xl backdrop-blur-xl animate-fade-in sm:max-h-screen"
           >
             {shouldShowRecentSearches ? (
               <div className="py-2">
@@ -411,10 +411,10 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                           className="flex min-h-[44px] flex-1 items-center gap-3 rounded-md py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                         >
                           <Clock3 className="h-4 w-4 text-muted-foreground" />
-                          <span className="flex-1 truncate text-sm font-medium text-foreground">
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
                             {item.query}
                           </span>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="hidden text-xs text-muted-foreground sm:inline">
                             {new Date(item.timestamp).toLocaleDateString()}
                           </span>
                         </button>
@@ -457,7 +457,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                         )}
                       >
                         {/* Thumbnail */}
-                        <div className="w-10 h-14 rounded overflow-hidden bg-muted flex-shrink-0">
+                        <div className="h-14 w-10 flex-shrink-0 overflow-hidden rounded bg-muted">
                           {getItemImage(item) ? (
                             <Image
                               src={
@@ -483,7 +483,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                         </div>
 
                         {/* Info */}
-                        <div className="flex-1 min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm truncate">
                             {getItemTitle(item)}
                           </p>
@@ -510,7 +510,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                 <button
                   type="button"
                   onClick={() => submitSearch(query)}
-                  className="flex w-full items-center justify-between border-t border-border/50 px-4 py-3 text-left text-sm text-primary transition-colors hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                  className="flex min-h-11 w-full items-center justify-between border-t border-border/50 px-4 py-3 text-left text-sm text-primary transition-colors hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
                 >
                   <span>
                     {t("common.seeAll")} results for "{query}"

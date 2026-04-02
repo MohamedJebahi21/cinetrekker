@@ -190,7 +190,7 @@ export default function Feedback() {
       <SEO title="Feedback - CineTrekker" description="Send feedback to CineTrekker" />
       <div className="max-w-3xl mx-auto py-12">
         <h1 className="section-title">Feedback</h1>
-        <p className="text-muted-foreground mt-4">
+        <p className="mt-4 text-base text-muted-foreground">
           We&apos;d love to hear your feedback. Fill out the form below and send it directly from the website.
         </p>
 
@@ -203,6 +203,8 @@ export default function Feedback() {
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
               autoComplete="name"
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? 'feedback-form-error' : undefined}
               required
             />
           </div>
@@ -216,6 +218,8 @@ export default function Feedback() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               autoComplete="email"
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? 'feedback-form-error' : undefined}
               required
             />
           </div>
@@ -228,6 +232,8 @@ export default function Feedback() {
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Share your ideas, bug reports, or feature requests..."
               className="min-h-[140px]"
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? 'feedback-form-error' : undefined}
               required
             />
           </div>
@@ -244,14 +250,22 @@ export default function Feedback() {
           </div>
 
           <div className="space-y-2">
-            <Label>Bot Protection</Label>
+            <Label htmlFor="feedback-bot-protection">Bot Protection</Label>
             {CAPTCHA_SITE_KEY && (
-              <div ref={turnstileContainerRef} />
+              <div id="feedback-bot-protection" ref={turnstileContainerRef} />
             )}
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          {success && <p className="text-sm text-emerald-400">{success}</p>}
+          {error && (
+            <p id="feedback-form-error" className="text-base text-destructive" role="alert">
+              {error}
+            </p>
+          )}
+          {success && (
+            <p className="text-base text-emerald-400" role="status" aria-live="polite">
+              {success}
+            </p>
+          )}
 
           <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
             {isSubmitting ? 'Sending...' : 'Send Feedback'}

@@ -10,6 +10,7 @@ import { getImageUrl } from "@/services/tmdb";
 import { Image } from "@/components/ui/Image";
 import { useWatchedEpisodes } from "@/hooks/useFollowedShows";
 import { useAuth } from "@/contexts/AuthContext";
+import { PaginationDotButton, PaginationDots, PaginationDotStatic } from "@/components/ui/pagination-dots";
 
 function ContinueWatchingSkeleton() {
   return (
@@ -22,20 +23,15 @@ function ContinueWatchingSkeleton() {
         {Array.from({ length: 3 }).map((_, index) => (
           <div
             key={index}
-            className="h-[440px] w-[min(82vw,360px)] shrink-0 rounded-3xl border border-border/60 bg-card/60 skeleton-shimmer sm:h-[420px] sm:w-[320px] md:w-[360px]"
+            className="h-[430px] w-[min(86vw,320px)] shrink-0 rounded-3xl border border-border/60 bg-card/60 skeleton-shimmer sm:h-[420px] sm:w-[320px] md:w-[360px]"
           />
         ))}
       </div>
-      <div className="mt-4 flex justify-center gap-2">
+      <PaginationDots className="justify-center">
         {Array.from({ length: 3 }).map((_, index) => (
-          <span
-            key={index}
-            className={`h-2.5 rounded-full ${
-              index === 0 ? "w-8 bg-primary" : "w-2.5 bg-primary/30"
-            }`}
-          />
+          <PaginationDotStatic key={index} active={index === 0} aria-hidden="true" />
         ))}
-      </div>
+      </PaginationDots>
     </section>
   );
 }
@@ -206,7 +202,7 @@ export function ContinueWatching() {
           return (
             <Card
               key={item.details.id}
-              className="min-h-[440px] w-[min(82vw,360px)] shrink-0 snap-start overflow-hidden rounded-3xl border-border/60 bg-card/80 sm:min-h-[420px] sm:w-[320px] md:w-[360px]"
+              className="min-h-[430px] w-[min(86vw,320px)] shrink-0 snap-start overflow-hidden rounded-3xl border-border/60 bg-card/80 sm:min-h-[420px] sm:w-[320px] md:w-[360px]"
             >
               <CardContent className="p-0">
                 <div className="flex h-full flex-col sm:flex-row">
@@ -315,21 +311,17 @@ export function ContinueWatching() {
       </div>
 
       {hasOverflow && pageCount > 1 ? (
-        <div className="mt-4 flex justify-center gap-2">
+        <PaginationDots className="justify-center">
           {Array.from({ length: pageCount }).map((_, index) => (
-            <button
+            <PaginationDotButton
               key={`continue-watching-page-${index}`}
-              type="button"
               onClick={() => scrollToCard(index)}
-              className={`rounded-full transition-all ${
-                index === activeIndex
-                  ? "h-2.5 w-8 bg-primary"
-                  : "h-2.5 w-2.5 bg-primary/30 hover:bg-primary/55"
-              }`}
+              active={index === activeIndex}
               aria-label={`Go to continue watching item ${index + 1}`}
+              aria-pressed={index === activeIndex}
             />
           ))}
-        </div>
+        </PaginationDots>
       ) : null}
     </section>
   );

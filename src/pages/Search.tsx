@@ -13,12 +13,15 @@ import {
 } from "lucide-react";
 import SEO from "@/components/SEO";
 import {
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-  DialogClose,
-  DialogDescription,
-} from "@/components/ui/dialog";
+  Drawer,
+  DrawerContent,
+  DrawerTrigger,
+  DrawerClose,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+} from "@/components/ui/drawer";
 import {
   Tooltip,
   TooltipTrigger,
@@ -64,6 +67,7 @@ import {
   toFaqJsonLd,
 } from "@/lib/seo";
 import { cn } from "@/lib/utils";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 
 const LANGUAGES = [
   { code: "en", key: "search.langOptions.english", fallback: "English" },
@@ -284,13 +288,13 @@ function SearchMultiSelect({
 
   return (
     <div className="space-y-1">
-      <label className="text-xs text-muted-foreground">{label}</label>
+      <label className="text-xs font-medium text-muted-foreground">{label}</label>
       <Popover>
         <PopoverTrigger asChild>
           <Button
             type="button"
             variant="outline"
-            className="h-10 w-full justify-between bg-background/50 px-3 font-normal"
+            className="h-11 w-full justify-between bg-background/50 px-3 font-normal"
           >
             <span className="truncate text-left">{summary}</span>
             <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -708,6 +712,8 @@ export default function Search() {
   const isError = activeQuery.isError;
   const activeError = activeQuery.error as Error | null;
   const hasMore = Boolean(activeQuery.hasNextPage);
+  const isLoadingOrRefreshing = isLoading || isRefreshingResults;
+  const loadingTimedOut = useLoadingTimeout(isLoadingOrRefreshing, 12000);
   const canonicalQuery = searchParams.toString();
   const faqItems = [
     {
@@ -896,10 +902,10 @@ export default function Search() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
         {/* Type Filter */}
         <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">
+          <label className="text-xs font-medium text-muted-foreground">
             {t("filters.type")}
           </label>
           <Select
@@ -928,7 +934,7 @@ export default function Search() {
 
         {/* Runtime Filter */}
         <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">
+          <label className="text-xs font-medium text-muted-foreground">
             {t("filters.runtime") || "Runtime"}
           </label>
           <Select
@@ -960,7 +966,7 @@ export default function Search() {
 
         {/* Year Filter */}
         <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">
+          <label className="text-xs font-medium text-muted-foreground">
             {t("filters.year")}
           </label>
           <Select
@@ -991,8 +997,8 @@ export default function Search() {
         />
 
         {/* Sort */}
-        <div className="space-y-1 col-span-2 sm:col-span-1">
-          <label className="text-xs text-muted-foreground">
+        <div className="space-y-1 sm:col-span-1">
+          <label className="text-xs font-medium text-muted-foreground">
             {t("filters.sort")}
           </label>
           <Select
@@ -1023,7 +1029,7 @@ export default function Search() {
   );
 
   return (
-    <div className="page-container pt-20">
+    <div className="page-container pt-20 pb-4 sm:pb-0">
       <SEO
         title={
           query
@@ -1054,10 +1060,10 @@ export default function Search() {
         ]}
       />
       {/* Search Header */}
-      <div className="mb-8 border-b border-border/60 bg-background/95 py-2 backdrop-blur-md">
+      <div className="mb-8 border-b border-border/60 bg-background/95 py-3 backdrop-blur-md sm:py-2">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="section-title mb-0">{t("nav.search")}</h1>
-          <RandomTrekButton />
+          <RandomTrekButton className="w-full sm:w-auto" />
         </div>
 
         {/* Search Input with Clear Button */}
@@ -1086,7 +1092,7 @@ export default function Search() {
         </div>
 
         {/* Filter hint */}
-        <p className="text-sm text-muted-foreground mt-3 flex items-center gap-2">
+        <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
           <SlidersHorizontal className="w-4 h-4" />
           {t("search.filterHint")}
         </p>
@@ -1099,11 +1105,11 @@ export default function Search() {
       </div>
 
       {/* Mobile filter button and dialog */}
-      <div className="md:hidden mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="mb-6 flex items-center justify-between gap-3 md:hidden">
+        <div className="min-w-0 flex-1 text-sm text-muted-foreground">
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="flex items-center gap-2">
+              <span className="flex items-center gap-2 truncate">
                 <SlidersHorizontal className="w-4 h-4" />
                 {t("search.filterHint")}
               </span>
@@ -1114,65 +1120,69 @@ export default function Search() {
           </Tooltip>
         </div>
 
-        <Dialog open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
-          <DialogTrigger asChild>
-            <Button variant="default" className="flex items-center gap-2">
+        <Drawer open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+          <DrawerTrigger asChild>
+            <Button variant="default" className="flex min-h-11 items-center gap-2 whitespace-nowrap px-4">
               <Filter className="w-4 h-4" />
               {t("search.filters")}
             </Button>
-          </DialogTrigger>
-          <DialogContent className="fixed right-0 top-0 h-full w-full max-w-sm bg-background p-4 z-50">
-            <DialogDescription className="sr-only">
-              {t("search.filterHint")}
-            </DialogDescription>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-primary" />
-                <span className="font-semibold">{t("search.filters")}</span>
+          </DrawerTrigger>
+          <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/60 bg-background px-0 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
+            <DrawerHeader className="border-b border-border/60 px-4 pb-4 pt-3 text-left">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <DrawerTitle className="text-lg">{t("search.filters")}</DrawerTitle>
+                  <DrawerDescription className="mt-1 text-sm text-muted-foreground">
+                    {t("search.filterHint")}
+                  </DrawerDescription>
+                </div>
+                <DrawerClose asChild>
+                  <button
+                    type="button"
+                    aria-label={t("common.close", "Close")}
+                    title={t("common.close", "Close")}
+                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border/60 bg-background text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </DrawerClose>
               </div>
-              <DialogClose asChild>
-                <button
-                  type="button"
-                  aria-label={t("common.close", "Close")}
-                  title={t("common.close", "Close")}
-                  className="p-2 rounded-md hover:bg-muted/30 ml-2 min-w-[44px] min-h-[44px]"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </DialogClose>
-            </div>
-            <div ref={mobileFiltersRef} className="overflow-auto max-h-[80vh]">
+            </DrawerHeader>
+
+            <div ref={mobileFiltersRef} className="max-h-[64vh] overflow-y-auto px-4 py-4">
               <FiltersContent />
             </div>
 
-            <div className="border-t border-border/50 mt-4 pt-3 flex items-center gap-2">
-              <Button
-                variant="ghost"
-                className="flex-1"
-                onClick={() => {
-                  clearFilters();
-                  mobileFiltersRef.current?.scrollTo({ top: 0 });
-                }}
-              >
-                {t("search.clearFilters")}
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={() => setMobileFiltersOpen(false)}
-              >
-                {t("common.apply", "Apply")}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            <DrawerFooter className="border-t border-border/60 px-4 pt-4">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  className="flex-1 min-h-11"
+                  onClick={() => {
+                    clearFilters();
+                    mobileFiltersRef.current?.scrollTo({ top: 0 });
+                  }}
+                >
+                  {t("search.clearFilters")}
+                </Button>
+                <Button
+                  className="flex-1 min-h-11"
+                  onClick={() => setMobileFiltersOpen(false)}
+                >
+                  {t("common.apply", "Apply")}
+                </Button>
+              </div>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
       </div>
 
       {/* Results Header */}
       <div className="mb-4">
         <p className="text-sm text-muted-foreground">
-          {isLoading || isRefreshingResults ? (
+          {isLoadingOrRefreshing && !loadingTimedOut ? (
             <>{t("common.loading")}</>
-          ) : isError ? (
+          ) : isError || loadingTimedOut ? (
             <>{activeError?.message || t("common.error")}</>
           ) : normalizedQuery ? (
             <>
@@ -1190,24 +1200,32 @@ export default function Search() {
       </div>
 
       {/* Results */}
-      {isLoading || isRefreshingResults ? (
+      {isLoadingOrRefreshing && !loadingTimedOut ? (
         <div className="media-grid">
           {Array.from({ length: 18 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
         </div>
-      ) : isError ? (
+      ) : isError || loadingTimedOut ? (
         <div className="text-center py-20 max-w-md mx-auto">
           <h3 className="text-2xl font-bold mb-3 title-display">
             {t("common.error")}
           </h3>
           <p className="text-muted-foreground mb-6 leading-relaxed">
-            {activeError?.message ||
+            {loadingTimedOut
+              ? t(
+                  "search.timeout",
+                  "Search took too long. Please try again.",
+                )
+              : activeError?.message ||
               t(
                 "search.noResultsDescription",
                 "Something went wrong while searching.",
               )}
           </p>
+          <Button onClick={() => void activeQuery.refetch()}>
+            {t("common.tryAgain", "Try again")}
+          </Button>
         </div>
       ) : results.length > 0 ? (
         <LoadMoreMediaGrid

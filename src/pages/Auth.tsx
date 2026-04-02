@@ -16,6 +16,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -197,8 +198,8 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
         description="Access your CineTrekker account to sync watchlists, ratings, and recommendations."
         canonical="https://cinetrekker.vercel.app/auth"
       />
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <Card className="w-full max-w-md">
+      <div className="flex min-h-[100dvh] items-center justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(1rem,env(safe-area-inset-top,0px))]">
+        <Card className="w-full max-w-md rounded-2xl">
           <CardHeader>
             <CardTitle>CineTrekker</CardTitle>
             <CardDescription>
@@ -224,7 +225,9 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                 )}
 
                 <div className="space-y-2">
+                  <Label htmlFor="auth-email">Email</Label>
                   <Input
+                    id="auth-email"
                     type="email"
                     name="email"
                     autoComplete={activeTab === "login" ? "username" : "email"}
@@ -247,20 +250,16 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                 <div className="space-y-2">
                   <div className="relative">
                     <div className="mb-2 flex items-center justify-between">
-                      <label
-                        htmlFor="auth-password"
-                        className="text-sm font-medium text-foreground"
-                      >
+                      <Label htmlFor="auth-password">
                         Password
-                      </label>
+                      </Label>
                       <button
                         type="button"
                         onClick={() => setShowPassword((current) => !current)}
-                        className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                        className="inline-flex min-h-11 items-center gap-1 rounded-md px-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
                         aria-label={
                           showPassword ? "Hide password" : "Show password"
                         }
-                        aria-pressed={showPassword}
                       >
                         {showPassword ? (
                           <EyeOff className="h-3.5 w-3.5" />
@@ -294,7 +293,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                     <button
                       type="button"
                       onClick={() => setShowPassword((current) => !current)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                      className="absolute right-2 top-1/2 inline-flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
                       aria-label={showPassword ? "Hide password" : "Show password"}
                     >
                       {showPassword ? (
@@ -310,7 +309,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                       <button
                         type="button"
                         onClick={() => void handleForgotPassword()}
-                        className="text-sm text-primary transition-colors hover:text-primary/80"
+                        className="min-h-11 rounded-md px-2 text-base text-primary transition-colors hover:text-primary/80"
                       >
                         Forgot Password?
                       </button>
@@ -324,7 +323,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                   )}
 
                   {activeTab === "register" && (
-                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 px-1 pt-1 text-[10px] text-muted-foreground opacity-80">
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 px-1 pt-1 text-sm text-muted-foreground opacity-80">
                       <p>• Min. 8 characters</p>
                       <p>• Uppercase & Lowercase</p>
                       <p>• Number & Special char</p>
@@ -333,8 +332,9 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                   )}
                 </div>
 
-                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                <label htmlFor="remember-me" className="flex items-center gap-2 text-base text-muted-foreground">
                   <Checkbox
+                    id="remember-me"
                     checked={rememberMe}
                     onCheckedChange={(checked) => setRememberMe(checked === true)}
                   />
@@ -360,14 +360,14 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t border-border" />
                   </div>
-                  <div className="relative flex justify-center text-xs uppercase">
+                  <div className="relative flex justify-center text-sm uppercase">
                     <span className="bg-background px-2 text-muted-foreground">
                       Or continue with
                     </span>
                   </div>
                 </div>
 
-                <p className="text-center text-xs text-muted-foreground">
+                <p className="text-center text-sm text-muted-foreground">
                   Google is the fastest option. Facebook and Apple may depend on
                   your browser or provider configuration.
                 </p>

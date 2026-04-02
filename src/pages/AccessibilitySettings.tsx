@@ -156,7 +156,7 @@ export default function AccessibilitySettings() {
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-9 w-9 shrink-0 border-border/60 bg-card/80 text-foreground hover:bg-card"
+                    className="h-11 w-11 shrink-0 border-border/60 bg-card/80 text-foreground hover:bg-card sm:h-9 sm:w-9"
                     onClick={decreaseFontSize}
                     aria-label="Decrease font size"
                     disabled={fontSize <= MIN_FONT_SIZE}
@@ -180,7 +180,7 @@ export default function AccessibilitySettings() {
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-9 w-9 shrink-0 border-border/60 bg-card/80 text-foreground hover:bg-card"
+                    className="h-11 w-11 shrink-0 border-border/60 bg-card/80 text-foreground hover:bg-card sm:h-9 sm:w-9"
                     onClick={increaseFontSize}
                     aria-label="Increase font size"
                     disabled={fontSize >= MAX_FONT_SIZE}
@@ -244,13 +244,12 @@ export default function AccessibilitySettings() {
                         key={option}
                         type="button"
                         className={cn(
-                          "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
+                          "rounded-lg px-3 py-2 text-xs font-semibold transition-colors",
                           active
                             ? "ct-toggle-button-active"
                             : "ct-toggle-button hover:text-foreground",
                         )}
                         onClick={() => setTheme(option)}
-                        aria-pressed={theme === option}
                       >
                         {label}
                       </button>

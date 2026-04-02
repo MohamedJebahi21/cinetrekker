@@ -310,6 +310,7 @@ export const MediaCard = React.memo(function MediaCard({
                   : "border-white/20 bg-background/80 text-foreground",
               )}
               onClick={(event) => void handleWatchlistClick(event)}
+              aria-label={`Add ${title} to watchlist`}
             >
               {isWatchlistPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -327,6 +328,7 @@ export const MediaCard = React.memo(function MediaCard({
                   : "border-white/20 bg-background/70 text-foreground",
               )}
               onClick={(event) => void handleWatchedClick(event)}
+              aria-label={`Mark ${title} as watched`}
             >
               {isWatchedPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -405,11 +407,6 @@ export const MediaCard = React.memo(function MediaCard({
             ) : (
               <span />
             )}
-            {!user && rating > 0 ? (
-              <span className="text-xs font-medium text-muted-foreground">
-                {rating.toFixed(1)}
-              </span>
-            ) : null}
           </div>
           {!user ? (
             <p className="mt-2 text-[11px] text-muted-foreground">
@@ -433,6 +430,7 @@ export const MediaCard = React.memo(function MediaCard({
                         : "border-white/20 bg-gradient-to-b from-background/90 to-background/65 text-foreground",
                     )}
                     onClick={(event) => void handleWatchlistClick(event)}
+                    aria-label={`Add ${title} to watchlist`}
                   >
                     {isWatchlistPending ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -460,6 +458,7 @@ export const MediaCard = React.memo(function MediaCard({
                       : "border-white/20 bg-gradient-to-b from-background/90 to-background/65 text-foreground",
                   )}
                   onClick={(event) => void handleWatchedClick(event)}
+                  aria-label={`Mark ${title} as watched`}
                 >
                   {isWatchedPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

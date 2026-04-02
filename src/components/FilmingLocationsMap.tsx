@@ -24,6 +24,7 @@ export function FilmingLocationsMap({ items = [], points: customPoints }: Filmin
   const mapboxRef = useRef<MapboxModule | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const markerRefs = useRef<import("mapbox-gl").Marker[]>([]);
+  const idleIdRef = useRef<number | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
   const points = useMemo(
@@ -37,6 +38,7 @@ export function FilmingLocationsMap({ items = [], points: customPoints }: Filmin
     }
 
     let cancelled = false;
+    let observer: IntersectionObserver | null = null;
 
     const initMap = async () => {
       const mapbox = await import("mapbox-gl");
@@ -75,10 +77,38 @@ export function FilmingLocationsMap({ items = [], points: customPoints }: Filmin
       mapRef.current = map;
     };
 
-    void initMap();
+    const queueMapInit = () => {
+      if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+        idleIdRef.current = window.requestIdleCallback(() => {
+          void initMap();
+        }, { timeout: 1800 });
+        return;
+      }
+
+      window.setTimeout(() => {
+        void initMap();
+      }, 120);
+    };
+
+    observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry?.isIntersecting) return;
+        observer?.disconnect();
+        queueMapInit();
+      },
+      { rootMargin: "220px" },
+    );
+
+    observer.observe(mapContainerRef.current);
 
     return () => {
       cancelled = true;
+      observer?.disconnect();
+      if (idleIdRef.current !== null && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleIdRef.current);
+      }
+      idleIdRef.current = null;
       markerRefs.current.forEach((marker) => marker.remove());
       markerRefs.current = [];
       mapRef.current?.remove();

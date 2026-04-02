@@ -64,6 +64,9 @@ import { Image } from "@/components/ui/Image";
 import { FollowUpdatesButton } from "@/components/FollowUpdatesButton";
 import { usePinnedFavorites } from "@/hooks/usePinnedFavorites";
 import { logger } from "@/lib/logger";
+import { toDisplayTitle } from "@/lib/displayTitle";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
+import { PaginationDotButton, PaginationDots } from "@/components/ui/pagination-dots";
 import {
   buildCanonicalUrl,
   buildMediaPath,
@@ -223,6 +226,7 @@ export default function Details() {
     enabled: isValidId && !!mediaType,
     retry: 3,
   });
+  const detailsLoadingTimedOut = useLoadingTimeout(isLoading, 15000);
 
   const { data: seasonDetails } = useQuery({
     queryKey: ["season-details", mediaId, selectedSeason, language],
@@ -341,7 +345,7 @@ export default function Details() {
     }
   }, [availableSeasonNumbers, mediaType, seasons, selectedSeason]);
 
-  if (isLoading) {
+  if (isLoading && !detailsLoadingTimedOut) {
     return (
       <div className="min-h-screen">
         <div className="relative h-[50vh] overflow-hidden -mt-16 md:h-[70vh]">
@@ -401,6 +405,18 @@ export default function Details() {
     );
   }
 
+  if (detailsLoadingTimedOut) {
+    return (
+      <MovieRouteError
+        message={t(
+          "details.timeout",
+          "Loading took too long. Please check your connection and try again.",
+        )}
+        onRetry={() => refetch()}
+      />
+    );
+  }
+
   if (!isValidId) {
     return (
       <TitleUnavailable
@@ -457,7 +473,7 @@ export default function Details() {
     );
   }
 
-  const title = details.title || details.name || "";
+  const title = toDisplayTitle(details.title || details.name || "");
   const overview = details.overview || t("details.noOverview");
   const posterUrl = getImageUrl(details.poster_path, "w500");
   const posterSrcSet = details.poster_path
@@ -1450,28 +1466,22 @@ export default function Details() {
               ))}
             </div>
             {castPageCount > 1 && (
-              <div className="mt-1 flex items-center justify-center gap-2">
+              <PaginationDots className="mt-1">
                 {Array.from({ length: castPageCount }).map((_, index) => (
-                  <button
+                  <PaginationDotButton
                     key={`cast-page-${index}`}
-                    type="button"
                     onClick={() =>
                       castScrollRef.current?.scrollTo({
                         left: (castScrollRef.current?.clientWidth || 0) * index,
                         behavior: "smooth",
                       })
                     }
-                    className={cn(
-                      "rounded-full transition-all",
-                      index === activeCastPage
-                        ? "h-2.5 w-6 bg-primary"
-                        : "h-2.5 w-2.5 bg-primary/30 hover:bg-primary/55",
-                    )}
+                    active={index === activeCastPage}
                     aria-label={`Go to cast page ${index + 1}`}
                     aria-current={index === activeCastPage ? "true" : undefined}
                   />
                 ))}
-              </div>
+              </PaginationDots>
             )}
           </section>
         )}

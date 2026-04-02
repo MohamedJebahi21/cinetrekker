@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { getImageUrl } from '@/services/tmdb';
 import { Image } from '@/components/ui/Image';
+import { PaginationDotButton, PaginationDots } from '@/components/ui/pagination-dots';
 
 type Props = {
   backdrops?: Array<{ file_path: string }>;
@@ -69,27 +70,22 @@ function MediaGalleryInner({ backdrops = [], videos = [] }: Props) {
     if (pageCount <= 1) return null;
 
     return (
-      <div className="mt-3 flex items-center justify-center gap-2">
+      <PaginationDots className="mt-3">
         {Array.from({ length: pageCount }).map((_, index) => (
-          <button
+          <PaginationDotButton
             key={`${label}-page-${index}`}
-            type="button"
             onClick={() =>
               container?.scrollTo({
                 left: container.clientWidth * index,
                 behavior: 'smooth',
               })
             }
-            className={
-              index === activePage
-                ? 'h-2.5 w-6 rounded-full bg-primary transition-all'
-                : 'h-2.5 w-2.5 rounded-full bg-primary/30 transition-all hover:bg-primary/55'
-            }
+            active={index === activePage}
             aria-label={`Go to ${label} page ${index + 1}`}
             aria-pressed={index === activePage}
           />
         ))}
-      </div>
+      </PaginationDots>
     );
   };
 

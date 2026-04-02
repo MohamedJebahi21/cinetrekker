@@ -24,7 +24,7 @@ export function HeroSection() {
   return (
     <section className="relative overflow-hidden border-b border-border/40 bg-background">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(229,9,20,0.22),transparent_32%),radial-gradient(circle_at_80%_20%,rgba(245,158,11,0.14),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.03),transparent_42%)]" />
-      <div className="page-container relative grid gap-8 py-12 sm:py-14 md:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] md:items-center md:gap-10 md:py-24">
+      <div className="page-container relative grid grid-cols-1 gap-8 py-12 sm:py-14 md:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] md:items-center md:gap-10 md:py-24">
         <div className="max-w-3xl">
           <div className="mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-2 text-xs font-medium text-primary sm:px-4 sm:text-sm">
             <Sparkles className="h-4 w-4" />
@@ -55,16 +55,16 @@ export function HeroSection() {
           </div>
         </div>
 
-        <div className="ct-panel-strong grid gap-3 p-4 md:p-5">
+        <div className="ct-panel-strong grid gap-3 rounded-3xl border border-border/50 bg-[linear-gradient(180deg,hsla(var(--card)/0.92),hsla(var(--card)/0.72)),radial-gradient(circle_at_top,hsla(var(--primary)/0.12),transparent_58%)] p-4 shadow-[0_18px_50px_rgba(0,0,0,0.18)] md:p-5">
           {HERO_HIGHLIGHTS.map((highlight) => {
             const Icon = highlight.icon;
             return (
               <div
                 key={highlight.label}
-                className="rounded-2xl border border-border/60 bg-card/70 p-4"
+                className="group rounded-2xl border border-border/60 bg-[linear-gradient(180deg,hsla(var(--card)/0.88),hsla(var(--card)/0.65))] p-4 shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_14px_36px_rgba(229,9,20,0.12)] focus-within:border-primary/35"
               >
                 <div className="flex items-start gap-3">
-                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/15 bg-primary/12 text-primary shadow-[0_8px_18px_hsla(var(--primary)/0.12)] transition-transform duration-300 group-hover:scale-105">
                     <Icon className="h-5 w-5" />
                   </span>
                   <p className="text-sm leading-6 text-foreground/90">

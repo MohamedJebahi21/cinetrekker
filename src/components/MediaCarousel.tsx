@@ -7,6 +7,7 @@ import { MediaCard, MediaCardSkeleton } from "@/components/MediaCard";
 import { Button } from "@/components/ui/button";
 import { useContentPolicy } from "@/contexts/content-policy-context";
 import { applySafetyFilter } from "@/lib/contentFilter";
+import { PaginationDotButton, PaginationDots } from "@/components/ui/pagination-dots";
 
 interface MediaCarouselProps {
   title: string;
@@ -158,11 +159,10 @@ export function MediaCarousel({
 
           {/* Pagination dots */}
           {pageCount > 1 && (
-            <div className="mt-4 flex items-center justify-center gap-2">
+            <PaginationDots>
               {Array.from({ length: pageCount }).map((_, index) => (
-                <button
+                <PaginationDotButton
                   key={`${title}-page-${index}`}
-                  type="button"
                   onClick={() => {
                     const container = scrollContainerRef.current;
                     if (!container) return;
@@ -171,16 +171,12 @@ export function MediaCarousel({
                       behavior: "smooth",
                     });
                   }}
-                  className={`h-2.5 rounded-full transition-all ${
-                    index === activePage
-                      ? "w-6 bg-primary"
-                      : "w-2.5 bg-primary/30 hover:bg-primary/55"
-                  }`}
+                  active={index === activePage}
                   aria-label={`Go to carousel page ${index + 1}`}
                   aria-pressed={index === activePage}
                 />
               ))}
-            </div>
+            </PaginationDots>
           )}
         </div>
       ) : (

@@ -21,6 +21,7 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GlassStatCard } from "@/components/GlassStatCard";
 import { useEnhancedStatsData, type MediaTypeFilter } from "@/hooks/useEnhancedStatsData";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const CINEMATIC_CHART_COLORS = [
   "#E50914",
@@ -35,6 +36,7 @@ const CINEMATIC_CHART_COLORS = [
 
 export default function EnhancedStats() {
   const { i18n, t } = useTranslation();
+  const isMobile = useIsMobile();
   const language = i18n.language;
   const {
     mediaLoading,
@@ -123,8 +125,8 @@ export default function EnhancedStats() {
           />
         </div>
 
-        <div className="ct-toolbar justify-center">
-          <div className="ct-filter-field">
+        <div className="ct-toolbar grid w-full grid-cols-1 justify-center gap-3 sm:flex sm:w-auto sm:flex-wrap">
+          <div className="ct-filter-field w-full sm:w-auto">
             <label className="ct-filter-label">Year</label>
             <Select
               value={selectedYear.toString()}
@@ -146,7 +148,7 @@ export default function EnhancedStats() {
             </Select>
           </div>
 
-          <div className="ct-filter-field">
+          <div className="ct-filter-field w-full sm:w-auto">
             <label className="ct-filter-label">Type</label>
             <Select
               value={selectedType}
@@ -163,7 +165,7 @@ export default function EnhancedStats() {
             </Select>
           </div>
 
-          <div className="ct-filter-field">
+          <div className="ct-filter-field w-full sm:w-auto">
             <label className="ct-filter-label">Language</label>
             <Select value={selectedLang} onValueChange={setSelectedLang}>
               <SelectTrigger className="rounded-2xl border-border/60 bg-card/70 text-foreground">
@@ -190,15 +192,15 @@ export default function EnhancedStats() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={isMobile ? 240 : 300}>
                   <PieChart>
                     <Pie
                       data={genreStats}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={(entry) => `${entry.name} (${entry.count})`}
-                      outerRadius={90}
+                      label={isMobile ? false : (entry) => `${entry.name} (${entry.count})`}
+                      outerRadius={isMobile ? 72 : 90}
                       dataKey="count"
                     >
                       {genreStats.map((entry, index) => (
@@ -231,19 +233,19 @@ export default function EnhancedStats() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={isMobile ? 240 : 300}>
                   <BarChart data={genreStats}>
                     <XAxis
                       dataKey="name"
                       angle={-45}
                       textAnchor="end"
-                      height={80}
+                      height={isMobile ? 64 : 80}
                       stroke="#a3a3a3"
-                      tick={{ fill: "#d4d4d8", fontSize: 12 }}
+                      tick={{ fill: "#d4d4d8", fontSize: isMobile ? 10 : 12 }}
                     />
                     <YAxis
                       stroke="#a3a3a3"
-                      tick={{ fill: "#d4d4d8", fontSize: 12 }}
+                      tick={{ fill: "#d4d4d8", fontSize: isMobile ? 10 : 12 }}
                     />
                     <Tooltip
                       contentStyle={{

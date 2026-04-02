@@ -38,9 +38,9 @@ export default function Notifications() {
         description="Your CineTrekker notifications"
         canonical="https://cinetrekker.vercel.app/notifications"
       />
-      <div className="page-container pt-20 pb-24 md:pb-0 max-w-2xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="section-title flex items-center gap-3">
+      <div className="page-container mx-auto max-w-2xl pt-20 pb-28 md:pb-0">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="section-title flex items-center gap-3 text-3xl sm:text-[2.5rem]">
             <Bell className="w-7 h-7 text-primary" />
             Notifications
           </h1>
@@ -49,7 +49,7 @@ export default function Notifications() {
               variant="outline"
               size="sm"
               onClick={() => markAllRead()}
-              className="gap-2"
+              className="min-h-11 w-full gap-2 sm:w-auto"
             >
               <CheckCheck className="w-4 h-4" />
               Mark all read
@@ -76,26 +76,30 @@ export default function Notifications() {
             }}
           />
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {notifications.map((n) => (
               <li
                 key={n.id}
                 className={cn(
-                  "flex items-start justify-between gap-3 rounded-lg border p-4 transition-colors",
+                  "flex items-start justify-between gap-3 rounded-2xl border p-4 transition-colors sm:p-4",
                   !n.is_read && "border-primary/30 bg-primary/5",
                   n.is_read && "border-border bg-card",
                 )}
               >
                 <button
-                  className="flex flex-1 items-start gap-3 text-left"
+                  className="flex min-w-0 flex-1 items-start gap-3 text-left"
                   onClick={() => handleNotificationClick(n.id, n.movie_id, n.is_read)}
                 >
-                  <NotificationMediaThumb movieId={n.movie_id} alt={n.message} className="h-14 w-10 shrink-0 rounded-md border border-border/60 object-cover" />
-                  <div>
-                    <p className={cn("text-sm", !n.is_read && "font-medium")}>
+                  <NotificationMediaThumb
+                    movieId={n.movie_id}
+                    alt={n.message}
+                    className="h-16 w-11 shrink-0 rounded-lg border border-border/60 object-cover"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className={cn("text-sm leading-6", !n.is_read && "font-medium")}>
                       {n.message}
                     </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(n.created_at), {
                         addSuffix: true,
                       })}
@@ -105,7 +109,7 @@ export default function Notifications() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="shrink-0 text-muted-foreground hover:text-destructive"
+                  className="min-h-11 min-w-11 shrink-0 text-muted-foreground hover:text-destructive"
                   aria-label="Delete notification"
                   onClick={() => deleteNotification(n.id)}
                 >

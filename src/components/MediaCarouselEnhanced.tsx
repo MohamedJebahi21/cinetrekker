@@ -5,12 +5,14 @@ import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { Media } from '@/types/media';
 import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
 import { Button } from '@/components/ui/button';
+import { PaginationDotButton, PaginationDots, PaginationDotStatic } from '@/components/ui/pagination-dots';
 
 interface MediaCarouselProps {
   title: string;
   items: Media[];
   loading?: boolean;
   showMoreLink?: string;
+  showMoreLabel?: string;
   emptyMessage?: string;
   showManualNav?: boolean;
 }
@@ -29,6 +31,7 @@ export function MediaCarouselEnhanced({
   items,
   loading = false,
   showMoreLink,
+  showMoreLabel,
   emptyMessage,
   showManualNav = true,
 }: MediaCarouselProps) {
@@ -97,7 +100,7 @@ export function MediaCarouselEnhanced({
         {showMoreLink && (
           <Link to={showMoreLink}>
             <Button variant="ghost" size="sm" className="w-full gap-1 sm:w-auto">
-              {t('common.seeAll').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase())}
+              {(showMoreLabel || t('common.seeAll')).replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase())}
               <ChevronRight className="w-4 h-4" />
             </Button>
           </Link>
@@ -113,15 +116,11 @@ export function MediaCarouselEnhanced({
               </div>
             ))}
           </div>
-          <div className="mt-4 flex items-center justify-center gap-2">
+          <PaginationDots>
             {Array.from({ length: 4 }).map((_, i) => (
-              <span
-                key={i}
-                className={`h-2.5 rounded-full ${i === 0 ? 'w-6 bg-primary' : 'w-2.5 bg-primary/30'}`}
-                aria-hidden="true"
-              />
+              <PaginationDotStatic key={i} active={i === 0} aria-hidden="true" />
             ))}
-          </div>
+          </PaginationDots>
         </div>
       ) : items.length > 0 ? (
         <div className="relative group/scroll">
@@ -166,11 +165,10 @@ export function MediaCarouselEnhanced({
           </div>
 
           {pageCount > 1 && (
-            <div className="mt-4 flex items-center justify-center gap-2">
+            <PaginationDots>
               {Array.from({ length: pageCount }).map((_, index) => (
-                <button
+                <PaginationDotButton
                   key={`${title}-page-${index}`}
-                  type="button"
                   onClick={() => {
                     const container = scrollContainerRef.current;
                     if (!container) return;
@@ -179,15 +177,12 @@ export function MediaCarouselEnhanced({
                       behavior: "smooth",
                     });
                   }}
-                  className={`rounded-full transition-all ${
-                    index === activePage
-                      ? "h-2.5 w-6 bg-primary"
-                      : "h-2.5 w-2.5 bg-primary/30 hover:bg-primary/55"
-                  }`}
+                  active={index === activePage}
                   aria-label={`Go to carousel page ${index + 1}`}
+                  aria-pressed={index === activePage}
                 />
               ))}
-            </div>
+            </PaginationDots>
           )}
         </div>
       ) : (

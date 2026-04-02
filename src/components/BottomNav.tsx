@@ -45,7 +45,7 @@ export function BottomNav({ showOnMobile = true }: BottomNavProps) {
 
   return (
     <>
-      <nav className="mobile-nav-safe fixed bottom-0 left-0 right-0 z-40 border-t border-border/70 bg-background/95 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] backdrop-blur-xl md:hidden">
+      <nav className="mobile-nav-safe fixed bottom-0 left-0 right-0 z-40 border-t border-border/70 bg-background/98 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] md:hidden">
         <div className="grid min-h-[4.5rem] grid-cols-4 gap-1 px-2 pt-2">
           {MOBILE_NAV_ITEMS.map((item) => {
             const Icon = item.icon;
@@ -59,9 +59,9 @@ export function BottomNav({ showOnMobile = true }: BottomNavProps) {
                 aria-label={item.label}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl px-2 text-[11px] font-semibold transition-colors",
+                  "flex min-h-[56px] flex-col items-center justify-center gap-0.5 rounded-xl px-2 text-[10px] font-semibold leading-none transition-colors",
                   active
-                    ? "bg-primary/12 text-primary"
+                    ? "bg-primary/12 text-primary shadow-[inset_0_0_0_1px_hsla(var(--primary)/0.18)]"
                     : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
                 )}
               >

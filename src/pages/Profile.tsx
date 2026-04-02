@@ -63,6 +63,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import { PaginationDotButton, PaginationDots } from "@/components/ui/pagination-dots";
 import SEO from "@/components/SEO";
 import { StickySaveBar } from "@/components/StickySaveBar";
 import { humanizeUiText } from "@/lib/humanize-ui-text";
@@ -2222,13 +2223,12 @@ export default function Profile() {
                         </div>
 
                         {favoriteMoviesCarouselState.pageCount > 1 ? (
-                          <div className="mt-4 flex items-center justify-center gap-2">
+                          <PaginationDots>
                             {Array.from({
                               length: favoriteMoviesCarouselState.pageCount,
                             }).map((_, index) => (
-                              <button
+                              <PaginationDotButton
                                 key={`favorite-movies-page-${index}`}
-                                type="button"
                                 onClick={() => {
                                   const container =
                                     favoriteMoviesCarouselRef.current;
@@ -2238,12 +2238,7 @@ export default function Profile() {
                                     behavior: "smooth",
                                   });
                                 }}
-                                className={
-                                  index ===
-                                  favoriteMoviesCarouselState.activePage
-                                    ? "h-2.5 w-6 rounded-full bg-primary transition-all"
-                                    : "h-2.5 w-2.5 rounded-full bg-primary/30 transition-all hover:bg-primary/55"
-                                }
+                                active={index === favoriteMoviesCarouselState.activePage}
                                 aria-label={`Go to favorite movies page ${index + 1}`}
                                 aria-pressed={
                                   index ===
@@ -2251,7 +2246,7 @@ export default function Profile() {
                                 }
                               />
                             ))}
-                          </div>
+                          </PaginationDots>
                         ) : null}
                       </div>
                     ) : null}
@@ -2403,13 +2398,12 @@ export default function Profile() {
                         </div>
 
                         {favoriteSeriesCarouselState.pageCount > 1 ? (
-                          <div className="mt-4 flex items-center justify-center gap-2">
+                          <PaginationDots>
                             {Array.from({
                               length: favoriteSeriesCarouselState.pageCount,
                             }).map((_, index) => (
-                              <button
+                              <PaginationDotButton
                                 key={`favorite-series-page-${index}`}
-                                type="button"
                                 onClick={() => {
                                   const container =
                                     favoriteSeriesCarouselRef.current;
@@ -2419,12 +2413,7 @@ export default function Profile() {
                                     behavior: "smooth",
                                   });
                                 }}
-                                className={
-                                  index ===
-                                  favoriteSeriesCarouselState.activePage
-                                    ? "h-2.5 w-6 rounded-full bg-primary transition-all"
-                                    : "h-2.5 w-2.5 rounded-full bg-primary/30 transition-all hover:bg-primary/55"
-                                }
+                                active={index === favoriteSeriesCarouselState.activePage}
                                 aria-label={`Go to favorite series page ${index + 1}`}
                                 aria-pressed={
                                   index ===
@@ -2432,7 +2421,7 @@ export default function Profile() {
                                 }
                               />
                             ))}
-                          </div>
+                          </PaginationDots>
                         ) : null}
                       </div>
                     ) : null}

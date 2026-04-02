@@ -60,12 +60,7 @@ export function Footer() {
           {/* Support Column */}
           <div className="min-w-0">
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-foreground/90">
-              <Link
-                to="/about"
-                className="hover:text-primary transition-colors"
-              >
-                {t("footer.support", "Support")}
-              </Link>
+              {t("footer.support", "Support")}
             </h3>
             <nav className="flex flex-col gap-3" aria-label="Support links">
               <a
@@ -87,6 +82,12 @@ export function Footer() {
               >
                 {t("footer.feedback", "Feedback")}
               </Link>
+              <Link
+                to="/feedback"
+                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                {t("footer.contact", "Contact")}
+              </Link>
               <a
                 href="https://developer.themoviedb.org/docs"
                 target="_blank" rel="noopener noreferrer"
@@ -99,12 +100,7 @@ export function Footer() {
           {/* Legal Column */}
           <div className="min-w-0">
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-foreground/90">
-              <Link
-                to="/privacy"
-                className="hover:text-primary transition-colors"
-              >
-                {t("footer.legal", "Legal")}
-              </Link>
+              {t("footer.legal", "Legal")}
             </h3>
             <nav className="flex flex-col gap-3" aria-label="Legal links">
               <Link
@@ -139,7 +135,7 @@ export function Footer() {
             {/* TMDB Attribution */}
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-[0.84rem] text-muted-foreground">
+                <span className="text-sm text-muted-foreground">
                   {t("footer.poweredBy", "Powered by")}
                 </span>
                 <a
@@ -150,7 +146,7 @@ export function Footer() {
                   <img
                     src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg"
                     alt="TMDB logo for CineTrekker movie tracker data provider"
-                    className="h-3 logo-image"
+                    className="h-4 logo-image"
                     loading="lazy"
                     width="81"
                     height="12"
@@ -160,7 +156,7 @@ export function Footer() {
             </div>
           </div>
           {/* TMDB Attribution Text */}
-          <p className="mx-auto mt-3 max-w-3xl text-center text-[0.78rem] leading-relaxed text-muted-foreground">
+          <p className="mx-auto mt-3 max-w-3xl text-center text-sm leading-relaxed text-muted-foreground">
             {t(
               "footer.attribution",
               "This product uses the TMDB API but is not endorsed or certified by TMDB. All movie and TV show data, including images and metadata, is provided by The Movie Database (TMDB).",

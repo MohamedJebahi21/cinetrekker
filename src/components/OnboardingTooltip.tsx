@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { X, Sparkles, BookmarkPlus, Play, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PaginationDots, PaginationDotStatic } from "@/components/ui/pagination-dots";
 import { cn } from "../lib/utils";
 
 const ONBOARDING_ID = "cinetrekker_onboarding_completed";
@@ -110,17 +111,15 @@ export function OnboardingTooltip() {
           </div>
 
           {/* Step indicator */}
-          <div className="flex items-center justify-center gap-2 mb-4">
+          <PaginationDots className="mb-4 mt-0">
             {steps.map((_, i) => (
-              <div
+              <PaginationDotStatic
                 key={i}
-                className={cn(
-                  "h-1.5 rounded-full transition-all",
-                  i === currentStep ? "w-6 bg-primary" : "w-1.5 bg-muted",
-                )}
+                active={i === currentStep}
+                aria-hidden="true"
               />
             ))}
-          </div>
+          </PaginationDots>
 
           {/* Text */}
           <h2 className="text-xl font-bold mb-3">{step.title}</h2>

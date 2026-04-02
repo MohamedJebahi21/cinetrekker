@@ -15,6 +15,7 @@ import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { HomeSectionState } from "@/components/home/HomeSectionState";
 import { HomeStatsSnapshot } from "@/components/home/HomeStatsSnapshot";
 import { HomeWatchlistSkeleton } from "@/components/home/HomeWatchlistSkeleton";
+import { PaginationDots, PaginationDotStatic } from "@/components/ui/pagination-dots";
 import {
   buildCanonicalUrl,
   toBreadcrumbJsonLd,
@@ -51,17 +52,11 @@ function TrendingSectionSkeleton() {
           </div>
         ))}
       </div>
-      <div className="mt-4 flex items-center justify-center gap-2">
+      <PaginationDots>
         {Array.from({ length: 4 }).map((_, index) => (
-          <span
-            key={index}
-            className={`h-2.5 rounded-full ${
-              index === 0 ? "w-6 bg-primary" : "w-2.5 bg-primary/30"
-            }`}
-            aria-hidden="true"
-          />
+          <PaginationDotStatic key={index} active={index === 0} aria-hidden="true" />
         ))}
-      </div>
+      </PaginationDots>
     </section>
   );
 }
@@ -330,21 +325,24 @@ export default function Index() {
                 <MediaCarouselEnhanced
                   title="Trending Today"
                   items={trendingDayQuery.data?.results || []}
-                  showMoreLink="/search?sort=popularity.desc"
+                  showMoreLink="/movies"
+                  showMoreLabel="See All Trending Movies"
                 />
               ) : null}
               {discoverTab === "trending-week" ? (
                 <MediaCarouselEnhanced
                   title="Trending This Week"
                   items={trendingWeek?.results || []}
-                  showMoreLink="/search?sort=popularity.desc"
+                  showMoreLink="/tv"
+                  showMoreLabel="See All Trending TV"
                 />
               ) : null}
               {discoverTab === "new-releases" ? (
                 <MediaCarouselEnhanced
                   title="New Releases"
                   items={newReleases?.results || []}
-                  showMoreLink="/search?sort=primary_release_date.desc&type=movie"
+                  showMoreLink="/movies"
+                  showMoreLabel="See All New Movie Releases"
                 />
               ) : null}
             </div>

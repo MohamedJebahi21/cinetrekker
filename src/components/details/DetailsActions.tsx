@@ -26,8 +26,8 @@ export default function DetailsActions({ inWatchlist, watched, onToggleWatchlist
   // Mobile sticky footer
   if (isMobile) {
     return (
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-[100] w-[94%] mobile-nav-safe">
-        <div className="rounded-xl backdrop-blur-sm md:backdrop-blur-md bg-black/60 p-3 flex flex-col gap-2">
+      <div className="mobile-nav-safe fixed bottom-0 left-1/2 z-[100] w-[min(96%,30rem)] -translate-x-1/2 px-1">
+        <div className="flex flex-col gap-2 rounded-xl border border-border/60 bg-background/96 p-3 shadow-[0_-10px_28px_rgba(0,0,0,0.18)]">
           <Button className={`${watchlistClass} w-full min-h-11`} onClick={onToggleWatchlist}>
             <Bookmark className="w-4 h-4 mr-2" />Watchlist
           </Button>

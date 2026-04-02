@@ -38,6 +38,8 @@ import {
 import SEO from '@/components/SEO';
 import { Image } from '@/components/ui/Image';
 import { getReleaseTimeInfo, formatReleaseDateTime } from '@/lib/timeUtils';
+import { useLoadingTimeout } from '@/hooks/useLoadingTimeout';
+import { toDisplayTitle } from '@/lib/displayTitle';
 
 interface CalendarItem {
   id: number;
@@ -71,7 +73,7 @@ export default function Calendar() {
   const [mediaTypeFilter, setMediaTypeFilter] = useState<'all' | 'movie' | 'tv'>('all');
 
   // Queries
-  const { data: upcomingMovies = [], isLoading: loadingMovies } = useQuery({
+  const { data: upcomingMovies = [], isLoading: loadingMovies, isError: moviesError, error: moviesErrorValue, refetch: refetchMovies } = useQuery({
     queryKey: ['upcoming-movies', i18n.language],
     queryFn: async () => {
       const [page1, page2] = await Promise.all([
@@ -83,7 +85,7 @@ export default function Calendar() {
     staleTime: 1000 * 60 * 30,
   });
 
-  const { data: onAirTV = [], isLoading: loadingTV } = useQuery<CalendarTVItem[]>({
+  const { data: onAirTV = [], isLoading: loadingTV, isError: tvError, error: tvErrorValue, refetch: refetchTV } = useQuery<CalendarTVItem[]>({
     queryKey: ['on-air-tv-with-networks', i18n.language],
     queryFn: async () => {
       const [page1, page2] = await Promise.all([
@@ -148,7 +150,7 @@ export default function Calendar() {
 
         items.push({
           id: movie.id,
-          title: movie.title || 'Unknown Title',
+          title: toDisplayTitle(movie.title || 'Unknown Title'),
           date: movie.release_date,
           type: 'movie',
           posterPath: movie.poster_path,
@@ -178,7 +180,7 @@ export default function Calendar() {
 
         items.push({
           id: show.id,
-          title: show.name || 'Unknown Show',
+          title: toDisplayTitle(show.name || 'Unknown Show'),
           date: airDate,
           type: 'tv',
           posterPath: show.poster_path,
@@ -222,6 +224,8 @@ export default function Calendar() {
   }, [calendarItems]);
 
   const isLoading = loadingMovies || loadingTV;
+  const calendarLoadingTimedOut = useLoadingTimeout(isLoading, 14000);
+  const hasCalendarError = moviesError || tvError;
 
   const weekRange = useMemo(() => {
     const start = startOfWeek(currentWeek, { weekStartsOn: 1 });
@@ -232,6 +236,20 @@ export default function Calendar() {
   const goToPreviousWeek = useCallback(() => setCurrentWeek((prev) => subWeeks(prev, 1)), []);
   const goToNextWeek = useCallback(() => setCurrentWeek((prev) => addWeeks(prev, 1)), []);
   const goToToday = useCallback(() => setCurrentWeek(new Date()), []);
+
+  const weekItemsCount = useMemo(() => {
+    return weekDays.reduce((total, day) => {
+      const dateKey = format(day, 'yyyy-MM-dd');
+      return total + (itemsByDate.get(dateKey)?.length || 0);
+    }, 0);
+  }, [itemsByDate, weekDays]);
+
+  const upcomingPreview = useMemo(() => {
+    return [...calendarItems]
+      .filter((item) => !isBefore(parseISO(item.date), todayStart))
+      .sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime())
+      .slice(0, 6);
+  }, [calendarItems, todayStart]);
 
   // Calendar Card
   const CalendarCard = React.memo(({ item }: { item: CalendarItem }) => {
@@ -244,7 +262,7 @@ export default function Calendar() {
         <div
           className={`
             relative overflow-hidden rounded-xl bg-card border border-border 
-            transition-all duration-300 hover:border-primary/40 hover:shadow-xl hover:-translate-y-0.5
+            transition-all duration-300 hover:border-primary/40 hover:shadow-xl hover:-translate-y-0.5 motion-reduce:transition-none
             ${item.isFollowed ? 'ring-2 ring-primary/50' : ''}
             ${isPast ? 'opacity-75' : ''}
           `}
@@ -257,7 +275,7 @@ export default function Calendar() {
                   src={getImageUrl(item.posterPath, 'w342')}
                   srcSet={`${getImageUrl(item.posterPath, 'w185')} 185w, ${getImageUrl(item.posterPath, 'w342')} 342w, ${getImageUrl(item.posterPath, 'w500')} 500w`}
                   sizes="(max-width: 640px) 112px, 260px"
-                  alt={item.title}
+                  alt={`Poster of ${item.title}`}
                   width={342}
                   height={513}
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -299,7 +317,7 @@ export default function Calendar() {
             </div>
 
             {/* Info Section */}
-            <div className="flex min-w-0 flex-1 flex-col justify-between p-3.5">
+            <div className="flex min-w-0 flex-1 flex-col justify-between p-3 sm:p-3.5">
               <div className="space-y-2">
                 <h3 className="line-clamp-2 text-sm font-semibold leading-tight transition-colors group-hover:text-primary">
                   {item.title}
@@ -370,7 +388,7 @@ export default function Calendar() {
           <div className="text-xs text-muted-foreground mt-1">{format(day, 'MMM')}</div>
         </div>
 
-        <div className={`flex-1 space-y-3 p-3 min-h-[220px] md:min-h-[420px] ${isCurrentDay ? 'bg-primary/5' : isPastDay ? 'bg-muted/30' : 'bg-background'}`}>
+        <div className={`flex-1 space-y-3 p-2.5 sm:p-3 min-h-[220px] md:min-h-[420px] ${isCurrentDay ? 'bg-primary/5' : isPastDay ? 'bg-muted/30' : 'bg-background'}`}>
           {sortedItems.length > 0 ? (
             sortedItems.map((item) => <CalendarCard key={`${item.type}-${item.id}`} item={item} />)
           ) : (
@@ -409,11 +427,11 @@ export default function Calendar() {
 
           <div className="flex flex-col items-stretch gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="ct-toolbar w-full justify-between gap-2 sm:w-auto sm:justify-start">
-              <Button variant="ghost" size="icon" onClick={goToPreviousWeek} className="h-10 w-10">
+              <Button variant="ghost" size="icon" onClick={goToPreviousWeek} className="h-11 w-11 sm:h-10 sm:w-10">
                 <ChevronLeft className="h-5 w-5" />
               </Button>
               <div className="min-w-0 flex-1 px-2 text-center text-sm font-medium sm:min-w-[180px] sm:px-4">{weekRange}</div>
-              <Button variant="ghost" size="icon" onClick={goToNextWeek} className="h-10 w-10">
+              <Button variant="ghost" size="icon" onClick={goToNextWeek} className="h-11 w-11 sm:h-10 sm:w-10">
                 <ChevronRight className="h-5 w-5" />
               </Button>
               <Button variant="secondary" size="sm" onClick={goToToday} className="w-full sm:ml-2 sm:w-auto">
@@ -447,7 +465,7 @@ export default function Calendar() {
         </div>
 
         {/* Main Calendar */}
-        {isLoading ? (
+        {isLoading && !calendarLoadingTimedOut ? (
           <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
             {Array.from({ length: 7 }).map((_, i) => (
               <div key={i} className="space-y-4">
@@ -456,8 +474,42 @@ export default function Calendar() {
               </div>
             ))}
           </div>
+        ) : hasCalendarError || calendarLoadingTimedOut ? (
+          <div className="ct-panel mx-auto max-w-2xl p-8 text-center">
+            <h2 className="text-xl font-semibold text-foreground">Unable to load calendar</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {calendarLoadingTimedOut
+                ? 'Loading took too long. Please try again.'
+                : (moviesErrorValue as Error | undefined)?.message ||
+                  (tvErrorValue as Error | undefined)?.message ||
+                  'Something went wrong while fetching releases.'}
+            </p>
+            <div className="mt-4 flex justify-center gap-2">
+              <Button onClick={() => { void refetchMovies(); void refetchTV(); }}>
+                Try again
+              </Button>
+            </div>
+          </div>
         ) : (
           <>
+            {weekItemsCount === 0 && (
+              <div className="ct-panel mb-6 p-5 text-center">
+                <h2 className="text-lg font-semibold text-foreground">No releases this week</h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Check upcoming weeks for new premieres and episodes.
+                </p>
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                  <Button variant="secondary" onClick={goToNextWeek}>View next week</Button>
+                  <Button variant="outline" onClick={goToToday}>Back to current week</Button>
+                </div>
+                {upcomingPreview.length > 0 && (
+                  <div className="mt-4 text-sm text-muted-foreground">
+                    Next up: {upcomingPreview.map((item) => item.title).join(' • ')}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Desktop View */}
             <div className="ct-panel hidden overflow-hidden md:block">
               <div className="grid grid-cols-7 divide-x divide-border">

@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { PaginationDotButton, PaginationDots } from "@/components/ui/pagination-dots";
 
 type CarouselApi = UseEmblaCarouselType[1];
 type UseCarouselParameters = Parameters<typeof useEmblaCarousel>;
@@ -240,27 +241,17 @@ const CarouselDots = React.forwardRef<
   }
 
   return (
-    <div
-      ref={ref}
-      className={cn("mt-4 flex items-center justify-center gap-2", className)}
-      {...props}
-    >
+    <PaginationDots ref={ref} className={className} {...props}>
       {scrollSnaps.map((_, index) => (
-        <button
+        <PaginationDotButton
           key={`carousel-dot-${index}`}
-          type="button"
           onClick={() => api.scrollTo(index)}
-          className={cn(
-            "rounded-full transition-all",
-            index === selectedIndex
-              ? "h-2.5 w-6 bg-primary"
-              : "h-2.5 w-2.5 bg-primary/30 hover:bg-primary/55",
-          )}
+          active={index === selectedIndex}
           aria-label={`Go to slide ${index + 1}`}
           aria-pressed={index === selectedIndex}
         />
       ))}
-    </div>
+    </PaginationDots>
   );
 });
 CarouselDots.displayName = "CarouselDots";
