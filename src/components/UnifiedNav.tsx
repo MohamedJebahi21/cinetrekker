@@ -314,9 +314,9 @@ export function UnifiedNav() {
           </button>
         </div>
 
-        {/* Mobile controls */}
+        {/* Mobile controls - hidden if bottom nav is active */}
         <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
-          <div className="flex items-center gap-1 md:hidden">
+          <div className="hidden items-center gap-1 sm:hidden md:hidden lg:hidden">
             <button
               type="button"
               onClick={openSearch}
@@ -377,7 +377,7 @@ export function UnifiedNav() {
               const closeButton = event.currentTarget.querySelector<HTMLButtonElement>("[data-sheet-close]");
               closeButton?.focus();
             }}
-            className="safe-area-insets w-full max-w-none border-l-0 bg-background px-0 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(1rem,env(safe-area-inset-top,0px))] md:hidden overflow-y-auto smooth-scroll sm:w-3/4 sm:max-w-sm sm:border-l"
+            className="safe-area-insets hidden w-full max-w-none border-l-0 bg-background px-0 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(1rem,env(safe-area-inset-top,0px))] md:hidden overflow-y-auto smooth-scroll sm:w-3/4 sm:max-w-sm sm:border-l"
           >
             <div className="w-full px-4 sm:px-5">
               <SheetHeader className="rounded-2xl border border-border/60 bg-card/60 px-4 py-4 text-left shadow-[0_8px_20px_rgba(0,0,0,0.08)]">
@@ -488,7 +488,7 @@ export function UnifiedNav() {
         </Sheet>
       </div>
 
-      {/* ── Desktop Mega Menu ── */}
+      {/* ── Desktop Mega Menu (hidden on mobile when BottomNav is active) ── */}
       <div
         ref={desktopMenuRef}
         className={cn(

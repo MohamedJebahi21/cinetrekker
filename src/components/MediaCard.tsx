@@ -424,7 +424,7 @@ export const MediaCard = React.memo(function MediaCard({
                     type="button"
                     variant="outline"
                     className={cn(
-                      "min-h-[44px] w-full justify-center backdrop-blur-md",
+                      "min-h-[48px] w-full justify-center backdrop-blur-md active:scale-95 transition-transform",
                       optimisticInWatchlist
                         ? "border-red-500/70 bg-red-600 text-white hover:bg-red-700"
                         : "border-white/20 bg-gradient-to-b from-background/90 to-background/65 text-foreground",
@@ -452,7 +452,7 @@ export const MediaCard = React.memo(function MediaCard({
                   type="button"
                   variant="outline"
                   className={cn(
-                    "min-h-[44px] w-full justify-center backdrop-blur-md",
+                    "min-h-[48px] w-full justify-center backdrop-blur-md active:scale-95 transition-transform",
                     optimisticWatched
                       ? "border-emerald-500/70 bg-emerald-600 text-white hover:bg-emerald-700"
                       : "border-white/20 bg-gradient-to-b from-background/90 to-background/65 text-foreground",

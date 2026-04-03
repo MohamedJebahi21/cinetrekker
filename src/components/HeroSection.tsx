@@ -43,13 +43,13 @@ export function HeroSection() {
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button asChild size="lg" className="btn-primary-glow w-full gap-2 sm:w-auto">
+            <Button asChild className="btn-primary-glow gap-2 h-12 px-6 sm:h-auto sm:px-8">
               <Link to={user ? "/watchlist" : "/signup"}>
                 {user ? "Open My Watchlist" : "Start Tracking Free"}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
+            <Button asChild variant="outline" className="h-12 px-6 sm:h-auto sm:px-8">
               <Link to="/search">Browse Movies &amp; TV</Link>
             </Button>
           </div>

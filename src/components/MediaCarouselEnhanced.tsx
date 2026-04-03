@@ -109,18 +109,20 @@ export function MediaCarouselEnhanced({
 
       {loading ? (
         <div className="min-h-[420px] sm:min-h-[520px]">
-          <div className="flex gap-4 overflow-hidden">
+          <div className="hide-scrollbar flex gap-3 overflow-hidden px-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))]">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="min-w-[132px] sm:min-w-[180px] md:min-w-[200px] lg:min-w-[220px] xl:min-w-[240px]">
+              <div key={i} className="w-[calc(50vw-1.5rem)] flex-shrink-0 sm:min-w-[180px] md:min-w-[200px] lg:min-w-[220px] xl:min-w-[240px]">
                 <MediaCardSkeleton />
               </div>
             ))}
           </div>
-          <PaginationDots>
-            {Array.from({ length: 4 }).map((_, i) => (
-              <PaginationDotStatic key={i} active={i === 0} aria-hidden="true" />
-            ))}
-          </PaginationDots>
+          <div className="mt-4 flex justify-center">
+            <PaginationDots>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <PaginationDotStatic key={i} active={i === 0} aria-hidden="true" />
+              ))}
+            </PaginationDots>
+          </div>
         </div>
       ) : items.length > 0 ? (
         <div className="relative group/scroll">
@@ -151,13 +153,13 @@ export function MediaCarouselEnhanced({
           {/* Scrollable container with scroll-snap */}
           <div
             ref={scrollContainerRef}
-            className="hide-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 scroll-smooth overscroll-contain touch-pan-x"
+            className="hide-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 scroll-smooth overscroll-contain touch-pan-x px-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))]"
             onScroll={checkScroll}
           >
             {items.map((item) => (
               <div
                 key={`${item.id}-${item.media_type || 'unknown'}`}
-                className="w-[132px] flex-shrink-0 snap-start sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
+                className="w-[calc(50vw-1.5rem)] flex-shrink-0 snap-start sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
               >
                 <MediaCard media={item} />
               </div>
@@ -165,24 +167,26 @@ export function MediaCarouselEnhanced({
           </div>
 
           {pageCount > 1 && (
-            <PaginationDots>
-              {Array.from({ length: pageCount }).map((_, index) => (
-                <PaginationDotButton
-                  key={`${title}-page-${index}`}
-                  onClick={() => {
-                    const container = scrollContainerRef.current;
-                    if (!container) return;
-                    container.scrollTo({
-                      left: container.clientWidth * index,
-                      behavior: "smooth",
-                    });
-                  }}
-                  active={index === activePage}
-                  aria-label={`Go to carousel page ${index + 1}`}
-                  aria-pressed={index === activePage}
-                />
-              ))}
-            </PaginationDots>
+            <div className="mt-4 flex justify-center">
+              <PaginationDots>
+                {Array.from({ length: pageCount }).map((_, index) => (
+                  <PaginationDotButton
+                    key={`${title}-page-${index}`}
+                    onClick={() => {
+                      const container = scrollContainerRef.current;
+                      if (!container) return;
+                      container.scrollTo({
+                        left: container.clientWidth * index,
+                        behavior: "smooth",
+                      });
+                    }}
+                    active={index === activePage}
+                    aria-label={`Go to carousel page ${index + 1}`}
+                    aria-pressed={index === activePage}
+                  />
+                ))}
+              </PaginationDots>
+            </div>
           )}
         </div>
       ) : (
