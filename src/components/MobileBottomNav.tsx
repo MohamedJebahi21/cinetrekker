@@ -39,7 +39,7 @@ export function MobileBottomNav() {
               key={path}
               to={path}
               className={cn(
-                "mobile-bottom-nav-item flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium leading-none transition-colors",
+                "mobile-bottom-nav-item flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium leading-none transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground",
               )}
               aria-current={isActive ? "page" : undefined}
@@ -54,7 +54,7 @@ export function MobileBottomNav() {
                   strokeWidth={isActive ? 2.5 : 2}
                 />
                 {isWatchlist && watchlistCount > 0 && (
-                  <span className="absolute -right-2 -top-1.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-primary px-0.5 text-[9px] font-bold leading-none text-primary-foreground">
+                  <span className="absolute -right-2 -top-1.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-primary px-0.5 text-[0.5625rem] font-bold leading-none text-primary-foreground">
                     {watchlistCount > 99 ? "99+" : watchlistCount}
                   </span>
                 )}
@@ -68,7 +68,7 @@ export function MobileBottomNav() {
         <button
           type="button"
           onClick={openMenu}
-          className="mobile-bottom-nav-item flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium leading-none text-muted-foreground transition-colors"
+          className="mobile-bottom-nav-item flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium leading-none text-muted-foreground transition-colors"
           aria-label={t("nav.more", "More")}
         >
           <Menu className="h-5 w-5" strokeWidth={2} />
