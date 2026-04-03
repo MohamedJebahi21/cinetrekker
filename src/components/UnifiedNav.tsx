@@ -179,6 +179,13 @@ export function UnifiedNav() {
     setIsMobileSheetOpen(false);
   }, [pathname]);
 
+  // Listen for open-mobile-menu events dispatched by the MobileBottomNav "More" button
+  useEffect(() => {
+    const handler = () => setIsMobileSheetOpen(true);
+    window.addEventListener("cinetrekker:open-mobile-menu", handler);
+    return () => window.removeEventListener("cinetrekker:open-mobile-menu", handler);
+  }, []);
+
   useEffect(() => {
     if (typeof document === "undefined") return;
 

@@ -16,6 +16,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ContentPolicyProvider } from "@/contexts/content-policy-context";
 import ScrollToTop from "@/components/ScrollToTop";
 import { UnifiedNav } from "@/components/UnifiedNav";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { Footer } from "@/components/Footer";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -609,7 +610,7 @@ const App = () => {
                     id="main"
                     tabIndex={-1}
                     ref={containerRef}
-                    className="flex-1 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] md:pb-10"
+                    className="flex-1 md:pb-10"
                     {...handlers}
                   >
                     <ErrorBoundary onRetry={handleBoundaryRetry}>
@@ -617,6 +618,7 @@ const App = () => {
                     </ErrorBoundary>
                   </main>
                   <Footer />
+                  <MobileBottomNav />
                 </div>
 
                 <Dialog open={authPromptOpen} onOpenChange={setAuthPromptOpen}>

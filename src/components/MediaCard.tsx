@@ -78,7 +78,7 @@ function PosterImage({
             className="mx-auto h-16 w-12 object-contain opacity-80"
             loading="lazy"
           />
-          <p className="mt-2 text-[11px] font-medium text-muted-foreground">
+          <p className="mt-2 text-xs font-medium text-muted-foreground">
             Poster Not Found
           </p>
         </div>
@@ -340,7 +340,7 @@ export const MediaCard = React.memo(function MediaCard({
           {/* Status Badges - positioned above gradient */}
           <div className="absolute top-2 left-2 right-2 flex justify-between items-start z-10">
             {showType && (
-              <span className="px-2 py-1 text-[10px] font-medium rounded bg-background/80 backdrop-blur-sm">
+              <span className="px-2 py-1 text-xs font-medium rounded bg-background/80 backdrop-blur-sm">
                 {mediaType === "movie" ? t("common.movie") : t("common.tvShow")}
               </span>
             )}
@@ -370,7 +370,7 @@ export const MediaCard = React.memo(function MediaCard({
               )}
 
             {optimisticWatched && (
-              <span className="px-2 py-1 text-[10px] font-medium rounded bg-success/90 text-success-foreground flex items-center gap-1">
+              <span className="px-2 py-1 text-xs font-medium rounded bg-success/90 text-success-foreground flex items-center gap-1">
                 <Check className="w-3 h-3" />
               </span>
             )}
@@ -409,7 +409,7 @@ export const MediaCard = React.memo(function MediaCard({
             )}
           </div>
           {!user ? (
-            <p className="mt-2 text-[11px] text-muted-foreground">
+            <p className="mt-2 text-xs text-muted-foreground">
               Sign in to save, track, and review this title.
             </p>
           ) : null}
