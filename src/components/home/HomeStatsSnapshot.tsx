@@ -1,5 +1,6 @@
 import { BarChart3, Bookmark, CheckCircle2, Tv } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import type { UserMediaItem } from "@/types/media";
 
@@ -12,27 +13,28 @@ export function HomeStatsSnapshot({
   watched,
   watchlist,
 }: HomeStatsSnapshotProps) {
+  const { t } = useTranslation();
   const watchingCount = watched.filter((item) => item.status === "watching").length;
   const ratedCount = watched.filter((item) => typeof item.rating === "number").length;
 
   const stats = [
     {
-      label: "Watched",
+      label: t("nav.watched", "Watched"),
       value: watched.length,
       icon: CheckCircle2,
     },
     {
-      label: "Watchlist",
+      label: t("nav.watchlist", "Watchlist"),
       value: watchlist.length,
       icon: Bookmark,
     },
     {
-      label: "Watching",
+      label: t("status.watching", "Watching"),
       value: watchingCount,
       icon: Tv,
     },
     {
-      label: "Rated",
+      label: t("actions.rateTitle", "Rate"),
       value: ratedCount,
       icon: BarChart3,
     },
@@ -42,13 +44,13 @@ export function HomeStatsSnapshot({
     <section className="ct-panel p-5 md:p-6">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="section-title mb-1">Stats Snapshot</h2>
+          <h2 className="section-title mb-1">{t("home.statsSnapshot", "Stats Snapshot")}</h2>
           <p className="text-sm text-muted-foreground">
-            A quick view of how your library is taking shape.
+            {t("home.statsSnapshotDesc", "A quick view of how your library is taking shape.")}
           </p>
         </div>
         <Button asChild variant="outline" size="sm">
-          <Link to="/stats">Open Full Stats</Link>
+          <Link to="/stats">{t("home.openFullStats", "Open Full Stats")}</Link>
         </Button>
       </div>
 

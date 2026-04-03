@@ -612,10 +612,10 @@ export default function Details() {
     void persistPinnedFavorites(next);
 
     toast({
-      title: alreadyPinned ? "Removed from favorites" : "Pinned to favorites",
+      title: alreadyPinned ? t("details.removedFromFavorites", "Removed from favorites") : t("details.pinnedToFavorites", "Pinned to favorites"),
       description: alreadyPinned
-        ? "This title is no longer pinned."
-        : "This title was pinned to your profile favorites.",
+        ? t("details.noLongerPinned", "This title is no longer pinned.")
+        : t("details.pinnedToFavoritesDesc", "This title was pinned to your profile favorites."),
     });
   };
 
@@ -808,22 +808,22 @@ export default function Details() {
 
     return (
       <section className="mt-4">
-        <h3 className="text-lg font-semibold mb-2">Where to Watch</h3>
+        <h3 className="text-lg font-semibold mb-2">{t("details.whereToWatch", "Where to Watch")}</h3>
         {flatrateProviders.length > 0 && (
           <div className="mb-2">
-            <div className="text-sm text-muted-foreground mb-1">Streaming</div>
+            <div className="text-sm text-muted-foreground mb-1">{t("details.streaming", "Streaming")}</div>
             {renderList(flatrateProviders)}
           </div>
         )}
         {rentProviders.length > 0 && (
           <div className="mb-2">
-            <div className="text-sm text-muted-foreground mb-1">Rent</div>
+            <div className="text-sm text-muted-foreground mb-1">{t("details.rent", "Rent")}</div>
             {renderList(rentProviders)}
           </div>
         )}
         {buyProviders.length > 0 && (
           <div className="mb-2">
-            <div className="text-sm text-muted-foreground mb-1">Buy</div>
+            <div className="text-sm text-muted-foreground mb-1">{t("details.buy", "Buy")}</div>
             {renderList(buyProviders)}
           </div>
         )}
@@ -1008,17 +1008,17 @@ export default function Details() {
                 {isWatchlistPending ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Watchlist
+                    {t("details.watchlist", "Watchlist")}
                   </>
                 ) : optimisticInWatchlist ? (
                   <>
                     <Bookmark className="w-4 h-4 fill-current" />
-                    Watchlist
+                    {t("details.watchlist", "Watchlist")}
                   </>
                 ) : (
                   <>
                     <Plus className="w-4 h-4" />
-                    Watchlist
+                    {t("details.watchlist", "Watchlist")}
                   </>
                 )}
               </Button>
@@ -1043,17 +1043,17 @@ export default function Details() {
                 {isWatchedPending ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Watched
+                    {t("details.watched", "Watched")}
                   </>
                 ) : optimisticWatched ? (
                   <>
                     <Check className="w-4 h-4" />
-                    Watched
+                    {t("details.watched", "Watched")}
                   </>
                 ) : (
                   <>
                     <Check className="w-4 h-4" />
-                    Watched
+                    {t("details.watched", "Watched")}
                   </>
                 )}
               </Button>
@@ -1068,8 +1068,10 @@ export default function Details() {
 
               {!user ? (
                 <div className="w-full rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-                  Save to watchlist, mark watched, and leave ratings after you
-                  sign in. You can still browse every public title now.
+                  {t(
+                    "details.guestActionHint",
+                    "Save to watchlist, mark watched, and leave ratings after you sign in. You can still browse every public title now.",
+                  )}
                 </div>
               ) : null}
 
@@ -1219,8 +1221,10 @@ export default function Details() {
                 >
                   <MessageSquare className="w-4 h-4" />
                   {watchedItem?.rating
-                    ? `${watchedItem.rating}/10 Review`
-                    : "Add Rating & Review"}
+                    ? t("details.ratingReviewWithScore", "{{rating}}/10 Review", {
+                        rating: watchedItem.rating,
+                      })
+                    : t("details.addRating", "Add Rating & Review")}
                 </Button>
               )}
             </div>
@@ -1246,17 +1250,25 @@ export default function Details() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-foreground">
-                    Your Rating &amp; Review
+                    {t("details.yourRatingReview", "Your Rating & Review")}
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {user
-                      ? "Keep a personal score and short note for this title."
-                      : "Sign in to rate this title and save a personal review."}
+                      ? t(
+                          "details.ratingReviewSignedInPrompt",
+                          "Keep a personal score and short note for this title.",
+                        )
+                      : t(
+                          "details.ratingReviewGuestPrompt",
+                          "Sign in to rate this title and save a personal review.",
+                        )}
                   </p>
                   {user && watchedItem ? (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Your saved entry is shown below. Edit it any time to
-                      update the score, note, or watch status.
+                      {t(
+                        "details.ratingReviewSavedEntryHint",
+                        "Your saved entry is shown below. Edit it any time to update the score, note, or watch status.",
+                      )}
                     </p>
                   ) : null}
                 </div>
@@ -1270,12 +1282,12 @@ export default function Details() {
                   >
                     <MessageSquare className="h-4 w-4" />
                     {watchedItem
-                      ? "Edit Saved Rating & Review"
-                      : "Add Rating & Review"}
+                      ? t("details.editRating", "Edit Saved Rating & Review")
+                      : t("details.addRating", "Add Rating & Review")}
                   </Button>
                 ) : (
                   <Button asChild variant="outline">
-                    <Link to="/login">Sign In to Review</Link>
+                    <Link to="/login">{t("details.signInToReview", "Sign In to Review")}</Link>
                   </Button>
                 )}
               </div>
@@ -1287,13 +1299,13 @@ export default function Details() {
                     {typeof watchedItem.rating === "number" ? (
                       <Badge variant="outline">{watchedItem.rating}/10</Badge>
                     ) : (
-                      <Badge variant="outline">No rating yet</Badge>
+                      <Badge variant="outline">{t("details.noRatingYet", "No rating yet")}</Badge>
                     )}
                   </div>
                   <p className="mt-3 text-sm text-muted-foreground">
                     {watchedItem.note?.trim()
                       ? watchedItem.note
-                      : "No note yet. Add a short review so you remember what stood out."}
+                      : t("details.noNoteYet", "No note yet. Add a short review so you remember what stood out.")}
                   </p>
                 </div>
               ) : null}
@@ -1339,11 +1351,13 @@ export default function Details() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div>
                     <h2 className="text-lg font-semibold text-foreground">
-                      Available Episodes
+                      {t("details.availableEpisodes", "Available Episodes")}
                     </h2>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Browse published episodes and read each episode summary
-                      directly from the series page.
+                      {t(
+                        "details.availableEpisodesDescription",
+                        "Browse published episodes and read each episode summary directly from the series page.",
+                      )}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -1360,7 +1374,9 @@ export default function Details() {
                         }
                         onClick={() => setSelectedSeason(seasonNum)}
                       >
-                        Season {seasonNum}
+                        {t("details.seasonLabel", "Season {{season}}", {
+                          season: seasonNum,
+                        })}
                       </Button>
                     ))}
                   </div>
@@ -1369,16 +1385,25 @@ export default function Details() {
                 <div className="mt-4">
                   {!selectedSeason ? (
                     <p className="text-sm text-muted-foreground">
-                      Select a season to view released episodes.
+                      {t(
+                        "details.selectSeasonPrompt",
+                        "Select a season to view released episodes.",
+                      )}
                     </p>
                   ) : !seasonDetails ? (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Loading season episodes...
+                      {t(
+                        "details.loadingSeasonEpisodes",
+                        "Loading season episodes...",
+                      )}
                     </div>
                   ) : publishedEpisodes.length === 0 ? (
                     <div className="rounded-2xl border border-border/60 bg-background/30 px-4 py-5 text-sm text-muted-foreground">
-                      No published episodes are available for this season yet.
+                      {t(
+                        "details.noPublishedEpisodes",
+                        "No published episodes are available for this season yet.",
+                      )}
                     </div>
                   ) : (
                     <Accordion type="single" collapsible className="w-full">
@@ -1400,7 +1425,10 @@ export default function Details() {
                                   ? new Date(
                                       episode.air_date,
                                     ).toLocaleDateString(language)
-                                  : "Release date unavailable"}
+                                  : t(
+                                      "details.releaseDateUnavailable",
+                                      "Release date unavailable",
+                                    )}
                                 {episode.runtime
                                   ? ` • ${episode.runtime} ${t("details.minutes")}`
                                   : ""}
@@ -1412,7 +1440,10 @@ export default function Details() {
                               <p className="text-sm leading-relaxed text-muted-foreground">
                                 {episode.overview?.trim()
                                   ? episode.overview
-                                  : "No description is available for this episode yet."}
+                                  : t(
+                                      "details.noEpisodeDescription",
+                                      "No description is available for this episode yet.",
+                                    )}
                               </p>
                             </div>
                           </AccordionContent>

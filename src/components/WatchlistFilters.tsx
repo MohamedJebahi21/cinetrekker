@@ -67,7 +67,7 @@ export function WatchlistFilters({
       <CardContent className="p-4">
         {/* Header with toggle */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-sm">{t('filters.title') || 'Filters & Sort'}</h3>
+          <h3 className="font-semibold text-sm">{t('watchlistPage.filtersAndSort', 'Filters & Sort')}</h3>
           <Button
             variant="ghost"
             size="sm"
@@ -111,7 +111,7 @@ export function WatchlistFilters({
             {/* Sort */}
             <div className="space-y-2">
               <Label className="text-xs font-medium text-muted-foreground">
-                {t('filters.sortBy') || 'Sort By'}
+                {t('filters.sortBy') || t('filters.sort') || 'Sort By'}
               </Label>
               <Select value={sortBy} onValueChange={onSortChange}>
                 <SelectTrigger className="h-9">
@@ -150,7 +150,7 @@ export function FilterBadge({ label, onRemove }: FilterBadgeProps) {
       <button
         type="button"
         onClick={onRemove}
-        aria-label="Remove filter"
+        aria-label={t('watchlistPage.removeFilter', 'Remove filter')}
         className="ml-1 text-primary/60 hover:text-primary transition-colors"
       >
         ×

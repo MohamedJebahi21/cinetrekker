@@ -243,8 +243,11 @@ export default function Profile() {
     onSyncError: (error) => {
       console.error("Error syncing favorites:", error);
       toast({
-        title: "Favorites sync delayed",
-        description: "Saved locally. Will retry on your next update.",
+        title: t("profile.favoritesSyncDelayed", "Favorites sync delayed"),
+        description: t(
+          "profile.favoritesSyncDelayedDesc",
+          "Saved locally. Will retry on your next update.",
+        ),
         variant: "destructive",
       });
     },
@@ -283,17 +286,17 @@ export default function Profile() {
 
   const maskEmail = useCallback((email: string): string => {
     const atIndex = email.indexOf("@");
-    if (atIndex <= 0) return "Hidden";
+    if (atIndex <= 0) return text("common.hidden", "Hidden");
     const localPart = email.slice(0, atIndex);
     const domain = email.slice(atIndex + 1);
-    if (!domain) return "Hidden";
+    if (!domain) return text("common.hidden", "Hidden");
 
     if (localPart.length <= 2) {
       return `${localPart[0] ?? "*"}****@${domain}`;
     }
 
     return `${localPart[0]}****${localPart[localPart.length - 1]}@${domain}`;
-  }, []);
+  }, [text]);
 
   const visibleEmail = useMemo(() => {
     if (!user?.email) return "";
@@ -322,8 +325,11 @@ export default function Profile() {
     },
     onError: () => {
       toast({
-        title: "Sync failed",
-        description: "Could not sync genre changes. Please try again.",
+        title: t("profile.syncFailed", "Sync failed"),
+        description: t(
+          "profile.syncGenreChangesFailed",
+          "Could not sync genre changes. Please try again.",
+        ),
         variant: "destructive",
       });
     },
@@ -471,9 +477,11 @@ export default function Profile() {
         // Show user-friendly error
         if (isMounted) {
           toast({
-            title: "Profile Loading Error",
-            description:
+            title: t("profile.loadingErrorTitle", "Profile Loading Error"),
+            description: t(
+              "profile.loadingErrorDesc",
               "Failed to load profile from server. Using cached data.",
+            ),
             variant: "destructive",
           });
         }
@@ -555,8 +563,12 @@ export default function Profile() {
         );
         if (!rateLimitCheck.allowed) {
           toast({
-            title: "Too many updates",
-            description: `Please wait ${rateLimitCheck.retryAfter} seconds before updating again.`,
+            title: t("profile.tooManyUpdates", "Too many updates"),
+            description: t(
+              "profile.waitBeforeUpdatingAgain",
+              "Please wait {{seconds}} seconds before updating again.",
+              { seconds: rateLimitCheck.retryAfter },
+            ),
             variant: "destructive",
           });
           setIsSaving(false);
@@ -613,8 +625,11 @@ export default function Profile() {
       window.dispatchEvent(new CustomEvent("profileUpdated"));
 
       toast({
-        title: "Profile updated successfully",
-        description: "Your latest profile changes are now live.",
+        title: t("profile.updatedSuccessfully", "Profile updated successfully"),
+        description: t(
+          "profile.latestChangesLive",
+          "Your latest profile changes are now live.",
+        ),
         className:
           "border-l-4 border-l-[#E50914] bg-neutral-900/95 text-neutral-100 rounded-full",
       });
@@ -622,9 +637,11 @@ export default function Profile() {
     } catch (error) {
       console.error("Error saving profile:", error);
       toast({
-        title: "Error saving profile",
-        description:
+        title: t("profile.errorSavingProfile", "Error saving profile"),
+        description: t(
+          "profile.savedLocallySyncFailed",
           "Profile saved locally, but syncing to server failed. Changes will sync when connection is restored.",
+        ),
         variant: "destructive",
       });
     } finally {
@@ -648,8 +665,11 @@ export default function Profile() {
 
       if (!user?.id) {
         toast({
-          title: "Sign in required",
-          description: "You must be signed in to upload a profile photo.",
+          title: t("profile.signInRequired", "Sign in required"),
+          description: t(
+            "profile.mustBeSignedInToUploadPhoto",
+            "You must be signed in to upload a profile photo.",
+          ),
           variant: "destructive",
         });
         return;
@@ -663,8 +683,11 @@ export default function Profile() {
       ];
       if (!ALLOWED_TYPES.includes(file.type)) {
         toast({
-          title: "Invalid file type",
-          description: "Only JPEG, PNG, and WebP images are allowed.",
+          title: t("profile.invalidFileType", "Invalid file type"),
+          description: t(
+            "profile.allowedImageTypes",
+            "Only JPEG, PNG, and WebP images are allowed.",
+          ),
           variant: "destructive",
         });
         return;
@@ -672,8 +695,11 @@ export default function Profile() {
 
       if (file.size > 2 * 1024 * 1024) {
         toast({
-          title: "Image too large",
-          description: "Please select an image smaller than 2MB.",
+          title: t("profile.imageTooLarge", "Image too large"),
+          description: t(
+            "profile.selectImageSmallerThan2Mb",
+            "Please select an image smaller than 2MB.",
+          ),
           variant: "destructive",
         });
         return;
@@ -700,14 +726,20 @@ export default function Profile() {
         setHasUnsavedChanges(true);
 
         toast({
-          title: "Photo uploaded",
-          description: "Click 'Save Changes' to finalize your profile.",
+          title: t("profile.photoUploaded", "Photo uploaded"),
+          description: t(
+            "profile.clickSaveChangesToFinalize",
+            "Click 'Save Changes' to finalize your profile.",
+          ),
         });
       } catch (error) {
         console.error("Avatar upload error:", error);
         toast({
-          title: "Upload failed",
-          description: "Could not upload photo. Please try again.",
+          title: t("profile.uploadFailed", "Upload failed"),
+          description: t(
+            "profile.couldNotUploadPhoto",
+            "Could not upload photo. Please try again.",
+          ),
           variant: "destructive",
         });
       }
@@ -741,7 +773,7 @@ export default function Profile() {
 
     const date = parseLocalDate(value);
     if (!date) {
-      setDobError("Please enter a valid date");
+      setDobError(t("profile.enterValidDate", "Please enter a valid date"));
       return;
     }
 
@@ -756,9 +788,11 @@ export default function Profile() {
     }
 
     if (age < 13) {
-      setDobError("You must be at least 13 years old");
+      setDobError(
+        t("profile.mustBeAtLeast13YearsOld", "You must be at least 13 years old"),
+      );
     } else if (age > 120) {
-      setDobError("Please enter a valid date");
+      setDobError(t("profile.enterValidDate", "Please enter a valid date"));
     } else {
       setDobError("");
       setAgeInput(String(age));
@@ -784,17 +818,19 @@ export default function Profile() {
 
     const age = Number(raw);
     if (!Number.isInteger(age) || age < 0) {
-      setDobError("Please enter a valid age");
+      setDobError(t("profile.enterValidAge", "Please enter a valid age"));
       return;
     }
 
     if (age < 13) {
-      setDobError("You must be at least 13 years old");
+      setDobError(
+        t("profile.mustBeAtLeast13YearsOld", "You must be at least 13 years old"),
+      );
       return;
     }
 
     if (age > 120) {
-      setDobError("Please enter a valid age");
+      setDobError(t("profile.enterValidAge", "Please enter a valid age"));
       return;
     }
 
@@ -973,7 +1009,7 @@ export default function Profile() {
             const preview: ProfileMediaPreview = {
               mediaId: item.mediaId,
               mediaType: item.mediaType,
-              title: details.title || details.name || "Untitled",
+              title: details.title || details.name || t("common.untitled", "Untitled"),
               posterPath: details.poster_path || null,
               runtimeMinutes:
                 item.mediaType === "movie"
@@ -987,7 +1023,11 @@ export default function Profile() {
             const fallback: ProfileMediaPreview = {
               mediaId: item.mediaId,
               mediaType: item.mediaType,
-              title: `${item.mediaType === "movie" ? "Movie" : "Series"} #${item.mediaId}`,
+              title: `${
+                item.mediaType === "movie"
+                  ? t("watchHistory.mediaTypeMovie", "Movie")
+                  : t("profile.series", "Series")
+              } #${item.mediaId}`,
               posterPath: null,
               runtimeMinutes: 0,
               genreIds: [],
@@ -1022,7 +1062,7 @@ export default function Profile() {
 
             return {
               key: `${item.mediaType}-${item.mediaId}`,
-              title: details.title || details.name || "Untitled",
+              title: details.title || details.name || t("common.untitled", "Untitled"),
               posterPath: details.poster_path || null,
               runtimeMinutes:
                 item.mediaType === "movie"
@@ -1211,7 +1251,7 @@ export default function Profile() {
             .map((item) => ({
               id: item.id,
               mediaType,
-              title: item.title || item.name || "Untitled",
+              title: item.title || item.name || t("common.untitled", "Untitled"),
               posterPath: item.poster_path || null,
               year: (item.release_date || item.first_air_date || "").slice(
                 0,
@@ -1275,17 +1315,20 @@ export default function Profile() {
           new Date(a.watchedAt || a.addedAt || 0).getTime(),
       );
 
-    if (rated.length === 0) return "No ratings yet";
+    if (rated.length === 0) return t("profile.noRatingsYet", "No ratings yet");
     const last = new Date(rated[0].watchedAt || rated[0].addedAt || 0);
     const diff = Math.max(
       0,
       Math.floor((Date.now() - last.getTime()) / (24 * 60 * 60 * 1000)),
     );
 
-    if (diff === 0) return "Last rated today";
-    if (diff === 1) return "Last rated 1 day ago";
-    return `Last rated ${diff} days ago`;
-  }, [watched]);
+    if (diff === 0) return t("profile.lastRatedToday", "Last rated today");
+    if (diff === 1)
+      return t("profile.lastRatedOneDayAgo", "Last rated 1 day ago");
+    return t("profile.lastRatedDaysAgo", "Last rated {{days}} days ago", {
+      days: diff,
+    });
+  }, [t, watched]);
 
   const ratingDistribution = useMemo(() => {
     const bins = Array.from({ length: 10 }, (_, index) => ({
@@ -1349,11 +1392,14 @@ export default function Profile() {
   );
 
   const cinephileLevel = useMemo(() => {
-    if (moviesWatched <= 50) return "Casual Viewer";
-    if (moviesWatched <= 150) return "Movie Buff";
-    if (moviesWatched <= 300) return "Cinephile";
-    return "Film Historian";
-  }, [moviesWatched]);
+    if (moviesWatched <= 50)
+      return text("profile.levelCasualViewer", "Casual Viewer");
+    if (moviesWatched <= 150)
+      return text("profile.levelMovieBuff", "Movie Buff");
+    if (moviesWatched <= 300)
+      return text("profile.levelCinephile", "Cinephile");
+    return text("profile.levelFilmHistorian", "Film Historian");
+  }, [moviesWatched, text]);
 
   const achievements = useMemo(
     () => [
@@ -1362,10 +1408,12 @@ export default function Profile() {
         icon: <Trophy className="h-5 w-5 text-amber-500" />,
         colorClass:
           "border-amber-500/30 bg-amber-500/10 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.15)]",
-        shortLabel: "First Log",
-        fullLabel: "First Movie Logged",
-        condition: "Log at least 1 movie",
-        progressLabel: `${Math.min(moviesWatched, 1)}/1 movies`,
+        shortLabel: text("profile.achievementFirstLogShort", "First Log"),
+        fullLabel: text("achievements.watchFirst", "First Movie Logged"),
+        condition: text("profile.achievementFirstLogCondition", "Log at least 1 movie"),
+        progressLabel: t("profile.achievementProgressMovies", "{{count}}/1 movies", {
+          count: Math.min(moviesWatched, 1),
+        }),
         unlocked: moviesWatched >= 1,
         unlockedLabel: getUnlockLabel(movieWatchDates, 1),
       },
@@ -1374,10 +1422,12 @@ export default function Profile() {
         icon: <Award className="h-5 w-5 text-neutral-300" />,
         colorClass:
           "border-primary/30 bg-primary/10 text-primary shadow-[0_0_15px_rgba(229,9,20,0.12)]",
-        shortLabel: "50 Movies",
-        fullLabel: "50 Movies Watched",
-        condition: "Watch 50 movies",
-        progressLabel: `${Math.min(moviesWatched, 50)}/50 movies`,
+        shortLabel: text("profile.achievement50MoviesShort", "50 Movies"),
+        fullLabel: text("achievements.watch50", "50 Movies Watched"),
+        condition: text("profile.achievement50MoviesCondition", "Watch 50 movies"),
+        progressLabel: t("profile.achievementProgress50Movies", "{{count}}/50 movies", {
+          count: Math.min(moviesWatched, 50),
+        }),
         unlocked: moviesWatched >= 50,
         unlockedLabel: getUnlockLabel(movieWatchDates, 50),
       },
@@ -1386,10 +1436,12 @@ export default function Profile() {
         icon: <Star className="h-5 w-5 text-yellow-400" />,
         colorClass:
           "border-yellow-400/30 bg-yellow-400/10 text-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.1)]",
-        shortLabel: "100 Movies",
-        fullLabel: "100 Movies Watched",
-        condition: "Watch 100 movies",
-        progressLabel: `${Math.min(moviesWatched, 100)}/100 movies`,
+        shortLabel: text("profile.achievement100MoviesShort", "100 Movies"),
+        fullLabel: text("achievements.watch100", "100 Movies Watched"),
+        condition: text("profile.achievement100MoviesCondition", "Watch 100 movies"),
+        progressLabel: t("profile.achievementProgress100Movies", "{{count}}/100 movies", {
+          count: Math.min(moviesWatched, 100),
+        }),
         unlocked: moviesWatched >= 100,
         unlockedLabel: getUnlockLabel(movieWatchDates, 100),
       },
@@ -1398,15 +1450,25 @@ export default function Profile() {
         icon: <Sparkles className="h-5 w-5 text-purple-400" />,
         colorClass:
           "border-purple-400/30 bg-purple-400/10 text-purple-400 shadow-[0_0_15px_rgba(192,132,252,0.1)]",
-        shortLabel: "200 Ratings",
-        fullLabel: "200 Ratings Given",
-        condition: "Rate 200 titles",
-        progressLabel: `${Math.min(ratingsCount, 200)}/200 ratings`,
+        shortLabel: text("profile.achievement200RatingsShort", "200 Ratings"),
+        fullLabel: text("achievements.rate200", "200 Ratings"),
+        condition: text("profile.achievement200RatingsCondition", "Rate 200 titles"),
+        progressLabel: t("profile.achievementProgress200Ratings", "{{count}}/200 ratings", {
+          count: Math.min(ratingsCount, 200),
+        }),
         unlocked: ratingsCount >= 200,
         unlockedLabel: getUnlockLabel(ratingDates, 200),
       },
     ],
-    [getUnlockLabel, movieWatchDates, moviesWatched, ratingDates, ratingsCount],
+    [
+      getUnlockLabel,
+      movieWatchDates,
+      moviesWatched,
+      ratingDates,
+      ratingsCount,
+      t,
+      text,
+    ],
   );
 
   const countMoviesWatched = useCountUp(moviesWatched, 1100, !!reduceMotion);
@@ -1420,7 +1482,7 @@ export default function Profile() {
       if (navigator.share) {
         await navigator.share({
           title: shareTitle,
-          text: "Check out this CineTrekker profile.",
+          text: t("profile.shareProfileMessage", "Check out this CineTrekker profile."),
           url: shareProfileLink,
         });
         return;
@@ -1429,15 +1491,15 @@ export default function Profile() {
       await navigator.clipboard.writeText(shareProfileLink);
       setShareCopied(true);
       toast({
-        title: "Link copied to clipboard!",
-        description: "Your profile link is ready to share.",
+        title: t("profile.linkCopiedToClipboard", "Link copied to clipboard!"),
+        description: t("profile.profileLinkReady", "Your profile link is ready to share."),
         className:
           "border-l-4 border-l-[#E50914] bg-neutral-900/95 text-neutral-100 rounded-full",
       });
     } catch {
       toast({
-        title: "Copy failed",
-        description: "Could not copy profile link. Please try again.",
+        title: t("profile.copyFailed", "Copy failed"),
+        description: t("profile.copyFailedDesc", "Could not copy profile link. Please try again."),
         variant: "destructive",
       });
     }
@@ -1461,8 +1523,10 @@ export default function Profile() {
         const next = [...current, key];
         void persistPinnedFavorites(next);
         toast({
-          title: "Pinned to favorites",
-          description: `${title} was added to your pinned favorites.`,
+          title: t("profile.pinnedToFavorites", "Pinned to favorites"),
+          description: t("profile.pinnedToFavoritesDesc", "{{title}} was added to your pinned favorites.", {
+            title,
+          }),
         });
         setIsFavoritesPickerOpen(false);
         setFavoriteSearchQuery("");
@@ -1481,8 +1545,10 @@ export default function Profile() {
         const next = current.filter((entry) => entry !== key);
         void persistPinnedFavorites(next);
         toast({
-          title: "Removed from favorites",
-          description: `${title} was removed from your pinned favorites.`,
+          title: t("profile.removedFromFavorites", "Removed from favorites"),
+          description: t("profile.removedFromFavoritesDesc", "{{title}} was removed from your pinned favorites.", {
+            title,
+          }),
         });
         return next;
       });
@@ -1493,8 +1559,8 @@ export default function Profile() {
   return (
     <>
       <SEO
-        title="My Profile - CineTrekker"
-        description="View your watching statistics and preferences"
+        title={t("profile.seoTitle", "My Profile - CineTrekker")}
+        description={t("profile.seoDescription", "View your watching statistics and preferences")}
         canonical="https://cinetrekker.vercel.app/profile"
       />
       <motion.div
@@ -1591,7 +1657,7 @@ export default function Profile() {
                             {profilePhoto ? (
                               <Image
                                 src={profilePhoto}
-                                alt="Profile"
+                                alt={text("profile.title", "Profile")}
                                 width={160}
                                 height={160}
                                 className="h-full w-full object-cover"
@@ -1612,10 +1678,10 @@ export default function Profile() {
                             >
                               <Camera className="h-6 w-6" />
                               <p className="text-xs font-semibold">
-                                Drop a photo to upload
+                                {text("profile.dropPhotoToUpload", "Drop a photo to upload")}
                               </p>
                               <p className="text-[11px] text-white/70">
-                                JPG, PNG, or WebP up to 2MB
+                                {text("profile.photoFormats", "JPG, PNG, or WebP up to 2MB")}
                               </p>
                             </div>
                           </div>
@@ -1643,11 +1709,13 @@ export default function Profile() {
                                 type="button"
                               >
                                 <Camera className="mr-2 h-4 w-4" />
-                                {profilePhoto ? "Change photo" : "Upload photo"}
+                                {profilePhoto
+                                  ? text("profile.changePhoto", "Change photo")
+                                  : text("profile.uploadPhoto", "Upload photo")}
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              Click or drop an image to update your avatar
+                              {text("profile.avatarUploadHint", "Click or drop an image to update your avatar")}
                             </TooltipContent>
                           </Tooltip>
                           {profilePhoto ? (
@@ -1659,12 +1727,12 @@ export default function Profile() {
                               onClick={handlePhotoRemove}
                             >
                               <X className="mr-2 h-4 w-4" />
-                              Remove
+                              {text("common.delete", "Remove")}
                             </Button>
                           ) : null}
                         </div>
                         <p className="mt-3 max-w-[21rem] text-center text-[11px] text-muted-foreground">
-                          Drag and drop a profile picture or choose a file.
+                          {text("profile.photoUploadHint", "Drag and drop a profile picture or choose a file.")}
                         </p>
                       </div>
 
@@ -1698,7 +1766,9 @@ export default function Profile() {
                               ) : (
                                 <Eye className="mr-1 h-3.5 w-3.5" />
                               )}
-                              {isEmailRevealed ? "Hide" : "Show"}
+                              {isEmailRevealed
+                                ? text("auth.hide", "Hide")
+                                : text("auth.show", "Show")}
                             </Button>
                             <Tooltip open={shareCopied ? true : undefined}>
                               <TooltipTrigger asChild>
@@ -1710,10 +1780,10 @@ export default function Profile() {
                                   onClick={handleCopyProfileLink}
                                 >
                                   <Share2 className="mr-1 h-3.5 w-3.5" />
-                                  Share Profile
+                                  {text("profile.shareProfile", "Share Profile")}
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>Link copied!</TooltipContent>
+                              <TooltipContent>{text("profile.linkCopied", "Link copied!")}</TooltipContent>
                             </Tooltip>
                           </div>
                         )}
@@ -1721,19 +1791,19 @@ export default function Profile() {
                         <div className="mt-4 grid gap-2 sm:grid-cols-3">
                           <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2">
                             <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                              Movies Watched
+                              {text("profile.moviesWatched", "Movies Watched")}
                             </p>
                             <p className="text-xl font-bold">{moviesWatched}</p>
                           </div>
                           <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2">
                             <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                              Ratings
+                              {text("profile.ratings", "Ratings")}
                             </p>
                             <p className="text-xl font-bold">{ratingsCount}</p>
                           </div>
                           <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2">
                             <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                              Watch Time
+                              {text("profile.watchTime", "Watch Time")}
                             </p>
                             <p className="text-xl font-bold">
                               {totalWatchHours}h
@@ -1767,8 +1837,8 @@ export default function Profile() {
                                 </p>
                                 {achievement.unlocked ? (
                                   <p className="text-xs text-amber-300">
-                                    Unlocked{" "}
-                                    {achievement.unlockedLabel ?? "Recently"}
+                                    {text("achievements.unlockedPrefix", "Unlocked")}{" "}
+                                    {achievement.unlockedLabel ?? text("achievements.recently", "Recently")}
                                   </p>
                                 ) : (
                                   <p className="text-xs text-muted-foreground">
@@ -1785,7 +1855,7 @@ export default function Profile() {
                             to="/achievements"
                             className="text-xs font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
                           >
-                            View All Achievements {"->"}
+                            {text("profile.viewAllAchievements", "View All Achievements")} {"->"}
                           </Link>
                         </div>
                       </div>
@@ -1812,7 +1882,7 @@ export default function Profile() {
                           variant="outline"
                           onClick={() => setIsEditMode(true)}
                         >
-                          Edit Profile
+                          {text("profile.editProfile", "Edit Profile")}
                         </Button>
                       ) : null}
                     </div>
@@ -1823,27 +1893,30 @@ export default function Profile() {
                           <div className="space-y-4">
                             <div>
                               <p className="text-xs uppercase tracking-wide text-neutral-500">
-                                Display Name
+                                {text("profile.displayName", "Display Name")}
                               </p>
                               <p className="text-base text-foreground">
-                                {displayName || "Not set"}
+                                {displayName || text("profile.notSet", "Not set")}
                               </p>
                             </div>
                             <div>
                               <p className="text-xs uppercase tracking-wide text-neutral-500">
-                                Current age
+                                {text("profile.currentAge", "Current age")}
                               </p>
                               <p className="text-base text-foreground">
-                                {userAge ?? "Not set"}
+                                {userAge ?? text("profile.notSet", "Not set")}
                               </p>
                             </div>
                             <div>
                               <p className="text-xs uppercase tracking-wide text-neutral-500">
-                                Bio
+                                {text("profile.bio", "Bio")}
                               </p>
                               <p className="text-sm leading-relaxed text-muted-foreground">
                                 {bio ||
-                                  "No bio yet. Tell people about your cinematic journey."}
+                                  text(
+                                    "profile.noBioYet",
+                                    "No bio yet. Tell people about your cinematic journey.",
+                                  )}
                               </p>
                             </div>
                           </div>
@@ -1890,7 +1963,7 @@ export default function Profile() {
                                   inputMode="numeric"
                                   value={ageInput}
                                   onChange={handleAgeInputChange}
-                                  placeholder="22"
+                                  placeholder={t("profile.agePlaceholder", "22")}
                                   className={cn(
                                     "bg-background/70 border-border focus:border-red-500 focus:ring-red-500/20",
                                     dobError &&
@@ -1932,7 +2005,7 @@ export default function Profile() {
                                 onClick={handleSaveProfile}
                                 disabled={isSaving}
                               >
-                                Save Changes
+                                {t("settings.saveChanges", "Save Changes")}
                               </Button>
                               <Button
                                 type="button"
@@ -1940,7 +2013,7 @@ export default function Profile() {
                                 onClick={handleCancelChanges}
                                 disabled={isSaving}
                               >
-                                Cancel
+                                {t("common.cancel", "Cancel")}
                               </Button>
                             </div>
                           </>
@@ -1973,10 +2046,12 @@ export default function Profile() {
                             {countMoviesWatched}
                           </p>
                           <p className="mt-1 text-sm font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground">
-                            Movies Watched
+                            {text("profile.moviesWatched", "Movies Watched")}
                           </p>
                           <p className="mt-2 text-xs text-muted-foreground">
-                            +{watchedThisMonth} this month
+                            {t("profile.watchedThisMonth", "+{{count}} this month", {
+                              count: watchedThisMonth,
+                            })}
                           </p>
                         </div>
                       </button>
@@ -1999,7 +2074,7 @@ export default function Profile() {
                             {countRatings}
                           </p>
                           <p className="mt-1 text-sm font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground">
-                            Ratings
+                            {text("profile.ratings", "Ratings")}
                           </p>
                           <p className="mt-2 text-xs text-muted-foreground">
                             {latestRatedDateLabel}
@@ -2025,10 +2100,12 @@ export default function Profile() {
                             {countWatchHours}h
                           </p>
                           <p className="mt-1 text-sm font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground">
-                            Watch Time
+                            {text("profile.watchTime", "Watch Time")}
                           </p>
                           <p className="mt-2 text-xs text-muted-foreground">
-                            Avg {averageMovieHours}h per movie
+                            {t("profile.averageHoursPerMovie", "Avg {{hours}}h per movie", {
+                              hours: averageMovieHours,
+                            })}
                           </p>
                         </div>
                       </button>
@@ -2042,8 +2119,10 @@ export default function Profile() {
                         {t("profile.actorMatches")}
                       </h2>
                       <p className="text-sm text-muted-foreground">
-                        Discover performers whose age range and genre footprint
-                        line up with the movies you rate most.
+                        {text(
+                          "profile.actorMatchesIntro",
+                          "Discover performers whose age range and genre footprint line up with the movies you rate most.",
+                        )}
                       </p>
                     </div>
                     <Suspense
@@ -2084,21 +2163,28 @@ export default function Profile() {
                     <div className="flex items-center justify-between gap-3">
                       <h3 className="flex items-center gap-2 text-lg font-semibold">
                         <Film className="h-4 w-4 text-primary" />
-                        Favorite Movies
+                        {text("profile.favoriteMovies", "Favorite Movies")}
                       </h3>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {pinnedMovieCount} movie{pinnedMovieCount === 1 ? "" : "s"} pinned
+                      {t("profile.moviesPinned", {
+                        count: pinnedMovieCount,
+                        defaultValue: "{{count}} movie pinned",
+                        defaultValue_plural: "{{count}} movies pinned",
+                      })}
                     </p>
                     {favoriteMovies.length === 0 ? (
                       <Card className="border-border/60 bg-card/55">
                         <CardContent className="flex flex-col gap-3 pt-5 sm:flex-row sm:items-center sm:justify-between">
                           <div>
                             <p className="text-sm font-semibold text-foreground">
-                              Start your essentials shelf
+                              {text("profile.startEssentialsShelf", "Start your essentials shelf")}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              Pin your first favorite films and keep building the shelf as long as you want.
+                              {text(
+                                "profile.startEssentialsShelfDesc",
+                                "Pin your first favorite films and keep building the shelf as long as you want.",
+                              )}
                             </p>
                           </div>
                           <div className="flex gap-2">
@@ -2107,10 +2193,10 @@ export default function Profile() {
                               size="sm"
                               onClick={() => openFavoritesPicker("movie")}
                             >
-                              Add a movie
+                              {text("profile.addMovie", "Add a movie")}
                             </Button>
                             <Button asChild size="sm" variant="outline">
-                              <Link to="/search">Browse films</Link>
+                              <Link to="/search">{text("profile.browseFilms", "Browse films")}</Link>
                             </Button>
                           </div>
                         </CardContent>
@@ -2130,7 +2216,7 @@ export default function Profile() {
                           disabled={!favoriteMoviesCarouselState.canScrollLeft}
                           type="button"
                           className="absolute left-2 top-[40%] z-10 inline-flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 shadow-lg backdrop-blur-sm transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 md:left-3 md:opacity-0 md:group-hover/scroll:opacity-100"
-                          aria-label="Previous favorite movies"
+                          aria-label={text("profile.previousFavoriteMovies", "Previous favorite movies")}
                         >
                           <ChevronLeft className="h-5 w-5" />
                         </button>
@@ -2144,7 +2230,7 @@ export default function Profile() {
                           disabled={!favoriteMoviesCarouselState.canScrollRight}
                           type="button"
                           className="absolute right-2 top-[40%] z-10 inline-flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 shadow-lg backdrop-blur-sm transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 md:right-3 md:opacity-0 md:group-hover/scroll:opacity-100"
-                          aria-label="Next favorite movies"
+                          aria-label={text("profile.nextFavoriteMovies", "Next favorite movies")}
                         >
                           <ChevronRight className="h-5 w-5" />
                         </button>
@@ -2176,7 +2262,7 @@ export default function Profile() {
                                         preview.title,
                                       )
                                     }
-                                    aria-label={`Remove ${preview.title} from favorites`}
+                                    aria-label={t("profile.removeFromFavorites", "Remove {{title}} from favorites", { title: preview.title })}
                                   >
                                     <X className="h-4 w-4" />
                                   </button>
@@ -2216,7 +2302,7 @@ export default function Profile() {
                                 <Plus className="h-6 w-6 transition-transform group-hover:rotate-90" />
                               </div>
                               <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 group-hover:opacity-100">
-                                Add Movie
+                                {text("profile.addMovieShort", "Add Movie")}
                               </span>
                             </button>
                           </div>
@@ -2239,7 +2325,7 @@ export default function Profile() {
                                   });
                                 }}
                                 active={index === favoriteMoviesCarouselState.activePage}
-                                aria-label={`Go to favorite movies page ${index + 1}`}
+                                aria-label={t("profile.goToFavoriteMoviesPage", "Go to favorite movies page {{index}}", { index: index + 1 })}
                                 aria-pressed={
                                   index ===
                                   favoriteMoviesCarouselState.activePage
@@ -2260,21 +2346,27 @@ export default function Profile() {
                     <div className="flex items-center justify-between gap-3">
                       <h3 className="flex items-center gap-2 text-lg font-semibold">
                         <Sparkles className="h-4 w-4 text-primary" />
-                        Favorite Series
+                        {text("profile.favoriteSeries", "Favorite Series")}
                       </h3>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {pinnedSeriesCount} series pinned
+                      {t("profile.seriesPinned", {
+                        count: pinnedSeriesCount,
+                        defaultValue: "{{count}} series pinned",
+                      })}
                     </p>
                     {favoriteSeries.length === 0 ? (
                       <Card className="border-border/60 bg-card/55">
                         <CardContent className="flex flex-col gap-3 pt-5 sm:flex-row sm:items-center sm:justify-between">
                           <div>
                             <p className="text-sm font-semibold text-foreground">
-                              Spotlight the shows you always recommend
+                              {text("profile.spotlightShows", "Spotlight the shows you always recommend")}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              Pin the shows you always recommend and keep the row growing over time.
+                              {text(
+                                "profile.spotlightShowsDesc",
+                                "Pin the shows you always recommend and keep the row growing over time.",
+                              )}
                             </p>
                           </div>
                           <div className="flex gap-2">
@@ -2283,10 +2375,10 @@ export default function Profile() {
                               size="sm"
                               onClick={() => openFavoritesPicker("tv")}
                             >
-                              Add a series
+                              {text("profile.addSeries", "Add a series")}
                             </Button>
                             <Button asChild size="sm" variant="outline">
-                              <Link to="/search">Browse shows</Link>
+                              <Link to="/search">{text("profile.browseShows", "Browse shows")}</Link>
                             </Button>
                           </div>
                         </CardContent>
@@ -2305,7 +2397,7 @@ export default function Profile() {
                           disabled={!favoriteSeriesCarouselState.canScrollLeft}
                           type="button"
                           className="absolute left-2 top-[40%] z-10 inline-flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 shadow-lg backdrop-blur-sm transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 md:left-3 md:opacity-0 md:group-hover/scroll:opacity-100"
-                          aria-label="Previous favorite series"
+                          aria-label={text("profile.previousFavoriteSeries", "Previous favorite series")}
                         >
                           <ChevronLeft className="h-5 w-5" />
                         </button>
@@ -2319,7 +2411,7 @@ export default function Profile() {
                           disabled={!favoriteSeriesCarouselState.canScrollRight}
                           type="button"
                           className="absolute right-2 top-[40%] z-10 inline-flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 shadow-lg backdrop-blur-sm transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 md:right-3 md:opacity-0 md:group-hover/scroll:opacity-100"
-                          aria-label="Next favorite series"
+                          aria-label={text("profile.nextFavoriteSeries", "Next favorite series")}
                         >
                           <ChevronRight className="h-5 w-5" />
                         </button>
@@ -2351,7 +2443,7 @@ export default function Profile() {
                                         preview.title,
                                       )
                                     }
-                                    aria-label={`Remove ${preview.title} from favorites`}
+                                    aria-label={t("profile.removeFromFavorites", "Remove {{title}} from favorites", { title: preview.title })}
                                   >
                                     <X className="h-4 w-4" />
                                   </button>
@@ -2391,7 +2483,7 @@ export default function Profile() {
                                 <Plus className="h-6 w-6 transition-transform group-hover:rotate-90" />
                               </div>
                               <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 group-hover:opacity-100">
-                                Add Series
+                                {text("profile.addSeriesShort", "Add Series")}
                               </span>
                             </button>
                           </div>
@@ -2414,7 +2506,7 @@ export default function Profile() {
                                   });
                                 }}
                                 active={index === favoriteSeriesCarouselState.activePage}
-                                aria-label={`Go to favorite series page ${index + 1}`}
+                                aria-label={t("profile.goToFavoriteSeriesPage", "Go to favorite series page {{index}}", { index: index + 1 })}
                                 aria-pressed={
                                   index ===
                                   favoriteSeriesCarouselState.activePage
@@ -2450,15 +2542,17 @@ export default function Profile() {
                             )}
                           </span>
                           {favoriteSearchType === "movie"
-                            ? "Choose Favorite Movies"
-                            : "Choose Favorite Series"}
+                            ? text("profile.chooseFavoriteMovies", "Choose Favorite Movies")
+                            : text("profile.chooseFavoriteSeries", "Choose Favorite Series")}
                         </DialogTitle>
                         <DialogDescription
                           id="favorites-picker-description"
                           className="max-w-2xl text-sm text-muted-foreground"
                         >
-                          Search TMDB and pin the titles that define your taste.
-                          Favorites are saved to your profile shelf right away.
+                          {text(
+                            "profile.favoritesPickerDesc",
+                            "Search TMDB and pin the titles that define your taste. Favorites are saved to your profile shelf right away.",
+                          )}
                         </DialogDescription>
                       </DialogHeader>
 
@@ -2472,8 +2566,8 @@ export default function Profile() {
                             }
                             placeholder={
                               favoriteSearchType === "movie"
-                                ? "Search movies"
-                                : "Search TV series"
+                                ? text("profile.searchMovies", "Search movies")
+                                : text("profile.searchSeries", "Search TV series")
                             }
                             className="h-14 rounded-2xl border-border/60 bg-background/60 pl-11 pr-4 text-base shadow-inner"
                             autoFocus
@@ -2483,13 +2577,13 @@ export default function Profile() {
                         {favoriteSearchTerm.length < 2 ? (
                           <div className="rounded-2xl border border-dashed border-border/60 bg-card/35 px-5 py-8 text-center">
                             <p className="text-base font-semibold text-foreground">
-                              Start typing to search
+                              {text("profile.startTypingToSearch", "Start typing to search")}
                             </p>
                             <p className="mt-2 text-sm text-muted-foreground">
-                              Enter at least 2 characters to find{" "}
+                              {text("profile.enterTwoChars", "Enter at least 2 characters to find")}{" "}
                               {favoriteSearchType === "movie"
-                                ? "movies"
-                                : "series"}
+                                ? text("common.movies", "movies")
+                                : text("common.tvShows", "series")}
                               .
                             </p>
                           </div>
@@ -2512,10 +2606,10 @@ export default function Profile() {
                         ) : favoriteSearchResults.length === 0 ? (
                           <div className="rounded-2xl border border-dashed border-border/60 bg-card/35 px-5 py-8 text-center">
                             <p className="text-base font-semibold text-foreground">
-                              No matches found
+                              {text("profile.noMatchesFound", "No matches found")}
                             </p>
                             <p className="mt-2 text-sm text-muted-foreground">
-                              Try a different title, year, or spelling.
+                              {text("profile.tryDifferentSearch", "Try a different title, year, or spelling.")}
                             </p>
                           </div>
                         ) : (
@@ -2547,8 +2641,8 @@ export default function Profile() {
                                     </p>
                                     <p className="mt-1 text-xs text-muted-foreground">
                                       {result.mediaType === "movie"
-                                        ? "Movie"
-                                        : "Series"}
+                                        ? text("watchHistory.mediaTypeMovie", "Movie")
+                                        : text("profile.series", "Series")}
                                       {result.year ? ` • ${result.year}` : ""}
                                     </p>
                                   </div>
@@ -2574,12 +2668,12 @@ export default function Profile() {
                                     {isPinned ? (
                                       <>
                                         <Check className="mr-1 h-3.5 w-3.5" />
-                                        Pinned
+                                        {text("profile.pinned", "Pinned")}
                                       </>
                                     ) : (
                                       <>
                                         <Plus className="mr-1 h-3.5 w-3.5" />
-                                        Add
+                                        {text("profile.add", "Add")}
                                       </>
                                     )}
                                   </Button>
@@ -2597,7 +2691,9 @@ export default function Profile() {
                       {text("profile.favoriteGenres", "Favorite Genres")}
                     </h2>
                     <p className="mb-4 text-sm text-neutral-400">
-                      {favoriteGenres.length} genres selected
+                      {t("profile.genresSelected", "{{count}} genres selected", {
+                        count: favoriteGenres.length,
+                      })}
                     </p>
                     <Card className="ct-panel transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl">
                       <CardContent className="pt-6">
@@ -2626,7 +2722,10 @@ export default function Profile() {
                                   </Badge>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  {genre.name} ({watchCount} films)
+                                  {t("profile.genreFilmsCount", "{{genre}} ({{count}} films)", {
+                                    genre: genre.name,
+                                    count: watchCount,
+                                  })}
                                 </TooltipContent>
                               </Tooltip>
                             );
@@ -2643,7 +2742,7 @@ export default function Profile() {
                   >
                     <h3 className="flex items-center gap-2 text-lg font-semibold">
                       <BarChart3 className="h-4 w-4 text-[#E50914]" />
-                      Rating Distribution
+                      {text("profile.ratingDistribution", "Rating Distribution")}
                     </h3>
                     <Card className="ct-panel w-full">
                       <CardContent className="space-y-4 pt-6">
@@ -2682,24 +2781,26 @@ export default function Profile() {
                         })}
                         <p className="text-xs text-neutral-400">
                           {mostUsedRating
-                            ? `Most frequent rating: ${mostUsedRating.rating} stars`
-                            : "No ratings yet"}
+                            ? t("profile.mostFrequentRating", "Most frequent rating: {{rating}} stars", { rating: mostUsedRating.rating })
+                            : text("profile.noRatingsYet", "No ratings yet")}
                         </p>
                         {ratingsCount === 0 ? (
                           <div className="rounded-xl border border-dashed border-border/70 bg-background/30 p-4">
                             <p className="text-sm font-medium text-foreground">
-                              You have not rated anything yet
+                              {text("profile.noRatingsTitle", "You have not rated anything yet")}
                             </p>
                             <p className="mt-1 text-sm text-muted-foreground">
-                              Rate a few titles to unlock recommendations,
-                              actor matches, and a full ratings breakdown.
+                              {text(
+                                "profile.noRatingsDesc",
+                                "Rate a few titles to unlock recommendations, actor matches, and a full ratings breakdown.",
+                              )}
                             </p>
                             <div className="mt-3 flex flex-wrap gap-2">
                               <Button asChild size="sm">
-                                <Link to="/search">Browse movies to rate</Link>
+                                <Link to="/search">{text("profile.browseMoviesToRate", "Browse movies to rate")}</Link>
                               </Button>
                               <Button asChild size="sm" variant="outline">
-                                <Link to="/watched">Open watched list</Link>
+                                <Link to="/watched">{text("profile.openWatchedList", "Open watched list")}</Link>
                               </Button>
                             </div>
                           </div>

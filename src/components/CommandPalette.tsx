@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import {
   CommandDialog,
   CommandInput,
@@ -23,6 +24,7 @@ export default function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { toggle: toggleTheme } = useTheme();
   const { signOut } = useAuth();
@@ -105,20 +107,23 @@ export default function CommandPalette() {
       <div className="w-[min(680px,92vw)]">
         <CommandInput
           ref={inputRef}
-          placeholder="Search movies, people, collections... (Cmd/Ctrl+K)"
+          placeholder={t(
+            "commandPalette.placeholder",
+            "Search movies, people, collections... (Cmd/Ctrl+K)",
+          )}
           onValueChange={(val: string) => setQuery(val)}
         />
         <CommandList>
-          <CommandEmpty>No results</CommandEmpty>
+          <CommandEmpty>{t("commandPalette.empty", "No results")}</CommandEmpty>
 
-          <CommandGroup heading="Actions">
+          <CommandGroup heading={t("commandPalette.actions", "Actions")}>
             <CommandItem
               onSelect={() => {
                 toggleTheme();
                 setOpen(false);
               }}
             >
-              Cycle Theme
+              {t("commandPalette.cycleTheme", "Cycle Theme")}
               <CommandShortcut>⌘/Ctrl K</CommandShortcut>
             </CommandItem>
             <CommandItem
@@ -127,7 +132,7 @@ export default function CommandPalette() {
                 setOpen(false);
               }}
             >
-              Go to Watchlist
+              {t("commandPalette.goToWatchlist", "Go to Watchlist")}
             </CommandItem>
             <CommandItem
               onSelect={async () => {
@@ -136,15 +141,17 @@ export default function CommandPalette() {
                 setOpen(false);
               }}
             >
-              Logout
+              {t("commandPalette.logout", "Logout")}
             </CommandItem>
           </CommandGroup>
 
           <CommandSeparator />
 
-          <CommandGroup heading="Collections">
+          <CommandGroup heading={t("commandPalette.collections", "Collections")}>
             {safeCollections.length === 0 && (
-              <CommandItem disabled> No collections </CommandItem>
+              <CommandItem disabled>
+                {t("commandPalette.noCollections", "No collections")}
+              </CommandItem>
             )}
             {safeCollections.map((c) => (
               <CommandItem
@@ -161,8 +168,12 @@ export default function CommandPalette() {
 
           <CommandSeparator />
 
-          <CommandGroup heading="Search Results">
-            {isFetching && <CommandItem disabled>Searching...</CommandItem>}
+          <CommandGroup heading={t("commandPalette.searchResults", "Search Results")}>
+            {isFetching && (
+              <CommandItem disabled>
+                {t("commandPalette.searching", "Searching...")}
+              </CommandItem>
+            )}
             {!isFetching &&
               searchResults.slice(0, 10).map((r: Media) => (
                 <CommandItem
@@ -171,7 +182,7 @@ export default function CommandPalette() {
                 >
                   {r.title || r.name}
                   <CommandShortcut>
-                    {r.media_type || (r.title ? "Movie" : "TV")}
+                    {r.media_type || (r.title ? t("common.movie", "Movie") : t("common.tvShow", "TV Show"))}
                   </CommandShortcut>
                 </CommandItem>
               ))}

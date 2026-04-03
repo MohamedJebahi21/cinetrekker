@@ -297,6 +297,18 @@
     text-align: right;
   }
 
+  .ct-switch .ct-switch-thumb[data-state="unchecked"] {
+    transform: translateX(0);
+  }
+
+  .ct-switch .ct-switch-thumb[data-state="checked"] {
+    transform: translateX(2.25rem);
+  }
+
+  [dir="rtl"] .ct-switch .ct-switch-thumb[data-state="checked"] {
+    transform: translateX(-2.25rem);
+  }
+
 }
 
 @layer components {
@@ -1486,8 +1498,8 @@ select:focus {
 .mobile-bottom-nav {
   background: hsl(var(--background) / 0.92);
   border-top: 1px solid hsl(var(--border) / 0.5);
-  backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
   /* Safe-area padding for notch/home-indicator devices */
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }

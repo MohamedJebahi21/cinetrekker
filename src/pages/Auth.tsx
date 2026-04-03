@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -63,6 +64,8 @@ function ProviderIcon({
 }
 
 export default function Auth({ initialTab }: { initialTab?: string }) {
+  const { t } = useTranslation();
+
   const normalizedTab =
     initialTab === "signin"
       ? "login"
@@ -101,15 +104,19 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
       const { userMessage } = processAuthError(error);
       const providerLabel =
         provider === "google"
-          ? "Google"
+          ? t("auth.providerGoogle", "Google")
           : provider === "facebook"
-            ? "Facebook"
-            : "Apple";
+            ? t("auth.providerFacebook", "Facebook")
+            : t("auth.providerApple", "Apple");
       setMessage({
         type: "error",
         text:
           userMessage === GENERIC_AUTH_ERROR
-            ? `${providerLabel} sign-in is not available right now. Please try email login instead.`
+            ? t(
+                "auth.providerUnavailable",
+                "{{provider}} sign-in is not available right now. Please try email login instead.",
+                { provider: providerLabel },
+              )
             : userMessage,
       });
       setIsLoading(false);
@@ -194,23 +201,23 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
   return (
     <>
       <SEO
-        title="Sign In or Register - CineTrekker"
-        description="Access your CineTrekker account to sync watchlists, ratings, and recommendations."
+        title={t("auth.seoTitle", "Sign In or Register - CineTrekker")}
+        description={t("auth.seoDescription", "Access your CineTrekker account to sync watchlists, ratings, and recommendations.")}
         canonical="https://cinetrekker.vercel.app/auth"
       />
       <div className="flex min-h-[100dvh] items-center justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(1rem,env(safe-area-inset-top,0px))]">
         <Card className="w-full max-w-md rounded-2xl">
           <CardHeader>
-            <CardTitle>CineTrekker</CardTitle>
+            <CardTitle>{t("auth.appName", "CineTrekker")}</CardTitle>
             <CardDescription>
-              Track what you watch, save your next pick, and keep your lists in sync.
+              {t("auth.tagline", "Track what you watch, save your next pick, and keep your lists in sync.")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
+                <TabsTrigger value="login">{t("auth.loginTab", "Login")}</TabsTrigger>
+                <TabsTrigger value="register">{t("auth.registerTab", "Register")}</TabsTrigger>
               </TabsList>
 
               <form onSubmit={handleAuth} className="space-y-4 pt-4">
@@ -225,13 +232,13 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="auth-email">Email</Label>
+                  <Label htmlFor="auth-email">{t("auth.emailLabel", "Email")}</Label>
                   <Input
                     id="auth-email"
                     type="email"
                     name="email"
                     autoComplete={activeTab === "login" ? "username" : "email"}
-                    placeholder="Email"
+                    placeholder={t("auth.emailLabel", "Email")}
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
@@ -251,14 +258,16 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                   <div className="relative">
                     <div className="mb-2 flex items-center justify-between">
                       <Label htmlFor="auth-password">
-                        Password
+                        {t("auth.passwordLabel", "Password")}
                       </Label>
                       <button
                         type="button"
                         onClick={() => setShowPassword((current) => !current)}
                         className="inline-flex min-h-11 items-center gap-1 rounded-md px-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
                         aria-label={
-                          showPassword ? "Hide password" : "Show password"
+                          showPassword
+                            ? t("auth.hidePassword", "Hide password")
+                            : t("auth.showPassword", "Show password")
                         }
                       >
                         {showPassword ? (
@@ -266,7 +275,9 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                         ) : (
                           <Eye className="h-3.5 w-3.5" />
                         )}
-                        {showPassword ? "Hide" : "Show"}
+                        {showPassword
+                          ? t("auth.hide", "Hide")
+                          : t("auth.show", "Show")}
                       </button>
                     </div>
                     <Input
@@ -278,7 +289,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                           ? "current-password"
                           : "new-password"
                       }
-                      placeholder="Password"
+                      placeholder={t("auth.passwordPlaceholder", "Password")}
                       value={password}
                       onChange={(e) => {
                         setPassword(e.target.value);
@@ -298,7 +309,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                         onClick={() => void handleForgotPassword()}
                         className="min-h-11 rounded-md px-2 text-base text-primary transition-colors hover:text-primary/80"
                       >
-                        Forgot Password?
+                        {t("auth.forgotPassword", "Forgot Password?")}
                       </button>
                     </div>
                   )}
@@ -311,10 +322,10 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
 
                   {activeTab === "register" && (
                     <div className="grid grid-cols-2 gap-x-2 gap-y-1 px-1 pt-1 text-sm text-muted-foreground opacity-80">
-                      <p>• Min. 8 characters</p>
-                      <p>• Uppercase & Lowercase</p>
-                      <p>• Number & Special char</p>
-                      <p>• No sequences (123, abc)</p>
+                      <p>{t("auth.passwordRuleMin", "• Min. 8 characters")}</p>
+                      <p>{t("auth.passwordRuleCase", "• Uppercase & Lowercase")}</p>
+                      <p>{t("auth.passwordRuleNumberSpecial", "• Number & Special char")}</p>
+                      <p>{t("auth.passwordRuleSequence", "• No sequences (123, abc)")}</p>
                     </div>
                   )}
                 </div>
@@ -325,7 +336,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                     checked={rememberMe}
                     onCheckedChange={(checked) => setRememberMe(checked === true)}
                   />
-                  <span>Remember Me</span>
+                  <span>{t("auth.rememberMe", "Remember Me")}</span>
                 </label>
 
                 <Button
@@ -339,7 +350,9 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                     </div>
                   )}
                   <span className={isLoading ? "opacity-0" : ""}>
-                    {activeTab === "login" ? "Sign In" : "Create Account"}
+                    {activeTab === "login"
+                      ? t("auth.submitSignIn", "Sign In")
+                      : t("auth.submitCreateAccount", "Create Account")}
                   </span>
                 </Button>
 
@@ -349,14 +362,16 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                   </div>
                   <div className="relative flex justify-center text-sm uppercase">
                     <span className="bg-background px-2 text-muted-foreground">
-                      Or continue with
+                      {t("auth.orContinueWith", "Or continue with")}
                     </span>
                   </div>
                 </div>
 
                 <p className="text-center text-sm text-muted-foreground">
-                  Google is the fastest option. Facebook and Apple may depend on
-                  your browser or provider configuration.
+                  {t(
+                    "auth.providerHint",
+                    "Google is the fastest option. Facebook and Apple may depend on your browser or provider configuration.",
+                  )}
                 </p>
 
                 <div className="space-y-2">
@@ -368,7 +383,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                     onClick={() => void handleProviderSignIn("google")}
                   >
                     <ProviderIcon provider="google" />
-                    Continue with Google
+                    {t("auth.continueWithGoogle", "Continue with Google")}
                   </Button>
                   <Button
                     type="button"
@@ -378,7 +393,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                     onClick={() => void handleProviderSignIn("facebook")}
                   >
                     <ProviderIcon provider="facebook" />
-                    Continue with Facebook
+                    {t("auth.continueWithFacebook", "Continue with Facebook")}
                   </Button>
                   <Button
                     type="button"
@@ -388,7 +403,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                     onClick={() => void handleProviderSignIn("apple")}
                   >
                     <ProviderIcon provider="apple" />
-                    Continue with Apple
+                    {t("auth.continueWithApple", "Continue with Apple")}
                   </Button>
                 </div>
               </form>

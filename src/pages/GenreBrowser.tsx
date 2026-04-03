@@ -12,7 +12,7 @@ import { applySafetyFilter } from '@/lib/contentFilter';
 
 export default function GenreBrowser() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { strictFiltering, moderateFiltering } = useContentPolicy();
   const includeAdult = !(strictFiltering || moderateFiltering);
   const language = i18n.language;
@@ -53,17 +53,17 @@ export default function GenreBrowser() {
   return (
     <>
       <SEO
-        title={`Browse by Genre — CineTrekker`}
-        description="Explore movies and TV shows by genre"
+        title={t("genres.seoTitle", "Browse by Genre — CineTrekker")}
+        description={t("genres.seoDescription", "Explore movies and TV shows by genre")}
         canonical="https://cinetrekker.vercel.app/genres"
       />
       <div className="page-container pt-20 pb-24 md:pb-0">
-        <h1 className="section-title">Browse by Genre</h1>
+        <h1 className="section-title">{t("genres.title", "Browse by Genre")}</h1>
 
         <Tabs value={mediaType} onValueChange={(v) => setSearchParams({ type: v, genre: selectedGenre || '' })}>
           <TabsList className="mb-6">
-            <TabsTrigger value="movie">Movies</TabsTrigger>
-            <TabsTrigger value="tv">TV Shows</TabsTrigger>
+            <TabsTrigger value="movie">{t("common.movies", "Movies")}</TabsTrigger>
+            <TabsTrigger value="tv">{t("common.tvShows", "TV Shows")}</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -94,7 +94,7 @@ export default function GenreBrowser() {
         {selectedGenreObj && (
           <>
             <h2 className="text-2xl font-bold mb-4">
-              {selectedGenreObj.name} {mediaType === 'movie' ? 'Movies' : 'TV Shows'}
+              {selectedGenreObj.name} {mediaType === 'movie' ? t("common.movies", "Movies") : t("common.tvShows", "TV Shows")}
             </h2>
 
             {isLoading ? (
@@ -111,7 +111,7 @@ export default function GenreBrowser() {
               </div>
             ) : (
               <div className="text-center py-16 text-muted-foreground">
-                No results available for this genre.
+                {t("genres.noResults", "No results available for this genre.")}
               </div>
             )}
           </>
@@ -119,7 +119,7 @@ export default function GenreBrowser() {
 
         {!selectedGenre && (
           <div className="text-center py-16 text-muted-foreground">
-            Select a genre above to browse content
+            {t("genres.selectPrompt", "Select a genre above to browse content")}
           </div>
         )}
       </div>

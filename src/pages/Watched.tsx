@@ -56,8 +56,11 @@ export default function Watched() {
   return (
     <>
       <SEO
-        title="Watched History - CineTrekker"
-        description="Movies and TV shows you've watched with ratings and notes"
+        title={t("watchedPage.seoTitle", "Watched History - CineTrekker")}
+        description={t(
+          "watchedPage.seoDescription",
+          "Movies and TV shows you have watched with ratings and notes",
+        )}
         canonical="https://cinetrekker.vercel.app/watched"
       />
 
@@ -65,7 +68,7 @@ export default function Watched() {
         <div className="page-container pt-20 pb-24 md:pb-10">
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="ct-kicker mb-2">Watched Archive</p>
+              <p className="ct-kicker mb-2">{t("watchedPage.kicker", "Watched Archive")}</p>
               <h1 className="section-title mb-0">{t("watched.title")}</h1>
             </div>
             {hasActiveFilters && (
@@ -76,7 +79,7 @@ export default function Watched() {
                 className="gap-2"
               >
                 <X className="h-4 w-4" />
-                Clear Filters
+                {t("search.clearFilters", "Clear Filters")}
               </Button>
             )}
           </div>
@@ -84,13 +87,13 @@ export default function Watched() {
           <div className="ct-panel mb-8 p-4 md:p-5">
             <div className="grid gap-4 lg:grid-cols-4">
               <div className="ct-filter-field">
-                <label className="ct-filter-label">Language</label>
+                <label className="ct-filter-label">{t("filters.language", "Language")}</label>
                 <Select value={filterLang} onValueChange={setFilterLang}>
-                  <SelectTrigger aria-label="Filter by language">
-                    <SelectValue placeholder="All Languages" />
+                  <SelectTrigger aria-label={t("watchedPage.filterByLanguage", "Filter by language")}>
+                    <SelectValue placeholder={t("watchedPage.allLanguages", "All Languages")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={ALL}>All Languages</SelectItem>
+                    <SelectItem value={ALL}>{t("watchedPage.allLanguages", "All Languages")}</SelectItem>
                     {filterOptions.langs.map((lang) => (
                     <SelectItem key={lang} value={lang}>
                         {getLanguageLabel(lang)}
@@ -101,16 +104,18 @@ export default function Watched() {
               </div>
 
               <div className="ct-filter-field">
-                <label className="ct-filter-label">Type</label>
+                <label className="ct-filter-label">{t("filters.type", "Type")}</label>
                 <Select value={filterType} onValueChange={setFilterType}>
-                  <SelectTrigger aria-label="Filter by type">
-                    <SelectValue placeholder="All Types" />
+                  <SelectTrigger aria-label={t("watchedPage.filterByType", "Filter by type")}>
+                    <SelectValue placeholder={t("watchedPage.allTypes", "All Types")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={ALL}>All Types</SelectItem>
+                    <SelectItem value={ALL}>{t("watchedPage.allTypes", "All Types")}</SelectItem>
                     {filterOptions.types.map((type) => (
                       <SelectItem key={type} value={type}>
-                        {type === "movie" ? "Movie" : "TV Series"}
+                        {type === "movie"
+                          ? t("common.movie", "Movie")
+                          : t("common.tvShow", "TV Show")}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -118,13 +123,13 @@ export default function Watched() {
               </div>
 
               <div className="ct-filter-field">
-                <label className="ct-filter-label">Country</label>
+                <label className="ct-filter-label">{t("watchedPage.country", "Country")}</label>
                 <Select value={filterCountry} onValueChange={setFilterCountry}>
-                  <SelectTrigger aria-label="Filter by country">
-                    <SelectValue placeholder="All Countries" />
+                  <SelectTrigger aria-label={t("watchedPage.filterByCountry", "Filter by country")}>
+                    <SelectValue placeholder={t("watchedPage.allCountries", "All Countries")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={ALL}>All Countries</SelectItem>
+                    <SelectItem value={ALL}>{t("watchedPage.allCountries", "All Countries")}</SelectItem>
                     {filterOptions.countries.map((country) => (
                       <SelectItem key={country} value={country}>
                         {getCountryLabel(country)}
@@ -135,7 +140,7 @@ export default function Watched() {
               </div>
 
               <div className="ct-filter-field">
-                <label className="ct-filter-label">Year Range</label>
+                <label className="ct-filter-label">{t("watchedPage.yearRange", "Year Range")}</label>
                 <div className="flex items-center gap-3">
                   <Input
                     type="number"
@@ -146,7 +151,7 @@ export default function Watched() {
                     min={filterOptions.minYear}
                     max={filterYear[1]}
                     className="w-24"
-                    aria-label="Minimum year"
+                    aria-label={t("watchedPage.minimumYear", "Minimum year")}
                   />
                   <span className="text-muted-foreground">-</span>
                   <Input
@@ -158,7 +163,7 @@ export default function Watched() {
                     min={filterYear[0]}
                     max={filterOptions.maxYear}
                     className="w-24"
-                    aria-label="Maximum year"
+                    aria-label={t("watchedPage.maximumYear", "Maximum year")}
                   />
                 </div>
               </div>
@@ -211,7 +216,7 @@ export default function Watched() {
 
                     <div className="absolute bottom-0 left-0 right-0 p-4 text-white opacity-0 transition-all duration-300 group-hover:opacity-100">
                       <h3 className="mb-1 line-clamp-2 text-base font-semibold">
-                        {title}
+                        <bdi dir="auto">{title}</bdi>
                       </h3>
                       <div className="mb-3 flex items-center gap-2 text-xs">
                         <Badge

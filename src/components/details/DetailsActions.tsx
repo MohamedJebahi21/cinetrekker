@@ -29,10 +29,10 @@ export default function DetailsActions({ inWatchlist, watched, onToggleWatchlist
       <div className="mobile-nav-safe fixed bottom-0 left-1/2 z-[100] w-[min(96%,30rem)] -translate-x-1/2 px-1">
         <div className="flex flex-col gap-2 rounded-xl border border-border/60 bg-background/96 p-3 shadow-[0_-10px_28px_rgba(0,0,0,0.18)]">
           <Button className={`${watchlistClass} w-full min-h-11`} onClick={onToggleWatchlist}>
-            <Bookmark className="w-4 h-4 mr-2" />Watchlist
+            <Bookmark className="w-4 h-4 mr-2" />{t('details.watchlist', 'Watchlist')}
           </Button>
           <Button className={`${watchedClass} w-full min-h-11`} onClick={onToggleWatched}>
-            <Check className="w-4 h-4 mr-2" />Watched
+            <Check className="w-4 h-4 mr-2" />{t('details.watched', 'Watched')}
           </Button>
           <Button variant="ghost" onClick={onShare} className="w-full min-h-11 justify-center">
             <Share2 className="w-4 h-4" />
@@ -45,10 +45,10 @@ export default function DetailsActions({ inWatchlist, watched, onToggleWatchlist
   return (
     <div className="flex items-center gap-3">
       <Button className={`${watchlistClass} gap-2`} onClick={onToggleWatchlist}>
-        <Bookmark className="w-4 h-4" /> Watchlist
+        <Bookmark className="w-4 h-4" /> {t('details.watchlist', 'Watchlist')}
       </Button>
       <Button className={`${watchedClass} gap-2`} onClick={onToggleWatched}>
-        <Check className="w-4 h-4" /> Watched
+        <Check className="w-4 h-4" /> {t('details.watched', 'Watched')}
       </Button>
       <Button variant="ghost" onClick={onShare} className="gap-2">
         <Share2 className="w-4 h-4" /> {t('actions.share')}

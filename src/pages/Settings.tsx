@@ -490,8 +490,8 @@ export default function Settings() {
       } catch (error) {
         console.error("Error loading settings:", error);
         toast({
-          title: "Error loading settings",
-          description: "Using default settings.",
+          title: text("settings.loadErrorTitle", "Error loading settings"),
+          description: text("settings.loadErrorDesc", "Using default settings."),
           variant: "destructive",
         });
       } finally {
@@ -562,8 +562,11 @@ export default function Settings() {
     setReduceMotion(false);
     setTheme("dark");
     toast({
-      title: "Accessibility reset",
-      description: "Theme, text size, and motion preferences are back to defaults.",
+      title: text("settings.accessibilityResetTitle", "Accessibility reset"),
+      description: text(
+        "settings.accessibilityResetDesc",
+        "Theme, text size, and motion preferences are back to defaults.",
+      ),
     });
   };
 
@@ -621,8 +624,11 @@ export default function Settings() {
     } catch (error) {
       console.error("Error saving settings:", error);
       toast({
-        title: "Error saving settings",
-        description: "Settings saved locally, but syncing to server failed.",
+        title: text("settings.saveErrorTitle", "Error saving settings"),
+        description: text(
+          "settings.saveErrorDesc",
+          "Settings saved locally, but syncing to server failed.",
+        ),
         variant: "destructive",
       });
     } finally {
@@ -643,7 +649,7 @@ export default function Settings() {
   const handleLanguageChange = (langCode: string) => {
     i18n.changeLanguage(langCode);
     toast({
-      title: "Language updated",
+      title: text("settings.languageUpdated", "Language updated"),
       description: `${text("settings.languageChangedTo", "Language changed to")} ${languages.find((l) => l.code === langCode)?.name}`,
     });
   };
@@ -720,14 +726,20 @@ export default function Settings() {
       URL.revokeObjectURL(url);
 
       toast({
-        title: "Export ready",
-        description: "Your profile, settings, and list data were downloaded as JSON.",
+        title: text("settings.exportReadyTitle", "Export ready"),
+        description: text(
+          "settings.exportReadyDesc",
+          "Your profile, settings, and list data were downloaded as JSON.",
+        ),
       });
     } catch (error) {
       console.error("Error exporting data:", error);
       toast({
-        title: "Export failed",
-        description: "Could not generate your data export. Please try again.",
+        title: text("settings.exportFailedTitle", "Export failed"),
+        description: text(
+          "settings.exportFailedDesc",
+          "Could not generate your data export. Please try again.",
+        ),
         variant: "destructive",
       });
     } finally {
@@ -773,18 +785,27 @@ export default function Settings() {
       }
 
       toast({
-        title: "Account data deleted",
+        title: text("settings.accountDeletedTitle", "Account data deleted"),
         description: user?.id
-          ? "Your CineTrekker profile data was removed and you were signed out."
-          : "This device's CineTrekker data was cleared.",
+          ? text(
+              "settings.accountDeletedSignedInDesc",
+              "Your CineTrekker profile data was removed and you were signed out.",
+            )
+          : text(
+              "settings.accountDeletedGuestDesc",
+              "This device's CineTrekker data was cleared.",
+            ),
       });
 
       navigate(user?.id ? "/auth" : "/");
     } catch (error) {
       console.error("Error deleting account data:", error);
       toast({
-        title: "Deletion failed",
-        description: "We could not remove all account data. Please try again.",
+        title: text("settings.deletionFailedTitle", "Deletion failed"),
+        description: text(
+          "settings.deletionFailedDesc",
+          "We could not remove all account data. Please try again.",
+        ),
         variant: "destructive",
       });
     } finally {
@@ -796,8 +817,8 @@ export default function Settings() {
   return (
     <>
       <SEO
-        title="Settings - CineTrekker"
-        description="Manage your account settings and preferences"
+        title={text("settings.seoTitle", "Settings - CineTrekker")}
+        description={text("settings.seoDescription", "Manage your account settings and preferences")}
         canonical="https://cinetrekker.vercel.app/settings"
       />
       <motion.div
@@ -935,8 +956,8 @@ export default function Settings() {
                 sectionLabel={text("settings.accessibilitySection", "Accessibility")}
                 sectionIcon={Accessibility}
                 sectionIconClass="text-red-400"
-                title="Accessibility & display"
-                description="Adjust readability, theme, and motion in the same place you manage the rest of your preferences."
+                title={text("settings.accessibilityDisplay", "Accessibility & display")}
+                description={text("settings.accessibilityDisplayDesc", "Adjust readability, theme, and motion in the same place you manage the rest of your preferences.")}
                 headerIcon={Accessibility}
                 headerIconClass="text-red-400"
                 isOpen={
@@ -959,10 +980,10 @@ export default function Settings() {
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                         <Type className="h-4 w-4 text-muted-foreground" />
-                        Text size
+                        {text("settings.textSize", "Text size")}
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Increase or decrease text size throughout the app.
+                        {text("settings.textSizeDesc", "Increase or decrease text size throughout the app.")}
                       </p>
                     </div>
                     <div className="flex items-center gap-4">
@@ -972,7 +993,7 @@ export default function Settings() {
                         size="icon"
                         className="h-9 w-9 shrink-0 border-border/60 bg-card/80 text-foreground hover:bg-card"
                         onClick={decreaseFontSize}
-                        aria-label="Decrease font size"
+                        aria-label={text("settings.decreaseFontSize", "Decrease font size")}
                         disabled={fontSize <= MIN_FONT_SIZE}
                       >
                         -
@@ -984,7 +1005,7 @@ export default function Settings() {
                         max={MAX_FONT_SIZE}
                         step={FONT_SIZE_STEP}
                         className="flex-1"
-                        aria-label="Font size"
+                        aria-label={text("settings.textSize", "Font size")}
                         aria-valuemin={MIN_FONT_SIZE}
                         aria-valuemax={MAX_FONT_SIZE}
                         aria-valuenow={fontSize}
@@ -996,7 +1017,7 @@ export default function Settings() {
                         size="icon"
                         className="h-9 w-9 shrink-0 border-border/60 bg-card/80 text-foreground hover:bg-card"
                         onClick={increaseFontSize}
-                        aria-label="Increase font size"
+                        aria-label={text("settings.increaseFontSize", "Increase font size")}
                         disabled={fontSize >= MAX_FONT_SIZE}
                       >
                         +
@@ -1004,7 +1025,7 @@ export default function Settings() {
                     </div>
                     <div className="flex items-center justify-between rounded-lg bg-background/40 px-4 py-3">
                       <p className="text-sm text-muted-foreground">
-                        Current size
+                        {text("settings.currentSize", "Current size")}
                       </p>
                       <p className="text-lg font-bold text-foreground">
                         {fontSize}%
@@ -1017,10 +1038,10 @@ export default function Settings() {
                   <div className="flex items-center justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-foreground">
-                        App theme
+                        {text("settings.appTheme", "App theme")}
                       </p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Choose Dark, Light, or OLED mode for the full interface.
+                        {text("settings.appThemeDesc", "Choose Dark, Light, or OLED mode for the full interface.")}
                       </p>
                     </div>
                     <div className="ct-toggle-group">
@@ -1041,7 +1062,6 @@ export default function Settings() {
                                 : "ct-toggle-button hover:text-foreground",
                             )}
                             onClick={() => setTheme(option)}
-                            aria-pressed={theme === option}
                           >
                             {label}
                           </button>
@@ -1063,13 +1083,13 @@ export default function Settings() {
                       className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-foreground"
                     >
                       <Eye className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      Reduce motion
+                      {text("settings.reduceMotion", "Reduce motion")}
                     </Label>
                     <p
                       id="reduceMotion-description"
                       className="mt-1 text-sm text-muted-foreground"
                     >
-                      Minimize animations and transitions across the app.
+                      {text("settings.reduceMotionDesc", "Minimize animations and transitions across the app.")}
                     </p>
                   </div>
                   <Switch
@@ -1089,7 +1109,7 @@ export default function Settings() {
                   className="w-full gap-2 border border-red-500/70 bg-transparent text-red-400 hover:bg-red-500/10 hover:text-red-300"
                 >
                   <RotateCcw className="h-4 w-4" />
-                  Reset accessibility defaults
+                  {text("settings.resetAccessibilityDefaults", "Reset accessibility defaults")}
                 </Button>
               </SettingsSection>
             </motion.div>
@@ -1264,11 +1284,14 @@ export default function Settings() {
             <motion.div variants={itemVariants}>
               <SettingsSection
                 id="settings-data-management"
-                sectionLabel="Data Management"
+                sectionLabel={text("settings.dataManagementSection", "Data management")}
                 sectionIcon={Database}
                 sectionIconClass="text-red-400"
-                title="Data management"
-                description="Export a copy of your data or remove your CineTrekker profile data from this app."
+                title={text("settings.dataManagementTitle", "Data management")}
+                description={text(
+                  "settings.dataManagementDesc",
+                  "Export a copy of your data or remove your CineTrekker profile data from this app.",
+                )}
                 headerIcon={Database}
                 headerIconClass="text-red-400"
                 isOpen={
@@ -1290,12 +1313,16 @@ export default function Settings() {
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-foreground">
-                        Download your CineTrekker data
+                        {text(
+                          "settings.downloadDataTitle",
+                          "Download your CineTrekker data",
+                        )}
                       </p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Export your profile, settings, content-safety state,
-                        watchlist, watched history, and hidden recommendations
-                        in one JSON file.
+                        {text(
+                          "settings.downloadDataDesc",
+                          "Export your profile, settings, content-safety state, watchlist, watched history, and hidden recommendations in one JSON file.",
+                        )}
                       </p>
                     </div>
                     <Button
@@ -1306,7 +1333,9 @@ export default function Settings() {
                       disabled={isExportingData}
                     >
                       <Download className="mr-2 h-4 w-4" />
-                      {isExportingData ? "Preparing export..." : "Export data"}
+                      {isExportingData
+                        ? text("settings.preparingExport", "Preparing export...")
+                        : text("settings.exportData", "Export data")}
                     </Button>
                   </div>
                 </div>
@@ -1316,24 +1345,30 @@ export default function Settings() {
                     <div className="min-w-0 flex-1">
                       <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                         <ShieldAlert className="h-4 w-4 text-red-400" />
-                        Danger zone
+                        {text("settings.dangerZone", "Danger zone")}
                       </p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Delete your CineTrekker profile data, saved preferences,
-                        watchlist, watched history, favorites, and local backups
-                        from this app.
+                        {text(
+                          "settings.dangerZoneDesc",
+                          "Delete your CineTrekker profile data, saved preferences, watchlist, watched history, favorites, and local backups from this app.",
+                        )}
                       </p>
                       <p className="mt-2 text-xs text-muted-foreground">
-                        Full identity-provider account removal may still require
-                        a separate privacy request. You can review the policy or
-                        contact the team from the links below.
+                        {text(
+                          "settings.dangerZoneHelp",
+                          "Full identity-provider account removal may still require a separate privacy request. You can review the policy or contact the team from the links below.",
+                        )}
                       </p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <Button asChild size="sm" variant="ghost">
-                          <Link to="/privacy">Privacy policy</Link>
+                          <Link to="/privacy">
+                            {text("settings.privacyPolicyLink", "Privacy policy")}
+                          </Link>
                         </Button>
                         <Button asChild size="sm" variant="ghost">
-                          <Link to="/feedback">Feedback page</Link>
+                          <Link to="/feedback">
+                            {text("settings.feedbackPageLink", "Feedback page")}
+                          </Link>
                         </Button>
                       </div>
                     </div>
@@ -1345,7 +1380,9 @@ export default function Settings() {
                       disabled={isDeletingData}
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
-                      {user ? "Delete account" : "Clear this device"}
+                      {user
+                        ? text("settings.deleteAccount", "Delete account")
+                        : text("settings.clearThisDevice", "Clear this device")}
                     </Button>
                   </div>
                 </div>
@@ -1362,7 +1399,10 @@ export default function Settings() {
               cancelLabel={text("common.cancel", "Cancel")}
               className="border-t-red-500/10"
             >
-              Save your pending settings changes from anywhere on the page.
+              {text(
+                "settings.savePendingHint",
+                "Save your pending settings changes from anywhere on the page.",
+              )}
             </StickySaveBar>
           </>
         )}

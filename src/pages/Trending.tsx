@@ -17,7 +17,7 @@ function coerceMediaType(items: Media[], type: "movie" | "tv") {
 }
 
 export default function Trending() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { strictFiltering, moderateFiltering } = useContentPolicy();
   const includeAdult = !(strictFiltering || moderateFiltering);
   const language = i18n.language;
@@ -43,8 +43,11 @@ export default function Trending() {
   return (
     <>
       <SEO
-        title="Trending Movie Tracker Picks | CineTrekker"
-        description="Explore trending movies and trending TV series in CineTrekker, the movie tracker built for fast discovery, watchlists, and follow-up viewing."
+        title={t("trending.seoTitle", "Trending Movie Tracker Picks | CineTrekker")}
+        description={t(
+          "trending.seoDescription",
+          "Explore trending movies and trending TV series in CineTrekker, the movie tracker built for fast discovery, watchlists, and follow-up viewing.",
+        )}
         canonical={buildCanonicalUrl("/trending")}
         keywords="trending movies, trending tv series, movie tracker trends, what to watch now"
         jsonLd={[
@@ -59,15 +62,15 @@ export default function Trending() {
         <div className="mb-8">
           <h1 className="section-title flex items-center gap-3">
             <Flame className="w-8 h-8 text-primary" />
-            Trending
+            {t("nav.trending")}
           </h1>
           <p className="text-muted-foreground mt-2">
-            What everyone is watching right now.
+            {t("trending.subtitle", "What everyone is watching right now.")}
           </p>
         </div>
 
         <section className="mb-10">
-          <h2 className="text-xl md:text-2xl font-bold mb-4">Trending Movies</h2>
+          <h2 className="text-xl md:text-2xl font-bold mb-4">{t("trending.movies", "Trending Movies")}</h2>
           <MediaGrid
             items={trendingMovies as (Media & { watchStatus?: string })[]}
             isLoading={loadingMovies}
@@ -78,7 +81,7 @@ export default function Trending() {
         </section>
 
         <section>
-          <h2 className="text-xl md:text-2xl font-bold mb-4">Trending TV Series</h2>
+          <h2 className="text-xl md:text-2xl font-bold mb-4">{t("trending.tv", "Trending TV Series")}</h2>
           <MediaGrid
             items={trendingTV as (Media & { watchStatus?: string })[]}
             isLoading={loadingTV}

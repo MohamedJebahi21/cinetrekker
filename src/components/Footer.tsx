@@ -30,12 +30,12 @@ export function Footer() {
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-foreground/90">
               {t("footer.explore", "Explore")}
             </h3>
-            <nav className="flex flex-col gap-3" aria-label="Explore links">
+            <nav className="flex flex-col gap-3" aria-label={t("footer.exploreLinks", "Explore links")}>
               <Link
                 to="/search"
                 className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
-                Search
+                {t("nav.search", "Search")}
               </Link>
               <Link
                 to="/trending"
@@ -62,7 +62,7 @@ export function Footer() {
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-foreground/90">
               {t("footer.support", "Support")}
             </h3>
-            <nav className="flex flex-col gap-3" aria-label="Support links">
+            <nav className="flex flex-col gap-3" aria-label={t("footer.supportLinks", "Support links")}>
               <a
                 href="https://buymeacoffee.com/mohamed_jebahi"
                 target="_blank" rel="noopener noreferrer"
@@ -102,7 +102,7 @@ export function Footer() {
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-foreground/90">
               {t("footer.legal", "Legal")}
             </h3>
-            <nav className="flex flex-col gap-3" aria-label="Legal links">
+            <nav className="flex flex-col gap-3" aria-label={t("footer.legalLinks", "Legal links")}>
               <Link
                 to="/privacy"
                 className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"

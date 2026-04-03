@@ -36,10 +36,10 @@ interface WatchedStatusDialogProps {
 }
 
 const STATUS_OPTIONS = [
-  { value: 'watching', label: 'Watching', icon: 'TV', color: 'text-primary' },
-  { value: 'completed', label: 'Completed', icon: 'Done', color: 'text-green-500' },
-  { value: 'dropped', label: 'Dropped', icon: 'Stop', color: 'text-red-500' },
-  { value: 'plan_to_watch', label: 'Plan to Watch', icon: 'List', color: 'text-yellow-500' },
+  { value: 'watching', labelKey: 'watchedStatusDialog.statusWatching', fallback: 'Watching', icon: 'TV', color: 'text-primary' },
+  { value: 'completed', labelKey: 'watchedStatusDialog.statusCompleted', fallback: 'Completed', icon: 'Done', color: 'text-green-500' },
+  { value: 'dropped', labelKey: 'watchedStatusDialog.statusDropped', fallback: 'Dropped', icon: 'Stop', color: 'text-red-500' },
+  { value: 'plan_to_watch', labelKey: 'watchedStatusDialog.statusPlanToWatch', fallback: 'Plan to Watch', icon: 'List', color: 'text-yellow-500' },
 ];
 
 export function WatchedStatusDialog({
@@ -96,7 +96,7 @@ export function WatchedStatusDialog({
                     <div className="flex items-center gap-2">
                       <span className="text-sm">{option.icon}</span>
                       <span className={cn('font-medium', option.color)}>
-                        {option.label}
+                        {t(option.labelKey, option.fallback)}
                       </span>
                     </div>
                   </SelectItem>
@@ -118,7 +118,7 @@ export function WatchedStatusDialog({
                   onMouseEnter={() => setHoveredStar(star)}
                   onMouseLeave={() => setHoveredStar(0)}
                   className="rounded transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary"
-                  aria-label={`Rate ${star} out of 10`}
+                  aria-label={t('watchedStatusDialog.rateOutOfTen', 'Rate {{star}} out of 10', { star })}
                 >
                   <Star
                     className={cn(

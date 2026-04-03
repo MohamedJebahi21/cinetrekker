@@ -242,9 +242,11 @@ export default function Watchlist() {
             className="mb-10 flex flex-col justify-between gap-6 sm:flex-row sm:items-center"
           >
             <div>
-              <p className="ct-kicker mb-2">Curated Queue</p>
+              <p className="ct-kicker mb-2">{t("watchlistPage.kicker", "Curated Queue")}</p>
               <h1 className="mb-2 text-3xl font-bold tracking-tight sm:text-4xl">
-                {isSharedView ? "Shared Watchlist" : t("watchlist.title")}
+                {isSharedView
+                  ? t("watchlistPage.sharedTitle", "Shared Watchlist")
+                  : t("watchlist.title")}
               </h1>
               <WatchlistStatsLine
                 totalCount={statusCounts.all}
@@ -266,8 +268,8 @@ export default function Watchlist() {
                 <ShareButton
                   title={
                     isSharedView
-                      ? "Shared CineTrekker Watchlist"
-                      : "My CineTrekker Watchlist"
+                      ? t("watchlistPage.sharedShareTitle", "Shared CineTrekker Watchlist")
+                      : t("watchlistPage.myShareTitle", "My CineTrekker Watchlist")
                   }
                   url={
                     isSharedView
@@ -279,7 +281,9 @@ export default function Watchlist() {
                             .join(","),
                         )}`
                   }
-                  text={`Check out this watchlist with ${listItems.length} titles!`}
+                  text={t("watchlistPage.shareText", "Check out this watchlist with {{count}} titles!", {
+                    count: listItems.length,
+                  })}
                   variant="ghost"
                   size="sm"
                 />
@@ -295,7 +299,7 @@ export default function Watchlist() {
                     }`}
                   >
                     <LayoutGrid className="h-4 w-4" />
-                    Grid
+                    {t("watchlistPage.grid", "Grid")}
                   </button>
                   <button
                     type="button"
@@ -307,7 +311,7 @@ export default function Watchlist() {
                     }`}
                   >
                     <List className="h-4 w-4" />
-                    List
+                    {t("watchlistPage.list", "List")}
                   </button>
                 </div>
 
@@ -330,14 +334,16 @@ export default function Watchlist() {
                     ) : (
                       <Square className="mr-2 h-4 w-4" />
                     )}
-                    {selectionMode ? "Done" : "Bulk Select"}
+                    {selectionMode
+                      ? t("watchlistPage.done", "Done")
+                      : t("watchlistPage.bulkSelect", "Bulk Select")}
                   </Button>
                 )}
 
                 <Button variant="ghost" size="sm" asChild>
                   <Link to="/print-watchlist">
                     <Printer className="mr-2 h-4 w-4" />
-                    Print
+                    {t("watchlistPage.print", "Print")}
                   </Link>
                 </Button>
               </div>
@@ -346,8 +352,10 @@ export default function Watchlist() {
 
           {isSharedView && (
             <div className="mb-8 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-6 py-4 text-sm text-amber-300">
-              You&apos;re viewing a shared watchlist. Sign in to add or manage
-              your own list.
+              {t(
+                "watchlistPage.sharedHint",
+                "You are viewing a shared watchlist. Sign in to add or manage your own list.",
+              )}
             </div>
           )}
 
@@ -397,11 +405,16 @@ export default function Watchlist() {
                 <div>
                   <p className="text-sm font-semibold text-foreground">
                     {selectedCount === 0
-                      ? "Select titles to manage them together"
-                      : `${selectedCount} title${selectedCount === 1 ? "" : "s"} selected`}
+                      ? t("watchlistPage.selectTitlesHint", "Select titles to manage them together")
+                      : t("watchlistPage.selectedCount", "{{count}} titles selected", {
+                          count: selectedCount,
+                        })}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Mark selected titles as watched or remove them from your watchlist in one pass.
+                    {t(
+                      "watchlistPage.bulkHint",
+                      "Mark selected titles as watched or remove them from your watchlist in one pass.",
+                    )}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -412,7 +425,7 @@ export default function Watchlist() {
                     onClick={() => void handleBulkMarkWatched()}
                   >
                     <CheckSquare className="mr-2 h-4 w-4" />
-                    Watched
+                    {t("actions.watched", "Watched")}
                   </Button>
                   <Button
                     size="sm"
@@ -421,10 +434,10 @@ export default function Watchlist() {
                     onClick={() => void handleBulkRemove()}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Remove
+                    {t("common.delete", "Remove")}
                   </Button>
                   <Button size="sm" variant="ghost" onClick={clearSelection}>
-                    Cancel
+                    {t("common.cancel", "Cancel")}
                   </Button>
                 </div>
               </div>
@@ -476,8 +489,8 @@ export default function Watchlist() {
                           }
                           aria-label={
                             selectedKeys.has(`${mediaType}-${media.id}`)
-                              ? "Deselect title"
-                              : "Select title"
+                              ? t("mediaCard.deselectTitle", "Deselect title")
+                              : t("mediaCard.selectTitle", "Select title")
                           }
                         >
                           {selectedKeys.has(`${mediaType}-${media.id}`) ? (
@@ -505,7 +518,7 @@ export default function Watchlist() {
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                           <h3 className="min-w-0 flex-1 text-base font-semibold transition-colors group-hover:text-primary sm:text-lg">
-                            {title}
+                            <bdi dir="auto">{title}</bdi>
                           </h3>
                           <Badge
                             variant="secondary"
@@ -545,7 +558,7 @@ export default function Watchlist() {
                   setSortBy("added-desc");
                 }}
               >
-                Clear Filters
+                {t("search.clearFilters", "Clear Filters")}
               </Button>
             </div>
           ) : (
@@ -563,8 +576,10 @@ export default function Watchlist() {
                 }}
               />
               <p className="mt-2 text-center text-sm text-muted-foreground">
-                Browse search, trending, or title pages and tap the bookmark to
-                start building your queue.
+                {t(
+                  "watchlistPage.buildQueueHint",
+                  "Browse search, trending, or title pages and tap the bookmark to start building your queue.",
+                )}
               </p>
             </div>
           )}

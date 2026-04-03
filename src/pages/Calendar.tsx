@@ -19,7 +19,7 @@ import { CalendarIcon, ChevronLeft, ChevronRight, Film, Tv, Star, Filter, Clock 
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserLists } from '@/contexts/UserListsContext';
 import { useFollowedShows } from '@/hooks/useFollowedShows';
-import { getUpcomingMovies, getOnTheAirTV, getImageUrl, getTVDetails } from '@/services/tmdb';
+import { getUpcomingMovies, getOnTheAirTV, getImageUrl, getTVDetails, getMediaTitle } from '@/services/tmdb';
 import { Media, TVEpisodeInfo, TVNetwork } from '@/types/media';
 
 import { Button } from '@/components/ui/button';
@@ -39,7 +39,6 @@ import SEO from '@/components/SEO';
 import { Image } from '@/components/ui/Image';
 import { getReleaseTimeInfo, formatReleaseDateTime } from '@/lib/timeUtils';
 import { useLoadingTimeout } from '@/hooks/useLoadingTimeout';
-import { toDisplayTitle } from '@/lib/displayTitle';
 
 interface CalendarItem {
   id: number;
@@ -150,14 +149,14 @@ export default function Calendar() {
 
         items.push({
           id: movie.id,
-          title: toDisplayTitle(movie.title || 'Unknown Title'),
+          title: getMediaTitle(movie),
           date: movie.release_date,
           type: 'movie',
           posterPath: movie.poster_path,
           overview: movie.overview,
           isFollowed: isInWatchlist,
           voteAverage: movie.vote_average,
-          network: 'Theatrical Release',
+          network: t('calendar.theatricalRelease', 'Theatrical Release'),
         });
       });
     }
@@ -180,7 +179,7 @@ export default function Calendar() {
 
         items.push({
           id: show.id,
-          title: toDisplayTitle(show.name || 'Unknown Show'),
+          title: getMediaTitle(show),
           date: airDate,
           type: 'tv',
           posterPath: show.poster_path,
@@ -275,7 +274,7 @@ export default function Calendar() {
                   src={getImageUrl(item.posterPath, 'w342')}
                   srcSet={`${getImageUrl(item.posterPath, 'w185')} 185w, ${getImageUrl(item.posterPath, 'w342')} 342w, ${getImageUrl(item.posterPath, 'w500')} 500w`}
                   sizes="(max-width: 640px) 112px, 260px"
-                  alt={`Poster of ${item.title}`}
+                  alt={t('calendar.posterAlt', 'Poster of {{title}}', { title: item.title })}
                   width={342}
                   height={513}
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -325,7 +324,10 @@ export default function Calendar() {
 
                 {item.type === 'tv' && item.seasonNumber && item.episodeNumber && (
                   <p className="text-xs font-medium text-muted-foreground">
-                    Season {item.seasonNumber} • Episode {item.episodeNumber}
+                    {t('calendar.seasonEpisode', 'Season {{season}} • Episode {{episode}}', {
+                      season: item.seasonNumber,
+                      episode: item.episodeNumber,
+                    })}
                   </p>
                 )}
 
@@ -419,7 +421,7 @@ export default function Calendar() {
               <CalendarIcon className="w-7 h-7 text-primary" />
             </div>
             <div className="min-w-0">
-              <p className="ct-kicker mb-2">Release Timeline</p>
+              <p className="ct-kicker mb-2">{t('calendar.releaseTimeline', 'Release Timeline')}</p>
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{t('calendar.title')}</h1>
               <p className="mt-1 text-sm text-muted-foreground sm:text-base">{t('calendar.subtitle')}</p>
             </div>
@@ -476,17 +478,17 @@ export default function Calendar() {
           </div>
         ) : hasCalendarError || calendarLoadingTimedOut ? (
           <div className="ct-panel mx-auto max-w-2xl p-8 text-center">
-            <h2 className="text-xl font-semibold text-foreground">Unable to load calendar</h2>
+            <h2 className="text-xl font-semibold text-foreground">{t('calendar.unableToLoad', 'Unable to load calendar')}</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               {calendarLoadingTimedOut
-                ? 'Loading took too long. Please try again.'
+                ? t('calendar.loadingTooLong', 'Loading took too long. Please try again.')
                 : (moviesErrorValue as Error | undefined)?.message ||
                   (tvErrorValue as Error | undefined)?.message ||
-                  'Something went wrong while fetching releases.'}
+                  t('calendar.fetchError', 'Something went wrong while fetching releases.')}
             </p>
             <div className="mt-4 flex justify-center gap-2">
               <Button onClick={() => { void refetchMovies(); void refetchTV(); }}>
-                Try again
+                {t('common.retry')}
               </Button>
             </div>
           </div>
@@ -494,17 +496,17 @@ export default function Calendar() {
           <>
             {weekItemsCount === 0 && (
               <div className="ct-panel mb-6 p-5 text-center">
-                <h2 className="text-lg font-semibold text-foreground">No releases this week</h2>
+                <h2 className="text-lg font-semibold text-foreground">{t('calendar.noReleasesWeek', 'No releases this week')}</h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Check upcoming weeks for new premieres and episodes.
+                  {t('calendar.noReleasesWeekDesc', 'Check upcoming weeks for new premieres and episodes.')}
                 </p>
                 <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                  <Button variant="secondary" onClick={goToNextWeek}>View next week</Button>
-                  <Button variant="outline" onClick={goToToday}>Back to current week</Button>
+                  <Button variant="secondary" onClick={goToNextWeek}>{t('calendar.viewNextWeek', 'View next week')}</Button>
+                  <Button variant="outline" onClick={goToToday}>{t('calendar.backToCurrentWeek', 'Back to current week')}</Button>
                 </div>
                 {upcomingPreview.length > 0 && (
                   <div className="mt-4 text-sm text-muted-foreground">
-                    Next up: {upcomingPreview.map((item) => item.title).join(' • ')}
+                    {t('calendar.nextUp', 'Next up')}: {upcomingPreview.map((item) => item.title).join(' • ')}
                   </div>
                 )}
               </div>
@@ -539,15 +541,15 @@ export default function Calendar() {
         {/* Legend */}
         <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 justify-center text-sm">
           <div className="flex items-center gap-2">
-            <Badge className="bg-primary text-primary-foreground">Movie</Badge>
+            <Badge className="bg-primary text-primary-foreground">{t('common.movie')}</Badge>
             <span className="text-muted-foreground">{t('common.movies')}</span>
           </div>
           <div className="flex items-center gap-2">
-            <Badge className="bg-amber-500 text-black">TV</Badge>
+            <Badge className="bg-amber-500 text-black">{t('common.tvShow')}</Badge>
             <span className="text-muted-foreground">{t('common.tvShows')}</span>
           </div>
           <div className="flex items-center gap-2">
-            <Badge className="bg-primary">★ Followed</Badge>
+            <Badge className="bg-primary">★ {t('calendar.followed')}</Badge>
             <span className="text-muted-foreground">{t('calendar.inYourList')}</span>
           </div>
         </div>

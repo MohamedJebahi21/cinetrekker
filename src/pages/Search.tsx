@@ -304,7 +304,7 @@ function SearchMultiSelect({
           <div className="border-b border-border/60 px-4 py-3">
             <p className="text-sm font-semibold text-foreground">{label}</p>
             <p className="text-xs text-muted-foreground">
-              Select one or more options.
+              {t("search.multiSelectHint", "Select one or more options.")}
             </p>
           </div>
           <div className="max-h-72 space-y-1 overflow-y-auto p-2">
@@ -336,7 +336,15 @@ function SearchMultiSelect({
                     onCheckedChange={() =>
                       onChange(toggleMultiValue(selectedValues, option.id))
                     }
-                    aria-label={`${checked ? "Remove" : "Select"} ${option.label}`}
+                    aria-label={
+                      checked
+                        ? t("search.removeOptionAria", "Remove {{label}}", {
+                            label: option.label,
+                          })
+                        : t("search.selectOptionAria", "Select {{label}}", {
+                            label: option.label,
+                          })
+                    }
                   />
                   <span className="flex-1">{option.label}</span>
                 </label>
@@ -717,14 +725,24 @@ export default function Search() {
   const canonicalQuery = searchParams.toString();
   const faqItems = [
     {
-      question: "What can I search for in CineTrekker?",
-      answer:
+      question: t(
+        "search.faq.q1",
+        "What can I search for in CineTrekker?",
+      ),
+      answer: t(
+        "search.faq.a1",
         "You can search for movies, TV shows, and people, then refine results with genre, year, language, runtime, and streaming filters.",
+      ),
     },
     {
-      question: "Why use search inside a movie tracker?",
-      answer:
+      question: t(
+        "search.faq.q2",
+        "Why use search inside a movie tracker?",
+      ),
+      answer: t(
+        "search.faq.a2",
         "Search is connected to watchlist actions, detail pages, follow tools, and saved progress, so every result is immediately useful instead of isolated.",
+      ),
     },
   ];
 
@@ -1033,18 +1051,39 @@ export default function Search() {
       <SEO
         title={
           query
-            ? `Search "${query}" | CineTrekker Movie Tracker`
-            : "Search Movies and TV Shows | CineTrekker Movie Tracker"
+            ? t(
+                "search.seoTitleWithQuery",
+                'Search "{{query}}" | CineTrekker Movie Tracker',
+                { query },
+              )
+            : t(
+                "search.seoTitleDefault",
+                "Search Movies and TV Shows | CineTrekker Movie Tracker",
+              )
         }
         description={
           query
-            ? `Search results for "${query}" in CineTrekker, the movie tracker for finding movies, TV shows, people, and watchlist-ready picks.`
-            : "Search and discover movies and TV shows by genre, year, rating, runtime, and streaming service in CineTrekker."
+            ? t(
+                "search.seoDescriptionWithQuery",
+                'Search results for "{{query}}" in CineTrekker, the movie tracker for finding movies, TV shows, people, and watchlist-ready picks.',
+                { query },
+              )
+            : t(
+                "search.seoDescriptionDefault",
+                "Search and discover movies and TV shows by genre, year, rating, runtime, and streaming service in CineTrekker.",
+              )
         }
         keywords={
           query
-            ? `${query}, movie tracker search, movies, TV shows, streaming`
-            : "movie tracker search, TV show search, genre filter, streaming services, watchlist discovery"
+            ? t(
+                "search.seoKeywordsWithQuery",
+                "{{query}}, movie tracker search, movies, TV shows, streaming",
+                { query },
+              )
+            : t(
+                "search.seoKeywordsDefault",
+                "movie tracker search, TV show search, genre filter, streaming services, watchlist discovery",
+              )
         }
         canonical={
           canonicalQuery
@@ -1053,8 +1092,8 @@ export default function Search() {
         }
         jsonLd={[
           toBreadcrumbJsonLd([
-            { name: "Home", path: "/" },
-            { name: "Search", path: "/search" },
+            { name: t("nav.home", "Home"), path: "/" },
+            { name: t("nav.search", "Search"), path: "/search" },
           ]),
           toFaqJsonLd(faqItems),
         ]}

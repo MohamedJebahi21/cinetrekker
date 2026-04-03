@@ -23,7 +23,7 @@ const DECADES = [
 ];
 
 export default function DecadeExplorer() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { strictFiltering, moderateFiltering } = useContentPolicy();
   const includeAdult = !(strictFiltering || moderateFiltering);
   const language = i18n.language;
@@ -70,14 +70,14 @@ export default function DecadeExplorer() {
   return (
     <>
       <SEO
-        title="Explore by Decade — CineTrekker"
-        description="Discover movies and TV shows from different eras"
+        title={t("decades.seoTitle", "Explore by Decade — CineTrekker")}
+        description={t("decades.seoDescription", "Discover movies and TV shows from different eras")}
         canonical="https://cinetrekker.vercel.app/decades"
       />
       <div className="page-container pt-20 pb-24 md:pb-0">
         <div className="flex items-center gap-2 mb-6">
           <Calendar className="h-8 w-8" />
-          <h1 className="section-title mb-0">Explore by Decade</h1>
+          <h1 className="section-title mb-0">{t("decades.title", "Explore by Decade")}</h1>
         </div>
 
         <Tabs
@@ -86,8 +86,8 @@ export default function DecadeExplorer() {
           className="mb-6"
         >
           <TabsList>
-            <TabsTrigger value="movie">Movies</TabsTrigger>
-            <TabsTrigger value="tv">TV Shows</TabsTrigger>
+            <TabsTrigger value="movie">{t("common.movies", "Movies")}</TabsTrigger>
+            <TabsTrigger value="tv">{t("common.tvShows", "TV Shows")}</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -118,7 +118,7 @@ export default function DecadeExplorer() {
         </div>
 
         <h2 className="text-2xl font-bold mb-4">
-          {selectedDecade.label} {mediaType === "movie" ? "Movies" : "TV Shows"}
+          {selectedDecade.label} {mediaType === "movie" ? t("common.movies", "Movies") : t("common.tvShows", "TV Shows")}
         </h2>
 
         {isLoading ? (
@@ -135,7 +135,7 @@ export default function DecadeExplorer() {
           </div>
         ) : (
           <div className="text-center py-16 text-muted-foreground">
-            No results available for this decade
+            {t("decades.noResults", "No results available for this decade")}
           </div>
         )}
       </div>

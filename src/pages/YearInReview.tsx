@@ -19,6 +19,7 @@ import {
   Tooltip as RechartsTooltip,
 } from "recharts";
 import { useTranslation } from "react-i18next";
+import { getMediaTitle } from "@/services/tmdb";
 
 const COLORS = ["#E50914", "#ff6b73", "#f97316", "#f59e0b", "#fb7185"];
 
@@ -30,7 +31,7 @@ type GenreSummary = { name: string };
 
 export default function YearInReview() {
   const currentYear = new Date().getFullYear();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { watched } = useUserLists();
 
   // Filter this year's watched content
@@ -145,13 +146,15 @@ export default function YearInReview() {
   if (totalWatched === 0) {
     return (
       <>
-        <SEO title={`${currentYear} Year in Review`} />
+        <SEO title={t("yearInReview.seoTitle", "{{year}} Year in Review", { year: currentYear })} />
         <div className="ct-page-shell flex min-h-screen items-center justify-center px-4">
           <Card className="ct-panel max-w-md p-12 text-center">
             <Calendar className="mx-auto mb-4 h-12 w-12 text-primary" />
-            <h2 className="mb-2 text-2xl font-semibold text-foreground">No Activity Yet</h2>
+            <h2 className="mb-2 text-2xl font-semibold text-foreground">{t("yearInReview.emptyTitle", "No Activity Yet")}</h2>
             <p className="text-muted-foreground">
-              Start watching in {currentYear} to see your Year in Review!
+              {t("yearInReview.emptyDescription", "Start watching in {{year}} to see your Year in Review!", {
+                year: currentYear,
+              })}
             </p>
           </Card>
         </div>
@@ -162,8 +165,8 @@ export default function YearInReview() {
   return (
     <>
       <SEO
-        title={`${currentYear} Year in Review`}
-        description={`Your ${currentYear} watching statistics and highlights`}
+        title={t("yearInReview.seoTitle", "{{year}} Year in Review", { year: currentYear })}
+        description={t("yearInReview.seoDescription", "Your {{year}} watching statistics and highlights", { year: currentYear })}
         canonical="https://cinetrekker.vercel.app/year-in-review"
       />
 
@@ -175,8 +178,10 @@ export default function YearInReview() {
               <Calendar className="h-9 w-9 text-primary" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{currentYear} Year in Review</h1>
-              <p className="text-sm text-muted-foreground sm:text-lg">Your cinematic journey this year</p>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                {t("yearInReview.title", "{{year}} Year in Review", { year: currentYear })}
+              </h1>
+              <p className="text-sm text-muted-foreground sm:text-lg">{t("yearInReview.subtitle", "Your cinematic journey this year")}</p>
             </div>
           </div>
 
@@ -185,59 +190,64 @@ export default function YearInReview() {
             <Card className="ct-panel rounded-3xl p-5 sm:p-6">
               <div className="flex items-center gap-3 mb-4">
                 <TrendingUp className="h-6 w-6 text-primary" />
-                <h3 className="font-semibold text-lg">Total Watched</h3>
+                <h3 className="font-semibold text-lg">{t("yearInReview.totalWatched", "Total Watched")}</h3>
               </div>
               <p className="text-4xl font-bold text-foreground sm:text-5xl">{totalWatched}</p>
               <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-                {thisYearMovies.length} movies • {thisYearTV.length} TV shows
+                {t("yearInReview.moviesAndShows", "{{movies}} movies • {{shows}} TV shows", {
+                  movies: thisYearMovies.length,
+                  shows: thisYearTV.length,
+                })}
               </p>
             </Card>
 
             <Card className="ct-panel rounded-3xl p-5 sm:p-6">
               <div className="flex items-center gap-3 mb-4">
                 <Clock className="h-6 w-6 text-primary" />
-                <h3 className="font-semibold text-lg">Time Invested</h3>
+                <h3 className="font-semibold text-lg">{t("yearInReview.timeInvested", "Time Invested")}</h3>
               </div>
               <p className="text-4xl font-bold text-foreground sm:text-5xl">{totalHours}h</p>
-              <p className="text-neutral-400 mt-1">≈ {totalDays} days of content</p>
+              <p className="text-neutral-400 mt-1">{t("yearInReview.daysOfContent", "≈ {{days}} days of content", { days: totalDays })}</p>
             </Card>
 
             <Card className="ct-panel rounded-3xl p-5 sm:p-6">
               <div className="flex items-center gap-3 mb-4">
                 <Award className="h-6 w-6 text-primary" />
-                <h3 className="font-semibold text-lg">Favorite Genre</h3>
+                <h3 className="font-semibold text-lg">{t("yearInReview.favoriteGenre", "Favorite Genre")}</h3>
               </div>
               <p className="text-2xl font-bold text-foreground truncate sm:text-3xl">
                 {genreData[0]?.name || "—"}
               </p>
               <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-                {genreData[0]?.value || 0} titles
+                {t("yearInReview.titlesCount", "{{count}} titles", { count: genreData[0]?.value || 0 })}
               </p>
             </Card>
 
             <Card className="ct-panel rounded-3xl p-5 sm:p-6">
               <div className="flex items-center gap-3 mb-4">
                 <Flame className="h-6 w-6 text-primary" />
-                <h3 className="font-semibold text-lg">Busiest Month</h3>
+                <h3 className="font-semibold text-lg">{t("yearInReview.busiestMonth", "Busiest Month")}</h3>
               </div>
               <p className="text-2xl font-bold text-foreground sm:text-3xl">{busiestMonth.month}</p>
-              <p className="mt-1 text-sm text-muted-foreground sm:text-base">{busiestMonth.count} titles watched</p>
+              <p className="mt-1 text-sm text-muted-foreground sm:text-base">
+                {t("yearInReview.titlesWatched", "{{count}} titles watched", { count: busiestMonth.count })}
+              </p>
             </Card>
           </div>
 
           {/* Tabs Section */}
           <Tabs defaultValue="genres" className="w-full">
             <TabsList className="grid w-full grid-cols-3 rounded-2xl border border-border/50 bg-card/70 p-1">
-              <TabsTrigger value="genres" className="rounded-xl px-2 text-xs sm:text-sm">Genres</TabsTrigger>
-              <TabsTrigger value="timeline" className="rounded-xl px-2 text-xs sm:text-sm">Activity</TabsTrigger>
-              <TabsTrigger value="highlights" className="rounded-xl px-2 text-xs sm:text-sm">Top Rated</TabsTrigger>
+              <TabsTrigger value="genres" className="rounded-xl px-2 text-xs sm:text-sm">{t("yearInReview.tabs.genres", "Genres")}</TabsTrigger>
+              <TabsTrigger value="timeline" className="rounded-xl px-2 text-xs sm:text-sm">{t("yearInReview.tabs.activity", "Activity")}</TabsTrigger>
+              <TabsTrigger value="highlights" className="rounded-xl px-2 text-xs sm:text-sm">{t("yearInReview.tabs.topRated", "Top Rated")}</TabsTrigger>
             </TabsList>
 
             {/* Genre Breakdown */}
             <TabsContent value="genres" className="mt-6">
               <Card className="ct-panel rounded-3xl p-5 sm:p-8">
                 <CardHeader className="px-0 pb-6">
-                  <CardTitle>Your Favorite Genres</CardTitle>
+                  <CardTitle>{t("yearInReview.favoriteGenresTitle", "Your Favorite Genres")}</CardTitle>
                 </CardHeader>
                 <div className="h-[360px]">
                   <ResponsiveContainer width="100%" height="100%">
@@ -266,7 +276,7 @@ export default function YearInReview() {
             <TabsContent value="timeline" className="mt-6">
               <Card className="ct-panel rounded-3xl p-5 sm:p-8">
                 <CardHeader className="px-0 pb-6">
-                  <CardTitle>Monthly Watching Activity</CardTitle>
+                  <CardTitle>{t("yearInReview.monthlyActivityTitle", "Monthly Watching Activity")}</CardTitle>
                 </CardHeader>
                 <div className="h-[360px]">
                   <ResponsiveContainer width="100%" height="100%">
@@ -285,7 +295,7 @@ export default function YearInReview() {
             <TabsContent value="highlights" className="mt-6">
               <Card className="ct-panel rounded-3xl p-5 sm:p-8">
                 <CardHeader className="px-0 pb-6">
-                  <CardTitle>Top Rated This Year</CardTitle>
+                  <CardTitle>{t("yearInReview.topRatedTitle", "Top Rated This Year")}</CardTitle>
                 </CardHeader>
                 <div className="space-y-4">
                   {topRated.map((item, index) => (
@@ -297,7 +307,7 @@ export default function YearInReview() {
                         {index + 1}
                       </Badge>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{item.title || item.name}</p>
+                        <p className="font-medium truncate"><bdi dir="auto">{getMediaTitle(item)}</bdi></p>
                         <p className="text-sm text-neutral-400">
                           ⭐ {item.vote_average?.toFixed(1)} • {item.release_date?.slice(0,4) || item.first_air_date?.slice(0,4)}
                         </p>

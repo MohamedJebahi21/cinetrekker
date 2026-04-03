@@ -138,19 +138,28 @@ export default function Index() {
 
   const faqItems = [
     {
-      question: "What is CineTrekker movie tracker used for?",
+      question: t("home.faq.q1", "What is CineTrekker movie tracker used for?"),
       answer:
-        "CineTrekker helps you track movies and TV shows, keep a personal watchlist, mark progress, and discover trending titles without losing context across devices.",
+        t(
+          "home.faq.a1",
+          "CineTrekker helps you track movies and TV shows, keep a personal watchlist, mark progress, and discover trending titles without losing context across devices.",
+        ),
     },
     {
-      question: "Can I follow releases and episode updates?",
+      question: t("home.faq.q2", "Can I follow releases and episode updates?"),
       answer:
-        "Yes. The app includes follow and notification tools so you can monitor returning series, new episodes, and titles you want to revisit later.",
+        t(
+          "home.faq.a2",
+          "Yes. The app includes follow and notification tools so you can monitor returning series, new episodes, and titles you want to revisit later.",
+        ),
     },
     {
-      question: "Does CineTrekker work well on mobile?",
+      question: t("home.faq.q3", "Does CineTrekker work well on mobile?"),
       answer:
-        "Yes. The interface is designed mobile-first with responsive cards, touch-friendly controls, skeleton loading states, and fast lazy-loaded media.",
+        t(
+          "home.faq.a3",
+          "Yes. The interface is designed mobile-first with responsive cards, touch-friendly controls, skeleton loading states, and fast lazy-loaded media.",
+        ),
     },
   ];
 
@@ -182,7 +191,7 @@ export default function Index() {
             <ContinueWatching />
 
             <HomeSectionState
-              title="Watchlist"
+              title={t("nav.watchlist", "Watchlist")}
               loading={watchlistPreviewQuery.isLoading}
               timedOut={watchlistTimedOut}
               error={
@@ -196,15 +205,18 @@ export default function Index() {
               skeleton={<HomeWatchlistSkeleton />}
             >
               <MediaSection
-                title="Watchlist"
+                title={t("nav.watchlist", "Watchlist")}
                 items={watchlistPreviewQuery.data || []}
-                emptyMessage="Save a few titles and they will show up here for quick access."
+                emptyMessage={t(
+                  "home.watchlistEmptyQuickAccess",
+                  "Save a few titles and they will show up here for quick access.",
+                )}
                 showMoreLink="/watchlist"
               />
             </HomeSectionState>
 
             <HomeSectionState
-              title="Personalized Recommendations"
+              title={t("home.personalizedRecommendations", "Personalized Recommendations")}
               loading={
                 deferredEnabled &&
                 moreInGenreQuery.isLoading
@@ -219,14 +231,16 @@ export default function Index() {
               {shouldGateRecommendations ? (
                 <section className="ct-panel flex min-h-[180px] flex-col items-center justify-center p-6 text-center">
                   <h2 className="text-xl font-semibold text-foreground">
-                    Personalized picks start after your first saves
+                    {t("home.personalizedGateTitle", "Personalized picks start after your first saves")}
                   </h2>
                   <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-                    Add a few movies or series to your watchlist so CineTrekker
-                    can put your next best watch ahead of the global feed.
+                    {t(
+                      "home.personalizedGateDesc",
+                      "Add a few movies or series to your watchlist so CineTrekker can put your next best watch ahead of the global feed.",
+                    )}
                   </p>
                   <Button asChild className="btn-primary-glow mt-4">
-                    <Link to="/watchlist">Build My Watchlist</Link>
+                    <Link to="/watchlist">{t("home.buildWatchlist", "Build My Watchlist")}</Link>
                   </Button>
                 </section>
               ) : (
@@ -237,10 +251,16 @@ export default function Index() {
 
                   {lastGenreId ? (
                     <MediaSection
-                      title={`More in ${lastGenreName || "this genre"}`}
+                      title={t("home.moreInGenre", {
+                        genre: lastGenreName || t("home.thisGenre", "this genre"),
+                        defaultValue: `More in ${lastGenreName || "this genre"}`,
+                      })}
                       items={filteredGenreItems}
                       loading={moreInGenreQuery.isLoading}
-                      emptyMessage="We need a bit more watch history before this row fills in."
+                      emptyMessage={t(
+                        "home.moreInGenreEmpty",
+                        "We need a bit more watch history before this row fills in.",
+                      )}
                     />
                   ) : null}
                 </div>
@@ -252,18 +272,20 @@ export default function Index() {
         ) : (
           <section className="ct-panel flex min-h-[180px] flex-col items-center justify-center p-6 text-center">
             <h2 className="text-xl font-semibold text-foreground">
-              Make every visit personal
+              {t("home.makeEveryVisitPersonal", "Make every visit personal")}
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Create a free account to keep your watchlist, progress, ratings,
-              and recommendations synced across devices.
+              {t(
+                "home.createAccountSyncDesc",
+                "Create a free account to keep your watchlist, progress, ratings, and recommendations synced across devices.",
+              )}
             </p>
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
               <Button asChild className="btn-primary-glow">
-                <Link to="/signup">Create Free Account</Link>
+                <Link to="/signup">{t("home.createFreeAccount", "Create Free Account")}</Link>
               </Button>
               <Button asChild variant="outline">
-                <Link to="/search">Explore Trending Titles</Link>
+                <Link to="/search">{t("home.exploreTrendingTitles", "Explore Trending Titles")}</Link>
               </Button>
             </div>
           </section>
@@ -272,16 +294,19 @@ export default function Index() {
         <section className="border-t border-border pt-10">
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="section-title mb-1">Trending Now</h2>
+              <h2 className="section-title mb-1">{t("search.trendingNow", "Trending Now")}</h2>
               <p className="text-sm text-muted-foreground">
-                Global discovery stays here so your personal library comes first.
+                {t(
+                  "home.globalDiscoveryHint",
+                  "Global discovery stays here so your personal library comes first.",
+                )}
               </p>
             </div>
             <div className="ct-toggle-group">
               {[
-                { key: "trending-day", label: "Trending Today" },
-                { key: "trending-week", label: "Trending This Week" },
-                { key: "new-releases", label: "New Releases" },
+                { key: "trending-day", label: t("home.trendingToday", "Trending Today") },
+                { key: "trending-week", label: t("home.trendingWeek", "Trending This Week") },
+                { key: "new-releases", label: t("home.newReleases", "New Releases") },
               ].map((tab) => (
                 <button
                   key={tab.key}
@@ -304,7 +329,7 @@ export default function Index() {
           </div>
 
           <HomeSectionState
-            title="Trending Now"
+            title={t("search.trendingNow", "Trending Now")}
             loading={!deferredEnabled || criticalDataQuery.isLoading || trendingDayQuery.isLoading}
             timedOut={discoveryTimedOut}
             error={
@@ -323,33 +348,36 @@ export default function Index() {
             <div key={discoverTab} className="animate-fade-in">
               {discoverTab === "trending-day" ? (
                 <MediaCarouselEnhanced
-                  title="Trending Today"
+                  title={t("home.trendingToday", "Trending Today")}
                   items={trendingDayQuery.data?.results || []}
                   showMoreLink="/movies"
-                  showMoreLabel="See All Trending Movies"
+                  showMoreLabel={t("home.seeAllTrendingMovies", "See All Trending Movies")}
                 />
               ) : null}
               {discoverTab === "trending-week" ? (
                 <MediaCarouselEnhanced
-                  title="Trending This Week"
+                  title={t("home.trendingWeek", "Trending This Week")}
                   items={trendingWeek?.results || []}
                   showMoreLink="/tv"
-                  showMoreLabel="See All Trending TV"
+                  showMoreLabel={t("home.seeAllTrendingTv", "See All Trending TV")}
                 />
               ) : null}
               {discoverTab === "new-releases" ? (
                 <MediaCarouselEnhanced
-                  title="New Releases"
+                  title={t("home.newReleases", "New Releases")}
                   items={newReleases?.results || []}
                   showMoreLink="/movies"
-                  showMoreLabel="See All New Movie Releases"
+                  showMoreLabel={t("home.seeAllNewMovieReleases", "See All New Movie Releases")}
                 />
               ) : null}
             </div>
           </HomeSectionState>
 
           <p className="mt-3 text-xs text-muted-foreground">
-            This product uses the TMDB API but is not endorsed or certified by TMDB.
+            {t(
+              "footer.attribution",
+              "This product uses the TMDB API but is not endorsed or certified by TMDB. All movie and TV show data, including images and metadata, is provided by The Movie Database (TMDB).",
+            )}
           </p>
         </section>
       </main>

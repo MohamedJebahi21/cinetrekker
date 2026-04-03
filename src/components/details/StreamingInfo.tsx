@@ -3,16 +3,18 @@ import { getProviderUrlFromData } from "@/lib/providerMap";
 import { getProviderWatchUrl } from "@/lib/providerLinks";
 import type { Provider } from "@/types/media";
 import { Image } from "@/components/ui/Image";
+import { useTranslation } from "react-i18next";
 
 export default function StreamingInfo({
   providers,
 }: {
   providers?: Provider[];
 }) {
+  const { t } = useTranslation();
   if (!providers || providers.length === 0) return null;
   return (
     <div className="glass-card p-4">
-      <h3 className="text-sm font-semibold mb-2">Where to Watch</h3>
+      <h3 className="text-sm font-semibold mb-2">{t('details.whereToWatch', 'Where to Watch')}</h3>
       <div className="flex items-center gap-2">
         {providers.slice(0, 6).map((p) => {
           const href =

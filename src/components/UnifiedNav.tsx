@@ -16,6 +16,7 @@ import LogIn from "lucide-react/dist/esm/icons/log-in";
 import LogOut from "lucide-react/dist/esm/icons/log-out";
 import Settings from "lucide-react/dist/esm/icons/settings";
 import Palette from "lucide-react/dist/esm/icons/palette";
+import Globe from "lucide-react/dist/esm/icons/globe";
 import House from "lucide-react/dist/esm/icons/house";
 import Search from "lucide-react/dist/esm/icons/search";
 import Bookmark from "lucide-react/dist/esm/icons/bookmark";
@@ -41,6 +42,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { languages } from "@/i18n";
 
 const NotificationBell = lazy(() =>
   import("@/components/NotificationBell").then((mod) => ({
@@ -64,6 +66,7 @@ interface NavItem {
 // Mega menu structure — 3 columns
 const MEGA_MENU_COLUMNS = [
   {
+    headingKey: "nav.discover",
     heading: "Discover",
     items: [
       { path: "/", key: "nav.home", fallback: "Home", icon: House, exact: true },
@@ -75,6 +78,7 @@ const MEGA_MENU_COLUMNS = [
     ],
   },
   {
+    headingKey: "nav.myLists",
     heading: "My Lists",
     items: [
       { path: "/watchlist", key: "nav.watchlist", fallback: "Watchlist", icon: Bookmark },
@@ -85,6 +89,7 @@ const MEGA_MENU_COLUMNS = [
     ],
   },
   {
+    headingKey: "nav.progress",
     heading: "Progress",
     items: [
       { path: "/stats", key: "nav.stats", fallback: "Stats", icon: ChartNoAxesCombined },
@@ -97,24 +102,26 @@ const MEGA_MENU_COLUMNS = [
 const NAV_ITEMS: NavItem[] = MEGA_MENU_COLUMNS.flatMap((col) => col.items) as NavItem[];
 
 const THEME_OPTIONS = [
-  { value: "dark", label: "Dark" },
-  { value: "light", label: "Light" },
-  { value: "oled", label: "OLED" },
+  { value: "dark", labelKey: "nav.themeDark", fallback: "Dark" },
+  { value: "light", labelKey: "nav.themeLight", fallback: "Light" },
+  { value: "oled", labelKey: "nav.themeOled", fallback: "OLED" },
 ] as const;
 
 export function UnifiedNav() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { pathname } = useLocation();
   const isSearchPage = pathname.startsWith("/search");
   const { user, signOut, loading } = useAuth();
   const { theme, setTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
+  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const desktopMenuRef = useRef<HTMLDivElement>(null);
   const desktopToggleButtonRef = useRef<HTMLButtonElement>(null);
   const desktopThemeMenuRef = useRef<HTMLDivElement>(null);
+  const desktopLanguageMenuRef = useRef<HTMLDivElement>(null);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -155,11 +162,15 @@ export function UnifiedNav() {
       if (isThemeMenuOpen && !desktopThemeMenuRef.current?.contains(target)) {
         setIsThemeMenuOpen(false);
       }
+      if (isLanguageMenuOpen && !desktopLanguageMenuRef.current?.contains(target)) {
+        setIsLanguageMenuOpen(false);
+      }
     };
     const onEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setIsMenuOpen(false);
         setIsThemeMenuOpen(false);
+        setIsLanguageMenuOpen(false);
         setIsMobileSheetOpen(false);
       }
     };
@@ -171,11 +182,12 @@ export function UnifiedNav() {
       document.removeEventListener("touchstart", onClickOutside);
       document.removeEventListener("keydown", onEscape);
     };
-  }, [isMenuOpen, isThemeMenuOpen]);
+  }, [isLanguageMenuOpen, isMenuOpen, isThemeMenuOpen]);
 
   useLayoutEffect(() => {
     setIsMenuOpen(false);
     setIsThemeMenuOpen(false);
+    setIsLanguageMenuOpen(false);
     setIsMobileSheetOpen(false);
   }, [pathname]);
 
@@ -262,25 +274,16 @@ export function UnifiedNav() {
           </Suspense>
 
           {user ? (
-            <>
-              <Link
-                to="/profile"
-                className={cn(
-                  "inline-flex min-h-[48px] min-w-[48px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent",
-                  pathname.startsWith("/profile") && "text-primary",
-                )}
-                aria-label={t("nav.profile", "Profile")}
-              >
-                {renderProfileAvatar()}
-              </Link>
-              <Link
-                to="/settings"
-                className="inline-flex min-h-[48px] min-w-[48px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent"
-                aria-label={t("nav.settings", "Settings")}
-              >
-                <Settings className="h-5 w-5" />
-              </Link>
-            </>
+            <Link
+              to="/profile"
+              className={cn(
+                "inline-flex min-h-[48px] min-w-[48px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent",
+                pathname.startsWith("/profile") && "text-primary",
+              )}
+              aria-label={t("nav.profile", "Profile")}
+            >
+              {renderProfileAvatar()}
+            </Link>
           ) : (
             <Link
               to="/login"
@@ -290,6 +293,46 @@ export function UnifiedNav() {
               {t("nav.signIn", "Sign In")}
             </Link>
           )}
+
+          <Link
+            to="/settings"
+            className="inline-flex min-h-[48px] min-w-[48px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent"
+            aria-label={t("nav.settings", "Settings")}
+          >
+            <Settings className="h-5 w-5" />
+          </Link>
+
+          {/* Language picker */}
+          <div className="relative" ref={desktopLanguageMenuRef}>
+            <button
+              type="button"
+              onClick={() => setIsLanguageMenuOpen((prev) => !prev)}
+              className="inline-flex min-h-[48px] min-w-[48px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent"
+              aria-label={t("nav.changeLanguage", "Change language")}
+            >
+              <Globe className="h-5 w-5" />
+            </button>
+            {isLanguageMenuOpen && (
+              <div className="absolute right-0 top-full z-50 mt-2 min-w-[140px] rounded-md border border-border/50 bg-popover/95 p-1 shadow-lg backdrop-blur-xl">
+                {languages.map((lang) => (
+                  <button
+                    key={lang.code}
+                    type="button"
+                    onClick={() => {
+                      void i18n.changeLanguage(lang.code);
+                      setIsLanguageMenuOpen(false);
+                    }}
+                    className={cn(
+                      "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
+                      i18n.language === lang.code && "bg-accent",
+                    )}
+                  >
+                    {lang.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Theme picker */}
           <div className="relative" ref={desktopThemeMenuRef}>
@@ -310,7 +353,7 @@ export function UnifiedNav() {
                     onClick={() => { setTheme(option.value); setIsThemeMenuOpen(false); }}
                     className={cn("w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent", theme === option.value && "bg-accent")}
                   >
-                    {option.label}
+                    {t(option.labelKey, option.fallback)}
                   </button>
                 ))}
               </div>
@@ -400,7 +443,7 @@ export function UnifiedNav() {
                 <SheetHeader className="rounded-2xl border border-border/60 bg-card/60 px-4 py-4 text-left shadow-[0_8px_20px_rgba(0,0,0,0.08)]">
                   <SheetTitle className="text-xl leading-tight">{t("common.appName", "CineTrekker")}</SheetTitle>
                   <div className="text-sm text-muted-foreground">
-                    Explore, track, and manage your lists
+                    {t("nav.mobileSubtitle", "Explore, track, and manage your lists")}
                   </div>
                 </SheetHeader>
 
@@ -413,13 +456,17 @@ export function UnifiedNav() {
                 >
                   {user ? renderProfileAvatar() : <User className="h-8 w-8 text-muted-foreground" />}
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold text-foreground">{user?.email || "Guest"}</div>
-                    <div className="text-xs text-muted-foreground">{user ? "Signed in" : "Sign in to sync your lists"}</div>
+                    <div className="truncate text-sm font-semibold text-foreground">{user?.email || t("nav.guest", "Guest")}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {user ? t("nav.signedIn", "Signed in") : t("nav.signInHint", "Sign in to sync your lists")}
+                    </div>
                   </div>
                 </Link>
 
                 <div className="space-y-2 border-t border-border/50 pt-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Theme</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                    {t("nav.theme", "Theme")}
+                  </p>
                   <div className="grid grid-cols-3 gap-2">
                     {THEME_OPTIONS.map((option) => (
                       <button
@@ -431,14 +478,16 @@ export function UnifiedNav() {
                           theme === option.value ? "border-primary/40 bg-primary/10 text-primary" : "bg-card/60 text-foreground",
                         )}
                       >
-                        {option.label}
+                        {t(option.labelKey, option.fallback)}
                       </button>
                     ))}
                   </div>
                 </div>
 
                 <nav className="space-y-2 border-t border-border/50 pt-4" aria-label={t("nav.main", "Main navigation")}>
-                  <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Browse</p>
+                  <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                    {t("nav.browse", "Browse")}
+                  </p>
                   {NAV_ITEMS.map((item) => {
                     const Icon = item.icon;
                     const isActive = item.exact ? pathname === item.path : pathname.startsWith(item.path);
@@ -469,7 +518,9 @@ export function UnifiedNav() {
                 </nav>
 
                 <div className="space-y-2 border-t border-border/50 pt-4">
-                  <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Account</p>
+                  <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                    {t("nav.account", "Account")}
+                  </p>
                   <Link
                     to="/settings"
                     onClick={() => setIsMobileSheetOpen(false)}
@@ -524,7 +575,7 @@ export function UnifiedNav() {
               >
                 {/* Column heading */}
                 <p className="mb-3 flex items-center gap-2 border-b border-border/40 pb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                  {col.heading}
+                  {t(col.headingKey, col.heading)}
                 </p>
                 <ul className="space-y-1">
                   {col.items.map((item) => {

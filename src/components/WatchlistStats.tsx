@@ -94,6 +94,8 @@ export function WatchlistStatsLine({
   completedCount = 0,
   planToWatchCount = 0,
 }: Omit<WatchlistStatsProps, "totalHours" | "compact">) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
       <motion.span
@@ -101,7 +103,9 @@ export function WatchlistStatsLine({
         animate={{ opacity: 1 }}
         className="font-semibold text-foreground"
       >
-        {totalCount} {totalCount === 1 ? "item" : "items"}
+        {t("watchlistPage.itemsCount", "{{count}} items", {
+          count: totalCount,
+        })}
       </motion.span>
 
       {watchingCount > 0 && (
@@ -110,7 +114,10 @@ export function WatchlistStatsLine({
           animate={{ opacity: 1 }}
           transition={{ delay: 0.05 }}
         >
-          <span className="text-primary">•</span> {watchingCount} watching
+          <span className="text-primary">•</span>{" "}
+          {t("watchlistPage.watchingCount", "{{count}} watching", {
+            count: watchingCount,
+          })}
         </motion.span>
       )}
 
@@ -120,7 +127,10 @@ export function WatchlistStatsLine({
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
         >
-          <span className="text-green-500">•</span> {completedCount} completed
+          <span className="text-green-500">•</span>{" "}
+          {t("watchlistPage.completedCount", "{{count}} completed", {
+            count: completedCount,
+          })}
         </motion.span>
       )}
 
@@ -130,7 +140,10 @@ export function WatchlistStatsLine({
           animate={{ opacity: 1 }}
           transition={{ delay: 0.15 }}
         >
-          <span className="text-amber-400">•</span> {planToWatchCount} planned
+          <span className="text-amber-400">•</span>{" "}
+          {t("watchlistPage.plannedCount", "{{count}} planned", {
+            count: planToWatchCount,
+          })}
         </motion.span>
       )}
     </div>

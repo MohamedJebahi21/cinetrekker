@@ -292,9 +292,17 @@ export const MediaCard = React.memo(function MediaCard({
                 className="min-h-[44px] min-w-[44px] rounded-full px-3 text-xs shadow-lg"
                 onClick={(event) => void handleToggleSelect(event)}
                 aria-pressed={selected}
-                aria-label={selected ? "Deselect title" : "Select title"}
+                aria-label={
+                  selected
+                    ? t("mediaCard.deselectTitle", "Deselect title")
+                    : t("mediaCard.selectTitle", "Select title")
+                }
               >
-                {selected ? <Check className="h-3.5 w-3.5" /> : "Select"}
+                {selected ? (
+                  <Check className="h-3.5 w-3.5" />
+                ) : (
+                  t("mediaCard.select", "Select")
+                )}
               </Button>
             </div>
           ) : null}
@@ -315,7 +323,7 @@ export const MediaCard = React.memo(function MediaCard({
               {isWatchlistPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : null}
-              Watchlist
+              {t("actions.watchlist", "Watchlist")}
             </Button>
             <Button
               type="button"
@@ -333,7 +341,7 @@ export const MediaCard = React.memo(function MediaCard({
               {isWatchedPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : null}
-              Watched
+              {t("actions.watched", "Watched")}
             </Button>
           </div>
 
@@ -399,7 +407,7 @@ export const MediaCard = React.memo(function MediaCard({
         {/* Info */}
         <div className="flex min-h-[6.25rem] flex-col p-3">
           <h3 className="title-display min-h-[3.5rem] line-clamp-2 text-base font-semibold transition-colors group-hover:text-primary md:text-lg">
-            {title}
+            <bdi dir="auto">{title}</bdi>
           </h3>
           <div className="mt-auto flex items-center justify-between gap-2 pt-1">
             {year ? (
@@ -410,7 +418,10 @@ export const MediaCard = React.memo(function MediaCard({
           </div>
           {!user ? (
             <p className="mt-2 text-xs text-muted-foreground">
-              Sign in to save, track, and review this title.
+              {t(
+                "mediaCard.signInHint",
+                "Sign in to save, track, and review this title.",
+              )}
             </p>
           ) : null}
         </div>
@@ -435,13 +446,16 @@ export const MediaCard = React.memo(function MediaCard({
                     {isWatchlistPending ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : null}
-                    Watchlist
+                    {t("actions.watchlist", "Watchlist")}
                   </Button>
                 </div>
               </TooltipTrigger>
               {!user && (
                 <TooltipContent>
-                  Create a free account to save your watchlist.
+                  {t(
+                    "mediaCard.createAccountHint",
+                    "Create a free account to save your watchlist.",
+                  )}
                 </TooltipContent>
               )}
             </Tooltip>
@@ -463,12 +477,15 @@ export const MediaCard = React.memo(function MediaCard({
                   {isWatchedPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : null}
-                  Watched
+                  {t("actions.watched", "Watched")}
                 </Button>
               </TooltipTrigger>
               {!user ? (
                 <TooltipContent>
-                  Sign in to save watched history and reviews.
+                  {t(
+                    "mediaCard.signInWatchedHint",
+                    "Sign in to save watched history and reviews.",
+                  )}
                 </TooltipContent>
               ) : null}
             </Tooltip>

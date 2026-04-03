@@ -19,14 +19,21 @@ export default function About() {
   });
   const faqItems = [
     {
-      question: "What makes CineTrekker different from a basic watchlist app?",
-      answer:
+      question: t(
+        "about.faq1Question",
+        "What makes CineTrekker different from a basic watchlist app?",
+      ),
+      answer: t(
+        "about.faq1Answer",
         "CineTrekker combines movie tracker tools, richer detail pages, follow features, notifications, and structured discovery views so you can move from browsing to planning without a disconnected workflow.",
+      ),
     },
     {
-      question: "Who is CineTrekker for?",
-      answer:
+      question: t("about.faq2Question", "Who is CineTrekker for?"),
+      answer: t(
+        "about.faq2Answer",
         "It is designed for casual viewers, list builders, series followers, and film fans who want a faster way to track movies and TV shows across devices.",
+      ),
     },
   ];
 
@@ -40,11 +47,14 @@ export default function About() {
           "Learn what CineTrekker is, how the movie tracker works, and how watchlists, recommendations, and follow features fit together.",
         )}
         canonical={buildCanonicalUrl("/about")}
-        keywords="about movie tracker, CineTrekker app, watchlist platform, track movies"
+        keywords={t(
+          "about.keywords",
+          "about movie tracker, CineTrekker app, watchlist platform, track movies",
+        )}
         jsonLd={[
           toBreadcrumbJsonLd([
-            { name: "Home", path: "/" },
-            { name: "About", path: "/about" },
+            { name: t("nav.home", "Home"), path: "/" },
+            { name: t("about.pageTitle", "About"), path: "/about" },
           ]),
           toFaqJsonLd(faqItems),
         ]}
@@ -74,23 +84,23 @@ export default function About() {
 
         <section className="ct-panel p-6 md:p-7">
           <h2 className="text-2xl font-bold text-foreground">
-            How the movie tracker experience works
+            {t(
+              "about.howItWorksTitle",
+              "How the movie tracker experience works",
+            )}
           </h2>
           <div className="editorial-copy mt-4 space-y-4 text-muted-foreground">
             <p>
-              CineTrekker is built to reduce the friction between discovering a
-              title and remembering to come back to it later. The app combines
-              search, watchlist management, watched status, follow tools, and
-              recommendation surfaces so your browsing session produces a useful
-              record instead of disappearing when the tab closes.
+              {t(
+                "about.howItWorksBody1",
+                "CineTrekker is built to reduce the friction between discovering a title and remembering to come back to it later. The app combines search, watchlist management, watched status, follow tools, and recommendation surfaces so your browsing session produces a useful record instead of disappearing when the tab closes.",
+              )}
             </p>
             <p>
-              That matters for both users and discovery systems. Human visitors
-              get a cleaner flow with mobile-friendly navigation, while search
-              engines and AI assistants get semantic content, structured data,
-              and stable internal links that explain what each page is about.
-              The goal is a movie tracker that feels lightweight in the browser
-              but still communicates clearly to modern search and AI pipelines.
+              {t(
+                "about.howItWorksBody2",
+                "That matters for both users and discovery systems. Human visitors get a cleaner flow with mobile-friendly navigation, while search engines and AI assistants get semantic content, structured data, and stable internal links that explain what each page is about. The goal is a movie tracker that feels lightweight in the browser but still communicates clearly to modern search and AI pipelines.",
+              )}
             </p>
           </div>
         </section>
@@ -143,33 +153,36 @@ export default function About() {
         </Card>
 
         <InternalLinksSection
-          title="Related pages"
+          title={t("about.relatedPages", "Related pages")}
           links={[
             {
               to: "/search",
-              title: "Search movies and series",
-              description:
+              title: t("about.searchMoviesAndSeries", "Search movies and series"),
+              description: t(
+                "about.searchMoviesAndSeriesDesc",
                 "Use the main movie tracker search to discover titles with filters and sorting.",
+              ),
             },
             {
               to: "/trending",
-              title: "Trending picks",
-              description:
+              title: t("about.trendingPicks", "Trending picks"),
+              description: t(
+                "about.trendingPicksDesc",
                 "Browse the fastest-moving titles before adding them to your watchlist.",
+              ),
             },
             {
               to: "/privacy",
-              title: "Privacy policy",
-              description:
+              title: t("about.privacyPolicy", "Privacy policy"),
+              description: t(
+                "about.privacyPolicyDesc",
                 "Review how account and preference data is handled across sessions.",
+              ),
             },
           ]}
         />
 
-        <FAQSection
-          title="About CineTrekker FAQs"
-          items={faqItems}
-        />
+        <FAQSection title={t("about.faqTitle", "About CineTrekker FAQs")} items={faqItems} />
       </div>
       </div>
     </div>

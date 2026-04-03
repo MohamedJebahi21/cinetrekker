@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import {
   Accessibility,
@@ -51,6 +52,7 @@ const itemVariants = {
 };
 
 export default function AccessibilitySettings() {
+  const { t } = useTranslation();
   const MIN_FONT_SIZE = 80;
   const MAX_FONT_SIZE = 150;
   const FONT_SIZE_STEP = 10;
@@ -86,8 +88,8 @@ export default function AccessibilitySettings() {
     setReduceMotion(false);
     setTheme("dark");
     toast({
-      title: "Settings Reset",
-      description: "Theme and accessibility settings have been reset to defaults.",
+      title: t("accessibility.resetToastTitle", "Settings Reset"),
+      description: t("accessibility.resetToastDesc", "Theme and accessibility settings have been reset to defaults."),
     });
   };
 
@@ -102,8 +104,8 @@ export default function AccessibilitySettings() {
   return (
     <>
       <SEO
-        title="Accessibility Settings - CineTrekker"
-        description="Customize your viewing experience with font size, theme, and motion settings"
+        title={t("accessibility.seoTitle", "Accessibility Settings - CineTrekker")}
+        description={t("accessibility.seoDescription", "Customize your viewing experience with font size, theme, and motion settings")}
         canonical="https://cinetrekker.vercel.app/accessibility"
       />
 
@@ -123,9 +125,9 @@ export default function AccessibilitySettings() {
                   <Accessibility className="w-7 h-7 text-red-400" />
                 </div>
                 <div>
-                  <h1 className="section-title mb-0 text-2xl md:text-3xl">Accessibility Settings</h1>
+                  <h1 className="section-title mb-0 text-2xl md:text-3xl">{t("accessibility.title", "Accessibility Settings")}</h1>
                   <p className="text-muted-foreground">
-                    Customize the app for better readability and usability.
+                    {t("accessibility.subtitle", "Customize the app for better readability and usability.")}
                   </p>
                 </div>
               </div>
@@ -137,7 +139,7 @@ export default function AccessibilitySettings() {
         <motion.div variants={itemVariants} className="mb-6">
           <p className="ct-kicker mb-3 inline-flex items-center gap-2">
             <Type className="h-3.5 w-3.5 text-red-400" />
-            Text Size
+            {t("accessibility.textSizeKicker", "Text Size")}
           </p>
           <Card className="ct-panel">
             <CardHeader>
@@ -145,9 +147,9 @@ export default function AccessibilitySettings() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-white/10 to-white/5">
                   <Type className="h-5 w-5 text-red-400" />
                 </div>
-                <span>Font Size</span>
+                <span>{t("accessibility.fontSize", "Font Size")}</span>
               </CardTitle>
-              <CardDescription>Adjust text size throughout the app.</CardDescription>
+              <CardDescription>{t("accessibility.fontSizeDesc", "Adjust text size throughout the app.")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="space-y-2">
@@ -202,7 +204,7 @@ export default function AccessibilitySettings() {
         <motion.div variants={itemVariants} className="mb-6">
           <p className="ct-kicker mb-3 inline-flex items-center gap-2">
             <Accessibility className="h-3.5 w-3.5 text-red-400" />
-            Display Preferences
+            {t("accessibility.displayPreferencesKicker", "Display Preferences")}
           </p>
           <Card className="ct-panel">
             <CardHeader>
@@ -210,9 +212,9 @@ export default function AccessibilitySettings() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-white/10 to-white/5">
                   <Accessibility className="h-5 w-5 text-red-400" />
                 </div>
-                <span>Theme & Motion</span>
+                <span>{t("accessibility.themeMotion", "Theme & Motion")}</span>
               </CardTitle>
-              <CardDescription>Choose a visual theme and motion behavior.</CardDescription>
+              <CardDescription>{t("accessibility.themeMotionDesc", "Choose a visual theme and motion behavior.")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Theme Switcher */}
@@ -224,10 +226,10 @@ export default function AccessibilitySettings() {
               >
                 <div className="min-w-0 flex-1">
                   <p id="theme-switcher-label" className="text-sm font-semibold text-foreground">
-                    App Theme
+                    {t("accessibility.appTheme", "App Theme")}
                   </p>
                   <p id="theme-switcher-description" className="mt-1 text-sm text-muted-foreground">
-                    Pick Dark, Light, or OLED mode for the full app.
+                    {t("accessibility.appThemeDesc", "Pick Dark, Light, or OLED mode for the full app.")}
                   </p>
                 </div>
                 <div
@@ -272,10 +274,10 @@ export default function AccessibilitySettings() {
                     className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-foreground"
                   >
                     <Eye className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    Reduce Motion
+                    {t("accessibility.reduceMotion", "Reduce Motion")}
                   </Label>
                   <p id="reduceMotion-description" className="mt-1 text-sm text-muted-foreground">
-                    Minimize animations and transitions.
+                    {t("accessibility.reduceMotionDesc", "Minimize animations and transitions.")}
                   </p>
                 </div>
                 <Switch
@@ -294,16 +296,16 @@ export default function AccessibilitySettings() {
         <motion.div variants={itemVariants} className="mb-6">
           <p className="ct-kicker mb-3 inline-flex items-center gap-2">
             <Accessibility className="h-3.5 w-3.5 text-red-400" />
-            Built-in Features
+            {t("accessibility.featuresKicker", "Built-in Features")}
           </p>
           <Card className="ct-panel">
             <CardContent className="px-5 py-4 space-y-2">
               {[
-                "Keyboard navigation support throughout the app",
-                "Screen reader compatible with ARIA labels",
-                "Focus indicators for better navigation",
-                "Skip to content links",
-                "Alt text for all images",
+                t("accessibility.feature1", "Keyboard navigation support throughout the app"),
+                t("accessibility.feature2", "Screen reader compatible with ARIA labels"),
+                t("accessibility.feature3", "Focus indicators for better navigation"),
+                t("accessibility.feature4", "Skip to content links"),
+                t("accessibility.feature5", "Alt text for all images"),
               ].map((feature) => (
                 <p key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Check className="h-4 w-4 shrink-0 text-red-400" aria-hidden="true" />
@@ -321,10 +323,10 @@ export default function AccessibilitySettings() {
             onClick={() => setConfirmResetOpen(true)}
             variant="outline"
             className="w-full gap-2 border border-red-500/80 bg-transparent text-red-400 hover:bg-red-500/10 hover:text-red-300"
-            aria-label="Reset all settings to defaults"
+            aria-label={t("accessibility.resetButton", "Reset to Default Settings")}
           >
             <RotateCcw className="h-4 w-4" />
-            Reset to Default Settings
+            {t("accessibility.resetButton", "Reset to Default Settings")}
           </Button>
         </motion.div>
         <AlertDialog open={confirmResetOpen} onOpenChange={setConfirmResetOpen}>
@@ -338,18 +340,18 @@ export default function AccessibilitySettings() {
             }}
           >
             <AlertDialogHeader>
-              <AlertDialogTitle>Reset accessibility settings?</AlertDialogTitle>
+              <AlertDialogTitle>{t("accessibility.resetConfirmTitle", "Reset accessibility settings?")}</AlertDialogTitle>
               <AlertDialogDescription>
-                This will restore theme, font size, and motion preferences to their default values.
+                {t("accessibility.resetConfirmDesc", "This will restore theme, font size, and motion preferences to their default values.")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{t("accessibility.resetCancel", "Cancel")}</AlertDialogCancel>
               <AlertDialogAction
                 className="bg-red-600 text-white hover:bg-red-700"
                 onClick={resetToDefaults}
               >
-                Confirm Reset
+                {t("accessibility.resetConfirm", "Reset")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -1,18 +1,22 @@
 import { ArrowRight, Bookmark, CheckCircle2, Sparkles, Tv } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
 const HERO_HIGHLIGHTS = [
   {
+    key: "watchlist",
     icon: Bookmark,
     label: "Build a watchlist that stays organized across devices",
   },
   {
+    key: "progress",
     icon: CheckCircle2,
     label: "Track what you watched, rated, and want to revisit",
   },
   {
+    key: "continueWatching",
     icon: Tv,
     label: "Keep up with series progress and continue where you left off",
   },
@@ -20,6 +24,7 @@ const HERO_HIGHLIGHTS = [
 
 export function HeroSection() {
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   return (
     <section className="relative overflow-hidden border-b border-border/40 bg-background">
@@ -29,17 +34,18 @@ export function HeroSection() {
           <div className="mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-2 text-xs font-medium text-primary sm:px-4 sm:text-sm">
             <Sparkles className="h-4 w-4" />
             <span className="truncate sm:whitespace-normal">
-              Track movies, series, and your next watch in one place
+              {t("home.hero.badge", "Track movies, series, and your next watch in one place")}
             </span>
           </div>
 
           <h1 className="max-w-3xl text-3xl font-black tracking-tight text-foreground sm:text-4xl md:text-6xl">
-            Your personal movie &amp; TV tracker
+            {t("home.hero.title", "Your personal movie & TV tracker")}
           </h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7 md:text-lg">
-            Save what you want to watch, mark progress episode by episode, rate
-            what you finish, and jump back into your next title without digging
-            through global feeds first.
+            {t(
+              "home.hero.subtitle",
+              "Save what you want to watch, mark progress episode by episode, rate what you finish, and jump back into your next title without digging through global feeds first.",
+            )}
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -49,7 +55,9 @@ export function HeroSection() {
               className="btn-primary-glow h-11 w-full gap-2 px-4 text-sm shadow-[0_10px_28px_hsla(var(--primary)/0.28)] sm:h-12 sm:w-auto sm:px-6 sm:text-base"
             >
               <Link to={user ? "/watchlist" : "/signup"}>
-                {user ? "Open My Watchlist" : "Start Tracking Free"}
+                {user
+                  ? t("home.hero.openWatchlist", "Open My Watchlist")
+                  : t("home.startTracking", "Start Tracking")}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -59,7 +67,7 @@ export function HeroSection() {
               variant="outline"
               className="h-10 w-full px-4 text-sm sm:h-12 sm:w-auto sm:px-6 sm:text-base"
             >
-              <Link to="/search">Browse Movies &amp; TV</Link>
+              <Link to="/search">{t("home.hero.browse", "Browse Movies & TV")}</Link>
             </Button>
           </div>
         </div>
@@ -77,7 +85,7 @@ export function HeroSection() {
                     <Icon className="h-5 w-5" />
                   </span>
                   <p className="text-sm leading-6 text-foreground/90">
-                    {highlight.label}
+                    {t(`home.hero.highlights.${highlight.key}`, highlight.label)}
                   </p>
                 </div>
               </div>

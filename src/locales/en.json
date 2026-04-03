@@ -42,6 +42,19 @@
     "readMore": "Read More"
     ,"close": "Close"
     ,"apply": "Apply"
+    ,"tryAgain": "Try again"
+    ,"pagination": "pagination"
+    ,"goToPreviousPage": "Go to previous page"
+    ,"goToNextPage": "Go to next page"
+    ,"morePages": "More pages"
+    ,"loadingPage": "Loading page..."
+    ,"offlineBanner": "You're offline. Browsing still works, but syncing actions may be delayed."
+    ,"readLess": "Read Less"
+    ,"unknown": "Unknown"
+    ,"undo": "Undo"
+    ,"episode": "Episode"
+    ,"hidden": "Hidden"
+    ,"untitled": "Untitled"
   },
   "nav": {
     "home": "Home",
@@ -72,7 +85,19 @@
     "main": "Main navigation",
     "genres": "Genres",
     "decades": "Decades",
-    "awards": "Awards"
+    "awards": "Awards",
+    "discover": "Discover",
+    "myLists": "My Lists",
+    "progress": "Progress",
+    "mobileSubtitle": "Explore, track, and manage your lists",
+    "guest": "Guest",
+    "signedIn": "Signed in",
+    "signInHint": "Sign in to sync your lists",
+    "theme": "Theme",
+    "browse": "Browse",
+    "account": "Account",
+    "more": "More",
+    "userMenu": "User menu"
   },
   "notFound": {
     "returnHome": "Return Home",
@@ -98,7 +123,21 @@
     "releasedHoursAgo": "{{hours}}h ago",
     "inHours": "In {{hours}}h",
     "channel": "Channel",
-    "unknownChannel": "Streaming"
+    "unknownChannel": "Streaming",
+    "unknownTitle": "Unknown Title",
+    "unknownShow": "Unknown Show",
+    "theatricalRelease": "Theatrical Release",
+    "posterAlt": "Poster of {{title}}",
+    "seasonEpisode": "Season {{season}} • Episode {{episode}}",
+    "releaseTimeline": "Release Timeline",
+    "unableToLoad": "Unable to load calendar",
+    "loadingTooLong": "Loading took too long. Please try again.",
+    "fetchError": "Something went wrong while fetching releases.",
+    "noReleasesWeek": "No releases this week",
+    "noReleasesWeekDesc": "Check upcoming weeks for new premieres and episodes.",
+    "viewNextWeek": "View next week",
+    "backToCurrentWeek": "Back to current week",
+    "nextUp": "Next up"
   },
   "home": {
     "trending": "Trending",
@@ -134,9 +173,42 @@
     "featured": "Featured",
     "viewDetails": "More Info",
     "startTracking": "Start Tracking",
+    "watchlistEmptyQuickAccess": "Save a few titles and they will show up here for quick access.",
+    "personalizedRecommendations": "Personalized Recommendations",
+    "personalizedGateTitle": "Personalized picks start after your first saves",
+    "personalizedGateDesc": "Add a few movies or series to your watchlist so CineTrekker can put your next best watch ahead of the global feed.",
+    "buildWatchlist": "Build My Watchlist",
+    "moreInGenre": "More in {{genre}}",
+    "thisGenre": "this genre",
+    "moreInGenreEmpty": "We need a bit more watch history before this row fills in.",
+    "makeEveryVisitPersonal": "Make every visit personal",
+    "createAccountSyncDesc": "Create a free account to keep your watchlist, progress, ratings, and recommendations synced across devices.",
+    "createFreeAccount": "Create Free Account",
+    "exploreTrendingTitles": "Explore Trending Titles",
+    "globalDiscoveryHint": "Global discovery stays here so your personal library comes first.",
+    "newReleases": "New Releases",
+    "seeAllTrendingMovies": "See All Trending Movies",
+    "seeAllTrendingTv": "See All Trending TV",
+    "seeAllNewMovieReleases": "See All New Movie Releases",
+    "faq": {
+      "q1": "What is CineTrekker movie tracker used for?",
+      "a1": "CineTrekker helps you track movies and TV shows, keep a personal watchlist, mark progress, and discover trending titles without losing context across devices.",
+      "q2": "Can I follow releases and episode updates?",
+      "a2": "Yes. The app includes follow and notification tools so you can monitor returning series, new episodes, and titles you want to revisit later.",
+      "q3": "Does CineTrekker work well on mobile?",
+      "a3": "Yes. The interface is designed mobile-first with responsive cards, touch-friendly controls, skeleton loading states, and fast lazy-loaded media."
+    },
     "hero": {
       "title": "Track Your Entertainment Journey",
-      "subtitle": "Discover, track, and remember every movie and TV show you watch"
+      "subtitle": "Discover, track, and remember every movie and TV show you watch",
+      "badge": "Track movies, series, and your next watch in one place",
+      "openWatchlist": "Open My Watchlist",
+      "browse": "Browse Movies & TV",
+      "highlights": {
+        "watchlist": "Build a watchlist that stays organized across devices",
+        "progress": "Track what you watched, rated, and want to revisit",
+        "continueWatching": "Keep up with series progress and continue where you left off"
+      }
     }
   },
   "search": {
@@ -157,7 +229,22 @@
     "noResults": "No results found for \"{{query}}\"",
     "tryDifferent": "Try different keywords or check spelling",
     "clearSearch": "Clear search",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "multiSelectHint": "Select one or more options.",
+    "removeOptionAria": "Remove {{label}}",
+    "selectOptionAria": "Select {{label}}",
+    "seoTitleWithQuery": "Search \"{{query}}\" | CineTrekker Movie Tracker",
+    "seoTitleDefault": "Search Movies and TV Shows | CineTrekker Movie Tracker",
+    "seoDescriptionWithQuery": "Search results for \"{{query}}\" in CineTrekker, the movie tracker for finding movies, TV shows, people, and watchlist-ready picks.",
+    "seoDescriptionDefault": "Search and discover movies and TV shows by genre, year, rating, runtime, and streaming service in CineTrekker.",
+    "seoKeywordsWithQuery": "{{query}}, movie tracker search, movies, TV shows, streaming",
+    "seoKeywordsDefault": "movie tracker search, TV show search, genre filter, streaming services, watchlist discovery",
+    "faq": {
+      "q1": "What can I search for in CineTrekker?",
+      "a1": "You can search for movies, TV shows, and people, then refine results with genre, year, language, runtime, and streaming filters.",
+      "q2": "Why use search inside a movie tracker?",
+      "a2": "Search is connected to watchlist actions, detail pages, follow tools, and saved progress, so every result is immediately useful instead of isolated."
+    }
     ,"lang": "Language"
     ,"streaming": "Streaming"
     ,"openFilters": "Open Filters"
@@ -312,6 +399,21 @@
     "empty": "You haven't watched anything yet",
     "emptyDesc": "Mark movies and TV shows as watched to track your viewing history"
   },
+  "watchedPage": {
+    "seoTitle": "Watched History - CineTrekker",
+    "seoDescription": "Movies and TV shows you have watched with ratings and notes",
+    "kicker": "Watched Archive",
+    "filterByLanguage": "Filter by language",
+    "allLanguages": "All Languages",
+    "filterByType": "Filter by type",
+    "allTypes": "All Types",
+    "country": "Country",
+    "filterByCountry": "Filter by country",
+    "allCountries": "All Countries",
+    "yearRange": "Year Range",
+    "minimumYear": "Minimum year",
+    "maximumYear": "Maximum year"
+  },
   "recommendations": {
     "title": "Recommendations",
     "subtitle": "Based on your watched titles",
@@ -321,7 +423,13 @@
     "watchMore": "Keep watching to discover more personalized recommendations."
   },
   "following": {
-    "followedShows": "you're tracking"
+    "followedShows": "you're tracking",
+    "seoTitle": "Following - CineTrekker",
+    "seoDescription": "Titles you are currently following",
+    "followedCount": "{{count}} titles you're tracking",
+    "empty": "No titles being followed",
+    "emptyDesc": "Start following movies or series to track updates",
+    "discoverShows": "Discover Titles"
   },
   "profile": {
     "title": "Profile",
@@ -384,7 +492,122 @@
     "actorMatchesBasedOnRatings": "Based on your top-rated films",
     "topWorks": "Top Works",
     "noTopWorksAvailable": "No top works available",
-    "viewFilmography": "View Filmography"
+    "viewFilmography": "View Filmography",
+    "favoritesSyncDelayed": "Favorites sync delayed",
+    "favoritesSyncDelayedDesc": "Saved locally. Will retry on your next update.",
+    "shareProfile": "Share Profile",
+    "linkCopied": "Link copied!",
+    "ratings": "Ratings",
+    "viewAllAchievements": "View All Achievements",
+    "editProfile": "Edit Profile",
+    "notSet": "Not set",
+    "noBioYet": "No bio yet. Tell people about your cinematic journey.",
+    "favoriteMovies": "Favorite Movies",
+    "moviesPinned": "{{count}} movie pinned",
+    "moviesPinned_other": "{{count}} movies pinned",
+    "startEssentialsShelf": "Start your essentials shelf",
+    "startEssentialsShelfDesc": "Pin your first favorite films and keep building the shelf as long as you want.",
+    "addMovie": "Add a movie",
+    "browseFilms": "Browse films",
+    "previousFavoriteMovies": "Previous favorite movies",
+    "nextFavoriteMovies": "Next favorite movies",
+    "removeFromFavorites": "Remove {{title}} from favorites",
+    "addMovieShort": "Add Movie",
+    "goToFavoriteMoviesPage": "Go to favorite movies page {{index}}",
+    "favoriteSeries": "Favorite Series",
+    "seriesPinned": "{{count}} series pinned",
+    "spotlightShows": "Spotlight the shows you always recommend",
+    "spotlightShowsDesc": "Pin the shows you always recommend and keep the row growing over time.",
+    "addSeries": "Add a series",
+    "browseShows": "Browse shows",
+    "previousFavoriteSeries": "Previous favorite series",
+    "nextFavoriteSeries": "Next favorite series",
+    "addSeriesShort": "Add Series",
+    "goToFavoriteSeriesPage": "Go to favorite series page {{index}}",
+    "chooseFavoriteMovies": "Choose Favorite Movies",
+    "chooseFavoriteSeries": "Choose Favorite Series",
+    "favoritesPickerDesc": "Search TMDB and pin the titles that define your taste. Favorites are saved to your profile shelf right away.",
+    "searchMovies": "Search movies",
+    "searchSeries": "Search TV series",
+    "startTypingToSearch": "Start typing to search",
+    "enterTwoChars": "Enter at least 2 characters to find",
+    "noMatchesFound": "No matches found",
+    "tryDifferentSearch": "Try a different title, year, or spelling.",
+    "series": "Series",
+    "pinned": "Pinned",
+    "add": "Add",
+    "ratingDistribution": "Rating Distribution",
+    "mostFrequentRating": "Most frequent rating: {{rating}} stars",
+    "noRatingsYet": "No ratings yet",
+    "noRatingsTitle": "You have not rated anything yet",
+    "noRatingsDesc": "Rate a few titles to unlock recommendations, actor matches, and a full ratings breakdown.",
+    "browseMoviesToRate": "Browse movies to rate",
+    "openWatchedList": "Open watched list"
+    ,"seoTitle": "My Profile - CineTrekker"
+    ,"seoDescription": "View your watching statistics and preferences"
+    ,"shareProfileMessage": "Check out this CineTrekker profile."
+    ,"linkCopiedToClipboard": "Link copied to clipboard!"
+    ,"profileLinkReady": "Your profile link is ready to share."
+    ,"copyFailed": "Copy failed"
+    ,"copyFailedDesc": "Could not copy profile link. Please try again."
+    ,"pinnedToFavorites": "Pinned to favorites"
+    ,"pinnedToFavoritesDesc": "{{title}} was added to your pinned favorites."
+    ,"removedFromFavorites": "Removed from favorites"
+    ,"removedFromFavoritesDesc": "{{title}} was removed from your pinned favorites."
+    ,"dropPhotoToUpload": "Drop a photo to upload"
+    ,"photoFormats": "JPG, PNG, or WebP up to 2MB"
+    ,"changePhoto": "Change photo"
+    ,"uploadPhoto": "Upload photo"
+    ,"avatarUploadHint": "Click or drop an image to update your avatar"
+    ,"photoUploadHint": "Drag and drop a profile picture or choose a file."
+    ,"watchedThisMonth": "+{{count}} this month"
+    ,"averageHoursPerMovie": "Avg {{hours}}h per movie"
+    ,"actorMatchesIntro": "Discover performers whose age range and genre footprint line up with the movies you rate most."
+    ,"lastRatedToday": "Last rated today"
+    ,"lastRatedOneDayAgo": "Last rated 1 day ago"
+    ,"lastRatedDaysAgo": "Last rated {{days}} days ago"
+    ,"levelCasualViewer": "Casual Viewer"
+    ,"levelMovieBuff": "Movie Buff"
+    ,"levelCinephile": "Cinephile"
+    ,"levelFilmHistorian": "Film Historian"
+    ,"achievementFirstLogShort": "First Log"
+    ,"achievementFirstLogCondition": "Log at least 1 movie"
+    ,"achievementProgressMovies": "{{count}}/1 movies"
+    ,"achievement50MoviesShort": "50 Movies"
+    ,"achievement50MoviesCondition": "Watch 50 movies"
+    ,"achievementProgress50Movies": "{{count}}/50 movies"
+    ,"achievement100MoviesShort": "100 Movies"
+    ,"achievement100MoviesCondition": "Watch 100 movies"
+    ,"achievementProgress100Movies": "{{count}}/100 movies"
+    ,"achievement200RatingsShort": "200 Ratings"
+    ,"achievement200RatingsCondition": "Rate 200 titles"
+    ,"achievementProgress200Ratings": "{{count}}/200 ratings"
+    ,"syncFailed": "Sync failed"
+    ,"syncGenreChangesFailed": "Could not sync genre changes. Please try again."
+    ,"loadingErrorTitle": "Profile Loading Error"
+    ,"loadingErrorDesc": "Failed to load profile from server. Using cached data."
+    ,"tooManyUpdates": "Too many updates"
+    ,"waitBeforeUpdatingAgain": "Please wait {{seconds}} seconds before updating again."
+    ,"updatedSuccessfully": "Profile updated successfully"
+    ,"latestChangesLive": "Your latest profile changes are now live."
+    ,"errorSavingProfile": "Error saving profile"
+    ,"savedLocallySyncFailed": "Profile saved locally, but syncing to server failed. Changes will sync when connection is restored."
+    ,"signInRequired": "Sign in required"
+    ,"mustBeSignedInToUploadPhoto": "You must be signed in to upload a profile photo."
+    ,"invalidFileType": "Invalid file type"
+    ,"allowedImageTypes": "Only JPEG, PNG, and WebP images are allowed."
+    ,"imageTooLarge": "Image too large"
+    ,"selectImageSmallerThan2Mb": "Please select an image smaller than 2MB."
+    ,"photoUploaded": "Photo uploaded"
+    ,"clickSaveChangesToFinalize": "Click 'Save Changes' to finalize your profile."
+    ,"uploadFailed": "Upload failed"
+    ,"couldNotUploadPhoto": "Could not upload photo. Please try again."
+    ,"enterValidDate": "Please enter a valid date"
+    ,"mustBeAtLeast13YearsOld": "You must be at least 13 years old"
+    ,"enterValidAge": "Please enter a valid age"
+    ,"agePlaceholder": "22"
+    ,"genresSelected": "{{count}} genres selected"
+    ,"genreFilmsCount": "{{genre}} ({{count}} films)"
   },
   "settings": {
     "language": "Language",
@@ -410,7 +633,52 @@
     "saveChanges": "Save Changes",
     "unsavedChanges": "You have unsaved changes",
     "settingsSaved": "Settings saved successfully!",
-    "settingsSavedDesc": "Your preferences have been updated."
+    "settingsSavedDesc": "Your preferences have been updated.",
+    "loadErrorTitle": "Error loading settings",
+    "loadErrorDesc": "Using default settings.",
+    "accessibilityResetTitle": "Accessibility reset",
+    "accessibilityResetDesc": "Theme, text size, and motion preferences are back to defaults.",
+    "saveErrorTitle": "Error saving settings",
+    "saveErrorDesc": "Settings saved locally, but syncing to server failed.",
+    "languageUpdated": "Language updated",
+    "exportReadyTitle": "Export ready",
+    "exportReadyDesc": "Your profile, settings, and list data were downloaded as JSON.",
+    "exportFailedTitle": "Export failed",
+    "exportFailedDesc": "Could not generate your data export. Please try again.",
+    "accountDeletedTitle": "Account data deleted",
+    "accountDeletedSignedInDesc": "Your CineTrekker profile data was removed and you were signed out.",
+    "accountDeletedGuestDesc": "This device's CineTrekker data was cleared.",
+    "deletionFailedTitle": "Deletion failed",
+    "deletionFailedDesc": "We could not remove all account data. Please try again.",
+    "seoTitle": "Settings - CineTrekker",
+    "seoDescription": "Manage your account settings and preferences",
+    "accessibilityDisplay": "Accessibility & display",
+    "accessibilityDisplayDesc": "Adjust readability, theme, and motion in the same place you manage the rest of your preferences.",
+    "textSize": "Text size",
+    "textSizeDesc": "Increase or decrease text size throughout the app.",
+    "decreaseFontSize": "Decrease font size",
+    "increaseFontSize": "Increase font size",
+    "currentSize": "Current size",
+    "appTheme": "App theme",
+    "appThemeDesc": "Choose Dark, Light, or OLED mode for the full interface.",
+    "reduceMotion": "Reduce motion",
+    "reduceMotionDesc": "Minimize animations and transitions across the app.",
+    "resetAccessibilityDefaults": "Reset accessibility defaults",
+    "dataManagementSection": "Data management",
+    "dataManagementTitle": "Data management",
+    "dataManagementDesc": "Export a copy of your data or remove your CineTrekker profile data from this app.",
+    "downloadDataTitle": "Download your CineTrekker data",
+    "downloadDataDesc": "Export your profile, settings, content-safety state, watchlist, watched history, and hidden recommendations in one JSON file.",
+    "preparingExport": "Preparing export...",
+    "exportData": "Export data",
+    "dangerZone": "Danger zone",
+    "dangerZoneDesc": "Delete your CineTrekker profile data, saved preferences, watchlist, watched history, favorites, and local backups from this app.",
+    "dangerZoneHelp": "Full identity-provider account removal may still require a separate privacy request. You can review the policy or contact the team from the links below.",
+    "privacyPolicyLink": "Privacy policy",
+    "feedbackPageLink": "Feedback page",
+    "deleteAccount": "Delete account",
+    "clearThisDevice": "Clear this device",
+    "savePendingHint": "Save your pending settings changes from anywhere on the page."
   },
   "contentPolicy": {
     "ageTitle": "Age Verification",
@@ -550,6 +818,9 @@
     "explore": "Explore",
     "trending": "Trending",
     "topRated": "Top Rated",
+    "exploreLinks": "Explore links",
+    "supportLinks": "Support links",
+    "legalLinks": "Legal links",
     "upcoming": "Upcoming",
     "support": "Support",
     "about": "About",
@@ -619,5 +890,384 @@
     "whyWeUseItDesc": "These technologies help remember your preferences, maintain account security, and provide a consistent experience between visits.",
     "managing": "Managing Cookies and Local Storage",
     "managingDesc": "You can clear cookies and local storage from your browser settings at any time. Doing so may sign you out and reset saved preferences."
+  },
+  "trending": {
+    "seoTitle": "Trending Movie Tracker Picks | CineTrekker",
+    "seoDescription": "Explore trending movies and trending TV series in CineTrekker, the movie tracker built for fast discovery, watchlists, and follow-up viewing.",
+    "subtitle": "What everyone is watching right now.",
+    "movies": "Trending Movies",
+    "tv": "Trending TV Series"
+  },
+  "yearInReview": {
+    "seoTitle": "{{year}} Year in Review",
+    "seoDescription": "Your {{year}} watching statistics and highlights",
+    "title": "{{year}} Year in Review",
+    "subtitle": "Your cinematic journey this year",
+    "emptyTitle": "No Activity Yet",
+    "emptyDescription": "Start watching in {{year}} to see your Year in Review!",
+    "totalWatched": "Total Watched",
+    "moviesAndShows": "{{movies}} movies • {{shows}} TV shows",
+    "timeInvested": "Time Invested",
+    "daysOfContent": "≈ {{days}} days of content",
+    "favoriteGenre": "Favorite Genre",
+    "titlesCount": "{{count}} titles",
+    "busiestMonth": "Busiest Month",
+    "titlesWatched": "{{count}} titles watched",
+    "favoriteGenresTitle": "Your Favorite Genres",
+    "monthlyActivityTitle": "Monthly Watching Activity",
+    "topRatedTitle": "Top Rated This Year",
+    "tabs": {
+      "genres": "Genres",
+      "activity": "Activity",
+      "topRated": "Top Rated"
+    }
+  },
+  "ui": {
+    "carousel": {
+      "previousSlide": "Previous slide",
+      "nextSlide": "Next slide",
+      "goToSlide": "Go to slide {{index}}"
+    }
+  },
+  "details": {
+    "watchlist": "Watchlist",
+    "watched": "Watched",
+    "whereToWatch": "Where to Watch",
+    "streaming": "Streaming",
+    "rent": "Rent",
+    "buy": "Buy",
+    "yourRatingReview": "Your Rating & Review",
+    "ratingReviewWithScore": "{{rating}}/10 Review",
+    "ratingReviewSignedInPrompt": "Keep a personal score and short note for this title.",
+    "ratingReviewGuestPrompt": "Sign in to rate this title and save a personal review.",
+    "ratingReviewSavedEntryHint": "Your saved entry is shown below. Edit it any time to update the score, note, or watch status.",
+    "guestActionHint": "Save to watchlist, mark watched, and leave ratings after you sign in. You can still browse every public title now.",
+    "availableEpisodes": "Available Episodes",
+    "availableEpisodesDescription": "Browse published episodes and read each episode summary directly from the series page.",
+    "seasonLabel": "Season {{season}}",
+    "selectSeasonPrompt": "Select a season to view released episodes.",
+    "loadingSeasonEpisodes": "Loading season episodes...",
+    "noPublishedEpisodes": "No published episodes are available for this season yet.",
+    "releaseDateUnavailable": "Release date unavailable",
+    "noEpisodeDescription": "No description is available for this episode yet.",
+    "signInToReview": "Sign In to Review",
+    "noRatingYet": "No rating yet",
+    "noNoteYet": "No note yet. Add a short review so you remember what stood out.",
+    "addRating": "Add Rating & Review",
+    "editRating": "Edit Saved Rating & Review",
+    "pinnedToFavorites": "Pinned to favorites",
+    "removedFromFavorites": "Removed from favorites",
+    "pinnedToFavoritesDesc": "This title was pinned to your profile favorites.",
+    "noLongerPinned": "This title is no longer pinned."
+  },
+  "watchHistory": {
+    "seoTitle": "Watch History Timeline - CineTrekker",
+    "seoDescription": "Visual timeline of your watching journey with all movies and TV shows you've marked as watched.",
+    "title": "Watch History",
+    "subtitle": "{{count}} items in your timeline",
+    "filterAll": "All",
+    "filterMovies": "Movies",
+    "filterTV": "TV Shows",
+    "sortRecent": "Recent First",
+    "sortOldest": "Oldest First",
+    "sortAlpha": "A-Z",
+    "emptyState": "No watch history yet. Start watching to build your timeline!",
+    "dateUnknown": "Date Unknown",
+    "mediaTypeMovie": "Movie",
+    "mediaTypeTV": "TV Show",
+    "itemsCount": "{{count}} items"
+  },
+  "mediaCard": {
+    "select": "Select",
+    "selectTitle": "Select title",
+    "deselectTitle": "Deselect title",
+    "signInHint": "Sign in to save, track, and review this title.",
+    "createAccountHint": "Create a free account to save your watchlist.",
+    "signInWatchedHint": "Sign in to save watched history and reviews."
+  },
+  "watchlistPage": {
+    "kicker": "Curated Queue",
+    "sharedTitle": "Shared Watchlist",
+    "sharedShareTitle": "Shared CineTrekker Watchlist",
+    "myShareTitle": "My CineTrekker Watchlist",
+    "shareText": "Check out this watchlist with {{count}} titles!",
+    "grid": "Grid",
+    "list": "List",
+    "done": "Done",
+    "bulkSelect": "Bulk Select",
+    "print": "Print",
+    "sharedHint": "You are viewing a shared watchlist. Sign in to add or manage your own list.",
+    "selectTitlesHint": "Select titles to manage them together",
+    "selectedCount": "{{count}} titles selected",
+    "itemsCount": "{{count}} items",
+    "watchingCount": "{{count}} watching",
+    "completedCount": "{{count}} completed",
+    "plannedCount": "{{count}} planned",
+    "bulkHint": "Mark selected titles as watched or remove them from your watchlist in one pass.",
+    "buildQueueHint": "Browse search, trending, or title pages and tap the bookmark to start building your queue."
+  },
+  "accessibility": {
+    "seoTitle": "Accessibility Settings - CineTrekker",
+    "seoDescription": "Customize your viewing experience with font size, theme, and motion settings",
+    "title": "Accessibility Settings",
+    "subtitle": "Customize the app for better readability and usability.",
+    "textSizeKicker": "Text Size",
+    "fontSize": "Font Size",
+    "fontSizeDesc": "Adjust text size throughout the app.",
+    "displayPreferencesKicker": "Display Preferences",
+    "themeMotion": "Theme & Motion",
+    "themeMotionDesc": "Choose a visual theme and motion behavior.",
+    "appTheme": "App Theme",
+    "appThemeDesc": "Pick Dark, Light, or OLED mode for the full app.",
+    "reduceMotion": "Reduce Motion",
+    "reduceMotionDesc": "Minimize animations and transitions.",
+    "featuresKicker": "Built-in Features",
+    "feature1": "Keyboard navigation support throughout the app",
+    "feature2": "Screen reader compatible with ARIA labels",
+    "feature3": "Focus indicators for better navigation",
+    "feature4": "Skip to content links",
+    "feature5": "Alt text for all images",
+    "resetButton": "Reset to Default Settings",
+    "resetConfirmTitle": "Reset accessibility settings?",
+    "resetConfirmDesc": "This will restore theme, font size, and motion preferences to their default values.",
+    "resetCancel": "Cancel",
+    "resetConfirm": "Reset",
+    "resetToastTitle": "Settings Reset",
+    "resetToastDesc": "Theme and accessibility settings have been reset to defaults."
+  },
+  "auth": {
+    "seoTitle": "Sign In or Register - CineTrekker",
+    "seoDescription": "Access your CineTrekker account to sync watchlists, ratings, and recommendations.",
+    "appName": "CineTrekker",
+    "tagline": "Track what you watch, save your next pick, and keep your lists in sync.",
+    "loginTab": "Login",
+    "registerTab": "Register",
+    "emailLabel": "Email",
+    "rememberMe": "Remember Me",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "show": "Show",
+    "hide": "Hide",
+    "forgotPassword": "Forgot Password?",
+    "passwordRuleMin": "• Min. 8 characters",
+    "passwordRuleCase": "• Uppercase & Lowercase",
+    "passwordRuleNumberSpecial": "• Number & Special char",
+    "passwordRuleSequence": "• No sequences (123, abc)",
+    "submitSignIn": "Sign In",
+    "submitCreateAccount": "Create Account",
+    "orContinueWith": "Or continue with",
+    "providerHint": "Google is the fastest option. Facebook and Apple may depend on your browser or provider configuration.",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithFacebook": "Continue with Facebook",
+    "continueWithApple": "Continue with Apple",
+    "providerGoogle": "Google",
+    "providerFacebook": "Facebook",
+    "providerApple": "Apple",
+    "providerUnavailable": "{{provider}} sign-in is not available right now. Please try email login instead."
+  },
+  "awards": {
+    "seoTitle": "Award Winners & Nominees",
+    "seoDescription": "Explore Oscar, Emmy, and critically acclaimed movies and TV shows",
+    "title": "Award Winners & Nominees",
+    "subtitle": "Celebrating excellence in film and television",
+    "filterCategory": "Category",
+    "filterCeremony": "Ceremony",
+    "filterActor": "Actor",
+    "selectCategory": "Select category",
+    "selectYear": "Select year",
+    "searchActor": "Search actor",
+    "typeToSearch": "Type to search...",
+    "noResults": "No results",
+    "categoryOscar": "Oscar",
+    "categoryEmmy": "Emmy",
+    "categoryGoldenGlobe": "Golden Globe",
+    "categoryBafta": "BAFTA",
+    "baftaComingSoon": "BAFTA filtering is coming soon. For now, use Oscar, Emmy, or Golden Globe.",
+    "tabsOscar": "Oscar Contenders",
+    "tabsEmmy": "Emmy Contenders",
+    "tabsCritical": "Critically Acclaimed",
+    "oscarHeading": "Academy Award Contenders {{year}}",
+    "oscarDescription": "Top-rated films from {{year}} eligible for Oscar consideration",
+    "noOscarWithActor": "No Oscar contenders matched the selected actor and filters.",
+    "noOscarForYear": "No Oscar contenders found for this year.",
+    "emmyHeading": "Emmy Award Contenders {{year}}",
+    "emmyDescription": "Top-rated series from {{year}} eligible for Emmy consideration",
+    "noEmmyWithActor": "No Emmy contenders matched the selected actor and filters.",
+    "noEmmyForYear": "No Emmy contenders found for this year.",
+    "criticalHeading": "Critically Acclaimed {{year}}",
+    "criticalDescription": "Highest-rated and most popular films from {{year}}",
+    "noCriticalWithActor": "No Golden Globe-style contenders matched the selected actor and filters.",
+    "noCriticalForYear": "No critically acclaimed titles found for this year.",
+    "loadingTimeout": "Loading award contenders took too long. Please try again.",
+    "loadFailed": "Failed to load award contenders."
+  },
+  "decades": {
+    "seoTitle": "Explore by Decade — CineTrekker",
+    "seoDescription": "Discover movies and TV shows from different eras",
+    "title": "Explore by Decade",
+    "noResults": "No results available for this decade"
+  },
+  "genres": {
+    "seoTitle": "Browse by Genre — CineTrekker",
+    "seoDescription": "Explore movies and TV shows by genre",
+    "title": "Browse by Genre",
+    "noResults": "No results available for this genre.",
+    "selectPrompt": "Select a genre above to browse content"
+  },
+  "achievements": {
+    "seoTitle": "Achievements - CineTrekker",
+    "seoDescription": "Track your cinematic milestones and achievement progress",
+    "pageTitle": "Achievements",
+    "pageSubtitle": "Your cinematic milestones",
+    "backToProfile": "Back to Profile",
+    "overallProgress": "Overall Progress",
+    "unlocked": "unlocked",
+    "percentComplete": "Complete",
+    "watchingMilestones": "🎬 Watching Milestones",
+    "ratingMilestones": "⭐ Rating Milestones",
+    "genreExplorer": "🎭 Genre Explorer",
+    "watchTime": "🕐 Watch Time",
+    "specialUnlocks": "✨ Special Unlocks",
+    "watchFirst": "First Movie Logged",
+    "watchFirstDesc": "Watch your first movie",
+    "watch10": "10 Movies Watched",
+    "watch10Desc": "Watch 10 movies",
+    "watch50": "50 Movies Watched",
+    "watch50Desc": "Watch 50 movies",
+    "watch100": "100 Movies Watched",
+    "watch100Desc": "Watch 100 movies",
+    "watch250": "250 Movies Watched",
+    "watch250Desc": "Watch 250 movies",
+    "watch500": "500 Movies Watched",
+    "watch500Desc": "Watch 500 movies",
+    "rateFirst": "First Rating Given",
+    "rateFirstDesc": "Rate your first title",
+    "rate25": "25 Ratings",
+    "rate25Desc": "Give 25 ratings",
+    "rate50": "50 Ratings",
+    "rate50Desc": "Give 50 ratings",
+    "rate100": "100 Ratings",
+    "rate100Desc": "Give 100 ratings",
+    "rate200": "200 Ratings",
+    "rate200Desc": "Give 200 ratings",
+    "rate500": "500 Ratings",
+    "rate500Desc": "Give 500 ratings",
+    "genre5": "5 Genres Watched",
+    "genre5Desc": "Watched a movie in 5 different genres",
+    "genre10": "10 Genres Watched",
+    "genre10Desc": "Watched a movie in 10 different genres",
+    "genreAll": "All Genres Watched",
+    "genreAllDesc": "Watched a movie in all available genres",
+    "time10": "10 Hours Watched",
+    "time10Desc": "Watch 10 hours of content",
+    "time50": "50 Hours Watched",
+    "time50Desc": "Watch 50 hours of content",
+    "time100": "100 Hours Watched",
+    "time100Desc": "Watch 100 hours of content",
+    "time500": "500 Hours Watched",
+    "time500Desc": "Watch 500 hours of content",
+    "founderBadge": "Founder Badge",
+    "founderBadgeDesc": "Early supporter of CineTrekker",
+    "marathonNight": "Marathon Night",
+    "marathonNightDesc": "Watched 5 movies in a single day",
+    "inviteOnly": "Invite-only",
+    "marathonProgress": "0 / 5 movies in 1 day",
+    "unlockedPrefix": "Unlocked",
+    "recently": "Recently"
+  },
+  "commandPalette": {
+    "placeholder": "Search movies, people, collections... (Cmd/Ctrl+K)",
+    "empty": "No results",
+    "actions": "Actions",
+    "cycleTheme": "Cycle Theme",
+    "goToWatchlist": "Go to Watchlist",
+    "logout": "Logout",
+    "collections": "Collections",
+    "noCollections": "No collections",
+    "searchResults": "Search Results",
+    "searching": "Searching..."
+  },
+  "bingeTimer": {
+    "title": "Binge-Watch Timer",
+    "watchingNow": "Currently watching...",
+    "startTracking": "Start tracking your watch time",
+    "pause": "Pause",
+    "start": "Start",
+    "reset": "Reset",
+    "epic": "🎬 Epic binge session!",
+    "gettingIntoIt": "📺 Getting into it!",
+    "justStarted": "⏱️ Just getting started"
+  },
+  "feedback": {
+    "seoTitle": "Feedback - CineTrekker",
+    "seoDescription": "Send feedback to CineTrekker",
+    "title": "Feedback",
+    "subtitle": "We'd love to hear your feedback. Fill out the form below and send it directly from the website.",
+    "nameLabel": "Name",
+    "namePlaceholder": "Your name",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "messageLabel": "Message",
+    "messagePlaceholder": "Share your ideas, bug reports, or feature requests...",
+    "websiteLabel": "Website",
+    "botProtectionLabel": "Bot Protection",
+    "sendButton": "Send Feedback",
+    "sending": "Sending...",
+    "formErrorRequired": "Please fill in all fields before sending feedback.",
+    "formErrorCaptcha": "Please complete the bot protection check before sending feedback.",
+    "formErrorSend": "Failed to send feedback. Please try again.",
+    "formSuccess": "Thanks for your feedback. It was sent successfully."
+  },
+  "printWatchlist": {
+    "seoTitle": "Printable Watchlist - CineTrekker",
+    "seoDescription": "Print-friendly movie and TV watchlist view from your CineTrekker account.",
+    "title": "My Watchlist",
+    "generatedOn": "Generated on {{date}} • {{count}} items",
+    "print": "Print",
+    "moviesCount": "Movies ({{count}})",
+    "tvShowsCount": "TV Shows ({{count}})",
+    "seasons": "{{count}} season",
+    "seasons_other": "{{count}} seasons",
+    "checkWhenWatched": "Check when watched",
+    "footerTagline": "CineTrekker • Your Personal Movie & TV Tracker"
+  },
+  "locationDetails": {
+    "loading": "Loading filming locations...",
+    "seoTitle": "Filming Locations for {{title}} | CineTrekker",
+    "seoDescription": "Explore filming locations, route stops, and cinematic geography for {{title}} on CineTrekker.",
+    "seoKeywords": "{{title}}, filming locations, {{country}}, movie travel, cine tourism",
+    "breadcrumbFilmingLocations": "Filming locations",
+    "backToDetails": "Back to details",
+    "posterAlt": "{{title}} filming locations poster for movie tracker",
+    "locationExplorer": "Location Explorer",
+    "subtitle": "Discover where this story came to life and map the cinematic stops.",
+    "source": "Source",
+    "sourceCurated": "Curated",
+    "sourceExternal": "External dataset",
+    "sourceEstimated": "Estimated fallback",
+    "visitThisLocation": "Visit this Location",
+    "behindTheScenesTrivia": "Behind the Scenes Trivia"
+  },
+  "mediaGallery": {
+    "trailersAndClips": "Trailers & Clips",
+    "backdrops": "Backdrops",
+    "backdropAlt": "Backdrop {{index}}",
+    "goToPage": "Go to {{label}} page {{index}}"
+  },
+  "watchedStatusDialog": {
+    "statusWatching": "Watching",
+    "statusCompleted": "Completed",
+    "statusDropped": "Dropped",
+    "statusPlanToWatch": "Plan to Watch",
+    "rateOutOfTen": "Rate {{star}} out of 10"
+  },
+  "authPrompt": {
+    "title": "Create a free account to save your watchlist",
+    "description": "Save titles, mark them watched, and keep your progress synced across devices.",
+    "notNow": "Not now",
+    "createAccount": "Create Account"
   }
 }
+

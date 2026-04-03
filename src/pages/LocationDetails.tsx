@@ -19,8 +19,10 @@ import {
   buildMediaPath,
   toBreadcrumbJsonLd,
 } from "@/lib/seo";
+import { useTranslation } from "react-i18next";
 
 export default function LocationDetails() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const mediaType: "movie" | "tv" = location.pathname.startsWith("/tv") ? "tv" : "movie";
@@ -47,11 +49,15 @@ export default function LocationDetails() {
   });
 
   if (isLoading || !data) {
-    return <div className="page-container pt-20 text-sm text-muted-foreground">Loading filming locations...</div>;
+    return (
+      <div className="page-container pt-20 text-sm text-muted-foreground">
+        {t("locationDetails.loading", "Loading filming locations...")}
+      </div>
+    );
   }
 
   const filmingLocation = enrichedLocations[0] || getFilmingLocation(data as Media);
-  const seoTitle = `Filming Locations for ${title} | CineTrekker`;
+  const seoTitle = t("locationDetails.seoTitle", "Filming Locations for {{title}} | CineTrekker", { title });
   const detailsPath = buildMediaPath(mediaType, mediaId, title);
   const canonical = buildCanonicalUrl(`/${mediaType}/${mediaId}/locations`);
 
@@ -59,15 +65,26 @@ export default function LocationDetails() {
     <>
       <SEO
         title={seoTitle}
-        description={`Explore filming locations, route stops, and cinematic geography for ${title} on CineTrekker.`}
+        description={t(
+          "locationDetails.seoDescription",
+          "Explore filming locations, route stops, and cinematic geography for {{title}} on CineTrekker.",
+          { title },
+        )}
         canonical={canonical}
-        keywords={`${title}, filming locations, ${filmingLocation.country}, movie travel, cine tourism`}
+        keywords={t(
+          "locationDetails.seoKeywords",
+          "{{title}}, filming locations, {{country}}, movie travel, cine tourism",
+          { title, country: filmingLocation.country },
+        )}
         type={mediaType === "movie" ? "video.movie" : "video.tv_show"}
         jsonLd={[
           toBreadcrumbJsonLd([
-            { name: "Home", path: "/" },
+            { name: t("nav.home", "Home"), path: "/" },
             { name: title, path: detailsPath },
-            { name: "Filming locations", path: `/${mediaType}/${mediaId}/locations` },
+            {
+              name: t("locationDetails.breadcrumbFilmingLocations", "Filming locations"),
+              path: `/${mediaType}/${mediaId}/locations`,
+            },
           ]),
         ]}
       />
@@ -78,14 +95,14 @@ export default function LocationDetails() {
           className="mb-4 inline-flex items-center gap-2 rounded-md border border-white/10 px-3 py-2 text-xs text-white/80 hover:bg-white/5"
         >
           <ChevronLeft className="h-4 w-4" />
-          Back to details
+          {t("locationDetails.backToDetails", "Back to details")}
         </Link>
 
         <div className="mb-6 grid gap-6 md:grid-cols-[220px_1fr]">
           <div className="overflow-hidden rounded-xl border border-white/10 bg-black/30">
             <Image
               src={getImageUrl(data.poster_path, "w342")}
-              alt={`${title} filming locations poster for movie tracker`}
+              alt={t("locationDetails.posterAlt", "{{title}} filming locations poster for movie tracker", { title })}
               width={342}
               height={513}
               loading="eager"
@@ -94,10 +111,15 @@ export default function LocationDetails() {
             />
           </div>
           <div>
-            <p className="heading-credits text-sm text-[#f2c572]">Location Explorer</p>
+            <p className="heading-credits text-sm text-[#f2c572]">
+              {t("locationDetails.locationExplorer", "Location Explorer")}
+            </p>
             <h1 className="heading-credits mt-2 text-5xl text-white md:text-6xl">{title}</h1>
             <p className="editorial-copy mt-3 text-sm text-white/75 md:text-base">
-              Discover where this story came to life and map the cinematic stops.
+              {t(
+                "locationDetails.subtitle",
+                "Discover where this story came to life and map the cinematic stops.",
+              )}
             </p>
             <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#f2c572]/35 bg-[#1b1408] px-3 py-1.5 text-xs text-[#f2c572]">
               <MapPin className="h-3.5 w-3.5" />
@@ -125,7 +147,12 @@ export default function LocationDetails() {
                   <p className="heading-credits text-2xl text-white">{location.label}</p>
                   <p className="mt-1 text-xs text-white/65">{location.scene}</p>
                   <p className="mt-1 text-[11px] uppercase tracking-[0.08em] text-white/55">
-                    Source: {location.source === "curated" ? "Curated" : location.source === "shotonwhat" ? "External dataset" : "Estimated fallback"}
+                    {t("locationDetails.source", "Source")}:{" "}
+                    {location.source === "curated"
+                      ? t("locationDetails.sourceCurated", "Curated")
+                      : location.source === "shotonwhat"
+                        ? t("locationDetails.sourceExternal", "External dataset")
+                        : t("locationDetails.sourceEstimated", "Estimated fallback")}
                   </p>
                   <p className="mt-1 text-xs text-[#f2c572]">
                     {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
@@ -134,7 +161,9 @@ export default function LocationDetails() {
                 <div className="w-full md:min-w-[260px] md:max-w-[360px] rounded-lg border border-[#f2c572]/25 bg-[#171108] p-3">
                   <div className="flex items-center gap-2 text-[#f7d499]">
                     <BedDouble className="h-4 w-4" />
-                    <p className="text-xs font-semibold uppercase tracking-[0.08em]">Visit this Location</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.08em]">
+                      {t("locationDetails.visitThisLocation", "Visit this Location")}
+                    </p>
                   </div>
                   <p className="mt-2 text-xs text-white/75">{getLocationDistanceContext(location)}</p>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -143,7 +172,7 @@ export default function LocationDetails() {
                       target="_blank" rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 rounded-md border border-[#f2c572]/35 bg-[#24180a] px-3 py-1.5 text-xs text-[#f7d499] hover:bg-[#2f1f0d]"
                     >
-                      Visit this Location
+                      {t("locationDetails.visitThisLocation", "Visit this Location")}
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
                     <a
@@ -168,7 +197,9 @@ export default function LocationDetails() {
                 <div className="mt-4 rounded-lg border border-[#f2c572]/20 bg-gradient-to-br from-[#1f1609] via-[#140f07] to-[#0f0b06] p-3">
                   <div className="mb-2 inline-flex items-center gap-2 text-[#f4ca83]">
                     <Film className="h-4 w-4" />
-                    <p className="text-xs font-semibold uppercase tracking-[0.1em]">Behind the Scenes Trivia</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.1em]">
+                      {t("locationDetails.behindTheScenesTrivia", "Behind the Scenes Trivia")}
+                    </p>
                   </div>
                   <div className="grid gap-2 md:grid-cols-2">
                     {location.trivia.map((fact, triviaIndex) => (

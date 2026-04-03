@@ -8,6 +8,7 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -95,6 +96,7 @@ const Analytics = shouldLoadVercelAnalytics
 
 function NetworkMonitor() {
   const { isOnline } = useNetworkStatus();
+  const { t } = useTranslation();
 
   if (isOnline) return null;
 
@@ -104,12 +106,17 @@ function NetworkMonitor() {
       role="status"
       aria-live="polite"
     >
-      You&apos;re offline. Browsing still works, but syncing actions may be delayed.
+      {t(
+        "common.offlineBanner",
+        "You're offline. Browsing still works, but syncing actions may be delayed.",
+      )}
     </div>
   );
 }
 
 function RouteSpinner() {
+  const { t } = useTranslation();
+
   return (
     <div
       className="page-container pt-20 flex items-center justify-center"
@@ -117,7 +124,7 @@ function RouteSpinner() {
       aria-live="polite"
     >
       <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      <span className="sr-only">Loading page...</span>
+      <span className="sr-only">{t("common.loadingPage", "Loading page...")}</span>
     </div>
   );
 }
@@ -274,11 +281,9 @@ function AnimatedRoutes() {
           <Route
             path="/settings"
             element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteSpinner />}>
-                  <Settings />
-                </Suspense>
-              </ProtectedRoute>
+              <Suspense fallback={<RouteSpinner />}>
+                <Settings />
+              </Suspense>
             }
           />
           <Route
@@ -455,6 +460,7 @@ function AnimatedRoutes() {
 const App = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [enableEnhancements, setEnableEnhancements] = useState(false);
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const refreshableQueryKeys = new Set([
@@ -625,11 +631,13 @@ const App = () => {
                   <DialogContent className="max-w-sm border-border bg-card text-card-foreground">
                     <DialogHeader>
                       <DialogTitle>
-                        Create a free account to save your watchlist
+                        {t("authPrompt.title", "Create a free account to save your watchlist")}
                       </DialogTitle>
                       <DialogDescription className="text-muted-foreground">
-                        Save titles, mark them watched, and keep your progress
-                        synced across devices.
+                        {t(
+                          "authPrompt.description",
+                          "Save titles, mark them watched, and keep your progress synced across devices.",
+                        )}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="mt-4 flex justify-end gap-2">
@@ -637,7 +645,7 @@ const App = () => {
                         variant="outline"
                         onClick={() => setAuthPromptOpen(false)}
                       >
-                        Not now
+                        {t("authPrompt.notNow", "Not now")}
                       </Button>
                       <Button
                         variant="outline"
@@ -646,7 +654,7 @@ const App = () => {
                           navigate("/login");
                         }}
                       >
-                        Sign In
+                        {t("nav.signIn", "Sign In")}
                       </Button>
                       <Button
                         className="bg-primary text-primary-foreground hover:bg-primary/90"
@@ -655,7 +663,7 @@ const App = () => {
                           navigate("/signup");
                         }}
                       >
-                        Create Account
+                        {t("authPrompt.createAccount", "Create Account")}
                       </Button>
                     </div>
                   </DialogContent>

@@ -19,8 +19,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
+import { useTranslation } from "react-i18next";
 
 export default function AwardWinners() {
+  const { t } = useTranslation();
   const [selectedYear, setSelectedYear] = useState(
     new Date().getFullYear() - 1,
   );
@@ -31,10 +33,10 @@ export default function AwardWinners() {
   // Category filter (Oscar, Emmy, Golden Globe, etc.)
   const [selectedCategory, setSelectedCategory] = useState<string>("oscar");
   const categoryOptions = [
-    { value: "oscar", label: "Oscar", enabled: true },
-    { value: "emmy", label: "Emmy", enabled: true },
-    { value: "golden_globe", label: "Golden Globe", enabled: true },
-    { value: "bafta", label: "BAFTA", enabled: false },
+    { value: "oscar", label: t("awards.categoryOscar", "Oscar"), enabled: true },
+    { value: "emmy", label: t("awards.categoryEmmy", "Emmy"), enabled: true },
+    { value: "golden_globe", label: t("awards.categoryGoldenGlobe", "Golden Globe"), enabled: true },
+    { value: "bafta", label: t("awards.categoryBafta", "BAFTA"), enabled: false },
   ];
 
   // Ceremony filter (for demo, just year for now)
@@ -177,8 +179,8 @@ export default function AwardWinners() {
       return (
         <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-8 text-center text-destructive">
           {awardsLoadingTimedOut
-            ? "Loading award contenders took too long. Please try again."
-            : errorMessage || "Failed to load award contenders."}
+            ? t("awards.loadingTimeout", "Loading award contenders took too long. Please try again.")
+            : errorMessage || t("awards.loadFailed", "Failed to load award contenders.")}
         </div>
       );
     }
@@ -203,8 +205,8 @@ export default function AwardWinners() {
   return (
     <>
       <SEO
-        title="Award Winners & Nominees"
-        description="Explore Oscar, Emmy, and critically acclaimed movies and TV shows"
+        title={t("awards.seoTitle", "Award Winners & Nominees")}
+        description={t("awards.seoDescription", "Explore Oscar, Emmy, and critically acclaimed movies and TV shows")}
         canonical="https://cinetrekker.vercel.app/awards"
       />
 
@@ -212,9 +214,9 @@ export default function AwardWinners() {
         <div className="mb-6 flex items-start gap-3 sm:items-center">
           <Award className="h-8 w-8 text-primary" />
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold sm:text-3xl">Award Winners & Nominees</h1>
+            <h1 className="text-2xl font-bold sm:text-3xl">{t("awards.title", "Award Winners & Nominees")}</h1>
             <p className="text-muted-foreground mt-1">
-              Celebrating excellence in film and television
+              {t("awards.subtitle", "Celebrating excellence in film and television")}
             </p>
           </div>
         </div>
@@ -224,10 +226,10 @@ export default function AwardWinners() {
         <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {/* Category Filter */}
           <div className="min-w-0">
-            <label className="block text-xs font-semibold mb-1 text-neutral-400">Category</label>
+            <label className="block text-xs font-semibold mb-1 text-neutral-400">{t("awards.filterCategory", "Category")}</label>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
               <SelectTrigger>
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder={t("awards.selectCategory", "Select category")} />
               </SelectTrigger>
               <SelectContent>
                 {categoryOptions.map((cat) => (
@@ -238,10 +240,10 @@ export default function AwardWinners() {
           </div>
           {/* Ceremony Filter (Year) */}
           <div className="min-w-0">
-            <label className="block text-xs font-semibold mb-1 text-neutral-400">Ceremony</label>
+            <label className="block text-xs font-semibold mb-1 text-neutral-400">{t("awards.filterCeremony", "Ceremony")}</label>
             <Select value={selectedCeremony.toString()} onValueChange={(v) => { setSelectedCeremony(Number(v)); setSelectedYear(Number(v)); }}>
               <SelectTrigger>
-                <SelectValue placeholder="Select year" />
+                <SelectValue placeholder={t("awards.selectYear", "Select year")} />
               </SelectTrigger>
               <SelectContent>
                 {years.map((year) => (
@@ -252,22 +254,22 @@ export default function AwardWinners() {
           </div>
           {/* Actor Filter */}
           <div className="min-w-0 sm:col-span-2 lg:col-span-1">
-            <label className="block text-xs font-semibold mb-1 text-neutral-400">Actor</label>
+            <label className="block text-xs font-semibold mb-1 text-neutral-400">{t("awards.filterActor", "Actor")}</label>
             <Select value={selectedActor} onValueChange={setSelectedActor}>
               <SelectTrigger>
-                <SelectValue placeholder="Search actor" />
+                <SelectValue placeholder={t("awards.searchActor", "Search actor")} />
               </SelectTrigger>
               <SelectContent>
                 <div className="px-2 py-1">
                   <input
                     className="mb-1 w-full rounded bg-neutral-800 px-2 py-2 text-sm text-white"
-                    placeholder="Type to search..."
+                    placeholder={t("awards.typeToSearch", "Type to search...")}
                     value={actorQuery}
                     onChange={(e) => setActorQuery(e.target.value)}
                   />
                 </div>
                 {actorOptions.length === 0 && actorQuery.length >= 2 ? (
-                  <div className="px-2 py-1 text-xs text-neutral-400">No results</div>
+                  <div className="px-2 py-1 text-xs text-neutral-400">{t("awards.noResults", "No results")}</div>
                 ) : (
                   actorOptions.map((actor) => (
                     <SelectItem key={actor.id} value={actor.id.toString()}>{actor.name}</SelectItem>
@@ -280,7 +282,7 @@ export default function AwardWinners() {
 
         {!categoryImplemented && (
           <div className="mb-6 rounded-xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-200">
-            BAFTA filtering is coming soon. For now, use Oscar, Emmy, or Golden Globe.
+            {t("awards.baftaComingSoon", "BAFTA filtering is coming soon. For now, use Oscar, Emmy, or Golden Globe.")}
           </div>
         )}
 
@@ -294,19 +296,18 @@ export default function AwardWinners() {
           className="w-full"
         >
           <TabsList className="mb-8 grid w-full grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-0">
-            <TabsTrigger value="oscars">Oscar Contenders</TabsTrigger>
-            <TabsTrigger value="emmys">Emmy Contenders</TabsTrigger>
-            <TabsTrigger value="critical">Critically Acclaimed</TabsTrigger>
+            <TabsTrigger value="oscars">{t("awards.tabsOscar", "Oscar Contenders")}</TabsTrigger>
+            <TabsTrigger value="emmys">{t("awards.tabsEmmy", "Emmy Contenders")}</TabsTrigger>
+            <TabsTrigger value="critical">{t("awards.tabsCritical", "Critically Acclaimed")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="oscars">
             <div className="mb-4">
               <h2 className="text-xl font-semibold mb-2">
-                Academy Award Contenders {selectedYear}
+                {t("awards.oscarHeading", "Academy Award Contenders {{year}}", { year: selectedYear })}
               </h2>
               <p className="text-sm text-muted-foreground">
-                Top-rated films from {selectedYear} eligible for Oscar
-                consideration
+                {t("awards.oscarDescription", "Top-rated films from {{year}} eligible for Oscar consideration", { year: selectedYear })}
               </p>
             </div>
 
@@ -314,8 +315,8 @@ export default function AwardWinners() {
               filteredOscarMovies,
               loadingOscar,
               selectedActor
-                ? "No Oscar contenders matched the selected actor and filters."
-                : "No Oscar contenders found for this year.",
+                ? t("awards.noOscarWithActor", "No Oscar contenders matched the selected actor and filters.")
+                : t("awards.noOscarForYear", "No Oscar contenders found for this year."),
               isOscarError,
               (oscarError as Error | undefined)?.message,
             )}
@@ -324,11 +325,10 @@ export default function AwardWinners() {
           <TabsContent value="emmys">
             <div className="mb-4">
               <h2 className="text-xl font-semibold mb-2">
-                Emmy Award Contenders {selectedYear}
+                {t("awards.emmyHeading", "Emmy Award Contenders {{year}}", { year: selectedYear })}
               </h2>
               <p className="text-sm text-muted-foreground">
-                Top-rated series from {selectedYear} eligible for Emmy
-                consideration
+                {t("awards.emmyDescription", "Top-rated series from {{year}} eligible for Emmy consideration", { year: selectedYear })}
               </p>
             </div>
 
@@ -336,8 +336,8 @@ export default function AwardWinners() {
               filteredEmmyShows,
               loadingEmmy,
               selectedActor
-                ? "No Emmy contenders matched the selected actor and filters."
-                : "No Emmy contenders found for this year.",
+                ? t("awards.noEmmyWithActor", "No Emmy contenders matched the selected actor and filters.")
+                : t("awards.noEmmyForYear", "No Emmy contenders found for this year."),
               isEmmyError,
               (emmyError as Error | undefined)?.message,
             )}
@@ -346,10 +346,10 @@ export default function AwardWinners() {
           <TabsContent value="critical">
             <div className="mb-4">
               <h2 className="text-xl font-semibold mb-2">
-                Critically Acclaimed {selectedYear}
+                {t("awards.criticalHeading", "Critically Acclaimed {{year}}", { year: selectedYear })}
               </h2>
               <p className="text-sm text-muted-foreground">
-                Highest-rated and most popular films from {selectedYear}
+                {t("awards.criticalDescription", "Highest-rated and most popular films from {{year}}", { year: selectedYear })}
               </p>
             </div>
 
@@ -357,8 +357,8 @@ export default function AwardWinners() {
               filteredCritical,
               loadingCritical,
               selectedActor
-                ? "No Golden Globe-style contenders matched the selected actor and filters."
-                : "No critically acclaimed titles found for this year.",
+                ? t("awards.noCriticalWithActor", "No Golden Globe-style contenders matched the selected actor and filters.")
+                : t("awards.noCriticalForYear", "No critically acclaimed titles found for this year."),
               isCriticalError,
               (criticalError as Error | undefined)?.message,
             )}

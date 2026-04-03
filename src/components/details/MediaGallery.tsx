@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { getImageUrl } from '@/services/tmdb';
 import { Image } from '@/components/ui/Image';
 import { PaginationDotButton, PaginationDots } from '@/components/ui/pagination-dots';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   backdrops?: Array<{ file_path: string }>;
@@ -9,6 +10,7 @@ type Props = {
 };
 
 function MediaGalleryInner({ backdrops = [], videos = [] }: Props) {
+  const { t } = useTranslation();
   const videosRef = useRef<HTMLDivElement>(null);
   const backdropsRef = useRef<HTMLDivElement>(null);
   const [activeVideoPage, setActiveVideoPage] = useState(0);
@@ -81,7 +83,10 @@ function MediaGalleryInner({ backdrops = [], videos = [] }: Props) {
               })
             }
             active={index === activePage}
-            aria-label={`Go to ${label} page ${index + 1}`}
+            aria-label={t('mediaGallery.goToPage', 'Go to {{label}} page {{index}}', {
+              label,
+              index: index + 1,
+            })}
             aria-pressed={index === activePage}
           />
         ))}
@@ -94,7 +99,7 @@ function MediaGalleryInner({ backdrops = [], videos = [] }: Props) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
-        <h3 className="text-lg font-semibold mb-2">Trailers & Clips</h3>
+        <h3 className="text-lg font-semibold mb-2">{t('mediaGallery.trailersAndClips', 'Trailers & Clips')}</h3>
         <div
           ref={videosRef}
           className="flex gap-3 overflow-x-auto hide-scrollbar scroll-smooth snap-x snap-mandatory"
@@ -113,7 +118,7 @@ function MediaGalleryInner({ backdrops = [], videos = [] }: Props) {
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold mb-2">Backdrops</h3>
+        <h3 className="text-lg font-semibold mb-2">{t('mediaGallery.backdrops', 'Backdrops')}</h3>
         <div
           ref={backdropsRef}
           className="flex gap-3 overflow-x-auto hide-scrollbar scroll-smooth snap-x snap-mandatory"
@@ -124,7 +129,7 @@ function MediaGalleryInner({ backdrops = [], videos = [] }: Props) {
               src={getImageUrl(b.file_path, 'w780')}
               srcSet={`${getImageUrl(b.file_path, 'w342')} 342w, ${getImageUrl(b.file_path, 'w780')} 780w`}
               sizes="288px"
-              alt={`Backdrop ${i + 1}`}
+              alt={t('mediaGallery.backdropAlt', 'Backdrop {{index}}', { index: i + 1 })}
               width={780}
               height={439}
               className="w-72 h-40 shrink-0 snap-start object-cover rounded-md"

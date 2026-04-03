@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useContinueWatching } from "@/hooks/useContinueWatching";
-import { getImageUrl } from "@/services/tmdb";
+import { getImageUrl, getMediaTitle } from "@/services/tmdb";
 import { Image } from "@/components/ui/Image";
 import { useWatchedEpisodes } from "@/hooks/useFollowedShows";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,7 +37,7 @@ function ContinueWatchingSkeleton() {
 }
 
 export function ContinueWatching() {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const { user } = useAuth();
   const language = i18n.language;
   const { data, isLoading, error, refetch } = useContinueWatching(language);
@@ -115,9 +115,9 @@ export function ContinueWatching() {
   if (error instanceof Error) {
     return (
       <section className="ct-panel p-6 text-center">
-        <h2 className="section-title mb-1">Continue Watching</h2>
+        <h2 className="section-title mb-1">{t("home.continueWatching", "Continue Watching")}</h2>
         <p className="text-sm text-muted-foreground">
-          We couldn&apos;t load your episode progress right now.
+          {t("home.continueWatchingLoadError", "We couldn't load your episode progress right now.")}
         </p>
         <Button
           type="button"
@@ -128,7 +128,7 @@ export function ContinueWatching() {
           }}
         >
           <RefreshCw className="h-4 w-4" />
-          Retry
+          {t("common.retry", "Retry")}
         </Button>
       </section>
     );
@@ -141,14 +141,17 @@ export function ContinueWatching() {
           <div>
             <div className="flex items-center gap-2">
               <Play className="h-5 w-5 text-primary" />
-              <h2 className="section-title mb-0">Continue Watching</h2>
+              <h2 className="section-title mb-0">{t("home.continueWatching", "Continue Watching")}</h2>
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              Pick up the next released episode without hunting through your library.
+              {t(
+                "home.continueWatchingSubtitle",
+                "Pick up the next released episode without hunting through your library.",
+              )}
             </p>
           </div>
           <Button asChild variant="outline" size="sm">
-            <Link to="/watched">View Watching List</Link>
+            <Link to="/watched">{t("home.viewWatchingList", "View Watching List")}</Link>
           </Button>
         </div>
 
@@ -156,13 +159,16 @@ export function ContinueWatching() {
           <div className="max-w-md space-y-3">
             <Tv className="mx-auto h-10 w-10 text-primary" />
             <h3 className="text-lg font-semibold text-foreground">
-              Nothing to continue yet
+              {t("home.continueWatchingEmptyTitle", "Nothing to continue yet")}
             </h3>
             <p className="text-sm text-muted-foreground">
-              Once you start a series, the next episode will appear here for fast access.
+              {t(
+                "home.continueWatchingEmptyDesc",
+                "Once you start a series, the next episode will appear here for fast access.",
+              )}
             </p>
             <Button asChild className="btn-primary-glow mt-2">
-              <Link to="/search">Find a show to start</Link>
+              <Link to="/search">{t("home.findShowToStart", "Find a show to start")}</Link>
             </Button>
           </div>
         </div>
@@ -176,14 +182,17 @@ export function ContinueWatching() {
         <div>
           <div className="flex items-center gap-2">
             <Play className="h-5 w-5 text-primary" />
-            <h2 className="section-title mb-0">Continue Watching</h2>
+            <h2 className="section-title mb-0">{t("home.continueWatching", "Continue Watching")}</h2>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Pick up the next released episode without hunting through your library.
+            {t(
+              "home.continueWatchingSubtitle",
+              "Pick up the next released episode without hunting through your library.",
+            )}
           </p>
         </div>
         <Button asChild variant="outline" size="sm">
-          <Link to="/watched">View Watching List</Link>
+          <Link to="/watched">{t("home.viewWatchingList", "View Watching List")}</Link>
         </Button>
       </div>
 
@@ -192,7 +201,7 @@ export function ContinueWatching() {
         className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 scroll-smooth overscroll-contain touch-pan-x"
       >
         {data.map((item) => {
-          const title = item.details.name || item.details.title || "TV Show";
+          const title = getMediaTitle(item.details) || t("common.tvShow", "TV Show");
           const nextEpisode = item.nextEpisode;
           const lastEpisode = item.lastWatchedEpisode;
           const nextEpisodeLabel = nextEpisode
@@ -222,10 +231,13 @@ export function ContinueWatching() {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <h3 className="line-clamp-2 min-h-[3.5rem] text-base font-semibold text-foreground sm:text-lg">
-                          {title}
+                          <bdi dir="auto">{title}</bdi>
                         </h3>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          {item.watchedEpisodeCount} episodes tracked
+                          {t("home.episodesTracked", {
+                            count: item.watchedEpisodeCount,
+                            defaultValue: "{{count}} episodes tracked",
+                          })}
                         </p>
                       </div>
                       <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/12 text-primary">
@@ -237,7 +249,9 @@ export function ContinueWatching() {
                       {nextEpisode ? (
                         <>
                           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                            {nextEpisode.isUpcoming ? "Up next" : "Next episode"}
+                            {nextEpisode.isUpcoming
+                              ? t("home.upNext", "Up next")
+                              : t("home.nextEpisode", "Next episode")}
                           </p>
                           <p className="mt-1 line-clamp-2 font-medium text-foreground">
                             {nextEpisodeLabel} {nextEpisode.name}
@@ -254,7 +268,7 @@ export function ContinueWatching() {
                       ) : lastEpisode ? (
                         <>
                           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                            Last watched
+                            {t("home.lastWatched", "Last watched")}
                           </p>
                           <p className="mt-1 font-medium text-foreground">
                             S{lastEpisode.season_number}E{lastEpisode.episode_number}
@@ -265,7 +279,7 @@ export function ContinueWatching() {
 
                     <div className="mt-4">
                       <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Series progress</span>
+                        <span>{t("home.seriesProgress", "Series progress")}</span>
                         <span>{item.progressPercent}%</span>
                       </div>
                       <Progress value={item.progressPercent} className="h-2" />
@@ -275,7 +289,7 @@ export function ContinueWatching() {
                       <Button asChild className="flex-1 gap-2">
                         <Link to={`/tv/${item.details.id}`}>
                           <Play className="h-4 w-4" />
-                          Open Show
+                          {t("home.openShow", "Open Show")}
                         </Link>
                       </Button>
                       {nextEpisode && !nextEpisode.isUpcoming ? (
@@ -296,7 +310,7 @@ export function ContinueWatching() {
                           }
                         >
                           <CheckCircle2 className="h-4 w-4" />
-                          Mark Next Episode
+                          {t("home.markNextEpisode", "Mark Next Episode")}
                         </Button>
                       ) : (
                         <div className="h-10" aria-hidden="true" />
@@ -317,7 +331,10 @@ export function ContinueWatching() {
               key={`continue-watching-page-${index}`}
               onClick={() => scrollToCard(index)}
               active={index === activeIndex}
-              aria-label={`Go to continue watching item ${index + 1}`}
+              aria-label={t("home.goToContinueWatchingItem", {
+                index: index + 1,
+                defaultValue: "Go to continue watching item {{index}}",
+              })}
               aria-pressed={index === activeIndex}
             />
           ))}

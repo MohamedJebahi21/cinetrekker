@@ -296,6 +296,33 @@ export function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* Settings Button */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  asChild
+                  className="hover:bg-white/5 min-w-[44px] min-h-[44px]"
+                >
+                  <Link
+                    to="/settings"
+                    aria-label={t("nav.settings", "Settings")}
+                  >
+                    <Settings className="h-5 w-5" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent
+                side="bottom"
+                className="bg-popover/95 backdrop-blur-xl border-border/50"
+              >
+                <p>{t("nav.settings", "Settings")}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
           {/* Language Switcher */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -325,40 +352,13 @@ export function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Settings Button */}
-          {user && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    asChild
-                    className="hover:bg-white/5 min-w-[44px] min-h-[44px]"
-                  >
-                    <Link
-                      to="/settings"
-                      aria-label={t("nav.settings", "Settings")}
-                    >
-                      <Settings className="h-5 w-5" />
-                    </Link>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent
-                  side="bottom"
-                  className="bg-popover/95 backdrop-blur-xl border-border/50"
-                >
-                  <p>{t("nav.settings", "Settings")}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+          {/* Theme Switcher */}
+          {renderThemeSwitcher()}
 
           {/* User Menu / Auth */}
           {!loading &&
             (user ? (
               <div className="flex items-center gap-2">
-                {renderThemeSwitcher()}
                 <NotificationBell />
                 <UserProfileDropdown
                   profilePhoto={profilePhoto}
@@ -366,20 +366,17 @@ export function Header() {
                 />
               </div>
             ) : (
-              <>
-                {renderThemeSwitcher()}
-                <Link to="/login">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="gap-2 btn-primary-glow min-w-[44px] min-h-[44px]"
-                    aria-label={t("nav.signIn")}
-                  >
-                    <LogIn className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t("nav.signIn")}</span>
-                  </Button>
-                </Link>
-              </>
+              <Link to="/login">
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="gap-2 btn-primary-glow min-w-[44px] min-h-[44px]"
+                  aria-label={t("nav.signIn")}
+                >
+                  <LogIn className="h-4 w-4" />
+                  <span className="hidden sm:inline">{t("nav.signIn")}</span>
+                </Button>
+              </Link>
             ))}
 
           {/* Mobile Menu Toggle */}

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Film, History, Star, Tv } from "lucide-react";
 import { useUserLists } from "@/contexts/UserListsContext";
 import { UserMediaItem } from "@/types/media";
@@ -23,6 +24,7 @@ import {
 import { getImageUrl, getMediaTitle } from "@/services/tmdb";
 
 export default function WatchHistory() {
+  const { t, i18n } = useTranslation();
   const { watched } = useUserLists();
   const watchedMovies = watched.filter((item) => item.mediaType === "movie");
   const watchedTV = watched.filter((item) => item.mediaType === "tv");
@@ -85,7 +87,7 @@ export default function WatchHistory() {
       }
 
       const date = new Date(watchedDateStr);
-      const monthKey = date.toLocaleDateString("en-US", {
+      const monthKey = date.toLocaleDateString(i18n.language || "en", {
         year: "numeric",
         month: "long",
       });
@@ -103,8 +105,8 @@ export default function WatchHistory() {
   return (
     <>
       <SEO
-        title="Watch History Timeline"
-        description="Visual timeline of your watching journey"
+        title={t("watchHistory.title", "Watch History")}
+        description={t("watchHistory.seoDescription", "Visual timeline of your watching journey")}
         canonical="https://cinetrekker.vercel.app/watch-history"
       />
 
@@ -113,9 +115,9 @@ export default function WatchHistory() {
           <div className="flex items-center gap-3">
             <History className="h-8 w-8 text-primary" />
             <div>
-              <h1 className="text-3xl font-bold">Watch History</h1>
+              <h1 className="text-3xl font-bold">{t("watchHistory.title", "Watch History")}</h1>
               <p className="mt-1 text-muted-foreground">
-                {sortedItems.length} items in your timeline
+                {t("watchHistory.subtitle", "{{count}} items in your timeline", { count: sortedItems.length })}
               </p>
             </div>
           </div>
@@ -129,9 +131,9 @@ export default function WatchHistory() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="movies">Movies</SelectItem>
-                <SelectItem value="tv">TV Shows</SelectItem>
+                <SelectItem value="all">{t("watchHistory.filterAll", "All")}</SelectItem>
+                <SelectItem value="movies">{t("watchHistory.filterMovies", "Movies")}</SelectItem>
+                <SelectItem value="tv">{t("watchHistory.filterTV", "TV Shows")}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -145,9 +147,9 @@ export default function WatchHistory() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="recent">Recent First</SelectItem>
-                <SelectItem value="oldest">Oldest First</SelectItem>
-                <SelectItem value="alpha">A-Z</SelectItem>
+                <SelectItem value="recent">{t("watchHistory.sortRecent", "Recent First")}</SelectItem>
+                <SelectItem value="oldest">{t("watchHistory.sortOldest", "Oldest First")}</SelectItem>
+                <SelectItem value="alpha">{t("watchHistory.sortAlpha", "A-Z")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -157,7 +159,7 @@ export default function WatchHistory() {
           <Card className="p-12 text-center">
             <History className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
             <p className="text-muted-foreground">
-              No watch history yet. Start watching to build your timeline!
+              {t("watchHistory.emptyState", "No watch history yet. Start watching to build your timeline!")}
             </p>
           </Card>
         ) : (
@@ -170,14 +172,14 @@ export default function WatchHistory() {
                   <div className="sticky top-20 z-10 mb-4 flex items-center gap-4 bg-background/95 py-2 backdrop-blur-sm">
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary shadow-lg">
                       <span className="font-bold text-primary-foreground">
-                        {new Date(month).toLocaleDateString("en-US", {
+                        {new Date(month).toLocaleDateString(i18n.language || "en", {
                           month: "short",
                         })}
                       </span>
                     </div>
                     <h2 className="text-2xl font-bold">{month}</h2>
                     <Badge variant="secondary">
-                      {timelineGroups[month].length} items
+                      {t("watchHistory.itemsCount", "{{count}} items", { count: timelineGroups[month].length })}
                     </Badge>
                   </div>
 
@@ -188,9 +190,7 @@ export default function WatchHistory() {
                           createMediaLookupKey(item.mediaType, item.mediaId),
                         ) || createFallbackMedia(item);
                       const watchedDateStr = item.watchedAt || item.addedAt;
-                      const title = (detail?.title || detail?.name) as
-                        | string
-                        | undefined;
+                      const title = detail ? getMediaTitle(detail) : undefined;
                       const vote = detail?.vote_average as number | undefined;
 
                       return (
@@ -216,7 +216,7 @@ export default function WatchHistory() {
                               <div className="flex items-start justify-between gap-2">
                                 <div>
                                   <h3 className="text-lg font-semibold">
-                                    {title || "Loading..."}
+                                    <bdi dir="auto">{title || t("common.loading", "Loading...")}</bdi>
                                   </h3>
                                   <div className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
                                     <span className="inline-flex items-center gap-1">
@@ -225,7 +225,9 @@ export default function WatchHistory() {
                                       ) : (
                                         <Tv className="h-3.5 w-3.5" />
                                       )}
-                                      {item.mediaType === "movie" ? "Movie" : "TV Show"}
+                                      {item.mediaType === "movie"
+                                        ? t("watchHistory.mediaTypeMovie", "Movie")
+                                        : t("watchHistory.mediaTypeTV", "TV Show")}
                                     </span>
                                     {detail && vote ? (
                                       <>
@@ -240,7 +242,7 @@ export default function WatchHistory() {
                                 </div>
                                 {watchedDateStr ? (
                                   <Badge variant="outline">
-                                    {new Date(watchedDateStr).toLocaleDateString("en-US", {
+                                    {new Date(watchedDateStr).toLocaleDateString(i18n.language || "en", {
                                       month: "short",
                                       day: "numeric",
                                     })}
@@ -267,9 +269,9 @@ export default function WatchHistory() {
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
                       <span className="font-bold text-muted-foreground">?</span>
                     </div>
-                    <h2 className="text-2xl font-bold">Date Unknown</h2>
+                    <h2 className="text-2xl font-bold">{t("watchHistory.dateUnknown", "Date Unknown")}</h2>
                     <Badge variant="secondary">
-                      {timelineGroups.Unknown.length} items
+                      {t("watchHistory.itemsCount", "{{count}} items", { count: timelineGroups.Unknown.length })}
                     </Badge>
                   </div>
 
@@ -279,9 +281,7 @@ export default function WatchHistory() {
                         detailMap.get(
                           createMediaLookupKey(item.mediaType, item.mediaId),
                         ) || createFallbackMedia(item);
-                      const title = (detail?.title || detail?.name) as
-                        | string
-                        | undefined;
+                      const title = detail ? getMediaTitle(detail) : undefined;
 
                       return (
                         <Card key={`${item.mediaId}-${idx}`} className="p-4">
@@ -301,7 +301,7 @@ export default function WatchHistory() {
                             ) : null}
                             <div>
                               <h3 className="font-semibold">
-                                {title || "Loading..."}
+                                <bdi dir="auto">{title || t("common.loading", "Loading...")}</bdi>
                               </h3>
                               <p className="inline-flex items-center gap-1 text-sm text-muted-foreground">
                                 {item.mediaType === "movie" ? (
@@ -309,7 +309,9 @@ export default function WatchHistory() {
                                 ) : (
                                   <Tv className="h-3.5 w-3.5" />
                                 )}
-                                {item.mediaType === "movie" ? "Movie" : "TV Show"}
+                                {item.mediaType === "movie"
+                                  ? t("watchHistory.mediaTypeMovie", "Movie")
+                                  : t("watchHistory.mediaTypeTV", "TV Show")}
                               </p>
                             </div>
                           </div>

@@ -57,8 +57,8 @@ export default function Following() {
   return (
     <>
       <SEO
-        title="Following — CineTrekker"
-        description="TV shows you're currently following"
+        title={t("following.seoTitle", "Following - CineTrekker")}
+        description={t("following.seoDescription", "Titles you are currently following")}
         canonical="https://cinetrekker.vercel.app/following"
       />
       <div className="page-container pt-20 pb-24 md:pb-0">
@@ -68,9 +68,9 @@ export default function Following() {
             {t("nav.following", "Following")}
           </h1>
           <p className="text-muted-foreground mt-2">
-            {followedTitles.length} title
-            {followedTitles.length !== 1 ? "s" : ""}{" "}
-            {t("following.followedShows", "you're tracking")}
+            {t("following.followedCount", "{{count}} titles you're tracking", {
+              count: followedTitles.length,
+            })}
           </p>
         </div>
 
@@ -131,7 +131,7 @@ export default function Following() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
                       <h3 className="font-bold text-sm line-clamp-2 text-white mb-1">
-                        {title}
+                        <bdi dir="auto">{title}</bdi>
                       </h3>
                       {year && <p className="text-xs text-gray-300">{year}</p>}
                     </div>

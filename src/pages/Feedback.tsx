@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useTranslation } from 'react-i18next';
 
 declare global {
   interface Window {
@@ -43,6 +44,7 @@ const CAPTCHA_PROVIDER = TURNSTILE_SITE_KEY ? 'turnstile' : RECAPTCHA_SITE_KEY ?
 const CAPTCHA_SITE_KEY = TURNSTILE_SITE_KEY || RECAPTCHA_SITE_KEY || '';
 
 export default function Feedback() {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
@@ -133,12 +135,12 @@ export default function Feedback() {
     setSuccess('');
 
     if (!name.trim() || !email.trim() || !message.trim()) {
-      setError('Please fill in all fields before sending feedback.');
+      setError(t('feedback.formErrorRequired', 'Please fill in all fields before sending feedback.'));
       return;
     }
 
     if (!captchaToken) {
-      setError('Please complete the bot protection check before sending feedback.');
+      setError(t('feedback.formErrorCaptcha', 'Please complete the bot protection check before sending feedback.'));
       return;
     }
 
@@ -162,11 +164,11 @@ export default function Feedback() {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         const details = [data?.error, data?.detail].filter(Boolean).join(' ');
-        setError(details || 'Failed to send feedback. Please try again.');
+        setError(details || t('feedback.formErrorSend', 'Failed to send feedback. Please try again.'));
         return;
       }
 
-      setSuccess('Thanks for your feedback. It was sent successfully.');
+      setSuccess(t('feedback.formSuccess', 'Thanks for your feedback. It was sent successfully.'));
       setName('');
       setEmail('');
       setMessage('');
@@ -179,7 +181,7 @@ export default function Feedback() {
         window.grecaptcha.reset(turnstileWidgetIdRef.current);
       }
     } catch {
-      setError('Failed to send feedback. Please try again.');
+      setError(t('feedback.formErrorSend', 'Failed to send feedback. Please try again.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -187,21 +189,27 @@ export default function Feedback() {
 
   return (
     <div className="page-container pt-20 pb-24 md:pb-0">
-      <SEO title="Feedback - CineTrekker" description="Send feedback to CineTrekker" />
+      <SEO
+        title={t('feedback.seoTitle', 'Feedback - CineTrekker')}
+        description={t('feedback.seoDescription', 'Send feedback to CineTrekker')}
+      />
       <div className="max-w-3xl mx-auto py-12">
-        <h1 className="section-title">Feedback</h1>
+        <h1 className="section-title">{t('feedback.title', 'Feedback')}</h1>
         <p className="mt-4 text-base text-muted-foreground">
-          We&apos;d love to hear your feedback. Fill out the form below and send it directly from the website.
+          {t(
+            'feedback.subtitle',
+            "We'd love to hear your feedback. Fill out the form below and send it directly from the website.",
+          )}
         </p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-5 rounded-xl border border-border/40 bg-card/50 p-6">
           <div className="space-y-2">
-            <Label htmlFor="feedback-name">Name</Label>
+            <Label htmlFor="feedback-name">{t('feedback.nameLabel', 'Name')}</Label>
             <Input
               id="feedback-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
+              placeholder={t('feedback.namePlaceholder', 'Your name')}
               autoComplete="name"
               aria-invalid={Boolean(error)}
               aria-describedby={error ? 'feedback-form-error' : undefined}
@@ -210,13 +218,13 @@ export default function Feedback() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="feedback-email">Email</Label>
+            <Label htmlFor="feedback-email">{t('feedback.emailLabel', 'Email')}</Label>
             <Input
               id="feedback-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder={t('feedback.emailPlaceholder', 'you@example.com')}
               autoComplete="email"
               aria-invalid={Boolean(error)}
               aria-describedby={error ? 'feedback-form-error' : undefined}
@@ -225,12 +233,12 @@ export default function Feedback() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="feedback-message">Message</Label>
+            <Label htmlFor="feedback-message">{t('feedback.messageLabel', 'Message')}</Label>
             <Textarea
               id="feedback-message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Share your ideas, bug reports, or feature requests..."
+              placeholder={t('feedback.messagePlaceholder', 'Share your ideas, bug reports, or feature requests...')}
               className="min-h-[140px]"
               aria-invalid={Boolean(error)}
               aria-describedby={error ? 'feedback-form-error' : undefined}
@@ -239,7 +247,7 @@ export default function Feedback() {
           </div>
 
           <div className="hidden" aria-hidden="true">
-            <Label htmlFor="feedback-website">Website</Label>
+            <Label htmlFor="feedback-website">{t('feedback.websiteLabel', 'Website')}</Label>
             <Input
               id="feedback-website"
               tabIndex={-1}
@@ -250,7 +258,7 @@ export default function Feedback() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="feedback-bot-protection">Bot Protection</Label>
+            <Label htmlFor="feedback-bot-protection">{t('feedback.botProtectionLabel', 'Bot Protection')}</Label>
             {CAPTCHA_SITE_KEY && (
               <div id="feedback-bot-protection" ref={turnstileContainerRef} />
             )}
@@ -268,7 +276,9 @@ export default function Feedback() {
           )}
 
           <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
-            {isSubmitting ? 'Sending...' : 'Send Feedback'}
+            {isSubmitting
+              ? t('feedback.sending', 'Sending...')
+              : t('feedback.sendButton', 'Send Feedback')}
           </Button>
         </form>
       </div>

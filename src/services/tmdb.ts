@@ -573,7 +573,14 @@ export const getTVGenres = async (
 };
 
 export const getMediaTitle = (media: Media): string => {
-  return toDisplayTitle(media.title || media.name || "Unknown Title");
+  // Prefer original title/name so media names stay in their source language.
+  return toDisplayTitle(
+    media.original_title ||
+      media.original_name ||
+      media.title ||
+      media.name ||
+      "Unknown Title",
+  );
 };
 
 export const getMediaYear = (media: Media): string => {
