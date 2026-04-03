@@ -24,11 +24,8 @@ export default function Person() {
   if (isLoading) {
     return (
       <div className="min-h-screen pt-16">
-        <div className="page-container pt-6">
+        <div className="page-container pb-24 pt-6 md:pb-0">
           <div className="mb-12 flex flex-col gap-8 md:flex-row">
-            <div className="mx-auto flex-shrink-0 md:mx-0">
-              <div className="w-48 poster-skeleton md:w-64" />
-            </div>
             <div className="flex-1 space-y-4">
               <div className="h-8 w-3/4 rounded skeleton-shimmer" />
               <div className="h-4 w-1/2 rounded skeleton-shimmer" />
@@ -106,7 +103,7 @@ export default function Person() {
       />
 
       <div className="min-h-screen pt-16">
-        <div className="page-container pt-6">
+        <div className="page-container pb-24 pt-6 md:pb-0">
           <Link
             to="/"
             className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors active:scale-95 focus-visible:ring-2 focus-visible:ring-primary md:hover:text-foreground"

@@ -247,7 +247,7 @@ export default function Achievements() {
         canonical="https://cinetrekker.vercel.app/achievements"
       />
 
-      <div className="ct-page-shell min-h-screen px-4 py-8 sm:py-10">
+      <div className="ct-page-shell min-h-screen px-4 pb-24 pt-8 sm:pb-10">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

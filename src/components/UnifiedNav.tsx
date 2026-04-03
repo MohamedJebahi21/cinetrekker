@@ -179,6 +179,13 @@ export function UnifiedNav() {
     setIsMobileSheetOpen(false);
   }, [pathname]);
 
+  // Listen for open-mobile-menu events dispatched by the MobileBottomNav "More" button
+  useEffect(() => {
+    const handler = () => setIsMobileSheetOpen(true);
+    window.addEventListener("cinetrekker:open-mobile-menu", handler);
+    return () => window.removeEventListener("cinetrekker:open-mobile-menu", handler);
+  }, []);
+
   useEffect(() => {
     if (typeof document === "undefined") return;
 
@@ -382,7 +389,9 @@ export function UnifiedNav() {
             closeAriaLabel={t("nav.closeMenu", "Close menu")}
             onOpenAutoFocus={(event) => {
               event.preventDefault();
-              const closeButton = event.currentTarget.querySelector<HTMLButtonElement>("[data-sheet-close]");
+              const target = event.currentTarget;
+              if (!(target instanceof Element)) return;
+              const closeButton = target.querySelector<HTMLButtonElement>("[data-sheet-close]");
               closeButton?.focus();
             }}
             className="safe-area-insets w-full max-w-none overflow-y-auto smooth-scroll border-l-0 bg-background px-0 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(1rem,env(safe-area-inset-top,0px))] md:hidden sm:w-3/4 sm:max-w-sm sm:border-l"

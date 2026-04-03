@@ -50,6 +50,7 @@ export function RatingInput({
               onClick={() => handleClick(starValue)}
               onMouseEnter={() => !readonly && setHoverValue(starValue)}
               disabled={readonly}
+              aria-label={`Rate ${starValue} out of ${max}`}
               className={cn(
                 'transition-all duration-150',
                 !readonly && 'cursor-pointer hover:scale-110',

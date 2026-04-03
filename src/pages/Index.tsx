@@ -174,7 +174,7 @@ export default function Index() {
 
       <HeroSection />
 
-      <main className="page-container space-y-6 pb-16 pt-8 md:space-y-8 md:pb-0">
+      <main className="page-container space-y-6 pb-24 pt-8 md:space-y-8 md:pb-0">
         {authLoading ? (
           <AuthHomeSkeleton />
         ) : user ? (

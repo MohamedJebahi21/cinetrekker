@@ -148,7 +148,9 @@ export function FilterBadge({ label, onRemove }: FilterBadgeProps) {
     >
       <span>{label}</span>
       <button
+        type="button"
         onClick={onRemove}
+        aria-label="Remove filter"
         className="ml-1 text-primary/60 hover:text-primary transition-colors"
       >
         ×

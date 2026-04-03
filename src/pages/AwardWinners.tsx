@@ -2,6 +2,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { discoverMovies, discoverTV, getPersonDetails, searchPeople } from "@/services/tmdb";
 import { MediaCard } from "@/components/MediaCard";
+import type { Media } from "@/types/media";
 import MovieSkeleton from "@/components/ui/MovieSkeleton";
 import SEO from "@/components/SEO";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -156,7 +157,7 @@ export default function AwardWinners() {
   );
 
   const renderGrid = (
-    items: Array<{ id: number }>,
+    items: Media[],
     loading: boolean,
     emptyMessage: string,
     hasError?: boolean,

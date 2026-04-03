@@ -111,6 +111,7 @@ export default function Recommendations() {
                   hideFromRecommendations(media.id, resolveMediaType(media));
                 }}
                 title={t('recommendations.hideTitle')}
+                aria-label={t('recommendations.hideTitle')}
               >
                 <EyeOff className="w-4 h-4" />
               </Button>

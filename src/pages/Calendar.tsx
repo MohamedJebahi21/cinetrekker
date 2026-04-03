@@ -427,11 +427,11 @@ export default function Calendar() {
 
           <div className="flex flex-col items-stretch gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="ct-toolbar w-full justify-between gap-2 sm:w-auto sm:justify-start">
-              <Button variant="ghost" size="icon" onClick={goToPreviousWeek} className="h-11 w-11 sm:h-10 sm:w-10">
+              <Button variant="ghost" size="icon" onClick={goToPreviousWeek} aria-label={t('calendar.previousWeek', 'Previous week')} className="h-11 w-11 sm:h-10 sm:w-10">
                 <ChevronLeft className="h-5 w-5" />
               </Button>
               <div className="min-w-0 flex-1 px-2 text-center text-sm font-medium sm:min-w-[180px] sm:px-4">{weekRange}</div>
-              <Button variant="ghost" size="icon" onClick={goToNextWeek} className="h-11 w-11 sm:h-10 sm:w-10">
+              <Button variant="ghost" size="icon" onClick={goToNextWeek} aria-label={t('calendar.nextWeek', 'Next week')} className="h-11 w-11 sm:h-10 sm:w-10">
                 <ChevronRight className="h-5 w-5" />
               </Button>
               <Button variant="secondary" size="sm" onClick={goToToday} className="w-full sm:ml-2 sm:w-auto">

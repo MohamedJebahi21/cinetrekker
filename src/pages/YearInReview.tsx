@@ -167,7 +167,7 @@ export default function YearInReview() {
         canonical="https://cinetrekker.vercel.app/year-in-review"
       />
 
-      <div className="ct-page-shell min-h-screen px-4 py-8 sm:py-10">
+      <div className="ct-page-shell min-h-screen px-4 pb-24 pt-8 sm:pb-10">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="mb-8 flex items-start gap-3 sm:mb-10 sm:items-center sm:gap-4">

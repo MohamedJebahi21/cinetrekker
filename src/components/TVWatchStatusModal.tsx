@@ -209,7 +209,6 @@ export function TVWatchStatusModal({
                             </span>
                             <Checkbox
                               checked={seasonSelected}
-                              ref={undefined}
                               onCheckedChange={() => handleSelectSeason(seasonNum, episodeCount)}
                               className={partialSelected && !seasonSelected ? 'data-[state=checked]:opacity-50' : ''}
                             />

@@ -1029,7 +1029,7 @@ export default function Search() {
   );
 
   return (
-    <div className="page-container pt-20 pb-4 sm:pb-0">
+    <div className="page-container pt-20 pb-24 md:pb-4">
       <SEO
         title={
           query

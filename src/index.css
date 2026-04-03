@@ -1481,3 +1481,35 @@ select:focus {
   box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
 }
 
+
+/* ─── Mobile Bottom Navigation Bar ─────────────────────────────────────────── */
+.mobile-bottom-nav {
+  background: hsl(var(--background) / 0.92);
+  border-top: 1px solid hsl(var(--border) / 0.5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  /* Safe-area padding for notch/home-indicator devices */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.mobile-bottom-nav-inner {
+  min-height: 3.25rem; /* 52px tap area above safe-area zone */
+}
+
+.mobile-bottom-nav-item {
+  min-height: 3.25rem; /* 52px = touch target */
+  min-width: 44px;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.mobile-bottom-nav-item:active {
+  opacity: 0.7;
+}
+
+/* Ensure main page content clears the bottom bar */
+@media (max-width: 767px) {
+  .ct-page-shell > main {
+    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}

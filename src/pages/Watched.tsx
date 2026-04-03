@@ -86,7 +86,7 @@ export default function Watched() {
               <div className="ct-filter-field">
                 <label className="ct-filter-label">Language</label>
                 <Select value={filterLang} onValueChange={setFilterLang}>
-                  <SelectTrigger>
+                  <SelectTrigger aria-label="Filter by language">
                     <SelectValue placeholder="All Languages" />
                   </SelectTrigger>
                   <SelectContent>
@@ -103,7 +103,7 @@ export default function Watched() {
               <div className="ct-filter-field">
                 <label className="ct-filter-label">Type</label>
                 <Select value={filterType} onValueChange={setFilterType}>
-                  <SelectTrigger>
+                  <SelectTrigger aria-label="Filter by type">
                     <SelectValue placeholder="All Types" />
                   </SelectTrigger>
                   <SelectContent>
@@ -120,7 +120,7 @@ export default function Watched() {
               <div className="ct-filter-field">
                 <label className="ct-filter-label">Country</label>
                 <Select value={filterCountry} onValueChange={setFilterCountry}>
-                  <SelectTrigger>
+                  <SelectTrigger aria-label="Filter by country">
                     <SelectValue placeholder="All Countries" />
                   </SelectTrigger>
                   <SelectContent>
@@ -146,6 +146,7 @@ export default function Watched() {
                     min={filterOptions.minYear}
                     max={filterYear[1]}
                     className="w-24"
+                    aria-label="Minimum year"
                   />
                   <span className="text-muted-foreground">-</span>
                   <Input
@@ -157,6 +158,7 @@ export default function Watched() {
                     min={filterYear[0]}
                     max={filterOptions.maxYear}
                     className="w-24"
+                    aria-label="Maximum year"
                   />
                 </div>
               </div>

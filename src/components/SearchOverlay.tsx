@@ -57,8 +57,15 @@ export default function SearchOverlay() {
   }, []);
 
   useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 0);
-    else setQuery("");
+    let id: ReturnType<typeof setTimeout> | undefined;
+    if (open) {
+      id = setTimeout(() => inputRef.current?.focus(), 0);
+    } else {
+      setQuery("");
+    }
+    return () => {
+      if (id !== undefined) clearTimeout(id);
+    };
   }, [open]);
 
   useEffect(() => {

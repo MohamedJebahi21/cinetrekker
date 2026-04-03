@@ -888,7 +888,7 @@ export default function Details() {
         </Link>
       </div>
 
-      <div className="page-container -mt-32 md:-mt-48 relative z-10">
+      <div className="page-container relative z-10 -mt-32 pb-24 md:-mt-48 md:pb-0">
         <div className="flex flex-col md:flex-row gap-8">
           <div className="flex-shrink-0 mx-auto md:mx-0">
             {details.poster_path ? (

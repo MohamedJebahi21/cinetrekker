@@ -101,7 +101,16 @@ export default function DecadeExplorer() {
               }
               className="cursor-pointer text-base py-2 px-4 hover:bg-primary/10 transition-colors"
               style={{ minWidth: "44px", minHeight: "44px" }} // Ensure 44px hit area
+              role="button"
+              tabIndex={0}
+              aria-pressed={selectedDecade.value === decade.value}
               onClick={() => setSelectedDecade(decade)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setSelectedDecade(decade);
+                }
+              }}
             >
               {decade.label}
             </Badge>
