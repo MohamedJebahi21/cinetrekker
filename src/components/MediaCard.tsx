@@ -273,7 +273,7 @@ export const MediaCard = React.memo(function MediaCard({
     <>
       <Link
         to={buildMediaPath(mediaType, media.id, title)}
-        className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-white/5 shadow-card transition-all duration-300 glass-card-hover hover:border-primary/20 hover:scale-[1.03] hover:-translate-y-1 focus-ring"
+        className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-white/5 shadow-card transition-all duration-300 glass-card-hover hover:border-primary/20 hover:scale-[1.03] hover:-translate-y-1 active:scale-[1.01] active:border-primary/30 focus-ring focus-visible:border-primary/35"
         aria-label={`${title} - open details`}
         tabIndex={0}
       >
@@ -289,7 +289,7 @@ export const MediaCard = React.memo(function MediaCard({
                 type="button"
                 variant={selected ? "default" : "secondary"}
                 size="sm"
-                className="h-8 rounded-full px-2.5 text-xs shadow-lg"
+                className="min-h-[44px] min-w-[44px] rounded-full px-3 text-xs shadow-lg"
                 onClick={(event) => void handleToggleSelect(event)}
                 aria-pressed={selected}
                 aria-label={selected ? "Deselect title" : "Select title"}

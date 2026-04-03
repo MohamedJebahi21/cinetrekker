@@ -43,7 +43,7 @@ function TrendingSectionSkeleton() {
         {Array.from({ length: 6 }).map((_, index) => (
           <div
             key={index}
-            className="min-w-[132px] sm:min-w-[180px] md:min-w-[200px] lg:min-w-[220px] xl:min-w-[240px]"
+            className="min-w-[calc(50vw-1rem)] sm:min-w-[180px] md:min-w-[200px] lg:min-w-[220px] xl:min-w-[240px]"
           >
             <MediaCardSkeleton
               delay={index * 70}
@@ -63,7 +63,7 @@ function TrendingSectionSkeleton() {
 
 function AuthHomeSkeleton() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       <section className="ct-panel min-h-[460px] p-5 md:min-h-[520px] md:p-6">
         <div className="mb-5 space-y-2">
           <div className="h-7 w-56 rounded-md skeleton-shimmer" />
@@ -230,7 +230,7 @@ export default function Index() {
                   </Button>
                 </section>
               ) : (
-                <div className="space-y-8">
+                <div className="space-y-6 md:space-y-8">
                   <Suspense fallback={<TrendingSectionSkeleton />}>
                     <BecauseYouLiked />
                   </Suspense>

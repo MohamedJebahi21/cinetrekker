@@ -1,4 +1,12 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
@@ -165,7 +173,7 @@ export function UnifiedNav() {
     };
   }, [isMenuOpen, isThemeMenuOpen]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setIsMenuOpen(false);
     setIsThemeMenuOpen(false);
     setIsMobileSheetOpen(false);
@@ -314,9 +322,9 @@ export function UnifiedNav() {
           </button>
         </div>
 
-        {/* Mobile controls - hidden if bottom nav is active */}
+        {/* Mobile controls */}
         <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
-          <div className="hidden items-center gap-1 sm:hidden md:hidden lg:hidden">
+          <div className="flex items-center gap-1 md:hidden">
             <button
               type="button"
               onClick={openSearch}
@@ -377,17 +385,17 @@ export function UnifiedNav() {
               const closeButton = event.currentTarget.querySelector<HTMLButtonElement>("[data-sheet-close]");
               closeButton?.focus();
             }}
-            className="safe-area-insets hidden w-full max-w-none border-l-0 bg-background px-0 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(1rem,env(safe-area-inset-top,0px))] md:hidden overflow-y-auto smooth-scroll sm:w-3/4 sm:max-w-sm sm:border-l"
+            className="safe-area-insets w-full max-w-none overflow-y-auto smooth-scroll border-l-0 bg-background px-0 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(1rem,env(safe-area-inset-top,0px))] md:hidden sm:w-3/4 sm:max-w-sm sm:border-l"
           >
             <div className="w-full px-4 sm:px-5">
-              <SheetHeader className="rounded-2xl border border-border/60 bg-card/60 px-4 py-4 text-left shadow-[0_8px_20px_rgba(0,0,0,0.08)]">
-                <SheetTitle className="text-xl leading-tight">{t("common.appName", "CineTrekker")}</SheetTitle>
-                <div className="text-sm text-muted-foreground">
-                  Explore, track, and manage your lists
-                </div>
-              </SheetHeader>
+                <SheetHeader className="rounded-2xl border border-border/60 bg-card/60 px-4 py-4 text-left shadow-[0_8px_20px_rgba(0,0,0,0.08)]">
+                  <SheetTitle className="text-xl leading-tight">{t("common.appName", "CineTrekker")}</SheetTitle>
+                  <div className="text-sm text-muted-foreground">
+                    Explore, track, and manage your lists
+                  </div>
+                </SheetHeader>
 
-              <div className="mt-5 space-y-5 pb-2">
+                <div className="mt-5 space-y-5 pb-2">
                 <Link
                   to={user ? "/profile" : "/login"}
                   onClick={() => setIsMobileSheetOpen(false)}
@@ -482,13 +490,13 @@ export function UnifiedNav() {
                     </Link>
                   )}
                 </div>
+                </div>
               </div>
-            </div>
           </SheetContent>
         </Sheet>
       </div>
 
-      {/* ── Desktop Mega Menu (hidden on mobile when BottomNav is active) ── */}
+      {/* ── Desktop Mega Menu ── */}
       <div
         ref={desktopMenuRef}
         className={cn(

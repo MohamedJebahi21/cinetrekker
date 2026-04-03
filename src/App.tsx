@@ -35,11 +35,6 @@ import { siteMetadata } from "@/lib/metadata";
 import { applyAccessibilityPreferencesToRoot } from "@/lib/accessibility-preferences";
 import Index from "./pages/Index";
 const KeyboardShortcuts = lazy(() => import("@/components/KeyboardShortcuts"));
-const BottomNav = lazy(() =>
-  import("@/components/BottomNav").then((mod) => ({
-    default: mod.BottomNav,
-  })),
-);
 const GlobalLoader = lazy(() =>
   import("@/components/GlobalLoader").then((mod) => ({
     default: mod.GlobalLoader,
@@ -461,7 +456,6 @@ const App = () => {
   const navigate = useNavigate();
   const [enableEnhancements, setEnableEnhancements] = useState(false);
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
-  const [shouldRenderBottomNav, setShouldRenderBottomNav] = useState(false);
   const refreshableQueryKeys = new Set([
     "details",
     "trending",
@@ -538,20 +532,6 @@ const App = () => {
       if (timeoutId !== null) {
         globalThis.clearTimeout(timeoutId);
       }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const mediaQuery = window.matchMedia("(max-width: 767px)");
-    const syncBottomNav = () => setShouldRenderBottomNav(mediaQuery.matches);
-
-    syncBottomNav();
-    mediaQuery.addEventListener("change", syncBottomNav);
-
-    return () => {
-      mediaQuery.removeEventListener("change", syncBottomNav);
     };
   }, []);
 
@@ -636,11 +616,6 @@ const App = () => {
                       <AnimatedRoutes />
                     </ErrorBoundary>
                   </main>
-                  {shouldRenderBottomNav && (
-                    <Suspense fallback={null}>
-                      <BottomNav />
-                    </Suspense>
-                  )}
                   <Footer />
                 </div>
 

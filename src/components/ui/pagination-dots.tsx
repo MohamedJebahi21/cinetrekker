@@ -8,7 +8,7 @@ const PaginationDots = React.forwardRef<HTMLDivElement, PaginationDotsProps>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("mt-4 flex items-center justify-center gap-2.5", className)}
+      className={cn("mt-5 flex items-center justify-center gap-2.5 pb-1", className)}
       {...props}
     />
   ),
@@ -32,7 +32,7 @@ function PaginationDotButton({
     <button
       type={type}
       className={cn(
-        "group inline-flex h-9 w-9 items-center justify-center rounded-full text-foreground/70 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+        "group inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-foreground/70 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
         className,
       )}
       {...props}
@@ -58,7 +58,7 @@ function PaginationDotStatic({ className, active = false, ...props }: Pagination
   return (
     <span
       className={cn(
-        "inline-flex h-9 w-9 items-center justify-center rounded-full",
+        "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full",
         className,
       )}
       {...props}

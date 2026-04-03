@@ -2119,7 +2119,7 @@ export default function Profile() {
 
 
                     {favoriteMovies.length > 0 ? (
-                      <div className="relative group/scroll">
+                      <div className="group/scroll relative pb-8">
                         <button
                           onClick={() =>
                             scrollFavoriteCarousel(
@@ -2129,7 +2129,7 @@ export default function Profile() {
                           }
                           disabled={!favoriteMoviesCarouselState.canScrollLeft}
                           type="button"
-                          className="absolute -left-4 md:-left-6 top-1/3 z-10 hidden h-10 w-10 items-center justify-center rounded-full border border-border bg-background/90 shadow-lg backdrop-blur-sm transition-all duration-200 group-hover/scroll:opacity-100 disabled:cursor-not-allowed disabled:opacity-50 md:flex"
+                          className="absolute left-2 top-[40%] z-10 inline-flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 shadow-lg backdrop-blur-sm transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 md:left-3 md:opacity-0 md:group-hover/scroll:opacity-100"
                           aria-label="Previous favorite movies"
                         >
                           <ChevronLeft className="h-5 w-5" />
@@ -2143,7 +2143,7 @@ export default function Profile() {
                           }
                           disabled={!favoriteMoviesCarouselState.canScrollRight}
                           type="button"
-                          className="absolute -right-4 md:-right-6 top-1/3 z-10 hidden h-10 w-10 items-center justify-center rounded-full border border-border bg-background/90 shadow-lg backdrop-blur-sm transition-all duration-200 group-hover/scroll:opacity-100 disabled:cursor-not-allowed disabled:opacity-50 md:flex"
+                          className="absolute right-2 top-[40%] z-10 inline-flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 shadow-lg backdrop-blur-sm transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 md:right-3 md:opacity-0 md:group-hover/scroll:opacity-100"
                           aria-label="Next favorite movies"
                         >
                           <ChevronRight className="h-5 w-5" />
@@ -2151,12 +2151,12 @@ export default function Profile() {
 
                         <div
                           ref={favoriteMoviesCarouselRef}
-                          className="hide-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 scroll-smooth overscroll-contain touch-pan-x"
+                          className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto px-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pb-2 scroll-smooth overscroll-contain touch-pan-x"
                         >
                           {favoriteMovies.map(({ item, preview }) => (
                             <div
                               key={`favorite-${item.mediaType}-${item.mediaId}`}
-                              className="w-[132px] flex-shrink-0 snap-start sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
+                              className="w-[calc(50vw-1rem)] min-w-[calc(50vw-1rem)] flex-shrink-0 snap-start sm:w-[180px] sm:min-w-[180px] md:w-[200px] md:min-w-[200px] lg:w-[220px] lg:min-w-[220px] xl:w-[240px] xl:min-w-[240px]"
                             >
                               <motion.div
                                 layout
@@ -2168,7 +2168,7 @@ export default function Profile() {
                                 <div className="absolute right-2 top-2 z-20 opacity-100 transition-all duration-300 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
                                   <button
                                     type="button"
-                                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background/90 text-foreground/75 shadow-sm backdrop-blur-md transition-all hover:scale-105 hover:bg-red-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-border bg-background/90 text-foreground/75 shadow-sm backdrop-blur-md transition-all hover:scale-105 hover:bg-red-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                                     onClick={() =>
                                       unpinFavorite(
                                         item.mediaId,
@@ -2206,7 +2206,7 @@ export default function Profile() {
                             </div>
                           ))}
 
-                          <div className="w-[132px] flex-shrink-0 snap-start sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]">
+                          <div className="w-[calc(50vw-1rem)] min-w-[calc(50vw-1rem)] flex-shrink-0 snap-start sm:w-[180px] sm:min-w-[180px] md:w-[200px] md:min-w-[200px] lg:w-[220px] lg:min-w-[220px] xl:w-[240px] xl:min-w-[240px]">
                             <button
                               type="button"
                               className="group flex aspect-[2/3] w-full flex-col items-center justify-center gap-3 rounded-[1.4rem] border-2 border-dashed border-border/60 bg-card/50 text-muted-foreground transition-all duration-300 hover:border-primary/45 hover:bg-primary/6 hover:text-primary"
@@ -2294,7 +2294,7 @@ export default function Profile() {
                     ) : null}
 
                     {favoriteSeries.length > 0 ? (
-                      <div className="relative group/scroll">
+                      <div className="group/scroll relative pb-8">
                         <button
                           onClick={() =>
                             scrollFavoriteCarousel(
@@ -2304,7 +2304,7 @@ export default function Profile() {
                           }
                           disabled={!favoriteSeriesCarouselState.canScrollLeft}
                           type="button"
-                          className="absolute -left-4 md:-left-6 top-1/3 z-10 hidden h-10 w-10 items-center justify-center rounded-full border border-border bg-background/90 shadow-lg backdrop-blur-sm transition-all duration-200 group-hover/scroll:opacity-100 disabled:cursor-not-allowed disabled:opacity-50 md:flex"
+                          className="absolute left-2 top-[40%] z-10 inline-flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 shadow-lg backdrop-blur-sm transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 md:left-3 md:opacity-0 md:group-hover/scroll:opacity-100"
                           aria-label="Previous favorite series"
                         >
                           <ChevronLeft className="h-5 w-5" />
@@ -2318,7 +2318,7 @@ export default function Profile() {
                           }
                           disabled={!favoriteSeriesCarouselState.canScrollRight}
                           type="button"
-                          className="absolute -right-4 md:-right-6 top-1/3 z-10 hidden h-10 w-10 items-center justify-center rounded-full border border-border bg-background/90 shadow-lg backdrop-blur-sm transition-all duration-200 group-hover/scroll:opacity-100 disabled:cursor-not-allowed disabled:opacity-50 md:flex"
+                          className="absolute right-2 top-[40%] z-10 inline-flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 shadow-lg backdrop-blur-sm transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 md:right-3 md:opacity-0 md:group-hover/scroll:opacity-100"
                           aria-label="Next favorite series"
                         >
                           <ChevronRight className="h-5 w-5" />
@@ -2326,12 +2326,12 @@ export default function Profile() {
 
                         <div
                           ref={favoriteSeriesCarouselRef}
-                          className="hide-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 scroll-smooth overscroll-contain touch-pan-x"
+                          className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto px-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pb-2 scroll-smooth overscroll-contain touch-pan-x"
                         >
                           {favoriteSeries.map(({ item, preview }) => (
                             <div
                               key={`favorite-series-${item.mediaType}-${item.mediaId}`}
-                              className="w-[132px] flex-shrink-0 snap-start sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
+                              className="w-[calc(50vw-1rem)] min-w-[calc(50vw-1rem)] flex-shrink-0 snap-start sm:w-[180px] sm:min-w-[180px] md:w-[200px] md:min-w-[200px] lg:w-[220px] lg:min-w-[220px] xl:w-[240px] xl:min-w-[240px]"
                             >
                               <motion.div
                                 layout
@@ -2343,7 +2343,7 @@ export default function Profile() {
                                 <div className="absolute right-2 top-2 z-20 opacity-100 transition-all duration-300 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
                                   <button
                                     type="button"
-                                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background/90 text-foreground/75 shadow-sm backdrop-blur-md transition-all hover:scale-105 hover:bg-red-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-border bg-background/90 text-foreground/75 shadow-sm backdrop-blur-md transition-all hover:scale-105 hover:bg-red-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                                     onClick={() =>
                                       unpinFavorite(
                                         item.mediaId,

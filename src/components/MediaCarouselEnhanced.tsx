@@ -125,7 +125,7 @@ export function MediaCarouselEnhanced({
           </div>
         </div>
       ) : items.length > 0 ? (
-        <div className="relative group/scroll">
+        <div className="group/scroll relative pb-8">
           {/* Manual scroll buttons for desktop - visible on hover or always for mobile */}
           {showManualNav && (
             <>
@@ -133,7 +133,7 @@ export function MediaCarouselEnhanced({
                 onClick={() => handleManualScroll('left')}
                 disabled={!canScroll.left}
                 type="button"
-                className="absolute -left-4 md:-left-6 top-1/3 z-10 hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 group-hover/scroll:opacity-100"
+                className="absolute left-2 top-[40%] z-10 inline-flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 backdrop-blur-sm transition-all duration-200 hover:bg-background disabled:cursor-not-allowed disabled:opacity-50 md:left-3 md:opacity-0 md:group-hover/scroll:opacity-100"
                 aria-label={t('common.previous') ? t('common.previous').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase()) : 'Previous'}
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -142,7 +142,7 @@ export function MediaCarouselEnhanced({
                 onClick={() => handleManualScroll('right')}
                 disabled={!canScroll.right}
                 type="button"
-                className="absolute -right-4 md:-right-6 top-1/3 z-10 hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 group-hover/scroll:opacity-100"
+                className="absolute right-2 top-[40%] z-10 inline-flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 backdrop-blur-sm transition-all duration-200 hover:bg-background disabled:cursor-not-allowed disabled:opacity-50 md:right-3 md:opacity-0 md:group-hover/scroll:opacity-100"
                 aria-label={t('common.next') ? t('common.next').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase()) : 'Next'}
               >
                 <ChevronRight className="w-5 h-5" />
