@@ -26,7 +26,6 @@ export default function Person() {
       <div className="min-h-screen pt-16">
         <div className="page-container pb-24 pt-6 md:pb-0">
           <div className="mb-12 flex flex-col gap-8 md:flex-row">
-            </div>
             <div className="flex-1 space-y-4">
               <div className="h-8 w-3/4 rounded skeleton-shimmer" />
               <div className="h-4 w-1/2 rounded skeleton-shimmer" />

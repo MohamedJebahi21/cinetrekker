@@ -85,7 +85,7 @@ export function FilmingLocationsMap({ items = [], points: customPoints }: Filmin
         return;
       }
 
-      window.setTimeout(() => {
+      setTimeout(() => {
         void initMap();
       }, 120);
     };
