@@ -54,7 +54,10 @@ export function MobileBottomNav() {
                   strokeWidth={isActive ? 2.5 : 2}
                 />
                 {isWatchlist && watchlistCount > 0 && (
-                  <span className="absolute -right-2 -top-1.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-primary px-0.5 text-[0.5625rem] font-bold leading-none text-primary-foreground">
+                  <span
+                    className="absolute -right-2 -top-1.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-primary px-0.5 text-[0.5625rem] font-bold leading-none text-primary-foreground"
+                    aria-label={`${watchlistCount > 99 ? "99+" : watchlistCount} watchlist items`}
+                  >
                     {watchlistCount > 99 ? "99+" : watchlistCount}
                   </span>
                 )}
