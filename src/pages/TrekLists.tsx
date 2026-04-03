@@ -128,7 +128,7 @@ export default function TrekLists() {
 
   if (!user) {
     return (
-      <div className="page-container pt-24 pb-24">
+      <div className="page-container pt-24 pb-24 md:pb-0">
         <h1 className="heading-credits text-5xl text-white">Trek Lists</h1>
         <p className="editorial-copy mt-4 max-w-xl text-white/70">
           Sign in to build custom watchlist-plus-itinerary experiences like "My London Film Tour" with mapped filming stops.
