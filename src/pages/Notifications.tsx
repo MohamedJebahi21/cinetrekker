@@ -87,6 +87,7 @@ export default function Notifications() {
                 )}
               >
                 <button
+                  type="button"
                   className="flex min-w-0 flex-1 items-start gap-3 text-left"
                   onClick={() => handleNotificationClick(n.id, n.movie_id, n.is_read)}
                 >

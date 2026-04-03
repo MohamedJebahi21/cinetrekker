@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Media } from "@/types/media";
 import { getFilmingMapPoints } from "@/lib/filmingLocations";
+import { stripHTML } from "@/lib/sanitize";
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 type MapboxModule = typeof import("mapbox-gl");
@@ -138,7 +139,7 @@ export function FilmingLocationsMap({ items = [], points: customPoints }: Filmin
       if (!mapbox) return;
 
       const popup = new mapbox.default.Popup({ offset: 18 }).setHTML(
-        `<div class="ct-map-popup"><strong>${point.title}</strong><p>${point.label}</p><small>${point.scene}</small></div>`,
+        `<div class="ct-map-popup"><strong>${stripHTML(point.title)}</strong><p>${stripHTML(point.label)}</p><small>${stripHTML(point.scene)}</small></div>`,
       );
 
       const marker = new mapbox.default.Marker({

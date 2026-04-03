@@ -27,7 +27,6 @@ export function OnboardingModal() {
           {t('onboarding.description')}
         </DialogDescription>
         <div className="space-y-4">
-          <p>{t('onboarding.description')}</p>
           <ul className="list-disc pl-6 text-sm text-muted-foreground">
             <li>{t('onboarding.feature1')}</li>
             <li>{t('onboarding.feature2')}</li>

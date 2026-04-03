@@ -74,7 +74,16 @@ export default function GenreBrowser() {
               key={genre.id}
               variant={selectedGenre === genre.id.toString() ? 'default' : 'outline'}
               className="cursor-pointer text-sm py-2 px-4 hover:bg-primary/10 transition-colors"
+              role="button"
+              tabIndex={0}
+              aria-pressed={selectedGenre === genre.id.toString()}
               onClick={() => setSearchParams({ type: mediaType, genre: genre.id.toString() })}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setSearchParams({ type: mediaType, genre: genre.id.toString() });
+                }
+              }}
             >
               {genre.name}
             </Badge>
