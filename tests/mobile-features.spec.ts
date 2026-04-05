@@ -87,39 +87,12 @@ test.describe("Mobile navigation", () => {
     await expect(page).toHaveURL(/\/login$/);
   });
 
-  test("top header search button opens overlay", async ({ page }) => {
-    const topSearchButton = page
-      .locator("header")
-      .getByRole("button", { name: /^search$/i })
-      .first();
+  test("slash shortcuts do not open a second search dialog", async ({ page }) => {
+    await page.keyboard.press("/");
+    await expect(page.getByRole("dialog", { name: /search/i })).toHaveCount(0);
 
-    await expect(topSearchButton).toBeVisible();
-    await topSearchButton.click();
-
-    const searchDialog = page.getByRole("dialog", { name: /search/i });
-    await expect(searchDialog).toBeVisible();
-    await expect(
-      searchDialog.locator('input[type="text"][autocomplete="off"]').first(),
-    ).toBeVisible();
-  });
-
-  test("typing stranger things in mobile overlay does not auto-redirect", async ({ page }) => {
-    const topSearchButton = page
-      .locator("header")
-      .getByRole("button", { name: /^search$/i })
-      .first();
-
-    await expect(topSearchButton).toBeVisible();
-    await topSearchButton.click();
-
-    const searchDialog = page.getByRole("dialog", { name: /search/i });
-    const searchInput = searchDialog
-      .locator('input[type="text"][autocomplete="off"]')
-      .first();
-
-    await expect(searchDialog).toBeVisible();
-    await searchInput.fill("stranger things");
-    await expect(searchInput).toHaveValue("stranger things");
+    await page.keyboard.press("Control+/");
+    await expect(page.getByRole("dialog", { name: /search/i })).toHaveCount(0);
     await expect(page).toHaveURL(/\/$/);
   });
 });

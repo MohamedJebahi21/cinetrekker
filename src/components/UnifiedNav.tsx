@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import Menu from "lucide-react/dist/esm/icons/menu";
@@ -111,6 +111,7 @@ const THEME_OPTIONS = [
 export function UnifiedNav() {
   const { t, i18n } = useTranslation();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const isSearchPage = pathname.startsWith("/search");
   const { user, signOut, loading } = useAuth();
   const { theme, setTheme } = useTheme();
@@ -217,7 +218,7 @@ export function UnifiedNav() {
     };
   }, [isMobileSheetOpen]);
 
-  const openSearch = () => window.dispatchEvent(new CustomEvent("open-search-overlay"));
+  const openSearch = () => navigate("/search");
 
   const renderProfileAvatar = () =>
     profileImageUrl ? (

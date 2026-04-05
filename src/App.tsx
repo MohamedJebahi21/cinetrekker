@@ -82,7 +82,6 @@ const Achievements = lazy(() => import("./pages/Achievements"));
 const PrintWatchlist = lazy(() => import("./pages/PrintWatchlist"));
 const AwardWinners = lazy(() => import("./pages/AwardWinners"));
 const YearInReview = lazy(() => import("./pages/YearInReview"));
-const SearchOverlay = lazy(() => import("@/components/SearchOverlay"));
 const isVercelHost =
   typeof window !== "undefined" &&
   /(?:^|\.)vercel\.app$/i.test(window.location.hostname);
@@ -622,9 +621,6 @@ const App = () => {
                 )}
                 <div className="ct-page-shell flex min-h-[100dvh] flex-col">
                   <UnifiedNav />
-                  <Suspense fallback={null}>
-                    <SearchOverlay />
-                  </Suspense>
                   <ScrollToTop />
                   <main
                     id="main"

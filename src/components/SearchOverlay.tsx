@@ -29,29 +29,11 @@ export default function SearchOverlay() {
     const onAppEscape = () => setOpen(false);
     window.addEventListener("app:escape", onAppEscape as EventListener);
 
-    const onKey = (e: KeyboardEvent) => {
-      // Ctrl+/ or Meta+/
-      if ((e.ctrlKey || e.metaKey) && e.key === "/") {
-        e.preventDefault();
-        setOpen((v) => !v);
-      }
-      // "/" to open search when not focused on input/textarea/select
-      if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        const tag = (document.activeElement?.tagName || "").toLowerCase();
-        if (!["input", "textarea", "select"].includes(tag)) {
-          e.preventDefault();
-          setOpen(true);
-        }
-      }
-    };
-    window.addEventListener("keydown", onKey);
-
     return () => {
       window.removeEventListener(
         "open-search-overlay",
         onOpen as EventListener,
       );
-      window.removeEventListener("keydown", onKey);
       window.removeEventListener("app:escape", onAppEscape as EventListener);
     };
   }, []);

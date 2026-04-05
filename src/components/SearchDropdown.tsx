@@ -92,13 +92,9 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
     setRecentSearches(getSearchHistory().slice(0, 6));
   }, []);
 
-  // Keyboard shortcut: "/" to focus search
+  // Global keyboard handling for quick close
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "/" && document.activeElement !== inputRef.current) {
-        e.preventDefault();
-        inputRef.current?.focus();
-      }
       if (e.key === "Escape") {
         setIsOpen(false);
         inputRef.current?.blur();
