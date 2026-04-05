@@ -18,7 +18,8 @@
     "test:security": "node --test tests/security-api.test.mjs",
     "audit:desktop": "node ./scripts/run-lighthouse-desktop.mjs",
     "audit:desktop:full": "npm run build && npm run audit:desktop",
-    "test:e2e:desktop": "playwright test --project=chromium --project=firefox --project=webkit"
+    "test:e2e:desktop": "playwright test --project=chromium --project=firefox --project=webkit",
+    "test:e2e:mobile:search-regressions": "playwright test tests/mobile-features.spec.ts --project=mobile-safari --grep \"top header search button opens overlay|typing stranger things in mobile overlay does not auto-redirect\""
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",

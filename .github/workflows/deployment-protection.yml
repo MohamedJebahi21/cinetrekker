@@ -48,6 +48,12 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Install Playwright WebKit
+        run: npx playwright install --with-deps webkit
+
+      - name: Run mobile search regression tests
+        run: npm run test:e2e:mobile:search-regressions
+
   dependency-check:
     name: Runtime Dependency Audit
     runs-on: ubuntu-latest
