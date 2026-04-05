@@ -71,6 +71,23 @@ export default function SearchOverlay() {
   useEffect(() => {
     if (!open) return;
 
+    const input = inputRef.current;
+    if (!input) return;
+
+    const handleBeforeInput = (event: Event) => {
+      const nativeEvent = event as InputEvent;
+      if (nativeEvent.inputType === "insertReplacementText") {
+        event.preventDefault();
+      }
+    };
+
+    input.addEventListener("beforeinput", handleBeforeInput);
+    return () => input.removeEventListener("beforeinput", handleBeforeInput);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
     const handleTab = (e: KeyboardEvent) => {
       if (e.key !== "Tab") return;
 
@@ -152,6 +169,10 @@ export default function SearchOverlay() {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
                   placeholder={t(
                     "search.placeholder",
                     "Search movies, TV shows, and more",

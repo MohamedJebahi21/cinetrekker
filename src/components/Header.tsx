@@ -78,9 +78,11 @@ export function Header() {
         if (!stored) return;
         const parsed = JSON.parse(stored) as {
           photo?: string;
+          profilePhoto?: string;
+          avatar_url?: string;
           displayName?: string;
         };
-        setProfilePhoto(parsed.photo || null);
+        setProfilePhoto(parsed.photo || parsed.profilePhoto || parsed.avatar_url || null);
         setDisplayName(parsed.displayName || "");
       } catch {
         setProfilePhoto(null);

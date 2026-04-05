@@ -2,6 +2,7 @@
 import SEO from "@/components/SEO";
 import { Shield, Database, Lock, Share2, Mail } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { safeT } from "@/lib/i18n";
 
 export default function Privacy() {
   const { t, i18n } = useTranslation();
@@ -15,8 +16,12 @@ export default function Privacy() {
     <div className="ct-page-shell min-h-screen">
       <div className="page-container pt-20 pb-24 md:pb-10">
       <SEO
-        title={t("privacy.seoTitle", "Privacy Policy - CineTrekker")}
-        description={t("privacy.seoDescription", "CineTrekker privacy policy and data handling practices")}
+        title={safeT(t, "privacy.seoTitle", "Privacy Policy")}
+        description={safeT(
+          t,
+          "privacy.seoDescription",
+          "CineTrekker privacy policy and data handling practices",
+        )}
         canonical="https://cinetrekker.vercel.app/privacy"
       />
       <div className="mx-auto max-w-4xl py-10 space-y-6">

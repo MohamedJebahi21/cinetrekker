@@ -10,6 +10,7 @@ import { getImageUrl, getMediaTitle } from "@/services/tmdb";
 import { Image } from "@/components/ui/Image";
 import { useWatchedEpisodes } from "@/hooks/useFollowedShows";
 import { useAuth } from "@/contexts/AuthContext";
+import { safeT } from "@/lib/i18n";
 import { PaginationDotButton, PaginationDots, PaginationDotStatic } from "@/components/ui/pagination-dots";
 
 function ContinueWatchingSkeleton() {
@@ -115,9 +116,13 @@ export function ContinueWatching() {
   if (error instanceof Error) {
     return (
       <section className="ct-panel p-6 text-center">
-        <h2 className="section-title mb-1">{t("home.continueWatching", "Continue Watching")}</h2>
+        <h2 className="section-title mb-1">{safeT(t, "home.continueWatching", "Continue Watching")}</h2>
         <p className="text-sm text-muted-foreground">
-          {t("home.continueWatchingLoadError", "We couldn't load your episode progress right now.")}
+          {safeT(
+            t,
+            "home.continueWatchingLoadError",
+            "We couldn't load your episode progress right now.",
+          )}
         </p>
         <Button
           type="button"
@@ -141,10 +146,11 @@ export function ContinueWatching() {
           <div>
             <div className="flex items-center gap-2">
               <Play className="h-5 w-5 text-primary" />
-              <h2 className="section-title mb-0">{t("home.continueWatching", "Continue Watching")}</h2>
+              <h2 className="section-title mb-0">{safeT(t, "home.continueWatching", "Continue Watching")}</h2>
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              {t(
+              {safeT(
+                t,
                 "home.continueWatchingSubtitle",
                 "Pick up the next released episode without hunting through your library.",
               )}
@@ -182,10 +188,11 @@ export function ContinueWatching() {
         <div>
           <div className="flex items-center gap-2">
             <Play className="h-5 w-5 text-primary" />
-            <h2 className="section-title mb-0">{t("home.continueWatching", "Continue Watching")}</h2>
+            <h2 className="section-title mb-0">{safeT(t, "home.continueWatching", "Continue Watching")}</h2>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            {t(
+            {safeT(
+              t,
               "home.continueWatchingSubtitle",
               "Pick up the next released episode without hunting through your library.",
             )}

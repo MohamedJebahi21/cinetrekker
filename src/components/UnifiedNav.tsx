@@ -35,6 +35,7 @@ import { Image } from "@/components/ui/Image";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { profileService } from "@/services/profile";
+import { UserProfileDropdown } from "@/components/UserProfileDropdown";
 import {
   Sheet,
   SheetContent,
@@ -131,9 +132,14 @@ export function UnifiedNav() {
   });
 
   const profileImageUrl = useMemo(() => {
+    if (profile?.avatar_url) return profile.avatar_url;
     if (profile?.profile_photo) return profile.profile_photo;
     const metadata = user?.user_metadata as Record<string, unknown> | undefined;
-    const candidates = [metadata?.avatar_url, metadata?.picture, metadata?.photo_url];
+    const candidates = [
+      metadata?.avatar_url,
+      metadata?.picture,
+      metadata?.photo_url,
+    ];
     return candidates.find((v): v is string => typeof v === "string" && v.trim().length > 0) ?? null;
   }, [profile, user]);
 
@@ -215,17 +221,19 @@ export function UnifiedNav() {
 
   const renderProfileAvatar = () =>
     profileImageUrl ? (
-      <Image
-        src={profileImageUrl}
-        alt={t("nav.profile", "Profile")}
-        width={32}
-        height={32}
-        className="h-8 w-8 rounded-full object-cover"
-        loading="lazy"
-        referrerPolicy="no-referrer"
-      />
+      <span className="block h-8 w-8 overflow-hidden rounded-full">
+        <Image
+          src={profileImageUrl}
+          alt={t("nav.profile", "Profile")}
+          width={32}
+          height={32}
+          className="h-full w-full object-cover object-center"
+          loading="lazy"
+          referrerPolicy="no-referrer"
+        />
+      </span>
     ) : (
-      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+      <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-primary text-sm font-semibold text-primary-foreground">
         {profileInitial}
       </span>
     );
@@ -274,16 +282,10 @@ export function UnifiedNav() {
           </Suspense>
 
           {user ? (
-            <Link
-              to="/profile"
-              className={cn(
-                "inline-flex min-h-[48px] min-w-[48px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent",
-                pathname.startsWith("/profile") && "text-primary",
-              )}
-              aria-label={t("nav.profile", "Profile")}
-            >
-              {renderProfileAvatar()}
-            </Link>
+            <UserProfileDropdown
+              profilePhoto={profileImageUrl}
+              displayName={profile?.display_name ?? undefined}
+            />
           ) : (
             <Link
               to="/login"

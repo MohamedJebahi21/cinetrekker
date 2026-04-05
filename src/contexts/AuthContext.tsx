@@ -171,6 +171,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         throw error;
       }
+
+      const signedOutUserId = session?.user?.id;
+      if (signedOutUserId && typeof window !== "undefined") {
+        window.localStorage.removeItem(`cinetrekker_profile_${signedOutUserId}`);
+      }
+
+      setSession(null);
+      setUser(null);
+      window.dispatchEvent(new Event("cinetrekker:sign-out"));
     } catch (error) {
       logger.warn("Sign out failed.", toAuthError(error));
     }

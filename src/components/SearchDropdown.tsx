@@ -67,6 +67,11 @@ interface SearchDropdownProps {
 }
 
 const PENDING_SEARCH_QUERY_KEY = "cinetrekker_pending_search_query";
+const MIN_SEARCH_LENGTH = 2;
+
+function normalizeSearchQuery(value: string): string {
+  return value.normalize("NFKC").trim().toLowerCase();
+}
 
 export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
   const { t, i18n } = useTranslation();
@@ -78,6 +83,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [recentSearches, setRecentSearches] = useState<SearchHistoryItem[]>([]);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const language = i18n.language;
@@ -106,6 +112,21 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
     refreshRecentSearches();
   }, [refreshRecentSearches]);
 
+  useEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+
+    const handleBeforeInput = (event: Event) => {
+      const nativeEvent = event as InputEvent;
+      if (nativeEvent.inputType === "insertReplacementText") {
+        event.preventDefault();
+      }
+    };
+
+    input.addEventListener("beforeinput", handleBeforeInput);
+    return () => input.removeEventListener("beforeinput", handleBeforeInput);
+  }, []);
+
   // Close dropdown on click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -127,7 +148,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
   } = useQuery({
     queryKey: ["search-dropdown", debouncedQuery, language, includeAdult],
     queryFn: async () => {
-      const q = debouncedQuery.trim();
+      const q = normalizeSearchQuery(debouncedQuery);
       if (!q) return [] as SearchResult[];
 
       const [movieResponse, tvResponse, peopleResponse] = await Promise.all([
@@ -185,7 +206,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
 
       return deduped.slice(0, 8);
     },
-    enabled: debouncedQuery.trim().length >= 1,
+    enabled: normalizeSearchQuery(debouncedQuery).length >= MIN_SEARCH_LENGTH,
     staleTime: 30000,
   });
 
@@ -200,9 +221,19 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
 
   const submitSearch = useCallback(
     (nextQuery: string) => {
-      const normalizedQuery = nextQuery.trim();
-      if (!normalizedQuery) return;
+      const normalizedQuery = normalizeSearchQuery(nextQuery);
+      if (normalizedQuery.length < MIN_SEARCH_LENGTH) {
+        setFeedbackMessage(
+          t(
+            "search.minLengthError",
+            "Type at least 2 characters to search.",
+          ),
+        );
+        setIsOpen(true);
+        return false;
+      }
 
+      setFeedbackMessage(null);
       addToSearchHistory(normalizedQuery);
       refreshRecentSearches();
       sessionStorage.setItem(PENDING_SEARCH_QUERY_KEY, normalizedQuery);
@@ -211,8 +242,9 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
       });
       setIsOpen(false);
       onNavigate?.();
+      return true;
     },
-    [navigate, onNavigate, refreshRecentSearches],
+    [navigate, onNavigate, refreshRecentSearches, t],
   );
 
   const getItemRoute = (item: SearchResult): string => {
@@ -222,6 +254,21 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+
+        if (selectedIndex >= 0 && results[selectedIndex]) {
+          addToSearchHistory(query.trim());
+          refreshRecentSearches();
+          navigate(getItemRoute(results[selectedIndex]));
+          setIsOpen(false);
+          setQuery("");
+          setFeedbackMessage(null);
+          onNavigate?.();
+        }
+        return;
+      }
+
       if (!isOpen || results.length === 0) return;
 
       switch (e.key) {
@@ -237,19 +284,6 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
             prev > 0 ? prev - 1 : results.length - 1,
           );
           break;
-        case "Enter":
-          e.preventDefault();
-          if (selectedIndex >= 0 && results[selectedIndex]) {
-            addToSearchHistory(query.trim());
-            refreshRecentSearches();
-            navigate(getItemRoute(results[selectedIndex]));
-            setIsOpen(false);
-            setQuery("");
-            onNavigate?.();
-          } else if (query.trim()) {
-            submitSearch(query);
-          }
-          break;
       }
     },
     [
@@ -260,13 +294,13 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
       navigate,
       onNavigate,
       refreshRecentSearches,
-      submitSearch,
     ],
   );
 
   const clearSearch = () => {
     setQuery("");
     setIsOpen(false);
+    setFeedbackMessage(null);
     inputRef.current?.focus();
   };
 
@@ -339,16 +373,21 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           ref={inputRef}
+          name="searchInput"
           type="text"
           inputMode="search"
           enterKeyHint="search"
           autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
           placeholder={t("search.placeholder")}
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
             setIsOpen(true);
             setSelectedIndex(-1);
+            setFeedbackMessage(null);
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
@@ -362,7 +401,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
 
         {/* Keyboard hint */}
         {!query && (
-          <kbd className="absolute right-10 top-1/2 -translate-y-1/2 hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border border-border/50 bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+          <kbd className="absolute right-10 top-1/2 -translate-y-1/2 hidden h-5 select-none items-center gap-1 rounded border border-border/50 bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
             /
           </kbd>
         )}
@@ -372,11 +411,17 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
           <button
             type="button"
             onClick={clearSearch}
-            className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors min-w-[44px] min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            className="absolute right-3 top-1/2 -translate-y-1/2 flex h-6 w-6 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-muted transition-colors hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             aria-label="Clear search"
           >
-            <X className="w-3 h-3" />
+            <X className="h-3 w-3" />
           </button>
+        )}
+
+        {feedbackMessage && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            {feedbackMessage}
+          </p>
         )}
       </div>
 
@@ -509,7 +554,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                 {/* View All Results */}
                 <button
                   type="button"
-                  onClick={() => submitSearch(query)}
+                  onClick={() => submitSearch(inputRef.current?.value ?? query)}
                   className="flex min-h-11 w-full items-center justify-between border-t border-border/50 px-4 py-3 text-left text-sm text-primary transition-colors hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
                 >
                   <span>

@@ -215,6 +215,10 @@
     "placeholder": "Search movies, TV shows, actors...",
     "searchResults": "Search Results",
     "resultsFor": "Results for \"{{query}}\"",
+    "errorTitle": "Search unavailable",
+    "loadError": "We couldn't load search results. Please try again.",
+    "backHome": "Back to home",
+    "backTrending": "Browse trending",
     "filterHint": "Use filters below to narrow your results",
     "filters": "Filters",
     "active": "active",
@@ -740,6 +744,8 @@
     "season": "Season {{number}}"
   },
   "privacy": {
+    "seoTitle": "Privacy Policy",
+    "seoDescription": "CineTrekker privacy policy and data handling practices",
     "title": "Privacy Policy",
     "lastUpdated": "Last updated: {{date}}",
     "dataCollected": "Data We Collect",
@@ -1004,7 +1010,15 @@
     "completedCount": "{{count}} completed",
     "plannedCount": "{{count}} planned",
     "bulkHint": "Mark selected titles as watched or remove them from your watchlist in one pass.",
+    "filtersAndSort": "Filters & Sort",
     "buildQueueHint": "Browse search, trending, or title pages and tap the bookmark to start building your queue."
+  },
+  "cookieConsent": {
+    "title": "Cookie preferences",
+    "description": "CineTrekker uses cookies to improve your experience. You can accept all cookies or choose only essential ones.",
+    "acceptAll": "Accept all",
+    "rejectNonEssential": "Reject non-essential",
+    "preferences": "Preferences"
   },
   "accessibility": {
     "seoTitle": "Accessibility Settings - CineTrekker",

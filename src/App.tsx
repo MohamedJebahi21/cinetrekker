@@ -35,6 +35,8 @@ import SEO from "@/components/SEO";
 import { websiteJsonLd } from "@/lib/schema";
 import { siteMetadata } from "@/lib/metadata";
 import { applyAccessibilityPreferencesToRoot } from "@/lib/accessibility-preferences";
+import { CookieConsent } from "@/components/CookieConsent";
+import { useCookieConsent } from "@/hooks/useCookieConsent";
 import Index from "./pages/Index";
 const KeyboardShortcuts = lazy(() => import("@/components/KeyboardShortcuts"));
 const GlobalLoader = lazy(() =>
@@ -80,19 +82,18 @@ const Achievements = lazy(() => import("./pages/Achievements"));
 const PrintWatchlist = lazy(() => import("./pages/PrintWatchlist"));
 const AwardWinners = lazy(() => import("./pages/AwardWinners"));
 const YearInReview = lazy(() => import("./pages/YearInReview"));
+const SearchOverlay = lazy(() => import("@/components/SearchOverlay"));
 const isVercelHost =
   typeof window !== "undefined" &&
   /(?:^|\.)vercel\.app$/i.test(window.location.hostname);
 const shouldLoadVercelAnalytics =
   import.meta.env.VITE_ENABLE_VERCEL_ANALYTICS === "true" ||
   (import.meta.env.PROD && isVercelHost);
-const Analytics = shouldLoadVercelAnalytics
-  ? lazy(() =>
-      import("@vercel/analytics/react").then((mod) => ({
-        default: mod.Analytics,
-      })),
-    )
-  : null;
+const Analytics = lazy(() =>
+  import("@vercel/analytics/react").then((mod) => ({
+    default: mod.Analytics,
+  })),
+);
 
 function NetworkMonitor() {
   const { isOnline } = useNetworkStatus();
@@ -461,6 +462,7 @@ const App = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { hasAcceptedConsent } = useCookieConsent();
   const [enableEnhancements, setEnableEnhancements] = useState(false);
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const refreshableQueryKeys = new Set([
@@ -519,6 +521,15 @@ const App = () => {
       );
     };
   }, []);
+
+  useEffect(() => {
+    const handleSignOut = () => {
+      queryClient.clear();
+    };
+
+    window.addEventListener("cinetrekker:sign-out", handleSignOut);
+    return () => window.removeEventListener("cinetrekker:sign-out", handleSignOut);
+  }, [queryClient]);
 
   useEffect(() => {
     let idleId: number | null = null;
@@ -611,6 +622,9 @@ const App = () => {
                 )}
                 <div className="ct-page-shell flex min-h-[100dvh] flex-col">
                   <UnifiedNav />
+                  <Suspense fallback={null}>
+                    <SearchOverlay />
+                  </Suspense>
                   <ScrollToTop />
                   <main
                     id="main"
@@ -673,11 +687,12 @@ const App = () => {
           </ContentPolicyProvider>
         </AuthProvider>
       </TooltipProvider>
-      {enableEnhancements && Analytics && (
+      {enableEnhancements && shouldLoadVercelAnalytics && hasAcceptedConsent && (
         <Suspense fallback={null}>
           <Analytics />
         </Suspense>
       )}
+      <CookieConsent />
     </ThemeProvider>
   );
 };

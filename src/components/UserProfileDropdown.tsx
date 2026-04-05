@@ -81,6 +81,7 @@ export function UserProfileDropdown({
   const handleSignOut = async () => {
     setIsOpen(false);
     await signOut();
+    navigate("/", { replace: true });
   };
 
   // Social section items
@@ -102,7 +103,7 @@ export function UserProfileDropdown({
                 variant="ghost"
                 size="icon"
                 className={cn(
-                  'rounded-full hover:bg-white/5 min-w-[44px] min-h-[44px] w-[44px] h-[44px] p-0 transition-transform duration-200',
+                  'rounded-full overflow-hidden hover:bg-white/5 min-w-[44px] min-h-[44px] w-[44px] h-[44px] p-0 transition-transform duration-200',
                   isOpen && 'ring-2 ring-primary/50',
                   className
                 )}
@@ -114,7 +115,7 @@ export function UserProfileDropdown({
                     alt={userName}
                     width={44}
                     height={44}
-                    className="w-full h-full rounded-full object-cover"
+                    className="w-full h-full rounded-full object-cover object-center"
                     loading="lazy"
                   />
                 ) : (
@@ -166,18 +167,18 @@ export function UserProfileDropdown({
                     }
                   }}
                 >
-                  <div className="relative">
+                  <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full">
                     {profilePhoto ? (
                       <Image
                         src={profilePhoto}
                         alt={userName}
                         width={40}
                         height={40}
-                        className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/30 group-hover:ring-primary/60 transition-all"
+                        className="h-full w-full object-cover object-center ring-2 ring-primary/30 group-hover:ring-primary/60 transition-all"
                         loading="lazy"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center ring-2 ring-primary/30 group-hover:ring-primary/60 transition-all">
+                      <div className="flex h-full w-full items-center justify-center rounded-full bg-primary/20 ring-2 ring-primary/30 group-hover:ring-primary/60 transition-all">
                         <UserIcon className="w-5 h-5 text-primary" />
                       </div>
                     )}

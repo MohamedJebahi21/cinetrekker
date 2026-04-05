@@ -521,7 +521,7 @@ export default function Profile() {
         subscription.unsubscribe();
       }
     };
-  }, [user?.id, profileKey, pinnedFavoritesStorageKey, setPinnedFavoriteKeys, toast]);
+  }, [user?.id, profileKey, pinnedFavoritesStorageKey, setPinnedFavoriteKeys, t, toast]);
 
   // Capture the loaded profile as the baseline once.
   useEffect(() => {
@@ -744,7 +744,7 @@ export default function Profile() {
         });
       }
     },
-    [toast, user?.id],
+    [t, toast, user?.id],
   );
 
   const handlePhotoChange = async (
@@ -1533,7 +1533,7 @@ export default function Profile() {
         return next;
       });
     },
-    [persistPinnedFavorites, setPinnedFavoriteKeys, toast],
+    [persistPinnedFavorites, setPinnedFavoriteKeys, t, toast],
   );
 
   const unpinFavorite = useCallback(
@@ -1553,7 +1553,7 @@ export default function Profile() {
         return next;
       });
     },
-    [persistPinnedFavorites, setPinnedFavoriteKeys, toast],
+    [persistPinnedFavorites, setPinnedFavoriteKeys, t, toast],
   );
 
   return (

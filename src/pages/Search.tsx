@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo, useRef } from "react";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { useState, useEffect, useMemo, useRef, type FormEvent } from "react";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
   Search as SearchIcon,
@@ -68,6 +69,7 @@ import {
 } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
+import { safeT } from "@/lib/i18n";
 
 const LANGUAGES = [
   { code: "en", key: "search.langOptions.english", fallback: "English" },
@@ -268,12 +270,14 @@ function SearchMultiSelect({
   selectedValues,
   onChange,
   allLabel,
+  t,
 }: {
   label: string;
   options: MultiSelectOption[];
   selectedValues: string[];
   onChange: (values: string[]) => void;
   allLabel: string;
+  t: TFunction;
 }) {
   const selectedLabels = options
     .filter((option) => selectedValues.includes(option.id))
@@ -395,11 +399,11 @@ export default function Search() {
   const [query, setQuery] = useState(initialQuery);
   const debouncedQuery = useDebounce(query, 300);
   const normalizedInputQuery = useMemo(
-    () => query.normalize("NFKC").trim(),
+    () => query.normalize("NFKC").trim().toLowerCase(),
     [query],
   );
   const normalizedQuery = useMemo(
-    () => debouncedQuery.normalize("NFKC").trim(),
+    () => debouncedQuery.normalize("NFKC").trim().toLowerCase(),
     [debouncedQuery],
   );
   const [mediaTypeFilter, setMediaTypeFilter] =
@@ -557,8 +561,8 @@ export default function Search() {
     languageFilters.length > 0 ||
     !!runtimeFilter ||
     streamingFilters.length > 0;
-  const useDiscoverMode = !normalizedQuery && hasFilters;
-  const useSearchMode = normalizedQuery.length > 0;
+  const useDiscoverMode = normalizedQuery.length < 2 && hasFilters;
+  const useSearchMode = normalizedQuery.length >= 2;
   const showTrending = !useDiscoverMode && !useSearchMode;
 
   // Text search query (infinite)
@@ -723,6 +727,23 @@ export default function Search() {
   const isLoadingOrRefreshing = isLoading || isRefreshingResults;
   const loadingTimedOut = useLoadingTimeout(isLoadingOrRefreshing, 12000);
   const canonicalQuery = searchParams.toString();
+  const searchErrorMessage = loadingTimedOut
+    ? t("search.timeout", "Search took too long. Please try again.")
+    : t(
+        "search.loadError",
+        "We couldn't load search results. Please try again.",
+      );
+
+  useEffect(() => {
+    if (!activeError) {
+      return;
+    }
+
+    // Debug /search failures in development by checking the console for the original TMDB or query error.
+    if (import.meta.env.DEV) {
+      console.error("/search query failed:", activeError);
+    }
+  }, [activeError]);
   const faqItems = [
     {
       question: t(
@@ -835,6 +856,11 @@ export default function Search() {
     setQuery("");
   };
 
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setQuery(normalizedInputQuery);
+  };
+
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const mobileFiltersRef = useRef<HTMLDivElement | null>(null);
 
@@ -895,9 +921,9 @@ export default function Search() {
   const FiltersContent = () => (
     <>
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-primary" />
-          <span className="font-semibold">{t("search.filters")}</span>
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-primary" />
+            <span className="font-semibold">{safeT(t, "search.filters", "Filters")}</span>
           {activeFiltersCount > 0 && (
             <Badge
               variant="secondary"
@@ -948,6 +974,7 @@ export default function Search() {
           selectedValues={genreFilters}
           onChange={setGenreFilters}
           allLabel={t("common.all")}
+          t={t}
         />
 
         {/* Runtime Filter */}
@@ -980,6 +1007,7 @@ export default function Search() {
           selectedValues={streamingFilters}
           onChange={setStreamingFilters}
           allLabel={t("common.all")}
+          t={t}
         />
 
         {/* Year Filter */}
@@ -1012,6 +1040,7 @@ export default function Search() {
           selectedValues={languageFilters}
           onChange={setLanguageFilters}
           allLabel={t("common.all")}
+          t={t}
         />
 
         {/* Sort */}
@@ -1106,7 +1135,7 @@ export default function Search() {
         </div>
 
         {/* Search Input with Clear Button */}
-        <div className="relative max-w-2xl">
+        <form className="relative max-w-2xl" onSubmit={handleSearchSubmit}>
           <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input
             type="text"
@@ -1121,6 +1150,7 @@ export default function Search() {
           />
           {query && (
             <button
+              type="button"
               onClick={clearSearch}
               className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary transition-all"
               aria-label={t("search.clearSearch", "Clear search")}
@@ -1128,13 +1158,8 @@ export default function Search() {
               <X className="w-4 h-4" />
             </button>
           )}
-        </div>
+        </form>
 
-        {/* Filter hint */}
-        <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-          <SlidersHorizontal className="w-4 h-4" />
-          {t("search.filterHint")}
-        </p>
       </div>
       {/* Advanced Filters (desktop) */}
       <div className="hidden md:block">
@@ -1144,21 +1169,7 @@ export default function Search() {
       </div>
 
       {/* Mobile filter button and dialog */}
-      <div className="mb-6 flex items-center justify-between gap-3 md:hidden">
-        <div className="min-w-0 flex-1 text-sm text-muted-foreground">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="flex items-center gap-2 truncate">
-                <SlidersHorizontal className="w-4 h-4" />
-                {t("search.filterHint")}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="top">
-              {t("search.openFilters", "Open filters (Press F)")}
-            </TooltipContent>
-          </Tooltip>
-        </div>
-
+      <div className="mb-6 flex items-center justify-end gap-3 md:hidden">
         <Drawer open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
           <DrawerTrigger asChild>
             <Button variant="default" className="flex min-h-11 items-center gap-2 whitespace-nowrap px-4">
@@ -1171,9 +1182,6 @@ export default function Search() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <DrawerTitle className="text-lg">{t("search.filters")}</DrawerTitle>
-                  <DrawerDescription className="mt-1 text-sm text-muted-foreground">
-                    {t("search.filterHint")}
-                  </DrawerDescription>
                 </div>
                 <DrawerClose asChild>
                   <button
@@ -1248,23 +1256,29 @@ export default function Search() {
       ) : isError || loadingTimedOut ? (
         <div className="text-center py-20 max-w-md mx-auto">
           <h3 className="text-2xl font-bold mb-3 title-display">
-            {t("common.error")}
+            {t("search.errorTitle", "Search unavailable")}
           </h3>
           <p className="text-muted-foreground mb-6 leading-relaxed">
-            {loadingTimedOut
-              ? t(
-                  "search.timeout",
-                  "Search took too long. Please try again.",
-                )
-              : activeError?.message ||
-              t(
-                "search.noResultsDescription",
-                "Something went wrong while searching.",
-              )}
+            {searchErrorMessage}
           </p>
-          <Button onClick={() => void activeQuery.refetch()}>
-            {t("common.tryAgain", "Try again")}
-          </Button>
+          {import.meta.env.DEV && activeError?.message && (
+            <p className="mb-6 rounded-2xl border border-border/60 bg-muted/40 px-4 py-3 text-left text-xs text-muted-foreground">
+              {activeError.message}
+            </p>
+          )}
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Button onClick={() => void activeQuery.refetch()}>
+              {t("common.tryAgain", "Try again")}
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/">{t("search.backHome", "Back to home")}</Link>
+            </Button>
+            <Button asChild variant="ghost">
+              <Link to="/trending">
+                {t("search.backTrending", "Browse trending")}
+              </Link>
+            </Button>
+          </div>
         </div>
       ) : results.length > 0 ? (
         <LoadMoreMediaGrid
@@ -1289,7 +1303,7 @@ export default function Search() {
             {normalizedQuery
               ? t(
                   "search.noResultsDescription",
-                  `We couldn't find anything matching "${normalizedQuery}". Try adjusting your filters or search terms.`,
+                  `No results found for "${normalizedQuery}". Try adjusting your filters or search terms.`,
                 )
               : t(
                   "search.trySearching",
@@ -1309,6 +1323,14 @@ export default function Search() {
               {t("common.discoverTrending", "Discover Trending")}
             </Button>
           )}
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Button asChild variant="outline">
+              <Link to="/trending">{t("search.backTrending", "Browse trending")}</Link>
+            </Button>
+            <Button asChild variant="ghost">
+              <Link to="/">{t("search.backHome", "Back to home")}</Link>
+            </Button>
+          </div>
         </div>
       )}
     </div>

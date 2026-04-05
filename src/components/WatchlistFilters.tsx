@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { safeT } from '@/lib/i18n';
 
 interface WatchlistFiltersProps {
   statusFilter: string;
@@ -67,7 +68,7 @@ export function WatchlistFilters({
       <CardContent className="p-4">
         {/* Header with toggle */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-sm">{t('watchlistPage.filtersAndSort', 'Filters & Sort')}</h3>
+          <h3 className="font-semibold text-sm">{safeT(t, 'watchlistPage.filtersAndSort', 'Filters & Sort')}</h3>
           <Button
             variant="ghost"
             size="sm"
@@ -139,6 +140,8 @@ interface FilterBadgeProps {
 }
 
 export function FilterBadge({ label, onRemove }: FilterBadgeProps) {
+  const { t } = useTranslation();
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
