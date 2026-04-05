@@ -86,6 +86,42 @@ test.describe("Mobile navigation", () => {
     await mobileNav.getByRole("button", { name: /^watchlist$/i }).click();
     await expect(page).toHaveURL(/\/login$/);
   });
+
+  test("top header search button opens overlay", async ({ page }) => {
+    const topSearchButton = page
+      .locator("header")
+      .getByRole("button", { name: /^search$/i })
+      .first();
+
+    await expect(topSearchButton).toBeVisible();
+    await topSearchButton.click();
+
+    const searchDialog = page.getByRole("dialog", { name: /search/i });
+    await expect(searchDialog).toBeVisible();
+    await expect(
+      searchDialog.locator('input[type="text"][autocomplete="off"]').first(),
+    ).toBeVisible();
+  });
+
+  test("typing stranger things in mobile overlay does not auto-redirect", async ({ page }) => {
+    const topSearchButton = page
+      .locator("header")
+      .getByRole("button", { name: /^search$/i })
+      .first();
+
+    await expect(topSearchButton).toBeVisible();
+    await topSearchButton.click();
+
+    const searchDialog = page.getByRole("dialog", { name: /search/i });
+    const searchInput = searchDialog
+      .locator('input[type="text"][autocomplete="off"]')
+      .first();
+
+    await expect(searchDialog).toBeVisible();
+    await searchInput.fill("stranger things");
+    await expect(searchInput).toHaveValue("stranger things");
+    await expect(page).toHaveURL(/\/$/);
+  });
 });
 
 test.describe("Mobile carousel", () => {
