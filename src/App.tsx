@@ -17,8 +17,6 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ContentPolicyProvider } from "@/contexts/content-policy-context";
 import ScrollToTop from "@/components/ScrollToTop";
 import { UnifiedNav } from "@/components/UnifiedNav";
-import { MobileBottomNav } from "@/components/MobileBottomNav";
-import { Footer } from "@/components/Footer";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
@@ -35,7 +33,6 @@ import SEO from "@/components/SEO";
 import { websiteJsonLd } from "@/lib/schema";
 import { siteMetadata } from "@/lib/metadata";
 import { applyAccessibilityPreferencesToRoot } from "@/lib/accessibility-preferences";
-import { CookieConsent } from "@/components/CookieConsent";
 import { useCookieConsent } from "@/hooks/useCookieConsent";
 import Index from "./pages/Index";
 const KeyboardShortcuts = lazy(() => import("@/components/KeyboardShortcuts"));
@@ -49,6 +46,19 @@ const FollowNotificationMonitor = lazy(
     import("@/components/FollowNotificationMonitor").then((mod) => ({
       default: mod.FollowNotificationMonitor,
     })),
+);
+const Footer = lazy(() =>
+  import("@/components/Footer").then((mod) => ({ default: mod.Footer })),
+);
+const MobileBottomNav = lazy(() =>
+  import("@/components/MobileBottomNav").then((mod) => ({
+    default: mod.MobileBottomNav,
+  })),
+);
+const CookieConsent = lazy(() =>
+  import("@/components/CookieConsent").then((mod) => ({
+    default: mod.CookieConsent,
+  })),
 );
 
 const Auth = lazy(() => import("./pages/Auth"));
@@ -626,15 +636,23 @@ const App = () => {
                     id="main"
                     tabIndex={-1}
                     ref={containerRef}
-                    className="flex-1 md:pb-10"
+                    className={`flex-1 ${
+                      hasAcceptedConsent
+                        ? "pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] md:pb-10"
+                        : "pb-[max(10rem,var(--ct-cookie-consent-offset,10rem))] md:pb-10"
+                    }`}
                     {...handlers}
                   >
                     <ErrorBoundary onRetry={handleBoundaryRetry}>
                       <AnimatedRoutes />
                     </ErrorBoundary>
                   </main>
-                  <Footer />
-                  <MobileBottomNav />
+                  <Suspense fallback={null}>
+                    <Footer />
+                  </Suspense>
+                  <Suspense fallback={null}>
+                    <MobileBottomNav />
+                  </Suspense>
                 </div>
 
                 <Dialog open={authPromptOpen} onOpenChange={setAuthPromptOpen}>
@@ -688,7 +706,9 @@ const App = () => {
           <Analytics />
         </Suspense>
       )}
-      <CookieConsent />
+      <Suspense fallback={null}>
+        <CookieConsent />
+      </Suspense>
     </ThemeProvider>
   );
 };

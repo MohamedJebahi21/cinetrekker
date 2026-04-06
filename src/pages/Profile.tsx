@@ -429,7 +429,7 @@ export default function Profile() {
 
           // Subscribe to real-time updates (only if component is still mounted)
           if (isMounted) {
-            subscription = profileService.subscribeToProfile(
+            subscription = await profileService.subscribeToProfile(
               user.id,
               (updatedProfile) => {
                 if (!isMounted) return;

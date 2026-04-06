@@ -71,7 +71,8 @@ export default function DecadeExplorer() {
     <>
       <SEO
         title={t("decades.seoTitle", "Explore by Decade — CineTrekker")}
-        description={t("decades.seoDescription", "Discover movies and TV shows from different eras")}
+        description={t("decades.seoDescription", "Explore movies and TV shows by decade on CineTrekker, from modern releases to classic cinema eras.")}
+        keywords={t("decades.seoKeywords", "movies by decade, tv shows by decade, classic films, 1990s movies, 2000s movies, CineTrekker decades")}
         canonical="https://cinetrekker.vercel.app/decades"
       />
       <div className="page-container pt-20 pb-24 md:pb-0">
@@ -79,6 +80,12 @@ export default function DecadeExplorer() {
           <Calendar className="h-8 w-8" />
           <h1 className="section-title mb-0">{t("decades.title", "Explore by Decade")}</h1>
         </div>
+        <p className="mb-6 max-w-3xl text-sm leading-relaxed text-muted-foreground md:text-base">
+          {t(
+            "decades.intro",
+            "Travel through film and TV history decade by decade. Switch eras to surface standout titles and compare how storytelling trends evolved over time.",
+          )}
+        </p>
 
         <Tabs
           value={mediaType}

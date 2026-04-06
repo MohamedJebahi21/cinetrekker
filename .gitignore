@@ -26,6 +26,7 @@ dist-ssr
 .next
 test-results
 *.local
+i18n-coverage-report.md
 
 # Environment files
 .env

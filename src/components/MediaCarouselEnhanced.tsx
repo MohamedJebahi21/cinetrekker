@@ -133,7 +133,7 @@ export function MediaCarouselEnhanced({
                 onClick={() => handleManualScroll('left')}
                 disabled={!canScroll.left}
                 type="button"
-                className="absolute left-2 top-[40%] z-10 inline-flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 backdrop-blur-sm transition-all duration-200 hover:bg-background disabled:cursor-not-allowed disabled:opacity-50 md:left-3 md:opacity-0 md:group-hover/scroll:opacity-100"
+                className="absolute left-2 top-[40%] z-10 inline-flex min-h-[48px] min-w-[48px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 backdrop-blur-sm transition-all duration-200 hover:bg-background disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:left-3 md:opacity-0 md:group-hover/scroll:opacity-100"
                 aria-label={t('common.previous') ? t('common.previous').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase()) : 'Previous'}
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -142,7 +142,7 @@ export function MediaCarouselEnhanced({
                 onClick={() => handleManualScroll('right')}
                 disabled={!canScroll.right}
                 type="button"
-                className="absolute right-2 top-[40%] z-10 inline-flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 backdrop-blur-sm transition-all duration-200 hover:bg-background disabled:cursor-not-allowed disabled:opacity-50 md:right-3 md:opacity-0 md:group-hover/scroll:opacity-100"
+                className="absolute right-2 top-[40%] z-10 inline-flex min-h-[48px] min-w-[48px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 backdrop-blur-sm transition-all duration-200 hover:bg-background disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:right-3 md:opacity-0 md:group-hover/scroll:opacity-100"
                 aria-label={t('common.next') ? t('common.next').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase()) : 'Next'}
               >
                 <ChevronRight className="w-5 h-5" />
@@ -181,7 +181,7 @@ export function MediaCarouselEnhanced({
                       });
                     }}
                     active={index === activePage}
-                    aria-label={`Go to carousel page ${index + 1}`}
+                    aria-label={t("common.goToPage", "Go to page {{page}}", { page: index + 1 })}
                     aria-pressed={index === activePage}
                   />
                 ))}

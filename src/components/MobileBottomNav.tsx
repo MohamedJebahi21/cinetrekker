@@ -27,10 +27,10 @@ export function MobileBottomNav() {
 
   return (
     <nav
-      className="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-40 md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/50 bg-background/92 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-[20px] md:hidden"
       aria-label={t("nav.main", "Main navigation")}
     >
-      <div className="mobile-bottom-nav-inner flex items-stretch">
+      <div className="flex min-h-[3.25rem] items-stretch">
         {NAV_ITEMS.map(({ path, key, fallback, icon: Icon, exact }) => {
           const isActive = exact ? pathname === path : pathname.startsWith(path);
           const isWatchlist = path === "/watchlist";
@@ -39,7 +39,7 @@ export function MobileBottomNav() {
               key={path}
               to={path}
               className={cn(
-                "mobile-bottom-nav-item flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium leading-none transition-colors",
+                "flex min-h-[3.25rem] min-w-11 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium leading-none transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground",
               )}
               aria-current={isActive ? "page" : undefined}
@@ -71,7 +71,7 @@ export function MobileBottomNav() {
         <button
           type="button"
           onClick={openMenu}
-          className="mobile-bottom-nav-item flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium leading-none text-muted-foreground transition-colors"
+          className="flex min-h-[3.25rem] min-w-11 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium leading-none text-muted-foreground transition-colors"
           aria-label={t("nav.more", "More")}
         >
           <Menu className="h-5 w-5" strokeWidth={2} />

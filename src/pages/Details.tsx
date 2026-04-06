@@ -694,14 +694,7 @@ export default function Details() {
           .slice(0, 12)
           .map((item) => ({ ...item, _score: 0 }));
 
-  const getOverviewPreview = (text: string) => {
-    if (!text) return "";
-    const paragraphs = text.split(/\n\s*\n/).filter(Boolean);
-    if (paragraphs.length > 3)
-      return paragraphs.slice(0, 3).join("\n\n") + "...";
-    if (text.length > 150) return text.slice(0, 150).trim() + "...";
-    return text;
-  };
+  const shouldShowOverviewToggle = overview.length > 280 || overview.includes("\n");
 
   const providerRegion = "US";
   const providerData =
@@ -1327,10 +1320,23 @@ export default function Details() {
               <h2 className="text-lg font-semibold mb-2">
                 {t("details.overview")}
               </h2>
-              <p className="text-muted-foreground leading-relaxed">
-                {showFullOverview ? overview : getOverviewPreview(overview)}
-              </p>
-              {overview && overview !== getOverviewPreview(overview) && (
+              <div className="relative">
+                <p
+                  className={cn(
+                    "whitespace-pre-line text-muted-foreground leading-relaxed transition-all",
+                    !showFullOverview && "max-h-32 overflow-hidden",
+                  )}
+                >
+                  {overview}
+                </p>
+                {!showFullOverview && shouldShowOverviewToggle ? (
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-background to-transparent"
+                  />
+                ) : null}
+              </div>
+              {shouldShowOverviewToggle && (
                 <div className="mt-2">
                   <Button
                     variant="link"
@@ -1508,7 +1514,7 @@ export default function Details() {
                       })
                     }
                     active={index === activeCastPage}
-                    aria-label={`Go to cast page ${index + 1}`}
+                    aria-label={t("details.goToCastPage", "Go to cast page {{page}}", { page: index + 1 })}
                     aria-current={index === activeCastPage ? "true" : undefined}
                   />
                 ))}

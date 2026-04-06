@@ -335,26 +335,6 @@
     }
   }
 
-  /* Phase 1: Glassmorphic navigation - Enhanced blur and border for premium feel */
-  .glass-nav {
-    /* Use sticky positioning so it naturally scrolls with content
-       and a semi-transparent True Black backdrop for premium look */
-    @apply sticky top-0 left-0 right-0 z-50;
-    background: hsl(var(--background) / 0.9);
-    -webkit-backdrop-filter: blur(16px);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid hsl(var(--border));
-    transition:
-      background 0.3s ease,
-      box-shadow 0.3s ease;
-  }
-
-  /* Enhanced scroll state for glass navigation */
-  .glass-nav.scrolled {
-    background: hsl(var(--background) / 0.97);
-    box-shadow: 0 4px 24px hsl(var(--foreground) / 0.08);
-  }
-
   /* Enhanced text wrapping for better typography */
   .title-display {
     overflow-wrap: anywhere;
@@ -1489,39 +1469,3 @@ select:focus {
   color: hsl(var(--foreground)) !important;
 }
 
-[data-theme="light"] .glass-nav {
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
-}
-
-
-/* ─── Mobile Bottom Navigation Bar ─────────────────────────────────────────── */
-.mobile-bottom-nav {
-  background: hsl(var(--background) / 0.92);
-  border-top: 1px solid hsl(var(--border) / 0.5);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
-  /* Safe-area padding for notch/home-indicator devices */
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-.mobile-bottom-nav-inner {
-  min-height: 3.25rem; /* 52px tap area above safe-area zone */
-}
-
-.mobile-bottom-nav-item {
-  min-height: 3.25rem; /* 52px = touch target */
-  min-width: 44px;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-}
-
-.mobile-bottom-nav-item:active {
-  opacity: 0.7;
-}
-
-/* Ensure main page content clears the bottom bar */
-@media (max-width: 767px) {
-  .ct-page-shell > main {
-    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px)) !important;
-  }
-}

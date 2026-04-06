@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { loadSupabaseModule } from "@/lib/loadSupabaseModule";
 import type { PersonDetails } from "@/services/tmdb";
 
 const isMissingContentPolicySchemaError = (error: unknown): boolean => {
@@ -85,6 +85,7 @@ const DEFAULT_PROFILE: Omit<UserProfile, "id" | "user_id"> = {
 export const profileService = {
   async getProfile(userId: string): Promise<UserProfile | null> {
     try {
+      const { supabase } = await loadSupabaseModule();
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -111,6 +112,7 @@ export const profileService = {
     profile: Partial<UserProfile>,
   ): Promise<UserProfile> {
     try {
+      const { supabase } = await loadSupabaseModule();
       const existing = await this.getProfile(userId);
 
       const profileData: Partial<UserProfile> & { user_id: string; updated_at: string } = {
@@ -173,6 +175,7 @@ export const profileService = {
 
   async initializeProfile(userId: string): Promise<UserProfile> {
     try {
+      const { supabase } = await loadSupabaseModule();
       const insertData = {
         user_id: userId,
         ...DEFAULT_PROFILE,
@@ -193,10 +196,11 @@ export const profileService = {
     }
   },
 
-  subscribeToProfile(
+  async subscribeToProfile(
     userId: string,
     callback: (profile: UserProfile) => void,
   ) {
+    const { supabase } = await loadSupabaseModule();
     return supabase
       .channel(`profiles_user_${userId}`)
       .on(

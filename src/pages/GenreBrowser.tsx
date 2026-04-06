@@ -54,11 +54,18 @@ export default function GenreBrowser() {
     <>
       <SEO
         title={t("genres.seoTitle", "Browse by Genre — CineTrekker")}
-        description={t("genres.seoDescription", "Explore movies and TV shows by genre")}
+        description={t("genres.seoDescription", "Discover movies and TV shows by genre on CineTrekker, with curated discovery paths for action, drama, comedy, thriller, and more.")}
+        keywords={t("genres.seoKeywords", "movie genres, tv genres, browse by genre, action movies, comedy movies, thriller series, cineTrekker discovery")}
         canonical="https://cinetrekker.vercel.app/genres"
       />
       <div className="page-container pt-20 pb-24 md:pb-0">
         <h1 className="section-title">{t("genres.title", "Browse by Genre")}</h1>
+        <p className="mb-6 max-w-3xl text-sm leading-relaxed text-muted-foreground md:text-base">
+          {t(
+            "genres.intro",
+            "Find your next watch by exploring genre-specific collections for both movies and TV shows. Select a genre to view popular titles and quickly jump from discovery to watchlist planning.",
+          )}
+        </p>
 
         <Tabs value={mediaType} onValueChange={(v) => setSearchParams({ type: v, genre: selectedGenre || '' })}>
           <TabsList className="mb-6">

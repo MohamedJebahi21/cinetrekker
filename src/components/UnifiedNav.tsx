@@ -250,8 +250,9 @@ export function UnifiedNav() {
     <header
       role="banner"
       className={cn(
-        "glass-nav min-h-[calc(4rem+env(safe-area-inset-top,0px)+0.4rem)] pt-[calc(env(safe-area-inset-top,0px)+0.4rem)] transition-all duration-300",
-        isScrolled && "scrolled",
+        "sticky top-0 left-0 right-0 z-50 min-h-[calc(4rem+env(safe-area-inset-top,0px)+0.4rem)] border-b border-border bg-background/90 pt-[calc(env(safe-area-inset-top,0px)+0.4rem)] backdrop-blur-[16px] transition-[background-color,box-shadow] duration-300",
+        isScrolled &&
+          "bg-[hsl(var(--background)/0.97)] shadow-[0_4px_24px_hsl(var(--foreground)/0.08)]",
       )}
     >
       <div className="container mx-auto flex h-full items-center justify-between gap-3 px-3 sm:px-4 md:gap-4">

@@ -39,7 +39,7 @@ export function HeroSection() {
           </div>
 
           <h1 className="max-w-3xl text-3xl font-black tracking-tight text-foreground sm:text-4xl md:text-6xl">
-            {t("home.hero.title", "Your personal movie & TV tracker")}
+            {t("home.hero.title", "CineTrekker: Track Your Entertainment Journey")}
           </h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7 md:text-lg">
             {t(

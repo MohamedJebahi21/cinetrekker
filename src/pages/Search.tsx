@@ -561,8 +561,8 @@ export default function Search() {
     languageFilters.length > 0 ||
     !!runtimeFilter ||
     streamingFilters.length > 0;
-  const useDiscoverMode = normalizedQuery.length < 2 && hasFilters;
-  const useSearchMode = normalizedQuery.length >= 2;
+  const useDiscoverMode = normalizedQuery.length === 0 && hasFilters;
+  const useSearchMode = normalizedQuery.length > 0;
   const showTrending = !useDiscoverMode && !useSearchMode;
 
   // Text search query (infinite)

@@ -466,7 +466,7 @@ export default function Settings() {
           }
 
           if (isMounted) {
-            subscription = profileService.subscribeToProfile(
+            subscription = await profileService.subscribeToProfile(
               user.id,
               (updatedProfile) => {
                 if (!isMounted) return;

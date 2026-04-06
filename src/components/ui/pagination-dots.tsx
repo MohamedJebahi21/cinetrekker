@@ -8,7 +8,7 @@ const PaginationDots = React.forwardRef<HTMLDivElement, PaginationDotsProps>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("mt-5 flex items-center justify-center gap-2.5 pb-1", className)}
+      className={cn("mt-5 flex items-center justify-center gap-2 pb-1", className)}
       {...props}
     />
   ),
@@ -32,7 +32,7 @@ function PaginationDotButton({
     <button
       type={type}
       className={cn(
-        "group inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-foreground/70 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+        "group inline-flex min-h-[48px] min-w-[48px] items-center justify-center rounded-full text-foreground/70 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
         className,
       )}
       {...props}
@@ -40,10 +40,10 @@ function PaginationDotButton({
       <span
         aria-hidden="true"
         className={cn(
-          "h-2.5 w-2.5 rounded-full border border-border/70 bg-muted-foreground/40 transition-all duration-200",
+          "h-3.5 w-3.5 rounded-full border border-border/70 bg-muted-foreground/40 transition-all duration-200",
           "group-hover:bg-muted-foreground/55",
           active &&
-            "w-7 border-primary/70 bg-primary shadow-[0_0_0_1px_hsl(var(--background)),0_0_0_3px_hsl(var(--primary)/0.3)]",
+            "w-8 border-primary/70 bg-primary shadow-[0_0_0_1px_hsl(var(--background)),0_0_0_3px_hsl(var(--primary)/0.3)]",
         )}
       />
     </button>
@@ -58,7 +58,7 @@ function PaginationDotStatic({ className, active = false, ...props }: Pagination
   return (
     <span
       className={cn(
-        "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full",
+        "inline-flex min-h-[48px] min-w-[48px] items-center justify-center rounded-full",
         className,
       )}
       {...props}
@@ -66,9 +66,9 @@ function PaginationDotStatic({ className, active = false, ...props }: Pagination
       <span
         aria-hidden="true"
         className={cn(
-          "h-2.5 w-2.5 rounded-full border border-border/70 bg-muted-foreground/40 transition-all duration-200",
+          "h-3.5 w-3.5 rounded-full border border-border/70 bg-muted-foreground/40 transition-all duration-200",
           active &&
-            "w-7 border-primary/70 bg-primary shadow-[0_0_0_1px_hsl(var(--background)),0_0_0_3px_hsl(var(--primary)/0.3)]",
+            "w-8 border-primary/70 bg-primary shadow-[0_0_0_1px_hsl(var(--background)),0_0_0_3px_hsl(var(--primary)/0.3)]",
         )}
       />
     </span>
