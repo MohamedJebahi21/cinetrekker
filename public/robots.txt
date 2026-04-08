@@ -2,5 +2,17 @@ User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /auth/callback
+Disallow: /calendar
+Disallow: /achievements
+Disallow: /following
+Disallow: /notifications
+Disallow: /profile
+Disallow: /recommendations
+Disallow: /settings
+Disallow: /stats
+Disallow: /trek-lists
+Disallow: /watched
+Disallow: /watchlist
+Disallow: /year-in-review
 
 Sitemap: https://cinetrekker.vercel.app/sitemap.xml
