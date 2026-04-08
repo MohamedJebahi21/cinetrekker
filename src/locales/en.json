@@ -1121,12 +1121,14 @@
     "seoTitle": "Explore by Decade — CineTrekker",
     "seoDescription": "Discover movies and TV shows from different eras",
     "title": "Explore by Decade",
+    "intro": "Explore standout movies and TV from each era, then jump directly into details, watchlists, and related titles.",
     "noResults": "No results available for this decade"
   },
   "genres": {
     "seoTitle": "Browse by Genre — CineTrekker",
     "seoDescription": "Explore movies and TV shows by genre",
     "title": "Browse by Genre",
+    "intro": "Choose a genre to discover popular movies and shows, compare options quickly, and add what you want to watch next.",
     "noResults": "No results available for this genre.",
     "selectPrompt": "Select a genre above to browse content"
   },
@@ -1231,6 +1233,8 @@
     "sending": "Sending...",
     "formErrorRequired": "Please fill in all fields before sending feedback.",
     "formErrorCaptcha": "Please complete the bot protection check before sending feedback.",
+    "formErrorCaptchaUnavailable": "Feedback bot protection is not configured yet. Please try again later.",
+    "botProtectionUnavailable": "Bot protection is currently unavailable. Feedback submissions are temporarily disabled.",
     "formErrorSend": "Failed to send feedback. Please try again.",
     "formSuccess": "Thanks for your feedback. It was sent successfully."
   },

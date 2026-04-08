@@ -46,9 +46,10 @@ export function MediaCarouselEnhanced({
     const container = scrollContainerRef.current;
     if (!container) return;
     const hasScroll = container.scrollWidth > container.clientWidth;
+    const estimatedPages = Math.max(1, Math.ceil(items.length / 2));
     const totalPages = hasScroll
-      ? Math.max(1, Math.ceil(container.scrollWidth / container.clientWidth))
-      : 1;
+      ? Math.max(1, Math.ceil(container.scrollWidth / container.clientWidth), estimatedPages)
+      : estimatedPages;
     const nextPage = hasScroll
       ? Math.min(totalPages - 1, Math.round(container.scrollLeft / container.clientWidth))
       : 0;
@@ -181,7 +182,7 @@ export function MediaCarouselEnhanced({
                       });
                     }}
                     active={index === activePage}
-                    aria-label={t("common.goToPage", "Go to page {{page}}", { page: index + 1 })}
+                    aria-label={`Go to carousel page ${index + 1}`}
                     aria-pressed={index === activePage}
                   />
                 ))}

@@ -22,6 +22,7 @@ const AuthContext = createContext<AuthContextType | undefined>(
 );
 
 const logger = createLogger("auth");
+const AUTH_INIT_TIMEOUT_MS = 4000;
 const MISSING_ENV_AUTH_ERROR =
   "Supabase environment is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local and restart the dev server.";
 let didWarnMissingSupabaseEnv = false;
@@ -85,10 +86,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         unsubscribe = () => subscription.unsubscribe();
 
+        const sessionResult = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise<never>((_, reject) => {
+            window.setTimeout(() => {
+              reject(new Error("Auth session check timed out."));
+            }, AUTH_INIT_TIMEOUT_MS);
+          }),
+        ]);
+
         const {
           data: { session: currentSession },
           error,
-        } = await supabase.auth.getSession();
+        } = sessionResult;
 
         if (error) {
           throw error;

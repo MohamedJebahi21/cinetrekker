@@ -38,10 +38,9 @@ export function CookieConsent() {
   }
 
   return (
-    <div ref={containerRef} className="fixed inset-x-0 bottom-0 z-[80] px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-4" aria-live="polite" aria-atomic="true">
+    <div ref={containerRef} className="fixed inset-x-0 bottom-[calc(3.25rem+env(safe-area-inset-bottom,0px)+0.75rem)] z-[80] px-4 pt-4 md:bottom-0" aria-live="polite" aria-atomic="true">
       <div
-        role="dialog"
-        aria-modal="false"
+        role="region"
         aria-labelledby="cookie-consent-title"
         aria-describedby="cookie-consent-description"
         className="mx-auto w-full max-w-5xl rounded-3xl border border-border/60 bg-background/95 px-4 py-4 shadow-[0_20px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl md:px-5 md:py-5"

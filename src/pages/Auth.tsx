@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -89,7 +89,18 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
   } | null>(null);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { signIn, signUp, signInWithProvider, resetPassword } = useAuth();
+
+  React.useEffect(() => {
+    const state = location.state as { authMessage?: string } | null;
+    if (!state?.authMessage) return;
+
+    setMessage({
+      type: "error",
+      text: state.authMessage,
+    });
+  }, [location.state]);
 
   const handleProviderSignIn = async (
     provider: "google" | "facebook" | "apple",

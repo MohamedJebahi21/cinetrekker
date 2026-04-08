@@ -1,6 +1,6 @@
 ﻿import { useTranslation } from "react-i18next";
 import SEO from "@/components/SEO";
-import { Info, Sparkles, Database, ShieldCheck } from "lucide-react";
+import { Info, Sparkles, Database, ShieldCheck, Cpu } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FAQSection } from "@/components/FAQSection";
 import { InternalLinksSection } from "@/components/InternalLinksSection";
@@ -142,6 +142,22 @@ export default function About() {
               t,
               "about.dataSourcesDesc",
               "Movie and TV metadata, artwork, and related information are provided by TMDB. If you create an account, your lists and preferences are saved so your experience is available across sessions and devices.",
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="ct-panel">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <Cpu className="h-5 w-5 text-primary" />
+              {safeT(t, "about.techStack", "Technology Stack")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-muted-foreground leading-relaxed">
+            {safeT(
+              t,
+              "about.techStackDesc",
+              "CineTrekker runs on a React + TypeScript front end with Vite, React Query for data orchestration, Supabase for auth and account data, and secure serverless APIs for protected integrations like recommendations, feedback, notifications, and content metadata proxying.",
             )}
           </CardContent>
         </Card>

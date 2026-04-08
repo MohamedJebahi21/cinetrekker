@@ -1,8 +1,19 @@
 ﻿import { useTranslation } from "react-i18next";
 import SEO from "@/components/SEO";
-import { Shield, Database, Lock, Share2, Mail } from "lucide-react";
+import {
+  Shield,
+  Database,
+  Lock,
+  Share2,
+  Mail,
+  Cookie,
+  Clock3,
+  UserCheck,
+  Server,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { safeT } from "@/lib/i18n";
+import { Link } from "react-router-dom";
 
 export default function Privacy() {
   const { t, i18n } = useTranslation();
@@ -47,6 +58,7 @@ export default function Privacy() {
               <li>{t("privacy.dataList.email", "Account details required for sign-in, such as email address.")}</li>
               <li>{t("privacy.dataList.watchlist", "Library data like watchlist entries, watched status, and ratings.")}</li>
               <li>{t("privacy.dataList.preferences", "Preference data such as language, theme, and accessibility settings.")}</li>
+              <li>{safeT(t, "privacy.dataList.activity", "Operational events such as follow actions, notification reads, and security checks for abuse prevention.")}</li>
             </ul>
           </CardContent>
         </Card>
@@ -55,21 +67,79 @@ export default function Privacy() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground"><Lock className="h-5 w-5 text-primary" />{t("privacy.dataUsage", "How We Use Data")}</CardTitle>
           </CardHeader>
-          <CardContent className="text-muted-foreground leading-relaxed">{t("privacy.dataUsageDesc", "We use your data to deliver core app functions, sync your account state, personalize your experience, and improve reliability.")}</CardContent>
+          <CardContent className="space-y-3 text-muted-foreground leading-relaxed">
+            <p>{t("privacy.dataUsageDesc", "We use your data to deliver core app functions, sync your account state, personalize your experience, and improve reliability.")}</p>
+            <p>{safeT(t, "privacy.dataUsageDesc2", "We also process security metadata to protect forms, detect abuse, and keep service endpoints stable.")}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="ct-panel">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground"><Cookie className="h-5 w-5 text-primary" />{safeT(t, "privacy.cookiesAndStorage", "Cookies and Local Storage")}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-muted-foreground leading-relaxed">
+            <p>{safeT(t, "privacy.cookiesDesc", "CineTrekker uses cookies and local storage for authentication sessions, language/theme preferences, accessibility settings, consent state, and performance optimization.")}</p>
+            <p>{safeT(t, "privacy.cookiesDesc2", "You can review cookie details on the Cookie Policy page and change optional tracking preferences from in-app settings.")}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="ct-panel">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground"><Server className="h-5 w-5 text-primary" />{safeT(t, "privacy.providers", "Service Providers and Infrastructure")}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-muted-foreground leading-relaxed">
+            <p>{safeT(t, "privacy.providersDesc", "CineTrekker relies on third-party providers for core operations, including authentication/session storage, movie and TV metadata, and optional analytics. These providers process only the data needed to deliver their parts of the service.")}</p>
+            <p>{safeT(t, "privacy.providersDesc2", "Examples include account infrastructure (such as Supabase), content metadata APIs (such as TMDB), and optional analytics/monitoring providers when enabled by consent and environment settings.")}</p>
+          </CardContent>
         </Card>
 
         <Card className="ct-panel">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground"><Share2 className="h-5 w-5 text-primary" />{t("privacy.dataSharing", "Data Sharing")}</CardTitle>
           </CardHeader>
-          <CardContent className="text-muted-foreground leading-relaxed">{t("privacy.dataSharingDesc", "CineTrekker does not sell personal data. Limited sharing may occur with service providers required to operate app infrastructure and authentication.")}</CardContent>
+          <CardContent className="space-y-3 text-muted-foreground leading-relaxed">
+            <p>{t("privacy.dataSharingDesc", "CineTrekker does not sell personal data. Limited sharing may occur with service providers required to operate app infrastructure and authentication.")}</p>
+            <p>{safeT(t, "privacy.dataSharingDesc2", "Where required by law, we may disclose limited records to comply with legal obligations, prevent fraud, or enforce platform safety policies.")}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="ct-panel">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground"><Clock3 className="h-5 w-5 text-primary" />{safeT(t, "privacy.retention", "Data Retention")}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-muted-foreground leading-relaxed">
+            <p>{safeT(t, "privacy.retentionDesc", "Account-linked list and preference data is retained while your account is active so your experience can sync across sessions and devices.")}</p>
+            <p>{safeT(t, "privacy.retentionDesc2", "If you use in-app account data deletion tools, we remove app profile records and related list data from CineTrekker systems, subject to operational backups and provider retention windows.")}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="ct-panel">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground"><UserCheck className="h-5 w-5 text-primary" />{safeT(t, "privacy.yourRights", "Your Controls and Rights")}</CardTitle>
+          </CardHeader>
+          <CardContent className="text-muted-foreground leading-relaxed">
+            {safeT(t, "privacy.rightsDesc", "You can access and change profile settings, export your app data, adjust safety and accessibility preferences, and request deletion using the in-app Settings page. Depending on your region, you may also have additional legal rights to access, correct, or erase personal data.")}
+          </CardContent>
         </Card>
 
         <Card className="ct-panel">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground"><Mail className="h-5 w-5 text-primary" />{t("privacy.contact", "Contact and Requests")}</CardTitle>
           </CardHeader>
-          <CardContent className="text-muted-foreground leading-relaxed">{t("privacy.contactDesc", "For privacy-related requests, contact the CineTrekker team via the Feedback page.")}</CardContent>
+          <CardContent className="space-y-3 text-muted-foreground leading-relaxed">
+            <p>{t("privacy.contactDesc", "For privacy-related requests, contact the CineTrekker team via the Feedback page.")}</p>
+            <div className="flex flex-wrap gap-3">
+              <Link to="/feedback" className="text-primary hover:text-primary/80">
+                {safeT(t, "privacy.feedbackLink", "Go to Feedback")}
+              </Link>
+              <Link to="/cookies" className="text-primary hover:text-primary/80">
+                {safeT(t, "privacy.cookiesLink", "Review Cookie Policy")}
+              </Link>
+              <Link to="/terms" className="text-primary hover:text-primary/80">
+                {safeT(t, "privacy.termsLink", "Review Terms")}
+              </Link>
+            </div>
+          </CardContent>
         </Card>
       </div>
       </div>

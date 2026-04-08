@@ -42,6 +42,7 @@ const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | u
 const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined;
 const CAPTCHA_PROVIDER = TURNSTILE_SITE_KEY ? 'turnstile' : RECAPTCHA_SITE_KEY ? 'recaptcha' : null;
 const CAPTCHA_SITE_KEY = TURNSTILE_SITE_KEY || RECAPTCHA_SITE_KEY || '';
+const CAPTCHA_CONFIGURED = Boolean(CAPTCHA_SITE_KEY);
 
 export default function Feedback() {
   const { t } = useTranslation();
@@ -136,6 +137,16 @@ export default function Feedback() {
 
     if (!name.trim() || !email.trim() || !message.trim()) {
       setError(t('feedback.formErrorRequired', 'Please fill in all fields before sending feedback.'));
+      return;
+    }
+
+    if (!CAPTCHA_CONFIGURED) {
+      setError(
+        t(
+          'feedback.formErrorCaptchaUnavailable',
+          'Feedback bot protection is not configured yet. Please try again later.',
+        ),
+      );
       return;
     }
 
@@ -262,6 +273,14 @@ export default function Feedback() {
             {CAPTCHA_SITE_KEY && (
               <div id="feedback-bot-protection" ref={turnstileContainerRef} />
             )}
+            {!CAPTCHA_CONFIGURED && (
+              <p className="text-sm text-muted-foreground">
+                {t(
+                  'feedback.botProtectionUnavailable',
+                  'Bot protection is currently unavailable. Feedback submissions are temporarily disabled.',
+                )}
+              </p>
+            )}
           </div>
 
           {error && (
@@ -275,7 +294,11 @@ export default function Feedback() {
             </p>
           )}
 
-          <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            className="w-full sm:w-auto"
+            disabled={isSubmitting || !CAPTCHA_CONFIGURED}
+          >
             {isSubmitting
               ? t('feedback.sending', 'Sending...')
               : t('feedback.sendButton', 'Send Feedback')}

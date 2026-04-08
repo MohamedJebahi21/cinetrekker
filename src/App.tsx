@@ -84,12 +84,14 @@ const About = lazy(() => import("./pages/About"));
 const Feedback = lazy(() => import("./pages/Feedback"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Cookies = lazy(() => import("./pages/Cookies"));
+const AccessibilitySettings = lazy(() => import("./pages/AccessibilitySettings"));
 const Calendar = lazy(() => import("./pages/Calendar"));
 const EnhancedStats = lazy(() => import("./pages/EnhancedStats"));
 const GenreBrowser = lazy(() => import("./pages/GenreBrowser"));
 const DecadeExplorer = lazy(() => import("./pages/DecadeExplorer"));
 const Achievements = lazy(() => import("./pages/Achievements"));
 const PrintWatchlist = lazy(() => import("./pages/PrintWatchlist"));
+const TrekLists = lazy(() => import("./pages/TrekLists"));
 const AwardWinners = lazy(() => import("./pages/AwardWinners"));
 const YearInReview = lazy(() => import("./pages/YearInReview"));
 const isVercelHost =
@@ -291,9 +293,11 @@ function AnimatedRoutes() {
           <Route
             path="/settings"
             element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Settings />
-              </Suspense>
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Settings />
+                </Suspense>
+              </ProtectedRoute>
             }
           />
           <Route
@@ -329,9 +333,11 @@ function AnimatedRoutes() {
           <Route
             path="/notifications"
             element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Notifications />
-              </Suspense>
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Notifications />
+                </Suspense>
+              </ProtectedRoute>
             }
           />
           <Route
@@ -356,13 +362,7 @@ function AnimatedRoutes() {
           />
           <Route
             path="/upcoming"
-            element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteSpinner />}>
-                  <Calendar />
-                </Suspense>
-              </ProtectedRoute>
-            }
+            element={<Navigate to="/calendar" replace />}
           />
 
           <Route
@@ -425,8 +425,16 @@ function AnimatedRoutes() {
               </Suspense>
             }
           />
-          <Route path="/collections" element={<Navigate to="/" replace />} />
-          <Route path="/trek-lists" element={<Navigate to="/" replace />} />
+          <Route
+            path="/trek-lists"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <TrekLists />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/awards"
             element={
@@ -451,7 +459,11 @@ function AnimatedRoutes() {
           />
           <Route
             path="/accessibility"
-            element={<Navigate to="/settings#settings-accessibility" replace />}
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <AccessibilitySettings />
+              </Suspense>
+            }
           />
 
           <Route

@@ -44,7 +44,7 @@ export function Footer() {
                 {t("footer.trending", "Trending")}
               </Link>
               <Link
-                to="/upcoming"
+                to="/calendar"
                 className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t("footer.upcoming", "Upcoming")}

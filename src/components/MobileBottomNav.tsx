@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import House from "lucide-react/dist/esm/icons/house";
 import Search from "lucide-react/dist/esm/icons/search";
@@ -18,6 +18,7 @@ const NAV_ITEMS = [
 export function MobileBottomNav() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const { watchlist } = useUserLists();
   const watchlistCount = watchlist.length;
 
@@ -27,7 +28,7 @@ export function MobileBottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/50 bg-background/92 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-[20px] md:hidden"
+      className="mobile-nav-safe fixed bottom-0 left-0 right-0 z-40 border-t border-border/50 bg-background/92 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-[20px] md:hidden"
       aria-label={t("nav.main", "Main navigation")}
     >
       <div className="flex min-h-[3.25rem] items-stretch">
@@ -35,14 +36,14 @@ export function MobileBottomNav() {
           const isActive = exact ? pathname === path : pathname.startsWith(path);
           const isWatchlist = path === "/watchlist";
           return (
-            <Link
+            <button
               key={path}
-              to={path}
+              type="button"
+              onClick={() => navigate(path)}
               className={cn(
                 "flex min-h-[3.25rem] min-w-11 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium leading-none transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground",
               )}
-              aria-current={isActive ? "page" : undefined}
               aria-label={t(key, fallback)}
             >
               <span className="relative flex items-center justify-center">
@@ -63,7 +64,7 @@ export function MobileBottomNav() {
                 )}
               </span>
               <span>{t(key, fallback)}</span>
-            </Link>
+            </button>
           );
         })}
 

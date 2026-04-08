@@ -33,6 +33,7 @@ function PaginationDotButton({
       type={type}
       className={cn(
         "group inline-flex min-h-[48px] min-w-[48px] items-center justify-center rounded-full text-foreground/70 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+        active && "w-6 bg-primary text-primary-foreground",
         className,
       )}
       {...props}
