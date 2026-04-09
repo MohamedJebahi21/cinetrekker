@@ -4,6 +4,7 @@ lighthouse-desktop-report
 lighthouse-accessibility-report.html
 playwright-report
 supabase/.temp
+*.report.html
 
 # Dev server logs
 dev.log
