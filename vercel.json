@@ -13,22 +13,6 @@
       "destination": "/api/sitemap"
     },
     {
-      "source": "/(.*)",
-      "has": [
-        {
-          "type": "header",
-          "key": "accept",
-          "value": "text/html.*"
-        }
-      ],
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, no-cache, must-revalidate, proxy-revalidate"
-        }
-      ]
-    },
-    {
       "source": "/((?!api/|assets/|static/|.*\\..*).*)",
       "destination": "/index.html"
     }
@@ -94,6 +78,15 @@
           "key": "X-XSS-Protection",
           "value": "1; mode=block"
         },
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate, proxy-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/((?!api/|assets/|static/|.*\\..*).*)",
+      "headers": [
         {
           "key": "Cache-Control",
           "value": "no-store, no-cache, must-revalidate, proxy-revalidate"
