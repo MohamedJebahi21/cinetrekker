@@ -11,6 +11,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { UserListsProvider } from "@/contexts/UserListsContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -88,6 +89,7 @@ const AccessibilitySettings = lazy(() => import("./pages/AccessibilitySettings")
 const Calendar = lazy(() => import("./pages/Calendar"));
 const EnhancedStats = lazy(() => import("./pages/EnhancedStats"));
 const GenreBrowser = lazy(() => import("./pages/GenreBrowser"));
+const Discover = lazy(() => import("./pages/Discover"));
 const DecadeExplorer = lazy(() => import("./pages/DecadeExplorer"));
 const Achievements = lazy(() => import("./pages/Achievements"));
 const PrintWatchlist = lazy(() => import("./pages/PrintWatchlist"));
@@ -145,8 +147,15 @@ function AnimatedRoutes() {
   const location = useLocation();
 
   return (
-    <div key={location.pathname}>
-      <Routes location={location}>
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={location.pathname}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <Routes location={location}>
           <Route
             path="/"
             element={<Index />}
@@ -281,6 +290,14 @@ function AnimatedRoutes() {
           />
 
           <Route
+            path="/discover"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Discover />
+              </Suspense>
+            }
+          />
+          <Route
             path="/profile"
             element={
               <ProtectedRoute>
@@ -303,21 +320,17 @@ function AnimatedRoutes() {
           <Route
             path="/watchlist"
             element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteSpinner />}>
-                  <Watchlist />
-                </Suspense>
-              </ProtectedRoute>
+              <Suspense fallback={<RouteSpinner />}>
+                <Watchlist />
+              </Suspense>
             }
           />
           <Route
             path="/watched"
             element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteSpinner />}>
-                  <Watched />
-                </Suspense>
-              </ProtectedRoute>
+              <Suspense fallback={<RouteSpinner />}>
+                <Watched />
+              </Suspense>
             }
           />
           <Route
@@ -474,8 +487,9 @@ function AnimatedRoutes() {
               </Suspense>
             }
           />
-      </Routes>
-    </div>
+        </Routes>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 

@@ -2,13 +2,14 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { discoverMovies, discoverTV } from "@/services/tmdb";
 import { MediaCard, MediaCardSkeleton } from "@/components/MediaCard";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import SEO from "@/components/SEO";
 import { useContentPolicy } from "@/contexts/content-policy-context";
 import { applySafetyFilter } from "@/lib/contentFilter";
+import { buildCanonicalUrl, toBreadcrumbJsonLd } from "@/lib/seo";
 
 const DECADES = [
   { value: "2020", label: "2020s", start: 2020, end: 2029 },
@@ -70,26 +71,50 @@ export default function DecadeExplorer() {
   return (
     <>
       <SEO
-        title={t("decades.seoTitle", "Explore by Decade — CineTrekker")}
-        description={t("decades.seoDescription", "Explore movies and TV shows by decade on CineTrekker, from modern releases to classic cinema eras.")}
-        keywords={t("decades.seoKeywords", "movies by decade, tv shows by decade, classic films, 1990s movies, 2000s movies, CineTrekker decades")}
-        canonical="https://cinetrekker.vercel.app/decades"
+        title={t("decades.seoTitle", "Explore by Decade - CineTrekker")}
+        description={t(
+          "decades.seoDescription",
+          "Explore movies and TV shows by decade on CineTrekker, from modern releases to classic cinema eras.",
+        )}
+        keywords={t(
+          "decades.seoKeywords",
+          "movies by decade, tv shows by decade, classic films, 1990s movies, 2000s movies, CineTrekker decades",
+        )}
+        canonical={buildCanonicalUrl("/decades")}
+        jsonLd={[
+          toBreadcrumbJsonLd([
+            { name: t("nav.home", "Home"), path: "/" },
+            { name: t("nav.discover", "Discover"), path: "/discover" },
+            { name: t("nav.decades", "Decades"), path: "/decades" },
+          ]),
+        ]}
       />
       <div className="page-container pt-20 pb-24 md:pb-0">
-        <div className="flex items-center gap-2 mb-6">
-          <Calendar className="h-8 w-8" />
-          <h1 className="section-title mb-0">{t("decades.title", "Explore by Decade")}</h1>
-        </div>
-        <p className="mb-6 max-w-3xl text-sm leading-relaxed text-muted-foreground md:text-base">
-          {t(
-            "decades.intro",
-            "Travel through film and TV history decade by decade. Switch eras to surface standout titles and compare how storytelling trends evolved over time.",
-          )}
-        </p>
+        <section className="ct-panel-strong mb-8 overflow-hidden rounded-[2rem] p-6 md:p-8">
+          <div className="flex items-start gap-3">
+            <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+              <Calendar className="h-6 w-6" />
+            </span>
+            <div>
+              <p className="ct-kicker mb-3">
+                {t("decades.kicker", "Browse by era")}
+              </p>
+              <h1 className="section-title mb-3">
+                {t("decades.title", "Explore by Decade")}
+              </h1>
+              <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground md:text-base">
+                {t(
+                  "decades.intro",
+                  "Travel through film and TV history decade by decade. Switch eras to surface standout titles and compare how storytelling trends evolved over time.",
+                )}
+              </p>
+            </div>
+          </div>
+        </section>
 
         <Tabs
           value={mediaType}
-          onValueChange={(v) => setMediaType(v as "movie" | "tv")}
+          onValueChange={(value) => setMediaType(value as "movie" | "tv")}
           className="mb-6"
         >
           <TabsList>
@@ -98,40 +123,45 @@ export default function DecadeExplorer() {
           </TabsList>
         </Tabs>
 
-        {/* Decade Selector */}
-        <div className="flex flex-wrap gap-2 mb-8">
-          {DECADES.map((decade) => (
-            <Badge
-              key={decade.value}
-              variant={
-                selectedDecade.value === decade.value ? "default" : "outline"
-              }
-              className="cursor-pointer text-base py-2 px-4 hover:bg-primary/10 transition-colors"
-              style={{ minWidth: "44px", minHeight: "44px" }} // Ensure 44px hit area
-              role="button"
-              tabIndex={0}
-              aria-pressed={selectedDecade.value === decade.value}
-              onClick={() => setSelectedDecade(decade)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  setSelectedDecade(decade);
-                }
-              }}
-            >
-              {decade.label}
-            </Badge>
-          ))}
-        </div>
+        <section className="ct-panel mb-8 p-4 md:p-5">
+          <p className="mb-3 text-sm font-medium text-foreground">
+            {t("decades.pickEra", "Choose an era to open its collection")}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {DECADES.map((decade) => (
+              <Badge
+                key={decade.value}
+                variant={selectedDecade.value === decade.value ? "default" : "outline"}
+                className="cursor-pointer px-4 py-2 text-base transition-colors hover:bg-primary/10"
+                style={{ minWidth: "44px", minHeight: "44px" }}
+                role="button"
+                tabIndex={0}
+                aria-pressed={selectedDecade.value === decade.value}
+                onClick={() => setSelectedDecade(decade)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setSelectedDecade(decade);
+                  }
+                }}
+              >
+                {decade.label}
+              </Badge>
+            ))}
+          </div>
+        </section>
 
-        <h2 className="text-2xl font-bold mb-4">
-          {selectedDecade.label} {mediaType === "movie" ? t("common.movies", "Movies") : t("common.tvShows", "TV Shows")}
+        <h2 className="mb-4 text-2xl font-bold">
+          {selectedDecade.label}{" "}
+          {mediaType === "movie"
+            ? t("common.movies", "Movies")
+            : t("common.tvShows", "TV Shows")}
         </h2>
 
         {isLoading ? (
           <div className="media-grid">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <MediaCardSkeleton key={i} />
+            {Array.from({ length: 12 }).map((_, index) => (
+              <MediaCardSkeleton key={index} />
             ))}
           </div>
         ) : media && media.length > 0 ? (
@@ -141,7 +171,7 @@ export default function DecadeExplorer() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-16 text-muted-foreground">
+          <div className="ct-panel py-16 text-center text-muted-foreground">
             {t("decades.noResults", "No results available for this decade")}
           </div>
         )}

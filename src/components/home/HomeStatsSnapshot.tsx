@@ -7,11 +7,15 @@ import type { UserMediaItem } from "@/types/media";
 type HomeStatsSnapshotProps = {
   watched: UserMediaItem[];
   watchlist: UserMediaItem[];
+  ctaHref?: string;
+  ctaLabel?: string;
 };
 
 export function HomeStatsSnapshot({
   watched,
   watchlist,
+  ctaHref = "/stats",
+  ctaLabel,
 }: HomeStatsSnapshotProps) {
   const { t } = useTranslation();
   const watchingCount = watched.filter((item) => item.status === "watching").length;
@@ -41,16 +45,23 @@ export function HomeStatsSnapshot({
   ];
 
   return (
-    <section className="ct-panel p-5 md:p-6">
+    <section className="ct-panel relative overflow-hidden p-5 md:p-6">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top,hsla(var(--primary)/0.14),transparent_68%)]"
+      />
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
+            {t("home.librarySnapshot", "Library Snapshot")}
+          </p>
           <h2 className="section-title mb-1">{t("home.statsSnapshot", "Stats Snapshot")}</h2>
           <p className="text-sm text-muted-foreground">
             {t("home.statsSnapshotDesc", "A quick view of how your library is taking shape.")}
           </p>
         </div>
         <Button asChild variant="outline" size="sm">
-          <Link to="/stats">{t("home.openFullStats", "Open Full Stats")}</Link>
+          <Link to={ctaHref}>{ctaLabel || t("home.openFullStats", "Open Full Stats")}</Link>
         </Button>
       </div>
 
@@ -60,7 +71,7 @@ export function HomeStatsSnapshot({
           return (
             <div
               key={stat.label}
-              className="rounded-2xl border border-border/60 bg-card/70 p-4"
+              className="rounded-2xl border border-border/60 bg-[linear-gradient(180deg,hsla(var(--card)/0.9),hsla(var(--card)/0.72))] p-4 shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
             >
               <div className="flex items-center justify-between gap-3">
                 <div>

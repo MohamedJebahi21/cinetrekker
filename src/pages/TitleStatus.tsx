@@ -27,7 +27,7 @@ const TitleStatus = () => {
     <>
       <SEO
         title={`${label} - CineTrekker`}
-        description="The requested resource is unavailable."
+        description="The page you requested could not be found."
       />
 
       <div className="flex min-h-screen items-center justify-center">
@@ -39,15 +39,18 @@ const TitleStatus = () => {
             404
           </h1>
           <p className="mb-4 text-lg text-muted-foreground">
-            {t("status.message", "Status unavailable.")}
+            {t("status.message", "This scene was cut from the final edit.")}
           </p>
           <p className="mb-8 text-sm text-muted-foreground/70">
-            {t("status.help", "Try returning home or using the search.")}
+            {t("status.help", "Try returning home, browsing Discover, or using search.")}
           </p>
 
           <div className="flex items-center justify-center gap-3">
             <Button asChild size="lg">
               <Link to="/">{t("notFound.returnHome", "Return to Home")}</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link to="/discover">{t("nav.discover", "Discover")}</Link>
             </Button>
             <Button asChild size="lg" variant="outline">
               <Link to="/search">{t("notFound.search", "Search")}</Link>

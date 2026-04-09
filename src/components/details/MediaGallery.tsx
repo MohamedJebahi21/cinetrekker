@@ -31,8 +31,23 @@ function MediaGalleryInner({ backdrops = [], videos = [] }: Props) {
         const totalPages = hasScroll
           ? Math.max(1, Math.ceil(container.scrollWidth / container.clientWidth))
           : 1;
+        const cards = Array.from(container.children) as HTMLElement[];
+        let nearestChildIndex = 0;
+        let nearestDistance = Number.POSITIVE_INFINITY;
+
+        cards.forEach((card, index) => {
+          const distance = Math.abs(card.offsetLeft - container.scrollLeft);
+          if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestChildIndex = index;
+          }
+        });
+
         const nextPage = hasScroll
-          ? Math.min(totalPages - 1, Math.round(container.scrollLeft / container.clientWidth))
+          ? Math.min(
+              totalPages - 1,
+              Math.round((nearestChildIndex / Math.max(1, cards.length - 1)) * (totalPages - 1)),
+            )
           : 0;
 
         setCount(totalPages);
@@ -76,12 +91,21 @@ function MediaGalleryInner({ backdrops = [], videos = [] }: Props) {
         {Array.from({ length: pageCount }).map((_, index) => (
           <PaginationDotButton
             key={`${label}-page-${index}`}
-            onClick={() =>
-              container?.scrollTo({
-                left: container.clientWidth * index,
+            onClick={() => {
+              if (!container) return;
+
+              const cards = Array.from(container.children) as HTMLElement[];
+              const targetChildIndex =
+                pageCount <= 1 || cards.length <= 1
+                  ? 0
+                  : Math.round((index * (cards.length - 1)) / (pageCount - 1));
+
+              cards[targetChildIndex]?.scrollIntoView({
                 behavior: 'smooth',
-              })
-            }
+                inline: 'start',
+                block: 'nearest',
+              });
+            }}
             active={index === activePage}
             aria-label={t('mediaGallery.goToPage', 'Go to {{label}} page {{index}}', {
               label,

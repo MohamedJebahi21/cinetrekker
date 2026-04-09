@@ -1,8 +1,10 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getTVDetails, getTVSeasonDetails } from "@/services/tmdb";
-import { useUserLists } from "@/contexts/UserListsContext";
-import { useWatchedEpisodes, type WatchedEpisode } from "@/hooks/useFollowedShows";
+import {
+  useWatchedEpisodes,
+  type WatchedEpisode,
+} from "@/hooks/useFollowedShows";
 import type { MediaDetails, TVEpisodeInfo } from "@/types/media";
 
 type ContinueWatchingEpisode = TVEpisodeInfo & {
@@ -15,6 +17,7 @@ export type ContinueWatchingItem = {
   progressPercent: number;
   nextEpisode: ContinueWatchingEpisode | null;
   lastWatchedEpisode: WatchedEpisode | null;
+  lastActivityAt: string | null;
 };
 
 function isReleased(airDate?: string | null) {
@@ -74,21 +77,30 @@ async function findNextEpisode(
 }
 
 export function useContinueWatching(language: string) {
-  const { watched } = useUserLists();
   const { watchedEpisodes } = useWatchedEpisodes();
 
   const activeShows = useMemo(() => {
-    const showIdsFromEpisodes = new Set(watchedEpisodes.map((item) => item.show_id));
-    return watched.filter((item) => {
-      if (item.mediaType !== "tv") return false;
-      return item.status === "watching" || showIdsFromEpisodes.has(item.mediaId);
+    const byId = new Map<number, { mediaId: number; lastActivityAt: string | null }>();
+    watchedEpisodes.forEach((episode) => {
+      const existing = byId.get(episode.show_id);
+      const nextActivityAt = [existing?.lastActivityAt, episode.watched_at]
+        .filter(Boolean)
+        .sort()
+        .at(-1) ?? null;
+
+      byId.set(episode.show_id, {
+        mediaId: episode.show_id,
+        lastActivityAt: nextActivityAt,
+      });
     });
-  }, [watched, watchedEpisodes]);
+
+    return Array.from(byId.values());
+  }, [watchedEpisodes]);
 
   return useQuery({
     queryKey: [
-      "continue-watching-v2",
-      activeShows.map((item) => item.mediaId),
+      "continue-watching-v3",
+      activeShows.map((item) => `${item.mediaId}-${item.lastActivityAt ?? "none"}`),
       watchedEpisodes.map(
         (item) =>
           `${item.show_id}-${item.season_number}-${item.episode_number}-${item.watched_at}`,
@@ -115,18 +127,19 @@ export function useContinueWatching(language: string) {
             language,
           );
           const watchedEpisodeCount = showEpisodes.length;
-          
-          // If there's no next episode, or the only next episode is upcoming, 
-          // the user has watched all currently released episodes.
-          const isCaughtUp = !nextEpisode || ('isUpcoming' in nextEpisode && nextEpisode.isUpcoming);
-          
-          const totalEpisodes = isCaughtUp 
-            ? watchedEpisodeCount 
-            : Math.max(details.number_of_episodes ?? 0, 1);
-            
-          const progressPercent = isCaughtUp 
-            ? 100 
-            : Math.min(100, Math.round((watchedEpisodeCount / totalEpisodes) * 100));
+          const hasReleasedNextEpisode =
+            Boolean(nextEpisode) &&
+            !("isUpcoming" in (nextEpisode ?? {})) &&
+            Boolean(nextEpisode);
+          const totalEpisodes = hasReleasedNextEpisode
+            ? Math.max(details.number_of_episodes ?? 0, watchedEpisodeCount, 1)
+            : Math.max(watchedEpisodeCount, 1);
+          const progressPercent = hasReleasedNextEpisode
+            ? Math.min(
+                99,
+                Math.round((watchedEpisodeCount / totalEpisodes) * 100),
+              )
+            : 100;
 
           return {
             details,
@@ -134,6 +147,7 @@ export function useContinueWatching(language: string) {
             progressPercent,
             nextEpisode: nextEpisode as ContinueWatchingEpisode | null,
             lastWatchedEpisode,
+            lastActivityAt: show.lastActivityAt,
           } satisfies ContinueWatchingItem;
         }),
       );
@@ -141,17 +155,20 @@ export function useContinueWatching(language: string) {
       return items
         .filter(
           (item) =>
-            item.progressPercent < 100 &&
-            (item.nextEpisode || item.lastWatchedEpisode),
+            item.watchedEpisodeCount > 0 &&
+            Boolean(item.nextEpisode) &&
+            item.nextEpisode?.isUpcoming !== true,
         )
         .sort((a, b) => {
           const aDate =
             a.nextEpisode?.air_date ??
+            a.lastActivityAt ??
             a.lastWatchedEpisode?.watched_at ??
             a.details.first_air_date ??
             "";
           const bDate =
             b.nextEpisode?.air_date ??
+            b.lastActivityAt ??
             b.lastWatchedEpisode?.watched_at ??
             b.details.first_air_date ??
             "";

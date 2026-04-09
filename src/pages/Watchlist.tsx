@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Bookmark, CheckSquare, LayoutGrid, List, Printer, Square, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUserLists } from "@/contexts/UserListsContext";
@@ -29,6 +29,7 @@ import {
 import { Image } from "@/components/ui/Image";
 import { enrichMediaItems } from "@/lib/mediaEnrichment";
 import { useAuth } from "@/contexts/AuthContext";
+import GuestSyncBanner from "@/components/GuestSyncBanner";
 
 type WatchlistStatusFilter =
   | "all"
@@ -50,18 +51,11 @@ type WatchlistMedia = Media & {
 
 export default function Watchlist() {
   const { t, i18n } = useTranslation();
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const { watchlist, watched, addToWatched, removeFromWatchlist } = useUserLists();
   const navigate = useNavigate();
-  const location = useLocation();
   const [searchParams] = useSearchParams();
   const language = i18n.language;
-
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate("/login", { replace: true, state: { from: location.pathname } });
-    }
-  }, [loading, user, navigate, location.pathname]);
 
   const [statusFilter, setStatusFilter] =
     useState<WatchlistStatusFilter>("all");
@@ -236,6 +230,7 @@ export default function Watchlist() {
 
       <div className="ct-page-shell min-h-screen">
         <div className="page-container max-w-7xl pt-20 pb-24 md:pb-10">
+          {!user ? <GuestSyncBanner /> : null}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}

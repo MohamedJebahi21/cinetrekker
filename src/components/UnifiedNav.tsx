@@ -29,6 +29,7 @@ import Layers from "lucide-react/dist/esm/icons/layers";
 import CalendarDays from "lucide-react/dist/esm/icons/calendar-days";
 import Award from "lucide-react/dist/esm/icons/award";
 import User from "lucide-react/dist/esm/icons/user";
+import Compass from "lucide-react/dist/esm/icons/compass";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Image } from "@/components/ui/Image";
@@ -64,6 +65,13 @@ interface NavItem {
   exact?: boolean;
 }
 
+const PRIMARY_NAV_ITEMS: NavItem[] = [
+  { path: "/", key: "nav.home", fallback: "Home", icon: House, exact: true },
+  { path: "/discover", key: "nav.discover", fallback: "Discover", icon: Compass },
+  { path: "/search", key: "nav.search", fallback: "Search", icon: Search },
+  { path: "/watchlist", key: "nav.watchlist", fallback: "My Lists", icon: Bookmark },
+];
+
 // Mega menu structure — 3 columns
 const MEGA_MENU_COLUMNS = [
   {
@@ -71,6 +79,7 @@ const MEGA_MENU_COLUMNS = [
     heading: "Discover",
     items: [
       { path: "/", key: "nav.home", fallback: "Home", icon: House, exact: true },
+      { path: "/discover", key: "nav.discover", fallback: "Discover", icon: Compass },
       { path: "/search", key: "nav.search", fallback: "Search", icon: Search },
       { path: "/trending", key: "nav.trending", fallback: "Trending", icon: Sparkles },
       { path: "/genres", key: "nav.genres", fallback: "Genres", icon: Layers },
@@ -268,9 +277,29 @@ export function UnifiedNav() {
           </div>
         </Link>
 
+        <div className="hidden items-center gap-1 lg:flex">
+          {PRIMARY_NAV_ITEMS.map((item) => {
+            const isActive = item.exact ? pathname === item.path : pathname.startsWith(item.path);
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "rounded-full px-3 py-2 text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-primary/12 text-primary"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                )}
+              >
+                {t(item.key, item.fallback)}
+              </Link>
+            );
+          })}
+        </div>
+
         {/* Desktop search */}
         {!isSearchPage && (
-          <div className="mx-4 hidden max-w-xl flex-1 md:block">
+          <div className="mx-4 hidden max-w-xl flex-1 lg:block">
             <Suspense fallback={searchFallback}>
               <SearchDropdown />
             </Suspense>

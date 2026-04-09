@@ -277,8 +277,23 @@ export default function Details() {
       const totalPages = hasScroll
         ? Math.max(1, Math.ceil(container.scrollWidth / container.clientWidth))
         : 1;
+      const cards = Array.from(container.children) as HTMLElement[];
+      let nearestChildIndex = 0;
+      let nearestDistance = Number.POSITIVE_INFINITY;
+
+      cards.forEach((card, index) => {
+        const distance = Math.abs(card.offsetLeft - container.scrollLeft);
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearestChildIndex = index;
+        }
+      });
+
       const nextPage = hasScroll
-        ? Math.min(totalPages - 1, Math.round(container.scrollLeft / container.clientWidth))
+        ? Math.min(
+            totalPages - 1,
+            Math.round((nearestChildIndex / Math.max(1, cards.length - 1)) * (totalPages - 1)),
+          )
         : 0;
 
       setCastPageCount(totalPages);
@@ -491,11 +506,6 @@ export default function Details() {
     rating >= 7 ? "rating-high" : rating >= 5 ? "rating-medium" : "rating-low";
 
   const handleAddToWatchlist = async () => {
-    if (!user) {
-      window.dispatchEvent(new CustomEvent("cinetrekker:auth-required"));
-      return;
-    }
-
     const nextState = !optimisticInWatchlist;
     setOptimisticInWatchlist(nextState);
     setIsWatchlistPending(true);
@@ -513,11 +523,6 @@ export default function Details() {
   };
 
   const handleMarkAsWatched = async () => {
-    if (!user) {
-      window.dispatchEvent(new CustomEvent("cinetrekker:auth-required"));
-      return;
-    }
-
     if (optimisticWatched) {
       setOptimisticWatched(false);
       setIsWatchedPending(true);
@@ -882,7 +887,7 @@ export default function Details() {
       </div>
 
       <div className="page-container relative z-10 -mt-32 pb-24 md:-mt-48 md:pb-0">
-        <div className="flex flex-col md:flex-row gap-8">
+        <div className="flex flex-col gap-8 md:flex-row">
           <div className="flex-shrink-0 mx-auto md:mx-0">
             {details.poster_path ? (
               <Image
@@ -914,80 +919,129 @@ export default function Details() {
           </div>
 
           <div className="flex-1 space-y-6">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant="outline" className="text-xs">
+            <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.78),rgba(15,23,42,0.42))] p-6 shadow-[0_24px_60px_rgba(0,0,0,0.32)] backdrop-blur-xl">
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <Badge variant="outline" className="border-white/15 bg-white/5 text-xs uppercase tracking-[0.18em] text-foreground/90">
                   {mediaType === "movie"
                     ? t("common.movie")
                     : t("common.tvShow")}
                 </Badge>
-                {year && <span className="text-muted-foreground">{year}</span>}
-              </div>
-              <h1 className="text-3xl md:text-4xl font-bold mb-4">{title}</h1>
-
-              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                {year && <span className="text-sm text-foreground/70">{year}</span>}
                 {rating > 0 && (
-                  <div className={cn("rating-badge", ratingClass)}>
-                    <Star className="w-4 h-4 mr-1 fill-current" />
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/35 px-3 py-1 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(0,0,0,0.24)] backdrop-blur-xl">
+                    <Star className="h-4 w-4 fill-yellow-300 text-yellow-300" />
                     {rating.toFixed(1)}
-                  </div>
+                  </span>
                 )}
+              </div>
+              <h1 className="text-3xl font-bold leading-tight md:text-5xl">{title}</h1>
+
+              <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-foreground/72">
                 {runtime && (
-                  <div className="flex items-center gap-1">
+                  <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
                     <Clock className="w-4 h-4" />
                     {runtime} {t("details.minutes")}
                   </div>
                 )}
                 {releaseDate && (
-                  <div className="flex items-center gap-1">
+                  <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
                     <Calendar className="w-4 h-4" />
                     {new Date(releaseDate).toLocaleDateString(language)}
                   </div>
                 )}
                 {details.number_of_seasons && (
-                  <span>
+                  <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
                     {details.number_of_seasons} {t("details.seasons")}
                   </span>
                 )}
                 {details.number_of_episodes && (
-                  <span>
+                  <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
                     {details.number_of_episodes} {t("details.episodes")}
                   </span>
                 )}
               </div>
 
               {details.genres && details.genres.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-4">
+                <div className="mt-5 flex flex-wrap gap-2">
                   {details.genres.map((genre) => (
-                    <Badge key={genre.id} variant="secondary">
+                    <Badge
+                      key={genre.id}
+                      variant="secondary"
+                      className="border border-white/10 bg-white/8 text-foreground"
+                    >
                       {genre.name}
                     </Badge>
                   ))}
                 </div>
               )}
-              {renderWatchProviders()}
+
+              <div className="mt-6 grid gap-3 lg:grid-cols-[minmax(0,1.6fr)_minmax(280px,1fr)]">
+                <div className="rounded-[1.5rem] border border-white/10 bg-black/20 p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground/55">
+                        {t("details.overview", "Overview")}
+                      </p>
+                      <p className="mt-3 max-w-3xl whitespace-pre-line text-sm leading-7 text-foreground/78 md:text-base">
+                        {showFullOverview || !shouldShowOverviewToggle
+                          ? overview
+                          : `${overview.slice(0, 280).trimEnd()}...`}
+                      </p>
+                    </div>
+                  </div>
+                  {shouldShowOverviewToggle ? (
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="mt-3 px-0 text-primary"
+                      onClick={() => setShowFullOverview((s) => !s)}
+                    >
+                      {showFullOverview
+                        ? t("common.readLess", "Read Less")
+                        : t("common.readMore", "Read More")}
+                    </Button>
+                  ) : null}
+                </div>
+
+                <div className="rounded-[1.5rem] border border-white/10 bg-black/20 p-5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground/55">
+                    {t("details.watchOptions", "Watch Options")}
+                  </p>
+                  <div className="mt-3 text-sm text-foreground/72">
+                    {renderWatchProviders()}
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <Button
-                variant={isPinnedFavorite ? "secondary" : "outline"}
-                className="gap-2"
-                onClick={handleTogglePinnedFavorite}
-                aria-label={
-                  isPinnedFavorite ? "Unpin from favorites" : "Pin to favorites"
-                }
-              >
-                <Pin className="w-4 h-4" />
-                {isPinnedFavorite ? "Pinned" : "Pin"}
-              </Button>
+            <div className="rounded-[1.75rem] border border-border/60 bg-card/55 p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)] backdrop-blur-md">
+              <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    {t("details.primaryActions", "Your Next Move")}
+                  </p>
+                  <h2 className="mt-1 text-lg font-semibold text-foreground">
+                    {t("details.trackThisTitle", "Track this title your way")}
+                  </h2>
+                </div>
+                {!user ? (
+                  <p className="text-sm text-muted-foreground">
+                    {t(
+                      "details.guestTrackingHint",
+                      "Guest actions save locally now. Create an account later if you want sync.",
+                    )}
+                  </p>
+                ) : null}
+              </div>
 
+              <div className="flex flex-wrap gap-3">
               <Button
-                variant="outline"
+                variant="default"
                 className={cn(
-                  "w-full gap-2 sm:w-auto",
+                  "w-full gap-2 sm:w-auto sm:min-w-[180px]",
                   optimisticInWatchlist
                     ? "border-red-500/70 bg-red-600 text-white hover:bg-red-700"
-                    : "border-border bg-background text-foreground hover:bg-accent",
+                    : "bg-primary text-primary-foreground hover:bg-primary/90",
                 )}
                 onClick={handleAddToWatchlist}
                 disabled={isWatchlistPending}
@@ -1019,7 +1073,7 @@ export default function Details() {
               <Button
                 variant="outline"
                 className={cn(
-                  "w-full gap-2 sm:w-auto",
+                  "w-full gap-2 sm:w-auto sm:min-w-[160px]",
                   optimisticWatched
                     ? "border-emerald-500/70 bg-emerald-600 text-white hover:bg-emerald-700"
                     : "border-border bg-background text-foreground hover:bg-accent",
@@ -1059,14 +1113,17 @@ export default function Details() {
                 details={details}
               />
 
-              {!user ? (
-                <div className="w-full rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-                  {t(
-                    "details.guestActionHint",
-                    "Save to watchlist, mark watched, and leave ratings after you sign in. You can still browse every public title now.",
-                  )}
-                </div>
-              ) : null}
+              <Button
+                variant={isPinnedFavorite ? "secondary" : "ghost"}
+                className="gap-2"
+                onClick={handleTogglePinnedFavorite}
+                aria-label={
+                  isPinnedFavorite ? "Unpin from favorites" : "Pin to favorites"
+                }
+              >
+                <Pin className="w-4 h-4" />
+                {isPinnedFavorite ? "Pinned" : "Pin"}
+              </Button>
 
               {mediaType === "tv" && seasons.length > 0 && user && (
                 <Dialog
@@ -1220,6 +1277,7 @@ export default function Details() {
                     : t("details.addRating", "Add Rating & Review")}
                 </Button>
               )}
+              </div>
             </div>
 
             <WatchedStatusDialog
@@ -1315,42 +1373,6 @@ export default function Details() {
                 {t("home.hero.subtitle")}
               </div>
             )}
-
-            <div>
-              <h2 className="text-lg font-semibold mb-2">
-                {t("details.overview")}
-              </h2>
-              <div className="relative">
-                <p
-                  className={cn(
-                    "whitespace-pre-line text-muted-foreground leading-relaxed transition-all",
-                    !showFullOverview && "max-h-32 overflow-hidden",
-                  )}
-                >
-                  {overview}
-                </p>
-                {!showFullOverview && shouldShowOverviewToggle ? (
-                  <div
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-background to-transparent"
-                  />
-                ) : null}
-              </div>
-              {shouldShowOverviewToggle && (
-                <div className="mt-2">
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="px-0"
-                    onClick={() => setShowFullOverview((s) => !s)}
-                  >
-                    {showFullOverview
-                      ? t("common.readLess", "Read Less")
-                      : t("common.readMore", "Read More")}
-                  </Button>
-                </div>
-              )}
-            </div>
 
             {mediaType === "tv" && seasons.length > 0 ? (
               <section className="ct-panel p-5">
@@ -1507,12 +1529,22 @@ export default function Details() {
                 {Array.from({ length: castPageCount }).map((_, index) => (
                   <PaginationDotButton
                     key={`cast-page-${index}`}
-                    onClick={() =>
-                      castScrollRef.current?.scrollTo({
-                        left: (castScrollRef.current?.clientWidth || 0) * index,
+                    onClick={() => {
+                      const castContainer = castScrollRef.current;
+                      if (!castContainer) return;
+
+                      const cards = Array.from(castContainer.children) as HTMLElement[];
+                      const targetChildIndex =
+                        castPageCount <= 1 || cards.length <= 1
+                          ? 0
+                          : Math.round((index * (cards.length - 1)) / (castPageCount - 1));
+
+                      cards[targetChildIndex]?.scrollIntoView({
                         behavior: "smooth",
-                      })
-                    }
+                        inline: "start",
+                        block: "nearest",
+                      });
+                    }}
                     active={index === activeCastPage}
                     aria-label={t("details.goToCastPage", "Go to cast page {{page}}", { page: index + 1 })}
                     aria-current={index === activeCastPage ? "true" : undefined}

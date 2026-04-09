@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { useTranslation } from "react-i18next";
+import { buildCanonicalUrl, toBreadcrumbJsonLd } from "@/lib/seo";
 
 export default function AwardWinners() {
   const { t } = useTranslation();
@@ -206,20 +207,32 @@ export default function AwardWinners() {
     <>
       <SEO
         title={t("awards.seoTitle", "Award Winners & Nominees")}
-        description={t("awards.seoDescription", "Explore Oscar, Emmy, and critically acclaimed movies and TV shows")}
-        canonical="https://cinetrekker.vercel.app/awards"
+        description={t("awards.seoDescription", "Explore award-inspired and critically acclaimed movies and TV shows")}
+        canonical={buildCanonicalUrl("/awards")}
+        jsonLd={[
+          toBreadcrumbJsonLd([
+            { name: t("nav.home", "Home"), path: "/" },
+            { name: t("nav.discover", "Discover"), path: "/discover" },
+            { name: t("nav.awards", "Awards"), path: "/awards" },
+          ]),
+        ]}
       />
 
       <div className="page-container pt-20 pb-24 md:pb-0">
-        <div className="mb-6 flex items-start gap-3 sm:items-center">
-          <Award className="h-8 w-8 text-primary" />
-          <div className="min-w-0">
-            <h1 className="text-2xl font-bold sm:text-3xl">{t("awards.title", "Award Winners & Nominees")}</h1>
-            <p className="text-muted-foreground mt-1">
-              {t("awards.subtitle", "Celebrating excellence in film and television")}
-            </p>
+        <section className="ct-panel-strong mb-8 overflow-hidden rounded-[2rem] p-6 md:p-8">
+          <div className="flex items-start gap-3">
+            <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+              <Award className="h-6 w-6" />
+            </span>
+            <div className="min-w-0">
+              <p className="ct-kicker mb-3">{t("awards.kicker", "Prestige-first browsing")}</p>
+              <h1 className="section-title mb-2">{t("awards.title", "Award Winners & Nominees")}</h1>
+              <p className="text-muted-foreground mt-1 max-w-3xl text-sm leading-relaxed md:text-base">
+                {t("awards.subtitle", "Browse award-inspired and critically acclaimed collections across film and television.")}
+              </p>
+            </div>
           </div>
-        </div>
+        </section>
 
 
         {/* Filters */}
@@ -285,6 +298,13 @@ export default function AwardWinners() {
             {t("awards.baftaComingSoon", "BAFTA filtering is coming soon. For now, use Oscar, Emmy, or Golden Globe.")}
           </div>
         )}
+
+        <div className="mb-6 rounded-xl border border-border/60 bg-card/60 p-4 text-sm text-muted-foreground">
+          {t(
+            "awards.proxyNote",
+            "These collections are discovery proxies based on ratings, popularity, and release year. They are meant to help you browse prestige picks quickly, not serve as official nomination records.",
+          )}
+        </div>
 
         <Tabs
           value={activeTab}

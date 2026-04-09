@@ -70,6 +70,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { safeT } from "@/lib/i18n";
+import { getSearchHistory, type SearchHistoryItem } from "@/lib/searchHistory";
 
 const LANGUAGES = [
   { code: "en", key: "search.langOptions.english", fallback: "English" },
@@ -863,6 +864,20 @@ export default function Search() {
 
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const mobileFiltersRef = useRef<HTMLDivElement | null>(null);
+  const [desktopFiltersExpanded, setDesktopFiltersExpanded] = useState(
+    initialQuery.length === 0 && initialGenres.length === 0 && !initialYear
+      ? false
+      : true,
+  );
+  const [recentSearches, setRecentSearches] = useState<SearchHistoryItem[]>([]);
+  const activeFiltersCount = [
+    mediaTypeFilter !== "all",
+    genreFilters.length > 0,
+    yearFilter,
+    languageFilters.length > 0,
+    runtimeFilter,
+    streamingFilters.length > 0,
+  ].filter(Boolean).length;
 
   // Keyboard shortcut: 'f' to open filters on mobile when not focused on input
   useEffect(() => {
@@ -893,14 +908,15 @@ export default function Search() {
     }
   }, [mobileFiltersOpen]);
 
-  const activeFiltersCount = [
-    mediaTypeFilter !== "all",
-    genreFilters.length > 0,
-    yearFilter,
-    languageFilters.length > 0,
-    runtimeFilter,
-    streamingFilters.length > 0,
-  ].filter(Boolean).length;
+  useEffect(() => {
+    setRecentSearches(getSearchHistory().slice(0, 6));
+  }, [normalizedLocationSearch]);
+
+  useEffect(() => {
+    if (activeFiltersCount > 0) {
+      setDesktopFiltersExpanded(true);
+    }
+  }, [activeFiltersCount]);
 
   const genreOptions = allGenres.map((genre) => ({
     id: genre.id.toString(),
@@ -914,6 +930,54 @@ export default function Search() {
     id: service.id,
     label: t(service.key, service.fallback),
   }));
+
+  const activeFilterPills = [
+    mediaTypeFilter !== "all"
+      ? {
+          key: "type",
+          label: `${t("filters.type")}: ${t(
+            mediaTypeFilter === "movie" ? "common.movies" : "common.tvShows",
+          )}`,
+          clear: () => setMediaTypeFilter("all"),
+        }
+      : null,
+    ...genreFilters.map((genreId) => ({
+      key: `genre-${genreId}`,
+      label: genreOptions.find((option) => option.id === genreId)?.label ?? genreId,
+      clear: () => setGenreFilters((current) => current.filter((item) => item !== genreId)),
+    })),
+    yearFilter
+      ? {
+          key: "year",
+          label: `${t("filters.year")}: ${yearFilter}`,
+          clear: () => setYearFilter(""),
+        }
+      : null,
+    ...languageFilters.map((lang) => ({
+      key: `lang-${lang}`,
+      label: languageOptions.find((option) => option.id === lang)?.label ?? lang.toUpperCase(),
+      clear: () => setLanguageFilters((current) => current.filter((item) => item !== lang)),
+    })),
+    runtimeFilter
+      ? {
+          key: "runtime",
+          label:
+            RUNTIMES.find((runtime) => runtime.id === runtimeFilter)?.fallback ??
+            runtimeFilter,
+          clear: () => setRuntimeFilter(""),
+        }
+      : null,
+    ...streamingFilters.map((serviceId) => ({
+      key: `streaming-${serviceId}`,
+      label:
+        streamingOptions.find((option) => option.id === serviceId)?.label ??
+        serviceId,
+      clear: () =>
+        setStreamingFilters((current) =>
+          current.filter((item) => item !== serviceId),
+        ),
+    })),
+  ].filter(Boolean) as Array<{ key: string; label: string; clear: () => void }>;
 
   // Card click navigates via the card's Link; quick preview removed
 
@@ -1128,9 +1192,18 @@ export default function Search() {
         ]}
       />
       {/* Search Header */}
-      <div className="mb-8 border-b border-border/60 bg-background/95 py-3 backdrop-blur-md sm:py-2">
+      <div className="mb-8 rounded-[2rem] border border-border/60 bg-[linear-gradient(180deg,hsla(var(--card)/0.92),hsla(var(--card)/0.72))] px-4 py-4 shadow-[0_18px_45px_rgba(0,0,0,0.12)] backdrop-blur-md sm:px-6">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="section-title mb-0">{t("nav.search")}</h1>
+          <div>
+            <p className="ct-kicker mb-2">{t("search.discoveryLab", "Discovery Lab")}</p>
+            <h1 className="section-title mb-0">{t("nav.search")}</h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              {t(
+                "search.heroSubtitle",
+                "Search by title, then narrow fast with genre, runtime, language, release year, and streaming filters without losing momentum.",
+              )}
+            </p>
+          </div>
           <RandomTrekButton className="w-full sm:w-auto" />
         </div>
 
@@ -1163,8 +1236,44 @@ export default function Search() {
       </div>
       {/* Advanced Filters (desktop) */}
       <div className="hidden md:block">
-        <div className="glass-card p-5 mb-8">
-          <FiltersContent />
+        <div className="glass-card sticky top-24 z-20 mb-8 overflow-hidden p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                {t("search.filters", "Filters")}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {activeFiltersCount > 0
+                  ? t(
+                      "search.filtersSummaryActive",
+                      "{{count}} filters are shaping these results.",
+                      { count: activeFiltersCount },
+                    )
+                  : t(
+                      "search.filtersSummaryIdle",
+                      "Open filters when you want to narrow by genre, runtime, year, language, or service.",
+                    )}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2"
+              onClick={() => setDesktopFiltersExpanded((current) => !current)}
+              aria-expanded={desktopFiltersExpanded}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              {desktopFiltersExpanded
+                ? t("search.hideFilters", "Hide Filters")
+                : t("search.showFilters", "Show Filters")}
+            </Button>
+          </div>
+
+          {desktopFiltersExpanded ? (
+            <div className="mt-5 border-t border-border/50 pt-5">
+              <FiltersContent />
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -1245,6 +1354,55 @@ export default function Search() {
           )}
         </p>
       </div>
+
+      {activeFilterPills.length > 0 ? (
+        <div className="mb-5 flex flex-wrap items-center gap-2">
+          {activeFilterPills.map((pill) => (
+            <button
+              key={pill.key}
+              type="button"
+              onClick={pill.clear}
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-full border border-border/60 bg-card/70 px-3 py-2 text-sm text-foreground transition-colors hover:border-primary/30 hover:bg-accent/50"
+            >
+              <span>{pill.label}</span>
+              <X className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+          ))}
+          <Button variant="ghost" size="sm" onClick={clearFilters}>
+            {t("search.clearFilters")}
+          </Button>
+        </div>
+      ) : null}
+
+      {!normalizedQuery && activeFiltersCount === 0 && recentSearches.length > 0 ? (
+        <div className="mb-6 rounded-[1.5rem] border border-border/60 bg-card/55 px-4 py-4 shadow-[0_14px_35px_rgba(0,0,0,0.12)] backdrop-blur-md">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                {t("search.recentSearches", "Recent Searches")}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t(
+                  "search.recentSearchesHint",
+                  "Jump back into something you were already exploring.",
+                )}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {recentSearches.map((item) => (
+                <button
+                  key={`${item.query}-${item.timestamp}`}
+                  type="button"
+                  onClick={() => setQuery(item.query)}
+                  className="rounded-full border border-border/60 bg-background/60 px-3 py-2 text-sm text-foreground transition-colors hover:border-primary/30 hover:bg-accent/50"
+                >
+                  {item.query}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* Results */}
       {isLoadingOrRefreshing && !loadingTimedOut ? (

@@ -35,6 +35,7 @@ export interface MediaCardProps {
   mediaType?: "movie" | "tv";
   showType?: boolean;
   showStatus?: boolean;
+  interactionMode?: "full" | "rail";
   onAction?: () => void;
   selectable?: boolean;
   selected?: boolean;
@@ -54,7 +55,7 @@ const STATUS_CONFIG: Record<string, WatchStatusConfig> = {
   plan_to_watch: { icon: "", label: "Plan to Watch", color: "bg-yellow-500" },
 };
 
-function PosterImage({
+const PosterImage = React.memo(function PosterImage({
   posterPath,
   alt,
 }: {
@@ -116,13 +117,15 @@ function PosterImage({
       )}
     </div>
   );
-}
+});
+PosterImage.displayName = "PosterImage";
 
 export const MediaCard = React.memo(function MediaCard({
   media,
   mediaType: mediaTypeProp,
   showType = true,
   showStatus = false,
+  interactionMode = "full",
   selectable = false,
   selected = false,
   onToggleSelect,
@@ -138,9 +141,6 @@ export const MediaCard = React.memo(function MediaCard({
     removeFromWatched,
   } = useUserLists();
   const { markEpisodeWatched } = useWatchedEpisodes();
-  const [localInWatchlist, setLocalInWatchlist] = useState<boolean>(() =>
-    false,
-  );
   const [optimisticInWatchlist, setOptimisticInWatchlist] = useState(false);
   const [optimisticWatched, setOptimisticWatched] = useState(false);
   const [isWatchlistPending, setIsWatchlistPending] = useState(false);
@@ -154,12 +154,24 @@ export const MediaCard = React.memo(function MediaCard({
     [mediaTypeProp, media],
   );
   const posterAlt = getMediaAltText(title, mediaType, "poster");
-  const inWatchlist = user
-    ? isInWatchlist(media.id, mediaType)
-    : localInWatchlist;
+  const inWatchlist = isInWatchlist(media.id, mediaType);
   const watched = isWatched(media.id, mediaType);
   const watchStatus = media.watchStatus;
   const rating = media.vote_average;
+  const showInlineActions = true;
+  const mediaLabel = useMemo(
+    () => (mediaType === "movie" ? t("common.movie") : t("common.tvShow")),
+    [mediaType, t],
+  );
+  const metaLine = useMemo(() => {
+    const parts = [year];
+
+    if (showType) {
+      parts.push(mediaLabel);
+    }
+
+    return parts.join(" • ");
+  }, [year, showType, mediaLabel]);
 
   useEffect(() => {
     setOptimisticInWatchlist(inWatchlist);
@@ -177,39 +189,31 @@ export const MediaCard = React.memo(function MediaCard({
   const handleWatchlistClick = async (e: PreventableEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (user) {
-      const nextState = !optimisticInWatchlist;
-      setOptimisticInWatchlist(nextState);
-      setIsWatchlistPending(true);
-      try {
-        if (nextState) {
-          await addToWatchlist(media.id, mediaType);
-          try {
-            if (typeof navigator !== "undefined" && "vibrate" in navigator)
-              (navigator as Navigator).vibrate?.(10);
-          } catch {
-            // Ignore vibration API failures for unsupported devices/browsers.
-          }
-        } else {
-          await removeFromWatchlist(media.id, mediaType);
+    const nextState = !optimisticInWatchlist;
+    setOptimisticInWatchlist(nextState);
+    setIsWatchlistPending(true);
+    try {
+      if (nextState) {
+        await addToWatchlist(media.id, mediaType);
+        try {
+          if (typeof navigator !== "undefined" && "vibrate" in navigator)
+            (navigator as Navigator).vibrate?.(10);
+        } catch {
+          // Ignore vibration API failures for unsupported devices/browsers.
         }
-      } catch {
-        setOptimisticInWatchlist(!nextState);
-      } finally {
-        setIsWatchlistPending(false);
+      } else {
+        await removeFromWatchlist(media.id, mediaType);
       }
-    } else {
-      window.dispatchEvent(new CustomEvent("cinetrekker:auth-required"));
+    } catch {
+      setOptimisticInWatchlist(!nextState);
+    } finally {
+      setIsWatchlistPending(false);
     }
   };
 
   const handleWatchedClick = async (e: PreventableEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!user) {
-      window.dispatchEvent(new CustomEvent("cinetrekker:auth-required"));
-      return;
-    }
 
     if (optimisticWatched) {
       setOptimisticWatched(false);
@@ -226,7 +230,7 @@ export const MediaCard = React.memo(function MediaCard({
       if (mediaType === "tv" && user) {
         setWatchStatusModalOpen(true);
       } else {
-        // For movies or guests, just mark as watched
+        // Guests can still track watched titles locally.
         setOptimisticWatched(true);
         setIsWatchedPending(true);
         try {
@@ -273,7 +277,7 @@ export const MediaCard = React.memo(function MediaCard({
     <>
       <Link
         to={buildMediaPath(mediaType, media.id, title)}
-        className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-white/5 shadow-card transition-all duration-300 glass-card-hover hover:border-primary/20 hover:scale-[1.03] hover:-translate-y-1 active:scale-[1.01] active:border-primary/30 focus-ring focus-visible:border-primary/35"
+        className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-white/5 shadow-card transition-all duration-300 glass-card-hover md:hover:border-primary/20 md:hover:scale-[1.03] md:hover:-translate-y-1 active:scale-[1.01] active:border-primary/30 focus-ring focus-visible:border-primary/35"
         aria-label={`${title} - open details`}
         tabIndex={0}
       >
@@ -306,52 +310,49 @@ export const MediaCard = React.memo(function MediaCard({
               </Button>
             </div>
           ) : null}
-          <div className="absolute inset-x-3 bottom-3 z-20 hidden translate-y-2 flex-col gap-2 opacity-0 transition-all duration-200 md:flex md:group-hover:translate-y-0 md:group-hover:opacity-100">
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className={cn(
-                "h-10 w-full justify-center gap-2 backdrop-blur-md",
-                optimisticInWatchlist
-                  ? "border-red-500/70 bg-red-600 text-white hover:bg-red-700"
-                  : "border-white/20 bg-background/80 text-foreground",
-              )}
-              onClick={(event) => void handleWatchlistClick(event)}
-              aria-label={`Add ${title} to watchlist`}
-            >
-              {isWatchlistPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : null}
-              {t("actions.watchlist", "Watchlist")}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className={cn(
-                "h-10 w-full justify-center gap-2 backdrop-blur-md",
-                optimisticWatched
-                  ? "border-emerald-500/70 bg-emerald-600 text-white hover:bg-emerald-700"
-                  : "border-white/20 bg-background/70 text-foreground",
-              )}
-              onClick={(event) => void handleWatchedClick(event)}
-              aria-label={`Mark ${title} as watched`}
-            >
-              {isWatchedPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : null}
-              {t("actions.watched", "Watched")}
-            </Button>
-          </div>
+          {showInlineActions ? (
+            <div className="absolute inset-x-3 bottom-3 z-20 hidden translate-y-2 flex-col gap-2 opacity-0 transition-all duration-200 md:flex md:group-hover:translate-y-0 md:group-hover:opacity-100">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className={cn(
+                  "h-10 w-full justify-center gap-2 backdrop-blur-md",
+                  optimisticInWatchlist
+                    ? "border-red-500/70 bg-red-600 text-white hover:bg-red-700"
+                    : "border-white/20 bg-background/80 text-foreground",
+                )}
+                onClick={(event) => void handleWatchlistClick(event)}
+                aria-label={`Add ${title} to watchlist`}
+              >
+                {isWatchlistPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : null}
+                {t("actions.watchlist", "Watchlist")}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className={cn(
+                  "h-10 w-full justify-center gap-2 backdrop-blur-md",
+                  optimisticWatched
+                    ? "border-emerald-500/70 bg-emerald-600 text-white hover:bg-emerald-700"
+                    : "border-white/20 bg-background/70 text-foreground",
+                )}
+                onClick={(event) => void handleWatchedClick(event)}
+                aria-label={`Mark ${title} as watched`}
+              >
+                {isWatchedPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : null}
+                {t("actions.watched", "Watched")}
+              </Button>
+            </div>
+          ) : null}
 
           {/* Status Badges - positioned above gradient */}
-          <div className="absolute top-2 left-2 right-2 flex justify-between items-start z-10">
-            {showType && (
-              <span className="px-2 py-1 text-xs font-medium rounded bg-background/80 backdrop-blur-sm">
-                {mediaType === "movie" ? t("common.movie") : t("common.tvShow")}
-              </span>
-            )}
+          <div className="absolute top-2 left-2 right-2 flex justify-start items-start z-10">
             {/* Watch Status Badge */}
             {showStatus &&
               watchStatus &&
@@ -388,15 +389,10 @@ export const MediaCard = React.memo(function MediaCard({
           {rating > 0 && (
             <span
               className={cn(
-                "absolute bottom-2 left-2 px-2 py-1 rounded text-xs font-bold shadow bg-black/80 tracking-[0.01em]",
-                rating >= 7
-                  ? "text-green-400"
-                  : rating >= 5
-                    ? "text-yellow-300"
-                    : "text-red-400",
+                "absolute right-2 top-2 inline-flex items-center gap-1 rounded-lg border border-white/10 bg-black/55 px-2.5 py-1 text-xs font-semibold text-white shadow-[0_8px_18px_rgba(0,0,0,0.25)] backdrop-blur-xl",
               )}
             >
-              <Star className="w-3 h-3 mr-1 fill-current inline-block" />
+              <Star className="h-3 w-3 fill-yellow-300 text-yellow-300" />
               {rating.toFixed(1)}
             </span>
           )}
@@ -410,87 +406,77 @@ export const MediaCard = React.memo(function MediaCard({
             <bdi dir="auto">{title}</bdi>
           </h3>
           <div className="mt-auto flex items-center justify-between gap-2 pt-1">
-            {year ? (
-              <p className="text-xs text-muted-foreground">{year}</p>
-            ) : (
-              <span />
-            )}
+            <p className="text-xs text-muted-foreground">{metaLine}</p>
           </div>
-          {!user ? (
-            <p className="mt-2 text-xs text-muted-foreground">
-              {t(
-                "mediaCard.signInHint",
-                "Sign in to save, track, and review this title.",
-              )}
-            </p>
-          ) : null}
         </div>
 
-        <div className="border-t border-border/50 p-3 md:hidden">
-          <div className="flex flex-col gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="w-full">
+        {showInlineActions ? (
+          <div className="border-t border-border/50 p-3 md:hidden">
+            <div className="flex flex-col gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="w-full">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={cn(
+                        "min-h-[48px] w-full justify-center backdrop-blur-md active:scale-95 transition-transform",
+                        optimisticInWatchlist
+                          ? "border-red-500/70 bg-red-600 text-white hover:bg-red-700"
+                          : "border-white/20 bg-gradient-to-b from-background/90 to-background/65 text-foreground",
+                      )}
+                      onClick={(event) => void handleWatchlistClick(event)}
+                      aria-label={`Add ${title} to watchlist`}
+                    >
+                      {isWatchlistPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : null}
+                      {t("actions.watchlist", "Watchlist")}
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                {!user ? (
+                  <TooltipContent>
+                    {t(
+                      "mediaCard.createAccountHint",
+                      "This saves locally now. Create a free account when you want sync across devices.",
+                    )}
+                  </TooltipContent>
+                ) : null}
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
                   <Button
                     type="button"
                     variant="outline"
                     className={cn(
                       "min-h-[48px] w-full justify-center backdrop-blur-md active:scale-95 transition-transform",
-                      optimisticInWatchlist
-                        ? "border-red-500/70 bg-red-600 text-white hover:bg-red-700"
+                      optimisticWatched
+                        ? "border-emerald-500/70 bg-emerald-600 text-white hover:bg-emerald-700"
                         : "border-white/20 bg-gradient-to-b from-background/90 to-background/65 text-foreground",
                     )}
-                    onClick={(event) => void handleWatchlistClick(event)}
-                    aria-label={`Add ${title} to watchlist`}
+                    onClick={(event) => void handleWatchedClick(event)}
+                    aria-label={`Mark ${title} as watched`}
                   >
-                    {isWatchlistPending ? (
+                    {isWatchedPending ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : null}
-                    {t("actions.watchlist", "Watchlist")}
+                    {t("actions.watched", "Watched")}
                   </Button>
-                </div>
-              </TooltipTrigger>
-              {!user && (
-                <TooltipContent>
-                  {t(
-                    "mediaCard.createAccountHint",
-                    "Create a free account to save your watchlist.",
-                  )}
-                </TooltipContent>
-              )}
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className={cn(
-                    "min-h-[48px] w-full justify-center backdrop-blur-md active:scale-95 transition-transform",
-                    optimisticWatched
-                      ? "border-emerald-500/70 bg-emerald-600 text-white hover:bg-emerald-700"
-                      : "border-white/20 bg-gradient-to-b from-background/90 to-background/65 text-foreground",
-                  )}
-                  onClick={(event) => void handleWatchedClick(event)}
-                  aria-label={`Mark ${title} as watched`}
-                >
-                  {isWatchedPending ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : null}
-                  {t("actions.watched", "Watched")}
-                </Button>
-              </TooltipTrigger>
-              {!user ? (
-                <TooltipContent>
-                  {t(
-                    "mediaCard.signInWatchedHint",
-                    "Sign in to save watched history and reviews.",
-                  )}
-                </TooltipContent>
-              ) : null}
-            </Tooltip>
+                </TooltipTrigger>
+                {!user ? (
+                  <TooltipContent>
+                    {t(
+                      "mediaCard.signInWatchedHint",
+                      "This saves locally now. Sign in later to keep watched history synced.",
+                    )}
+                  </TooltipContent>
+                ) : null}
+              </Tooltip>
+            </div>
           </div>
-        </div>
+        ) : null}
       </Link>
 
       {/* Media preview removed */}
@@ -508,6 +494,20 @@ export const MediaCard = React.memo(function MediaCard({
         />
       )}
     </>
+  );
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.media.id === nextProps.media.id &&
+    (prevProps.mediaType ?? prevProps.media.media_type) ===
+      (nextProps.mediaType ?? nextProps.media.media_type) &&
+    prevProps.media.poster_path === nextProps.media.poster_path &&
+    prevProps.media.vote_average === nextProps.media.vote_average &&
+    prevProps.media.watchStatus === nextProps.media.watchStatus &&
+    prevProps.showType === nextProps.showType &&
+    prevProps.showStatus === nextProps.showStatus &&
+    prevProps.interactionMode === nextProps.interactionMode &&
+    prevProps.selectable === nextProps.selectable &&
+    prevProps.selected === nextProps.selected
   );
 });
 
@@ -559,4 +559,5 @@ export const MediaCardSkeleton = React.forwardRef<
   );
 });
 MediaCardSkeleton.displayName = "MediaCardSkeleton";
+
 

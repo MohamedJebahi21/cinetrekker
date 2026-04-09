@@ -142,14 +142,26 @@ function getCarouselState(
     return DEFAULT_CAROUSEL_STATE;
   }
 
+  const cards = Array.from(container.children) as HTMLElement[];
   const hasScroll = container.scrollWidth > container.clientWidth;
   const pageCount = hasScroll
     ? Math.max(1, Math.ceil(container.scrollWidth / container.clientWidth))
     : 1;
-  const activePage = hasScroll
+  let nearestIndex = 0;
+  let nearestDistance = Number.POSITIVE_INFINITY;
+
+  cards.forEach((card, index) => {
+    const distance = Math.abs(card.offsetLeft - container.scrollLeft);
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearestIndex = index;
+    }
+  });
+
+  const activePage = hasScroll && cards.length > 1
     ? Math.min(
         pageCount - 1,
-        Math.round(container.scrollLeft / container.clientWidth),
+        Math.round((nearestIndex / (cards.length - 1)) * (pageCount - 1)),
       )
     : 0;
 
@@ -2237,7 +2249,7 @@ export default function Profile() {
 
                         <div
                           ref={favoriteMoviesCarouselRef}
-                          className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto px-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pb-2 scroll-smooth overscroll-contain touch-pan-x"
+                          className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto px-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pb-2 scroll-smooth overscroll-x-contain"
                         >
                           {favoriteMovies.map(({ item, preview }) => (
                             <div
@@ -2319,9 +2331,18 @@ export default function Profile() {
                                   const container =
                                     favoriteMoviesCarouselRef.current;
                                   if (!container) return;
-                                  container.scrollTo({
-                                    left: container.clientWidth * index,
+                                  const cards = Array.from(container.children) as HTMLElement[];
+                                  const targetChildIndex =
+                                    favoriteMoviesCarouselState.pageCount <= 1 || cards.length <= 1
+                                      ? 0
+                                      : Math.round(
+                                          (index * (cards.length - 1)) /
+                                            (favoriteMoviesCarouselState.pageCount - 1),
+                                        );
+                                  cards[targetChildIndex]?.scrollIntoView({
                                     behavior: "smooth",
+                                    inline: "start",
+                                    block: "nearest",
                                   });
                                 }}
                                 active={index === favoriteMoviesCarouselState.activePage}
@@ -2418,7 +2439,7 @@ export default function Profile() {
 
                         <div
                           ref={favoriteSeriesCarouselRef}
-                          className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto px-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pb-2 scroll-smooth overscroll-contain touch-pan-x"
+                          className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto px-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pb-2 scroll-smooth overscroll-x-contain"
                         >
                           {favoriteSeries.map(({ item, preview }) => (
                             <div
@@ -2500,9 +2521,18 @@ export default function Profile() {
                                   const container =
                                     favoriteSeriesCarouselRef.current;
                                   if (!container) return;
-                                  container.scrollTo({
-                                    left: container.clientWidth * index,
+                                  const cards = Array.from(container.children) as HTMLElement[];
+                                  const targetChildIndex =
+                                    favoriteSeriesCarouselState.pageCount <= 1 || cards.length <= 1
+                                      ? 0
+                                      : Math.round(
+                                          (index * (cards.length - 1)) /
+                                            (favoriteSeriesCarouselState.pageCount - 1),
+                                        );
+                                  cards[targetChildIndex]?.scrollIntoView({
                                     behavior: "smooth",
+                                    inline: "start",
+                                    block: "nearest",
                                   });
                                 }}
                                 active={index === favoriteSeriesCarouselState.activePage}

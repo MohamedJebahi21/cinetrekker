@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Calendar, CheckCircle2, Play, RefreshCw, Tv } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -44,11 +44,13 @@ export function ContinueWatching() {
   const { data, isLoading, error, refetch } = useContinueWatching(language);
   const { markEpisodeWatched } = useWatchedEpisodes();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const scrollFrameRef = useRef<number | null>(null);
+  const scrollSettleTimeoutRef = useRef<number | null>(null);
+  const [activePage, setActivePage] = useState(0);
   const [hasOverflow, setHasOverflow] = useState(false);
   const [pageCount, setPageCount] = useState(1);
 
-  const updateActiveIndex = () => {
+  const updateActiveIndex = useCallback(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
@@ -59,33 +61,56 @@ export function ContinueWatching() {
     const nextPageCount = nextHasOverflow
       ? Math.max(1, Math.ceil(container.scrollWidth / container.clientWidth))
       : 1;
-
-    setHasOverflow(nextHasOverflow);
-    setPageCount(nextPageCount);
-
-    const scrollLeft = container.scrollLeft;
-    let nearestIndex = 0;
+    let nearestCardIndex = 0;
     let nearestDistance = Number.POSITIVE_INFINITY;
 
     cards.forEach((card, index) => {
-      const distance = Math.abs(card.offsetLeft - container.offsetLeft - scrollLeft);
+      const distance = Math.abs(card.offsetLeft - container.scrollLeft);
       if (distance < nearestDistance) {
         nearestDistance = distance;
-        nearestIndex = index;
+        nearestCardIndex = index;
       }
     });
 
-    setActiveIndex(nearestIndex);
-  };
+    const nextActivePage = nextHasOverflow && cards.length > 1
+      ? Math.min(
+          nextPageCount - 1,
+          Math.round((nearestCardIndex / (cards.length - 1)) * (nextPageCount - 1)),
+        )
+      : 0;
+
+    setHasOverflow(nextHasOverflow);
+    setPageCount(nextPageCount);
+    setActivePage(nextActivePage);
+  }, []);
+
+  const scheduleActiveIndexUpdate = useCallback(() => {
+    if (scrollFrameRef.current !== null) return;
+    scrollFrameRef.current = window.requestAnimationFrame(() => {
+      scrollFrameRef.current = null;
+      updateActiveIndex();
+    });
+  }, [updateActiveIndex]);
+
+  const scheduleSettledActiveIndexUpdate = useCallback(() => {
+    if (scrollSettleTimeoutRef.current !== null) {
+      window.clearTimeout(scrollSettleTimeoutRef.current);
+    }
+
+    scrollSettleTimeoutRef.current = window.setTimeout(() => {
+      scrollSettleTimeoutRef.current = null;
+      scheduleActiveIndexUpdate();
+    }, 120);
+  }, [scheduleActiveIndexUpdate]);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container || !data?.length) return;
 
-    updateActiveIndex();
+    scheduleActiveIndexUpdate();
 
-    const handleScroll = () => updateActiveIndex();
-    const resizeObserver = new ResizeObserver(() => updateActiveIndex());
+    const handleScroll = () => scheduleSettledActiveIndexUpdate();
+    const resizeObserver = new ResizeObserver(() => scheduleActiveIndexUpdate());
 
     container.addEventListener("scroll", handleScroll, { passive: true });
     resizeObserver.observe(container);
@@ -93,18 +118,35 @@ export function ContinueWatching() {
     return () => {
       container.removeEventListener("scroll", handleScroll);
       resizeObserver.disconnect();
+      if (scrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(scrollFrameRef.current);
+        scrollFrameRef.current = null;
+      }
+      if (scrollSettleTimeoutRef.current !== null) {
+        window.clearTimeout(scrollSettleTimeoutRef.current);
+        scrollSettleTimeoutRef.current = null;
+      }
     };
-  }, [data?.length]);
+  }, [data?.length, scheduleActiveIndexUpdate, scheduleSettledActiveIndexUpdate]);
 
   const scrollToCard = (index: number) => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    container.scrollTo({
-      left: container.clientWidth * index,
+    const cards = Array.from(container.children) as HTMLElement[];
+    if (cards.length === 0) return;
+
+    const nextPageCount = Math.max(1, Math.ceil(container.scrollWidth / container.clientWidth));
+    const targetChildIndex =
+      nextPageCount <= 1 || cards.length <= 1
+        ? 0
+        : Math.round((index * (cards.length - 1)) / (nextPageCount - 1));
+
+    cards[targetChildIndex]?.scrollIntoView({
       behavior: "smooth",
+      inline: "start",
+      block: "nearest",
     });
-    setActiveIndex(index);
   };
 
   if (!user) return null;
@@ -205,7 +247,7 @@ export function ContinueWatching() {
 
       <div
         ref={scrollContainerRef}
-        className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 scroll-smooth overscroll-contain touch-pan-x"
+        className="hide-scrollbar -mx-1 flex snap-x snap-proximity gap-4 overflow-x-auto px-1 pb-2 overscroll-x-contain [scrollbar-width:none]"
       >
         {data.map((item) => {
           const title = getMediaTitle(item.details) || t("common.tvShow", "TV Show");
@@ -218,7 +260,7 @@ export function ContinueWatching() {
           return (
             <Card
               key={item.details.id}
-              className="min-h-[430px] w-[min(86vw,320px)] shrink-0 snap-start overflow-hidden rounded-3xl border-border/60 bg-card/80 sm:min-h-[420px] sm:w-[320px] md:w-[360px]"
+              className="min-h-[430px] w-[min(86vw,320px)] shrink-0 snap-start overflow-hidden rounded-3xl border-border/60 bg-card/80 [content-visibility:auto] [contain-intrinsic-size:320px_430px] sm:min-h-[420px] sm:w-[320px] md:w-[360px]"
             >
               <CardContent className="p-0">
                 <div className="flex h-full flex-col sm:flex-row">
@@ -337,12 +379,12 @@ export function ContinueWatching() {
             <PaginationDotButton
               key={`continue-watching-page-${index}`}
               onClick={() => scrollToCard(index)}
-              active={index === activeIndex}
+              active={index === activePage}
               aria-label={t("home.goToContinueWatchingItem", {
                 index: index + 1,
                 defaultValue: "Go to continue watching item {{index}}",
               })}
-              aria-pressed={index === activeIndex}
+              aria-pressed={index === activePage}
             />
           ))}
         </PaginationDots>

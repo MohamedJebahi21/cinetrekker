@@ -5,6 +5,8 @@ import {
   discoverMovies,
   discoverTV,
   getNowPlayingMovies,
+  getPopularMovies,
+  getPopularTV,
   getTopRatedMovies,
   getTopRatedTV,
   getTrending,
@@ -27,14 +29,12 @@ type UserListEntry = {
 
 type UseHomePageDataOptions = {
   language: string;
-  user: unknown;
   watched: UserListEntry[];
   watchlist: UserListEntry[];
 };
 
 export function useHomePageData({
   language,
-  user,
   watched,
   watchlist,
 }: UseHomePageDataOptions) {
@@ -64,7 +64,7 @@ export function useHomePageData({
       : TV_GENRES.find((genre) => genre.id === lastGenreId)?.name;
 
   const shouldGateRecommendations =
-    !user || (watched.length === 0 && watchlist.length === 0 && !lastViewed);
+    watched.length === 0 && watchlist.length === 0 && !lastViewed;
 
   const [discoverTab, setDiscoverTab] = useState<
     "trending-day" | "trending-week" | "new-releases"
@@ -131,6 +131,18 @@ export function useHomePageData({
     },
   });
 
+  const popularMoviesQuery = useQuery({
+    queryKey: ["popular", "movie", language, includeAdult],
+    queryFn: () => getPopularMovies(1, language, includeAdult),
+    enabled: deferredEnabled,
+  });
+
+  const popularTVQuery = useQuery({
+    queryKey: ["popular", "tv", language, includeAdult],
+    queryFn: () => getPopularTV(1, language, includeAdult),
+    enabled: deferredEnabled,
+  });
+
   const watchlistPreviewQuery = useQuery({
     queryKey: [
       "home-watchlist-preview",
@@ -147,7 +159,7 @@ export function useHomePageData({
         logScope: "home-watchlist-preview",
       }) as Promise<Media[]>;
     },
-    enabled: Boolean(user) && watchlist.length > 0,
+    enabled: watchlist.length > 0,
   });
 
   const topRatedMoviesQuery = useQuery({
@@ -202,6 +214,8 @@ export function useHomePageData({
     topRatedMoviesQuery,
     topRatedTVQuery,
     trendingDayQuery,
+    popularMoviesQuery,
+    popularTVQuery,
     hasDeferredErrors,
   };
 }
