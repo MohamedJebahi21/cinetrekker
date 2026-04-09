@@ -26,6 +26,7 @@ export function FilmingLocationsMap({ items = [], points: customPoints }: Filmin
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const markerRefs = useRef<import("mapbox-gl").Marker[]>([]);
   const idleIdRef = useRef<number | null>(null);
+  const frameIdRef = useRef<number | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
   const points = useMemo(
@@ -86,9 +87,9 @@ export function FilmingLocationsMap({ items = [], points: customPoints }: Filmin
         return;
       }
 
-      setTimeout(() => {
+      frameIdRef.current = window.requestAnimationFrame(() => {
         void initMap();
-      }, 120);
+      });
     };
 
     observer = new IntersectionObserver(
@@ -110,6 +111,10 @@ export function FilmingLocationsMap({ items = [], points: customPoints }: Filmin
         window.cancelIdleCallback(idleIdRef.current);
       }
       idleIdRef.current = null;
+      if (frameIdRef.current !== null) {
+        window.cancelAnimationFrame(frameIdRef.current);
+      }
+      frameIdRef.current = null;
       markerRefs.current.forEach((marker) => marker.remove());
       markerRefs.current = [];
       mapRef.current?.remove();

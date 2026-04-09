@@ -121,15 +121,15 @@ i18n.use(LanguageDetector).use(initReactI18next).init({
     order: ["localStorage", "navigator"],
     caches: ["localStorage"],
   },
-  parseMissingKeyHandler: (key) => {
-    if (isDev) {
-      if (!warnedMissingKeys.has(key)) {
-        warnedMissingKeys.add(key);
-        console.warn(`[i18n] Missing translation key: ${key}`);
+  parseMissingKeyHandler: i18nDebugEnabled
+    ? (key) => {
+        if (isDev && !warnedMissingKeys.has(key)) {
+          warnedMissingKeys.add(key);
+          console.warn(`[i18n] Missing translation key: ${key}`);
+        }
+        return lastSegmentTitleCase(key);
       }
-    }
-    return lastSegmentTitleCase(key);
-  },
+    : undefined,
 });
 
 // Update document direction when language changes

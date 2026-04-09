@@ -5,6 +5,7 @@ import {
   Star,
   Check,
   Loader2,
+  Bookmark,
 } from "lucide-react";
 import { Media } from "@/types/media";
 import {
@@ -327,7 +328,9 @@ export const MediaCard = React.memo(function MediaCard({
               >
                 {isWatchlistPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
-                ) : null}
+                ) : (
+                  <Bookmark className="h-4 w-4" />
+                )}
                 {t("actions.watchlist", "Watchlist")}
               </Button>
               <Button
@@ -345,9 +348,67 @@ export const MediaCard = React.memo(function MediaCard({
               >
                 {isWatchedPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
-                ) : null}
+                ) : (
+                  <Check className="h-4 w-4" />
+                )}
                 {t("actions.watched", "Watched")}
               </Button>
+            </div>
+          ) : null}
+
+          {showInlineActions ? (
+            <div className="absolute right-2 top-12 z-20 flex flex-col gap-2 md:hidden">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className={cn(
+                      "h-11 w-11 rounded-full border-white/15 bg-black/55 text-white shadow-[0_10px_24px_rgba(0,0,0,0.3)] backdrop-blur-xl",
+                      optimisticInWatchlist &&
+                        "border-red-500/70 bg-red-600 text-white hover:bg-red-700",
+                    )}
+                    onClick={(event) => void handleWatchlistClick(event)}
+                    aria-label={`Add ${title} to watchlist`}
+                  >
+                    {isWatchlistPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Bookmark className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t("actions.watchlist", "Watchlist")}
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className={cn(
+                      "h-11 w-11 rounded-full border-white/15 bg-black/55 text-white shadow-[0_10px_24px_rgba(0,0,0,0.3)] backdrop-blur-xl",
+                      optimisticWatched &&
+                        "border-emerald-500/70 bg-emerald-600 text-white hover:bg-emerald-700",
+                    )}
+                    onClick={(event) => void handleWatchedClick(event)}
+                    aria-label={`Mark ${title} as watched`}
+                  >
+                    {isWatchedPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Check className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t("actions.watched", "Watched")}
+                </TooltipContent>
+              </Tooltip>
             </div>
           ) : null}
 
@@ -401,82 +462,14 @@ export const MediaCard = React.memo(function MediaCard({
         </div>
 
         {/* Info */}
-        <div className="flex min-h-[6.25rem] flex-col p-3">
-          <h3 className="title-display min-h-[3.5rem] line-clamp-2 text-base font-semibold transition-colors group-hover:text-primary md:text-lg">
+        <div className="flex min-h-[4.75rem] flex-col p-3">
+          <h3 className="min-h-[2.75rem] line-clamp-2 text-base font-semibold tracking-tight text-foreground transition-colors group-hover:text-primary md:text-lg">
             <bdi dir="auto">{title}</bdi>
           </h3>
           <div className="mt-auto flex items-center justify-between gap-2 pt-1">
             <p className="text-xs text-muted-foreground">{metaLine}</p>
           </div>
         </div>
-
-        {showInlineActions ? (
-          <div className="border-t border-border/50 p-3 md:hidden">
-            <div className="flex flex-col gap-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="w-full">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={cn(
-                        "min-h-[48px] w-full justify-center backdrop-blur-md active:scale-95 transition-transform",
-                        optimisticInWatchlist
-                          ? "border-red-500/70 bg-red-600 text-white hover:bg-red-700"
-                          : "border-white/20 bg-gradient-to-b from-background/90 to-background/65 text-foreground",
-                      )}
-                      onClick={(event) => void handleWatchlistClick(event)}
-                      aria-label={`Add ${title} to watchlist`}
-                    >
-                      {isWatchlistPending ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : null}
-                      {t("actions.watchlist", "Watchlist")}
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                {!user ? (
-                  <TooltipContent>
-                    {t(
-                      "mediaCard.createAccountHint",
-                      "This saves locally now. Create a free account when you want sync across devices.",
-                    )}
-                  </TooltipContent>
-                ) : null}
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={cn(
-                      "min-h-[48px] w-full justify-center backdrop-blur-md active:scale-95 transition-transform",
-                      optimisticWatched
-                        ? "border-emerald-500/70 bg-emerald-600 text-white hover:bg-emerald-700"
-                        : "border-white/20 bg-gradient-to-b from-background/90 to-background/65 text-foreground",
-                    )}
-                    onClick={(event) => void handleWatchedClick(event)}
-                    aria-label={`Mark ${title} as watched`}
-                  >
-                    {isWatchedPending ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : null}
-                    {t("actions.watched", "Watched")}
-                  </Button>
-                </TooltipTrigger>
-                {!user ? (
-                  <TooltipContent>
-                    {t(
-                      "mediaCard.signInWatchedHint",
-                      "This saves locally now. Sign in later to keep watched history synced.",
-                    )}
-                  </TooltipContent>
-                ) : null}
-              </Tooltip>
-            </div>
-          </div>
-        ) : null}
       </Link>
 
       {/* Media preview removed */}

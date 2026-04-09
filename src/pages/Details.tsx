@@ -808,6 +808,14 @@ export default function Details() {
       <section className="mt-4">
         <h3 className="text-lg font-semibold mb-2">{t("details.whereToWatch", "Where to Watch")}</h3>
         {flatrateProviders.length > 0 && (
+          <p className="mb-3 text-sm text-emerald-300/90">
+            {t(
+              "details.providerUrgencyHint",
+              "Available on subscription now. Great moment to start before provider catalogs rotate.",
+            )}
+          </p>
+        )}
+        {flatrateProviders.length > 0 && (
           <div className="mb-2">
             <div className="text-sm text-muted-foreground mb-1">{t("details.streaming", "Streaming")}</div>
             {renderList(flatrateProviders)}

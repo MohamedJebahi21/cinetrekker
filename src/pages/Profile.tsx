@@ -49,6 +49,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -234,6 +235,9 @@ export default function Profile() {
   const [isAvatarDragActive, setIsAvatarDragActive] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [isFavoritesPickerOpen, setIsFavoritesPickerOpen] = useState(false);
+  const [activeProfileTab, setActiveProfileTab] = useState<
+    "overview" | "favorites" | "taste" | "edit"
+  >("overview");
   const [favoriteSearchQuery, setFavoriteSearchQuery] = useState("");
   const favoriteMoviesCarouselRef = useRef<HTMLDivElement>(null);
   const favoriteSeriesCarouselRef = useRef<HTMLDivElement>(null);
@@ -320,6 +324,14 @@ export default function Profile() {
     const timer = window.setTimeout(() => setShareCopied(false), 1600);
     return () => window.clearTimeout(timer);
   }, [shareCopied]);
+
+  useEffect(() => {
+    if (isEditMode) {
+      setActiveProfileTab("edit");
+    } else if (activeProfileTab === "edit") {
+      setActiveProfileTab("overview");
+    }
+  }, [activeProfileTab, isEditMode]);
 
   const optimisticGenresMutation = useMutation({
     mutationFn: async (nextGenres: number[]) => {
@@ -1306,6 +1318,14 @@ export default function Profile() {
     user?.email?.split("@")[0] ||
     t("common.appName", "CineTrekker");
   const shareProfileLink = absoluteSiteUrl("/profile");
+  const shouldShowProfileSection = useCallback(
+    (section: "overview" | "favorites" | "taste" | "edit") => {
+      if (section === "edit") return activeProfileTab === "edit";
+      if (activeProfileTab === "edit") return false;
+      return activeProfileTab === "overview" || activeProfileTab === section;
+    },
+    [activeProfileTab],
+  );
 
   const watchedThisMonth = useMemo(() => {
     const now = new Date();
@@ -1876,8 +1896,35 @@ export default function Profile() {
                 </Card>
               </motion.section>
 
+              <motion.section variants={itemVariants} className="mb-6">
+                <Tabs
+                  value={activeProfileTab}
+                  onValueChange={(value) =>
+                    setActiveProfileTab(
+                      value as "overview" | "favorites" | "taste" | "edit",
+                    )
+                  }
+                >
+                  <TabsList className="ct-toolbar h-auto w-full justify-start gap-2 rounded-2xl bg-card/60 p-2">
+                    <TabsTrigger value="overview" className="rounded-xl px-4 py-2">
+                      {text("profile.overview", "Overview")}
+                    </TabsTrigger>
+                    <TabsTrigger value="favorites" className="rounded-xl px-4 py-2">
+                      {text("profile.favorites", "Favorites")}
+                    </TabsTrigger>
+                    <TabsTrigger value="taste" className="rounded-xl px-4 py-2">
+                      {text("profile.tasteAndStats", "Taste & Stats")}
+                    </TabsTrigger>
+                    <TabsTrigger value="edit" className="rounded-xl px-4 py-2">
+                      {text("profile.editProfile", "Edit Profile")}
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </motion.section>
+
               <div className="space-y-8">
                 <div className="space-y-8">
+                  {activeProfileTab === "edit" || shouldShowProfileSection("overview") ? (
                   <motion.section
                     variants={itemVariants}
                     id="profile-details"
@@ -2033,7 +2080,9 @@ export default function Profile() {
                       </CardContent>
                     </Card>
                   </motion.section>
+                  ) : null}
 
+                  {shouldShowProfileSection("overview") ? (
                   <motion.section variants={itemVariants} id="stats-overview">
                     <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
                       <TrendingUp className="h-5 w-5 text-red-500" />
@@ -2123,7 +2172,9 @@ export default function Profile() {
                       </button>
                     </div>
                   </motion.section>
+                  ) : null}
 
+                  {shouldShowProfileSection("taste") ? (
                   <motion.section variants={itemVariants}>
                     <div className="mb-4 space-y-1">
                       <h2 className="flex items-center gap-2 text-xl font-bold">
@@ -2168,9 +2219,11 @@ export default function Profile() {
                       />
                     </Suspense>
                   </motion.section>
+                  ) : null}
                 </div>
 
                 <div className="space-y-8">
+                  {shouldShowProfileSection("favorites") ? (
                   <motion.section variants={itemVariants} className="space-y-3">
                     <div className="flex items-center justify-between gap-3">
                       <h3 className="flex items-center gap-2 text-lg font-semibold">
@@ -2358,7 +2411,9 @@ export default function Profile() {
                       </div>
                     ) : null}
                   </motion.section>
+                  ) : null}
 
+                  {shouldShowProfileSection("favorites") ? (
                   <motion.section
                     variants={itemVariants}
                     id="favorite-series"
@@ -2548,6 +2603,7 @@ export default function Profile() {
                       </div>
                     ) : null}
                   </motion.section>
+                  ) : null}
 
                   <Dialog
                     open={isFavoritesPickerOpen}
@@ -2716,6 +2772,7 @@ export default function Profile() {
                     </DialogContent>
                   </Dialog>
 
+                  {shouldShowProfileSection("taste") ? (
                   <motion.section variants={itemVariants}>
                     <h2 className="mb-2 text-xl font-bold">
                       {text("profile.favoriteGenres", "Favorite Genres")}
@@ -2764,7 +2821,9 @@ export default function Profile() {
                       </CardContent>
                     </Card>
                   </motion.section>
+                  ) : null}
 
+                  {shouldShowProfileSection("taste") ? (
                   <motion.section
                     variants={itemVariants}
                     id="ratings-distribution"
@@ -2838,6 +2897,7 @@ export default function Profile() {
                       </CardContent>
                     </Card>
                   </motion.section>
+                  ) : null}
                 </div>
               </div>
 

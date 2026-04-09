@@ -45,6 +45,10 @@ export function WatchlistFilters({
     { value: 'added-desc', label: t('sort.recentlyAdded') || 'Recently Added' },
     { value: 'rating-desc', label: t('sort.highestRated') || 'Highest Rated' },
     { value: 'rating-asc', label: t('sort.lowestRated') || 'Lowest Rated' },
+    { value: 'date-desc', label: t('sort.releaseYearNew', 'Release Year: Newest') },
+    { value: 'date-asc', label: t('sort.releaseYearOld', 'Release Year: Oldest') },
+    { value: 'runtime-desc', label: t('sort.runtimeLong', 'Runtime: Longest') },
+    { value: 'runtime-asc', label: t('sort.runtimeShort', 'Runtime: Shortest') },
     { value: 'title-asc', label: t('sort.titleAZ') || 'Title A-Z' },
     { value: 'title-desc', label: t('sort.titleZA') || 'Title Z-A' },
   ];

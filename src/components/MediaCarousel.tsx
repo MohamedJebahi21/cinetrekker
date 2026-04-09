@@ -90,7 +90,6 @@ export function MediaCarousel({
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollCheckFrameRef = useRef<number | null>(null);
-  const scrollSettleTimeoutRef = useRef<number | null>(null);
 
   const [scrollState, setScrollState] = useState<ScrollState>(DEFAULT_SCROLL_STATE);
 
@@ -111,24 +110,13 @@ export function MediaCarousel({
     });
   }, [syncScrollState]);
 
-  const scheduleSettledScrollSync = useCallback(() => {
-    if (scrollSettleTimeoutRef.current !== null) {
-      window.clearTimeout(scrollSettleTimeoutRef.current);
-    }
-
-    scrollSettleTimeoutRef.current = window.setTimeout(() => {
-      scrollSettleTimeoutRef.current = null;
-      scheduleScrollSync();
-    }, 120);
-  }, [scheduleScrollSync]);
-
   useEffect(() => {
     syncScrollState();
 
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    const handleScroll = () => scheduleSettledScrollSync();
+    const handleScroll = () => scheduleScrollSync();
     const handleResize = () => scheduleScrollSync();
 
     container.addEventListener("scroll", handleScroll, { passive: true });
@@ -146,13 +134,8 @@ export function MediaCarousel({
         window.cancelAnimationFrame(scrollCheckFrameRef.current);
         scrollCheckFrameRef.current = null;
       }
-
-      if (scrollSettleTimeoutRef.current !== null) {
-        window.clearTimeout(scrollSettleTimeoutRef.current);
-        scrollSettleTimeoutRef.current = null;
-      }
     };
-  }, [filteredItems.length, scheduleScrollSync, scheduleSettledScrollSync, syncScrollState]);
+  }, [filteredItems.length, scheduleScrollSync, syncScrollState]);
 
   const handleManualScroll = useCallback((direction: "left" | "right") => {
     const container = scrollContainerRef.current;

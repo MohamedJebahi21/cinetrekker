@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { searchMulti, searchMovies, searchTV, searchPeople } from '@/services/tmdb';
 import { RequestCanceller, RequestThrottler } from '@/lib/requestUtils';
 import { Media, PersonSearchResult, TMDBResponse } from '@/types/media';
 import { validateSearchQuery } from '@/lib/validation';
+import { useDebounce } from '@/hooks/useDebounce';
 
 const canceller = new RequestCanceller();
 const searchThrottler = new RequestThrottler(1000); // 1 request per second
@@ -27,29 +28,7 @@ export function useSearch(
   options: UseSearchOptions = {}
 ) {
   const { debounceMs = 300, enabled = true } = options;
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [debouncedQuery, setDebouncedQuery] = useState(query);
-
-  // Debounce the query
-  useEffect(() => {
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-
-    if (query.trim()) {
-      debounceTimeoutRef.current = setTimeout(() => {
-        setDebouncedQuery(query);
-      }, debounceMs);
-    } else {
-      setDebouncedQuery('');
-    }
-
-    return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
-    };
-  }, [query, debounceMs]);
+  const debouncedQuery = useDebounce(query, debounceMs).trim();
 
   // Create search function based on type
   const searchFn = async (): Promise<TMDBResponse<Media | PersonSearchResult>> => {
@@ -88,7 +67,7 @@ export function useSearch(
   const result = useQuery({
     queryKey: ['search', type, debouncedQuery, page, language],
     queryFn: searchFn,
-    enabled: enabled && debouncedQuery.trim().length > 0,
+    enabled: enabled && debouncedQuery.length > 0,
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
   });

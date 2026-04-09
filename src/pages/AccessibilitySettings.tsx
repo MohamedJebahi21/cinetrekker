@@ -28,8 +28,10 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import {
   applyAccessibilityPreferencesToRoot,
+  type MotionIntensity,
   readAccessibilityPreferences,
   saveFontSizePreference,
+  saveMotionIntensityPreference,
   saveReduceMotionPreference,
 } from "@/lib/accessibility-preferences";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -66,6 +68,9 @@ export default function AccessibilitySettings() {
   const [reduceMotion, setReduceMotion] = useState<boolean>(
     () => readAccessibilityPreferences().reduceMotion,
   );
+  const [motionIntensity, setMotionIntensity] = useState<MotionIntensity>(
+    () => readAccessibilityPreferences().motionIntensity,
+  );
 
   // Apply font size
   useEffect(() => {
@@ -83,9 +88,20 @@ export default function AccessibilitySettings() {
     applyAccessibilityPreferencesToRoot();
   }, [reduceMotion]);
 
+  // Apply motion intensity
+  useEffect(() => {
+    const normalized = saveMotionIntensityPreference(motionIntensity);
+    if (normalized !== motionIntensity) {
+      setMotionIntensity(normalized);
+      return;
+    }
+    applyAccessibilityPreferencesToRoot();
+  }, [motionIntensity]);
+
   const resetToDefaults = () => {
     setFontSize(100);
     setReduceMotion(false);
+    setMotionIntensity("medium");
     setTheme("dark");
     toast({
       title: t("accessibility.resetToastTitle", "Settings Reset"),
@@ -287,6 +303,52 @@ export default function AccessibilitySettings() {
                   aria-labelledby="reduceMotion-label"
                   aria-describedby="reduceMotion-description"
                 />
+              </div>
+
+              {/* Motion Intensity Row */}
+              <div
+                className={cn(
+                  "flex items-center justify-between gap-4 rounded-xl border px-4 py-4 transition-all duration-300",
+                  "border-border/60 bg-card/70",
+                )}
+              >
+                <div className="min-w-0 flex-1">
+                  <p id="motionIntensity-label" className="text-sm font-semibold text-foreground">
+                    {t("accessibility.motionDensity", "Motion Density")}
+                  </p>
+                  <p id="motionIntensity-description" className="mt-1 text-sm text-muted-foreground">
+                    {t("accessibility.motionDensityDesc", "Control how dense cinematic motion effects feel.")}
+                  </p>
+                </div>
+                <div
+                  role="group"
+                  aria-labelledby="motionIntensity-label"
+                  aria-describedby="motionIntensity-description"
+                  className="ct-toggle-group"
+                >
+                  {([
+                    { value: "low", label: t("accessibility.motionLow", "Low") },
+                    { value: "medium", label: t("accessibility.motionMedium", "Medium") },
+                    { value: "high", label: t("accessibility.motionHigh", "High") },
+                  ] as const).map((option) => {
+                    const active = motionIntensity === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className={cn(
+                          "rounded-lg px-3 py-2 text-xs font-semibold transition-colors",
+                          active
+                            ? "ct-toggle-button-active"
+                            : "ct-toggle-button hover:text-foreground",
+                        )}
+                        onClick={() => setMotionIntensity(option.value)}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </CardContent>
           </Card>

@@ -10,8 +10,6 @@ import User from "lucide-react/dist/esm/icons/user";
 import Settings from "lucide-react/dist/esm/icons/settings";
 import Home from "lucide-react/dist/esm/icons/home";
 import Search from "lucide-react/dist/esm/icons/search";
-import Bookmark from "lucide-react/dist/esm/icons/bookmark";
-import Eye from "lucide-react/dist/esm/icons/eye";
 import Sparkles from "lucide-react/dist/esm/icons/sparkles";
 import Trophy from "lucide-react/dist/esm/icons/trophy";
 import BarChart3 from "lucide-react/dist/esm/icons/bar-chart-3";
@@ -37,7 +35,6 @@ import {
 import { languages } from "@/i18n";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useUserLists } from "@/contexts/UserListsContext";
 import { SearchDropdown } from "@/components/SearchDropdown";
 import { cn } from "@/lib/utils";
 import GuestSyncBanner from "@/components/GuestSyncBanner";
@@ -49,8 +46,6 @@ export function Header() {
   const location = useLocation();
   const { user, signOut, loading } = useAuth();
   const { theme, setTheme } = useTheme();
-  const { watchlist } = useUserLists();
-  const watchlistCount = watchlist.length;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
@@ -100,8 +95,6 @@ export function Header() {
   const navLinks = [
     { path: "/", label: t("nav.home"), exact: true },
     { path: "/search", label: t("nav.search"), exact: false },
-    { path: "/watchlist", label: t("nav.watchlist"), exact: false },
-    { path: "/watched", label: t("nav.watched"), exact: false },
     { path: "/recommendations", label: t("nav.recommendations"), exact: false },
     { path: "/achievements", label: "Achievements", exact: false },
     { path: "/enhanced-stats", label: "Stats", exact: false },
@@ -117,13 +110,6 @@ export function Header() {
       items: [
         { path: "/", label: t("nav.home"), icon: Home },
         { path: "/search", label: t("nav.search"), icon: Search },
-        {
-          path: "/watchlist",
-          label: t("nav.watchlist"),
-          icon: Bookmark,
-          count: watchlistCount,
-        },
-        { path: "/watched", label: t("nav.watched"), icon: Eye },
       ],
     },
     {
@@ -182,7 +168,7 @@ export function Header() {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="min-w-[140px] bg-popover/95 backdrop-blur-xl border-border/50"
+        className="min-w-[140px] bg-popover border-border/50"
       >
         {(["dark", "light", "oled"] as const).map((option) => {
           const optionLabel = themeLabelMap[option];
@@ -233,7 +219,7 @@ export function Header() {
             .find((item) => {
               if (item.path === "/") return location.pathname === "/";
               return location.pathname.startsWith(item.path);
-            })?.label || t("nav.home")}
+            })?.label || ""}
         </div>
 
         {/* Right Section */}
@@ -244,7 +230,7 @@ export function Header() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-2 hover:bg-accent min-w-[44px] min-h-[44px]"
+                className="hidden lg:flex gap-2 hover:bg-accent min-w-[44px] min-h-[44px]"
                 aria-label={t("nav.allMenus", "All menus")}
               >
                 <span>{t("nav.menu", "Menu")}</span>
@@ -252,7 +238,7 @@ export function Header() {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-[400px] max-h-[600px] overflow-y-auto bg-popover/95 backdrop-blur-xl border-border/50"
+              className="w-[400px] max-h-[600px] overflow-y-auto bg-popover border-border/50"
             >
               <div className="p-2">
                 {menuCategories.map((category, idx) => (
@@ -306,7 +292,7 @@ export function Header() {
                   variant="ghost"
                   size="icon"
                   asChild
-                  className="hover:bg-white/5 min-w-[44px] min-h-[44px]"
+                  className="hidden lg:flex hover:bg-white/5 min-w-[44px] min-h-[44px]"
                 >
                   <Link
                     to="/settings"
@@ -318,7 +304,7 @@ export function Header() {
               </TooltipTrigger>
               <TooltipContent
                 side="bottom"
-                className="bg-popover/95 backdrop-blur-xl border-border/50"
+                className="bg-popover border-border/50"
               >
                 <p>{t("nav.settings", "Settings")}</p>
               </TooltipContent>
@@ -331,7 +317,7 @@ export function Header() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-2 hover:bg-white/5 min-w-[44px] min-h-[44px]"
+                className="hidden lg:flex gap-2 hover:bg-white/5 min-w-[44px] min-h-[44px]"
                 aria-label={t("nav.changeLanguage", "Change language")}
               >
                 <Globe className="h-4 w-4" />
@@ -340,7 +326,7 @@ export function Header() {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="min-w-[140px] bg-popover/95 backdrop-blur-xl border-border/50"
+              className="min-w-[140px] bg-popover border-border/50"
             >
               {languages.map((lang) => (
                 <DropdownMenuItem
@@ -354,19 +340,37 @@ export function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Theme Switcher */}
-          {renderThemeSwitcher()}
+          {/* Theme Switcher - Desktop Only */}
+          <div className="hidden lg:block">
+            {renderThemeSwitcher()}
+          </div>
 
           {/* User Menu / Auth */}
           {!loading &&
             (user ? (
-              <div className="flex items-center gap-2">
-                <NotificationBell />
-                <UserProfileDropdown
-                  profilePhoto={profilePhoto}
-                  displayName={displayName}
-                />
-              </div>
+              <>
+                <div className="hidden lg:block">
+                  <NotificationBell />
+                </div>
+                <div className="hidden lg:flex items-center gap-2">
+                  <UserProfileDropdown
+                    profilePhoto={profilePhoto}
+                    displayName={displayName}
+                  />
+                </div>
+                {/* Mobile Profile Link */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  asChild
+                  className="lg:hidden hover:bg-white/5 min-w-[44px] min-h-[44px]"
+                  aria-label={t("nav.profile", "Profile")}
+                >
+                  <Link to="/profile">
+                    <User className="h-5 w-5" />
+                  </Link>
+                </Button>
+              </>
             ) : (
               <Link to="/login">
                 <Button
@@ -408,7 +412,7 @@ export function Header() {
       {/* Mobile Menu */}
       {isMenuOpen && (
         <nav
-          className="lg:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl animate-fade-in max-h-[calc(100vh-4rem-env(safe-area-inset-top))] overflow-y-auto overscroll-contain"
+          className="lg:hidden border-t border-border/50 bg-background animate-fade-in max-h-[calc(100vh-4rem-env(safe-area-inset-top))] overflow-y-auto overscroll-contain"
           aria-label="Mobile navigation"
         >
           <div className="container mx-auto px-4 py-4 flex flex-col gap-3">
@@ -436,11 +440,6 @@ export function Header() {
                 >
                   <span className="flex items-center gap-2">
                     {link.label}
-                    {link.path === "/watchlist" && watchlistCount > 0 && (
-                      <span className="min-w-[18px] h-[18px] px-1 rounded-full text-[10px] leading-[18px] text-primary-foreground bg-primary/90 text-center">
-                        {watchlistCount}
-                      </span>
-                    )}
                   </span>
                 </Link>
               );

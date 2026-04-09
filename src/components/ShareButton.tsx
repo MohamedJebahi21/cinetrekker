@@ -3,6 +3,7 @@ import { Share2, Copy, Download, Facebook, Twitter, MessageCircle } from 'lucide
 import { Button } from '@/components/ui/button';
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
+import { trackEngagementEvent } from '@/lib/engagement';
 
 interface ShareButtonProps {
   title: string;
@@ -29,6 +30,7 @@ export function ShareButton({ title, url, text, variant = 'ghost', size = 'sm' }
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(url);
+      trackEngagementEvent("share_copy_link", { source: "share_button" });
       toast.success('Link copied!', {
         description: 'The link has been copied to your clipboard.',
       });
@@ -42,6 +44,7 @@ export function ShareButton({ title, url, text, variant = 'ghost', size = 'sm' }
   const handleShare = async () => {
     if (navigator.share) {
       try {
+        trackEngagementEvent("share_open", { mode: "native_share" });
         await navigator.share({
           title,
           text: text || title,
@@ -78,11 +81,12 @@ export function ShareButton({ title, url, text, variant = 'ghost', size = 'sm' }
     }
 
     window.open(shareUrl, '_blank', 'width=600,height=400');
+    trackEngagementEvent("share_open", { mode: platform });
   };
 
   return (
     <div className="relative inline-block text-left" ref={menuRef}>
-      <Button variant={variant} size={size} onClick={() => setIsOpen(!isOpen)}>
+      <Button variant={variant} size={size} onClick={() => { setIsOpen(!isOpen); trackEngagementEvent("share_open", { mode: "menu" }); }}>
         <Share2 className="h-4 w-4 mr-2" />
         Share
       </Button>

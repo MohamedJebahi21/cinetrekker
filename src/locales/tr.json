@@ -798,8 +798,8 @@
     "step1Desc": "Your personal hub for tracking movies and TV shows. Let's get you started.",
     "step2Title": "Build Your Watchlist",
     "step2Desc": "Click the bookmark icon on any title to save it to your watchlist for later.",
-    "step3Title": "Start Your Trek",
-    "step3Desc": "Use \"Random Trek\" to discover highly-rated titles, or browse trending content.",
+    "step3Title": "Start Discovering",
+    "step3Desc": "Browse trending titles, search by mood or genre, and jump straight into your next watch.",
     "next": "Next"
   },
   "comingSoon": "Çıkışta",
@@ -1076,7 +1076,7 @@
     "titleZA": "Title Z-A"
   },
   "randomTrek": {
-    "button": "Random Trek",
+    "button": "Surprise Pick",
     "finding": "Finding something great..."
   },
   "modal": {

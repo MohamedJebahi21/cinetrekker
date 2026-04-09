@@ -52,10 +52,10 @@ export function OnboardingTooltip() {
     {
       id: 3,
       icon: <Play className="w-6 h-6 text-primary" />,
-      title: t("onboarding.step3Title", "Start Your Trek"),
+      title: t("onboarding.step3Title", "Start Discovering"),
       description: t(
         "onboarding.step3Desc",
-        'Use "Random Trek" to discover highly-rated titles, or browse trending content.',
+        'Browse trending titles, search by mood or genre, and jump straight into your next watch.',
       ),
     },
   ];

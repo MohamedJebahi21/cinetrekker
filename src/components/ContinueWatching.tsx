@@ -45,7 +45,6 @@ export function ContinueWatching() {
   const { markEpisodeWatched } = useWatchedEpisodes();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollFrameRef = useRef<number | null>(null);
-  const scrollSettleTimeoutRef = useRef<number | null>(null);
   const [activePage, setActivePage] = useState(0);
   const [hasOverflow, setHasOverflow] = useState(false);
   const [pageCount, setPageCount] = useState(1);
@@ -92,24 +91,13 @@ export function ContinueWatching() {
     });
   }, [updateActiveIndex]);
 
-  const scheduleSettledActiveIndexUpdate = useCallback(() => {
-    if (scrollSettleTimeoutRef.current !== null) {
-      window.clearTimeout(scrollSettleTimeoutRef.current);
-    }
-
-    scrollSettleTimeoutRef.current = window.setTimeout(() => {
-      scrollSettleTimeoutRef.current = null;
-      scheduleActiveIndexUpdate();
-    }, 120);
-  }, [scheduleActiveIndexUpdate]);
-
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container || !data?.length) return;
 
     scheduleActiveIndexUpdate();
 
-    const handleScroll = () => scheduleSettledActiveIndexUpdate();
+    const handleScroll = () => scheduleActiveIndexUpdate();
     const resizeObserver = new ResizeObserver(() => scheduleActiveIndexUpdate());
 
     container.addEventListener("scroll", handleScroll, { passive: true });
@@ -122,12 +110,8 @@ export function ContinueWatching() {
         window.cancelAnimationFrame(scrollFrameRef.current);
         scrollFrameRef.current = null;
       }
-      if (scrollSettleTimeoutRef.current !== null) {
-        window.clearTimeout(scrollSettleTimeoutRef.current);
-        scrollSettleTimeoutRef.current = null;
-      }
     };
-  }, [data?.length, scheduleActiveIndexUpdate, scheduleSettledActiveIndexUpdate]);
+  }, [data?.length, scheduleActiveIndexUpdate]);
 
   const scrollToCard = (index: number) => {
     const container = scrollContainerRef.current;

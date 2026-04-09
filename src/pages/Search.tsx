@@ -39,7 +39,6 @@ import {
 import { Media } from "@/types/media";
 import { LoadMoreMediaGrid } from "@/components/MediaGrid";
 import SkeletonCard from "@/components/ui/SkeletonCard";
-import { RandomTrekButton } from "@/components/RandomTrekButton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -898,13 +897,15 @@ export default function Search() {
   // When mobile filters open, scroll to top and focus first control for better UX
   useEffect(() => {
     if (mobileFiltersOpen) {
-      setTimeout(() => {
+      const frameId = window.requestAnimationFrame(() => {
         mobileFiltersRef.current?.scrollTo({ top: 0, behavior: "smooth" });
         const first = mobileFiltersRef.current?.querySelector<HTMLElement>(
           "button, input, select",
         );
         first?.focus();
-      }, 50);
+      });
+
+      return () => window.cancelAnimationFrame(frameId);
     }
   }, [mobileFiltersOpen]);
 
@@ -1204,7 +1205,6 @@ export default function Search() {
               )}
             </p>
           </div>
-          <RandomTrekButton className="w-full sm:w-auto" />
         </div>
 
         {/* Search Input with Clear Button */}

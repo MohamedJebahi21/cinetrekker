@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import type { UserMediaItem } from "@/types/media";
+import { useEngagementLoop } from "@/hooks/useEngagementLoop";
 
 type HomeStatsSnapshotProps = {
   watched: UserMediaItem[];
@@ -18,8 +19,8 @@ export function HomeStatsSnapshot({
   ctaLabel,
 }: HomeStatsSnapshotProps) {
   const { t } = useTranslation();
+  const { streakDays } = useEngagementLoop();
   const watchingCount = watched.filter((item) => item.status === "watching").length;
-  const ratedCount = watched.filter((item) => typeof item.rating === "number").length;
 
   const stats = [
     {
@@ -38,8 +39,8 @@ export function HomeStatsSnapshot({
       icon: Tv,
     },
     {
-      label: t("actions.rateTitle", "Rate"),
-      value: ratedCount,
+      label: t("home.streak", "Streak"),
+      value: Math.max(1, streakDays || 0),
       icon: BarChart3,
     },
   ];

@@ -80,7 +80,9 @@ try {
     if (typeof window !== "undefined" && "requestIdleCallback" in window) {
       window.requestIdleCallback(injectInsights, { timeout: 2500 });
     } else {
-      setTimeout(injectInsights, 600);
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(injectInsights);
+      });
     }
   }
 } catch (err) {

@@ -18,6 +18,7 @@ import {
   useGuestWatched,
 } from "@/hooks/useGuestMediaLists";
 import { STORAGE_KEYS } from "@/contexts/userListsStorageKeys";
+import { trackEngagementEvent } from "@/lib/engagement";
 
 export interface UserListsContextType {
   watchlist: UserMediaItem[];
@@ -114,6 +115,7 @@ function GuestUserListsProvider({ children }: { children: React.ReactNode }) {
     async (mediaId: number, mediaType: "movie" | "tv") => {
       guestWatchlist.addToGuestWatchlist(mediaId, mediaType);
       toast("Added to Watchlist (guest)");
+      trackEngagementEvent("watchlist_add", { mediaId, mediaType, auth: false });
     },
     [guestWatchlist],
   );
@@ -122,6 +124,7 @@ function GuestUserListsProvider({ children }: { children: React.ReactNode }) {
     async (mediaId: number, mediaType: "movie" | "tv") => {
       guestWatchlist.removeFromGuestWatchlist(mediaId, mediaType);
       toast(t("actions.watchlistRemoved", "Removed from watchlist"));
+      trackEngagementEvent("watchlist_remove", { mediaId, mediaType, auth: false });
     },
     [guestWatchlist, t],
   );
@@ -145,6 +148,7 @@ function GuestUserListsProvider({ children }: { children: React.ReactNode }) {
           "Marked as watched on this device. Sign in later to sync it to your account.",
         ),
       });
+      trackEngagementEvent("watched_add", { mediaId, mediaType, auth: false });
     },
     [guestWatched, t],
   );
@@ -153,6 +157,7 @@ function GuestUserListsProvider({ children }: { children: React.ReactNode }) {
     async (mediaId: number, mediaType: "movie" | "tv") => {
       guestWatched.removeFromGuestWatched(mediaId, mediaType);
       toast(t("actions.watchedRemoved", "Removed from watched"));
+      trackEngagementEvent("watched_remove", { mediaId, mediaType, auth: false });
     },
     [guestWatched, t],
   );
@@ -212,6 +217,7 @@ function GuestUserListsProvider({ children }: { children: React.ReactNode }) {
         });
         return next;
       });
+      trackEngagementEvent("recommendation_hide", { mediaId, mediaType, auth: false });
     },
     [setHiddenRecommendations, t, user?.id],
   );

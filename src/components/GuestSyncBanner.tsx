@@ -24,13 +24,23 @@ export default function GuestSyncBanner() {
             <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
               Guest Mode
             </p>
-            {t('guest.localSyncMessage', 'You are using a local watchlist. Sign in to sync across devices.')}
+            <p className="font-medium text-foreground">
+              {t('guest.localSyncMessage', "Your watchlist and watched history are saved only on this device right now.")}
+            </p>
+            <p className="mt-1 text-muted-foreground">
+              {t('guest.localSyncSubcopy', "Create a free account before you leave this browser if you want your progress, notes, and lists to persist everywhere.")}
+            </p>
           </div>
         </div>
-        <div className="shrink-0">
+        <div className="flex shrink-0 gap-2">
           <Link to="/login">
-            <Button size="sm" variant="default" className="gap-2">
+            <Button size="sm" variant="outline" className="gap-2">
               {t('nav.signIn', 'Sign in')}
+            </Button>
+          </Link>
+          <Link to="/signup">
+            <Button size="sm" variant="default" className="gap-2">
+              {t('guest.createAccount', 'Create free account')}
             </Button>
           </Link>
         </div>

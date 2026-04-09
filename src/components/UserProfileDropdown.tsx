@@ -5,11 +5,19 @@ import {
   Users,
   LogOut,
   User as UserIcon,
+  Compass,
+  Bookmark,
+  Settings,
+  Bell,
+  Palette,
+  Globe,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 import { Image } from '@/components/ui/Image';
+import { languages } from '@/i18n';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,8 +78,9 @@ export function UserProfileDropdown({
   displayName,
   className,
 }: UserProfileDropdownProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = React.useState(false);
   const navigate = useNavigate();
 
@@ -85,11 +94,31 @@ export function UserProfileDropdown({
   };
 
   // Social section items
-  const socialItems = [
+  const menuItems = [
+    {
+      icon: Compass,
+      label: t('nav.discover', 'Discover'),
+      path: '/discover',
+    },
+    {
+      icon: Bookmark,
+      label: t('nav.watchlist', 'Watchlist'),
+      path: '/watchlist',
+    },
     {
       icon: Users,
       label: t('profile.following', 'Following'),
       path: '/following',
+    },
+    {
+      icon: Bell,
+      label: t('nav.notifications', 'Notifications'),
+      path: '/notifications',
+    },
+    {
+      icon: Settings,
+      label: t('nav.settings', 'Settings'),
+      path: '/settings',
     },
   ];
 
@@ -124,7 +153,7 @@ export function UserProfileDropdown({
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
-          <TooltipContent side="bottom" className="bg-popover/95 backdrop-blur-xl border-border/50">
+          <TooltipContent side="bottom" className="bg-popover border-border/50">
             <p>{userName}</p>
           </TooltipContent>
         </Tooltip>
@@ -141,7 +170,7 @@ export function UserProfileDropdown({
             <DropdownMenuContent
               align="end"
               className={cn(
-                'w-56 bg-background/80 backdrop-blur-md border-border/50 shadow-xl',
+                'w-56 bg-background border-border/50 shadow-xl',
                 'p-0 overflow-hidden'
               )}
               style={{
@@ -194,12 +223,12 @@ export function UserProfileDropdown({
                 </div>
               </motion.div>
 
-              {/* Social Section */}
+              {/* Navigation Section */}
               <motion.div className="py-2">
                 <div className="px-4 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  {t('profile.social', 'Social')}
+                  {t('nav.account', 'Account')}
                 </div>
-                {socialItems.map((item, idx) => {
+                {menuItems.map((item, idx) => {
                   const Icon = item.icon;
                   return (
                     <motion.div
@@ -230,10 +259,80 @@ export function UserProfileDropdown({
 
               <DropdownMenuSeparator className="my-0 bg-border/30" />
 
+              <motion.div
+                variants={itemVariants}
+                custom={menuItems.length + 1}
+                initial="hidden"
+                animate="visible"
+                className="px-4 py-3"
+              >
+                <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <Palette className="h-3.5 w-3.5" />
+                  {t('nav.theme', 'Theme')}
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    ['dark', t('nav.themeDark', 'Dark')],
+                    ['light', t('nav.themeLight', 'Light')],
+                    ['oled', t('nav.themeOled', 'OLED')],
+                  ] as const).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setTheme(value)}
+                      className={cn(
+                        'rounded-lg border px-2 py-2 text-xs font-medium transition-colors',
+                        theme === value
+                          ? 'border-primary/40 bg-primary/10 text-primary'
+                          : 'border-border/60 bg-card/70 text-foreground hover:bg-accent',
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+
+              <DropdownMenuSeparator className="my-0 bg-border/30" />
+
+              <motion.div
+                variants={itemVariants}
+                custom={menuItems.length + 2}
+                initial="hidden"
+                animate="visible"
+                className="px-4 py-3"
+              >
+                <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <Globe className="h-3.5 w-3.5" />
+                  {t('nav.language', 'Language')}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {languages.slice(0, 6).map((language) => (
+                    <button
+                      key={language.code}
+                      type="button"
+                      onClick={() => {
+                        void i18n.changeLanguage(language.code);
+                      }}
+                      className={cn(
+                        'rounded-lg border px-2 py-2 text-left text-xs font-medium transition-colors',
+                        i18n.language === language.code
+                          ? 'border-primary/40 bg-primary/10 text-primary'
+                          : 'border-border/60 bg-card/70 text-foreground hover:bg-accent',
+                      )}
+                    >
+                      {language.name}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+
+              <DropdownMenuSeparator className="my-0 bg-border/30" />
+
               {/* Logout Section */}
               <motion.div
                 variants={itemVariants}
-                custom={socialItems.length + 1}
+                custom={menuItems.length + 3}
                 initial="hidden"
                 animate="visible"
                 className="py-2"

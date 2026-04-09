@@ -60,7 +60,9 @@ export default function Watchlist() {
   const [statusFilter, setStatusFilter] =
     useState<WatchlistStatusFilter>("all");
   const [sortBy, setSortBy] = useState("added-desc");
-  const [filterExpanded, setFilterExpanded] = useState(true);
+  const [filterExpanded, setFilterExpanded] = useState(() =>
+    typeof window === "undefined" ? true : window.innerWidth >= 768,
+  );
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
@@ -137,6 +139,16 @@ export default function Watchlist() {
       new Date(item.addedAt || 0),
     );
   });
+  const staleQueueKeys = new Set(
+    listItems
+      .filter((item) => {
+        if (!item.addedAt) return false;
+        const added = new Date(item.addedAt).getTime();
+        if (!Number.isFinite(added)) return false;
+        return Date.now() - added >= 1000 * 60 * 60 * 24 * 30;
+      })
+      .map((item) => `${item.mediaType}-${item.mediaId}`),
+  );
 
   if (filteredMedia.length > 0) {
     filteredMedia = sortMedia(
@@ -166,6 +178,14 @@ export default function Watchlist() {
       ? 0
       : mediaDetails.filter((media) => media.watchStatus === "dropped").length,
   };
+
+  const totalRuntimeMinutes = mediaDetails.reduce((total, media) => {
+    const runtime = media.runtime || media.episode_run_time?.[0] || 0;
+    return total + runtime;
+  }, 0);
+  const totalHoursEstimate = totalRuntimeMinutes > 0 ? Math.round(totalRuntimeMinutes / 60) : 0;
+  const completionRate =
+    statusCounts.all > 0 ? Math.round((statusCounts.completed / statusCounts.all) * 100) : 0;
 
   const selectedCount = selectedKeys.size;
   const selectedWatchlistItems = useMemo(
@@ -354,6 +374,16 @@ export default function Watchlist() {
             </div>
           )}
 
+          {!isSharedView && staleQueueKeys.size > 0 && (
+            <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-3 text-sm text-amber-200">
+              {t(
+                "watchlistPage.staleQueueHint",
+                "{{count}} titles have been in your queue for 30+ days. Pick one tonight to keep momentum.",
+                { count: staleQueueKeys.size },
+              )}
+            </div>
+          )}
+
           {!isSharedView && mediaDetails.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -366,8 +396,27 @@ export default function Watchlist() {
                 watchingCount={statusCounts.watching}
                 completedCount={statusCounts.completed}
                 planToWatchCount={statusCounts.plan_to_watch}
+                totalHours={totalHoursEstimate}
               />
             </motion.div>
+          )}
+
+          {!isSharedView && mediaDetails.length > 0 && (
+            <div className="mb-6 rounded-3xl border border-border/60 bg-card/70 px-5 py-4 text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">
+                {t("watchlistPage.progressHeadline", "Queue progress")}
+              </span>{" "}
+              {t(
+                "watchlistPage.progressCopy",
+                "You've watched {{completed}} of {{total}} saved titles ({{percent}}%). Estimated watch time still in queue: about {{hours}} hours.",
+                {
+                  completed: statusCounts.completed,
+                  total: statusCounts.all,
+                  percent: completionRate,
+                  hours: totalHoursEstimate,
+                },
+              )}
+            </div>
           )}
 
           {!isSharedView && mediaDetails.length > 0 && (
@@ -523,16 +572,31 @@ export default function Watchlist() {
                           </Badge>
                         </div>
 
-                        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
                           {year && <span>{year}</span>}
                           {media.vote_average > 0 && (
-                            <span>★ {media.vote_average.toFixed(1)}</span>
+                            <Badge
+                              variant="secondary"
+                              className="rounded-full border border-amber-500/25 bg-amber-500/10 text-amber-200"
+                            >
+                              ★ {media.vote_average.toFixed(1)}
+                            </Badge>
                           )}
                           {media.watchStatus && (
-                            <span className="capitalize">
+                            <Badge variant="secondary" className="capitalize">
                               {media.watchStatus.replace(/_/g, " ")}
-                            </span>
+                            </Badge>
                           )}
+                          {staleQueueKeys.has(`${mediaType}-${media.id}`) && (
+                            <Badge className="rounded-full border border-amber-500/35 bg-amber-500/15 text-amber-200">
+                              {t("watchlistPage.leavingSoon", "Leaving your queue soon")}
+                            </Badge>
+                          )}
+                          <span className="text-xs uppercase tracking-[0.14em]">
+                            {mediaType === "movie"
+                              ? t("common.movie", "Movie")
+                              : t("common.tvShow", "TV Show")}
+                          </span>
                         </div>
                       </div>
                     </Link>

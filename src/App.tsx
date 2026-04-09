@@ -37,6 +37,7 @@ import { applyAccessibilityPreferencesToRoot } from "@/lib/accessibility-prefere
 import { useCookieConsent } from "@/hooks/useCookieConsent";
 import Index from "./pages/Index";
 const KeyboardShortcuts = lazy(() => import("@/components/KeyboardShortcuts"));
+const CommandPalette = lazy(() => import("@/components/CommandPalette"));
 const GlobalLoader = lazy(() =>
   import("@/components/GlobalLoader").then((mod) => ({
     default: mod.GlobalLoader,
@@ -71,7 +72,6 @@ const TitleStatus = lazy(() => import("./pages/TitleStatus"));
 const Search = lazy(() => import("./pages/Search"));
 const Trending = lazy(() => import("./pages/Trending"));
 const Details = lazy(() => import("./pages/Details"));
-const LocationDetails = lazy(() => import("./pages/LocationDetails"));
 const Person = lazy(() => import("./pages/Person"));
 const Watchlist = lazy(() => import("./pages/Watchlist"));
 const Watched = lazy(() => import("./pages/Watched"));
@@ -93,7 +93,6 @@ const Discover = lazy(() => import("./pages/Discover"));
 const DecadeExplorer = lazy(() => import("./pages/DecadeExplorer"));
 const Achievements = lazy(() => import("./pages/Achievements"));
 const PrintWatchlist = lazy(() => import("./pages/PrintWatchlist"));
-const TrekLists = lazy(() => import("./pages/TrekLists"));
 const AwardWinners = lazy(() => import("./pages/AwardWinners"));
 const YearInReview = lazy(() => import("./pages/YearInReview"));
 const isVercelHost =
@@ -116,7 +115,7 @@ function NetworkMonitor() {
 
   return (
     <div
-      className="sticky top-0 z-[90] border-b border-amber-500/25 bg-amber-500/10 px-4 py-2 text-center text-sm text-amber-100 backdrop-blur-sm"
+      className="sticky top-0 z-[90] border-b border-primary/25 bg-primary/10 px-4 py-2 text-center text-sm text-primary backdrop-blur-sm"
       role="status"
       aria-live="polite"
     >
@@ -185,26 +184,10 @@ function AnimatedRoutes() {
             }
           />
           <Route
-            path="/movie/:id/locations"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <LocationDetails />
-              </Suspense>
-            }
-          />
-          <Route
             path="/tv/:id/:slug?"
             element={
               <Suspense fallback={<RouteSpinner />}>
                 <Details />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/tv/:id/locations"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <LocationDetails />
               </Suspense>
             }
           />
@@ -439,16 +422,6 @@ function AnimatedRoutes() {
             }
           />
           <Route
-            path="/trek-lists"
-            element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteSpinner />}>
-                  <TrekLists />
-                </Suspense>
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/awards"
             element={
               <Suspense fallback={<RouteSpinner />}>
@@ -521,8 +494,6 @@ const App = () => {
     "tv-seasons",
     "season-details",
     "home-critical",
-    "location-details",
-    "enriched-filming-locations",
     "followed-titles-details",
     "print-watchlist",
     "recommendations",
@@ -568,22 +539,22 @@ const App = () => {
 
   useEffect(() => {
     let idleId: number | null = null;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let frameId: number | null = null;
 
     const enable = () => setEnableEnhancements(true);
 
     if (typeof window !== "undefined" && "requestIdleCallback" in window) {
       idleId = window.requestIdleCallback(enable, { timeout: 1500 });
     } else {
-      timeoutId = globalThis.setTimeout(enable, 200);
+      frameId = window.requestAnimationFrame(enable);
     }
 
     return () => {
       if (idleId !== null && "cancelIdleCallback" in window) {
         window.cancelIdleCallback(idleId);
       }
-      if (timeoutId !== null) {
-        globalThis.clearTimeout(timeoutId);
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
       }
     };
   }, []);
@@ -631,6 +602,11 @@ const App = () => {
                 {enableEnhancements && (
                   <Suspense fallback={null}>
                     <KeyboardShortcuts />
+                  </Suspense>
+                )}
+                {enableEnhancements && (
+                  <Suspense fallback={null}>
+                    <CommandPalette />
                   </Suspense>
                 )}
                 <Sonner position="bottom-right" />

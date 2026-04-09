@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useId } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
@@ -86,6 +86,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const resultsListId = useId().replace(/:/g, "");
   const language = i18n.language;
 
   const refreshRecentSearches = useCallback(() => {
@@ -211,6 +212,10 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
     strictFiltering,
     moderateFiltering,
   ) as unknown as SearchResult[];
+  const activeOptionId =
+    selectedIndex >= 0 && results[selectedIndex]
+      ? `search-option-${results[selectedIndex].media_type}-${results[selectedIndex].id}`
+      : undefined;
 
   const shouldShowRecentSearches =
     isOpen && query.trim().length === 0 && recentSearches.length > 0;
@@ -387,12 +392,13 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          className="h-11 rounded-lg border-white/10 bg-card/50 pl-9 pr-16 transition-all focus:border-primary focus:ring-primary/20 sm:h-10"
+          className="main-search-input h-11 rounded-lg border-white/10 bg-card/50 pl-9 pr-16 transition-all focus:border-primary focus:ring-primary/20 sm:h-10"
           aria-label={t("search.placeholder")}
           role="combobox"
           aria-autocomplete="list"
           aria-expanded={isOpen}
-          aria-controls="search-dropdown-results"
+          aria-controls={resultsListId}
+          aria-activedescendant={activeOptionId}
         />
 
         {/* Keyboard hint */}
@@ -425,8 +431,8 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
       {isOpen &&
         (debouncedQuery.trim().length >= 1 || shouldShowRecentSearches) && (
           <div
-            id="search-dropdown-results"
-            className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[72vh] overflow-y-auto rounded-xl border border-border/50 bg-popover/95 shadow-2xl backdrop-blur-xl animate-fade-in sm:max-h-screen"
+            id={resultsListId}
+            className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[72vh] overflow-y-auto rounded-xl border border-border/50 bg-popover shadow-2xl animate-fade-in sm:max-h-screen"
           >
             {shouldShowRecentSearches ? (
               <div className="py-2">
@@ -445,7 +451,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                 <ul>
                   {recentSearches.map((item) => (
                     <li key={item.timestamp}>
-                      <div className="flex items-center gap-3 px-4 py-1 transition-colors hover:bg-accent/50">
+                      <div className="group flex items-center gap-3 px-4 py-1 transition-colors hover:bg-accent/50">
                         <button
                           type="button"
                           onClick={() => handleRecentSearchClick(item.query)}
@@ -455,9 +461,6 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                           <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
                             {item.query}
                           </span>
-                          <span className="hidden text-xs text-muted-foreground sm:inline">
-                            {new Date(item.timestamp).toLocaleDateString()}
-                          </span>
                         </button>
                         <div className="flex min-h-[44px] min-w-[44px] items-center justify-center">
                           <button
@@ -465,7 +468,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                             onClick={(event) =>
                               handleRemoveRecentSearch(event, item.query)
                             }
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground opacity-70 transition-all hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                             aria-label={`Remove ${item.query} from recent searches`}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -489,6 +492,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                     <li key={`${item.media_type}-${item.id}`}>
                       <button
                         type="button"
+                        id={`search-option-${item.media_type}-${item.id}`}
                         onClick={() => handleItemClick(item)}
                         className={cn(
                           "w-full flex items-center gap-3 px-4 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",

@@ -28,6 +28,7 @@ import { logger } from "@/lib/logger";
 
 const extensionConnectionErrorRegex =
   /Could not establish connection\. Receiving end does not exist\.?/i;
+let handlersInstalled = false;
 
 function getRejectionMessage(reason: unknown): string {
   if (typeof reason === "string") return reason;
@@ -317,6 +318,17 @@ export function installChunkErrorHandlers(): void {
       import.meta.env?.VITE_CHUNK_ERROR_DEBUG === "true") ||
     (typeof process !== "undefined" &&
       process.env?.VITE_CHUNK_ERROR_DEBUG === "true");
+
+  // In dev this mostly catches extension/runtime noise; keep opt-in via debug flag.
+  if (isDev && !chunkDebugEnabled) {
+    return;
+  }
+
+  // Avoid duplicate global listeners across HMR/module reloads.
+  if (handlersInstalled) {
+    return;
+  }
+  handlersInstalled = true;
 
   // Handle unhandled promise rejections (common for dynamic imports)
   window.addEventListener(

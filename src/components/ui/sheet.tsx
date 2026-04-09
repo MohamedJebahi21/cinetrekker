@@ -53,6 +53,7 @@ interface SheetContentProps
   showCloseButton?: boolean;
   closeAriaLabel?: string;
   closeIcon?: React.ReactNode;
+  overlayClassName?: string;
 }
 
 const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Content>, SheetContentProps>(
@@ -64,13 +65,14 @@ const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Con
       showCloseButton = true,
       closeAriaLabel = "Close",
       closeIcon,
+      overlayClassName,
       "aria-describedby": ariaDescribedBy,
       ...props
     },
     ref,
   ) => (
     <SheetPortal>
-      <SheetOverlay />
+      <SheetOverlay className={overlayClassName} />
       <SheetPrimitive.Content
         ref={ref}
         aria-describedby={ariaDescribedBy}

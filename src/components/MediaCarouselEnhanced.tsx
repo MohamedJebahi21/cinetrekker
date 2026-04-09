@@ -51,29 +51,19 @@ function areScrollStatesEqual(a: ScrollState, b: ScrollState): boolean {
 }
 
 function getScrollState(container: HTMLDivElement, itemCount: number): ScrollState {
-  const cards = Array.from(container.children) as HTMLElement[];
   const maxScrollLeft = Math.max(0, container.scrollWidth - container.clientWidth);
   const hasScrollableWidth = maxScrollLeft > 0;
-  const fallbackPages = Math.max(1, Math.ceil(itemCount / 2));
-  const measuredPages = hasScrollableWidth
-    ? Math.max(1, Math.ceil(container.scrollWidth / container.clientWidth))
+  const pageCount = hasScrollableWidth
+    ? Math.max(1, Math.round(maxScrollLeft / container.clientWidth) + 1)
     : 1;
-  const pageCount = Math.max(fallbackPages, measuredPages);
-  let nearestChildIndex = 0;
-  let nearestDistance = Number.POSITIVE_INFINITY;
 
-  cards.forEach((card, index) => {
-    const distance = Math.abs(card.offsetLeft - container.scrollLeft);
-    if (distance < nearestDistance) {
-      nearestDistance = distance;
-      nearestChildIndex = index;
-    }
-  });
-
-  const activePage = hasScrollableWidth && cards.length > 1
+  const activePage = hasScrollableWidth && pageCount > 1
     ? Math.min(
         pageCount - 1,
-        Math.round((nearestChildIndex / (cards.length - 1)) * (pageCount - 1)),
+        Math.max(
+          0,
+          Math.round((container.scrollLeft / maxScrollLeft) * (pageCount - 1)),
+        ),
       )
     : 0;
 
@@ -97,7 +87,6 @@ export function MediaCarouselEnhanced({
   const { t } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollCheckFrameRef = useRef<number | null>(null);
-  const scrollSettleTimeoutRef = useRef<number | null>(null);
 
   const [scrollState, setScrollState] = useState<ScrollState>(DEFAULT_SCROLL_STATE);
 
@@ -118,28 +107,17 @@ export function MediaCarouselEnhanced({
     });
   }, [syncScrollState]);
 
-  const scheduleSettledScrollSync = useCallback(() => {
-    if (scrollSettleTimeoutRef.current !== null) {
-      window.clearTimeout(scrollSettleTimeoutRef.current);
-    }
-
-    scrollSettleTimeoutRef.current = window.setTimeout(() => {
-      scrollSettleTimeoutRef.current = null;
-      scheduleScrollSync();
-    }, 120);
-  }, [scheduleScrollSync]);
-
   useEffect(() => {
     syncScrollState();
 
     const container = scrollContainerRef.current;
     if (!container) return;
 
-      const handleScroll = () => scheduleSettledScrollSync();
-      const handleResize = () => scheduleScrollSync();
+    const handleScroll = () => scheduleScrollSync();
+    const handleResize = () => scheduleScrollSync();
 
-      container.addEventListener("scroll", handleScroll, { passive: true });
-      window.addEventListener("resize", handleResize);
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleResize);
 
     const resizeObserver = new ResizeObserver(() => scheduleScrollSync());
     resizeObserver.observe(container);
@@ -153,13 +131,8 @@ export function MediaCarouselEnhanced({
         window.cancelAnimationFrame(scrollCheckFrameRef.current);
         scrollCheckFrameRef.current = null;
       }
-
-      if (scrollSettleTimeoutRef.current !== null) {
-        window.clearTimeout(scrollSettleTimeoutRef.current);
-        scrollSettleTimeoutRef.current = null;
-      }
     };
-  }, [scheduleScrollSync, scheduleSettledScrollSync, syncScrollState]);
+  }, [scheduleScrollSync, syncScrollState]);
 
   const handleManualScroll = useCallback((direction: "left" | "right") => {
     const container = scrollContainerRef.current;
@@ -176,19 +149,17 @@ export function MediaCarouselEnhanced({
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    const cards = Array.from(container.children) as HTMLElement[];
-    if (cards.length === 0) return;
+    const maxScrollLeft = Math.max(0, container.scrollWidth - container.clientWidth);
+    if (maxScrollLeft <= 0) return;
 
-    const pageCount = Math.max(1, Math.ceil(container.scrollWidth / container.clientWidth));
-    const targetChildIndex =
-      pageCount <= 1 || cards.length <= 1
-        ? 0
-        : Math.round((index * (cards.length - 1)) / (pageCount - 1));
+    const pageCount = Math.max(1, Math.round(maxScrollLeft / container.clientWidth) + 1);
+    const clampedIndex = Math.max(0, Math.min(pageCount - 1, index));
+    const targetLeft =
+      pageCount <= 1 ? 0 : (clampedIndex / (pageCount - 1)) * maxScrollLeft;
 
-    cards[targetChildIndex]?.scrollIntoView({
+    container.scrollTo({
+      left: targetLeft,
       behavior: "smooth",
-      inline: "start",
-      block: "nearest",
     });
   }, []);
 
@@ -249,7 +220,7 @@ export function MediaCarouselEnhanced({
                 type="button"
                 onClick={() => handleManualScroll("left")}
                 disabled={!scrollState.canScrollLeft}
-                className="absolute left-2 top-[40%] z-10 inline-flex min-h-[48px] min-w-[48px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 backdrop-blur-sm transition-all duration-200 hover:bg-background disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:left-3 md:opacity-0 md:group-hover/scroll:opacity-100"
+                className="absolute left-2 top-[40%] z-10 inline-flex min-h-[48px] min-w-[48px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 backdrop-blur-sm transition-all duration-200 hover:bg-background disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:left-3 md:opacity-0 md:group-hover/scroll:opacity-100 md:focus-visible:opacity-100"
                 aria-label={previousText}
               >
                 <ChevronLeft className="h-5 w-5" />
@@ -259,7 +230,7 @@ export function MediaCarouselEnhanced({
                 type="button"
                 onClick={() => handleManualScroll("right")}
                 disabled={!scrollState.canScrollRight}
-                className="absolute right-2 top-[40%] z-10 inline-flex min-h-[48px] min-w-[48px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 backdrop-blur-sm transition-all duration-200 hover:bg-background disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:right-3 md:opacity-0 md:group-hover/scroll:opacity-100"
+                className="absolute right-2 top-[40%] z-10 inline-flex min-h-[48px] min-w-[48px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 backdrop-blur-sm transition-all duration-200 hover:bg-background disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:right-3 md:opacity-0 md:group-hover/scroll:opacity-100 md:focus-visible:opacity-100"
                 aria-label={nextText}
               >
                 <ChevronRight className="h-5 w-5" />

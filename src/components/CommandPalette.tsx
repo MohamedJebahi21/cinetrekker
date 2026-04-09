@@ -69,7 +69,10 @@ export default function CommandPalette() {
 
   useEffect(() => {
     if (open) {
-      setTimeout(() => inputRef.current?.focus(), 50);
+      const frameId = window.requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
+      return () => window.cancelAnimationFrame(frameId);
     } else {
       setQuery("");
     }

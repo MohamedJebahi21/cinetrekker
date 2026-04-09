@@ -32,21 +32,41 @@ export function usePullToRefresh({
 
   const handlers: PullToRefreshHandlers = {
     onTouchStart: (event) => {
-      if (window.scrollY !== 0 || isRefreshing) return;
+      // Only start pull gesture if at top of page, not already pulling, and not refreshing
+      if (window.scrollY !== 0 || isRefreshing || isPullingRef.current) return;
       startYRef.current = event.touches[0].clientY;
       isPullingRef.current = true;
     },
     onTouchMove: (event) => {
-      if (!isPullingRef.current || startYRef.current === null || isRefreshing)
+      // Validate pulling state and position
+      if (!isPullingRef.current || startYRef.current === null || isRefreshing) {
+        resetPull();
         return;
-      if (window.scrollY !== 0) return;
+      }
+      
+      // If user scrolls past top, abort pull gesture
+      if (window.scrollY !== 0) {
+        resetPull();
+        return;
+      }
 
       const delta = event.touches[0].clientY - startYRef.current;
-      if (delta <= 0) return;
+      
+      // Only pull downward
+      if (delta <= 0) {
+        resetPull();
+        return;
+      }
 
+      // Calculate visual resistance
       const resisted = Math.min(maxPull, delta * 0.6);
       setPullDistance(resisted);
-      event.preventDefault();
+      
+      // Only prevent default if actively pulling (delta > threshold)
+      // This prevents interference with normal scrolling
+      if (delta > 20) {
+        event.preventDefault();
+      }
     },
     onTouchEnd: async () => {
       if (!isPullingRef.current || isRefreshing) {

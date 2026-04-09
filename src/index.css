@@ -4,39 +4,40 @@
 
 @layer base {
   :root {
+    --font-display: "Space Grotesk", "DM Sans", system-ui, sans-serif;
+    --font-body: "DM Sans", system-ui, sans-serif;
     /* Light theme defaults */
-    --background: 210 20% 97%; /* #F6F7F9 */
-    --foreground: 222 47% 11%; /* #111827 */
+    --background: 30 20% 97%;
+    --foreground: 240 10% 10%;
 
-    --card: 0 0% 100%; /* #FFFFFF */
-    --card-foreground: 222 47% 11%; /* #111827 */
-    --card-hover: 210 17% 95%; /* #F1F3F5 */
+    --card: 40 20% 99%;
+    --card-foreground: 240 10% 10%;
+    --card-hover: 30 16% 95%;
 
-    --popover: 0 0% 100%; /* #FFFFFF */
-    --popover-foreground: 222 47% 11%; /* #111827 */
+    --popover: 40 20% 99%;
+    --popover-foreground: 240 10% 10%;
 
-    /* Primary accent: Refined Red */
     --primary: 350 96% 43%; /* #D90429 */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 17% 95%; /* #F1F3F5 */
-    --secondary-foreground: 215 16% 34%; /* #4B5563 */
+    --secondary: 30 16% 95%;
+    --secondary-foreground: 240 6% 36%;
 
-    --muted: 210 17% 95%; /* #F1F3F5 */
-    --muted-foreground: 220 9% 46%; /* #6B7280 */
-    --disabled-foreground: 220 9% 65%; /* #9CA3AF */
+    --muted: 30 16% 95%;
+    --muted-foreground: 240 5% 44%;
+    --disabled-foreground: 240 5% 62%;
 
-    --accent: 350 83% 95%; /* #FDE8EA */
-    --accent-foreground: 222 47% 11%; /* #111827 */
+    --accent: 350 83% 95%;
+    --accent-foreground: 240 10% 10%;
 
-    --destructive: 350 96% 43%; /* #D90429 */
+    --destructive: 12 82% 48%;
     --destructive-foreground: 0 0% 100%;
 
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%; /* #E5E7EB */
-    --input: 220 13% 91%; /* #E5E7EB */
+    --border: 28 13% 88%;
+    --input: 28 13% 88%;
     --ring: 350 96% 43%;
 
     --radius: 0.75rem;
@@ -51,12 +52,8 @@
     --glass-blur: blur(16px);
 
     /* Gradient tokens */
-    --gradient-primary: linear-gradient(
-      135deg,
-      hsl(350 96% 43%),
-      hsl(350 96% 35%)
-    ); /* #D90429 -> #B0031F */
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 17% 95%));
+    --gradient-primary: linear-gradient(135deg, hsl(350 96% 43%), hsl(350 96% 35%));
+    --gradient-card: linear-gradient(180deg, hsl(40 20% 99%), hsl(30 16% 95%));
     --gradient-hero: linear-gradient(
       to top,
       hsl(210 17% 95%) 0%,
@@ -77,14 +74,14 @@
     --rating-medium: 45 100% 50%;
     --rating-low: 0 72% 51%;
 
-    --sidebar-background: 210 20% 97%; /* #F6F7F9 */
-    --sidebar-foreground: 222 47% 11%; /* #111827 */
-    --sidebar-primary: 350 96% 43%; /* #D90429 */
+    --sidebar-background: 30 20% 97%;
+    --sidebar-foreground: 240 10% 10%;
+    --sidebar-primary: 350 96% 43%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 17% 95%; /* #F1F3F5 */
-    --sidebar-accent-foreground: 215 16% 34%; /* #4B5563 */
-    --sidebar-border: 220 13% 91%; /* #E5E7EB */
-    --sidebar-ring: 350 96% 43%; /* #D90429 */
+    --sidebar-accent: 30 16% 95%;
+    --sidebar-accent-foreground: 240 6% 36%;
+    --sidebar-border: 28 13% 88%;
+    --sidebar-ring: 350 96% 43%;
 
     /* Shared cinematic aliases derived from the semantic theme tokens */
     --bg-page: hsl(var(--background));
@@ -92,7 +89,7 @@
     --bg-row: hsl(var(--muted));
     --text-primary: hsl(var(--foreground));
     --text-secondary: hsl(var(--muted-foreground));
-    --ct-accent-gold: hsl(42 92% 62%);
+    --ct-accent-gold: hsl(350 96% 43%);
     --ct-panel-border: hsl(var(--border) / 0.6);
     --ct-surface-soft: hsl(var(--card) / 0.72);
     --ct-surface-strong: hsl(var(--card) / 0.9);
@@ -107,36 +104,36 @@
 
   .dark {
     /* Dark theme (cinematic) */
-    --background: 0 0% 3%;
-    --foreground: 0 0% 98%;
+    --background: 240 8% 5%; /* #0D0D0F */
+    --foreground: 48 23% 95%; /* #F5F5F0 */
 
-    --card: 0 0% 5%;
-    --card-foreground: 0 0% 98%;
-    --card-hover: 0 0% 8%;
+    --card: 240 5% 13%; /* #1E1E21 */
+    --card-foreground: 48 23% 95%;
+    --card-hover: 240 5% 16%;
 
-    --popover: 0 0% 5%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 240 5% 9%; /* #161618 */
+    --popover-foreground: 48 23% 95%;
 
     --primary: 358 94% 46%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 90%;
+    --secondary: 240 5% 9%;
+    --secondary-foreground: 240 4% 78%;
 
-    --muted: 0 0% 8%;
-    --muted-foreground: 0 0% 72%;
+    --muted: 240 5% 9%;
+    --muted-foreground: 240 5% 64%;
 
-    --accent: 358 94% 46%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 358 94% 20%;
+    --accent-foreground: 48 23% 95%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 12 82% 48%;
     --destructive-foreground: 0 0% 100%;
 
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
 
-    --border: 0 0% 12%;
-    --input: 0 0% 12%;
+    --border: 240 5% 18%;
+    --input: 240 5% 18%;
     --ring: 358 94% 46%;
 
     --radius: 0.75rem;
@@ -148,13 +145,9 @@
     --glass-border: 0 0% 100% / 0.06;
     --glass-blur: blur(16px);
 
-    --gradient-primary: linear-gradient(
-      135deg,
-      hsl(358 94% 46%),
-      hsl(358 94% 36%)
-    );
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 7%), hsl(0 0% 3%));
-    --gradient-hero: linear-gradient(to top, hsl(0 0% 2%) 0%, transparent 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(358 94% 46%), hsl(358 94% 36%));
+    --gradient-card: linear-gradient(180deg, hsl(240 5% 13%), hsl(240 8% 5%));
+    --gradient-hero: linear-gradient(to top, hsl(240 8% 4%) 0%, transparent 100%);
     --gradient-poster: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
 
     --shadow-glow: 0 0 60px hsl(358 94% 46% / 0.15);
@@ -166,13 +159,13 @@
     --rating-medium: 45 100% 50%;
     --rating-low: 0 72% 51%;
 
-    --sidebar-background: 0 0% 2%;
-    --sidebar-foreground: 0 0% 98%;
+    --sidebar-background: 240 8% 4%;
+    --sidebar-foreground: 48 23% 95%;
     --sidebar-primary: 358 94% 46%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 0 0% 12%;
+    --sidebar-accent: 240 5% 9%;
+    --sidebar-accent-foreground: 240 4% 78%;
+    --sidebar-border: 240 5% 18%;
     --sidebar-ring: 358 94% 46%;
   }
 
@@ -208,7 +201,7 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: "Inter", system-ui, sans-serif;
+    font-family: var(--font-body);
     letter-spacing: -0.01em;
     line-height: 1.5;
     overflow-x: hidden;
@@ -281,7 +274,7 @@
       position: fixed;
       inset: 0;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-      opacity: 0.01;
+      opacity: 0.018;
       mix-blend-mode: soft-light;
       pointer-events: none;
       z-index: 0;
@@ -290,7 +283,7 @@
 
   /* RTL support for Arabic */
   [dir="rtl"] body {
-    font-family: "Noto Sans Arabic", "Inter", system-ui, sans-serif;
+    font-family: "Noto Sans Arabic", var(--font-body);
   }
 
   [dir="rtl"] {
@@ -366,7 +359,6 @@
   }
 
   .glass-card-hover:hover {
-    transform: scale(1.05);
     border-color: hsl(var(--foreground) / 0.18);
     box-shadow: var(--shadow-card-hover);
   }
@@ -475,7 +467,7 @@
 
   /* Cinematic display type for major headings */
   .heading-cinematic {
-    font-family: "Bebas Neue", Impact, sans-serif;
+    font-family: var(--font-display);
     font-weight: 400;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -483,7 +475,7 @@
 
   /* Movie/show title styling */
   .title-display {
-    font-family: "Bebas Neue", Impact, sans-serif;
+    font-family: var(--font-display);
     font-weight: 600;
     letter-spacing: 0.03em;
   }
@@ -739,13 +731,13 @@
   }
 
   .heading-credits {
-    font-family: "Bebas Neue", Impact, sans-serif;
+    font-family: var(--font-display);
     letter-spacing: 0.07em;
     text-transform: uppercase;
   }
 
   .editorial-copy {
-    font-family: "Inter", system-ui, sans-serif;
+    font-family: var(--font-body);
     line-height: 1.7;
     letter-spacing: 0;
   }

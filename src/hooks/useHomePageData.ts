@@ -74,7 +74,7 @@ export function useHomePageData({
   useEffect(() => {
     setDeferredEnabled(false);
 
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    let frameId: number | undefined;
     let idleId: number | undefined;
 
     const enableDeferred = () => setDeferredEnabled(true);
@@ -82,15 +82,15 @@ export function useHomePageData({
     if (typeof window !== "undefined" && "requestIdleCallback" in window) {
       idleId = window.requestIdleCallback(enableDeferred, { timeout: 1200 });
     } else {
-      timeoutId = globalThis.setTimeout(enableDeferred, 0);
+      frameId = window.requestAnimationFrame(enableDeferred);
     }
 
     return () => {
       if (idleId !== undefined && "cancelIdleCallback" in window) {
         window.cancelIdleCallback(idleId);
       }
-      if (timeoutId !== undefined) {
-        globalThis.clearTimeout(timeoutId);
+      if (frameId !== undefined) {
+        window.cancelAnimationFrame(frameId);
       }
     };
   }, [language]);

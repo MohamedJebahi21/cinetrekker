@@ -31,6 +31,7 @@ import {
 } from "@/contexts/UserListsContext";
 import { createLogger } from "@/lib/logger";
 import { STORAGE_KEYS } from "@/contexts/userListsStorageKeys";
+import { trackEngagementEvent } from "@/lib/engagement";
 
 const logger = createLogger("user-lists");
 
@@ -160,11 +161,13 @@ export function AuthenticatedUserListsProvider({
     async (mediaId: number, mediaType: "movie" | "tv") => {
       if (user) {
         await addToWatchlistMutation.mutateAsync({ mediaId, mediaType });
+        trackEngagementEvent("watchlist_add", { mediaId, mediaType, auth: true });
         return;
       }
 
       guestWatchlist.addToGuestWatchlist(mediaId, mediaType);
       toast("Added to Watchlist (guest)");
+      trackEngagementEvent("watchlist_add", { mediaId, mediaType, auth: false });
     },
     [addToWatchlistMutation, guestWatchlist, user],
   );
@@ -173,11 +176,13 @@ export function AuthenticatedUserListsProvider({
     async (mediaId: number, mediaType: "movie" | "tv") => {
       if (user) {
         await removeFromWatchlistMutation.mutateAsync({ mediaId, mediaType });
+        trackEngagementEvent("watchlist_remove", { mediaId, mediaType, auth: true });
         return;
       }
 
       guestWatchlist.removeFromGuestWatchlist(mediaId, mediaType);
       toast(t("actions.watchlistRemoved", "Removed from watchlist"));
+      trackEngagementEvent("watchlist_remove", { mediaId, mediaType, auth: false });
     },
     [guestWatchlist, removeFromWatchlistMutation, t, user],
   );
@@ -198,6 +203,7 @@ export function AuthenticatedUserListsProvider({
           note,
           status,
         });
+        trackEngagementEvent("watched_add", { mediaId, mediaType, auth: true });
         return;
       }
 
@@ -212,6 +218,7 @@ export function AuthenticatedUserListsProvider({
           "Marked as watched on this device. Sign in later to sync it to your account.",
         ),
       });
+      trackEngagementEvent("watched_add", { mediaId, mediaType, auth: false });
     },
     [addToWatchedMutation, guestWatched, t, user],
   );
@@ -220,11 +227,13 @@ export function AuthenticatedUserListsProvider({
     async (mediaId: number, mediaType: "movie" | "tv") => {
       if (user) {
         await removeFromWatchedMutation.mutateAsync({ mediaId, mediaType });
+        trackEngagementEvent("watched_remove", { mediaId, mediaType, auth: true });
         return;
       }
 
       guestWatched.removeFromGuestWatched(mediaId, mediaType);
       toast(t("actions.watchedRemoved", "Removed from watched"));
+      trackEngagementEvent("watched_remove", { mediaId, mediaType, auth: false });
     },
     [guestWatched, removeFromWatchedMutation, t, user],
   );

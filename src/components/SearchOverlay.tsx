@@ -39,14 +39,14 @@ export default function SearchOverlay() {
   }, []);
 
   useEffect(() => {
-    let id: ReturnType<typeof setTimeout> | undefined;
+    let frameId: number | undefined;
     if (open) {
-      id = setTimeout(() => inputRef.current?.focus(), 0);
+      frameId = window.requestAnimationFrame(() => inputRef.current?.focus());
     } else {
       setQuery("");
     }
     return () => {
-      if (id !== undefined) clearTimeout(id);
+      if (frameId !== undefined) window.cancelAnimationFrame(frameId);
     };
   }, [open]);
 
@@ -141,7 +141,7 @@ export default function SearchOverlay() {
             role="dialog"
             aria-modal="true"
             aria-label={t("nav.search", "Search")}
-            className="w-full max-w-3xl bg-popover/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl"
+            className="w-full max-w-3xl bg-popover border border-border/50 rounded-xl shadow-2xl"
           >
             <div className="flex items-center gap-2 p-3">
               <Search className="w-5 h-5 text-muted-foreground ml-2" />

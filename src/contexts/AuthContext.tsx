@@ -86,14 +86,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         unsubscribe = () => subscription.unsubscribe();
 
-        const sessionResult = await Promise.race([
-          supabase.auth.getSession(),
-          new Promise<never>((_, reject) => {
-            window.setTimeout(() => {
-              reject(new Error("Auth session check timed out."));
-            }, AUTH_INIT_TIMEOUT_MS);
-          }),
-        ]);
+        let timeoutId: number | null = null;
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          timeoutId = window.setTimeout(() => {
+            reject(new Error("Auth session check timed out."));
+          }, AUTH_INIT_TIMEOUT_MS);
+        });
+
+        let sessionResult: Awaited<ReturnType<typeof supabase.auth.getSession>>;
+        try {
+          sessionResult = await Promise.race([
+            supabase.auth.getSession(),
+            timeoutPromise,
+          ]);
+        } finally {
+          if (timeoutId !== null) {
+            window.clearTimeout(timeoutId);
+            timeoutId = null;
+          }
+        }
 
         const {
           data: { session: currentSession },

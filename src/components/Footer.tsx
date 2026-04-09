@@ -1,20 +1,39 @@
+import { Suspense, lazy } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
+import { useMotionIntensityPreference } from "@/hooks/useMotionIntensityPreference";
+
+const RemotionAurora = lazy(() =>
+  import("@/components/motion/RemotionAurora").then((mod) => ({
+    default: mod.RemotionAurora,
+  })),
+);
 
 export function Footer() {
   const { t } = useTranslation();
+  const motionIntensity = useMotionIntensityPreference();
   const currentYear = new Date().getFullYear();
+
   return (
-    <footer className="bg-background border-t border-border/40">
-      <div className="container mx-auto px-4 py-6 pb-[max(calc(3.5rem+env(safe-area-inset-bottom,0px)),1.5rem)] md:py-10 md:pb-10">
+    <footer className="relative overflow-hidden border-t border-border/40 bg-background">
+      {motionIntensity !== "low" ? (
+        <div className={cn("pointer-events-none absolute inset-0 hidden md:block", motionIntensity === "high" ? "opacity-48" : "opacity-30")}>
+          <Suspense fallback={null}>
+            <RemotionAurora className={motionIntensity === "high" ? "opacity-75" : "opacity-55"} />
+          </Suspense>
+        </div>
+      ) : null}
+
+      <div className="container relative z-10 mx-auto px-4 py-6 pb-[max(calc(3.5rem+env(safe-area-inset-bottom,0px)),1.5rem)] md:py-10 md:pb-10">
         <div className="grid grid-cols-1 gap-6 min-[400px]:grid-cols-2 md:grid-cols-5 md:gap-10">
           <div className="col-span-1 min-[400px]:col-span-2 md:col-span-2 min-w-0">
             <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary shadow-[0_8px_20px_hsl(358_94%_46%/0.2)]">
-                <span className="text-lg font-bold text-primary-foreground">
-                  CT
-                </span>
-              </div>
+              <img
+                src="/apple-touch-icon.png"
+                alt="CineTrekker logo"
+                className="h-11 w-11 rounded-2xl object-cover shadow-[0_8px_20px_hsl(var(--primary)/0.2)]"
+              />
               <span className="text-[1.45rem] font-semibold leading-none text-foreground sm:text-[1.85rem]">
                 {t("common.appName")}
               </span>
@@ -22,42 +41,31 @@ export function Footer() {
             <p className="max-w-sm text-[0.95rem] leading-relaxed text-muted-foreground">
               {t(
                 "footer.tagline",
-                "Your personal movie and TV show tracker. Discover, track, and share your cinematic journey.",
+                "Your personal movie and TV tracker. Discover, track, and share your cinematic journey.",
               )}
             </p>
           </div>
+
           <div className="min-w-0">
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-foreground/90">
               {t("footer.explore", "Explore")}
             </h3>
             <nav className="flex flex-col gap-3" aria-label={t("footer.exploreLinks", "Explore links")}>
-              <Link
-                to="/search"
-                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              >
+              <Link to="/" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
+                {t("nav.home", "Home")}
+              </Link>
+              <Link to="/watchlist" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
+                {t("nav.watchlist", "Watchlist")}
+              </Link>
+              <Link to="/watched" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
+                {t("nav.watched", "Watched")}
+              </Link>
+              <Link to="/search" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
                 {t("nav.search", "Search")}
-              </Link>
-              <Link
-                to="/trending"
-                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              >
-                {t("footer.trending", "Trending")}
-              </Link>
-              <Link
-                to="/calendar"
-                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              >
-                {t("footer.upcoming", "Upcoming")}
-              </Link>
-              <Link
-                to="/search?sort=vote_average.desc"
-                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              >
-                {t("footer.topRated", "Top Rated")}
               </Link>
             </nav>
           </div>
-          {/* Support Column */}
+
           <div className="min-w-0">
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-foreground/90">
               {t("footer.support", "Support")}
@@ -65,74 +73,44 @@ export function Footer() {
             <nav className="flex flex-col gap-3" aria-label={t("footer.supportLinks", "Support links")}>
               <a
                 href="https://buymeacoffee.com/mohamed_jebahi"
-                target="_blank" rel="noopener noreferrer"
-                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground"
               >
                 {t("footer.buyMeACoffee", "Buy Me a Coffee")}
               </a>
-              <Link
-                to="/about"
-                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              >
+              <Link to="/about" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
                 {t("footer.about", "About")}
               </Link>
-              <Link
-                to="/feedback"
-                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              >
+              <Link to="/feedback" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
                 {t("footer.feedback", "Feedback")}
               </Link>
-              <Link
-                to="/feedback"
-                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              >
-                {t("footer.contact", "Contact")}
-              </Link>
-              <a
-                href="https://developer.themoviedb.org/docs"
-                target="_blank" rel="noopener noreferrer"
-                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              >
-                {t("footer.tmdbApi", "TMDB API")}
-              </a>
             </nav>
           </div>
-          {/* Legal Column */}
+
           <div className="min-w-0">
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-foreground/90">
               {t("footer.legal", "Legal")}
             </h3>
             <nav className="flex flex-col gap-3" aria-label={t("footer.legalLinks", "Legal links")}>
-              <Link
-                to="/privacy"
-                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              >
+              <Link to="/privacy" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
                 {t("nav.privacy", "Privacy Policy")}
               </Link>
-              <Link
-                to="/terms"
-                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              >
+              <Link to="/terms" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
                 {t("footer.terms", "Terms of Service")}
               </Link>
-              <Link
-                to="/cookies"
-                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              >
+              <Link to="/cookies" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
                 {t("footer.cookies", "Cookie Policy")}
               </Link>
             </nav>
           </div>
         </div>
-        {/* Bottom Bar */}
+
         <div className="mt-8 border-t border-border/40 pt-5">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            {/* Copyright */}
             <p className="text-center text-[0.84rem] text-muted-foreground md:text-left">
-              © {currentYear} {t("common.appName")}.{" "}
-              {t("footer.allRightsReserved", "All rights reserved.")}
+              © {currentYear} {t("common.appName")}. {t("footer.allRightsReserved", "All rights reserved.")}
             </p>
-            {/* TMDB Attribution */}
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">
@@ -140,7 +118,8 @@ export function Footer() {
                 </span>
                 <a
                   href="https://www.themoviedb.org/"
-                  target="_blank" rel="noopener noreferrer"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="transition-opacity hover:opacity-80"
                 >
                   <img
@@ -155,7 +134,6 @@ export function Footer() {
               </div>
             </div>
           </div>
-          {/* TMDB Attribution Text */}
           <p className="mx-auto mt-3 max-w-3xl text-center text-sm leading-relaxed text-muted-foreground">
             {t(
               "footer.attribution",
