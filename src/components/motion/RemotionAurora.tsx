@@ -1,6 +1,6 @@
 import { Player } from "@remotion/player";
 import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 type AuraProps = {
@@ -87,6 +87,19 @@ function AuroraComposition() {
 }
 
 export const RemotionAurora = memo(function RemotionAurora({ className, paused = false }: AuraProps) {
+  const [hasUserGesture, setHasUserGesture] = useState(false);
+
+  useEffect(() => {
+    const onFirstGesture = () => setHasUserGesture(true);
+    window.addEventListener("pointerdown", onFirstGesture, { once: true });
+    window.addEventListener("keydown", onFirstGesture, { once: true });
+
+    return () => {
+      window.removeEventListener("pointerdown", onFirstGesture);
+      window.removeEventListener("keydown", onFirstGesture);
+    };
+  }, []);
+
   return (
     <div className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)} aria-hidden="true">
       <Player
@@ -96,9 +109,10 @@ export const RemotionAurora = memo(function RemotionAurora({ className, paused =
         compositionHeight={1080}
         fps={30}
         controls={false}
-        autoPlay={!paused}
-        loop={!paused}
+        autoPlay={!paused && hasUserGesture}
+        loop={!paused && hasUserGesture}
         clickToPlay={false}
+        acknowledgeRemotionLicense
         className="h-full w-full"
       />
     </div>
