@@ -78,12 +78,11 @@ try {
     };
 
     if (typeof window !== "undefined") {
-      const g = window as any;
-      if ("requestIdleCallback" in g) {
-        g.requestIdleCallback(injectInsights, { timeout: 2500 });
+      if ("requestIdleCallback" in window) {
+        window.requestIdleCallback(injectInsights, { timeout: 2500 });
       } else {
-        g.requestAnimationFrame(() => {
-          g.requestAnimationFrame(injectInsights);
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(injectInsights);
         });
       }
     }

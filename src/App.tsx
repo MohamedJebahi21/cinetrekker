@@ -544,11 +544,10 @@ const App = () => {
     const enable = () => setEnableEnhancements(true);
 
     if (typeof window !== "undefined") {
-      const g = window as any;
-      if ("requestIdleCallback" in g) {
-        idleId = g.requestIdleCallback(enable, { timeout: 1500 });
+      if ("requestIdleCallback" in window) {
+        idleId = window.requestIdleCallback(enable, { timeout: 1500 });
       } else {
-        frameId = g.requestAnimationFrame(enable);
+        frameId = window.requestAnimationFrame(enable);
       }
     }
 
