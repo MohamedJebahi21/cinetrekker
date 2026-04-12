@@ -83,7 +83,7 @@ export function useHomePageData({
     if (typeof window !== "undefined" && "requestIdleCallback" in g) {
       idleId = g.requestIdleCallback!(enableDeferred, { timeout: 1200 });
     } else {
-      frameId = g.requestAnimationFrame(enableDeferred);
+      frameId = window.requestAnimationFrame(enableDeferred);
     }
 
     return () => {

@@ -548,7 +548,7 @@ const App = () => {
       if ("requestIdleCallback" in g) {
         idleId = g.requestIdleCallback!(enable, { timeout: 1500 });
       } else {
-        frameId = g.requestAnimationFrame(enable);
+        frameId = window.requestAnimationFrame(enable);
       }
     }
 

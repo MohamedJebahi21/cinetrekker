@@ -88,7 +88,7 @@ export function FilmingLocationsMap({ items = [], points: customPoints }: Filmin
         return;
       }
 
-      frameIdRef.current = g.requestAnimationFrame(() => {
+      frameIdRef.current = window.requestAnimationFrame(() => {
         void initMap();
       });
     };

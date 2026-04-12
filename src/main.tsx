@@ -82,8 +82,8 @@ try {
       if ("requestIdleCallback" in g) {
         g.requestIdleCallback!(injectInsights, { timeout: 2500 });
       } else {
-        g.requestAnimationFrame(() => {
-          g.requestAnimationFrame(injectInsights);
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(injectInsights);
         });
       }
     }
