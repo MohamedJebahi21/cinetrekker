@@ -80,14 +80,15 @@ export function FilmingLocationsMap({ items = [], points: customPoints }: Filmin
     };
 
     const queueMapInit = () => {
-      if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-        idleIdRef.current = window.requestIdleCallback(() => {
+      const g = window as any;
+      if (typeof window !== "undefined" && "requestIdleCallback" in g) {
+        idleIdRef.current = g.requestIdleCallback(() => {
           void initMap();
         }, { timeout: 1800 });
         return;
       }
 
-      frameIdRef.current = window.requestAnimationFrame(() => {
+      frameIdRef.current = g.requestAnimationFrame(() => {
         void initMap();
       });
     };

@@ -1,7 +1,13 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   processAuthError,
@@ -29,39 +35,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import SEO from "@/components/SEO";
 
-function ProviderIcon({
-  provider,
-}: {
-  provider: "google" | "facebook" | "apple";
-}) {
-  if (provider === "google") {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
-        <path
-          fill="#EA4335"
-          d="M12 10.2v3.9h5.5c-.2 1.3-1.5 3.9-5.5 3.9-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.5 14.6 2.6 12 2.6 6.9 2.6 2.8 6.7 2.8 11.8S6.9 21 12 21c6.9 0 9.1-4.8 9.1-7.3 0-.5 0-.9-.1-1.3H12Z"
-        />
-      </svg>
-    );
-  }
 
-  if (provider === "facebook") {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
-        <path
-          fill="#1877F2"
-          d="M24 12.1C24 5.4 18.6 0 12 0S0 5.4 0 12.1c0 6 4.4 11 10.1 11.9v-8.4H7.1v-3.5h3V9.4c0-3 1.8-4.7 4.5-4.7 1.3 0 2.7.2 2.7.2v3h-1.5c-1.5 0-2 .9-2 1.9v2.3h3.4l-.5 3.5h-2.9V24C19.6 23.1 24 18.1 24 12.1Z"
-        />
-      </svg>
-    );
-  }
-
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-current">
-      <path d="M16.37 12.73c.03 3.21 2.82 4.28 2.85 4.3-.02.08-.45 1.54-1.48 3.04-.89 1.29-1.82 2.57-3.28 2.6-1.43.03-1.89-.85-3.52-.85-1.63 0-2.14.82-3.49.88-1.41.05-2.49-1.41-3.38-2.69C2.26 17.4.87 12.6 2.75 9.34c.94-1.62 2.61-2.65 4.43-2.68 1.38-.03 2.68.93 3.52.93.84 0 2.41-1.15 4.07-.98.69.03 2.62.28 3.86 2.09-.1.06-2.3 1.34-2.26 4.03ZM13.67 4.71c.74-.89 1.23-2.13 1.09-3.36-1.07.04-2.36.71-3.13 1.6-.69.8-1.3 2.06-1.14 3.27 1.2.09 2.43-.61 3.18-1.51Z" />
-    </svg>
-  );
-}
 
 export default function Auth({ initialTab }: { initialTab?: string }) {
   const { t } = useTranslation();
@@ -90,7 +64,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signUp, signInWithProvider, resetPassword } = useAuth();
+  const { signIn, signUp, resetPassword } = useAuth();
 
   React.useEffect(() => {
     const state = location.state as { authMessage?: string } | null;
@@ -102,37 +76,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
     });
   }, [location.state]);
 
-  const handleProviderSignIn = async (
-    provider: "google" | "facebook" | "apple",
-  ) => {
-    setIsLoading(true);
-    setMessage(null);
 
-    try {
-      const { error } = await signInWithProvider(provider);
-      if (error) throw error;
-    } catch (error: unknown) {
-      const { userMessage } = processAuthError(error);
-      const providerLabel =
-        provider === "google"
-          ? t("auth.providerGoogle", "Google")
-          : provider === "facebook"
-            ? t("auth.providerFacebook", "Facebook")
-            : t("auth.providerApple", "Apple");
-      setMessage({
-        type: "error",
-        text:
-          userMessage === GENERIC_AUTH_ERROR
-            ? t(
-                "auth.providerUnavailable",
-                "{{provider}} sign-in is not available right now. Please try email login instead.",
-                { provider: providerLabel },
-              )
-            : userMessage,
-      });
-      setIsLoading(false);
-    }
-  };
 
   const handleForgotPassword = async () => {
     const emailValidation = emailSchema.safeParse(email);
@@ -266,31 +210,35 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                 </div>
 
                 <div className="space-y-2">
+                  <div className="mb-2 flex items-center gap-2">
+                    <Label htmlFor="auth-password">
+                      {t("auth.passwordLabel", "Password")}
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button 
+                            type="button"
+                            className="text-muted-foreground hover:text-foreground transition-colors outline-none"
+                            aria-label={t("auth.passwordRules", "Password requirements")}
+                          >
+                            <Info className="h-4 w-4" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-xs space-y-1">
+                          <p className="font-medium text-sm">{t("auth.passwordRulesTitle", "Password Requirements:")}</p>
+                          <ul className="text-xs space-y-0.5">
+                            <li>{t("auth.passwordRuleMin", "• Minimum 8 characters")}</li>
+                            <li>{t("auth.passwordRuleProTip", "• Tip: Use uppercase and numbers for strength")}</li>
+                            <li className="italic text-[10px] opacity-70">
+                              {t("auth.passwordSymbolsOptional", "(Symbols are optional)")}
+                            </li>
+                          </ul>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <div className="relative">
-                    <div className="mb-2 flex items-center justify-between">
-                      <Label htmlFor="auth-password">
-                        {t("auth.passwordLabel", "Password")}
-                      </Label>
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((current) => !current)}
-                        className="inline-flex min-h-11 items-center gap-1 rounded-md px-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                        aria-label={
-                          showPassword
-                            ? t("auth.hidePassword", "Hide password")
-                            : t("auth.showPassword", "Show password")
-                        }
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-3.5 w-3.5" />
-                        ) : (
-                          <Eye className="h-3.5 w-3.5" />
-                        )}
-                        {showPassword
-                          ? t("auth.hide", "Hide")
-                          : t("auth.show", "Show")}
-                      </button>
-                    </div>
                     <Input
                       id="auth-password"
                       type={showPassword ? "text" : "password"}
@@ -310,7 +258,24 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                         }));
                       }}
                       required
+                      className="pr-10"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((current) => !current)}
+                      className="absolute right-0 top-0 flex h-full w-10 items-center justify-center text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-e-md transition-colors"
+                      aria-label={
+                        showPassword
+                          ? t("auth.hidePassword", "Hide password")
+                          : t("auth.showPassword", "Show password")
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
                   </div>
 
                   {activeTab === "login" && (
@@ -331,14 +296,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                     </p>
                   )}
 
-                  {activeTab === "register" && (
-                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 px-1 pt-1 text-sm text-muted-foreground opacity-80">
-                      <p>{t("auth.passwordRuleMin", "• Min. 8 characters")}</p>
-                      <p>{t("auth.passwordRuleCase", "• Uppercase & Lowercase")}</p>
-                      <p>{t("auth.passwordRuleNumberSpecial", "• Number & Special char")}</p>
-                      <p>{t("auth.passwordRuleSequence", "• No sequences (123, abc)")}</p>
-                    </div>
-                  )}
+
                 </div>
 
                 <label htmlFor="remember-me" className="flex items-center gap-2 text-base text-muted-foreground">
@@ -367,56 +325,6 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                   </span>
                 </Button>
 
-                <div className="relative py-1">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-border" />
-                  </div>
-                  <div className="relative flex justify-center text-sm uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
-                      {t("auth.orContinueWith", "Or continue with")}
-                    </span>
-                  </div>
-                </div>
-
-                <p className="text-center text-sm text-muted-foreground">
-                  {t(
-                    "auth.providerHint",
-                    "Google is the fastest option. Facebook and Apple may depend on your browser or provider configuration.",
-                  )}
-                </p>
-
-                <div className="space-y-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full justify-start gap-3"
-                    disabled={isLoading}
-                    onClick={() => void handleProviderSignIn("google")}
-                  >
-                    <ProviderIcon provider="google" />
-                    {t("auth.continueWithGoogle", "Continue with Google")}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full justify-start gap-3"
-                    disabled={isLoading}
-                    onClick={() => void handleProviderSignIn("facebook")}
-                  >
-                    <ProviderIcon provider="facebook" />
-                    {t("auth.continueWithFacebook", "Continue with Facebook")}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full justify-start gap-3"
-                    disabled={isLoading}
-                    onClick={() => void handleProviderSignIn("apple")}
-                  >
-                    <ProviderIcon provider="apple" />
-                    {t("auth.continueWithApple", "Continue with Apple")}
-                  </Button>
-                </div>
               </form>
             </Tabs>
           </CardContent>

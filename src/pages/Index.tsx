@@ -131,9 +131,6 @@ function DiscoveryGridRail({
           <h2 className="text-xl font-semibold tracking-tight text-foreground md:text-2xl">
             {title}
           </h2>
-          <p className="text-sm text-muted-foreground">
-            Curated in a tighter grid so the homepage pace shifts between browse modes.
-          </p>
         </div>
         <Button asChild variant="ghost" size="sm">
           <Link to={href}>See All</Link>

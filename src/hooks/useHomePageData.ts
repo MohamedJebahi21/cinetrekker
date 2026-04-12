@@ -79,10 +79,11 @@ export function useHomePageData({
 
     const enableDeferred = () => setDeferredEnabled(true);
 
-    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      idleId = window.requestIdleCallback(enableDeferred, { timeout: 1200 });
+    const g = window as any;
+    if (typeof window !== "undefined" && "requestIdleCallback" in g) {
+      idleId = g.requestIdleCallback(enableDeferred, { timeout: 1200 });
     } else {
-      frameId = window.requestAnimationFrame(enableDeferred);
+      frameId = g.requestAnimationFrame(enableDeferred);
     }
 
     return () => {

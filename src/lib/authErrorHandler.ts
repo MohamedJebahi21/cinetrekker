@@ -1,7 +1,7 @@
 export const GENERIC_AUTH_ERROR =
   "Authentication failed. Please check your credentials.";
 export const GENERIC_SIGNUP_SUCCESS =
-  "Please check your email to complete setup.";
+  "Registration successful! Please check your email (including spam) for a confirmation link to activate your account.";
 
 const pW = "pass" + "word";
 export const AUTH_RESET_NOTIF =
@@ -62,9 +62,17 @@ export function processAuthError(error: unknown): {
     };
   }
 
-  if (errorMessage.includes("email not confirmed")) {
+  if (errorMessage.includes("email_address_invalid") || errorMessage.includes("invalid email")) {
     return {
-      userMessage: "Please confirm your email address before signing in.",
+      userMessage: "This email address or domain is not supported. Please try a different email (e.g., Gmail).",
+      shouldLog: false,
+      logContext,
+    };
+  }
+
+  if (errorMessage.includes("email not confirmed") || errorMessage.includes("confirmation_sent")) {
+    return {
+      userMessage: "Please check your email and click the confirmation link before signing in.",
       shouldLog: false,
       logContext,
     };

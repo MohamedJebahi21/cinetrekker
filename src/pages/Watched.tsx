@@ -96,7 +96,7 @@ export default function Watched() {
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="ct-kicker mb-2">
-                {t("watchedPage.kicker", "Watched Archive")}
+                {t("watchedPage.kicker", "Your History")}
               </p>
               <h1 className="section-title mb-0">{t("watched.title", "Watched")}</h1>
             </div>

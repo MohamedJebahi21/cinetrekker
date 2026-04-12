@@ -642,6 +642,7 @@
   .ct-page-shell {
     background: var(--ct-gradient-shell);
     overflow-x: clip;
+    max-width: 100vw;
   }
 
   .ct-panel {
@@ -888,9 +889,9 @@
     background: linear-gradient(
       to bottom,
       transparent 0%,
-      hsla(0, 0%, 2%, 0.3) 40%,
-      hsla(0, 0%, 2%, 0.8) 70%,
-      hsl(0, 0%, 2%) 100%
+      hsl(var(--background) / 0.35) 40%,
+      hsl(var(--background) / 0.82) 70%,
+      hsl(var(--background)) 100%
     );
   }
 
@@ -914,6 +915,7 @@
 
   .hide-scrollbar {
     -ms-overflow-style: none;
+    scrollbar-width: none; /* Firefox */
   }
 
   .hide-scrollbar::-webkit-scrollbar {
@@ -1054,10 +1056,9 @@ img {
   background-color: rgba(0, 0, 0, 0.45);
 }
 
-.dialog-content,
-[data-radix-dialog-content] {
-  color: #fff;
-}
+/* Note: dialog text color is inherited from the card/foreground CSS variables.
+   Do NOT set a hardcoded color here — it breaks light-mode dialogs.
+   Dark-mode dialogs already get the correct foreground via the .dark class. */
 
 /* Mobile-optimized typography for section titles */
 @media (max-width: 768px) {
@@ -1461,3 +1462,14 @@ select:focus {
   color: hsl(var(--foreground)) !important;
 }
 
+
+/* Scrollbar Utilities */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+}

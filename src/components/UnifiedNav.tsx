@@ -19,6 +19,13 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useMotionIntensityPreference } from "@/hooks/useMotionIntensityPreference";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -45,20 +52,20 @@ const RemotionAurora = lazy(() =>
 );
 
 const menuLinks = [
-  { path: "/profile", label: "Profile", icon: User },
-  { path: "/discover", label: "Discover", icon: Compass },
-  { path: "/trending", label: "Trending", icon: Film },
-  { path: "/search", label: "Search", icon: Compass },
-  { path: "/recommendations", label: "Recommendations", icon: Film },
-  { path: "/calendar", label: "Calendar", icon: CalendarDays },
-  { path: "/stats", label: "Stats", icon: Award },
-  { path: "/achievements", label: "Achievements", icon: Award },
-  { path: "/print-watchlist", label: "Print Watchlist", icon: Film },
-  { path: "/genres", label: "Genres", icon: Layers },
-  { path: "/decades", label: "Decades", icon: CalendarDays },
-  { path: "/awards", label: "Awards", icon: Award },
-  { path: "/year-in-review", label: "Year In Review", icon: Award },
-  { path: "/following", label: "Following", icon: User },
+  { path: "/profile", labelKey: "nav.profile", defaultLabel: "Profile", icon: User },
+  { path: "/discover", labelKey: "nav.discover", defaultLabel: "Discover", icon: Compass },
+  { path: "/trending", labelKey: "nav.trending", defaultLabel: "Trending", icon: Film },
+  { path: "/search", labelKey: "nav.search", defaultLabel: "Search", icon: Compass },
+  { path: "/recommendations", labelKey: "nav.recommendations", defaultLabel: "Recommendations", icon: Film },
+  { path: "/calendar", labelKey: "nav.calendar", defaultLabel: "Calendar", icon: CalendarDays },
+  { path: "/stats", labelKey: "nav.stats", defaultLabel: "Stats", icon: Award },
+  { path: "/achievements", labelKey: "nav.achievements", defaultLabel: "Achievements", icon: Award },
+  { path: "/print-watchlist", labelKey: "nav.printWatchlist", defaultLabel: "Print Watchlist", icon: Film },
+  { path: "/genres", labelKey: "nav.genres", defaultLabel: "Genres", icon: Layers },
+  { path: "/decades", labelKey: "nav.decades", defaultLabel: "Decades", icon: CalendarDays },
+  { path: "/awards", labelKey: "nav.awards", defaultLabel: "Awards", icon: Award },
+  { path: "/year-in-review", labelKey: "nav.yearInReview", defaultLabel: "Year In Review", icon: Award },
+  { path: "/following", labelKey: "nav.following", defaultLabel: "Following", icon: User },
 ];
 
 const desktopMenuGridVariants = {
@@ -79,7 +86,7 @@ const menuItemVariants = {
     y: 0,
     transition: {
       duration: 0.24,
-      ease: "easeOut",
+      ease: "easeOut" as const,
     },
   },
 };
@@ -162,7 +169,7 @@ export function UnifiedNav() {
       { path: "/login", label: t("nav.signIn", "Sign In") },
       { path: "/signup", label: t("nav.signUp", "Sign Up") },
       { path: "/accessibility", label: t("accessibility.title", "Accessibility Settings") },
-      ...menuLinks,
+      ...menuLinks.map(item => ({ path: item.path, label: t(item.labelKey, item.defaultLabel) })),
     ];
 
     const matched = routeLabels
@@ -228,25 +235,59 @@ export function UnifiedNav() {
             </Link>
           </Button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full"
-            onClick={() => setIsDesktopMenuOpen(true)}
-            aria-label={t("nav.changeLanguage", "Change language")}
-          >
-            <Globe className="h-5 w-5" />
-          </Button>
+          {/* Language Switcher */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full"
+                aria-label={t("nav.changeLanguage", "Change language")}
+              >
+                <Globe className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[160px] bg-popover border-border/50">
+              {languages.map((lang) => (
+                <DropdownMenuItem
+                  key={lang.code}
+                  onClick={() => i18n.changeLanguage(lang.code)}
+                  className={i18n.language === lang.code ? "bg-accent" : ""}
+                >
+                  {lang.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full"
-            onClick={() => setIsDesktopMenuOpen(true)}
-            aria-label={t("nav.changeTheme", "Change theme")}
-          >
-            <Palette className="h-5 w-5" />
-          </Button>
+          {/* Theme Switcher */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full"
+                aria-label={t("nav.changeTheme", "Change theme")}
+              >
+                <Palette className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[140px] bg-popover border-border/50">
+              {(["dark", "light", "oled"] as const).map((option) => (
+                <DropdownMenuItem
+                  key={option}
+                  onClick={() => setTheme(option)}
+                  className={theme === option ? "bg-accent" : ""}
+                >
+                  {option === "dark"
+                    ? t("nav.themeDark", "Dark")
+                    : option === "light"
+                      ? t("nav.themeLight", "Light")
+                      : t("nav.themeOled", "OLED")}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <Button
             variant="ghost"
@@ -381,7 +422,7 @@ export function UnifiedNav() {
                             className="flex min-h-[64px] items-center gap-3 rounded-2xl border border-border/60 bg-card px-5 py-4 text-base font-medium text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/50"
                           >
                             <Icon className="h-5 w-5 shrink-0 text-muted-foreground" />
-                            {item.label}
+                            {t(item.labelKey, item.defaultLabel)}
                           </Link>
                         </motion.div>
                       );
@@ -401,7 +442,7 @@ export function UnifiedNav() {
           side="right"
           showCloseButton={false}
           overlayClassName="top-[calc(4rem+env(safe-area-inset-top,0px))]"
-          className="relative safe-area-insets top-[calc(4rem+env(safe-area-inset-top,0px))] h-[calc(100dvh-4rem-env(safe-area-inset-top,0px))] w-full max-w-none overflow-y-auto border-l-0 bg-background px-0 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-4 sm:w-[24rem] sm:border-l sm:pt-[max(1rem,env(safe-area-inset-top,0px))]"
+          className="safe-area-insets top-[calc(4rem+env(safe-area-inset-top,0px))] h-[calc(100dvh-4rem-env(safe-area-inset-top,0px))] w-full max-w-none overflow-y-auto border-l-0 bg-background px-0 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-4 sm:w-[24rem] sm:border-l sm:pt-[max(1rem,env(safe-area-inset-top,0px))]"
         >
           {motionIntensity !== "low" ? (
             <div className={cn("pointer-events-none absolute inset-0", motionIntensity === "high" ? "opacity-56" : "opacity-34")}>
@@ -460,11 +501,51 @@ export function UnifiedNav() {
                         className="flex min-h-[56px] items-center gap-3 rounded-2xl border border-border/50 bg-card px-4 py-3 text-sm font-medium text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/45"
                       >
                         <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        {item.label}
+                        {t(item.labelKey, item.defaultLabel)}
                       </Link>
                     </motion.div>
                   );
                 })}
+              </div>
+
+              {/* Settings & Auth */}
+              <div className="space-y-2 border-t border-border/50 pt-4">
+                <motion.div variants={menuItemVariants}>
+                  <Link
+                    to="/settings"
+                    onClick={() => setIsMobileSheetOpen(false)}
+                    className="flex min-h-[56px] items-center gap-3 rounded-2xl border border-border/50 bg-card px-4 py-3 text-sm font-medium text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/45"
+                  >
+                    <Settings className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    {t("nav.settings", "Settings")}
+                  </Link>
+                </motion.div>
+                {user ? (
+                  <motion.div variants={menuItemVariants}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileSheetOpen(false);
+                        window.dispatchEvent(new Event("cinetrekker:sign-out"));
+                      }}
+                      className="flex min-h-[56px] w-full items-center gap-3 rounded-2xl border border-destructive/30 bg-card px-4 py-3 text-sm font-medium text-destructive transition-all duration-200 hover:bg-destructive/10"
+                    >
+                      <User className="h-4 w-4 shrink-0" />
+                      {t("nav.signOut", "Sign Out")}
+                    </button>
+                  </motion.div>
+                ) : (
+                  <motion.div variants={menuItemVariants}>
+                    <Link
+                      to="/login"
+                      onClick={() => setIsMobileSheetOpen(false)}
+                      className="flex min-h-[56px] items-center gap-3 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-primary transition-all duration-200 hover:bg-primary/20"
+                    >
+                      <User className="h-4 w-4 shrink-0" />
+                      {t("nav.signIn", "Sign In")}
+                    </Link>
+                  </motion.div>
+                )}
               </div>
             </motion.div>
           </motion.div>

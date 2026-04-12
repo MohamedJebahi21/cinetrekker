@@ -77,12 +77,15 @@ try {
         .catch(() => undefined);
     };
 
-    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      window.requestIdleCallback(injectInsights, { timeout: 2500 });
-    } else {
-      window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(injectInsights);
-      });
+    if (typeof window !== "undefined") {
+      const g = window as any;
+      if ("requestIdleCallback" in g) {
+        g.requestIdleCallback(injectInsights, { timeout: 2500 });
+      } else {
+        g.requestAnimationFrame(() => {
+          g.requestAnimationFrame(injectInsights);
+        });
+      }
     }
   }
 } catch (err) {

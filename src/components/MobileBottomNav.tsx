@@ -38,6 +38,7 @@ export function MobileBottomNav() {
                 isActive ? "text-primary" : "text-muted-foreground",
               )}
               aria-label={t(key, fallback)}
+              aria-current={isActive ? "page" : undefined}
             >
               <Icon className={cn("h-5 w-5 transition-transform", isActive && "scale-110")} strokeWidth={isActive ? 2.5 : 2} />
               <span>{t(key, fallback)}</span>
@@ -53,6 +54,7 @@ export function MobileBottomNav() {
             profileActive ? "text-primary" : "text-muted-foreground",
           )}
           aria-label={user ? t("nav.profile", "Profile") : t("nav.signIn", "Sign In")}
+          aria-current={profileActive ? "page" : undefined}
         >
           <User className={cn("h-5 w-5 transition-transform", profileActive && "scale-110")} strokeWidth={profileActive ? 2.5 : 2} />
           <span>{user ? t("nav.profile", "Profile") : t("nav.signIn", "Sign In")}</span>

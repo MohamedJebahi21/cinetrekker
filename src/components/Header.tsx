@@ -207,23 +207,13 @@ export function Header() {
           </span>
         </Link>
 
-        {/* Search Dropdown - Desktop (Prominent & Sticky) */}
-        <div className="hidden md:block flex-1 max-w-2xl mx-8">
+        {/* Search Dropdown - Desktop */}
+        <div className="hidden md:block flex-1 max-w-2xl mx-4 lg:mx-8">
           <SearchDropdown />
         </div>
 
-        {/* Current Page Indicator */}
-        <div className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 text-primary font-medium">
-          {menuCategories
-            .flatMap((cat) => cat.items)
-            .find((item) => {
-              if (item.path === "/") return location.pathname === "/";
-              return location.pathname.startsWith(item.path);
-            })?.label || ""}
-        </div>
-
         {/* Right Section */}
-        <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
           {/* All Menus Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -268,9 +258,9 @@ export function Header() {
                               <span className="flex-1 text-sm">
                                 {item.label}
                               </span>
-                              {item.count !== undefined && item.count > 0 && (
+                              {(item as { count?: number }).count !== undefined && (item as { count?: number }).count! > 0 && (
                                 <span className="min-w-[18px] h-[18px] px-1 rounded-full text-[10px] leading-[18px] bg-primary text-primary-foreground text-center">
-                                  {item.count}
+                                  {(item as { count?: number }).count}
                                 </span>
                               )}
                             </Link>
@@ -385,7 +375,21 @@ export function Header() {
               </Link>
             ))}
 
+          {/* Mobile Search Shortcut — tap to go to /search */}
+          <Button
+            variant="ghost"
+            size="icon"
+            asChild
+            className="md:hidden hover:bg-white/5 min-w-[44px] min-h-[44px]"
+            aria-label={t("nav.search", "Search")}
+          >
+            <Link to="/search">
+              <Search className="h-5 w-5" />
+            </Link>
+          </Button>
+
           {/* Mobile Menu Toggle */}
+
           <Button
             variant="ghost"
             size="icon"
