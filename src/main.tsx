@@ -78,9 +78,9 @@ try {
     };
 
     if (typeof window !== "undefined") {
-      const g = window as any;
+      const g = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number };
       if ("requestIdleCallback" in g) {
-        g.requestIdleCallback(injectInsights, { timeout: 2500 });
+        g.requestIdleCallback!(injectInsights, { timeout: 2500 });
       } else {
         g.requestAnimationFrame(() => {
           g.requestAnimationFrame(injectInsights);

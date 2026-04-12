@@ -258,7 +258,9 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
+        ok: true,
         success: true,
+        processedCount: totalUpdated,
         usersProcessed: userShows.size,
         usersUpdated: totalUpdated,
         timestamp: new Date().toISOString(),
