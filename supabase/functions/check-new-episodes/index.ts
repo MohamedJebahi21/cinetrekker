@@ -258,6 +258,8 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
+        ok: true,
+        processedCount: totalUpdated,
         success: true,
         usersProcessed: userShows.size,
         usersUpdated: totalUpdated,
