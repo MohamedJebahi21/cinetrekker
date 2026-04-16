@@ -62,8 +62,11 @@ The workflow file `.github/workflows/check-new-episodes.yml` is included.
    - Go to: **Settings** → **Secrets and variables** → **Actions**
    - Add: `SUPABASE_URL` (your Supabase project URL)
    - Add: `SUPABASE_ANON_KEY` (your anon key)
+   - Add: `CRON_SECRET` (must match Supabase Edge Function `CRON_SECRET`)
 
 2. The workflow runs automatically every day at 3 AM UTC
+
+Detailed guide: `docs/CRON_SECRET_SETUP.md`
 
 #### Option C: External Cron Service
 
@@ -72,7 +75,9 @@ The workflow file `.github/workflows/check-new-episodes.yml` is included.
    - **URL**: `https://[YOUR-PROJECT-ID].supabase.co/functions/v1/check-new-episodes`
    - **Schedule**: Daily at 3:00 AM
    - **Method**: POST
-   - **Headers**: Add `Authorization: Bearer YOUR_SUPABASE_ANON_KEY`
+   - **Headers**:
+     - `Authorization: Bearer YOUR_SUPABASE_ANON_KEY`
+     - `x-cron-secret: YOUR_CRON_SECRET`
 
 ## 🧪 Manual Testing
 
@@ -85,7 +90,8 @@ supabase functions invoke check-new-episodes
 # Or using curl
 curl -X POST \
   https://[YOUR-PROJECT-ID].supabase.co/functions/v1/check-new-episodes \
-  -H "Authorization: Bearer YOUR_SUPABASE_ANON_KEY"
+  -H "Authorization: Bearer YOUR_SUPABASE_ANON_KEY" \
+  -H "x-cron-secret: YOUR_CRON_SECRET"
 ```
 
 ## 📊 Performance Comparison

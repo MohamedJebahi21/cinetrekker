@@ -10,6 +10,8 @@ The workflow file (`.github/workflows/check-new-episodes.yml`) is already commit
 
 ## 🚀 Setup Steps (3 minutes)
 
+> ⚠️ Before continuing, complete `CRON_SECRET` setup using `docs/CRON_SECRET_SETUP.md`.
+
 ### Step 1: Add Repository Secrets
 
 1. Go to your repository on GitHub:
@@ -27,6 +29,11 @@ The workflow file (`.github/workflows/check-new-episodes.yml`) is already commit
 4. Add **SUPABASE_ANON_KEY**:
    - Name: `SUPABASE_ANON_KEY`
    - Value: Get from Supabase Dashboard → Settings → API → `anon` `public`
+   - Click **Add secret**
+
+5. Add **CRON_SECRET**:
+   - Name: `CRON_SECRET`
+   - Value: Use the same value configured in Supabase Edge Function secrets
    - Click **Add secret**
 
 ### Step 2: Verify Workflow is Active
@@ -74,6 +81,7 @@ The workflow file (`.github/workflows/check-new-episodes.yml`) is already commit
 POST https://wzlcekvieglnidfempap.supabase.co/functions/v1/check-new-episodes
 Headers:
   Authorization: Bearer <SUPABASE_ANON_KEY>
+  x-cron-secret: <CRON_SECRET>
   Content-Type: application/json
 ```
 
@@ -164,7 +172,7 @@ Add a notification step to the workflow:
 ### "Secret not found" Error:
 
 - Make sure secrets are added to the **repository** (not your personal account)
-- Secret names must match exactly: `SUPABASE_URL`, `SUPABASE_ANON_KEY`
+- Secret names must match exactly: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `CRON_SECRET`
 - Secrets are case-sensitive!
 
 ### Workflow not running automatically:
