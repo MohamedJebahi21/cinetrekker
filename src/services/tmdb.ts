@@ -67,19 +67,22 @@ function parseMaturityFromStorage(): {
     const raw = window.localStorage.getItem(CONTENT_POLICY_STORAGE_KEY);
     if (!raw) return { maturityLevel: SafetyLevel.STRICT, ageVerified: false };
 
-    const parsed = JSON.parse(raw) as {
-      safetyLevel?: string;
-      maturityRating?: string;
-      ageVerified?: boolean;
-      age?: number | null;
-      strictFiltering?: boolean;
-      moderateFiltering?: boolean;
-      adultContentEnabled?: boolean;
-    };
+    let parsed: Record<string, unknown>;
+    try {
+      const parsedJson = JSON.parse(raw);
+      if (!parsedJson || typeof parsedJson !== "object") {
+        return { maturityLevel: SafetyLevel.STRICT, ageVerified: false };
+      }
+      parsed = parsedJson as Record<string, unknown>;
+    } catch {
+      return { maturityLevel: SafetyLevel.STRICT, ageVerified: false };
+    }
 
     const ageVerified =
       parsed.ageVerified === true || typeof parsed.age === "number";
-    const tier = parsed.safetyLevel ?? parsed.maturityRating;
+    const tier =
+      (typeof parsed.safetyLevel === "string" ? parsed.safetyLevel : null) ??
+      (typeof parsed.maturityRating === "string" ? parsed.maturityRating : null);
     if (
       tier === SafetyLevel.STRICT ||
       tier === SafetyLevel.MODERATE ||
@@ -127,6 +130,7 @@ const fetchTMDB = async <T>(
   endpoint: string,
   language: string = "en",
   extraParams: Record<string, string> = {},
+  signal?: AbortSignal,
 ): Promise<T> => {
   if (USE_SUPABASE_EDGE_PROXY && (!SUPABASE_URL || !SUPABASE_API_KEY)) {
     throw new Error(
@@ -166,6 +170,10 @@ const fetchTMDB = async <T>(
       const timeoutId = globalThis.setTimeout(() => {
         controller.abort();
       }, TMDB_REQUEST_TIMEOUT_MS);
+
+      if (signal) {
+        signal.addEventListener("abort", () => controller.abort());
+      }
 
       const headers: HeadersInit = {
         "Content-Type": "application/json",
@@ -237,11 +245,12 @@ export const getTrending = async (
   language: string = "en",
   page: number = 1,
   includeAdult: boolean = false,
+  signal?: AbortSignal,
 ): Promise<TMDBResponse<Media>> => {
   return fetchTMDB(`/trending/${mediaType}/${timeWindow}`, language, {
     page: page.toString(),
     include_adult: includeAdult ? "true" : "false",
-  });
+  }, signal);
 };
 
 export const searchMulti = async (
@@ -249,12 +258,13 @@ export const searchMulti = async (
   page: number = 1,
   language: string = "en",
   includeAdult: boolean = false,
+  signal?: AbortSignal,
 ): Promise<TMDBResponse<Media>> => {
   return fetchTMDB(`/search/multi`, language, {
     query,
     page: page.toString(),
     include_adult: includeAdult ? "true" : "false",
-  });
+  }, signal);
 };
 
 export const searchMovies = async (
@@ -433,6 +443,7 @@ export const discoverMovies = async (
     include_adult?: string;
   },
   language: string = "en",
+  signal?: AbortSignal,
 ): Promise<TMDBResponse<Media>> => {
   const queryParams: Record<string, string> = {
     page: (params.page || 1).toString(),
@@ -457,7 +468,7 @@ export const discoverMovies = async (
     queryParams.with_watch_providers = params.with_watch_providers;
   if (params.watch_region) queryParams.watch_region = params.watch_region;
   if (params.include_adult) queryParams.include_adult = params.include_adult;
-  return fetchTMDB(`/discover/movie`, language, queryParams);
+  return fetchTMDB(`/discover/movie`, language, queryParams, signal);
 };
 
 export const discoverTV = async (
@@ -477,6 +488,7 @@ export const discoverTV = async (
     include_adult?: string;
   },
   language: string = "en",
+  signal?: AbortSignal,
 ): Promise<TMDBResponse<Media>> => {
   const queryParams: Record<string, string> = {
     page: (params.page || 1).toString(),
@@ -501,7 +513,7 @@ export const discoverTV = async (
     queryParams.with_watch_providers = params.with_watch_providers;
   if (params.watch_region) queryParams.watch_region = params.watch_region;
   if (params.include_adult) queryParams.include_adult = params.include_adult;
-  return fetchTMDB(`/discover/tv`, language, queryParams);
+  return fetchTMDB(`/discover/tv`, language, queryParams, signal);
 };
 
 // Get movie videos (trailers, etc.)

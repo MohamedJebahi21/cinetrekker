@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -43,6 +42,9 @@ jobs:
       - name: Verify production build
         run: npm run build
 
+      - name: Enforce bundle budget
+        run: npm run test:bundle-budget
+
       - name: Run API security tests
         run: npm run test:security
 
@@ -52,8 +54,18 @@ jobs:
       - name: Install Playwright WebKit
         run: npx playwright install --with-deps webkit
 
-      - name: Run mobile search regression tests
-        run: npm run test:e2e:mobile:search-regressions
+      - name: Run mobile feature tests
+        run: npm run test:e2e:mobile
+
+      - name: Upload Playwright artifacts (on failure)
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts-deployment-protection
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
 
   dependency-check:
     name: Runtime Dependency Audit

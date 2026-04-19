@@ -154,7 +154,8 @@ export function SEO({
           script.type = "application/ld+json";
           script.dataset.cinetrekkerJsonld = "true";
           script.id = `cinetrekker-jsonld-${index}`;
-          script.text = JSON.stringify(payload).replace(/</g, "\\u003c");
+          const safeJson = JSON.stringify(payload).replace(/</g, "\\u003c");
+          script.text = safeJson;
           document.head.appendChild(script);
         });
     }

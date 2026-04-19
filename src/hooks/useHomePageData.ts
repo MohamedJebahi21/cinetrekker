@@ -33,6 +33,14 @@ type UseHomePageDataOptions = {
   watchlist: UserListEntry[];
 };
 
+type IdleCallbackWindow = Window & {
+  requestIdleCallback?: (
+    callback: IdleRequestCallback,
+    options?: IdleRequestOptions,
+  ) => number;
+  cancelIdleCallback?: (handle: number) => void;
+};
+
 export function useHomePageData({
   language,
   watched,
@@ -73,24 +81,25 @@ export function useHomePageData({
 
   useEffect(() => {
     setDeferredEnabled(false);
+    const win = window as IdleCallbackWindow;
 
     let frameId: number | undefined;
     let idleId: number | undefined;
 
     const enableDeferred = () => setDeferredEnabled(true);
 
-    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      idleId = window.requestIdleCallback(enableDeferred, { timeout: 1200 });
+    if (typeof win.requestIdleCallback === "function") {
+      idleId = win.requestIdleCallback(enableDeferred, { timeout: 1200 });
     } else {
-      frameId = window.requestAnimationFrame(enableDeferred);
+      frameId = win.requestAnimationFrame(enableDeferred);
     }
 
     return () => {
-      if (idleId !== undefined && "cancelIdleCallback" in window) {
-        window.cancelIdleCallback(idleId);
+      if (idleId !== undefined && typeof win.cancelIdleCallback === "function") {
+        win.cancelIdleCallback(idleId);
       }
       if (frameId !== undefined) {
-        window.cancelAnimationFrame(frameId);
+        win.cancelAnimationFrame(frameId);
       }
     };
   }, [language]);
@@ -121,7 +130,9 @@ export function useHomePageData({
     queryFn: async () => {
       const [newReleasesData, trendingWeekData] = await Promise.all([
         getNowPlayingMovies(1, language, includeAdult),
-        getTrending("all", "week", language, 1, includeAdult),
+        new Promise<void>(resolve => setTimeout(resolve, 120)).then(() => 
+          getTrending("all", "week", language, 1, includeAdult)
+        ),
       ]);
 
       return {
@@ -133,13 +144,19 @@ export function useHomePageData({
 
   const popularMoviesQuery = useQuery({
     queryKey: ["popular", "movie", language, includeAdult],
-    queryFn: () => getPopularMovies(1, language, includeAdult),
+    queryFn: async () => {
+      await new Promise(resolve => setTimeout(resolve, 150));
+      return getPopularMovies(1, language, includeAdult);
+    },
     enabled: deferredEnabled,
   });
 
   const popularTVQuery = useQuery({
     queryKey: ["popular", "tv", language, includeAdult],
-    queryFn: () => getPopularTV(1, language, includeAdult),
+    queryFn: async () => {
+      await new Promise(resolve => setTimeout(resolve, 250));
+      return getPopularTV(1, language, includeAdult);
+    },
     enabled: deferredEnabled,
   });
 
@@ -164,13 +181,19 @@ export function useHomePageData({
 
   const topRatedMoviesQuery = useQuery({
     queryKey: ["top-rated", "movie", language, includeAdult],
-    queryFn: () => getTopRatedMovies(1, language, includeAdult),
+    queryFn: async () => {
+      await new Promise(resolve => setTimeout(resolve, 350));
+      return getTopRatedMovies(1, language, includeAdult);
+    },
     enabled: deferredEnabled,
   });
 
   const topRatedTVQuery = useQuery({
     queryKey: ["top-rated", "tv", language, includeAdult],
-    queryFn: () => getTopRatedTV(1, language, includeAdult),
+    queryFn: async () => {
+      await new Promise(resolve => setTimeout(resolve, 450));
+      return getTopRatedTV(1, language, includeAdult);
+    },
     enabled: deferredEnabled,
   });
 

@@ -6,6 +6,7 @@ import { reportSecurityEvent } from './_lib/securityMonitor.js';
 const MAX_NAME_LENGTH = 120;
 const MAX_EMAIL_LENGTH = 254;
 const MAX_MESSAGE_LENGTH = 4000;
+const RESEND_TIMEOUT_MS = 10_000;
 const logger = createServerLogger("feedback");
 
 function normalizeText(value, maxLength) {
@@ -77,20 +78,29 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await runtimeFetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: FEEDBACK_FROM_EMAIL,
-        to: [FEEDBACK_TO_EMAIL],
-        reply_to: email,
-        subject: `New CineTrekker feedback from ${name}`,
-        text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
-      }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), RESEND_TIMEOUT_MS);
+
+    let response;
+    try {
+      response = await runtimeFetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          from: FEEDBACK_FROM_EMAIL,
+          to: [FEEDBACK_TO_EMAIL],
+          reply_to: email,
+          subject: `New CineTrekker feedback from ${name}`,
+          text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
+        }),
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       await reportSecurityEvent({

@@ -361,6 +361,8 @@ export default function Settings() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [settingsLoadRetryCount, setSettingsLoadRetryCount] = useState(0);
+  const [settingsLoadTimedOut, setSettingsLoadTimedOut] = useState(false);
   const [pulseRowId, setPulseRowId] = useState<string | null>(null);
   const [isMobileSectionCollapse, setIsMobileSectionCollapse] = useState(false);
   const [isExportingData, setIsExportingData] = useState(false);
@@ -509,7 +511,21 @@ export default function Settings() {
         subscription.unsubscribe();
       }
     };
-  }, [profileKey, text, toast, user?.id, withTimeout]);
+  }, [profileKey, settingsLoadRetryCount, text, toast, user?.id, withTimeout]);
+
+  useEffect(() => {
+    if (!isLoadingSettings) {
+      setSettingsLoadTimedOut(false);
+      return;
+    }
+
+    setSettingsLoadTimedOut(false);
+    const timeoutId = window.setTimeout(() => {
+      setSettingsLoadTimedOut(true);
+    }, 15000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [isLoadingSettings, settingsLoadRetryCount]);
 
   useEffect(() => {
     if (!isLoadingSettings) {
@@ -797,7 +813,7 @@ export default function Settings() {
             ),
       });
 
-      navigate(user?.id ? "/auth" : "/");
+      navigate(user?.id ? "/login" : "/");
     } catch (error) {
       console.error("Error deleting account data:", error);
       toast({
@@ -852,9 +868,27 @@ export default function Settings() {
           </Card>
         </motion.section>
 
-        {isLoadingSettings && (
+        {isLoadingSettings && !settingsLoadTimedOut && (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          </div>
+        )}
+
+        {isLoadingSettings && settingsLoadTimedOut && (
+          <div className="mx-auto max-w-md rounded-lg border border-border/60 bg-card/70 p-5 text-center">
+            <p className="text-sm text-muted-foreground">
+              {text(
+                "settings.loadTimeoutDesc",
+                "Loading settings is taking longer than expected.",
+              )}
+            </p>
+            <Button
+              type="button"
+              className="mt-4"
+              onClick={() => setSettingsLoadRetryCount((count) => count + 1)}
+            >
+              {text("common.retry", "Retry")}
+            </Button>
           </div>
         )}
 

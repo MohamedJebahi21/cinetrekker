@@ -41,7 +41,7 @@ async function findNextEpisode(
   const firstRelevantSeason = watchedEpisodes.length
     ? Math.max(
         1,
-        Math.min(...watchedEpisodes.map((episode) => episode.season_number)),
+        Math.max(...watchedEpisodes.map((episode) => episode.season_number)),
       )
     : 1;
 
@@ -109,7 +109,9 @@ export function useContinueWatching(language: string) {
     ],
     queryFn: async () => {
       const items = await Promise.all(
-        activeShows.map(async (show) => {
+        activeShows.map(async (show, index) => {
+          // Add a small staggered delay to prevent proxy overload
+          if (index > 0) await new Promise(resolve => setTimeout(resolve, index * 120));
           const details = await getTVDetails(show.mediaId, language);
           const showEpisodes = watchedEpisodes
             .filter((episode) => episode.show_id === show.mediaId)

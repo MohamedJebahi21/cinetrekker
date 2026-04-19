@@ -1,6 +1,6 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, type ComponentType } from "react";
 import { createPortal } from "react-dom";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Settings from "lucide-react/dist/esm/icons/settings";
 import Palette from "lucide-react/dist/esm/icons/palette";
@@ -13,8 +13,7 @@ import Menu from "lucide-react/dist/esm/icons/menu";
 import X from "lucide-react/dist/esm/icons/x";
 import Compass from "lucide-react/dist/esm/icons/compass";
 import Film from "lucide-react/dist/esm/icons/film";
-import Info from "lucide-react/dist/esm/icons/info";
-import MessageSquare from "lucide-react/dist/esm/icons/message-square";
+import Clock3 from "lucide-react/dist/esm/icons/clock-3";
 import { useQuery } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -31,6 +30,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { profileService } from "@/services/profile";
 import { UserProfileDropdown } from "@/components/UserProfileDropdown";
+import { NotificationBell } from "@/components/NotificationBell";
 import {
   Sheet,
   SheetContent,
@@ -51,21 +51,42 @@ const RemotionAurora = lazy(() =>
   })),
 );
 
-const menuLinks = [
-  { path: "/profile", labelKey: "nav.profile", defaultLabel: "Profile", icon: User },
-  { path: "/discover", labelKey: "nav.discover", defaultLabel: "Discover", icon: Compass },
-  { path: "/trending", labelKey: "nav.trending", defaultLabel: "Trending", icon: Film },
-  { path: "/search", labelKey: "nav.search", defaultLabel: "Search", icon: Compass },
-  { path: "/recommendations", labelKey: "nav.recommendations", defaultLabel: "Recommendations", icon: Film },
-  { path: "/calendar", labelKey: "nav.calendar", defaultLabel: "Calendar", icon: CalendarDays },
-  { path: "/stats", labelKey: "nav.stats", defaultLabel: "Stats", icon: Award },
-  { path: "/achievements", labelKey: "nav.achievements", defaultLabel: "Achievements", icon: Award },
-  { path: "/print-watchlist", labelKey: "nav.printWatchlist", defaultLabel: "Print Watchlist", icon: Film },
-  { path: "/genres", labelKey: "nav.genres", defaultLabel: "Genres", icon: Layers },
-  { path: "/decades", labelKey: "nav.decades", defaultLabel: "Decades", icon: CalendarDays },
-  { path: "/awards", labelKey: "nav.awards", defaultLabel: "Awards", icon: Award },
-  { path: "/year-in-review", labelKey: "nav.yearInReview", defaultLabel: "Year In Review", icon: Award },
-  { path: "/following", labelKey: "nav.following", defaultLabel: "Following", icon: User },
+type MenuCategoryKey = "browse" | "library" | "insights" | "social";
+
+type MenuLinkItem = {
+  path: string;
+  labelKey: string;
+  defaultLabel: string;
+  icon: ComponentType<{ className?: string }>;
+  requiresAuth: boolean;
+  category: MenuCategoryKey;
+};
+
+const menuCategoryOrder: Array<{
+  key: MenuCategoryKey;
+  labelKey: string;
+  defaultLabel: string;
+}> = [
+  { key: "browse", labelKey: "nav.browse", defaultLabel: "Browse" },
+  { key: "library", labelKey: "nav.library", defaultLabel: "Library" },
+  { key: "insights", labelKey: "nav.insights", defaultLabel: "Insights" },
+  { key: "social", labelKey: "nav.social", defaultLabel: "Social" },
+];
+
+const menuLinks: MenuLinkItem[] = [
+  { path: "/discover", labelKey: "nav.discover", defaultLabel: "Discover", icon: Compass, requiresAuth: false, category: "browse" },
+  { path: "/trending", labelKey: "nav.trending", defaultLabel: "Trending", icon: Film, requiresAuth: false, category: "browse" },
+  { path: "/genres", labelKey: "nav.genres", defaultLabel: "Genres", icon: Layers, requiresAuth: false, category: "browse" },
+  { path: "/decades", labelKey: "nav.decades", defaultLabel: "Decades", icon: CalendarDays, requiresAuth: false, category: "browse" },
+  { path: "/awards", labelKey: "nav.awards", defaultLabel: "Awards", icon: Award, requiresAuth: false, category: "browse" },
+  { path: "/watchlist", labelKey: "nav.watchlist", defaultLabel: "Watchlist", icon: Film, requiresAuth: true, category: "library" },
+  { path: "/watched", labelKey: "nav.watched", defaultLabel: "Watched", icon: Clock3, requiresAuth: false, category: "library" },
+  { path: "/recommendations", labelKey: "nav.recommendations", defaultLabel: "Recommendations", icon: Film, requiresAuth: true, category: "library" },
+  { path: "/calendar", labelKey: "nav.calendar", defaultLabel: "Calendar", icon: CalendarDays, requiresAuth: true, category: "library" },
+  { path: "/stats", labelKey: "nav.stats", defaultLabel: "Stats", icon: Award, requiresAuth: true, category: "insights" },
+  { path: "/achievements", labelKey: "nav.achievements", defaultLabel: "Achievements", icon: Award, requiresAuth: true, category: "insights" },
+  { path: "/year-in-review", labelKey: "nav.yearInReview", defaultLabel: "Year In Review", icon: Award, requiresAuth: true, category: "insights" },
+  { path: "/following", labelKey: "nav.following", defaultLabel: "Following", icon: User, requiresAuth: true, category: "social" },
 ];
 
 const desktopMenuGridVariants = {
@@ -105,7 +126,8 @@ const mobileMenuListVariants = {
 export function UnifiedNav() {
   const { t, i18n } = useTranslation();
   const { pathname } = useLocation();
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const reduceMotion = useReducedMotion();
   const motionIntensity = useMotionIntensityPreference();
@@ -131,6 +153,19 @@ export function UnifiedNav() {
       ) ?? null
     );
   }, [profile, user]);
+
+  const visibleMenuLinks = useMemo(() => menuLinks, []);
+
+  const groupedMenuLinks = useMemo(
+    () =>
+      menuCategoryOrder
+        .map((category) => ({
+          ...category,
+          items: visibleMenuLinks.filter((item) => item.category === category.key),
+        }))
+        .filter((category) => category.items.length > 0),
+    [visibleMenuLinks],
+  );
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -169,7 +204,10 @@ export function UnifiedNav() {
       { path: "/login", label: t("nav.signIn", "Sign In") },
       { path: "/signup", label: t("nav.signUp", "Sign Up") },
       { path: "/accessibility", label: t("accessibility.title", "Accessibility Settings") },
-      ...menuLinks.map(item => ({ path: item.path, label: t(item.labelKey, item.defaultLabel) })),
+      ...visibleMenuLinks.map((item) => ({
+        path: item.path,
+        label: t(item.labelKey, item.defaultLabel),
+      })),
     ];
 
     const matched = routeLabels
@@ -181,7 +219,13 @@ export function UnifiedNav() {
     const segment = pathname.split("/").filter(Boolean)[0];
     if (!segment) return t("nav.home", "Home");
     return segment.charAt(0).toUpperCase() + segment.slice(1);
-  }, [pathname, t]);
+  }, [pathname, t, visibleMenuLinks]);
+
+  const handleMobileSignOut = async () => {
+    setIsMobileSheetOpen(false);
+    await signOut();
+    navigate("/", { replace: true });
+  };
 
   return (
     <header
@@ -217,10 +261,15 @@ export function UnifiedNav() {
 
         <div className="ml-auto hidden items-center gap-1 md:flex">
           {user ? (
-            <UserProfileDropdown
-              profilePhoto={profileImageUrl}
-              displayName={profile?.display_name ?? undefined}
-            />
+            <>
+              <div className="flex items-center rounded-full border border-border/60 bg-card/60 px-1 py-1 shadow-sm backdrop-blur-xl">
+                <NotificationBell />
+              </div>
+              <UserProfileDropdown
+                profilePhoto={profileImageUrl}
+                displayName={profile?.display_name ?? undefined}
+              />
+            </>
           ) : (
             <Button asChild variant="ghost" size="icon" className="rounded-full">
               <Link to="/login" aria-label={t("nav.signIn", "Sign In")}>
@@ -294,7 +343,11 @@ export function UnifiedNav() {
             size="icon"
             className="relative rounded-full text-foreground/90"
             onClick={() => setIsDesktopMenuOpen((current) => !current)}
-            aria-label={isDesktopMenuOpen ? t("common.close", "Close") : t("nav.menu", "Menu")}
+            aria-label={
+              isDesktopMenuOpen
+                ? t("nav.closeMenu", "Close menu")
+                : t("nav.openMenu", "Open menu")
+            }
             aria-expanded={isDesktopMenuOpen}
             aria-controls="desktop-menu-overlay"
           >
@@ -316,6 +369,11 @@ export function UnifiedNav() {
         </div>
 
         <div className="ml-auto flex items-center gap-1 md:hidden">
+          {user ? (
+            <div className="flex items-center rounded-full border border-border/60 bg-card/60 px-1 py-1 shadow-sm backdrop-blur-xl">
+              <NotificationBell />
+            </div>
+          ) : null}
           <Button asChild variant="ghost" size="icon" className="rounded-full">
             <Link to={user ? "/profile" : "/login"} aria-label={t("nav.profile", "Profile")}>
               {profileImageUrl ? (
@@ -334,7 +392,11 @@ export function UnifiedNav() {
             size="icon"
             className="rounded-full"
             onClick={() => setIsMobileSheetOpen((current) => !current)}
-            aria-label={isMobileSheetOpen ? t("common.close", "Close") : t("nav.menu", "Menu")}
+            aria-label={
+              isMobileSheetOpen
+                ? t("nav.closeMenu", "Close menu")
+                : t("nav.openMenu", "Open menu")
+            }
             aria-expanded={isMobileSheetOpen}
             aria-controls="mobile-menu-panel"
           >
@@ -401,33 +463,71 @@ export function UnifiedNav() {
                     </div>
                   </div>
 
-                  <motion.div
-                    className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
-                    variants={desktopMenuGridVariants}
-                    initial="hidden"
-                    animate="visible"
-                    transition={reduceMotion ? { delayChildren: 0.01, staggerChildren: 0.01 } : undefined}
-                  >
-                    {menuLinks.map((item) => {
-                      const Icon = item.icon;
-                      return (
+                  <div className="space-y-5">
+                    {groupedMenuLinks.map((category) => (
+                      <div key={category.key} className="space-y-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                          {t(category.labelKey, category.defaultLabel)}
+                        </p>
                         <motion.div
-                          key={item.path}
-                          variants={menuItemVariants}
-                          transition={reduceMotion ? { duration: 0.12 } : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                          className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+                          variants={desktopMenuGridVariants}
+                          initial="hidden"
+                          animate="visible"
+                          transition={reduceMotion ? { delayChildren: 0.01, staggerChildren: 0.01 } : undefined}
                         >
-                          <Link
-                            to={item.path}
-                            onClick={() => setIsDesktopMenuOpen(false)}
-                            className="flex min-h-[64px] items-center gap-3 rounded-2xl border border-border/60 bg-card px-5 py-4 text-base font-medium text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/50"
-                          >
-                            <Icon className="h-5 w-5 shrink-0 text-muted-foreground" />
-                            {t(item.labelKey, item.defaultLabel)}
-                          </Link>
+                          {category.items.map((item) => {
+                            const Icon = item.icon;
+                            return (
+                              <motion.div
+                                key={item.path}
+                                variants={menuItemVariants}
+                                transition={reduceMotion ? { duration: 0.12 } : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                              >
+                                <Link
+                                  to={item.path}
+                                  onClick={() => setIsDesktopMenuOpen(false)}
+                                  className="flex min-h-[64px] items-center gap-3 rounded-2xl border border-border/60 bg-card px-5 py-4 text-base font-medium text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/50"
+                                >
+                                  <Icon className="h-5 w-5 shrink-0 text-muted-foreground" />
+                                  {t(item.labelKey, item.defaultLabel)}
+                                </Link>
+                              </motion.div>
+                            );
+                          })}
                         </motion.div>
-                      );
-                    })}
-                  </motion.div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {!user ? (
+                    <div className="rounded-3xl border border-primary/20 bg-primary/8 px-5 py-5">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/85">
+                        {t("nav.account", "Account")}
+                      </p>
+                      <h3 className="mt-2 text-xl font-semibold text-foreground">
+                        {t("authPrompt.title", "Create a free account to save your watchlist")}
+                      </h3>
+                      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                        {t(
+                          "authPrompt.description",
+                          "Save titles, mark them watched, and keep your progress synced across devices.",
+                        )}
+                      </p>
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        <Button asChild>
+                          <Link to="/signup" onClick={() => setIsDesktopMenuOpen(false)}>
+                            {t("authPrompt.createAccount", "Create Account")}
+                          </Link>
+                        </Button>
+                        <Button asChild variant="outline">
+                          <Link to="/login" onClick={() => setIsDesktopMenuOpen(false)}>
+                            {t("nav.signIn", "Sign In")}
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
 
                 </div>
               </motion.div>
@@ -441,6 +541,8 @@ export function UnifiedNav() {
           id="mobile-menu-panel"
           side="right"
           showCloseButton={false}
+          aria-labelledby={undefined}
+          aria-label={`${t("common.appName", "CineTrekker")} ${t("nav.menu", "Menu")}`}
           overlayClassName="top-[calc(4rem+env(safe-area-inset-top,0px))]"
           className="safe-area-insets top-[calc(4rem+env(safe-area-inset-top,0px))] h-[calc(100dvh-4rem-env(safe-area-inset-top,0px))] w-full max-w-none overflow-y-auto border-l-0 bg-background px-0 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-4 sm:w-[24rem] sm:border-l sm:pt-[max(1rem,env(safe-area-inset-top,0px))]"
         >
@@ -459,54 +561,48 @@ export function UnifiedNav() {
             transition={{ duration: reduceMotion ? 0.14 : 0.24, ease: [0.22, 1, 0.36, 1] }}
           >
             <SheetHeader className="rounded-2xl border border-border/60 bg-card px-4 py-4 text-left">
-              <SheetTitle className="text-xl">{t("nav.menu", "Menu")}</SheetTitle>
+              <SheetTitle className="text-xl">
+                {`${t("common.appName", "CineTrekker")} ${t("nav.menu", "Menu")}`}
+              </SheetTitle>
               <p className="text-sm text-muted-foreground">
                 {t("nav.mobileSubtitle", "Browse tools and extra pages live here.")}
               </p>
             </SheetHeader>
 
-            <motion.div
+            <motion.nav
               className="mt-5 space-y-5"
+              aria-label={t("nav.main", "Main navigation")}
               variants={mobileMenuListVariants}
               initial="hidden"
               animate="visible"
               transition={reduceMotion ? { delayChildren: 0.01, staggerChildren: 0.01 } : undefined}
             >
-              <motion.div variants={menuItemVariants}>
-                <Link
-                  to="/"
-                  onClick={() => setIsMobileSheetOpen(false)}
-                  className="flex min-h-[56px] items-center gap-3 rounded-2xl border border-border/50 bg-card px-4 py-3 text-sm font-medium text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/45"
-                >
-                  <Compass className="h-4 w-4 shrink-0 text-primary" />
-                  {t("nav.home", "Home")}
-                </Link>
-              </motion.div>
-
-              <div className="space-y-2 border-t border-border/50 pt-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                  {t("nav.browse", "Browse")}
-                </p>
-                {menuLinks.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <motion.div
-                      key={item.path}
-                      variants={menuItemVariants}
-                      transition={reduceMotion ? { duration: 0.12 } : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                    >
-                      <Link
-                        to={item.path}
-                        onClick={() => setIsMobileSheetOpen(false)}
-                        className="flex min-h-[56px] items-center gap-3 rounded-2xl border border-border/50 bg-card px-4 py-3 text-sm font-medium text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/45"
+              {groupedMenuLinks.map((category) => (
+                <div key={category.key} className="space-y-2 border-t border-border/50 pt-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                    {t(category.labelKey, category.defaultLabel)}
+                  </p>
+                  {category.items.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <motion.div
+                        key={item.path}
+                        variants={menuItemVariants}
+                        transition={reduceMotion ? { duration: 0.12 } : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                       >
-                        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        {t(item.labelKey, item.defaultLabel)}
-                      </Link>
-                    </motion.div>
-                  );
-                })}
-              </div>
+                        <Link
+                          to={item.path}
+                          onClick={() => setIsMobileSheetOpen(false)}
+                          className="flex min-h-[56px] items-center gap-3 rounded-2xl border border-border/50 bg-card px-4 py-3 text-sm font-medium text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/45"
+                        >
+                          <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          {t(item.labelKey, item.defaultLabel)}
+                        </Link>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              ))}
 
               {/* Settings & Auth */}
               <div className="space-y-2 border-t border-border/50 pt-4">
@@ -525,8 +621,7 @@ export function UnifiedNav() {
                     <button
                       type="button"
                       onClick={() => {
-                        setIsMobileSheetOpen(false);
-                        window.dispatchEvent(new Event("cinetrekker:sign-out"));
+                        void handleMobileSignOut();
                       }}
                       className="flex min-h-[56px] w-full items-center gap-3 rounded-2xl border border-destructive/30 bg-card px-4 py-3 text-sm font-medium text-destructive transition-all duration-200 hover:bg-destructive/10"
                     >
@@ -546,8 +641,20 @@ export function UnifiedNav() {
                     </Link>
                   </motion.div>
                 )}
+                {!user ? (
+                  <motion.div variants={menuItemVariants}>
+                    <Link
+                      to="/signup"
+                      onClick={() => setIsMobileSheetOpen(false)}
+                      className="flex min-h-[56px] items-center gap-3 rounded-2xl border border-border/50 bg-card px-4 py-3 text-sm font-medium text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/45"
+                    >
+                      <User className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      {t("authPrompt.createAccount", "Create Account")}
+                    </Link>
+                  </motion.div>
+                ) : null}
               </div>
-            </motion.div>
+            </motion.nav>
           </motion.div>
         </SheetContent>
       </Sheet>

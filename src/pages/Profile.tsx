@@ -231,6 +231,8 @@ export default function Profile() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [profileLoadRetryCount, setProfileLoadRetryCount] = useState(0);
+  const [profileLoadTimedOut, setProfileLoadTimedOut] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isAvatarDragActive, setIsAvatarDragActive] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -324,6 +326,20 @@ export default function Profile() {
     const timer = window.setTimeout(() => setShareCopied(false), 1600);
     return () => window.clearTimeout(timer);
   }, [shareCopied]);
+
+  useEffect(() => {
+    if (!isLoadingProfile) {
+      setProfileLoadTimedOut(false);
+      return;
+    }
+
+    setProfileLoadTimedOut(false);
+    const timeoutId = window.setTimeout(() => {
+      setProfileLoadTimedOut(true);
+    }, 15000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [isLoadingProfile, profileLoadRetryCount]);
 
   useEffect(() => {
     if (isEditMode) {
@@ -545,7 +561,15 @@ export default function Profile() {
         subscription.unsubscribe();
       }
     };
-  }, [user?.id, profileKey, pinnedFavoritesStorageKey, setPinnedFavoriteKeys, t, toast]);
+  }, [
+    user?.id,
+    profileKey,
+    pinnedFavoritesStorageKey,
+    profileLoadRetryCount,
+    setPinnedFavoriteKeys,
+    t,
+    toast,
+  ]);
 
   // Capture the loaded profile as the baseline once.
   useEffect(() => {
@@ -1601,9 +1625,27 @@ export default function Profile() {
         initial="hidden"
         animate="visible"
       >
-        {isLoadingProfile && (
+        {isLoadingProfile && !profileLoadTimedOut && (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        )}
+
+        {isLoadingProfile && profileLoadTimedOut && (
+          <div className="mx-auto max-w-md rounded-lg border border-border/60 bg-card/70 p-5 text-center">
+            <p className="text-sm text-muted-foreground">
+              {t(
+                "profile.loadingTimedOut",
+                "Loading your profile is taking longer than expected.",
+              )}
+            </p>
+            <Button
+              type="button"
+              className="mt-4"
+              onClick={() => setProfileLoadRetryCount((count) => count + 1)}
+            >
+              {t("common.retry", "Retry")}
+            </Button>
           </div>
         )}
 

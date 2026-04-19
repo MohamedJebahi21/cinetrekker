@@ -168,7 +168,9 @@ export function FollowNotificationMonitor() {
     refetchOnWindowFocus: false,
     queryFn: async () => {
       const currentStates = await Promise.all(
-        followedTitles.map(async (follow) => {
+        followedTitles.map(async (follow, index) => {
+          // Stagger requests to avoid overwhelming the proxy
+          if (index > 0) await new Promise((resolve) => setTimeout(resolve, index * 150));
           const details =
             follow.mediaType === "movie"
               ? await getMovieDetails(follow.mediaId)

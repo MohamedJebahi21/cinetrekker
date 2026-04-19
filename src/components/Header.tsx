@@ -190,40 +190,40 @@ export function Header() {
     <header
       role="banner"
       className={cn(
-        "glass-nav transition-all duration-300",
-        isScrolled && "scrolled",
+        "ct-premium-header sticky top-0 z-40 transition-all duration-300 shadow-lg border-b border-border/60",
+        isScrolled && "scrolled shadow-xl",
       )}
     >
-      <div className="container mx-auto flex h-16 items-center justify-between px-4 gap-4 pt-[env(safe-area-inset-top)] md:pt-0">
+      <div className="container mx-auto flex h-20 items-center justify-between px-4 gap-6 pt-[env(safe-area-inset-top)] md:pt-0">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-3 group flex-shrink-0">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary transition-all duration-300 group-hover:shadow-[0_0_20px_hsl(358_94%_46%/0.5)]">
-            <span className="text-xl font-bold text-primary-foreground">
+        <Link to="/" className="flex items-center gap-4 group flex-shrink-0">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary shadow-[0_2px_16px_hsl(var(--primary)/0.18)] transition-all duration-300 group-hover:shadow-[0_0_32px_hsl(358_94%_46%/0.32)]">
+            <span className="text-2xl font-extrabold tracking-tight text-primary-foreground drop-shadow-sm select-none">
               CT
             </span>
           </div>
-          <span className="text-xl font-bold text-foreground hidden lg:block">
+          <span className="text-2xl font-extrabold tracking-tight text-foreground hidden lg:block drop-shadow-sm select-none">
             {t("common.appName")}
           </span>
         </Link>
 
         {/* Search Dropdown - Desktop */}
-        <div className="hidden md:block flex-1 max-w-2xl mx-4 lg:mx-8">
+        <div className="hidden md:block flex-1 max-w-2xl mx-6 lg:mx-12">
           <SearchDropdown />
         </div>
 
         {/* Right Section */}
-        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
           {/* All Menus Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
-                className="hidden lg:flex gap-2 hover:bg-accent min-w-[44px] min-h-[44px]"
+                className="hidden lg:flex gap-2 hover:bg-accent/60 focus-visible:bg-accent/80 min-w-[48px] min-h-[48px] rounded-xl shadow-sm transition-all"
                 aria-label={t("nav.allMenus", "All menus")}
               >
-                <span>{t("nav.menu", "Menu")}</span>
+                <span className="font-semibold tracking-wide text-base">{t("nav.menu", "Menu")}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -282,7 +282,7 @@ export function Header() {
                   variant="ghost"
                   size="icon"
                   asChild
-                  className="hidden lg:flex hover:bg-white/5 min-w-[44px] min-h-[44px]"
+                  className="hidden lg:flex hover:bg-accent/60 focus-visible:bg-accent/80 min-w-[48px] min-h-[48px] rounded-xl shadow-sm transition-all"
                 >
                   <Link
                     to="/settings"
@@ -307,7 +307,7 @@ export function Header() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="hidden lg:flex gap-2 hover:bg-white/5 min-w-[44px] min-h-[44px]"
+                className="hidden lg:flex gap-2 hover:bg-accent/60 focus-visible:bg-accent/80 min-w-[48px] min-h-[48px] rounded-xl shadow-sm transition-all"
                 aria-label={t("nav.changeLanguage", "Change language")}
               >
                 <Globe className="h-4 w-4" />
@@ -342,7 +342,7 @@ export function Header() {
                 <div className="hidden lg:block">
                   <NotificationBell />
                 </div>
-                <div className="hidden lg:flex items-center gap-2">
+                <div className="hidden lg:flex items-center gap-3">
                   <UserProfileDropdown
                     profilePhoto={profilePhoto}
                     displayName={displayName}
@@ -353,7 +353,7 @@ export function Header() {
                   variant="ghost"
                   size="icon"
                   asChild
-                  className="lg:hidden hover:bg-white/5 min-w-[44px] min-h-[44px]"
+                  className="lg:hidden hover:bg-accent/60 focus-visible:bg-accent/80 min-w-[48px] min-h-[48px] rounded-xl shadow-sm transition-all"
                   aria-label={t("nav.profile", "Profile")}
                 >
                   <Link to="/profile">
@@ -366,7 +366,7 @@ export function Header() {
                 <Button
                   variant="default"
                   size="sm"
-                  className="gap-2 btn-primary-glow min-w-[44px] min-h-[44px]"
+                  className="gap-2 btn-primary-glow min-w-[48px] min-h-[48px] rounded-xl shadow-md text-base font-semibold"
                   aria-label={t("nav.signIn")}
                 >
                   <LogIn className="h-4 w-4" />
@@ -380,7 +380,7 @@ export function Header() {
             variant="ghost"
             size="icon"
             asChild
-            className="md:hidden hover:bg-white/5 min-w-[44px] min-h-[44px]"
+            className="md:hidden hover:bg-accent/60 focus-visible:bg-accent/80 min-w-[48px] min-h-[48px] rounded-xl shadow-sm transition-all"
             aria-label={t("nav.search", "Search")}
           >
             <Link to="/search">
@@ -393,7 +393,7 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden hover:bg-white/5 min-w-[44px] min-h-[44px]"
+            className="lg:hidden hover:bg-accent/60 focus-visible:bg-accent/80 min-w-[48px] min-h-[48px] rounded-xl shadow-sm transition-all"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label={
               isMenuOpen
@@ -416,12 +416,12 @@ export function Header() {
       {/* Mobile Menu */}
       {isMenuOpen && (
         <nav
-          className="lg:hidden border-t border-border/50 bg-background animate-fade-in max-h-[calc(100vh-4rem-env(safe-area-inset-top))] overflow-y-auto overscroll-contain"
+          className="lg:hidden border-t border-border/50 bg-background/95 shadow-2xl animate-fade-in max-h-[calc(100vh-5.5rem-env(safe-area-inset-top))] overflow-y-auto overscroll-contain backdrop-blur-xl"
           aria-label="Mobile navigation"
         >
-          <div className="container mx-auto px-4 py-4 flex flex-col gap-3">
+          <div className="container mx-auto px-4 py-6 flex flex-col gap-4">
             {/* Mobile Search */}
-            <div className="mb-2">
+            <div className="mb-3">
               <SearchDropdown onNavigate={() => setIsMenuOpen(false)} />
             </div>
 
@@ -434,10 +434,10 @@ export function Header() {
                   key={link.path}
                   to={link.path}
                   className={cn(
-                    "px-4 py-4 rounded-lg text-sm font-medium transition-colors min-h-[44px] flex items-center",
+                    "px-5 py-4 rounded-xl text-base font-semibold transition-colors min-h-[48px] flex items-center shadow-sm",
                     isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                      ? "bg-primary text-primary-foreground shadow-md"
+                      : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
                   )}
                   onClick={() => setIsMenuOpen(false)}
                   aria-current={isActive ? "page" : undefined}
@@ -453,7 +453,7 @@ export function Header() {
             {!user ? (
               <Link
                 to="/login"
-                className="px-4 py-3 rounded-lg text-sm font-medium bg-primary text-primary-foreground text-center mt-2 min-h-[44px] flex items-center justify-center"
+                className="px-5 py-3 rounded-xl text-base font-semibold bg-primary text-primary-foreground text-center mt-2 min-h-[48px] flex items-center justify-center shadow-md"
                 onClick={() => setIsMenuOpen(false)}
               >
                 {t("nav.signIn")}
@@ -464,7 +464,7 @@ export function Header() {
                   handleSignOut();
                   setIsMenuOpen(false);
                 }}
-                className="px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 text-left mt-2 min-h-[44px] flex items-center"
+                className="px-5 py-3 rounded-xl text-base font-semibold text-destructive hover:bg-destructive/10 text-left mt-2 min-h-[48px] flex items-center shadow-sm"
               >
                 {t("nav.signOut")}
               </button>

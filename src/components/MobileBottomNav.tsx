@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import House from "lucide-react/dist/esm/icons/house";
 import Search from "lucide-react/dist/esm/icons/search";
+import Bookmark from "lucide-react/dist/esm/icons/bookmark";
 import User from "lucide-react/dist/esm/icons/user";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const NAV_ITEMS = [
   { path: "/", key: "nav.home", fallback: "Home", icon: House, exact: true as const },
   { path: "/search", key: "nav.search", fallback: "Search", icon: Search, exact: false as const },
+  { path: "/watchlist", key: "nav.watchlist", fallback: "Watchlist", icon: Bookmark, exact: false as const },
 ];
 
 export function MobileBottomNav() {

@@ -9,6 +9,7 @@ import path from "node:path";
 import { enforceRequestSecurity } from "./_lib/requestSecurity.js";
 import { getMissingServerEnv, getServerEnv } from "./_lib/env.js";
 import { createServerLogger } from "./_lib/logger.js";
+import { parseBody } from "./_lib/http.js";
 
 const fetch = globalThis.fetch;
 const logger = createServerLogger("recommend");
@@ -17,6 +18,7 @@ const TMDB_BASE = "https://api.themoviedb.org/3";
 const MAX_PROMPT_LENGTH = 500;
 const MAX_LIMIT = 20;
 const MIN_LIMIT = 1;
+const UPSTREAM_TIMEOUT_MS = 12_000;
 
 const REQUIRED_ENV_VARS = ["OPENAI_API_KEY"];
 const missingVars = getMissingServerEnv(REQUIRED_ENV_VARS);
@@ -28,15 +30,34 @@ if (missingVars.length > 0 && process.env.NODE_ENV === "production") {
   );
 }
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = UPSTREAM_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+
+  if (typeof fetch !== "function") {
+    return res.status(503).json({ error: "Service temporarily unavailable" });
+  }
 
   const security = await enforceRequestSecurity(req, res, "recommend");
   if (!security.ok) {
     return res.status(security.status).json({ error: security.error });
   }
 
-  const { prompt, language = "en", limit = 12 } = req.body || {};
+  const body = parseBody(req);
+  const { prompt, language = "en", limit = 12 } = body;
   if (!prompt || typeof prompt !== "string") {
     return res.status(400).json({ error: "Missing prompt" });
   }
@@ -50,6 +71,11 @@ export default async function handler(req, res) {
       .status(400)
       .json({ error: `Prompt exceeds ${MAX_PROMPT_LENGTH} characters` });
   }
+
+  const normalizedLanguage =
+    typeof language === "string" && language.trim().length > 0
+      ? language.trim().slice(0, 16)
+      : "en";
 
   const normalizedLimit = Number.isFinite(Number(limit))
     ? Math.max(MIN_LIMIT, Math.min(MAX_LIMIT, Number(limit)))
@@ -65,7 +91,7 @@ export default async function handler(req, res) {
   try {
     const system = `You are a helpful film expert. Given a short user prompt, return a strict JSON object with two keys: "summary" (a short 1-2 sentence summary as a film critic, no more than ~140 characters) and "suggestions" (an array of up to ${normalizedLimit} items). Each suggestion must be an object with keys: "title" (string), optionally "year" (number), and "media_type" which must be either "movie" or "tv". Do NOT include adult content. Output MUST be valid JSON and contain only the JSON object.`;
 
-    const openaiRes = await fetch(
+    const openaiRes = await fetchWithTimeout(
       "https://api.openai.com/v1/chat/completions",
       {
         method: "POST",
@@ -152,10 +178,10 @@ export default async function handler(req, res) {
     for (const suggestion of suggestions) {
       if (resolved.length >= normalizedLimit) break;
       const media = suggestion.media_type === "tv" ? "tv" : "movie";
-      const searchUrl = `${TMDB_BASE}/search/${media}?query=${encodeURIComponent(suggestion.title)}&include_adult=false&language=${encodeURIComponent(language)}`;
+      const searchUrl = `${TMDB_BASE}/search/${media}?query=${encodeURIComponent(suggestion.title)}&include_adult=false&language=${encodeURIComponent(normalizedLanguage)}`;
 
       try {
-        const searchResponse = await fetch(searchUrl, {
+        const searchResponse = await fetchWithTimeout(searchUrl, {
           headers: {
             Authorization: `Bearer ${tmdbKey}`,
           },
@@ -177,8 +203,8 @@ export default async function handler(req, res) {
         });
 
         try {
-          const recommendationsUrl = `${TMDB_BASE}/${media}/${first.id}/recommendations?language=${encodeURIComponent(language)}`;
-          const recommendationsResponse = await fetch(recommendationsUrl, {
+          const recommendationsUrl = `${TMDB_BASE}/${media}/${first.id}/recommendations?language=${encodeURIComponent(normalizedLanguage)}`;
+          const recommendationsResponse = await fetchWithTimeout(recommendationsUrl, {
             headers: {
               Authorization: `Bearer ${tmdbKey}`,
             },
@@ -209,8 +235,8 @@ export default async function handler(req, res) {
 
     if (resolved.length === 0) {
       try {
-        const searchUrl = `${TMDB_BASE}/search/multi?query=${encodeURIComponent(normalizedPrompt)}&include_adult=false&language=${encodeURIComponent(language)}`;
-        const searchResponse = await fetch(searchUrl, {
+        const searchUrl = `${TMDB_BASE}/search/multi?query=${encodeURIComponent(normalizedPrompt)}&include_adult=false&language=${encodeURIComponent(normalizedLanguage)}`;
+        const searchResponse = await fetchWithTimeout(searchUrl, {
           headers: {
             Authorization: `Bearer ${tmdbKey}`,
           },

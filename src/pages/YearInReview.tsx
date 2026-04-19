@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useUserLists } from "@/contexts/UserListsContext";
 import { getMovieDetails, getTVDetails } from "@/services/tmdb";
@@ -7,27 +7,44 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, TrendingUp, Award, Clock, Flame } from "lucide-react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip as RechartsTooltip,
-} from "recharts";
 import { useTranslation } from "react-i18next";
 import { getMediaTitle } from "@/services/tmdb";
 
-const COLORS = ["#E50914", "#ff6b73", "#f97316", "#f59e0b", "#fb7185"];
+const YearInReviewGenreChart = lazy(
+  () => import("@/components/stats/YearInReviewGenreChart"),
+);
+const YearInReviewMonthlyChart = lazy(
+  () => import("@/components/stats/YearInReviewMonthlyChart"),
+);
 
 type MovieDetails = Awaited<ReturnType<typeof getMovieDetails>>;
 type TVDetails = Awaited<ReturnType<typeof getTVDetails>>;
 type DetailItem = MovieDetails | TVDetails;
 type SeasonSummary = { episode_count?: number };
 type GenreSummary = { name: string };
+
+const YEAR_IN_REVIEW_MAX_TITLES_PER_TYPE = 24;
+const YEAR_IN_REVIEW_FETCH_CONCURRENCY = 4;
+const YEAR_IN_REVIEW_STALE_TIME_MS = 30 * 60 * 1000;
+
+async function fetchWithConcurrency<TInput, TOutput>(
+  items: TInput[],
+  worker: (item: TInput) => Promise<TOutput>,
+): Promise<TOutput[]> {
+  const results: TOutput[] = [];
+
+  for (let index = 0; index < items.length; index += YEAR_IN_REVIEW_FETCH_CONCURRENCY) {
+    const chunk = items.slice(index, index + YEAR_IN_REVIEW_FETCH_CONCURRENCY);
+    const settled = await Promise.allSettled(chunk.map((item) => worker(item)));
+    for (const item of settled) {
+      if (item.status === "fulfilled") {
+        results.push(item.value);
+      }
+    }
+  }
+
+  return results;
+}
 
 export default function YearInReview() {
   const currentYear = new Date().getFullYear();
@@ -51,23 +68,25 @@ export default function YearInReview() {
   const { data: movieDetails = [] } = useQuery({
     queryKey: ["year-review-movies", currentYear],
     queryFn: async () => {
-      const promises = thisYearMovies.slice(0, 40).map((item) => 
-        getMovieDetails(item.mediaId)
-      );
-      return Promise.all(promises);
+      const movieIds = thisYearMovies
+        .slice(0, YEAR_IN_REVIEW_MAX_TITLES_PER_TYPE)
+        .map((item) => item.mediaId);
+      return fetchWithConcurrency(movieIds, (mediaId) => getMovieDetails(mediaId));
     },
     enabled: thisYearMovies.length > 0,
+    staleTime: YEAR_IN_REVIEW_STALE_TIME_MS,
   });
 
   const { data: tvDetails = [] } = useQuery({
     queryKey: ["year-review-tv", currentYear],
     queryFn: async () => {
-      const promises = thisYearTV.slice(0, 40).map((item) => 
-        getTVDetails(item.mediaId)
-      );
-      return Promise.all(promises);
+      const tvIds = thisYearTV
+        .slice(0, YEAR_IN_REVIEW_MAX_TITLES_PER_TYPE)
+        .map((item) => item.mediaId);
+      return fetchWithConcurrency(tvIds, (mediaId) => getTVDetails(mediaId));
     },
     enabled: thisYearTV.length > 0,
+    staleTime: YEAR_IN_REVIEW_STALE_TIME_MS,
   });
 
   const allDetails = useMemo(
@@ -249,26 +268,13 @@ export default function YearInReview() {
                 <CardHeader className="px-0 pb-6">
                   <CardTitle>{t("yearInReview.favoriteGenresTitle", "Your Favorite Genres")}</CardTitle>
                 </CardHeader>
-                <div className="h-[360px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={genreData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={80}
-                        outerRadius={130}
-                        dataKey="value"
-                        nameKey="name"
-                      >
-                        {genreData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <RechartsTooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+                <Suspense
+                  fallback={
+                    <div className="h-[360px] animate-pulse rounded-2xl bg-white/5" />
+                  }
+                >
+                  <YearInReviewGenreChart data={genreData} />
+                </Suspense>
               </Card>
             </TabsContent>
 
@@ -278,16 +284,13 @@ export default function YearInReview() {
                 <CardHeader className="px-0 pb-6">
                   <CardTitle>{t("yearInReview.monthlyActivityTitle", "Monthly Watching Activity")}</CardTitle>
                 </CardHeader>
-                <div className="h-[360px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={monthlyData}>
-                      <XAxis dataKey="month" tick={{ fill: "#aaa" }} />
-                      <YAxis tick={{ fill: "#aaa" }} />
-                      <RechartsTooltip />
-                      <Bar dataKey="count" fill="#E50914" radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                <Suspense
+                  fallback={
+                    <div className="h-[360px] animate-pulse rounded-2xl bg-white/5" />
+                  }
+                >
+                  <YearInReviewMonthlyChart data={monthlyData} />
+                </Suspense>
               </Card>
             </TabsContent>
 

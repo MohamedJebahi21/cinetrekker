@@ -1,16 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Clock, Film, Star, Tv } from "lucide-react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from "recharts";
+import { lazy, Suspense } from "react";
 import {
   Select,
   SelectTrigger,
@@ -22,6 +12,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GlassStatCard } from "@/components/GlassStatCard";
 import { useEnhancedStatsData, type MediaTypeFilter } from "@/hooks/useEnhancedStatsData";
 import { useIsMobile } from "@/hooks/use-mobile";
+
+const EnhancedStatsCharts = lazy(
+  () => import("@/components/stats/EnhancedStatsCharts"),
+);
 
 const CINEMATIC_CHART_COLORS = [
   "#E50914",
@@ -184,82 +178,42 @@ export default function EnhancedStats() {
         </div>
 
         {genreStats.length > 0 && (
-          <div className="grid gap-8 md:grid-cols-2">
-            <Card className="ct-panel">
-              <CardHeader>
-                <CardTitle className="text-lg font-bold text-foreground">
-                  {t("stats.genreDistribution", "Genre Distribution")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={isMobile ? 240 : 300}>
-                  <PieChart>
-                    <Pie
-                      data={genreStats}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={isMobile ? false : (entry) => `${entry.name} (${entry.count})`}
-                      outerRadius={isMobile ? 72 : 90}
-                      dataKey="count"
-                    >
-                      {genreStats.map((entry, index) => (
-                        <Cell
-                          key={`cell-${entry.name}`}
-                          fill={
-                            CINEMATIC_CHART_COLORS[
-                              index % CINEMATIC_CHART_COLORS.length
-                            ]
-                          }
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        background: "rgba(22,22,22,0.95)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        color: "#fff",
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card className="ct-panel">
-              <CardHeader>
-                <CardTitle className="text-lg font-bold text-foreground">
-                  {t("stats.hoursByGenre", "Hours by Genre")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={isMobile ? 240 : 300}>
-                  <BarChart data={genreStats}>
-                    <XAxis
-                      dataKey="name"
-                      angle={-45}
-                      textAnchor="end"
-                      height={isMobile ? 64 : 80}
-                      stroke="#a3a3a3"
-                      tick={{ fill: "#d4d4d8", fontSize: isMobile ? 10 : 12 }}
-                    />
-                    <YAxis
-                      stroke="#a3a3a3"
-                      tick={{ fill: "#d4d4d8", fontSize: isMobile ? 10 : 12 }}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        background: "rgba(22,22,22,0.95)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        color: "#fff",
-                      }}
-                    />
-                    <Bar dataKey="hours" fill="#E50914" radius={[8, 8, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
+          <Suspense
+            fallback={
+              <div className="grid gap-8 md:grid-cols-2">
+                <Card className="ct-panel">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-bold text-foreground">
+                      {t("stats.genreDistribution", "Genre Distribution")}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[240px] animate-pulse rounded-lg bg-white/5 md:h-[300px]" />
+                  </CardContent>
+                </Card>
+                <Card className="ct-panel">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-bold text-foreground">
+                      {t("stats.hoursByGenre", "Hours by Genre")}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[240px] animate-pulse rounded-lg bg-white/5 md:h-[300px]" />
+                  </CardContent>
+                </Card>
+              </div>
+            }
+          >
+            <EnhancedStatsCharts
+              genreStats={genreStats}
+              isMobile={isMobile}
+              colors={CINEMATIC_CHART_COLORS}
+              labels={{
+                genreDistribution: t("stats.genreDistribution", "Genre Distribution"),
+                hoursByGenre: t("stats.hoursByGenre", "Hours by Genre"),
+              }}
+            />
+          </Suspense>
         )}
       </div>
     </div>

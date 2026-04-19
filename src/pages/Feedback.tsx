@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from 'react-i18next';
+import { ApiRequestError, requestJson } from '@/services/api';
 
 declare global {
   interface Window {
@@ -158,26 +159,17 @@ export default function Feedback() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/feedback', {
+      await requestJson<{ ok?: boolean }>('/api/feedback', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        timeoutMs: 12000,
+        body: {
           name: name.trim(),
           email: email.trim(),
           message: message.trim(),
           captchaToken,
           website: honeypot,
-        }),
+        },
       });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        const details = [data?.error, data?.detail].filter(Boolean).join(' ');
-        setError(details || t('feedback.formErrorSend', 'Failed to send feedback. Please try again.'));
-        return;
-      }
 
       setSuccess(t('feedback.formSuccess', 'Thanks for your feedback. It was sent successfully.'));
       setName('');
@@ -191,7 +183,22 @@ export default function Feedback() {
       if (CAPTCHA_PROVIDER === 'recaptcha' && turnstileWidgetIdRef.current && window.grecaptcha?.reset) {
         window.grecaptcha.reset(turnstileWidgetIdRef.current);
       }
-    } catch {
+    } catch (error) {
+      if (error instanceof ApiRequestError) {
+        const details =
+          typeof error.details === 'object' && error.details
+            ? [
+                (error.details as { error?: string }).error,
+                (error.details as { detail?: string }).detail,
+              ]
+                .filter(Boolean)
+                .join(' ')
+            : '';
+
+        setError(details || t('feedback.formErrorSend', 'Failed to send feedback. Please try again.'));
+        return;
+      }
+
       setError(t('feedback.formErrorSend', 'Failed to send feedback. Please try again.'));
     } finally {
       setIsSubmitting(false);

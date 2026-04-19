@@ -522,8 +522,13 @@ export default function Watchlist() {
                               ? "border-primary bg-primary text-primary-foreground"
                               : "border-border/60 bg-card text-muted-foreground"
                           }`}
+                          onPointerDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
                           onClick={(event) => {
                             event.preventDefault();
+                            event.stopPropagation();
                             toggleSelect(media.id, mediaType);
                           }}
                           aria-current={

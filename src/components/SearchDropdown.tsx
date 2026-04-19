@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useId } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
@@ -68,6 +68,7 @@ interface SearchDropdownProps {
 
 const PENDING_SEARCH_QUERY_KEY = "cinetrekker_pending_search_query";
 const MIN_SEARCH_LENGTH = 2;
+let searchDropdownInstanceCounter = 0;
 
 function normalizeSearchQuery(value: string): string {
   return value.normalize("NFKC").trim().toLowerCase();
@@ -86,7 +87,9 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const resultsListId = useId().replace(/:/g, "");
+  const instanceIdRef = useRef(`search-dropdown-${++searchDropdownInstanceCounter}`);
+  const resultsListId = `${instanceIdRef.current}-results`;
+  const optionIdPrefix = `${instanceIdRef.current}-option`;
   const language = i18n.language;
 
   const refreshRecentSearches = useCallback(() => {
@@ -214,7 +217,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
   ) as unknown as SearchResult[];
   const activeOptionId =
     selectedIndex >= 0 && results[selectedIndex]
-      ? `search-option-${results[selectedIndex].media_type}-${results[selectedIndex].id}`
+      ? `${optionIdPrefix}-${results[selectedIndex].media_type}-${results[selectedIndex].id}`
       : undefined;
 
   const shouldShowRecentSearches =
@@ -492,7 +495,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                     <li key={`${item.media_type}-${item.id}`}>
                       <button
                         type="button"
-                        id={`search-option-${item.media_type}-${item.id}`}
+                        id={`${optionIdPrefix}-${item.media_type}-${item.id}`}
                         onClick={() => handleItemClick(item)}
                         className={cn(
                           "w-full flex items-center gap-3 px-4 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",

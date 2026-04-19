@@ -263,7 +263,11 @@ export function useUpdateWatched() {
       }
 
       if (user) {
-        const dbUpdates: Record<string, unknown> = {};
+        const dbUpdates: {
+          rating?: UserMediaItem["rating"] | null;
+          note?: UserMediaItem["note"] | null;
+          status?: UserMediaItem["status"];
+        } = {};
         if (validatedUpdates.rating !== undefined) dbUpdates.rating = validatedUpdates.rating;
         if (validatedUpdates.note !== undefined) dbUpdates.note = validatedUpdates.note;
         if (validatedUpdates.status !== undefined) dbUpdates.status = validatedUpdates.status;

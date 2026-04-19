@@ -129,7 +129,6 @@ const YEARS = Array.from({ length: 50 }, (_, i) =>
   (currentYear - i).toString(),
 );
 
-const PENDING_SEARCH_QUERY_KEY = "cinetrekker_pending_search_query";
 
 type SearchSortOption =
   | "popularity.desc"
@@ -374,10 +373,7 @@ export default function Search() {
             submittedQuery?: string;
           }
         | undefined
-    )?.submittedQuery ||
-      (typeof window !== "undefined"
-        ? window.sessionStorage.getItem(PENDING_SEARCH_QUERY_KEY) || ""
-        : ""),
+    )?.submittedQuery || ""
   );
 
   // Initialize from URL params
@@ -469,19 +465,7 @@ export default function Search() {
     }
   }, [searchParams, setSearchParams]);
 
-  useEffect(() => {
-    if (normalizedInputQuery) {
-      window.sessionStorage.setItem(
-        PENDING_SEARCH_QUERY_KEY,
-        normalizedInputQuery,
-      );
-      return;
-    }
 
-    if (location.pathname === "/search") {
-      window.sessionStorage.removeItem(PENDING_SEARCH_QUERY_KEY);
-    }
-  }, [location.pathname, normalizedInputQuery]);
 
   // Quick preview modal removed - navigation to details is used instead
 
@@ -568,8 +552,8 @@ export default function Search() {
   // Text search query (infinite)
   const searchQuery = useInfiniteQuery({
     queryKey: ["search", normalizedQuery, language, includeAdult],
-    queryFn: ({ pageParam = 1 }) =>
-      searchMulti(normalizedQuery, pageParam as number, language, includeAdult),
+    queryFn: ({ pageParam = 1, signal }) =>
+      searchMulti(normalizedQuery, pageParam as number, language, includeAdult, signal),
     enabled: Boolean(useSearchMode),
     retry: 1,
     initialPageParam: 1,
@@ -592,7 +576,7 @@ export default function Search() {
       language,
       includeAdult,
     ],
-    queryFn: async ({ pageParam = 1 }) => {
+    queryFn: async ({ pageParam = 1, signal }) => {
       const page = pageParam as number;
       const common = {
         with_genres: effectiveGenres,
@@ -615,6 +599,7 @@ export default function Search() {
             include_adult: includeAdult ? "true" : "false",
           },
           language,
+          signal
         );
         return {
           totalPages: resp.total_pages,
@@ -636,6 +621,7 @@ export default function Search() {
             include_adult: includeAdult ? "true" : "false",
           },
           language,
+          signal
         );
         return {
           totalPages: resp.total_pages,
@@ -703,8 +689,8 @@ export default function Search() {
   // Trending for default view (infinite)
   const trendingQuery = useInfiniteQuery({
     queryKey: ["trending", "all", "week", language, includeAdult],
-    queryFn: ({ pageParam = 1 }) =>
-      getTrending("all", "week", language, pageParam as number, includeAdult),
+    queryFn: ({ pageParam = 1, signal }) =>
+      getTrending("all", "week", language, pageParam as number, includeAdult, signal),
     enabled: Boolean(showTrending),
     initialPageParam: 1,
     getNextPageParam: (lastPage) =>

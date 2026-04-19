@@ -21,14 +21,7 @@ Since Supabase's Leaked Password Protection is a paid feature, we implement robu
 - **Repeated character detection:** Prevents patterns like "aaa"
 - **Real-time strength indicator:** Shows weak/fair/good/strong feedback
 
-### 2. Email Verification Required
-
-**Configuration:** Supabase Auth `auto_confirm_email` set to `false`
-
-- New users must verify their email before accessing protected routes
-- Verification email sent automatically on signup
-
-### 3. Protected Routes
+### 2. Protected Routes
 
 **File:** `src/components/ProtectedRoute.tsx`
 
@@ -43,7 +36,7 @@ Features:
 - Automatic redirect to `/login` for unauthenticated users
 - Return URL preserved for post-login redirect
 
-### 4. OAuth Preferred (Google Sign-In)
+### 3. OAuth Preferred (Google Sign-In)
 
 **File:** `src/pages/Auth.tsx`
 
@@ -53,7 +46,7 @@ Google OAuth is prominently displayed as the preferred authentication method bec
 - Users benefit from Google's security infrastructure
 - Reduces risk of password reuse
 
-### 5. Anonymous Sign-ups Disabled
+### 4. Anonymous Sign-ups Disabled
 
 Anonymous users are disabled in Supabase configuration to prevent abuse.
 

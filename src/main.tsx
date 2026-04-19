@@ -10,6 +10,14 @@ import {
   applyThemeToDocument,
   readStoredTheme,
 } from "@/contexts/ThemeContext";
+import { sanitizeHTML } from "@/lib/sanitize";
+
+type IdleCallbackWindow = Window & {
+  requestIdleCallback?: (
+    callback: IdleRequestCallback,
+    options?: IdleRequestOptions,
+  ) => number;
+};
 
 // Install chunk error recovery handlers
 import { installChunkErrorHandlers } from "@/lib/chunkErrorRecovery";
@@ -19,30 +27,64 @@ installChunkErrorHandlers();
 applyThemeToDocument(readStoredTheme());
 
 if (typeof window !== "undefined") {
-  const tt = (window as unknown as { 
-    trustedTypes?: { 
-      createPolicy: (name: string, rules: {
-        createHTML?: (value: string) => string;
-        createScript?: (value: string) => string;
-        createScriptURL?: (value: string) => string;
-      }) => void 
-    } 
-  }).trustedTypes;
-  if (tt) {
-    const createPolicy = (name: string) => {
-      try {
-        tt.createPolicy(name, {
-          createHTML: (value: string) => value,
-          createScript: (value: string) => value,
-          createScriptURL: (value: string) => value,
-        });
-      } catch {
-        // Reuse existing policy if already created by the browser/runtime.
-      }
-    };
+  try {
+    const tt = window.trustedTypes;
+    if (tt) {
+      const createSafeJsonScript = (value: string): string => {
+        const trimmed = value.trim();
+        if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+          throw new TypeError("Trusted Types: only JSON script payloads are allowed.");
+        }
 
-    createPolicy("default");
-    createPolicy("cinetrekker");
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(trimmed);
+        } catch {
+          throw new TypeError("Trusted Types: invalid JSON script payload.");
+        }
+
+        return JSON.stringify(parsed).replace(/</g, "\\u003c");
+      };
+
+      const denyScriptSink = (_value: string): never => {
+        throw new TypeError("Trusted Types: script sinks are not allowed.");
+      };
+
+      const createSafeScriptUrl = (value: string): string => {
+        if (import.meta.env.DEV) {
+          return value;
+        }
+        throw new TypeError("Trusted Types: script URL sinks are not allowed.");
+      };
+
+      const createPolicy = (
+        name: string,
+        options: {
+          createHTML?: (value: string) => string;
+          createScript?: (value: string) => string;
+          createScriptURL?: (value: string) => string;
+        },
+      ) => {
+        try {
+          tt.createPolicy(name, options);
+        } catch {
+          // Reuse existing policy if already created by the browser/runtime.
+        }
+      };
+
+      createPolicy("default", {
+        createHTML: (value: string) => sanitizeHTML(value),
+        createScript: createSafeJsonScript,
+        createScriptURL: createSafeScriptUrl,
+      });
+      createPolicy("cinetrekker", {
+        createHTML: (value: string) => sanitizeHTML(value),
+        createScript: createSafeJsonScript,
+        createScriptURL: createSafeScriptUrl,
+      });
+    }
+  } catch (error) {
+    console.warn("Trusted Types initialization failed; continuing app bootstrap.", error);
   }
 }
 
@@ -78,11 +120,12 @@ try {
     };
 
     if (typeof window !== "undefined") {
-      if ("requestIdleCallback" in window) {
-        window.requestIdleCallback(injectInsights, { timeout: 2500 });
+      const win = window as IdleCallbackWindow;
+      if (typeof win.requestIdleCallback === "function") {
+        win.requestIdleCallback(injectInsights, { timeout: 2500 });
       } else {
-        window.requestAnimationFrame(() => {
-          window.requestAnimationFrame(injectInsights);
+        win.requestAnimationFrame(() => {
+          win.requestAnimationFrame(injectInsights);
         });
       }
     }

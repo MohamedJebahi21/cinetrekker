@@ -43,7 +43,13 @@ export default function MoodResult({
     retry: 1,
   });
 
-  const handleAdd = async () => {
+  const handleAdd = async (event?: {
+    preventDefault: () => void;
+    stopPropagation: () => void;
+  }) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+
     if (!match) return;
     const mediaType = match.media_type === "tv" ? "tv" : "movie";
     try {
@@ -133,7 +139,13 @@ export default function MoodResult({
         </p>
 
         <div className="mt-6 flex flex-wrap gap-3">
-          <Button onClick={handleAdd} className="gap-2">
+          <Button
+            type="button"
+            onClick={(event) => {
+              void handleAdd(event);
+            }}
+            className="gap-2"
+          >
             Watchlist
           </Button>
           <Button

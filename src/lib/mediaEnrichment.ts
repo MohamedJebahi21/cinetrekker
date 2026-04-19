@@ -69,7 +69,11 @@ export async function enrichMediaItems<
   } = options;
 
   const settled = await Promise.allSettled(
-    items.map((item) => fetchMediaDetailsByReference(getReference(item), language)),
+    items.map(async (item, index) => {
+      // Stagger requests to prevent proxy burst overload
+      if (index > 0) await new Promise((resolve) => setTimeout(resolve, index * 100));
+      return fetchMediaDetailsByReference(getReference(item), language);
+    }),
   );
 
   const fallbackEntries = settled.flatMap((result, index) => {

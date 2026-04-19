@@ -27,11 +27,18 @@ export default function LocationDetails() {
   const location = useLocation();
   const mediaType: "movie" | "tv" = location.pathname.startsWith("/tv") ? "tv" : "movie";
   const mediaId = Number(id);
+  const hasValidMediaId = Number.isFinite(mediaId) && mediaId > 0;
 
-  const { data, isLoading } = useQuery({
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["location-details", mediaType, mediaId],
     queryFn: () => (mediaType === "movie" ? getMovieDetails(mediaId) : getTVDetails(mediaId)),
-    enabled: Number.isFinite(mediaId) && mediaId > 0,
+    enabled: hasValidMediaId,
   });
 
   const title = data ? getMediaTitle(data) : "";
@@ -48,10 +55,46 @@ export default function LocationDetails() {
     enabled: !!data,
   });
 
-  if (isLoading || !data) {
+  if (!hasValidMediaId) {
+    return (
+      <div className="page-container pt-20 pb-24 text-sm text-muted-foreground md:pb-0">
+        <p>{t("locationDetails.invalidTitle", "This title link is invalid.")}</p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
     return (
       <div className="page-container pt-20 text-sm text-muted-foreground">
         {t("locationDetails.loading", "Loading filming locations...")}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="page-container pt-20 pb-24 md:pb-0">
+        <p className="text-sm text-muted-foreground">
+          {t("locationDetails.error", "We could not load filming locations right now.")}
+        </p>
+        <button
+          type="button"
+          onClick={() => void refetch()}
+          className="mt-3 inline-flex min-h-11 items-center rounded-md border border-white/10 px-3 py-2 text-sm text-white/85 hover:bg-white/5"
+        >
+          {t("common.retry", "Retry")}
+        </button>
+        {error instanceof Error && (
+          <p className="mt-2 text-xs text-muted-foreground">{error.message}</p>
+        )}
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="page-container pt-20 pb-24 text-sm text-muted-foreground md:pb-0">
+        <p>{t("locationDetails.notFound", "We could not find this title.")}</p>
       </div>
     );
   }

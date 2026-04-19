@@ -15,6 +15,7 @@ type EngagementVisitState = {
 
 export type EngagementEventName =
   | "session_start"
+  | "page_view"
   | "watchlist_add"
   | "watchlist_remove"
   | "watched_add"

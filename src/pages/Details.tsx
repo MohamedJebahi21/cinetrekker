@@ -505,7 +505,18 @@ export default function Details() {
   const ratingClass =
     rating >= 7 ? "rating-high" : rating >= 5 ? "rating-medium" : "rating-low";
 
-  const handleAddToWatchlist = async () => {
+  type PreventableEvent = {
+    preventDefault: () => void;
+    stopPropagation: () => void;
+  };
+
+  const suppressActionNavigation = (event?: PreventableEvent) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+  };
+
+  const handleAddToWatchlist = async (event?: PreventableEvent) => {
+    suppressActionNavigation(event);
     const nextState = !optimisticInWatchlist;
     setOptimisticInWatchlist(nextState);
     setIsWatchlistPending(true);
@@ -522,7 +533,8 @@ export default function Details() {
     }
   };
 
-  const handleMarkAsWatched = async () => {
+  const handleMarkAsWatched = async (event?: PreventableEvent) => {
+    suppressActionNavigation(event);
     if (optimisticWatched) {
       setOptimisticWatched(false);
       setIsWatchedPending(true);
@@ -1051,7 +1063,7 @@ export default function Details() {
                     ? "border-red-500/70 bg-red-600 text-white hover:bg-red-700"
                     : "bg-primary text-primary-foreground hover:bg-primary/90",
                 )}
-                onClick={handleAddToWatchlist}
+                onClick={(event) => void handleAddToWatchlist(event)}
                 disabled={isWatchlistPending}
                 aria-busy={isWatchlistPending}
                 aria-label={
@@ -1086,7 +1098,7 @@ export default function Details() {
                     ? "border-emerald-500/70 bg-emerald-600 text-white hover:bg-emerald-700"
                     : "border-border bg-background text-foreground hover:bg-accent",
                 )}
-                onClick={handleMarkAsWatched}
+                onClick={(event) => void handleMarkAsWatched(event)}
                 disabled={isWatchedPending}
                 aria-busy={isWatchedPending}
                 aria-label={

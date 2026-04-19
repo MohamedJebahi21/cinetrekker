@@ -209,6 +209,7 @@ export default function Index() {
   const personalizedHasError = Boolean(
     moreInGenreQuery.error,
   );
+  const watchlistDestination = user ? "/watchlist" : "/signup";
   const hasListActivity = watchlist.length > 0 || watched.length > 0;
   const dailyPick: Media | null =
     watchlistPreviewQuery.data?.[0] ||
@@ -237,7 +238,7 @@ export default function Index() {
           "home.watchlistEmptyQuickAccess",
           "Save a few titles and they will show up here for quick access.",
         )}
-        showMoreLink="/watchlist"
+        showMoreLink={watchlistDestination}
       />
     </HomeSectionState>
   ) : null;
@@ -255,7 +256,7 @@ export default function Index() {
       </p>
       <div className="mt-4 flex flex-col gap-3 sm:flex-row">
         <Button asChild className="btn-primary-glow">
-          <Link to="/watchlist">{t("home.startTracking", "Start Tracking")}</Link>
+          <Link to="/discover">{t("home.startTracking", "Start Tracking")}</Link>
         </Button>
         <Button asChild variant="outline">
           <Link to="/signup">{t("home.createFreeAccount", "Create Free Account")}</Link>
@@ -287,7 +288,11 @@ export default function Index() {
             )}
           </p>
           <Button asChild className="btn-primary-glow mt-4">
-            <Link to="/watchlist">{t("home.buildWatchlist", "Build My Watchlist")}</Link>
+            <Link to={watchlistDestination}>
+              {user
+                ? t("home.buildWatchlist", "Build My Watchlist")
+                : t("home.createFreeAccount", "Create Free Account")}
+            </Link>
           </Button>
         </section>
       ) : (
@@ -349,8 +354,13 @@ export default function Index() {
 
   useEffect(() => {
     if (typeof window === "undefined" || authLoading || user) return;
-    const hasSeenOnboarding = window.localStorage.getItem("cinetrekker_guest_onboarding_seen");
-    if (!hasSeenOnboarding) {
+    const params = new URLSearchParams(window.location.search);
+    const explicitOnboarding = params.get("onboarding") === "1";
+    const hasSeenOnboarding = window.localStorage.getItem(
+      "cinetrekker_guest_onboarding_seen",
+    );
+
+    if (explicitOnboarding && !hasSeenOnboarding) {
       setOnboardingOpen(true);
     }
   }, [authLoading, user]);

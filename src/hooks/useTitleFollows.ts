@@ -245,6 +245,7 @@ export function useTitleFollows() {
         const { error } = await supabase
           .from("followed_title_state")
           .upsert(
+            // @ts-expect-error user_id is missing from Supabase's strict insert types due to schema mismatch
             statesToSync.map((state) => ({
               user_id: user.id,
               ...state,
@@ -394,6 +395,7 @@ export function useTitleFollows() {
         const { error } = await supabase
           .from("followed_title_state")
           .upsert(
+            // @ts-expect-error user_id is missing from Supabase's strict insert types due to schema mismatch
             {
               user_id: user.id,
               ...initialState,
@@ -464,11 +466,14 @@ export function useTitleFollows() {
         }
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from("followed_title_state") as any)
+      const { error } = await supabase.from("followed_title_state")
         .delete()
         .eq("user_id", user.id)
         .eq("movie_id", followId);
+
+      if (error) {
+        throw error;
+      }
 
       return { followId, mediaType };
     },

@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useContinueWatching } from "@/hooks/useContinueWatching";
 import { getImageUrl, getMediaTitle } from "@/services/tmdb";
+import { cn } from "@/lib/utils";
 import { Image } from "@/components/ui/Image";
 import { useWatchedEpisodes } from "@/hooks/useFollowedShows";
 import { useAuth } from "@/contexts/AuthContext";
@@ -153,7 +154,7 @@ export function ContinueWatching() {
         <Button
           type="button"
           variant="outline"
-          className="mt-4 gap-2"
+          className="mt-4 gap-2 rounded-full border-white/10 bg-white/5"
           onClick={() => {
             void refetch();
           }}
@@ -168,13 +169,14 @@ export function ContinueWatching() {
   if (!data || data.length === 0) {
     return (
       <section className="ct-panel min-h-[420px] p-5 md:min-h-[460px] md:p-6">
-        <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <div className="flex items-center gap-2">
-              <Play className="h-5 w-5 text-primary" />
-              <h2 className="section-title mb-0">{safeT(t, "home.continueWatching", "Continue Watching")}</h2>
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+              <Play className="h-3.5 w-3.5 fill-current" />
+              {t("home.continueWatchingBadge", "Active Queue")}
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <h2 className="mt-4 text-2xl font-semibold tracking-tight text-white md:text-3xl">{safeT(t, "home.continueWatching", "Continue Watching")}</h2>
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/60">
               {safeT(
                 t,
                 "home.continueWatchingSubtitle",
@@ -182,24 +184,26 @@ export function ContinueWatching() {
               )}
             </p>
           </div>
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="outline" className="h-10 rounded-full border-white/10 bg-white/5 px-5 text-sm font-medium text-white hover:bg-white/10">
             <Link to="/watched">{t("home.viewWatchingList", "View Watching List")}</Link>
           </Button>
         </div>
 
-        <div className="flex h-[320px] items-center justify-center rounded-3xl border border-dashed border-border/60 bg-background/30 p-6 text-center">
-          <div className="max-w-md space-y-3">
-            <Tv className="mx-auto h-10 w-10 text-primary" />
-            <h3 className="text-lg font-semibold text-foreground">
+        <div className="flex h-[320px] items-center justify-center rounded-[2rem] border border-dashed border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent)] p-6 text-center shadow-[inset_0_0_40px_rgba(0,0,0,0.2)]">
+          <div className="max-w-md space-y-4">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white/5 shadow-[0_0_20px_rgba(255,255,255,0.02)]">
+              <Tv className="h-7 w-7 text-white/40" />
+            </div>
+            <h3 className="text-xl font-semibold tracking-tight text-white">
               {t("home.continueWatchingEmptyTitle", "Nothing to continue yet")}
             </h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm leading-7 text-white/50">
               {t(
                 "home.continueWatchingEmptyDesc",
                 "Once you start a series, the next episode will appear here for fast access.",
               )}
             </p>
-            <Button asChild className="btn-primary-glow mt-2">
+            <Button asChild className="btn-primary-glow mt-2 h-11 rounded-full px-6">
               <Link to="/search">{t("home.findShowToStart", "Find a show to start")}</Link>
             </Button>
           </div>
@@ -210,13 +214,14 @@ export function ContinueWatching() {
 
   return (
     <section className="ct-panel p-5 md:p-6">
-      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="flex items-center gap-2">
-            <Play className="h-5 w-5 text-primary" />
-            <h2 className="section-title mb-0">{safeT(t, "home.continueWatching", "Continue Watching")}</h2>
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+            <Play className="h-3.5 w-3.5 fill-current" />
+            {t("home.continueWatchingBadge", "Active Queue")}
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h2 className="mt-4 text-2xl font-semibold tracking-tight text-white md:text-3xl">{safeT(t, "home.continueWatching", "Continue Watching")}</h2>
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/50">
             {safeT(
               t,
               "home.continueWatchingSubtitle",
@@ -224,14 +229,14 @@ export function ContinueWatching() {
             )}
           </p>
         </div>
-        <Button asChild variant="outline" size="sm">
+        <Button asChild variant="outline" className="h-10 rounded-full border-white/10 bg-white/5 px-5 text-sm font-medium text-white hover:bg-white/10">
           <Link to="/watched">{t("home.viewWatchingList", "View Watching List")}</Link>
         </Button>
       </div>
 
       <div
         ref={scrollContainerRef}
-        className="hide-scrollbar -mx-1 flex snap-x snap-proximity gap-4 overflow-x-auto px-1 pb-2 overscroll-x-contain [scrollbar-width:none]"
+        className="hide-scrollbar -mx-1 flex snap-x snap-proximity gap-4 overflow-x-auto px-1 pb-4 overscroll-x-contain sm:gap-5 [scrollbar-width:none]"
       >
         {data.map((item) => {
           const title = getMediaTitle(item.details) || t("common.tvShow", "TV Show");
@@ -244,93 +249,102 @@ export function ContinueWatching() {
           return (
             <Card
               key={item.details.id}
-              className="min-h-[430px] w-[min(86vw,320px)] shrink-0 snap-start overflow-hidden rounded-3xl border-border/60 bg-card/80 [content-visibility:auto] [contain-intrinsic-size:320px_430px] sm:min-h-[420px] sm:w-[320px] md:w-[360px]"
+              className="relative isolate min-h-[460px] w-[min(88vw,330px)] shrink-0 snap-start overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06)_0%,rgba(255,255,255,0.01)_100%)] shadow-[0_24px_48px_rgba(0,0,0,0.5)] backdrop-blur-2xl [content-visibility:auto] [contain-intrinsic-size:330px_460px] sm:min-h-[420px] sm:w-[350px] md:w-[410px]"
             >
-              <CardContent className="p-0">
-                <div className="flex h-full flex-col sm:flex-row">
-                  <div className="aspect-[2/3] w-full overflow-hidden bg-muted/40 sm:aspect-auto sm:h-auto sm:w-32 md:w-36">
+              <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.04),transparent_60%)]" />
+              <CardContent className="h-full p-2.5 sm:p-3">
+                <div className="flex h-full flex-col gap-4 sm:flex-row sm:gap-5">
+                  <div className="relative h-40 w-full shrink-0 overflow-hidden rounded-[1.5rem] bg-black/40 sm:h-auto sm:w-[130px] md:w-[150px]">
                     <Image
                       src={getImageUrl(item.details.poster_path, "w342")}
                       alt={title}
                       width={342}
                       height={513}
-                      className="h-full w-full object-contain sm:object-cover"
+                      className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.02]"
                       loading="lazy"
                       showSkeleton
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent sm:hidden" />
                   </div>
 
-                  <div className="flex flex-1 flex-col p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="line-clamp-2 min-h-[3.5rem] text-base font-semibold text-foreground sm:text-lg">
-                          <bdi dir="auto">{title}</bdi>
-                        </h3>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {t("home.episodesTracked", {
-                            count: item.watchedEpisodeCount,
-                            defaultValue: "{{count}} episodes tracked",
-                          })}
-                        </p>
+                  <div className="flex flex-1 flex-col px-1 pb-2 sm:py-2 sm:pr-2">
+                    {/* Title & Metadata */}
+                    <div>
+                      <h3 className="line-clamp-2 text-lg font-semibold tracking-tight text-white mb-2">
+                        <bdi dir="auto">{title}</bdi>
+                      </h3>
+                      <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-white/70">
+                        {t("home.episodesTracked", {
+                          count: item.watchedEpisodeCount,
+                          defaultValue: "{{count}} tracked",
+                        })}
                       </div>
-                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/12 text-primary">
-                        <Tv className="h-5 w-5" />
-                      </span>
                     </div>
 
-                    <div className="mt-4 min-h-[112px] rounded-2xl border border-border/60 bg-background/40 p-3">
+                    {/* Next Episode Widget */}
+                    <div className="mt-4 rounded-[1.25rem] border border-white/5 bg-white/[0.02] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
                       {nextEpisode ? (
                         <>
-                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                            {nextEpisode.isUpcoming
-                              ? t("home.upNext", "Up next")
-                              : t("home.nextEpisode", "Next episode")}
-                          </p>
-                          <p className="mt-1 line-clamp-2 font-medium text-foreground">
-                            {nextEpisodeLabel} {nextEpisode.name}
+                          <div className="mb-2 flex items-center gap-2">
+                            <div className={cn(
+                              "h-1.5 w-1.5 rounded-full",
+                              nextEpisode.isUpcoming ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]" : "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"
+                            )} />
+                            <p className={cn(
+                              "text-[10px] font-semibold uppercase tracking-[0.2em]",
+                              nextEpisode.isUpcoming ? "text-amber-400/90" : "text-emerald-400/90"
+                            )}>
+                              {nextEpisode.isUpcoming
+                                ? t("home.upNext", "Up next")
+                                : t("home.readyToWatch", "Ready to watch")}
+                            </p>
+                          </div>
+                          <p className="line-clamp-2 text-sm font-medium leading-relaxed text-white/90">
+                            <span className="mr-1 text-white/50">{nextEpisodeLabel}</span>
+                            {nextEpisode.name}
                           </p>
                           {nextEpisode.air_date ? (
-                            <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                              <Calendar className="h-3.5 w-3.5" />
-                              {new Date(nextEpisode.air_date).toLocaleDateString(
-                                language,
-                              )}
+                            <p className="mt-2 flex items-center gap-1.5 text-[11px] text-white/40">
+                              <Calendar className="h-3 w-3" />
+                              {new Date(nextEpisode.air_date).toLocaleDateString(language)}
                             </p>
                           ) : null}
                         </>
                       ) : lastEpisode ? (
                         <>
-                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40 mb-1">
                             {t("home.lastWatched", "Last watched")}
                           </p>
-                          <p className="mt-1 font-medium text-foreground">
+                          <p className="font-medium text-white/90">
                             S{lastEpisode.season_number}E{lastEpisode.episode_number}
                           </p>
                         </>
                       ) : null}
                     </div>
 
-                    <div className="mt-4">
-                      <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-                        <span>{t("home.seriesProgress", "Series progress")}</span>
-                        <span>{item.progressPercent}%</span>
+                    {/* Progress Segment */}
+                    <div className="mt-5">
+                      <div className="mb-2 flex items-center justify-between text-[10px] font-semibold uppercase tracking-widest text-white/40">
+                        <span>{t("home.seriesProgress", "Progress")}</span>
+                        <span className="text-white/80">{item.progressPercent}%</span>
                       </div>
-                      <Progress value={item.progressPercent} className="h-2" />
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                        <div
+                          className="h-full rounded-full bg-primary shadow-[0_0_10px_rgba(217,4,41,0.5)] transition-all duration-1000 ease-out"
+                          style={{ width: `${item.progressPercent}%` }}
+                        />
+                      </div>
                     </div>
 
-                    <div className="mt-auto flex flex-col gap-2 pt-4">
-                      <Button asChild className="flex-1 gap-2">
-                        <Link to={`/tv/${item.details.id}`}>
-                          <Play className="h-4 w-4" />
-                          {t("home.openShow", "Open Show")}
-                        </Link>
-                      </Button>
-                      {nextEpisode && !nextEpisode.isUpcoming ? (
+                    {/* Actions */}
+                    <div className="mt-auto flex flex-col gap-2.5 pt-6">
+                      {nextEpisode && !nextEpisode.isUpcoming && (
                         <Button
                           type="button"
-                          variant="outline"
-                          className="flex-1 gap-2"
-                          onClick={() =>
+                          className="btn-primary-glow h-11 w-full rounded-xl text-sm font-semibold transition-all hover:scale-[1.02]"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             markEpisodeWatched({
                               showId: item.details.id,
                               seasonNumber: nextEpisode.season_number,
@@ -339,15 +353,22 @@ export function ContinueWatching() {
                               airDate: nextEpisode.air_date || undefined,
                               showName: title,
                               posterPath: item.details.poster_path,
-                            })
-                          }
+                            });
+                          }}
                         >
-                          <CheckCircle2 className="h-4 w-4" />
-                          {t("home.markNextEpisode", "Mark Next Episode")}
+                          <CheckCircle2 className="mr-2 h-4 w-4" />
+                          {t("home.markWatchedCompact", "Mark Watched")}
                         </Button>
-                      ) : (
-                        <div className="h-10" aria-hidden="true" />
                       )}
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="h-11 w-full rounded-xl border-white/10 bg-white/[0.03] text-sm font-medium text-white backdrop-blur-md transition-all hover:bg-white/10"
+                      >
+                        <Link to={`/tv/${item.details.id}`}>
+                          {t("home.openShow", "Open Show")}
+                        </Link>
+                      </Button>
                     </div>
                   </div>
                 </div>

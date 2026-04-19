@@ -11,13 +11,11 @@ import {
 import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { UserListsProvider } from "@/contexts/UserListsContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ContentPolicyProvider } from "@/contexts/content-policy-context";
 import ScrollToTop from "@/components/ScrollToTop";
-import { UnifiedNav } from "@/components/UnifiedNav";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
@@ -35,9 +33,11 @@ import { websiteJsonLd } from "@/lib/schema";
 import { siteMetadata } from "@/lib/metadata";
 import { applyAccessibilityPreferencesToRoot } from "@/lib/accessibility-preferences";
 import { useCookieConsent } from "@/hooks/useCookieConsent";
-import Index from "./pages/Index";
+import { trackEngagementEvent } from "@/lib/engagement";
+import { UnifiedNav } from "@/components/UnifiedNav";
 const KeyboardShortcuts = lazy(() => import("@/components/KeyboardShortcuts"));
 const CommandPalette = lazy(() => import("@/components/CommandPalette"));
+const Index = lazy(() => import("./pages/Index"));
 const GlobalLoader = lazy(() =>
   import("@/components/GlobalLoader").then((mod) => ({
     default: mod.GlobalLoader,
@@ -67,6 +67,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
+const Logout = lazy(() => import("./pages/Logout"));
 const TitleStatus = lazy(() => import("./pages/TitleStatus"));
 
 const Search = lazy(() => import("./pages/Search"));
@@ -146,18 +147,15 @@ function AnimatedRoutes() {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={location.pathname}
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-      >
+    <div key={location.pathname}>
         <Routes location={location}>
           <Route
             path="/"
-            element={<Index />}
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Index />
+              </Suspense>
+            }
           />
           <Route
             path="/search"
@@ -255,11 +253,21 @@ function AnimatedRoutes() {
               </Suspense>
             }
           />
+          <Route path="/signin" element={<Navigate to="/login" replace />} />
           <Route
             path="/signup"
             element={
               <Suspense fallback={<RouteSpinner />}>
                 <Signup />
+              </Suspense>
+            }
+          />
+          <Route path="/register" element={<Navigate to="/signup" replace />} />
+          <Route
+            path="/logout"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Logout />
               </Suspense>
             }
           />
@@ -303,9 +311,11 @@ function AnimatedRoutes() {
           <Route
             path="/watchlist"
             element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Watchlist />
-              </Suspense>
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Watchlist />
+                </Suspense>
+              </ProtectedRoute>
             }
           />
           <Route
@@ -461,14 +471,14 @@ function AnimatedRoutes() {
             }
           />
         </Routes>
-      </motion.div>
-    </AnimatePresence>
+    </div>
   );
 }
 
 const App = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const { hasAcceptedConsent } = useCookieConsent();
   const [enableEnhancements, setEnableEnhancements] = useState(false);
@@ -560,6 +570,13 @@ const App = () => {
       }
     };
   }, []);
+
+  useEffect(() => {
+    trackEngagementEvent("page_view", {
+      path: location.pathname,
+      hasQuery: location.search.length > 0,
+    });
+  }, [location.pathname, location.search]);
 
   const { handlers, containerRef } = usePullToRefresh({
     onRefresh: async () => {

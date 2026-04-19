@@ -1,3 +1,47 @@
+/* Premium section container and typography improvements */
+.ct-panel {
+  @apply rounded-2xl bg-card/90 border border-border/60 shadow-[0_4px_32px_hsl(var(--primary)/0.04)] p-6 md:p-8 mb-8;
+}
+
+.ct-panel-strong {
+  @apply rounded-[2rem] bg-gradient-to-br from-card/95 to-background/90 border border-border/70 shadow-[0_8px_40px_hsl(var(--primary)/0.06)] p-8 md:p-12 mb-10;
+}
+
+.section-title {
+  @apply font-extrabold text-2xl md:text-3xl tracking-tight text-foreground mb-2;
+  letter-spacing: -0.01em;
+}
+
+.ct-kicker {
+  @apply text-xs font-bold uppercase tracking-[0.18em] text-primary/80 mb-2;
+  letter-spacing: 0.18em;
+}
+
+.ct-page-shell {
+  @apply min-h-screen flex flex-col bg-background;
+}
+
+.page-container {
+  @apply w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-8;
+}
+
+.home-section-shell {
+  @apply mb-10;
+}
+/* Premium glassmorphic footer for SaaS look */
+.ct-premium-footer {
+  background: hsl(var(--glass-bg)) !important;
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border-top: 1px solid hsl(var(--glass-border));
+}
+/* Premium glassmorphic header for SaaS look */
+.ct-premium-header {
+  background: hsl(var(--glass-bg));
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid hsl(var(--glass-border));
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -375,6 +419,15 @@
   .premium-glass-chip:hover {
     background: hsla(0, 0%, 100%, 0.1);
     border-color: hsla(var(--primary) / 0.4);
+  }
+
+  /* Hero gradient overlays (moved from inline styles) */
+  .hero-grad-horizontal {
+    background-image: linear-gradient(90deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.32) 60%, transparent 100%);
+  }
+
+  .hero-grad-vertical {
+    background-image: linear-gradient(0deg, rgba(0,0,0,0.72) 0%, transparent 80%);
   }
 
   .actor-match-card {
@@ -1175,6 +1228,17 @@ select:focus-visible {
 /* Button focus states */
 button:focus-visible,
 a:focus-visible {
+  outline: 3px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Keep focus discoverable for programmatic focus flows used by assistive tooling and tests. */
+button:focus,
+a:focus,
+input:focus,
+textarea:focus,
+select:focus,
+[role="button"]:focus {
   outline: 3px solid hsl(var(--ring));
   outline-offset: 2px;
 }

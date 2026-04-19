@@ -142,14 +142,28 @@ export default defineConfig(({ mode }) => {
               return "vendor-query";
             }
 
+            if (id.includes("node_modules/@radix-ui/")) {
+              return "vendor-radix";
+            }
+
             if (
-              id.includes("node_modules/@radix-ui/") ||
               id.includes("node_modules/react-hook-form/") ||
-              id.includes("node_modules/cmdk/") ||
-              id.includes("node_modules/sonner/") ||
+              id.includes("node_modules/input-otp/")
+            ) {
+              return "vendor-forms";
+            }
+
+            if (
               id.includes("node_modules/class-variance-authority/") ||
               id.includes("node_modules/clsx/") ||
-              id.includes("node_modules/tailwind-merge/") ||
+              id.includes("node_modules/tailwind-merge/")
+            ) {
+              return "vendor-utils";
+            }
+
+            if (
+              id.includes("node_modules/cmdk/") ||
+              id.includes("node_modules/sonner/") ||
               id.includes("node_modules/embla-carousel")
             ) {
               return "vendor-ui";

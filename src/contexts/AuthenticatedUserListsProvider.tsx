@@ -76,12 +76,26 @@ export function AuthenticatedUserListsProvider({
       ? `${STORAGE_KEYS.hidden}_${user.id}`
       : STORAGE_KEYS.hidden;
     const storedHidden = localStorage.getItem(storageKey);
-    if (storedHidden) {
-      setHiddenRecommendations(JSON.parse(storedHidden));
-      return;
+    const nextHidden: HiddenRecommendation[] = storedHidden ? JSON.parse(storedHidden) : [];
+
+    // Migrate guest hidden items
+    if (user) {
+      const guestHiddenStr = localStorage.getItem(STORAGE_KEYS.hidden);
+      if (guestHiddenStr) {
+        const guestHidden: HiddenRecommendation[] = JSON.parse(guestHiddenStr);
+        if (guestHidden.length > 0) {
+           const existingIds = new Set(nextHidden.map(h => h.id));
+           for (const item of guestHidden) {
+             if (!existingIds.has(item.id)) {
+               nextHidden.push({ ...item, userId: user.id });
+             }
+           }
+           localStorage.removeItem(STORAGE_KEYS.hidden);
+        }
+      }
     }
 
-    setHiddenRecommendations([]);
+    setHiddenRecommendations(nextHidden);
   }, [user]);
 
   useEffect(() => {
