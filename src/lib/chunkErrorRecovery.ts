@@ -171,49 +171,65 @@ class ChunkErrorRecovery {
     const existing = document.getElementById("chunk-reload-notification");
     if (existing) return;
 
+    // Build the notification using DOM APIs to avoid an innerHTML Trusted-Types
+    // sink for a purely static, controlled string.
     const notification = document.createElement("div");
     notification.id = "chunk-reload-notification";
-    notification.innerHTML = `
-      <div style="
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 99999;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 16px 24px;
-        border-radius: 12px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-        font-family: system-ui, -apple-system, sans-serif;
-        font-size: 14px;
-        font-weight: 500;
-        animation: slideIn 0.3s ease-out;
-      ">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="
-            width: 20px;
-            height: 20px;
-            border: 2px solid white;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-          "></div>
-          <div>
-            <div style="font-weight: 600; margin-bottom: 4px;">Updating CineTrekker</div>
-            <div style="opacity: 0.9; font-size: 12px;">Loading the latest version...</div>
-          </div>
-        </div>
-      </div>
-      <style>
-        @keyframes slideIn {
-          from { transform: translateX(100%); opacity: 0; }
-          to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      </style>
-    `;
+
+    const card = document.createElement("div");
+    card.style.cssText = [
+      "position:fixed",
+      "top:20px",
+      "right:20px",
+      "z-index:99999",
+      "background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)",
+      "color:white",
+      "padding:16px 24px",
+      "border-radius:12px",
+      "box-shadow:0 10px 40px rgba(0,0,0,0.3)",
+      "font-family:system-ui,-apple-system,sans-serif",
+      "font-size:14px",
+      "font-weight:500",
+      "animation:slideIn 0.3s ease-out",
+    ].join(";");
+
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;align-items:center;gap:12px;";
+
+    const spinner = document.createElement("div");
+    spinner.style.cssText = [
+      "width:20px",
+      "height:20px",
+      "border:2px solid white",
+      "border-top-color:transparent",
+      "border-radius:50%",
+      "animation:spin 0.8s linear infinite",
+    ].join(";");
+
+    const textCol = document.createElement("div");
+
+    const heading = document.createElement("div");
+    heading.style.cssText = "font-weight:600;margin-bottom:4px;";
+    heading.textContent = "Updating CineTrekker";
+
+    const sub = document.createElement("div");
+    sub.style.cssText = "opacity:0.9;font-size:12px;";
+    sub.textContent = "Loading the latest version...";
+
+    textCol.appendChild(heading);
+    textCol.appendChild(sub);
+    row.appendChild(spinner);
+    row.appendChild(textCol);
+    card.appendChild(row);
+
+    const style = document.createElement("style");
+    style.textContent = [
+      "@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}",
+      "@keyframes spin{to{transform:rotate(360deg)}}",
+    ].join("");
+
+    notification.appendChild(card);
+    notification.appendChild(style);
     document.body.appendChild(notification);
   }
 

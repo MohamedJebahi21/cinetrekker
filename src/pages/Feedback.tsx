@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
+import { toTrustedScriptURL } from '@/lib/trustedTypes';
 import SEO from '@/components/SEO';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -104,10 +105,12 @@ export default function Feedback() {
     }
 
     const script = document.createElement('script');
-    script.src =
+    const captchaUrl =
       CAPTCHA_PROVIDER === 'turnstile'
         ? 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
         : 'https://www.google.com/recaptcha/api.js?render=explicit';
+    // script.src is a TrustedScriptURL sink; use the cinetrekker policy.
+    script.src = toTrustedScriptURL(captchaUrl) as string;
     script.async = true;
     script.defer = true;
     if (CAPTCHA_PROVIDER === 'turnstile') {

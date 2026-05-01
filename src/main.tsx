@@ -13,38 +13,13 @@ import {
 
 // Install chunk error recovery handlers
 import { installChunkErrorHandlers } from "@/lib/chunkErrorRecovery";
+// Initialise Trusted Types policies (cinetrekker + default) before any React
+// code runs so that all DOM sink assignments are covered from the start.
+import "@/lib/trustedTypes";
 
 // Install chunk error handlers BEFORE React renders
 installChunkErrorHandlers();
 applyThemeToDocument(readStoredTheme());
-
-if (typeof window !== "undefined") {
-  const tt = (window as unknown as { 
-    trustedTypes?: { 
-      createPolicy: (name: string, rules: {
-        createHTML?: (value: string) => string;
-        createScript?: (value: string) => string;
-        createScriptURL?: (value: string) => string;
-      }) => void 
-    } 
-  }).trustedTypes;
-  if (tt) {
-    const createPolicy = (name: string) => {
-      try {
-        tt.createPolicy(name, {
-          createHTML: (value: string) => value,
-          createScript: (value: string) => value,
-          createScriptURL: (value: string) => value,
-        });
-      } catch {
-        // Reuse existing policy if already created by the browser/runtime.
-      }
-    };
-
-    createPolicy("default");
-    createPolicy("cinetrekker");
-  }
-}
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
