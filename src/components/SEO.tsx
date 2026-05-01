@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { siteMetadata } from "@/lib/metadata";
 import { sanitizeJsonLd, sanitizeMetaText } from "@/lib/seo";
+import { toTrustedScript } from "@/lib/trustedTypes";
 
 export interface SEOProps {
   title?: string;
@@ -154,7 +155,7 @@ export function SEO({
           script.type = "application/ld+json";
           script.dataset.cinetrekkerJsonld = "true";
           script.id = `cinetrekker-jsonld-${index}`;
-          script.text = JSON.stringify(payload).replace(/</g, "\\u003c");
+          script.text = toTrustedScript(JSON.stringify(payload).replace(/</g, "\\u003c")) as string;
           document.head.appendChild(script);
         });
     }

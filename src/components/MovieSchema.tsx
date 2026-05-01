@@ -1,5 +1,6 @@
 import React, { useEffect, useId } from "react";
 import { sanitizeJsonLd, sanitizeMetaText } from "@/lib/seo";
+import { toTrustedScript } from "@/lib/trustedTypes";
 
 interface MovieSchemaProps {
   schemaType?: "Movie" | "TVSeries";
@@ -54,7 +55,7 @@ export default function MovieSchema({
     script.id = scriptId;
     script.type = "application/ld+json";
     script.dataset.cinetrekkerJsonld = "true";
-    script.text = JSON.stringify(jsonLd).replace(/</g, "\\u003c");
+    script.text = toTrustedScript(JSON.stringify(jsonLd).replace(/</g, "\\u003c")) as string;
     document.head.appendChild(script);
 
     return () => script.remove();
