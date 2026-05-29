@@ -5,6 +5,7 @@ import {
 } from "@/services/tmdb";
 import { createFallbackMedia } from "@/lib/mediaFallback";
 import { createLogger } from "@/lib/logger";
+import { mapWithConcurrency } from "@/lib/requestUtils";
 import type { Media } from "@/types/media";
 
 const enrichmentLogger = createLogger("media-enrichment");
@@ -69,11 +70,9 @@ export async function enrichMediaItems<
   } = options;
 
   const settled = await Promise.allSettled(
-    items.map(async (item, index) => {
-      // Stagger requests to prevent proxy burst overload
-      if (index > 0) await new Promise((resolve) => setTimeout(resolve, index * 100));
-      return fetchMediaDetailsByReference(getReference(item), language);
-    }),
+    mapWithConcurrency(items, 4, async (item) =>
+      fetchMediaDetailsByReference(getReference(item), language),
+    ),
   );
 
   const fallbackEntries = settled.flatMap((result, index) => {

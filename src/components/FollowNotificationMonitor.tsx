@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getMovieDetails, getTVDetails } from "@/services/tmdb";
 import { supabase } from "@/integrations/supabase/client";
+import { mapWithConcurrency } from "@/lib/requestUtils";
 import {
   appendGuestNotifications,
   readGuestNotifications,
@@ -167,10 +168,10 @@ export function FollowNotificationMonitor() {
     refetchInterval: 10 * 60_000,
     refetchOnWindowFocus: false,
     queryFn: async () => {
-      const currentStates = await Promise.all(
-        followedTitles.map(async (follow, index) => {
-          // Stagger requests to avoid overwhelming the proxy
-          if (index > 0) await new Promise((resolve) => setTimeout(resolve, index * 150));
+      const currentStates = await mapWithConcurrency(
+        followedTitles,
+        3,
+        async (follow) => {
           const details =
             follow.mediaType === "movie"
               ? await getMovieDetails(follow.mediaId)
@@ -188,7 +189,7 @@ export function FollowNotificationMonitor() {
               details,
             ),
           };
-        }),
+        },
       );
 
       const currentById = Object.fromEntries(
@@ -238,7 +239,9 @@ export function FollowNotificationMonitor() {
       }
 
 
-      const movieIds = currentStates.map((item) => item.state.movie_id).filter((id) => typeof id === "string" && id.length > 0);
+      const movieIds = currentStates
+        .map((item) => item.state.movie_id)
+        .filter((id): id is string => typeof id === "string" && id.length > 0);
       let previousById: Record<string, FollowedTitleState> = {};
       if (movieIds.length > 0) {
         const { data: previousRows, error: previousError } = await (supabase

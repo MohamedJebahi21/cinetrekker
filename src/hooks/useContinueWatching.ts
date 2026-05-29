@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getTVDetails, getTVSeasonDetails } from "@/services/tmdb";
+import { mapWithConcurrency } from "@/lib/requestUtils";
 import {
   useWatchedEpisodes,
   type WatchedEpisode,
@@ -108,51 +109,44 @@ export function useContinueWatching(language: string) {
       language,
     ],
     queryFn: async () => {
-      const items = await Promise.all(
-        activeShows.map(async (show, index) => {
-          // Add a small staggered delay to prevent proxy overload
-          if (index > 0) await new Promise(resolve => setTimeout(resolve, index * 120));
-          const details = await getTVDetails(show.mediaId, language);
-          const showEpisodes = watchedEpisodes
-            .filter((episode) => episode.show_id === show.mediaId)
-            .sort((a, b) => {
-              if (a.season_number !== b.season_number) {
-                return a.season_number - b.season_number;
-              }
-              return a.episode_number - b.episode_number;
-            });
-          const lastWatchedEpisode =
-            showEpisodes.length > 0 ? showEpisodes[showEpisodes.length - 1] : null;
-          const nextEpisode = await findNextEpisode(
-            details,
-            showEpisodes,
-            language,
-          );
-          const watchedEpisodeCount = showEpisodes.length;
-          const hasReleasedNextEpisode =
-            Boolean(nextEpisode) &&
-            !("isUpcoming" in (nextEpisode ?? {})) &&
-            Boolean(nextEpisode);
-          const totalEpisodes = hasReleasedNextEpisode
-            ? Math.max(details.number_of_episodes ?? 0, watchedEpisodeCount, 1)
-            : Math.max(watchedEpisodeCount, 1);
-          const progressPercent = hasReleasedNextEpisode
-            ? Math.min(
-                99,
-                Math.round((watchedEpisodeCount / totalEpisodes) * 100),
-              )
-            : 100;
+      const items = await mapWithConcurrency(activeShows, 3, async (show) => {
+        const details = await getTVDetails(show.mediaId, language);
+        const showEpisodes = watchedEpisodes
+          .filter((episode) => episode.show_id === show.mediaId)
+          .sort((a, b) => {
+            if (a.season_number !== b.season_number) {
+              return a.season_number - b.season_number;
+            }
+            return a.episode_number - b.episode_number;
+          });
+        const lastWatchedEpisode =
+          showEpisodes.length > 0 ? showEpisodes[showEpisodes.length - 1] : null;
+        const nextEpisode = await findNextEpisode(
+          details,
+          showEpisodes,
+          language,
+        );
+        const watchedEpisodeCount = showEpisodes.length;
+        const hasReleasedNextEpisode =
+          Boolean(nextEpisode) &&
+          !("isUpcoming" in (nextEpisode ?? {})) &&
+          Boolean(nextEpisode);
+        const totalEpisodes = hasReleasedNextEpisode
+          ? Math.max(details.number_of_episodes ?? 0, watchedEpisodeCount, 1)
+          : Math.max(watchedEpisodeCount, 1);
+        const progressPercent = hasReleasedNextEpisode
+          ? Math.min(99, Math.round((watchedEpisodeCount / totalEpisodes) * 100))
+          : 100;
 
-          return {
-            details,
-            watchedEpisodeCount,
-            progressPercent,
-            nextEpisode: nextEpisode as ContinueWatchingEpisode | null,
-            lastWatchedEpisode,
-            lastActivityAt: show.lastActivityAt,
-          } satisfies ContinueWatchingItem;
-        }),
-      );
+        return {
+          details,
+          watchedEpisodeCount,
+          progressPercent,
+          nextEpisode: nextEpisode as ContinueWatchingEpisode | null,
+          lastWatchedEpisode,
+          lastActivityAt: show.lastActivityAt,
+        } satisfies ContinueWatchingItem;
+      });
 
       return items
         .filter(

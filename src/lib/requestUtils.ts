@@ -103,3 +103,32 @@ export class RequestThrottler {
     this.lastCallTime.delete(key);
   }
 }
+
+/**
+ * Map items with a bounded number of concurrent workers.
+ * This keeps request bursts under control without serializing everything.
+ */
+export async function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  concurrency: number,
+  mapper: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  if (items.length === 0) {
+    return [];
+  }
+
+  const workerCount = Math.max(1, Math.min(Math.floor(concurrency), items.length));
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+
+  const worker = async () => {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex++;
+      if (currentIndex >= items.length) return;
+      results[currentIndex] = await mapper(items[currentIndex], currentIndex);
+    }
+  };
+
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+  return results;
+}
