@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { json } from "../_lib/http.js";
 import { getSupabaseAdminClient } from "../_lib/supabaseAdmin.js";
 import { getServerEnv } from "../_lib/env.js";
@@ -7,6 +8,14 @@ import { reportSecurityEvent } from "../_lib/securityMonitor.js";
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const DEFAULT_BATCH_SIZE = 5;
 const logger = createServerLogger("check-followed-updates");
+
+function safeCompare(a, b) {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
 
 function isAuthorizedCronCall(req) {
   const cronSecret = getServerEnv("CRON_SECRET");
@@ -19,13 +28,13 @@ function isAuthorizedCronCall(req) {
   const authHeader = typeof req?.headers?.authorization === "string"
     ? req.headers.authorization.trim()
     : "";
-  if (authHeader === `Bearer ${cronSecret}`) return true;
+  if (safeCompare(authHeader, `Bearer ${cronSecret}`)) return true;
 
   // Fallback: allow x-cron-secret header for manual/local testing.
   const cronHeader = typeof req?.headers?.["x-cron-secret"] === "string"
     ? req.headers["x-cron-secret"].trim()
     : "";
-  return cronHeader === cronSecret;
+  return safeCompare(cronHeader, cronSecret);
 }
 
 function parseMovieKey(movieId) {
