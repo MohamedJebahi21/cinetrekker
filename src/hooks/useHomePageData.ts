@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MOVIE_GENRES, TV_GENRES } from "@/data/genres";
 import {
@@ -69,7 +69,15 @@ export function useHomePageData({
   const [discoverTab, setDiscoverTab] = useState<
     "trending-day" | "trending-week" | "new-releases"
   >("trending-day");
-  const deferredEnabled = true;
+
+  // Truly defer non-critical queries until after the critical fold paints.
+  // Without this, all 7 queries fire simultaneously on mount, flooding the
+  // network before the LCP backdrop image has had a chance to load.
+  const [deferredEnabled, setDeferredEnabled] = useState(false);
+  useEffect(() => {
+    const id = window.setTimeout(() => setDeferredEnabled(true), 200);
+    return () => window.clearTimeout(id);
+  }, []);
 
   const moreInGenreQuery = useQuery({
     queryKey: ["more-in-genre", lastGenreId, language],

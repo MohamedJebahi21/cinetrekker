@@ -192,8 +192,13 @@ export function HeroSection() {
 
   const activeItem = heroSlides[activeIndex];
   const activeTitle = activeItem.title;
+  // Responsive backdrop: w780 on mobile saves ~200 KB on LCP image.
+  // We read innerWidth at render time (not a resize listener) because this
+  // only affects which src is used on paint — resize is not a common case.
+  const heroImageSize =
+    typeof window !== "undefined" && window.innerWidth < 768 ? "w780" : "w1280";
   const heroImage = activeItem.backdrop_path
-    ? getBackdropUrl(activeItem.backdrop_path, "w1280") || ""
+    ? getBackdropUrl(activeItem.backdrop_path, heroImageSize) || ""
     : "";
   const posterImage = activeItem.poster_path
     ? getImageUrl(activeItem.poster_path, "w342")

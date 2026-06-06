@@ -71,6 +71,18 @@ export function AuthenticatedUserListsProvider({
   );
   const loading = user ? Boolean(watchlistLoading || watchedLoading) : false;
 
+  // O(1) Set-based lookup — avoids O(n) linear scans per card render.
+  // With a 100-item grid and 500-item watchlist the old .some() approach
+  // was O(n²); this is O(n) to build once, O(1) per lookup.
+  const watchlistSet = useMemo(
+    () => new Set(watchlist.map((i) => `${i.mediaType}-${i.mediaId}`)),
+    [watchlist],
+  );
+  const watchedSet = useMemo(
+    () => new Set(watched.map((i) => `${i.mediaType}-${i.mediaId}`)),
+    [watched],
+  );
+
   useEffect(() => {
     const storageKey = user
       ? `${STORAGE_KEYS.hidden}_${user.id}`
@@ -265,20 +277,14 @@ export function AuthenticatedUserListsProvider({
 
   const isInWatchlist = useCallback(
     (mediaId: number, mediaType: "movie" | "tv") =>
-      watchlist.some(
-        (item: UserMediaItem) =>
-          item.mediaId === mediaId && item.mediaType === mediaType,
-      ),
-    [watchlist],
+      watchlistSet.has(`${mediaType}-${mediaId}`),
+    [watchlistSet],
   );
 
   const isWatched = useCallback(
     (mediaId: number, mediaType: "movie" | "tv") =>
-      watched.some(
-        (item: UserMediaItem) =>
-          item.mediaId === mediaId && item.mediaType === mediaType,
-      ),
-    [watched],
+      watchedSet.has(`${mediaType}-${mediaId}`),
+    [watchedSet],
   );
 
   const getWatchedItem = useCallback(

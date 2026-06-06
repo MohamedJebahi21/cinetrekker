@@ -57,6 +57,10 @@ const STATUS_CONFIG: Record<string, WatchStatusConfig> = {
   plan_to_watch: { icon: "", label: "Plan to Watch", color: "bg-yellow-500" },
 };
 
+// Stable options — not an inline object, so the useInView effect dep array
+// never sees a reference change and re-creates observers.
+const POSTER_IN_VIEW_OPTIONS = { rootMargin: '300px' };
+
 const PosterImage = React.memo(function PosterImage({
   posterPath,
   alt,
@@ -64,12 +68,12 @@ const PosterImage = React.memo(function PosterImage({
   posterPath: string | null;
   alt: string;
 }) {
-  const [ref, inView] = useInView<HTMLDivElement>({ rootMargin: "300px" });
+  const [ref, inView] = useInView<HTMLDivElement>(POSTER_IN_VIEW_OPTIONS);
 
   if (!posterPath) {
     return (
       <div
-        ref={ref}
+        ref={ref as React.RefCallback<HTMLDivElement>}
         className="w-full h-full aspect-[2/3] relative overflow-hidden bg-muted flex items-center justify-center"
       >
         <div className="text-center px-3">
@@ -95,7 +99,7 @@ const PosterImage = React.memo(function PosterImage({
 
   return (
     <div
-      ref={ref}
+      ref={ref as React.RefCallback<HTMLDivElement>}
       className="w-full h-full aspect-[2/3] relative overflow-hidden bg-muted"
     >
       {inView ? (
@@ -159,8 +163,10 @@ export const MediaCard = React.memo(function MediaCard({
       });
     }
   }, [watchedList]);
-  const [optimisticInWatchlist, setOptimisticInWatchlist] = useState(false);
-  const [optimisticWatched, setOptimisticWatched] = useState(false);
+  // Pending flags are only used to drive spinner display during async ops.
+  // We read watchlist/watched truth directly from context (already optimistic
+  // via React Query's onMutate) so we don't need redundant local state that
+  // would cause a double-render on every toggle.
   const [isWatchlistPending, setIsWatchlistPending] = useState(false);
   const [isWatchedPending, setIsWatchedPending] = useState(false);
   const [watchStatusModalOpen, setWatchStatusModalOpen] = useState(false);
@@ -172,8 +178,10 @@ export const MediaCard = React.memo(function MediaCard({
     [mediaTypeProp, media],
   );
   const posterAlt = getMediaAltText(title, mediaType, "poster");
-  const inWatchlist = isInWatchlist(media.id, mediaType);
-  const watched = isWatched(media.id, mediaType);
+  // Read directly from context — context is already optimistically updated
+  // by React Query's onMutate, so the UI responds at 0 ms.
+  const optimisticInWatchlist = isInWatchlist(media.id, mediaType);
+  const optimisticWatched = isWatched(media.id, mediaType);
   const watchStatus = media.watchStatus;
   const rating = media.vote_average;
   const showInlineActions = true;
@@ -190,14 +198,6 @@ export const MediaCard = React.memo(function MediaCard({
 
     return parts.join(" • ");
   }, [year, showType, mediaLabel]);
-
-  useEffect(() => {
-    setOptimisticInWatchlist(inWatchlist);
-  }, [inWatchlist]);
-
-  useEffect(() => {
-    setOptimisticWatched(watched);
-  }, [watched]);
 
   type PreventableEvent = {
     preventDefault: () => void;
@@ -220,11 +220,9 @@ export const MediaCard = React.memo(function MediaCard({
 
   const handleWatchlistClick = async (e: PreventableEvent) => {
     suppressCardNavigation(e);
-    const nextState = !optimisticInWatchlist;
-    setOptimisticInWatchlist(nextState);
     setIsWatchlistPending(true);
     try {
-      if (nextState) {
+      if (!optimisticInWatchlist) {
         await addToWatchlist(media.id, mediaType);
         try {
           if (typeof navigator !== "undefined" && "vibrate" in navigator)
@@ -235,8 +233,6 @@ export const MediaCard = React.memo(function MediaCard({
       } else {
         await removeFromWatchlist(media.id, mediaType);
       }
-    } catch {
-      setOptimisticInWatchlist(!nextState);
     } finally {
       setIsWatchlistPending(false);
     }
@@ -246,12 +242,9 @@ export const MediaCard = React.memo(function MediaCard({
     suppressCardNavigation(e);
 
     if (optimisticWatched) {
-      setOptimisticWatched(false);
       setIsWatchedPending(true);
       try {
         await removeFromWatched(media.id, mediaType);
-      } catch {
-        setOptimisticWatched(true);
       } finally {
         setIsWatchedPending(false);
       }
@@ -261,7 +254,6 @@ export const MediaCard = React.memo(function MediaCard({
         setWatchStatusModalOpen(true);
       } else {
         // Guests can still track watched titles locally.
-        setOptimisticWatched(true);
         setIsWatchedPending(true);
         try {
           await addToWatched(media.id, mediaType);
@@ -274,8 +266,6 @@ export const MediaCard = React.memo(function MediaCard({
           }
           // Milestone confetti
           triggerMilestoneConfetti();
-        } catch {
-          setOptimisticWatched(false);
         } finally {
           setIsWatchedPending(false);
         }

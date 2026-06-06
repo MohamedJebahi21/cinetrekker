@@ -272,12 +272,13 @@ export const searchMovies = async (
   page: number = 1,
   language: string = "en",
   includeAdult: boolean = false,
+  signal?: AbortSignal,
 ): Promise<TMDBResponse<Media>> => {
   return fetchTMDB(`/search/movie`, language, {
     query,
     page: page.toString(),
     include_adult: includeAdult ? "true" : "false",
-  });
+  }, signal);
 };
 
 export const searchTV = async (
@@ -285,23 +286,25 @@ export const searchTV = async (
   page: number = 1,
   language: string = "en",
   includeAdult: boolean = false,
+  signal?: AbortSignal,
 ): Promise<TMDBResponse<Media>> => {
   return fetchTMDB(`/search/tv`, language, {
     query,
     page: page.toString(),
     include_adult: includeAdult ? "true" : "false",
-  });
+  }, signal);
 };
 
 export const searchPeople = async (
   query: string,
   page: number = 1,
   language: string = "en",
+  signal?: AbortSignal,
 ): Promise<TMDBResponse<PersonSearchResult>> => {
   return fetchTMDB(`/search/person`, language, {
     query,
     page: page.toString(),
-  });
+  }, signal);
 };
 
 export const getPopularPeople = async (
