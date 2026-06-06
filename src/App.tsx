@@ -35,6 +35,7 @@ import { applyAccessibilityPreferencesToRoot } from "@/lib/accessibility-prefere
 import { useCookieConsent } from "@/hooks/useCookieConsent";
 import { trackEngagementEvent } from "@/lib/engagement";
 import { UnifiedNav } from "@/components/UnifiedNav";
+import { updateAndGetStreak } from "@/lib/streak";
 const KeyboardShortcuts = lazy(() => import("@/components/KeyboardShortcuts"));
 const CommandPalette = lazy(() => import("@/components/CommandPalette"));
 const Index = lazy(() => import("./pages/Index"));
@@ -60,6 +61,11 @@ const MobileBottomNav = lazy(() =>
 const CookieConsent = lazy(() =>
   import("@/components/CookieConsent").then((mod) => ({
     default: mod.CookieConsent,
+  })),
+);
+const StickyGuestCTA = lazy(() =>
+  import("@/components/StickyGuestCTA").then((mod) => ({
+    default: mod.StickyGuestCTA,
   })),
 );
 
@@ -528,6 +534,11 @@ const App = () => {
 
   useEffect(() => {
     applyAccessibilityPreferencesToRoot();
+    try {
+      updateAndGetStreak();
+    } catch {
+      // Ignore local storage errors
+    }
 
     const handleStorage = (event: StorageEvent) => {
       if (event.key && !event.key.startsWith("cinetrekker_")) return;
@@ -752,6 +763,9 @@ const App = () => {
       )}
       <Suspense fallback={null}>
         <CookieConsent />
+      </Suspense>
+      <Suspense fallback={null}>
+        <StickyGuestCTA />
       </Suspense>
     </ThemeProvider>
   );

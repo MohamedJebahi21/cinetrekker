@@ -53,7 +53,7 @@ export function CookieConsent() {
             <p id="cookie-consent-description" className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
               {t(
                 "cookieConsent.description",
-                "CineTrekker uses cookies to improve your experience. You can accept all cookies or choose only essential ones.",
+                "We use cookies to save your watchlist and personalize your experience. Choose to accept all or only essential cookies.",
               )}
             </p>
           </div>

@@ -112,17 +112,19 @@ export default function Following() {
                     className="group relative block overflow-hidden rounded-lg transition-all duration-300"
                   >
                     {posterUrl ? (
-                      <Image
-                        src={posterUrl}
-                        srcSet={`${getImageUrl(show.poster_path, "w185")} 185w, ${getImageUrl(show.poster_path, "w342")} 342w, ${getImageUrl(show.poster_path, "w500")} 500w`}
-                        sizes="(max-width: 639px) calc(50vw - 16px), (max-width: 1023px) calc(33vw - 24px), 220px"
-                        alt={`${title} poster`}
-                        width={342}
-                        height={513}
-                        className="w-full h-auto object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-                        loading="lazy"
-                        showSkeleton
-                      />
+                      <div className="w-full aspect-[2/3] relative overflow-hidden rounded-lg bg-muted/20">
+                        <Image
+                          src={posterUrl}
+                          srcSet={`${getImageUrl(show.poster_path, "w185")} 185w, ${getImageUrl(show.poster_path, "w342")} 342w, ${getImageUrl(show.poster_path, "w500")} 500w`}
+                          sizes="(max-width: 639px) calc(50vw - 16px), (max-width: 1023px) calc(33vw - 24px), 220px"
+                          alt={`${title} poster`}
+                          width={342}
+                          height={513}
+                          className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                          loading="lazy"
+                          showSkeleton
+                        />
+                      </div>
                     ) : (
                       <div className="w-full bg-gradient-to-br from-primary/20 to-primary/5 aspect-[2/3] flex items-center justify-center">
                         <span className="text-4xl">📺</span>

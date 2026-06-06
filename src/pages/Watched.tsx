@@ -290,17 +290,19 @@ export default function Watched() {
                           className="group relative block overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1"
                         >
                           {posterUrl ? (
-                            <Image
-                              src={posterUrl}
-                              srcSet={`${getImageUrl(media.poster_path, "w185")} 185w, ${getImageUrl(media.poster_path, "w342")} 342w, ${getImageUrl(media.poster_path, "w500")} 500w`}
-                              sizes="(max-width: 639px) calc(50vw - 16px), (max-width: 1023px) calc(33vw - 24px), 220px"
-                              alt={title}
-                              width={342}
-                              height={513}
-                              className="w-full aspect-[2/3] object-cover transition-transform duration-500 group-hover:scale-105"
-                              loading="lazy"
-                              showSkeleton
-                            />
+                            <div className="w-full aspect-[2/3] relative overflow-hidden rounded-2xl bg-muted/20">
+                              <Image
+                                src={posterUrl}
+                                srcSet={`${getImageUrl(media.poster_path, "w185")} 185w, ${getImageUrl(media.poster_path, "w342")} 342w, ${getImageUrl(media.poster_path, "w500")} 500w`}
+                                sizes="(max-width: 639px) calc(50vw - 16px), (max-width: 1023px) calc(33vw - 24px), 220px"
+                                alt={title}
+                                width={342}
+                                height={513}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                loading="lazy"
+                                showSkeleton
+                              />
+                            </div>
                           ) : (
                             <div className="flex aspect-[2/3] items-center justify-center rounded-2xl bg-muted">
                               <Star className="h-12 w-12 text-muted-foreground/50" />

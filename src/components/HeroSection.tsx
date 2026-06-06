@@ -448,7 +448,7 @@ export function HeroSection() {
                           ) : (
                             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(217,4,41,0.24),transparent_26%),linear-gradient(135deg,#181b23_0%,#0d1017_52%,#090b10_100%)]" />
                           )}
-                          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,12,18,0.06)_0%,rgba(10,12,18,0.28)_32%,rgba(10,12,18,0.94)_100%)]" />
+                          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.94)_0%,rgba(0,0,0,0.6)_60%,transparent_100%)]" />
                           <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6">
                             <div className="flex flex-wrap items-center gap-2">
                               <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">
@@ -471,7 +471,7 @@ export function HeroSection() {
                                 </span>
                               ) : null}
                             </div>
-                              <h3 className="mt-2 text-xl font-semibold tracking-tight text-white sm:mt-3 sm:text-[2rem] sm:tracking-[-0.04em]">
+                              <h3 className="mt-2 text-3xl sm:text-6xl font-bold tracking-tight text-white leading-none sm:leading-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.85)]">
                                 {activeTitle}
                               </h3>
                               <p className="mt-2 line-clamp-2 text-sm leading-6 text-white/78 sm:mt-3 sm:line-clamp-4 sm:max-w-2xl sm:text-[1.02rem] sm:leading-7">
@@ -594,7 +594,7 @@ export function HeroSection() {
                       </motion.div>
                     </AnimatePresence>
 
-                    <div className="space-y-3 rounded-3xl border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.025))] p-4">
+                    <div className="hidden md:block space-y-3 rounded-3xl border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.025))] p-4">
                       <div className="mb-3 flex items-center justify-between">
                         <p className="text-sm font-semibold text-white">
                           {t("home.heroTrendingPanel", "Trending Queue")}

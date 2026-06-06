@@ -928,17 +928,19 @@ export default function Details() {
         <div className="flex flex-col gap-8 md:flex-row">
           <div className="flex-shrink-0 mx-auto md:mx-0">
             {details.poster_path ? (
-              <Image
-                src={posterUrl}
-                srcSet={posterSrcSet || undefined}
-                sizes="(max-width: 768px) 192px, 256px"
-                alt={getMediaAltText(title, mediaType, "poster")}
-                width={500}
-                height={750}
-                loading="lazy"
-                showSkeleton
-                className="w-48 md:w-64 rounded-xl shadow-2xl"
-              />
+              <div className="w-48 md:w-64 aspect-[2/3] relative overflow-hidden rounded-xl shadow-2xl bg-muted/20">
+                <Image
+                  src={posterUrl}
+                  srcSet={posterSrcSet || undefined}
+                  sizes="(max-width: 768px) 192px, 256px"
+                  alt={getMediaAltText(title, mediaType, "poster")}
+                  width={500}
+                  height={750}
+                  loading="lazy"
+                  showSkeleton
+                  className="w-full h-full object-cover"
+                />
+              </div>
             ) : (
               <div className="w-48 md:w-64 aspect-[2/3] bg-muted rounded-xl flex flex-col items-center justify-center text-muted-foreground">
                 <Image

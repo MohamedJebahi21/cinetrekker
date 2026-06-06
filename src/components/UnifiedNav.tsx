@@ -38,6 +38,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { languages } from "@/i18n";
+import { getCurrentStreak } from "@/lib/streak";
 
 const SearchDropdown = lazy(() =>
   import("@/components/SearchDropdown").then((mod) => ({
@@ -127,6 +128,7 @@ export function UnifiedNav() {
   const { t, i18n } = useTranslation();
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const streak = getCurrentStreak();
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const reduceMotion = useReducedMotion();
@@ -257,7 +259,12 @@ export function UnifiedNav() {
           </Suspense>
         </div>
 
-        <div className="ml-auto hidden items-center gap-1 md:flex">
+        <div className="ml-auto hidden items-center gap-2 md:flex">
+          {streak > 0 && (
+            <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/10 px-2.5 py-1 text-xs font-semibold text-orange-400 select-none shadow-[0_2px_8px_rgba(249,115,22,0.15)]">
+              🔥 {streak} {streak === 1 ? t("common.day", "day") : t("common.days", "days")}
+            </div>
+          )}
           {user ? (
             <>
               <div className="flex items-center rounded-full border border-border/60 bg-card/60 px-1 py-1 shadow-sm backdrop-blur-xl">
@@ -366,7 +373,12 @@ export function UnifiedNav() {
           </Button>
         </div>
 
-        <div className="ml-auto flex items-center gap-1 md:hidden">
+        <div className="ml-auto flex items-center gap-2 md:hidden">
+          {streak > 0 && (
+            <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/10 px-2 py-0.5 text-xs font-semibold text-orange-400 select-none">
+              🔥 {streak}
+            </div>
+          )}
           {user ? (
             <div className="flex items-center rounded-full border border-border/60 bg-card/60 px-1 py-1 shadow-sm backdrop-blur-xl">
               <NotificationBell />
