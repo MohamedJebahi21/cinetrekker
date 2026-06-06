@@ -1,18 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Sparkles, X, ArrowRight, ShieldCheck } from "lucide-react";
+import { Sparkles, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserLists } from "@/contexts/UserListsContext";
 import { useCookieConsent } from "@/hooks/useCookieConsent";
+
+const DISMISSED_KEY = "cinetrekker_guest_sync_bar_dismissed";
 
 export function GuestSyncStickyBar() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { watchlist, watched } = useUserLists();
   const { choice: cookieChoice } = useCookieConsent();
-  const [isDismissed, setIsDismissed] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(DISMISSED_KEY) === "true";
+  });
 
   const unsyncedCount = watchlist.length + watched.length;
 
@@ -26,7 +31,10 @@ export function GuestSyncStickyBar() {
       <div className="flex items-center justify-between gap-4 rounded-2xl border border-primary/25 bg-primary/95 p-3.5 pr-10 shadow-[0_20px_60px_rgba(229,9,20,0.32)] backdrop-blur-md text-white relative">
         {/* Close Button */}
         <button
-          onClick={() => setIsDismissed(true)}
+          onClick={() => {
+            window.localStorage.setItem(DISMISSED_KEY, "true");
+            setIsDismissed(true);
+          }}
           className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-white/70 transition hover:bg-white/10 hover:text-white"
           aria-label={t("common.dismiss", "Dismiss")}
         >

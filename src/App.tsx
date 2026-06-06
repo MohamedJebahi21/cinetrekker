@@ -63,9 +63,9 @@ const CookieConsent = lazy(() =>
     default: mod.CookieConsent,
   })),
 );
-const StickyGuestCTA = lazy(() =>
-  import("@/components/StickyGuestCTA").then((mod) => ({
-    default: mod.StickyGuestCTA,
+const GuestSyncStickyBar = lazy(() =>
+  import("@/components/GuestSyncStickyBar").then((mod) => ({
+    default: mod.GuestSyncStickyBar,
   })),
 );
 
@@ -765,7 +765,7 @@ const App = () => {
         <CookieConsent />
       </Suspense>
       <Suspense fallback={null}>
-        <StickyGuestCTA />
+        <GuestSyncStickyBar />
       </Suspense>
     </ThemeProvider>
   );
