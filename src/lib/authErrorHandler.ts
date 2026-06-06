@@ -27,13 +27,15 @@ export function processAuthError(error: unknown): {
     candidate?.code?.toString() || candidate?.status?.toString();
   const errorMessage = candidate?.message?.toLowerCase() || "";
 
-  // Debug log for all auth errors
-  console.error("[AUTH DEBUG]", {
-    rawError: error,
-    errorCode,
-    errorMessage,
-    logContext,
-  });
+  // Debug log for auth errors — development only
+  if (import.meta.env.DEV) {
+    console.error("[AUTH DEBUG]", {
+      rawError: error,
+      errorCode,
+      errorMessage,
+      logContext,
+    });
+  }
 
   if (logContext.includes("Supabase environment is not configured")) {
     return {

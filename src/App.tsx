@@ -318,6 +318,12 @@ function AnimatedRoutes() {
               </ProtectedRoute>
             }
           />
+          {/*
+           * /watched is intentionally public — guest users can mark titles as
+           * watched locally (stored in localStorage) before creating an account.
+           * Authenticated users get their server-synced history. Both cases
+           * are handled transparently by useUserLists / useWatchedFilters.
+           */}
           <Route
             path="/watched"
             element={
@@ -554,19 +560,21 @@ const App = () => {
     const enable = () => setEnableEnhancements(true);
 
     if (typeof window !== "undefined") {
-      if ("requestIdleCallback" in window) {
-        idleId = window.requestIdleCallback(enable, { timeout: 1500 });
+      const w = window as any;
+      if ("requestIdleCallback" in w) {
+        idleId = w.requestIdleCallback(enable, { timeout: 1500 });
       } else {
-        frameId = window.requestAnimationFrame(enable);
+        frameId = w.requestAnimationFrame(enable);
       }
     }
 
     return () => {
-      if (idleId !== null && "cancelIdleCallback" in window) {
-        window.cancelIdleCallback(idleId);
+      const w = window as any;
+      if (idleId !== null && "cancelIdleCallback" in w) {
+        w.cancelIdleCallback(idleId);
       }
       if (frameId !== null) {
-        window.cancelAnimationFrame(frameId);
+        w.cancelAnimationFrame(frameId);
       }
     };
   }, []);

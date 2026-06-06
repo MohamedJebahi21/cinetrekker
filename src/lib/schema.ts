@@ -41,12 +41,14 @@ export function websiteJsonLd({
   url = buildCanonicalUrl("/"),
   description = "Track movies and TV shows you love with a structured movie tracker.",
   logo = buildCanonicalUrl("/favicon.ico"),
+  alternateName = ["Cine Trekker", "CineTrekker Movie Tracker"],
 } = {}) {
   return sanitizeJsonLd({
     "@context": "https://schema.org",
     "@type": "WebSite",
     "@id": `${url}#website`,
     name,
+    alternateName,
     url,
     description,
     inLanguage: "en-US",

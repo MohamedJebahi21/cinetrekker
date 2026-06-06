@@ -69,11 +69,17 @@ export async function enrichMediaItems<
     logScope = "media-enrichment",
   } = options;
 
-  const settled = await Promise.allSettled(
-    mapWithConcurrency(items, 4, async (item) =>
-      fetchMediaDetailsByReference(getReference(item), language),
-    ),
-  );
+  const settled = await mapWithConcurrency(items, 4, async (item) => {
+    try {
+      const value = await fetchMediaDetailsByReference(
+        getReference(item),
+        language,
+      );
+      return { status: "fulfilled" as const, value };
+    } catch (reason) {
+      return { status: "rejected" as const, reason };
+    }
+  });
 
   const fallbackEntries = settled.flatMap((result, index) => {
     if (result.status === "fulfilled") {

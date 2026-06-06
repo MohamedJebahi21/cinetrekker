@@ -14,8 +14,9 @@ export type Database = {
   };
   public: {
     Tables: {
-      followed_title_state: {
+      followed_title_state_user: {
         Row: {
+          user_id: string;
           movie_id: string;
           media_type: string;
           tmdb_id: number;
@@ -28,6 +29,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          user_id: string;
           movie_id: string;
           media_type: string;
           tmdb_id: number;
@@ -40,6 +42,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          user_id?: string;
           movie_id?: string;
           media_type?: string;
           tmdb_id?: number;

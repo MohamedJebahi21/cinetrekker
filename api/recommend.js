@@ -30,6 +30,21 @@ if (missingVars.length > 0 && process.env.NODE_ENV === "production") {
   );
 }
 
+function getTmdbRequest(baseUrl, endpoint, paramsObj, token) {
+  const isV4 = token.includes(".");
+  const params = new URLSearchParams(paramsObj);
+  if (!isV4) {
+    params.set("api_key", token);
+  }
+  const url = `${baseUrl}${endpoint}?${params.toString()}`;
+  const options = {
+    headers: isV4
+      ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
+      : { "Content-Type": "application/json" },
+  };
+  return { url, options };
+}
+
 async function fetchWithTimeout(url, options = {}, timeoutMs = UPSTREAM_TIMEOUT_MS) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -178,14 +193,19 @@ export default async function handler(req, res) {
     for (const suggestion of suggestions) {
       if (resolved.length >= normalizedLimit) break;
       const media = suggestion.media_type === "tv" ? "tv" : "movie";
-      const searchUrl = `${TMDB_BASE}/search/${media}?query=${encodeURIComponent(suggestion.title)}&include_adult=false&language=${encodeURIComponent(normalizedLanguage)}`;
+      const { url: searchUrl, options: searchOptions } = getTmdbRequest(
+        TMDB_BASE,
+        `/search/${media}`,
+        {
+          query: suggestion.title,
+          include_adult: "false",
+          language: normalizedLanguage,
+        },
+        tmdbKey,
+      );
 
       try {
-        const searchResponse = await fetchWithTimeout(searchUrl, {
-          headers: {
-            Authorization: `Bearer ${tmdbKey}`,
-          },
-        });
+        const searchResponse = await fetchWithTimeout(searchUrl, searchOptions);
 
         if (!searchResponse.ok) continue;
 
@@ -203,12 +223,17 @@ export default async function handler(req, res) {
         });
 
         try {
-          const recommendationsUrl = `${TMDB_BASE}/${media}/${first.id}/recommendations?language=${encodeURIComponent(normalizedLanguage)}`;
-          const recommendationsResponse = await fetchWithTimeout(recommendationsUrl, {
-            headers: {
-              Authorization: `Bearer ${tmdbKey}`,
-            },
-          });
+          const { url: recommendationsUrl, options: recommendationsOptions } =
+            getTmdbRequest(
+              TMDB_BASE,
+              `/${media}/${first.id}/recommendations`,
+              { language: normalizedLanguage },
+              tmdbKey,
+            );
+          const recommendationsResponse = await fetchWithTimeout(
+            recommendationsUrl,
+            recommendationsOptions,
+          );
 
           if (recommendationsResponse.ok) {
             const recommendationsJson = await recommendationsResponse.json();
@@ -235,12 +260,17 @@ export default async function handler(req, res) {
 
     if (resolved.length === 0) {
       try {
-        const searchUrl = `${TMDB_BASE}/search/multi?query=${encodeURIComponent(normalizedPrompt)}&include_adult=false&language=${encodeURIComponent(normalizedLanguage)}`;
-        const searchResponse = await fetchWithTimeout(searchUrl, {
-          headers: {
-            Authorization: `Bearer ${tmdbKey}`,
+        const { url: searchUrl, options: searchOptions } = getTmdbRequest(
+          TMDB_BASE,
+          `/search/multi`,
+          {
+            query: normalizedPrompt,
+            include_adult: "false",
+            language: normalizedLanguage,
           },
-        });
+          tmdbKey,
+        );
+        const searchResponse = await fetchWithTimeout(searchUrl, searchOptions);
 
         if (searchResponse.ok) {
           const searchJson = await searchResponse.json();

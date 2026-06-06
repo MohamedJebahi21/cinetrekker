@@ -24,11 +24,9 @@ export async function requestJson<T>(
   const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
   const hasBody = body !== undefined;
 
-  const requestHeaders: HeadersInit = {
-    ...(headers ?? {}),
-  };
+  const requestHeaders = new Headers(headers);
   if (hasBody) {
-    requestHeaders["Content-Type"] = "application/json";
+    requestHeaders.set("Content-Type", "application/json");
   }
 
   try {

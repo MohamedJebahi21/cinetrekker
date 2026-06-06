@@ -18,6 +18,33 @@
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://cinetrekker.vercel.app/" />
 
+    <!-- Google Site Name Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "@id": "https://cinetrekker.vercel.app/#website",
+      "url": "https://cinetrekker.vercel.app/",
+      "name": "CineTrekker",
+      "alternateName": ["Cine Trekker", "CineTrekker Movie Tracker"],
+      "publisher": {
+        "@type": "Organization",
+        "@id": "https://cinetrekker.vercel.app/#organization",
+        "name": "CineTrekker",
+        "url": "https://cinetrekker.vercel.app/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://cinetrekker.vercel.app/favicon.ico"
+        }
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://cinetrekker.vercel.app/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://cinetrekker.vercel.app/" />
     <meta property="og:title" content="CineTrekker Movie Tracker | Track Movies, TV Shows, and Watchlists" />

@@ -1,5 +1,6 @@
 # Temp / cache
 .tmp
+tsconfig.tsbuildinfo
 lighthouse-desktop-report
 lighthouse-accessibility-report.html
 playwright-report
