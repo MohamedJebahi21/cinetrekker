@@ -11,6 +11,8 @@ import {
   ArrowRight,
   Clock3,
   Trash2,
+  Mic,
+  MicOff,
 } from "lucide-react";
 import {
   searchMovies,
@@ -91,6 +93,45 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
   const resultsListId = `${instanceIdRef.current}-results`;
   const optionIdPrefix = `${instanceIdRef.current}-option`;
   const language = i18n.language;
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<{ stop: () => void } | null>(null);
+  const speechSupported = typeof window !== "undefined" &&
+    ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
+
+  const startVoiceSearch = useCallback(() => {
+    if (!speechSupported) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SpeechRecognitionCtor: new () => any =
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).SpeechRecognition ||
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionCtor) return;
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = language;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognitionRef.current = recognition as { stop: () => void };
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onresult = (event: any) => {
+      const transcript: string = event.results?.[0]?.[0]?.transcript ?? "";
+      if (transcript.trim().length >= MIN_SEARCH_LENGTH) {
+        setQuery(transcript.trim());
+        setIsOpen(true);
+      }
+    };
+    recognition.start();
+  }, [speechSupported, isListening, language]);
 
   const refreshRecentSearches = useCallback(() => {
     setRecentSearches(getSearchHistory().slice(0, 6));
@@ -404,11 +445,28 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
           aria-activedescendant={activeOptionId}
         />
 
-        {/* Keyboard hint */}
-        {!query && (
+        {/* Keyboard hint — hide when query is set or voice is active */}
+        {!query && !isListening && (
           <kbd className="absolute right-10 top-1/2 -translate-y-1/2 hidden h-5 select-none items-center gap-1 rounded border border-border/50 bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
             /
           </kbd>
+        )}
+
+        {/* Voice search button */}
+        {speechSupported && !query && (
+          <button
+            type="button"
+            onClick={startVoiceSearch}
+            className={cn(
+              "absolute right-3 top-1/2 -translate-y-1/2 flex h-7 w-7 min-h-[44px] min-w-[44px] items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+              isListening
+                ? "text-red-500 animate-pulse"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+            aria-label={isListening ? "Stop voice search" : "Start voice search"}
+          >
+            {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+          </button>
         )}
 
         {/* Clear button */}

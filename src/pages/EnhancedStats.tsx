@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
-import { Clock, Film, Star, Tv } from "lucide-react";
-import { lazy, Suspense } from "react";
+import { Clock, Film, Star, Tv, Trophy } from "lucide-react";
+import { lazy, Suspense, useState } from "react";
 import {
   Select,
   SelectTrigger,
@@ -28,10 +28,103 @@ const CINEMATIC_CHART_COLORS = [
   "#FCD34D",
 ];
 
+const GOAL_PRESETS = [50, 100, 150, 200, 300, 500];
+
+/** Inline radial SVG gauge — no external dep needed */
+function RadialProgressGauge({
+  value,
+  goal,
+  onGoalChange,
+}: {
+  value: number;
+  goal: number;
+  onGoalChange: (g: number) => void;
+}) {
+  const radius = 52;
+  const stroke = 8;
+  const normalizedRadius = radius - stroke / 2;
+  const circumference = 2 * Math.PI * normalizedRadius;
+  const progress = Math.min(value / goal, 1);
+  const dashOffset = circumference * (1 - progress);
+  const pct = Math.round(progress * 100);
+  const completed = pct >= 100;
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+        Yearly Binge Goal
+      </p>
+      <div className="relative flex items-center justify-center">
+        <svg width={radius * 2} height={radius * 2} className="-rotate-90">
+          {/* Track */}
+          <circle
+            cx={radius}
+            cy={radius}
+            r={normalizedRadius}
+            fill="none"
+            stroke="rgba(255,255,255,0.08)"
+            strokeWidth={stroke}
+          />
+          {/* Progress arc */}
+          <circle
+            cx={radius}
+            cy={radius}
+            r={normalizedRadius}
+            fill="none"
+            stroke={completed ? "#22c55e" : "#E50914"}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={dashOffset}
+            style={{ transition: "stroke-dashoffset 0.6s ease" }}
+          />
+        </svg>
+        {/* Center label */}
+        <div className="absolute flex flex-col items-center justify-center">
+          {completed ? (
+            <Trophy className="h-6 w-6 text-green-400" />
+          ) : (
+            <>
+              <span className="text-xl font-extrabold leading-none text-foreground">{pct}%</span>
+              <span className="text-[10px] text-muted-foreground">{Math.round(value)}h/{goal}h</span>
+            </>
+          )}
+        </div>
+      </div>
+      {/* Goal selector */}
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground">Goal:</span>
+        <div className="flex gap-1">
+          {GOAL_PRESETS.map((g) => (
+            <button
+              key={g}
+              type="button"
+              onClick={() => onGoalChange(g)}
+              className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
+                goal === g
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-white/8 text-muted-foreground hover:bg-white/15"
+              }`}
+            >
+              {g}h
+            </button>
+          ))}
+        </div>
+      </div>
+      {completed && (
+        <p className="text-xs font-semibold text-green-400">
+          🎉 Goal smashed! You&apos;re a true cinephile.
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function EnhancedStats() {
   const { i18n, t } = useTranslation();
   const isMobile = useIsMobile();
   const language = i18n.language;
+  const [bingeGoal, setBingeGoal] = useState(200);
   const {
     mediaLoading,
     selectedYear,
@@ -77,6 +170,15 @@ export default function EnhancedStats() {
             {t("stats.daysTotal", "{{count}} days total", {
               count: Math.round(totalHours / 24),
             })}
+          </div>
+
+          {/* Radial binge-goal gauge */}
+          <div className="mt-8 border-t border-white/8 pt-6 w-full flex justify-center">
+            <RadialProgressGauge
+              value={totalHours}
+              goal={bingeGoal}
+              onGoalChange={setBingeGoal}
+            />
           </div>
         </div>
 

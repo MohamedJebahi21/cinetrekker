@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
+import confetti from "canvas-confetti";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -140,8 +141,24 @@ export const MediaCard = React.memo(function MediaCard({
     removeFromWatchlist,
     addToWatched,
     removeFromWatched,
+    watched: watchedList,
   } = useUserLists();
   const { markEpisodeWatched } = useWatchedEpisodes();
+
+  const triggerMilestoneConfetti = useCallback(() => {
+    const movieCount = (watchedList ?? []).filter((w) => w.mediaType === "movie").length;
+    // Burst on the 25th, 50th, 100th… movie milestone
+    if (movieCount > 0 && movieCount % 25 === 0) {
+      void confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.55 },
+        colors: ["#E50914", "#F97316", "#F2C572", "#FB7185", "#ffffff"],
+        gravity: 1.1,
+        scalar: 0.9,
+      });
+    }
+  }, [watchedList]);
   const [optimisticInWatchlist, setOptimisticInWatchlist] = useState(false);
   const [optimisticWatched, setOptimisticWatched] = useState(false);
   const [isWatchlistPending, setIsWatchlistPending] = useState(false);
@@ -248,6 +265,15 @@ export const MediaCard = React.memo(function MediaCard({
         setIsWatchedPending(true);
         try {
           await addToWatched(media.id, mediaType);
+          // Haptic feedback — richer double-pulse for success
+          try {
+            if (typeof navigator !== "undefined" && "vibrate" in navigator)
+              (navigator as Navigator).vibrate?.([10, 30, 15]);
+          } catch {
+            // Ignore vibration API failures
+          }
+          // Milestone confetti
+          triggerMilestoneConfetti();
         } catch {
           setOptimisticWatched(false);
         } finally {
@@ -396,7 +422,7 @@ export const MediaCard = React.memo(function MediaCard({
                     size="icon"
                     variant="outline"
                     className={cn(
-                      "h-11 w-11 rounded-full border-white/15 bg-black/55 text-white shadow-[0_10px_24px_rgba(0,0,0,0.3)] backdrop-blur-xl",
+                      "h-12 w-12 rounded-full border-white/15 bg-black/55 text-white shadow-[0_10px_24px_rgba(0,0,0,0.3)] backdrop-blur-xl",
                       optimisticInWatchlist &&
                         "border-red-500/70 bg-red-600 text-white hover:bg-red-700",
                     )}
@@ -427,7 +453,7 @@ export const MediaCard = React.memo(function MediaCard({
                     size="icon"
                     variant="outline"
                     className={cn(
-                      "h-11 w-11 rounded-full border-white/15 bg-black/55 text-white shadow-[0_10px_24px_rgba(0,0,0,0.3)] backdrop-blur-xl",
+                      "h-12 w-12 rounded-full border-white/15 bg-black/55 text-white shadow-[0_10px_24px_rgba(0,0,0,0.3)] backdrop-blur-xl",
                       optimisticWatched &&
                         "border-emerald-500/70 bg-emerald-600 text-white hover:bg-emerald-700",
                     )}

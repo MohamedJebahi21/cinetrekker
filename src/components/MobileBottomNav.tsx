@@ -21,6 +21,13 @@ export function MobileBottomNav() {
   const profilePath = user ? "/profile" : "/login";
   const profileActive = pathname.startsWith("/profile") || pathname.startsWith("/login");
 
+  const haptic = () => {
+    try {
+      if (typeof navigator !== "undefined" && "vibrate" in navigator)
+        (navigator as Navigator).vibrate?.(10);
+    } catch { /* ignore */ }
+  };
+
   return (
     <nav
       className="mobile-nav-safe fixed bottom-0 left-0 right-0 z-40 border-t border-border/50 bg-background/92 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-[20px] md:hidden"
@@ -34,7 +41,7 @@ export function MobileBottomNav() {
             <button
               key={path}
               type="button"
-              onClick={() => navigate(path)}
+              onClick={() => { haptic(); navigate(path); }}
               className={cn(
                 "flex min-h-[3.25rem] min-w-11 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium leading-none transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground",
@@ -50,7 +57,7 @@ export function MobileBottomNav() {
 
         <button
           type="button"
-          onClick={() => navigate(profilePath)}
+          onClick={() => { haptic(); navigate(profilePath); }}
           className={cn(
             "flex min-h-[3.25rem] min-w-11 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium leading-none transition-colors",
             profileActive ? "text-primary" : "text-muted-foreground",

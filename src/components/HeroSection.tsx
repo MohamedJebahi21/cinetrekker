@@ -430,7 +430,7 @@ export function HeroSection() {
                         transition={{ duration: td, ease: "easeOut" }}
                         className="overflow-hidden rounded-[1.75rem] border border-white/8 bg-[linear-gradient(180deg,#10151d_0%,#0d1219_100%)] shadow-[0_16px_36px_rgba(0,0,0,0.22)]"
                       >
-                        <div className="relative h-[200px] overflow-hidden sm:h-[280px]">
+                        <div className="relative h-[160px] overflow-hidden sm:h-[280px]">
                           {heroImage ? (
                             <img
                               src={heroImage}
@@ -479,9 +479,9 @@ export function HeroSection() {
                           </div>
                         </div>
 
-                        <div className="flex flex-col gap-4 p-4 lg:grid lg:grid-cols-[150px_minmax(0,1fr)] lg:gap-5 lg:p-5">
-                          <div className="flex flex-col gap-4 lg:contents">
-                            <div className="w-full shrink-0 overflow-hidden rounded-2xl border border-white/8 bg-white/4 shadow-[0_18px_40px_rgba(0,0,0,0.32)] lg:h-full lg:w-full">
+                        <div className="flex gap-4 p-4 lg:grid lg:grid-cols-[150px_minmax(0,1fr)] lg:gap-5 lg:p-5">
+                          <div className="flex gap-4 lg:contents">
+                            <div className="w-[90px] shrink-0 overflow-hidden rounded-2xl border border-white/8 bg-white/4 shadow-[0_18px_40px_rgba(0,0,0,0.32)] sm:w-[130px] lg:h-full lg:w-full">
                               {posterImage ? (
                                 <img
                                   src={posterImage}
@@ -490,8 +490,8 @@ export function HeroSection() {
                                   className="aspect-[2/3] w-full object-cover lg:aspect-auto lg:h-full lg:min-h-[248px]"
                                 />
                               ) : (
-                                <div className="flex h-full min-h-[150px] items-center justify-center bg-[radial-gradient(circle_at_top,rgba(217,4,41,0.2),transparent_36%),linear-gradient(180deg,#171a21_0%,#0d1117_100%)] p-2 text-center lg:min-h-[248px]">
-                                  <span className="title-display text-sm font-semibold leading-tight text-white/92 sm:text-lg">
+                                <div className="flex aspect-[2/3] w-full items-center justify-center bg-[radial-gradient(circle_at_top,rgba(217,4,41,0.2),transparent_36%),linear-gradient(180deg,#171a21_0%,#0d1117_100%)] p-2 text-center lg:min-h-[248px]">
+                                  <span className="title-display text-xs font-semibold leading-tight text-white/92 sm:text-sm">
                                     {activeTitle}
                                   </span>
                                 </div>
@@ -523,7 +523,7 @@ export function HeroSection() {
                                   </Link>
                                 </Button>
                               {isLiveSlide ? (
-                                <div className="flex flex-col gap-2 sm:flex-row">
+                                <div className="flex flex-wrap gap-2">
                                     <Button
                                       type="button"
                                       variant="outline"

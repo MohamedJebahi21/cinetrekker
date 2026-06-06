@@ -369,7 +369,7 @@ export default function Details() {
           <div className="absolute left-4 top-20 z-10 h-10 w-28 rounded-lg skeleton-shimmer bg-background/60" />
         </div>
 
-        <div className="page-container relative z-10 -mt-32 pb-24 md:-mt-48 md:pb-0">
+        <div className="page-container relative z-10 -mt-16 sm:-mt-24 md:-mt-48 pb-24 md:pb-0">
           <div className="flex flex-col gap-8 md:flex-row">
             <div className="mx-auto w-48 flex-shrink-0 md:mx-0 md:w-64">
               <div className="poster-skeleton rounded-xl shadow-2xl" />
@@ -906,7 +906,7 @@ export default function Details() {
         </Link>
       </div>
 
-      <div className="page-container relative z-10 -mt-32 pb-24 md:-mt-48 md:pb-0">
+      <div className="page-container relative z-10 -mt-16 sm:-mt-24 md:-mt-48 pb-24 md:pb-0">
         <div className="flex flex-col gap-8 md:flex-row">
           <div className="flex-shrink-0 mx-auto md:mx-0">
             {details.poster_path ? (

@@ -388,7 +388,7 @@ export default function Index() {
 
       <HeroSection />
 
-      <main className="page-container space-y-5 pb-24 pt-6 sm:pt-7 md:space-y-8 md:pb-0 md:pt-8">
+      <div className="page-container space-y-5 pb-8 pt-6 sm:pt-7 md:space-y-8 md:pb-0 md:pt-8">
         {authLoading ? (
           <AuthHomeSkeleton />
         ) : user ? (
@@ -519,7 +519,7 @@ export default function Index() {
             }}
             skeleton={<TrendingSectionSkeleton />}
           >
-            <div key={discoverTab} className="animate-fade-in">
+            <div key={discoverTab} className="animate-fade-in min-h-[320px] md:min-h-[400px]">
               {discoverTab === "trending-day" ? (
                 <MediaCarouselEnhanced
                   title={t("home.trendingToday", "Trending Today")}
@@ -547,7 +547,7 @@ export default function Index() {
             </div>
           </HomeSectionState>
         </section>
-      </main>
+      </div>
 
       <Dialog open={onboardingOpen} onOpenChange={setOnboardingOpen}>
         <DialogContent className="max-w-2xl border-border bg-card text-card-foreground">

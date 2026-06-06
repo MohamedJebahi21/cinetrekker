@@ -249,25 +249,24 @@ export function ContinueWatching() {
           return (
             <Card
               key={item.details.id}
-              className="relative isolate min-h-[460px] w-[min(88vw,330px)] shrink-0 snap-start overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06)_0%,rgba(255,255,255,0.01)_100%)] shadow-[0_24px_48px_rgba(0,0,0,0.5)] backdrop-blur-2xl [content-visibility:auto] [contain-intrinsic-size:330px_460px] sm:min-h-[420px] sm:w-[350px] md:w-[410px]"
+              className="relative isolate min-h-[280px] w-[min(88vw,330px)] shrink-0 snap-start overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06)_0%,rgba(255,255,255,0.01)_100%)] shadow-[0_24px_48px_rgba(0,0,0,0.5)] backdrop-blur-2xl [content-visibility:auto] [contain-intrinsic-size:330px_320px] sm:min-h-[420px] sm:w-[350px] md:w-[410px]"
             >
               <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.04),transparent_60%)]" />
               <CardContent className="h-full p-2.5 sm:p-3">
-                <div className="flex h-full flex-col gap-4 sm:flex-row sm:gap-5">
-                  <div className="relative h-40 w-full shrink-0 overflow-hidden rounded-[1.5rem] bg-black/40 sm:h-auto sm:w-[130px] md:w-[150px]">
+                <div className="flex h-full gap-4 sm:gap-5">
+                  <div className="relative w-[100px] shrink-0 self-start overflow-hidden rounded-[1.5rem] bg-black/40 sm:w-[130px] md:w-[150px]">
                     <Image
                       src={getImageUrl(item.details.poster_path, "w342")}
                       alt={title}
                       width={342}
                       height={513}
-                      className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.02]"
+                      className="aspect-[2/3] h-auto w-full object-cover transition-transform duration-700 hover:scale-[1.02]"
                       loading="lazy"
                       showSkeleton
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent sm:hidden" />
                   </div>
 
-                  <div className="flex flex-1 flex-col px-1 pb-2 sm:py-2 sm:pr-2">
+                  <div className="flex flex-1 flex-col py-1 pb-2 pr-1 sm:py-2 sm:pr-2">
                     {/* Title & Metadata */}
                     <div>
                       <h3 className="line-clamp-2 text-lg font-semibold tracking-tight text-white mb-2">
