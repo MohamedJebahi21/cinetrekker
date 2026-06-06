@@ -98,10 +98,40 @@ const AwardWinners = lazy(() => import("./pages/AwardWinners"));
 const YearInReview = lazy(() => import("./pages/YearInReview"));
 const isVercelHost =
   typeof window !== "undefined" &&
-  /(?:^|\.)vercel\.app$/i.test(window.location.hostname);
+  /(?:\.|^)vercel\.app$/i.test(window.location.hostname);
 const shouldLoadVercelAnalytics =
   import.meta.env.VITE_ENABLE_VERCEL_ANALYTICS === "true" ||
   (import.meta.env.PROD && isVercelHost);
+
+// Hoisted to module scope so it's not recreated on every App render
+// (App re-renders on every route change due to useLocation).
+const REFRESHABLE_QUERY_KEYS = new Set([
+  "details",
+  "trending",
+  "trending-movies",
+  "trending-tv",
+  "popular",
+  "top-rated",
+  "nowPlaying",
+  "airingToday",
+  "videos",
+  "search",
+  "search-dropdown",
+  "search-overlay",
+  "genres",
+  "genre-media",
+  "watch-providers",
+  "watchProviders",
+  "tv-details",
+  "tv-seasons",
+  "season-details",
+  "home-critical",
+  "followed-titles-details",
+  "print-watchlist",
+  "recommendations",
+  "continue-watching",
+  "new-episodes",
+]);
 const Analytics = lazy(() =>
   import("@vercel/analytics/react").then((mod) => ({
     default: mod.Analytics,
@@ -146,8 +176,12 @@ function RouteSpinner() {
 function AnimatedRoutes() {
   const location = useLocation();
 
+  // IMPORTANT: Do NOT add key={location.pathname} here.
+  // Using a key causes React to unmount and remount the ENTIRE page tree on
+  // every navigation — destroying all query cache subscriptions, component
+  // state, and scroll positions, causing a full re-render waterfall.
   return (
-    <div key={location.pathname}>
+    <div>
         <Routes location={location}>
           <Route
             path="/"
@@ -489,33 +523,8 @@ const App = () => {
   const { hasAcceptedConsent } = useCookieConsent();
   const [enableEnhancements, setEnableEnhancements] = useState(false);
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
-  const refreshableQueryKeys = new Set([
-    "details",
-    "trending",
-    "trending-movies",
-    "trending-tv",
-    "popular",
-    "top-rated",
-    "nowPlaying",
-    "airingToday",
-    "videos",
-    "search",
-    "search-dropdown",
-    "search-overlay",
-    "genres",
-    "genre-media",
-    "watch-providers",
-    "watchProviders",
-    "tv-details",
-    "tv-seasons",
-    "season-details",
-    "home-critical",
-    "followed-titles-details",
-    "print-watchlist",
-    "recommendations",
-    "continue-watching",
-    "new-episodes",
-  ]);
+  // Note: REFRESHABLE_QUERY_KEYS is defined at module scope — not inside the
+  // component — so it is not re-created on every render.
 
   useEffect(() => {
     applyAccessibilityPreferencesToRoot();
@@ -592,7 +601,7 @@ const App = () => {
         predicate: (query) => {
           const head = query.queryKey[0];
           const key = typeof head === "string" ? head : "";
-          return refreshableQueryKeys.has(key);
+          return REFRESHABLE_QUERY_KEYS.has(key);
         },
       });
     },
@@ -605,7 +614,7 @@ const App = () => {
       predicate: (query) => {
         const head = query.queryKey[0];
         const key = typeof head === "string" ? head : "";
-        return refreshableQueryKeys.has(key);
+        return REFRESHABLE_QUERY_KEYS.has(key);
       },
     });
 
@@ -614,7 +623,7 @@ const App = () => {
       predicate: (query) => {
         const head = query.queryKey[0];
         const key = typeof head === "string" ? head : "";
-        return refreshableQueryKeys.has(key);
+        return REFRESHABLE_QUERY_KEYS.has(key);
       },
     });
   };

@@ -69,8 +69,8 @@ export const queryClient = new QueryClient({
           return false;
         }
         
-        // Retry transient failures with exponential backoff.
-        return failureCount < 3;
+        // Retry transient failures with exponential backoff: 1 retry max.
+        return failureCount < 1;
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff: 1s, 2s, max 30s
       refetchOnWindowFocus: false,

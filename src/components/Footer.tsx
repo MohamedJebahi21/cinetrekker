@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { useMotionIntensityPreference } from "@/hooks/useMotionIntensityPreference";
+import { useInView } from "@/hooks/useInView";
 
 const RemotionAurora = lazy(() =>
   import("@/components/motion/RemotionAurora").then((mod) => ({
@@ -10,14 +11,17 @@ const RemotionAurora = lazy(() =>
   })),
 );
 
+const FOOTER_IN_VIEW_OPTIONS = { rootMargin: "100px", triggerOnce: false };
+
 export function Footer() {
   const { t } = useTranslation();
   const motionIntensity = useMotionIntensityPreference();
   const currentYear = new Date().getFullYear();
+  const [ref, inView] = useInView<HTMLDivElement>(FOOTER_IN_VIEW_OPTIONS);
 
   return (
-    <footer className="ct-premium-footer relative overflow-hidden border-t border-border/40 shadow-[0_-2px_24px_hsl(var(--primary)/0.08)] bg-background/90 backdrop-blur-xl">
-      {motionIntensity !== "low" ? (
+    <footer ref={ref} className="ct-premium-footer relative overflow-hidden border-t border-border/40 shadow-[0_-2px_24px_hsl(var(--primary)/0.08)] bg-background/90 backdrop-blur-xl">
+      {motionIntensity !== "low" && inView ? (
         <div className={cn("pointer-events-none absolute inset-0 hidden md:block", motionIntensity === "high" ? "opacity-48" : "opacity-30")}>
           <Suspense fallback={null}>
             <RemotionAurora className={motionIntensity === "high" ? "opacity-75" : "opacity-55"} />

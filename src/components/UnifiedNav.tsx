@@ -154,17 +154,15 @@ export function UnifiedNav() {
     );
   }, [profile, user]);
 
-  const visibleMenuLinks = useMemo(() => menuLinks, []);
-
   const groupedMenuLinks = useMemo(
     () =>
       menuCategoryOrder
         .map((category) => ({
           ...category,
-          items: visibleMenuLinks.filter((item) => item.category === category.key),
+          items: menuLinks.filter((item) => item.category === category.key),
         }))
         .filter((category) => category.items.length > 0),
-    [visibleMenuLinks],
+    [],
   );
 
   useEffect(() => {
@@ -204,7 +202,7 @@ export function UnifiedNav() {
       { path: "/login", label: t("nav.signIn", "Sign In") },
       { path: "/signup", label: t("nav.signUp", "Sign Up") },
       { path: "/accessibility", label: t("accessibility.title", "Accessibility Settings") },
-      ...visibleMenuLinks.map((item) => ({
+      ...menuLinks.map((item) => ({
         path: item.path,
         label: t(item.labelKey, item.defaultLabel),
       })),
@@ -219,7 +217,7 @@ export function UnifiedNav() {
     const segment = pathname.split("/").filter(Boolean)[0];
     if (!segment) return t("nav.home", "Home");
     return segment.charAt(0).toUpperCase() + segment.slice(1);
-  }, [pathname, t, visibleMenuLinks]);
+  }, [pathname, t]);
 
   const handleMobileSignOut = async () => {
     setIsMobileSheetOpen(false);

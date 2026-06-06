@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 /**
  * Shared IntersectionObserver pool.
@@ -65,39 +65,56 @@ export function useInView<T extends Element>(
   const [inView, setInView] = useState(false);
   const elementRef = useRef<T | null>(null);
 
-  // Stable ref callback — avoids recreating the observer when the component
-  // re-renders for unrelated reasons.
-  const callbackRef: React.RefCallback<T> = (node) => {
-    if (elementRef.current && elementRef.current !== node) {
-      // Clean up previous element
+  // Stable ref callback — only runs when the DOM element mounts or unmounts.
+  // Since rootMargin and threshold are primitives, the reference remains stable
+  // even if the caller passes an inline options object.
+  const callbackRef: React.RefCallback<T> = useCallback((node) => {
+    if (node === null) {
+      if (elementRef.current) {
+        const { observer, callbacks } = getSharedObserver(rootMargin, threshold);
+        observer.unobserve(elementRef.current);
+        callbacks.delete(elementRef.current);
+        elementRef.current = null;
+      }
+      return;
+    }
+
+    if (elementRef.current === node) {
+      return;
+    }
+
+    // Clean up previous element if it existed
+    if (elementRef.current) {
       const { observer, callbacks } = getSharedObserver(rootMargin, threshold);
       observer.unobserve(elementRef.current);
       callbacks.delete(elementRef.current);
     }
-    elementRef.current = node;
-  };
 
-  useEffect(() => {
-    const el = elementRef.current;
-    if (!el) return;
+    elementRef.current = node;
+    setInView(false);
 
     const { observer, callbacks } = getSharedObserver(rootMargin, threshold);
-
     const handleIntersection = (isIntersecting: boolean) => {
       if (isIntersecting) {
         setInView(true);
         // Unobserve once visible — "load once" semantics
-        observer.unobserve(el);
-        callbacks.delete(el);
+        observer.unobserve(node);
+        callbacks.delete(node);
       }
     };
 
-    callbacks.set(el, handleIntersection);
-    observer.observe(el);
+    callbacks.set(node, handleIntersection);
+    observer.observe(node);
+  }, [rootMargin, threshold]);
 
+  // Cleanup effect in case the hook itself unmounts
+  useEffect(() => {
     return () => {
-      observer.unobserve(el);
-      callbacks.delete(el);
+      if (elementRef.current) {
+        const { observer, callbacks } = getSharedObserver(rootMargin, threshold);
+        observer.unobserve(elementRef.current);
+        callbacks.delete(elementRef.current);
+      }
     };
   }, [rootMargin, threshold]);
 
