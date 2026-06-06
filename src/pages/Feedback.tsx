@@ -41,9 +41,9 @@ declare global {
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined;
-const CAPTCHA_PROVIDER = TURNSTILE_SITE_KEY ? 'turnstile' : RECAPTCHA_SITE_KEY ? 'recaptcha' : null;
+const CAPTCHA_PROVIDER = TURNSTILE_SITE_KEY ? 'turnstile' : RECAPTCHA_SITE_KEY ? 'recaptcha' : 'math';
 const CAPTCHA_SITE_KEY = TURNSTILE_SITE_KEY || RECAPTCHA_SITE_KEY || '';
-const CAPTCHA_CONFIGURED = Boolean(CAPTCHA_SITE_KEY);
+const CAPTCHA_CONFIGURED = true;
 
 export default function Feedback() {
   const { t } = useTranslation();
@@ -52,13 +52,31 @@ export default function Feedback() {
   const [message, setMessage] = useState('');
   const [honeypot, setHoneypot] = useState('');
   const [captchaToken, setCaptchaToken] = useState('');
+  const [mathChallenge, setMathChallenge] = useState('');
+  const [mathAnswer, setMathAnswer] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
   const turnstileWidgetIdRef = useRef<string | null>(null);
 
+  const fetchMathChallenge = async () => {
+    try {
+      const data = await requestJson<{ challenge: string; token: string }>('/api/captcha-challenge');
+      setMathChallenge(data.challenge);
+      setCaptchaToken(data.token);
+      setMathAnswer('');
+    } catch (err) {
+      setError(t('feedback.formErrorCaptchaFetch', 'Failed to load bot protection challenge.'));
+    }
+  };
+
   useEffect(() => {
+    if (CAPTCHA_PROVIDER === 'math') {
+      void fetchMathChallenge();
+      return;
+    }
+
     if (!CAPTCHA_SITE_KEY || !turnstileContainerRef.current) return;
 
     const existingScript = document.querySelector<HTMLScriptElement>(
@@ -141,13 +159,8 @@ export default function Feedback() {
       return;
     }
 
-    if (!CAPTCHA_CONFIGURED) {
-      setError(
-        t(
-          'feedback.formErrorCaptchaUnavailable',
-          'Feedback bot protection is not configured yet. Please try again later.',
-        ),
-      );
+    if (CAPTCHA_PROVIDER === 'math' && !mathAnswer.trim()) {
+      setError(t('feedback.formErrorCaptcha', 'Please complete the bot protection check before sending feedback.'));
       return;
     }
 
@@ -167,6 +180,7 @@ export default function Feedback() {
           email: email.trim(),
           message: message.trim(),
           captchaToken,
+          captchaAnswer: mathAnswer.trim(),
           website: honeypot,
         },
       });
@@ -177,13 +191,20 @@ export default function Feedback() {
       setMessage('');
       setHoneypot('');
       setCaptchaToken('');
+      setMathAnswer('');
       if (CAPTCHA_PROVIDER === 'turnstile' && turnstileWidgetIdRef.current && window.turnstile?.reset) {
         window.turnstile.reset(turnstileWidgetIdRef.current);
       }
       if (CAPTCHA_PROVIDER === 'recaptcha' && turnstileWidgetIdRef.current && window.grecaptcha?.reset) {
         window.grecaptcha.reset(turnstileWidgetIdRef.current);
       }
+      if (CAPTCHA_PROVIDER === 'math') {
+        void fetchMathChallenge();
+      }
     } catch (error) {
+      if (CAPTCHA_PROVIDER === 'math') {
+        void fetchMathChallenge();
+      }
       if (error instanceof ApiRequestError) {
         const details =
           typeof error.details === 'object' && error.details
@@ -277,16 +298,38 @@ export default function Feedback() {
 
           <div className="space-y-2">
             <Label htmlFor="feedback-bot-protection">{t('feedback.botProtectionLabel', 'Bot Protection')}</Label>
-            {CAPTCHA_SITE_KEY && (
-              <div id="feedback-bot-protection" ref={turnstileContainerRef} />
+            {CAPTCHA_PROVIDER === 'turnstile' && CAPTCHA_SITE_KEY && (
+              <div id="feedback-bot-protection" ref={turnstileContainerRef} className="min-h-[65px]" />
             )}
-            {!CAPTCHA_CONFIGURED && (
-              <p className="text-sm text-muted-foreground">
-                {t(
-                  'feedback.botProtectionUnavailable',
-                  'Bot protection is currently unavailable. Feedback submissions are temporarily disabled.',
-                )}
-              </p>
+            {CAPTCHA_PROVIDER === 'recaptcha' && CAPTCHA_SITE_KEY && (
+              <div id="feedback-bot-protection" ref={turnstileContainerRef} className="min-h-[78px]" />
+            )}
+            {CAPTCHA_PROVIDER === 'math' && (
+              <div className="space-y-2 rounded-lg border border-border/40 bg-background/50 p-4">
+                <p className="text-sm font-medium text-foreground select-none">
+                  {mathChallenge || t('feedback.loadingChallenge', 'Loading challenge...')}
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    id="feedback-bot-protection"
+                    type="text"
+                    value={mathAnswer}
+                    onChange={(e) => setMathAnswer(e.target.value)}
+                    placeholder={t('feedback.captchaPlaceholder', 'Answer')}
+                    className="max-w-[150px] h-10 text-center font-semibold tracking-wider text-base"
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void fetchMathChallenge()}
+                    className="h-10 px-3 text-xs"
+                  >
+                    {t('feedback.refresh', 'Refresh')}
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
 
@@ -304,7 +347,7 @@ export default function Feedback() {
           <Button
             type="submit"
             className="w-full sm:w-auto"
-            disabled={isSubmitting || !CAPTCHA_CONFIGURED}
+            disabled={isSubmitting || (CAPTCHA_PROVIDER === 'math' && !mathAnswer)}
           >
             {isSubmitting
               ? t('feedback.sending', 'Sending...')

@@ -10,6 +10,11 @@ interface MovieSchemaProps {
   rating?: number;
   ratingCount?: number;
   url?: string;
+  genres?: string[];
+  actors?: Array<{ name: string; image?: string }>;
+  directors?: Array<{ name: string }>;
+  creators?: Array<{ name: string }>;
+  duration?: number; // in minutes
 }
 
 export default function MovieSchema({
@@ -21,6 +26,11 @@ export default function MovieSchema({
   rating,
   ratingCount,
   url,
+  genres,
+  actors,
+  directors,
+  creators,
+  duration,
 }: MovieSchemaProps) {
   const id = useId().replace(/:/g, "-");
   const jsonLd = sanitizeJsonLd({
@@ -31,6 +41,27 @@ export default function MovieSchema({
     image: image || undefined,
     url: url || undefined,
     datePublished: releaseDate || undefined,
+    genre: genres && genres.length > 0 ? genres : undefined,
+    actor: actors && actors.length > 0
+      ? actors.map(a => ({
+          '@type': 'Person',
+          name: a.name,
+          image: a.image || undefined
+        }))
+      : undefined,
+    director: directors && directors.length > 0
+      ? directors.map(d => ({
+          '@type': 'Person',
+          name: d.name
+        }))
+      : undefined,
+    creator: creators && creators.length > 0
+      ? creators.map(c => ({
+          '@type': 'Person',
+          name: c.name
+        }))
+      : undefined,
+    duration: duration ? `PT${duration}M` : undefined,
     aggregateRating:
       typeof rating === 'number' && Number.isFinite(rating)
         ? {

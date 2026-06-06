@@ -877,6 +877,24 @@ export default function Details() {
         rating={rating || undefined}
         ratingCount={details.vote_count}
         url={seoCanonical}
+        genres={details.genres?.map((g) => g.name)}
+        actors={details.credits?.cast?.slice(0, 10).map((person) => ({
+          name: person.name,
+          image: person.profile_path ? getImageUrl(person.profile_path, "w185") : undefined,
+        }))}
+        directors={
+          mediaType === "movie"
+            ? details.credits?.crew
+                ?.filter((member) => member.job === "Director")
+                .map((member) => ({ name: member.name }))
+            : undefined
+        }
+        creators={
+          mediaType === "tv"
+            ? details.created_by?.map((creator) => ({ name: creator.name }))
+            : undefined
+        }
+        duration={runtime || undefined}
       />
 
       <div className="relative h-[50vh] md:h-[70vh] overflow-hidden -mt-16">
