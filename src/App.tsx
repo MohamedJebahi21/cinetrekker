@@ -1,4 +1,3 @@
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
@@ -19,7 +18,6 @@ import { ContentPolicyProvider } from "@/contexts/content-policy-context";
 import ScrollToTop from "@/components/ScrollToTop";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { GlobalLoader } from "@/components/GlobalLoader";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import SEO from "@/components/SEO";
@@ -69,6 +67,7 @@ const Signup = lazy(() => import("./pages/Signup"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const Logout = lazy(() => import("./pages/Logout"));
 const TitleStatus = lazy(() => import("./pages/TitleStatus"));
+const Trending = lazy(() => import("./pages/Trending"));
 
 const Search = lazy(() => import("./pages/Search"));
 const Details = lazy(() => import("./pages/Details"));
@@ -85,16 +84,16 @@ const Feedback = lazy(() => import("./pages/Feedback"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Cookies = lazy(() => import("./pages/Cookies"));
 const Calendar = lazy(() => import("./pages/Calendar"));
-const Stats = lazy(() => import("./pages/Stats"));
 const EnhancedStats = lazy(() => import("./pages/EnhancedStats"));
 const GenreBrowser = lazy(() => import("./pages/GenreBrowser"));
 const DecadeExplorer = lazy(() => import("./pages/DecadeExplorer"));
-const AdvancedSearch = lazy(() => import("./pages/AdvancedSearch"));
 const Achievements = lazy(() => import("./pages/Achievements"));
-const Collections = lazy(() => import("./pages/Collections"));
 const PrintWatchlist = lazy(() => import("./pages/PrintWatchlist"));
 const AwardWinners = lazy(() => import("./pages/AwardWinners"));
 const YearInReview = lazy(() => import("./pages/YearInReview"));
+const Discover = lazy(() => import("./pages/Discover"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const AccessibilitySettings = lazy(() => import("./pages/AccessibilitySettings"));
 const isVercelHost =
   typeof window !== "undefined" &&
   /(?:\.|^)vercel\.app$/i.test(window.location.hostname);
@@ -547,7 +546,7 @@ const App = () => {
 
   useEffect(() => {
     let idleId: number | null = null;
-    let timeoutId: number | null = null;
+    let frameId: number | null = null;
 
     const enable = () => setEnableEnhancements(true);
 

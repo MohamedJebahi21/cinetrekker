@@ -350,3 +350,5 @@ export function UserListsProvider({ children }: { children: ReactNode }) {
     </UserListsContext.Provider>
   );
 }
+
+export { useUserLists } from "@/contexts/user-lists-context";

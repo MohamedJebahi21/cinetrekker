@@ -3,11 +3,6 @@ import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 
 import en from "./locales/en.json";
-import ar from "./locales/ar.json";
-import fr from "./locales/fr.json";
-import tr from "./locales/tr.json";
-import es from "./locales/es.json";
-import de from "./locales/de.json";
 
 export const languages = [
   { code: "en", name: "English", dir: "ltr" },
@@ -22,12 +17,33 @@ export type LanguageCode = (typeof languages)[number]["code"];
 
 const resources = {
   en: { translation: en },
-  ar: { translation: ar },
-  fr: { translation: fr },
-  tr: { translation: tr },
-  es: { translation: es },
-  de: { translation: de },
 };
+
+const localeLoaders = {
+  ar: () => import("./locales/ar.json"),
+  fr: () => import("./locales/fr.json"),
+  tr: () => import("./locales/tr.json"),
+  es: () => import("./locales/es.json"),
+  de: () => import("./locales/de.json"),
+} as const satisfies Partial<Record<Exclude<LanguageCode, "en">, () => Promise<{ default: Record<string, string> }>>>;
+
+const loadedLanguages = new Set<LanguageCode>(["en"]);
+
+async function ensureLanguageResources(language: LanguageCode) {
+  if (loadedLanguages.has(language) || language === "en") {
+    return;
+  }
+
+  const loader = localeLoaders[language as keyof typeof localeLoaders];
+  if (!loader) {
+    loadedLanguages.add(language);
+    return;
+  }
+
+  const module = await loader();
+  i18n.addResourceBundle(language, "translation", module.default, true, true);
+  loadedLanguages.add(language);
+}
 
 const isDev = Boolean(
   (typeof import.meta !== "undefined" && import.meta.env?.DEV) ||
@@ -94,6 +110,17 @@ i18n
       return lastSegmentTitleCase(key);
     },
   });
+
+const originalChangeLanguage = i18n.changeLanguage.bind(i18n);
+i18n.changeLanguage = (async (language?: string, ...args: unknown[]) => {
+  const nextLanguage = (language || "en") as LanguageCode;
+  await ensureLanguageResources(nextLanguage);
+  return originalChangeLanguage(nextLanguage, ...(args as []));
+}) as typeof i18n.changeLanguage;
+
+if (i18n.language !== "en") {
+  void i18n.changeLanguage(i18n.language);
+}
 
 // Update document direction when language changes
 i18n.on("languageChanged", (lng) => {

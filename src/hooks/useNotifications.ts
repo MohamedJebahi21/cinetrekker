@@ -210,6 +210,7 @@ export function useNotifications() {
     },
     enabled: !!user,
     refetchInterval: 60_000, // poll every minute for new notifications
+    refetchIntervalInBackground: false,
   });
 
   const allNotifications = user ? notifications : guestNotifications;

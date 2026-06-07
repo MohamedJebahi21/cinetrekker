@@ -75,8 +75,39 @@ export function useHomePageData({
   // network before the LCP backdrop image has had a chance to load.
   const [deferredEnabled, setDeferredEnabled] = useState(false);
   useEffect(() => {
-    const id = window.setTimeout(() => setDeferredEnabled(true), 200);
-    return () => window.clearTimeout(id);
+    let idleId: number | null = null;
+    let timeoutId: number | null = null;
+
+    const enable = () => setDeferredEnabled(true);
+
+    if (typeof window !== "undefined") {
+      const w = window as Window & {
+        requestIdleCallback?: (
+          callback: IdleRequestCallback,
+          options?: IdleRequestOptions,
+        ) => number;
+        cancelIdleCallback?: (handle: number) => void;
+      };
+
+      if (typeof w.requestIdleCallback === "function") {
+        idleId = w.requestIdleCallback(enable, { timeout: 1500 });
+      } else {
+        timeoutId = window.setTimeout(enable, 400);
+      }
+    }
+
+    return () => {
+      const w = window as Window & {
+        cancelIdleCallback?: (handle: number) => void;
+      };
+
+      if (idleId !== null && typeof w.cancelIdleCallback === "function") {
+        w.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   const moreInGenreQuery = useQuery({

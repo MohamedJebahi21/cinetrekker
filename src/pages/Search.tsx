@@ -364,13 +364,8 @@ export default function Search() {
         );
         return {
           page,
-          primary_release_year: yearFilter || undefined,
-          sort_by: getDiscoverSort(sortBy, 'movie'),
-        }, language);
-        return {
-          page: resp.page,
-          total_pages: resp.total_pages,
-          results: resp.results.map((m) => ({ ...m, media_type: 'movie' as const })),
+          total_pages: Math.max(...movieResponses.map((response) => response.totalPages), 1),
+          results: movieResponses.flatMap((response) => response.results),
         };
       }
 

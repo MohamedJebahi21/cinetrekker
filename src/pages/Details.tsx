@@ -1,7 +1,7 @@
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { 
   Star, Clock, Calendar, Bookmark, Check, Plus, 
   MessageSquare, ChevronLeft, Heart, HeartOff, PlayCircle
@@ -148,18 +148,26 @@ export default function Details() {
   const seoTitle = _title || undefined;
   useDocumentTitle(seoTitle);
 
-  if (isLoading) {
-    return (
-      details?.seasons
+  const todayDateKey = new Date().toISOString().slice(0, 10);
+  const seasons = details?.number_of_seasons
+    ? Array.from({ length: details.number_of_seasons }, (_, index) => index + 1)
+    : [];
+  const availableSeasonNumbers = useMemo(() => {
+    if (mediaType !== "tv") return [];
+
+    const seasonList = details?.seasons;
+    const seasonNumbers =
+      seasonList
         ?.map((season) => season.season_number)
         .filter(
           (seasonNumber, index) =>
             seasonNumber > 0 &&
-            (details.seasons?.[index]?.air_date
-              ? details.seasons[index].air_date! <= todayDateKey
+            (seasonList?.[index]?.air_date
+              ? seasonList[index].air_date! <= todayDateKey
               : true),
-        ) ?? seasons
-    ).sort((a, b) => b - a);
+        ) ?? seasons;
+
+    return [...seasonNumbers].sort((left, right) => right - left);
   }, [details?.seasons, mediaType, seasons, todayDateKey]);
 
   // Must be called unconditionally before any early return (Rules of Hooks)
@@ -402,8 +410,6 @@ export default function Details() {
   const rentProviders = providerData?.rent || [];
   const buyProviders = providerData?.buy || [];
 
-  const seasons = details.number_of_seasons ? Array.from({ length: details.number_of_seasons }, (_, i) => i + 1) : [];
-  
   const seoDescription = (details.overview || '').slice(0, 160);
   const seoImage = getImageUrl(details.poster_path, 'w500');
   const seoCanonical = `https://cinetrekker.vercel.app/${mediaType}/${mediaId}`;

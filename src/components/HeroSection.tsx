@@ -1,5 +1,4 @@
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useRef } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent, type TouchEvent } from "react";
 import {
   ArrowRight,
   Bookmark,
@@ -14,7 +13,6 @@ import {
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState, type TouchEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getBackdropUrl, getImageUrl, getMediaTitle, getTrending } from "@/services/tmdb";
@@ -39,6 +37,23 @@ type HeroSlide = {
   source: "live" | "fallback";
 };
 
+function useReducedMotionPreference() {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updatePreference = () => setPrefersReducedMotion(query.matches);
+    updatePreference();
+
+    query.addEventListener?.("change", updatePreference);
+    return () => query.removeEventListener?.("change", updatePreference);
+  }, []);
+
+  return prefersReducedMotion;
+}
+
 export function HeroSection() {
   const heroRef = useRef<HTMLElement>(null);
   const { t, i18n } = useTranslation();
@@ -55,10 +70,8 @@ export function HeroSection() {
   const { user } = useAuth();
   const { strictFiltering, moderateFiltering } = useContentPolicy();
   const includeAdult = !(strictFiltering || moderateFiltering);
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useReducedMotionPreference();
   const language = i18n.language;
-  const [showTrailer, setShowTrailer] = useState(false);
-  const [allowTrailerFetch, setAllowTrailerFetch] = useState(false);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -66,7 +79,7 @@ export function HeroSection() {
   const [parallax, setParallax] = useState({ x: 0, y: 0 });
   const queueContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleParallax = (e: React.MouseEvent<HTMLElement>) => {
+  const handleParallax = (e: MouseEvent<HTMLElement>) => {
     if (window.innerWidth < 1024 || prefersReducedMotion) return;
     const rect = heroRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -80,27 +93,9 @@ export function HeroSection() {
 
   const resetParallax = () => setParallax({ x: 0, y: 0 });
 
-    const enable = () => setAllowTrailerFetch(true);
-
-    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      idleId = window.requestIdleCallback(enable, { timeout: 1800 });
-    } else {
-      timeoutId = setTimeout(enable, 300);
-    }
-
-    return () => {
-      if (idleId !== null && typeof window !== "undefined" && "cancelIdleCallback" in window) {
-        window.cancelIdleCallback(idleId);
-      }
-      if (timeoutId !== null) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, []);
-
   const { data: trendingDay, isLoading } = useQuery({
-    queryKey: ['trending', 'day', language],
-    queryFn: () => getTrending('all', 'day', language),
+    queryKey: ["trending", "day", language, includeAdult],
+    queryFn: () => getTrending("all", "day", language, 1, includeAdult),
   });
 
   const fallbackSlides = useMemo<HeroSlide[]>(
@@ -153,7 +148,7 @@ export function HeroSection() {
 
   const topWeekly = useMemo<HeroSlide[]>(
     () =>
-      (weeklyResponse?.results || []).slice(0, 5).map((item) => ({
+      (trendingDay?.results || []).slice(0, 5).map((item) => ({
         id: item.id,
         title: getMediaTitle(item),
         overview: item.overview || "",
@@ -165,7 +160,7 @@ export function HeroSection() {
         vote_average: item.vote_average ?? 0,
         source: "live",
       })),
-    [weeklyResponse],
+    [trendingDay],
   );
 
   const heroSlides = topWeekly.length > 0 ? topWeekly : fallbackSlides;
@@ -266,7 +261,6 @@ export function HeroSection() {
     setIsPaused(false);
   };
 
-  const td = prefersReducedMotion ? 0 : 0.45;
   const primaryCta = user ? "/discover" : "/signup";
   const secondaryCta = user ? "/watchlist" : "/discover";
 
@@ -446,14 +440,10 @@ export function HeroSection() {
                   </div>
 
                   <div className="space-y-4">
-                    <AnimatePresence mode="wait">
-                      <motion.div
+                    <div>
+                      <div
                         key={`hero-dashboard-${activeItem.id}`}
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: td, ease: "easeOut" }}
-                        className="overflow-hidden rounded-[1.75rem] border border-white/8 bg-[linear-gradient(180deg,#10151d_0%,#0d1219_100%)] shadow-[0_16px_36px_rgba(0,0,0,0.22)]"
+                        className="overflow-hidden rounded-[1.75rem] border border-white/8 bg-[linear-gradient(180deg,#10151d_0%,#0d1219_100%)] shadow-[0_16px_36px_rgba(0,0,0,0.22)] transition-[opacity,transform] duration-300 ease-out"
                       >
                         <div className="relative h-[160px] overflow-hidden sm:h-[280px]">
                           {heroImage ? (
@@ -611,8 +601,8 @@ export function HeroSection() {
                             </div>
                           </div>
                         </div>
-                      </motion.div>
-                    </AnimatePresence>
+                      </div>
+                    </div>
 
                     <div className="hidden md:block space-y-3 rounded-3xl border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.025))] p-4">
                       <div className="mb-3 flex items-center justify-between">
@@ -705,17 +695,13 @@ export function HeroSection() {
                               className="relative h-full flex-1 overflow-hidden bg-white/14 outline-none hover:bg-white/20 transition-colors"
                               aria-label={t("hero.goToSlide", "Go to slide {{index}}", { index: index + 1 })}
                             >
-                              <motion.div
+                              <div
                                 className="absolute left-0 top-0 h-full bg-primary"
-                                initial={{ width: index < activeIndex ? "100%" : "0%" }}
-                                animate={{ 
-                                  width: isActive ? "100%" : (index < activeIndex ? "100%" : "0%") 
-                                }}
-                                transition={{
-                                  width: { 
-                                    duration: isActive ? (AUTO_PLAY_MS / 1000) : 0.3, 
-                                    ease: isActive ? "linear" : "easeOut" 
-                                  },
+                                style={{
+                                  width: isActive || index < activeIndex ? "100%" : "0%",
+                                  transitionDuration: `${isActive ? AUTO_PLAY_MS : 300}ms`,
+                                  transitionProperty: "width",
+                                  transitionTimingFunction: isActive ? "linear" : "ease-out",
                                 }}
                               />
                             </button>

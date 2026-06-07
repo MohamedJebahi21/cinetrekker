@@ -217,51 +217,8 @@ export default function Watchlist() {
         {/* Content */}
         {isLoading ? (
           <MediaGrid items={[]} isLoading columns="normal" gap="md" />
-        ) : filteredMedia && filteredMedia.length > 0 ? (
-          viewMode === 'grid' ? (
-            <MediaGrid 
-              items={filteredMedia} 
-              columns="normal"
-              gap="md"
-            />
-          ) : (
-            <div className="divide-y divide-border/50 rounded-xl border border-border/50 bg-background/40">
-              {filteredMedia.map((media) => {
-                const title = getMediaTitle(media);
-                const year = getMediaYear(media);
-                const mediaType = getMediaType(media);
-                const poster = getImageUrl(media.poster_path, 'w154');
-                const rating = media.vote_average;
-                return (
-                  <Link
-                    key={`${mediaType}-${media.id}`}
-                    to={`/${mediaType}/${media.id}`}
-                    className="flex items-center gap-4 p-4 transition-colors hover:bg-accent/30"
-                  >
-                    <CheckSquare className="mr-2 h-4 w-4" />
-                    {t("actions.watched", "Watched")}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    disabled={selectedCount === 0}
-                    onClick={() => void handleBulkRemove()}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    {t("common.delete", "Remove")}
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={clearSelection}>
-                    {t("common.cancel", "Cancel")}
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {isLoading ? (
-            <MediaGrid items={[]} isLoading columns="normal" gap="md" />
-          ) : filteredMedia.length > 0 ? (
-            viewMode === "grid" ? (
+        ) : filteredMedia.length > 0 ? (
+          viewMode === "grid" ? (
               <MediaGrid
                 items={filteredMedia}
                 columns="normal"
@@ -284,60 +241,75 @@ export default function Watchlist() {
                       to={`/${mediaType}/${media.id}`}
                       className="ct-list-row group items-start gap-4 p-4 sm:items-center sm:gap-5 sm:p-5"
                     >
-                      {selectionMode && (
-                        <button
-                          type="button"
-                          className={`mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${
-                            selectedKeys.has(`${mediaType}-${media.id}`)
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-border/60 bg-card text-muted-foreground"
-                          }`}
-                          onPointerDown={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                          }}
-                          onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            toggleSelect(media.id, mediaType);
-                          }}
-                          aria-current={
-                            selectedKeys.has(`${mediaType}-${media.id}`)
-                              ? "true"
-                              : undefined
-                          }
-                          aria-label={
-                            selectedKeys.has(`${mediaType}-${media.id}`)
-                              ? t("mediaCard.deselectTitle", "Deselect title")
-                              : t("mediaCard.selectTitle", "Select title")
-                          }
-                        >
-                          {selectedKeys.has(`${mediaType}-${media.id}`) ? (
-                            <CheckSquare className="h-4 w-4" />
+                      <div className="flex w-full items-start gap-4">
+                        <div className="relative h-24 w-16 shrink-0 overflow-hidden rounded-xl border border-border/60 bg-muted">
+                          {poster ? (
+                            <img
+                              src={poster}
+                              alt={title}
+                              loading="lazy"
+                              className="h-full w-full object-cover"
+                            />
                           ) : (
-                            <Square className="h-4 w-4" />
+                            <div className="h-full w-full bg-gradient-to-br from-muted via-muted/60 to-muted/20" />
                           )}
-                        </button>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-sm md:text-base truncate">{title}</h3>
-                        <Badge variant="secondary" className="text-[10px] uppercase">
-                          {mediaType}
-                        </Badge>
-                      </div>
-                      <div className="mt-1 text-xs text-muted-foreground flex flex-wrap items-center gap-2">
-                        {year && <span>{year}</span>}
-                        {rating > 0 && <span>Rating: {rating.toFixed(1)}</span>}
-                        {media.watchStatus && (
-                          <span className="capitalize">{media.watchStatus.replace(/_/g, ' ')}</span>
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className="truncate text-sm font-semibold md:text-base">{title}</h3>
+                            <Badge variant="secondary" className="text-[10px] uppercase">
+                              {mediaType}
+                            </Badge>
+                          </div>
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            {year && <span>{year}</span>}
+                            {rating > 0 && <span>Rating: {rating.toFixed(1)}</span>}
+                            {media.watchStatus && (
+                              <span className="capitalize">{media.watchStatus.replace(/_/g, " ")}</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {selectionMode && (
+                          <button
+                            type="button"
+                            className={`mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${
+                              selectedKeys.has(`${mediaType}-${media.id}`)
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border/60 bg-card text-muted-foreground"
+                            }`}
+                            onPointerDown={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                            }}
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              toggleSelect(media.id, mediaType);
+                            }}
+                            aria-current={
+                              selectedKeys.has(`${mediaType}-${media.id}`)
+                                ? "true"
+                                : undefined
+                            }
+                            aria-label={
+                              selectedKeys.has(`${mediaType}-${media.id}`)
+                                ? t("mediaCard.deselectTitle", "Deselect title")
+                                : t("mediaCard.selectTitle", "Select title")
+                            }
+                          >
+                            {selectedKeys.has(`${mediaType}-${media.id}`) ? (
+                              <CheckSquare className="h-4 w-4" />
+                            ) : (
+                              <Square className="h-4 w-4" />
+                            )}
+                          </button>
                         )}
                       </div>
-                    </div>
-                  </Link>
-                );
-              })}
+                    </Link>
+                  );
+                })}
             </div>
           )
         ) : mediaDetails && mediaDetails.length > 0 ? (

@@ -91,31 +91,6 @@ export default function YearInReview() {
     staleTime: YEAR_IN_REVIEW_STALE_TIME_MS,
   });
 
-  const totalWatched = thisYearMovies.length + thisYearTV.length;
-
-  // Fetch details for watched items
-  const { data: movieDetails } = useQuery({
-    queryKey: ['year-review-movies', currentYear],
-    queryFn: async () => {
-      const details = await Promise.all(
-        thisYearMovies.slice(0, 50).map(item => getMovieDetails(item.mediaId))
-      );
-      return details;
-    },
-    enabled: thisYearMovies.length > 0
-  });
-
-  const { data: tvDetails } = useQuery({
-    queryKey: ['year-review-tv', currentYear],
-    queryFn: async () => {
-      const details = await Promise.all(
-        thisYearTV.slice(0, 50).map(item => getTVDetails(item.mediaId))
-      );
-      return details;
-    },
-    enabled: thisYearTV.length > 0
-  });
-
   // Calculate statistics
   const totalRuntime = (movieDetails || []).reduce((acc, movie) => acc + (movie?.runtime || 0), 0) +
     (tvDetails || []).reduce((acc, show) => {

@@ -1,6 +1,23 @@
 import { useLayoutEffect } from "react";
 import { ThemeContext } from '@/contexts/theme-context';
 
+export type Theme = "dark";
+
+export function readStoredTheme(): Theme {
+  return "dark";
+}
+
+export function applyThemeToDocument(theme: Theme): void {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  const root = document.documentElement;
+  root.classList.toggle("dark", theme === "dark");
+  root.setAttribute("data-theme", theme);
+  root.style.colorScheme = theme;
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useLayoutEffect(() => {
     try {
@@ -17,5 +34,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  return <ThemeContext.Provider value={{theme: "dark"}}>{children}</ThemeContext.Provider>;
+  return <ThemeContext.Provider value={{ theme: "dark" }}>{children}</ThemeContext.Provider>;
 }
+
+export { useTheme } from '@/contexts/theme-context';

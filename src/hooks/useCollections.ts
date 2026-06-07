@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth-context';
@@ -6,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 export const useCollections = () => {
   const { user } = useAuth();
   const DISABLE_ID = 'cinetrekker:collections_disabled';
-  const disabledFlag = typeof window !== 'undefined' && localStorage.getItem(DISABLE_ID) === '1';
+  const [disabledFlag] = useState(() => typeof window !== 'undefined' && localStorage.getItem(DISABLE_ID) === '1');
   return useQuery({
     queryKey: ['collections', user?.id],
     enabled: !!user && !disabledFlag,
@@ -39,6 +40,7 @@ export const useCollections = () => {
       }
     },
     staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
   });
 };
 

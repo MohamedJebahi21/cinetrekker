@@ -16,6 +16,7 @@ const FOOTER_IN_VIEW_OPTIONS = { rootMargin: "100px", triggerOnce: false };
 export function Footer() {
   const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
+  const motionIntensity = useMotionIntensityPreference();
   const [ref, inView] = useInView<HTMLDivElement>(FOOTER_IN_VIEW_OPTIONS);
 
   return (
@@ -33,9 +34,11 @@ export function Footer() {
           <div className="col-span-1 min-[400px]:col-span-2 md:col-span-2 min-w-0">
             <div className="mb-5 flex items-center gap-4">
               <img
-                src="/apple-touch-icon.png"
+                src="/favicon-32x32.png"
                 alt="CineTrekker logo"
-                className="h-14 w-14 rounded-2xl object-cover shadow-[0_8px_32px_hsl(var(--primary)/0.18)] border-2 border-primary/20"
+                width={32}
+                height={32}
+                className="h-10 w-10 rounded-xl object-cover shadow-[0_8px_32px_hsl(var(--primary)/0.18)] border-2 border-primary/20"
               />
               <span className="text-[2rem] font-extrabold leading-none text-foreground sm:text-[2.2rem] tracking-tight drop-shadow-sm select-none">
                 {t("common.appName")}
@@ -78,10 +81,10 @@ export function Footer() {
                 href="https://buymeacoffee.com/mohamed_jebahi"
                 target="_blank"
                 rel="noopener noreferrer"
-                  className="break-words rounded-md text-[1.01rem] text-muted-foreground font-semibold transition-colors hover:text-primary hover:underline underline-offset-4"
+                className="break-words rounded-md text-[1.01rem] text-muted-foreground font-semibold transition-colors hover:text-primary hover:underline underline-offset-4"
               >
                 {t('footer.trending', 'Trending')}
-              </Link>
+              </a>
               <Link 
                 to="/search?sort=primary_release_date.desc" 
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"

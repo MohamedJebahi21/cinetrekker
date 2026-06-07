@@ -117,7 +117,7 @@ const PosterImage = React.memo(function PosterImage({
       )}
     </div>
   );
-}
+});
 
 export const MediaCard = React.memo(function MediaCard({ media, mediaType: mediaTypeProp, showType = true, showStatus = false }: MediaCardProps) {
   const { t, i18n } = useTranslation();
@@ -192,25 +192,25 @@ export const MediaCard = React.memo(function MediaCard({ media, mediaType: media
   const handleWatchlistClick = async (e: PreventableEvent) => {
     suppressCardNavigation(e);
     setIsWatchlistPending(true);
+    const nextState = !optimisticInWatchlist;
+    setOptimisticInWatchlist(nextState);
+
     try {
-      if (!optimisticInWatchlist) {
+      if (nextState) {
         await addToWatchlist(media.id, mediaType);
-        try {
-          if (typeof navigator !== "undefined" && "vibrate" in navigator)
-            (navigator as Navigator).vibrate?.(10);
-        } catch {
-          // Ignore vibration API failures for unsupported devices/browsers.
+      } else {
+        await removeFromWatchlist(media.id, mediaType);
+      }
+
+      try {
+        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+          (navigator as Navigator).vibrate?.(10);
         }
       } catch {
-        setOptimisticInWatchlist(!nextState);
+        // Ignore vibration API failures for unsupported devices/browsers.
       }
-    } else {
-      const newState = toggleLocalWatchlist(media.id);
-      setLocalInWatchlist(newState);
-      setOptimisticInWatchlist(newState);
-      if (newState) {
-        try { if (typeof navigator !== 'undefined' && 'vibrate' in navigator) (navigator as Navigator).vibrate?.(10); } catch (e) { /* TODO: add optional debug logging for vibration API failures */ }
-      }
+    } catch {
+      setOptimisticInWatchlist(!nextState);
     } finally {
       setIsWatchlistPending(false);
     }
@@ -226,28 +226,32 @@ export const MediaCard = React.memo(function MediaCard({ media, mediaType: media
       } finally {
         setIsWatchedPending(false);
       }
-    } else {
-      // For TV shows, open modal to choose watch type
-      if (mediaType === 'tv' && user) {
-        setWatchStatusModalOpen(true);
-      } else {
-        // Guests can still track watched titles locally.
-        setIsWatchedPending(true);
-        try {
-          await addToWatched(media.id, mediaType);
-          // Haptic feedback — richer double-pulse for success
-          try {
-            if (typeof navigator !== "undefined" && "vibrate" in navigator)
-              (navigator as Navigator).vibrate?.([10, 30, 15]);
-          } catch {
-            // Ignore vibration API failures
-          }
-          // Milestone confetti
-          triggerMilestoneConfetti();
-        } finally {
-          setIsWatchedPending(false);
+      return;
+    }
+
+    // For TV shows, open modal to choose watch type
+    if (mediaType === "tv" && user) {
+      setWatchStatusModalOpen(true);
+      return;
+    }
+
+    // Guests can still track watched titles locally.
+    setIsWatchedPending(true);
+    try {
+      await addToWatched(media.id, mediaType);
+
+      try {
+        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+          (navigator as Navigator).vibrate?.([10, 30, 15]);
         }
+      } catch {
+        // Ignore vibration API failures.
       }
+
+      // Milestone confetti
+      triggerMilestoneConfetti();
+    } finally {
+      setIsWatchedPending(false);
     }
   };
 

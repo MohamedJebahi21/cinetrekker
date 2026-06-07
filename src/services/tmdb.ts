@@ -150,58 +150,86 @@ const fetchTMDB = async <T>(
   const params = new URLSearchParams({
     endpoint,
     language,
+    include_adult: extraParams.include_adult ?? includeAdultFromStorage,
     ...extraParams,
   });
 
-  try {
-    const requestPromise = (async () => {
-      const controller = new AbortController();
-      const timeoutId = globalThis.setTimeout(() => {
-        controller.abort();
-      }, TMDB_REQUEST_TIMEOUT_MS);
+  const requestPromise = (async () => {
+    const controller = new AbortController();
+    const timeoutId = globalThis.setTimeout(() => {
+      controller.abort();
+    }, TMDB_REQUEST_TIMEOUT_MS);
 
-      if (signal) {
-        signal.addEventListener("abort", () => controller.abort());
-      }
-
-      const headers: HeadersInit = {
-        "Content-Type": "application/json",
-      };
-
-      if (USE_SUPABASE_EDGE_PROXY && SUPABASE_API_KEY) {
-        headers.Authorization = `Bearer ${SUPABASE_API_KEY}`;
-        headers.apikey = SUPABASE_API_KEY;
-      }
-    );
-
-    // Explicit 401 handling - Stop retries immediately
-    if (response.status === 401) {
-      console.error('401 Unauthorized: Invalid Supabase API key or expired session');
-      throw new Error('AUTHENTICATION_ERROR');
+    if (signal) {
+      signal.addEventListener("abort", () => controller.abort(), { once: true });
     }
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const statusText = response.status === 404 ? 'Unavailable - Invalid endpoint' 
-        : response.status >= 500 ? 'Server Error - TMDB or Supabase issue' 
-        : `HTTP ${response.status}`;
-      console.error(`TMDB Proxy Error [${response.status}]:`, {
-        endpoint,
-        status: response.status,
-        statusText,
-        error: errorData
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+
+    if (USE_SUPABASE_EDGE_PROXY && SUPABASE_API_KEY) {
+      headers.Authorization = `Bearer ${SUPABASE_API_KEY}`;
+      headers.apikey = SUPABASE_API_KEY;
+    }
+
+    try {
+      const response = await fetch(`${TMDB_PROXY_URL}?${params.toString()}`, {
+        method: "GET",
+        headers,
+        signal: controller.signal,
       });
-      
-      throw new Error(errorData.error || `TMDB API error: ${statusText}`);
-    }
 
-    return response.json();
+      if (response.status === 401) {
+        console.error("401 Unauthorized: Invalid Supabase API key or expired session");
+        throw new Error("AUTHENTICATION_ERROR");
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const statusText =
+          response.status === 404
+            ? "Unavailable - Invalid endpoint"
+            : response.status >= 500
+              ? "Server Error - TMDB or Supabase issue"
+              : `HTTP ${response.status}`;
+        console.error(`TMDB Proxy Error [${response.status}]:`, {
+          endpoint,
+          status: response.status,
+          statusText,
+          error: errorData,
+        });
+
+        throw new Error(errorData.error || `TMDB API error: ${statusText}`);
+      }
+
+      return (await response.json()) as T;
+    } finally {
+      globalThis.clearTimeout(timeoutId);
+    }
+  })();
+
+  tmdbInFlight.set(cacheKey, requestPromise);
+
+  try {
+    const data = (await requestPromise) as T;
+    const ttl = getCacheTTL(endpoint);
+    const expiresAt = Date.now() + ttl;
+    tmdbResponseCache.set(cacheKey, { expiresAt, data });
+    if (tmdbResponseCache.size > TMDB_CACHE_MAX_ENTRIES) {
+      const oldestKey = tmdbResponseCache.keys().next().value;
+      if (oldestKey) {
+        tmdbResponseCache.delete(oldestKey);
+      }
+    }
+    return data;
   } catch (error) {
-    // Ensure authentication errors propagate with correct type
-    if (error instanceof Error && error.message === 'AUTHENTICATION_ERROR') {
+    if (error instanceof Error && error.message === "AUTHENTICATION_ERROR") {
       throw error;
     }
     throw error;
+  } finally {
+    tmdbInFlight.delete(cacheKey);
   }
 };
 

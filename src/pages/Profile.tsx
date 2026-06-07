@@ -808,58 +808,80 @@ export default function Profile() {
                       ? "border-border/70 bg-card"
                       : "border-border/60 bg-card/95",
                   )}
-                </div>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  id="profile-photo-input"
-                  onChange={handlePhotoChange}
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-neutral-800/90 border border-neutral-700 hover:bg-neutral-700 hover:scale-110 transition-all shadow-lg"
-                  onClick={() => document.getElementById('profile-photo-input')?.click()}
-                  type="button"
                 >
-                  <Camera className="w-4 h-4" />
-                </Button>
-              </div>
+                  <CardContent className="p-6 md:p-8">
+                    <div className="flex flex-col gap-6 md:flex-row md:items-center">
+                      <div className="relative shrink-0">
+                        <div className="relative h-24 w-24 overflow-hidden rounded-3xl border border-border/60 bg-background shadow-lg">
+                          {profilePhoto ? (
+                            <img
+                              src={profilePhoto}
+                              alt={t("profile.photoAlt", "Profile photo")}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted via-muted/70 to-muted/30">
+                              <User className="h-10 w-10 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                        <input
+                          ref={profilePhotoInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          id="profile-photo-input"
+                          onChange={handlePhotoChange}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute -bottom-1 -right-1 h-10 w-10 rounded-full border border-border/60 bg-background/95 shadow-lg hover:bg-background"
+                          onClick={() => profilePhotoInputRef.current?.click()}
+                          type="button"
+                        >
+                          <Camera className="h-4 w-4" />
+                        </Button>
+                      </div>
 
-              {/* User Info */}
-              <div className="flex-1">
-                {user ? (
-                  <>
-                    <h1 className="text-2xl sm:text-3xl font-bold mb-1">
-                      {displayName || user.email?.split('@')[0]}
-                    </h1>
-                    <p className="text-neutral-400 mb-3">{user.email}</p>
-                  </>
-                ) : (
-                  <>
-                    <h1 className="text-2xl sm:text-3xl font-bold mb-1">{t('common.appName')} {t('nav.profile')}</h1>
-                    <Link to="/login">
-                      <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80">
-                        {t('auth.signInRequired')}
-                      </Button>
-                    </Link>
-                  </>
-                )}
-                {profileCompletion < 100 && (
-                  <div className="mt-4 max-w-md">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-neutral-400">{t('profile.profileCompletion', 'Profile Completion')}</span>
-                      <span className="text-xs text-neutral-500">{Math.round(profileCompletion)}%</span>
+                      <div className="flex-1">
+                        {user ? (
+                          <>
+                            <h1 className="mb-1 text-2xl font-bold sm:text-3xl">
+                              {displayName || user.email?.split("@")[0]}
+                            </h1>
+                            <p className="mb-3 text-neutral-400">{user.email}</p>
+                          </>
+                        ) : (
+                          <>
+                            <h1 className="mb-1 text-2xl font-bold sm:text-3xl">
+                              {t("common.appName")} {t("nav.profile")}
+                            </h1>
+                            <Link to="/login">
+                              <Button variant="link" className="h-auto p-0 text-primary hover:text-primary/80">
+                                {t("auth.signInRequired")}
+                              </Button>
+                            </Link>
+                          </>
+                        )}
+                        {profileCompletion < 100 && (
+                          <div className="mt-4 max-w-md">
+                            <div className="mb-2 flex items-center justify-between">
+                              <span className="text-xs font-medium text-neutral-400">
+                                {t("profile.profileCompletion", "Profile Completion")}
+                              </span>
+                              <span className="text-xs text-neutral-500">
+                                {Math.round(profileCompletion)}%
+                              </span>
+                            </div>
+                            <Progress value={profileCompletion} className="h-1.5" />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <Progress value={profileCompletion} className="h-1.5" />
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.section>
+                  </CardContent>
+                </Card>
+              </motion.section>
 
       {/* Stats Bento Grid */}
       <motion.section variants={itemVariants} className="mb-8">
@@ -1103,7 +1125,7 @@ export default function Profile() {
         saveLabel={t('settings.saveChanges') || 'Save Changes'}
         cancelLabel="Cancel"
       />
-      </>
+      </></TooltipProvider>
       )}
     </motion.div>
     </>

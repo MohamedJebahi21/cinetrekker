@@ -117,7 +117,7 @@ export function OnboardingTooltip() {
           </div>
 
           {/* Step indicator */}
-          <PaginationDots className="mb-2 mt-0">
+          <div className="mb-2 mt-0 flex items-center justify-center gap-1.5">
             {steps.map((_, i) => (
               <div
                 key={i}

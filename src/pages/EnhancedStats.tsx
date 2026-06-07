@@ -1,20 +1,22 @@
-import { useTranslation } from "react-i18next";
-import { Clock, Film, Star, Tv, Trophy } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { GlassStatCard } from "@/components/GlassStatCard";
+import { useTranslation } from "react-i18next";
+import { Clock, Film, Tv, Trophy } from "lucide-react";
+import { useUserLists } from "@/contexts/UserListsContext";
 import { useEnhancedStatsData, type MediaTypeFilter } from "@/hooks/useEnhancedStatsData";
 import { useIsMobile } from "@/hooks/use-mobile";
+import SEO from "@/components/SEO";
+import { GlassStatCard } from "@/components/GlassStatCard";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-const EnhancedStatsCharts = lazy(
-  () => import("@/components/stats/EnhancedStatsCharts"),
+const EnhancedStatsCharts = lazy(() =>
+  import("@/components/stats/EnhancedStatsCharts"),
 );
 
 const CINEMATIC_CHART_COLORS = [
@@ -30,7 +32,6 @@ const CINEMATIC_CHART_COLORS = [
 
 const GOAL_PRESETS = [50, 100, 150, 200, 300, 500];
 
-/** Inline radial SVG gauge — no external dep needed */
 function RadialProgressGauge({
   value,
   goal,
@@ -38,7 +39,7 @@ function RadialProgressGauge({
 }: {
   value: number;
   goal: number;
-  onGoalChange: (g: number) => void;
+  onGoalChange: (nextGoal: number) => void;
 }) {
   const radius = 52;
   const stroke = 8;
@@ -56,7 +57,6 @@ function RadialProgressGauge({
       </p>
       <div className="relative flex items-center justify-center">
         <svg width={radius * 2} height={radius * 2} className="-rotate-90">
-          {/* Track */}
           <circle
             cx={radius}
             cy={radius}
@@ -65,7 +65,6 @@ function RadialProgressGauge({
             stroke="rgba(255,255,255,0.08)"
             strokeWidth={stroke}
           />
-          {/* Progress arc */}
           <circle
             cx={radius}
             cy={radius}
@@ -79,52 +78,78 @@ function RadialProgressGauge({
             style={{ transition: "stroke-dashoffset 0.6s ease" }}
           />
         </svg>
-        {/* Center label */}
         <div className="absolute flex flex-col items-center justify-center">
           {completed ? (
             <Trophy className="h-6 w-6 text-green-400" />
           ) : (
             <>
               <span className="text-xl font-extrabold leading-none text-foreground">{pct}%</span>
-              <span className="text-[10px] text-muted-foreground">{Math.round(value)}h/{goal}h</span>
+              <span className="text-[10px] text-muted-foreground">
+                {Math.round(value)}h/{goal}h
+              </span>
             </>
           )}
         </div>
       </div>
-      {/* Goal selector */}
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground">Goal:</span>
-        <div className="flex gap-1">
-          {GOAL_PRESETS.map((g) => (
-            <button
-              key={g}
-              type="button"
-              onClick={() => onGoalChange(g)}
-              className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
-                goal === g
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-white/8 text-muted-foreground hover:bg-white/15"
-              }`}
-            >
-              {g}h
-            </button>
-          ))}
-        </div>
+      <div className="flex flex-wrap items-center justify-center gap-1.5">
+        {GOAL_PRESETS.map((preset) => (
+          <button
+            key={preset}
+            type="button"
+            onClick={() => onGoalChange(preset)}
+            className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
+              goal === preset
+                ? "bg-primary text-primary-foreground"
+                : "bg-white/8 text-muted-foreground hover:bg-white/15"
+            }`}
+          >
+            {preset}h
+          </button>
+        ))}
       </div>
-      {completed && (
-        <p className="text-xs font-semibold text-green-400">
-          🎉 Goal smashed! You&apos;re a true cinephile.
-        </p>
-      )}
+    </div>
+  );
+}
+
+function FilterCard({
+  label,
+  value,
+  onValueChange,
+  items,
+}: {
+  label: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  items: Array<{ value: string; label: string }>;
+}) {
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+        {label}
+      </p>
+      <Select value={value} onValueChange={onValueChange}>
+        <SelectTrigger className="h-11 rounded-2xl border-border/70 bg-background/80">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {items.map((item) => (
+            <SelectItem key={item.value} value={item.value}>
+              {item.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
 
 export default function EnhancedStats() {
+  const { t, i18n } = useTranslation();
   const { watched } = useUserLists();
-  const { i18n } = useTranslation();
   const language = i18n.language;
+  const isMobile = useIsMobile();
   const [bingeGoal, setBingeGoal] = useState(200);
+
   const {
     mediaLoading,
     selectedYear,
@@ -143,227 +168,248 @@ export default function EnhancedStats() {
     genreStats,
   } = useEnhancedStatsData(language);
 
-  const { data: mediaDetails } = useQuery({
-    queryKey: ['stats-details', watched.map((i) => `${i.mediaType}-${i.mediaId}`), language],
-    queryFn: async () => {
-      const results = await Promise.all(
-        watched.map(async (item) => {
-          try {
-            const details =
-              item.mediaType === 'movie'
-                ? await getMovieDetails(item.mediaId, language)
-                : await getTVDetails(item.mediaId, language);
-            return { ...details, media_type: item.mediaType, userRating: item.rating, watchedAt: item.addedAt };
-          } catch {
-            return null;
-          }
-        })
-      );
-      return results.filter(Boolean);
-    },
-    enabled: watched.length > 0,
-  });
+  const yearOptions = [
+    { value: "all", label: t("stats.filters.allYears", "All years") },
+    ...years.map((year) => ({ value: String(year), label: String(year) })),
+  ];
+  const typeOptions: Array<{ value: string; label: string }> = [
+    { value: "all", label: t("stats.filters.allTypes", "All types") },
+    { value: "movie", label: t("common.movies", "Movies") },
+    { value: "tv", label: t("common.tvShows", "TV shows") },
+  ];
+  const languageOptions = [
+    { value: "all", label: t("stats.filters.allLanguages", "All languages") },
+    ...languages.map((entry) => ({ value: entry, label: entry.toUpperCase() })),
+  ];
 
-  // Calculate stats
-  const totalMovies = mediaDetails?.filter((m) => m.media_type === 'movie').length || 0;
-  const totalTV = mediaDetails?.filter((m) => m.media_type === 'tv').length || 0;
-
-  const totalHours =
-    mediaDetails?.reduce((acc, item) => {
-      const runtime = item.runtime || (item.episode_run_time && item.episode_run_time[0]) || 0;
-      const episodes = item.media_type === 'tv' ? (item.number_of_episodes || 1) : 1;
-      return acc + (runtime * episodes) / 60;
-    }, 0) || 0;
-
-  const avgRating =
-    mediaDetails && mediaDetails.length > 0
-      ? mediaDetails.reduce((acc, item) => acc + (item.vote_average || 0), 0) / mediaDetails.length
-      : 0;
-
-  // Genre breakdown
-  const genreMap = new Map<number, { name: string; count: number; hours: number }>();
-  mediaDetails?.forEach((item) => {
-    const runtime = item.runtime || (item.episode_run_time && item.episode_run_time[0]) || 0;
-    const episodes = item.media_type === 'tv' ? (item.number_of_episodes || 1) : 1;
-    const hours = (runtime * episodes) / 60;
-
-    item.genres?.forEach((genre: Genre) => {
-      const existing = genreMap.get(genre.id) || { name: genre.name, count: 0, hours: 0 };
-      genreMap.set(genre.id, {
-        name: genre.name,
-        count: existing.count + 1,
-        hours: existing.hours + hours,
-      });
-    });
-  });
-
-  const genreStats = Array.from(genreMap.values())
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 8);
-
-  // Calculate watching streak
-  const sortedWatched = [...watched].sort(
-    (a, b) => new Date(b.addedAt || 0).getTime() - new Date(a.addedAt || 0).getTime()
-  );
-
-  let currentStreak = 0;
-  let longestStreak = 0;
-  let tempStreak = 0;
-  let lastDate: Date | null = null;
-
-  sortedWatched.forEach((item) => {
-    const itemDate = new Date(item.addedAt || 0);
-    itemDate.setHours(0, 0, 0, 0);
-
-    if (!lastDate) {
-      tempStreak = 1;
-    } else {
-      const dayDiff = Math.floor((lastDate.getTime() - itemDate.getTime()) / (1000 * 60 * 60 * 24));
-      if (dayDiff === 1) {
-        tempStreak++;
-      } else if (dayDiff > 1) {
-        longestStreak = Math.max(longestStreak, tempStreak);
-        tempStreak = 1;
-      }
-    }
-
-    lastDate = itemDate;
-  });
-
-  longestStreak = Math.max(longestStreak, tempStreak);
-
-  // Check if watching recently for current streak
-  if (sortedWatched.length > 0) {
-    const mostRecent = new Date(sortedWatched[0].addedAt || 0);
-    const today = new Date();
-    const daysSinceLastWatch = Math.floor((today.getTime() - mostRecent.getTime()) / (1000 * 60 * 60 * 24));
-    if (daysSinceLastWatch <= 1) {
-      currentStreak = tempStreak;
-    }
-  }
+  const totalWatched = filteredMedia.length;
+  const averageHours = totalWatched > 0 ? totalHours / totalWatched : 0;
 
   return (
     <div className="ct-page-shell min-h-screen">
-      <div className="page-container w-full max-w-6xl space-y-10 pt-20 pb-24 md:pb-10">
-        <div className="ct-panel-strong relative flex flex-col items-center justify-center py-10 text-center">
-          <Clock className="mb-4 h-12 w-12 text-primary drop-shadow-lg" />
-          <p className="ct-kicker mb-3">Annual Watching Snapshot</p>
-          <div className="mb-2 text-6xl font-extrabold tracking-tight text-foreground drop-shadow-xl md:text-7xl">
-            {Math.round(totalHours)}
-            <span className="align-super text-2xl font-bold text-primary">h</span>
-          </div>
-          <div className="mb-1 text-lg font-medium text-foreground md:text-xl">
-            {t("stats.hoursWatched", "Hours Watched")}
-          </div>
-          <div className="text-sm text-muted-foreground">
-            {t("stats.daysTotal", "{{count}} days total", {
-              count: Math.round(totalHours / 24),
-            })}
-          </div>
-
-          {/* Radial binge-goal gauge */}
-          <div className="mt-8 border-t border-white/8 pt-6 w-full flex justify-center">
-            <RadialProgressGauge
-              value={totalHours}
-              goal={bingeGoal}
-              onGoalChange={setBingeGoal}
-            />
-          </div>
-        </div>
-
-  return (
-    <>
       <SEO
         title="Enhanced Stats — CineTrekker"
-        description="View detailed statistics about your watching habits"
+        description="View detailed statistics about your watching habits."
         canonical="https://cinetrekker.vercel.app/stats"
       />
-      <div className="page-container pt-20 pb-24 md:pb-0">
-        <h1 className="section-title">Your Stats</h1>
 
-        {/* Overview Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <GlassStatCard
-            icon={Film}
-            label="Total Watched"
-            value={watched.length}
-            description={`${totalMovies} movies, ${totalTV} shows`}
-            variant="primary"
-            size="md"
-            delay={0}
-          />
+      <div className="page-container w-full max-w-6xl space-y-8 pb-24 pt-20 md:pb-10">
+        <header className="ct-panel-strong space-y-5 p-6 md:p-8">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-2">
+              <p className="ct-kicker">{t("stats.titleKicker", "Annual Watching Snapshot")}</p>
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-5xl">
+                {t("stats.title", "Your Stats")}
+              </h1>
+              <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
+                {t(
+                  "stats.subtitle",
+                  "A quick read on what you watch, how long you spend, and which genres dominate your history.",
+                )}
+              </p>
+            </div>
 
-          <GlassStatCard
-            icon={Clock}
-            label="Hours Watched"
-            value={`${Math.round(totalHours)}h`}
-            description={`${Math.round(totalHours / 24)} days total`}
-            variant="success"
-            size="md"
-            delay={0.1}
-          />
-
-          <GlassStatCard
-            icon={Star}
-            label="Average Rating"
-            value={avgRating.toFixed(1)}
-            description="out of 10"
-            variant="warning"
-            size="md"
-            delay={0.2}
-          />
-
-          <GlassStatCard
-            icon={Flame}
-            label="Current Streak"
-            value={`${currentStreak} days`}
-            description={`Longest: ${longestStreak} days`}
-            variant="danger"
-            size="md"
-            delay={0.3}
-          />
-        </div>
-
-        {/* Genre Breakdown */}
-        {genreStats.length > 0 && (
-          <Suspense
-            fallback={
-              <div className="grid gap-8 md:grid-cols-2">
-                <Card className="ct-panel">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-bold text-foreground">
-                      {t("stats.genreDistribution", "Genre Distribution")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[240px] animate-pulse rounded-lg bg-white/5 md:h-[300px]" />
-                  </CardContent>
-                </Card>
-                <Card className="ct-panel">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-bold text-foreground">
-                      {t("stats.hoursByGenre", "Hours by Genre")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[240px] animate-pulse rounded-lg bg-white/5 md:h-[300px]" />
-                  </CardContent>
-                </Card>
+            <div className="flex flex-col items-center gap-3 rounded-3xl border border-border/60 bg-card/60 p-4">
+              <Clock className="h-10 w-10 text-primary" />
+              <div className="text-center">
+                <div className="text-5xl font-extrabold tracking-tight text-foreground md:text-6xl">
+                  {Math.round(totalHours)}
+                  <span className="align-super text-2xl font-bold text-primary">h</span>
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {t("stats.hoursWatched", "Hours Watched")}
+                </p>
               </div>
-            }
-          >
-            <EnhancedStatsCharts
-              genreStats={genreStats}
-              isMobile={isMobile}
-              colors={CINEMATIC_CHART_COLORS}
-              labels={{
-                genreDistribution: t("stats.genreDistribution", "Genre Distribution"),
-                hoursByGenre: t("stats.hoursByGenre", "Hours by Genre"),
-              }}
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <GlassStatCard
+              icon={Film}
+              label={t("stats.totalMovies", "Movies")}
+              value={totalMovies}
+              description={t("stats.moviesDescription", "{{count}} movie entries", {
+                count: totalMovies,
+              })}
+              variant="primary"
+              size="md"
+              delay={0}
             />
-          </Suspense>
-        )}
+            <GlassStatCard
+              icon={Tv}
+              label={t("stats.totalTV", "TV Shows")}
+              value={totalTV}
+              description={t("stats.tvDescription", "{{count}} TV entries", {
+                count: totalTV,
+              })}
+              variant="success"
+              size="md"
+              delay={0.05}
+            />
+            <GlassStatCard
+              icon={Clock}
+              label={t("stats.totalEpisodes", "Episodes")}
+              value={totalEpisodes}
+              description={t("stats.episodesDescription", "Across the filtered library")}
+              variant="warning"
+              size="md"
+              delay={0.1}
+            />
+            <GlassStatCard
+              icon={Trophy}
+              label={t("stats.avgRuntime", "Avg. Hours")}
+              value={averageHours.toFixed(1)}
+              description={t("stats.avgRuntimeDescription", "Per watched title")}
+              variant="danger"
+              size="md"
+              delay={0.15}
+            />
+          </div>
+
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
+            <FilterCard
+              label={t("stats.filters.year", "Year")}
+              value={selectedYear === "all" ? "all" : String(selectedYear)}
+              onValueChange={(value) => setSelectedYear(value === "all" ? "all" : Number(value))}
+              items={yearOptions}
+            />
+            <FilterCard
+              label={t("stats.filters.type", "Type")}
+              value={selectedType}
+              onValueChange={(value) => setSelectedType(value as MediaTypeFilter)}
+              items={typeOptions}
+            />
+            <FilterCard
+              label={t("stats.filters.language", "Language")}
+              value={selectedLang}
+              onValueChange={setSelectedLang}
+              items={languageOptions}
+            />
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+            <div className="rounded-3xl border border-border/60 bg-card/50 p-5">
+              <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    {t("stats.filteredCount", "Filtered library")}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("stats.filteredCountDescription", "{{count}} titles visible", {
+                      count: totalWatched,
+                    })}
+                  </p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {t("stats.totalHours", "{{count}} hours total", {
+                    count: Math.round(totalHours),
+                  })}
+                </p>
+              </div>
+              <div className="h-px bg-border/70" />
+              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                {t(
+                  "stats.filterHint",
+                  "These controls only affect the analysis below, not the underlying watch history.",
+                )}
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-border/60 bg-card/50 p-5">
+              <RadialProgressGauge
+                value={totalHours}
+                goal={bingeGoal}
+                onGoalChange={setBingeGoal}
+              />
+            </div>
+          </div>
+        </header>
+
+        <section className="space-y-4">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+              {t("stats.genreDistribution", "Genre Distribution")}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {t(
+                "stats.genreDistributionDesc",
+                "Lazy-loaded charts keep the page responsive while the heavier visualization code loads only when needed.",
+              )}
+            </p>
+          </div>
+
+          {mediaLoading ? (
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card className="ct-panel">
+                <CardHeader>
+                  <CardTitle className="text-lg font-bold text-foreground">
+                    {t("stats.genreDistribution", "Genre Distribution")}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[240px] animate-pulse rounded-lg bg-white/5 md:h-[300px]" />
+                </CardContent>
+              </Card>
+              <Card className="ct-panel">
+                <CardHeader>
+                  <CardTitle className="text-lg font-bold text-foreground">
+                    {t("stats.hoursByGenre", "Hours by Genre")}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[240px] animate-pulse rounded-lg bg-white/5 md:h-[300px]" />
+                </CardContent>
+              </Card>
+            </div>
+          ) : genreStats.length > 0 ? (
+            <Suspense
+              fallback={
+                <div className="grid gap-6 md:grid-cols-2">
+                  <Card className="ct-panel">
+                    <CardHeader>
+                      <CardTitle className="text-lg font-bold text-foreground">
+                        {t("stats.genreDistribution", "Genre Distribution")}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-[240px] animate-pulse rounded-lg bg-white/5 md:h-[300px]" />
+                    </CardContent>
+                  </Card>
+                  <Card className="ct-panel">
+                    <CardHeader>
+                      <CardTitle className="text-lg font-bold text-foreground">
+                        {t("stats.hoursByGenre", "Hours by Genre")}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-[240px] animate-pulse rounded-lg bg-white/5 md:h-[300px]" />
+                    </CardContent>
+                  </Card>
+                </div>
+              }
+            >
+              <EnhancedStatsCharts
+                genreStats={genreStats}
+                isMobile={isMobile}
+                colors={CINEMATIC_CHART_COLORS}
+                labels={{
+                  genreDistribution: t("stats.genreDistribution", "Genre Distribution"),
+                  hoursByGenre: t("stats.hoursByGenre", "Hours by Genre"),
+                }}
+              />
+            </Suspense>
+          ) : (
+            <Card className="ct-panel">
+              <CardContent className="py-12 text-center text-sm text-muted-foreground">
+                {t(
+                  "stats.noGenreData",
+                  "Add more watched titles with genre metadata to unlock the breakdown.",
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </section>
       </div>
-    </>
+    </div>
   );
 }
