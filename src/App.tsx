@@ -2,31 +2,72 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
-import { Routes, Route, useLocation } from "react-router-dom";
-import { Loader2 } from 'lucide-react';
-import { lazy, Suspense, useEffect, useState } from 'react';
-import { AuthProvider } from "@/contexts/auth-context";
-import { UserListsProvider } from "@/contexts/user-lists-context";
-import { ThemeProvider } from "@/contexts/theme-context";
-import KeyboardShortcuts from '@/components/KeyboardShortcuts';
-import ScrollToTop from '@/components/ScrollToTop';
-import { UnifiedNav } from "@/components/UnifiedNav";
-import { Footer } from "@/components/Footer";
-import { BottomNav } from "@/components/BottomNav";
+import {
+  Routes,
+  Route,
+  useNavigate,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { Loader2 } from "lucide-react";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { UserListsProvider } from "@/contexts/UserListsContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import { ContentPolicyProvider } from "@/contexts/content-policy-context";
+import ScrollToTop from "@/components/ScrollToTop";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { GlobalLoader } from "@/components/GlobalLoader";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
-import SEO from '@/components/SEO';
-import { websiteJsonLd } from '@/lib/schema';
-import { siteMetadata } from '@/lib/metadata';
-import Index from "./pages/Index";
+import SEO from "@/components/SEO";
+import { websiteJsonLd } from "@/lib/schema";
+import { siteMetadata } from "@/lib/metadata";
+import { applyAccessibilityPreferencesToRoot } from "@/lib/accessibility-preferences";
+import { useCookieConsent } from "@/hooks/useCookieConsent";
+import { trackEngagementEvent } from "@/lib/engagement";
+import { UnifiedNav } from "@/components/UnifiedNav";
+import { updateAndGetStreak } from "@/lib/streak";
+const KeyboardShortcuts = lazy(() => import("@/components/KeyboardShortcuts"));
+const CommandPalette = lazy(() => import("@/components/CommandPalette"));
+const Index = lazy(() => import("./pages/Index"));
+const GlobalLoader = lazy(() =>
+  import("@/components/GlobalLoader").then((mod) => ({
+    default: mod.GlobalLoader,
+  })),
+);
+const FollowNotificationMonitor = lazy(
+  () =>
+    import("@/components/FollowNotificationMonitor").then((mod) => ({
+      default: mod.FollowNotificationMonitor,
+    })),
+);
+const Footer = lazy(() =>
+  import("@/components/Footer").then((mod) => ({ default: mod.Footer })),
+);
+const MobileBottomNav = lazy(() =>
+  import("@/components/MobileBottomNav").then((mod) => ({
+    default: mod.MobileBottomNav,
+  })),
+);
+const CookieConsent = lazy(() =>
+  import("@/components/CookieConsent").then((mod) => ({
+    default: mod.CookieConsent,
+  })),
+);
+const GuestSyncStickyBar = lazy(() =>
+  import("@/components/GuestSyncStickyBar").then((mod) => ({
+    default: mod.GuestSyncStickyBar,
+  })),
+);
 
 const Auth = lazy(() => import("./pages/Auth"));
 const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
+const Logout = lazy(() => import("./pages/Logout"));
 const TitleStatus = lazy(() => import("./pages/TitleStatus"));
 
 const Search = lazy(() => import("./pages/Search"));
@@ -54,16 +95,47 @@ const Collections = lazy(() => import("./pages/Collections"));
 const PrintWatchlist = lazy(() => import("./pages/PrintWatchlist"));
 const AwardWinners = lazy(() => import("./pages/AwardWinners"));
 const YearInReview = lazy(() => import("./pages/YearInReview"));
-const WatchHistory = lazy(() => import("./pages/WatchHistory"));
-const AccessibilitySettings = lazy(() => import("./pages/AccessibilitySettings"));
+const isVercelHost =
+  typeof window !== "undefined" &&
+  /(?:\.|^)vercel\.app$/i.test(window.location.hostname);
 const shouldLoadVercelAnalytics =
-  import.meta.env.PROD ||
-  import.meta.env.VITE_ENABLE_VERCEL_ANALYTICS === "true";
-const Analytics = shouldLoadVercelAnalytics
-  ? lazy(() =>
-      import("@vercel/analytics/react").then((mod) => ({ default: mod.Analytics })),
-    )
-  : null;
+  import.meta.env.VITE_ENABLE_VERCEL_ANALYTICS === "true" ||
+  (import.meta.env.PROD && isVercelHost);
+
+// Hoisted to module scope so it's not recreated on every App render
+// (App re-renders on every route change due to useLocation).
+const REFRESHABLE_QUERY_KEYS = new Set([
+  "details",
+  "trending",
+  "trending-movies",
+  "trending-tv",
+  "popular",
+  "top-rated",
+  "nowPlaying",
+  "airingToday",
+  "videos",
+  "search",
+  "search-dropdown",
+  "search-overlay",
+  "genres",
+  "genre-media",
+  "watch-providers",
+  "watchProviders",
+  "tv-details",
+  "tv-seasons",
+  "season-details",
+  "home-critical",
+  "followed-titles-details",
+  "print-watchlist",
+  "recommendations",
+  "continue-watching",
+  "new-episodes",
+]);
+const Analytics = lazy(() =>
+  import("@vercel/analytics/react").then((mod) => ({
+    default: mod.Analytics,
+  })),
+);
 
 function NetworkMonitor() {
   useNetworkStatus();
@@ -81,47 +153,341 @@ function RouteSpinner() {
 
 function AnimatedRoutes() {
   const location = useLocation();
-  
+
+  // IMPORTANT: Do NOT add key={location.pathname} here.
+  // Using a key causes React to unmount and remount the ENTIRE page tree on
+  // every navigation — destroying all query cache subscriptions, component
+  // state, and scroll positions, causing a full re-render waterfall.
   return (
-    <div key={location.pathname} className="animate-fade-in">
-      <Routes location={location}>
-          <Route path="/" element={<Suspense fallback={<RouteSpinner />}><Index /></Suspense>} />
-          <Route path="/search" element={<Suspense fallback={<RouteSpinner />}><Search /></Suspense>} />
-          <Route path="/movie/:id" element={<Suspense fallback={<RouteSpinner />}><Details /></Suspense>} />
-          <Route path="/tv/:id" element={<Suspense fallback={<RouteSpinner />}><Details /></Suspense>} />
-          <Route path="/person/:id" element={<Suspense fallback={<RouteSpinner />}><Person /></Suspense>} />
-          <Route path="/privacy" element={<Suspense fallback={<RouteSpinner />}><Privacy /></Suspense>} />
-          <Route path="/about" element={<Suspense fallback={<RouteSpinner />}><About /></Suspense>} />
-          <Route path="/feedback" element={<Suspense fallback={<RouteSpinner />}><Feedback /></Suspense>} />
-          <Route path="/terms" element={<Suspense fallback={<RouteSpinner />}><Terms /></Suspense>} />
-          <Route path="/cookies" element={<Suspense fallback={<RouteSpinner />}><Cookies /></Suspense>} />
-          <Route path="/auth" element={<Suspense fallback={<RouteSpinner />}><Auth /></Suspense>} />
-          <Route path="/login" element={<Suspense fallback={<RouteSpinner />}><Login /></Suspense>} />
-          <Route path="/signup" element={<Suspense fallback={<RouteSpinner />}><Signup /></Suspense>} />
-          <Route path="/auth/callback" element={<Suspense fallback={<RouteSpinner />}><AuthCallback /></Suspense>} />
-          
-          <Route path="/profile" element={<ProtectedRoute><Suspense fallback={<RouteSpinner />}><Profile /></Suspense></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><Suspense fallback={<RouteSpinner />}><Settings /></Suspense></ProtectedRoute>} />
-          <Route path="/watchlist" element={<ProtectedRoute><Suspense fallback={<RouteSpinner />}><Watchlist /></Suspense></ProtectedRoute>} />
-          <Route path="/watched" element={<ProtectedRoute><Suspense fallback={<RouteSpinner />}><Watched /></Suspense></ProtectedRoute>} />
-          <Route path="/following" element={<ProtectedRoute><Suspense fallback={<RouteSpinner />}><Following /></Suspense></ProtectedRoute>} />
-          <Route path="/recommendations" element={<ProtectedRoute><Suspense fallback={<RouteSpinner />}><Recommendations /></Suspense></ProtectedRoute>} />
-          <Route path="/calendar" element={<ProtectedRoute><Suspense fallback={<RouteSpinner />}><Calendar /></Suspense></ProtectedRoute>} />
-          <Route path="/stats" element={<ProtectedRoute><Suspense fallback={<RouteSpinner />}><Stats /></Suspense></ProtectedRoute>} />
-          <Route path="/enhanced-stats" element={<ProtectedRoute><Suspense fallback={<RouteSpinner />}><EnhancedStats /></Suspense></ProtectedRoute>} />
-          <Route path="/achievements" element={<ProtectedRoute><Suspense fallback={<RouteSpinner />}><Achievements /></Suspense></ProtectedRoute>} />
-          <Route path="/print-watchlist" element={<ProtectedRoute><Suspense fallback={<RouteSpinner />}><PrintWatchlist /></Suspense></ProtectedRoute>} />
-          
-          <Route path="/genres" element={<Suspense fallback={<RouteSpinner />}><GenreBrowser /></Suspense>} />
-          <Route path="/decades" element={<Suspense fallback={<RouteSpinner />}><DecadeExplorer /></Suspense>} />
-          <Route path="/advanced-search" element={<Suspense fallback={<RouteSpinner />}><AdvancedSearch /></Suspense>} />
-          <Route path="/collections" element={<Suspense fallback={<RouteSpinner />}><Collections /></Suspense>} />
-          <Route path="/awards" element={<Suspense fallback={<RouteSpinner />}><AwardWinners /></Suspense>} />
-          <Route path="/year-in-review" element={<ProtectedRoute><Suspense fallback={<RouteSpinner />}><YearInReview /></Suspense></ProtectedRoute>} />
-          <Route path="/watch-history" element={<ProtectedRoute><Suspense fallback={<RouteSpinner />}><WatchHistory /></Suspense></ProtectedRoute>} />
-          <Route path="/accessibility" element={<Suspense fallback={<RouteSpinner />}><AccessibilitySettings /></Suspense>} />
-          
-          <Route path="*" element={<Suspense fallback={<RouteSpinner />}><TitleStatus /></Suspense>} />
+    <div>
+        <Routes location={location}>
+          <Route
+            path="/"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Index />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/search"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Search />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/trending"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Trending />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/movie/:id/:slug?"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Details />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/tv/:id/:slug?"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Details />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/person/:id/:slug?"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Person />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/privacy"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Privacy />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/about"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <About />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/feedback"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Feedback />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/terms"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Terms />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/cookies"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Cookies />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/auth"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Auth />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Login />
+              </Suspense>
+            }
+          />
+          <Route path="/signin" element={<Navigate to="/login" replace />} />
+          <Route
+            path="/signup"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Signup />
+              </Suspense>
+            }
+          />
+          <Route path="/register" element={<Navigate to="/signup" replace />} />
+          <Route
+            path="/logout"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Logout />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/auth/callback"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <AuthCallback />
+              </Suspense>
+            }
+          />
+
+          <Route
+            path="/discover"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Discover />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Profile />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Settings />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/watchlist"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Watchlist />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          {/*
+           * /watched is intentionally public — guest users can mark titles as
+           * watched locally (stored in localStorage) before creating an account.
+           * Authenticated users get their server-synced history. Both cases
+           * are handled transparently by useUserLists / useWatchedFilters.
+           */}
+          <Route
+            path="/watched"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Watched />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/following"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Following />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Notifications />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/recommendations"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Recommendations />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/calendar"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Calendar />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/upcoming"
+            element={<Navigate to="/calendar" replace />}
+          />
+
+          <Route
+            path="/movies"
+            element={<Navigate to="/search?type=movie&sort=popularity.desc" replace />}
+          />
+
+          <Route
+            path="/tv"
+            element={<Navigate to="/search?type=tv&sort=popularity.desc" replace />}
+          />
+          <Route
+            path="/stats"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <EnhancedStats />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/enhanced-stats"
+            element={<Navigate to="/stats" replace />}
+          />
+          <Route
+            path="/achievements"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Achievements />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/print-watchlist"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <PrintWatchlist />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/genres"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <GenreBrowser />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/decades"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <DecadeExplorer />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/awards"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <AwardWinners />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/year-in-review"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <YearInReview />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/watch-history"
+            element={<Navigate to="/watched" replace />}
+          />
+          <Route
+            path="/accessibility"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <AccessibilitySettings />
+              </Suspense>
+            }
+          />
+
+          <Route
+            path="*"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <TitleStatus />
+              </Suspense>
+            }
+          />
         </Routes>
     </div>
   );
@@ -129,7 +495,55 @@ function AnimatedRoutes() {
 
 const App = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { t } = useTranslation();
+  const { hasAcceptedConsent } = useCookieConsent();
   const [enableEnhancements, setEnableEnhancements] = useState(false);
+  const [authPromptOpen, setAuthPromptOpen] = useState(false);
+  // Note: REFRESHABLE_QUERY_KEYS is defined at module scope — not inside the
+  // component — so it is not re-created on every render.
+
+  useEffect(() => {
+    applyAccessibilityPreferencesToRoot();
+    try {
+      updateAndGetStreak();
+    } catch {
+      // Ignore local storage errors
+    }
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key && !event.key.startsWith("cinetrekker_")) return;
+      applyAccessibilityPreferencesToRoot();
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
+  useEffect(() => {
+    const openAuthPrompt = () => setAuthPromptOpen(true);
+    window.addEventListener(
+      "cinetrekker:auth-required",
+      openAuthPrompt as EventListener,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "cinetrekker:auth-required",
+        openAuthPrompt as EventListener,
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleSignOut = () => {
+      queryClient.clear();
+    };
+
+    window.addEventListener("cinetrekker:sign-out", handleSignOut);
+    return () => window.removeEventListener("cinetrekker:sign-out", handleSignOut);
+  }, [queryClient]);
 
   useEffect(() => {
     let idleId: number | null = null;
@@ -138,64 +552,180 @@ const App = () => {
     const enable = () => setEnableEnhancements(true);
 
     if (typeof window !== "undefined") {
-      const g = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number };
-      if ("requestIdleCallback" in g) {
-        idleId = g.requestIdleCallback!(enable, { timeout: 1500 });
+      const w = window as any;
+      if ("requestIdleCallback" in w) {
+        idleId = w.requestIdleCallback(enable, { timeout: 1500 });
       } else {
-        frameId = window.requestAnimationFrame(enable);
+        frameId = w.requestAnimationFrame(enable);
       }
     }
 
     return () => {
-      if (idleId !== null && "cancelIdleCallback" in window) {
-        window.cancelIdleCallback(idleId);
+      const w = window as any;
+      if (idleId !== null && "cancelIdleCallback" in w) {
+        w.cancelIdleCallback(idleId);
       }
-      if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
+      if (frameId !== null) {
+        w.cancelAnimationFrame(frameId);
       }
     };
   }, []);
 
-  const { handlers, containerStyle } = usePullToRefresh({
-    onRefresh: async () => { await queryClient.invalidateQueries(); },
+  useEffect(() => {
+    trackEngagementEvent("page_view", {
+      path: location.pathname,
+      hasQuery: location.search.length > 0,
+    });
+  }, [location.pathname, location.search]);
+
+  const { handlers, containerRef } = usePullToRefresh({
+    onRefresh: async () => {
+      await queryClient.invalidateQueries({
+        predicate: (query) => {
+          const head = query.queryKey[0];
+          const key = typeof head === "string" ? head : "";
+          return REFRESHABLE_QUERY_KEYS.has(key);
+        },
+      });
+    },
     threshold: 100,
     maxPull: 150,
   });
+
+  const handleBoundaryRetry = async () => {
+    await queryClient.invalidateQueries({
+      predicate: (query) => {
+        const head = query.queryKey[0];
+        const key = typeof head === "string" ? head : "";
+        return REFRESHABLE_QUERY_KEYS.has(key);
+      },
+    });
+
+    await queryClient.refetchQueries({
+      type: "active",
+      predicate: (query) => {
+        const head = query.queryKey[0];
+        const key = typeof head === "string" ? head : "";
+        return REFRESHABLE_QUERY_KEYS.has(key);
+      },
+    });
+  };
 
   return (
     <ThemeProvider>
       <TooltipProvider>
         <AuthProvider>
-          <UserListsProvider>
-            <ErrorBoundary>
-              <Toaster />
-              {enableEnhancements && <KeyboardShortcuts />}
-              <Sonner position="bottom-right" />
-              <SEO
-                jsonLd={websiteJsonLd({
-                  name: siteMetadata.siteName,
-                  url: siteMetadata.canonical,
-                  description: siteMetadata.description,
-                })}
-                title={siteMetadata.title}
-                description={siteMetadata.description}
-                canonical={siteMetadata.canonical}
-              />
-              {enableEnhancements && <GlobalLoader />}
-              {enableEnhancements && <NetworkMonitor />}
-              <div className="flex min-h-[100dvh] flex-col">
-                <UnifiedNav />
-                <ScrollToTop />
-                <main id="main" tabIndex={-1} className="flex-1 pb-0" style={containerStyle} {...handlers}>
-                  <ErrorBoundary>
-                    <AnimatedRoutes />
-                  </ErrorBoundary>
-                </main>
-                <BottomNav />
-                <Footer />
-              </div>
-            </ErrorBoundary>
-          </UserListsProvider>
+          <ContentPolicyProvider>
+            <UserListsProvider>
+              <ErrorBoundary onRetry={handleBoundaryRetry}>
+                {enableEnhancements && (
+                  <Suspense fallback={null}>
+                    <KeyboardShortcuts />
+                  </Suspense>
+                )}
+                {enableEnhancements && (
+                  <Suspense fallback={null}>
+                    <CommandPalette />
+                  </Suspense>
+                )}
+                <Sonner position="bottom-right" />
+                <SEO
+                  jsonLd={websiteJsonLd({
+                    name: siteMetadata.siteName,
+                    url: siteMetadata.canonical,
+                    description: siteMetadata.description,
+                  })}
+                  title={siteMetadata.title}
+                  description={siteMetadata.description}
+                  keywords={siteMetadata.keywords}
+                />
+                {enableEnhancements && (
+                  <Suspense fallback={null}>
+                    <GlobalLoader />
+                  </Suspense>
+                )}
+                {enableEnhancements && <NetworkMonitor />}
+                {enableEnhancements && (
+                  <Suspense fallback={null}>
+                    <FollowNotificationMonitor />
+                  </Suspense>
+                )}
+                <div className="ct-page-shell flex min-h-[100dvh] flex-col">
+                  <a
+                    href="#main"
+                    className="skip-link sr-only focus:not-sr-only px-4 py-2 bg-primary text-primary-foreground rounded-lg shadow-lg font-semibold border border-primary/20"
+                  >
+                    {t("nav.skipToContent", "Skip to content")}
+                  </a>
+                  <UnifiedNav />
+                  <ScrollToTop />
+                  <main
+                    id="main"
+                    tabIndex={-1}
+                    ref={containerRef}
+                    className={`flex-1 ${
+                      hasAcceptedConsent
+                        ? "pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] md:pb-10"
+                        : "pb-[max(10rem,var(--ct-cookie-consent-offset,10rem))] md:pb-10"
+                    }`}
+                    {...handlers}
+                  >
+                    <ErrorBoundary onRetry={handleBoundaryRetry}>
+                      <AnimatedRoutes />
+                    </ErrorBoundary>
+                  </main>
+                  <Suspense fallback={null}>
+                    <Footer />
+                  </Suspense>
+                  <Suspense fallback={null}>
+                    <MobileBottomNav />
+                  </Suspense>
+                </div>
+
+                <Dialog open={authPromptOpen} onOpenChange={setAuthPromptOpen}>
+                  <DialogContent className="max-w-sm border-border bg-card text-card-foreground">
+                    <DialogHeader>
+                      <DialogTitle>
+                        {t("authPrompt.title", "Create a free account to save your watchlist")}
+                      </DialogTitle>
+                      <DialogDescription className="text-muted-foreground">
+                        {t(
+                          "authPrompt.description",
+                          "Save titles, mark them watched, and keep your progress synced across devices.",
+                        )}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="mt-4 flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setAuthPromptOpen(false)}
+                      >
+                        {t("authPrompt.notNow", "Not now")}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setAuthPromptOpen(false);
+                          navigate("/login");
+                        }}
+                      >
+                        {t("nav.signIn", "Sign In")}
+                      </Button>
+                      <Button
+                        className="bg-primary text-primary-foreground hover:bg-primary/90"
+                        onClick={() => {
+                          setAuthPromptOpen(false);
+                          navigate("/signup");
+                        }}
+                      >
+                        {t("authPrompt.createAccount", "Create Account")}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </ErrorBoundary>
+            </UserListsProvider>
+          </ContentPolicyProvider>
         </AuthProvider>
       </TooltipProvider>
       {enableEnhancements && Analytics && (
@@ -203,6 +733,12 @@ const App = () => {
           <Analytics />
         </Suspense>
       )}
+      <Suspense fallback={null}>
+        <CookieConsent />
+      </Suspense>
+      <Suspense fallback={null}>
+        <GuestSyncStickyBar />
+      </Suspense>
     </ThemeProvider>
   );
 };

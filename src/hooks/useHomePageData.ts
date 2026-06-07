@@ -69,32 +69,15 @@ export function useHomePageData({
   const [discoverTab, setDiscoverTab] = useState<
     "trending-day" | "trending-week" | "new-releases"
   >("trending-day");
+
+  // Truly defer non-critical queries until after the critical fold paints.
+  // Without this, all 7 queries fire simultaneously on mount, flooding the
+  // network before the LCP backdrop image has had a chance to load.
   const [deferredEnabled, setDeferredEnabled] = useState(false);
-
   useEffect(() => {
-    setDeferredEnabled(false);
-
-    let frameId: number | undefined;
-    let idleId: number | undefined;
-
-    const enableDeferred = () => setDeferredEnabled(true);
-
-    const g = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number };
-    if (typeof window !== "undefined" && "requestIdleCallback" in g) {
-      idleId = g.requestIdleCallback!(enableDeferred, { timeout: 1200 });
-    } else {
-      frameId = window.requestAnimationFrame(enableDeferred);
-    }
-
-    return () => {
-      if (idleId !== undefined && "cancelIdleCallback" in window) {
-        window.cancelIdleCallback(idleId);
-      }
-      if (frameId !== undefined) {
-        window.cancelAnimationFrame(frameId);
-      }
-    };
-  }, [language]);
+    const id = window.setTimeout(() => setDeferredEnabled(true), 200);
+    return () => window.clearTimeout(id);
+  }, []);
 
   const moreInGenreQuery = useQuery({
     queryKey: ["more-in-genre", lastGenreId, language],
@@ -134,13 +117,17 @@ export function useHomePageData({
 
   const popularMoviesQuery = useQuery({
     queryKey: ["popular", "movie", language, includeAdult],
-    queryFn: () => getPopularMovies(1, language, includeAdult),
+    queryFn: async () => {
+      return getPopularMovies(1, language, includeAdult);
+    },
     enabled: deferredEnabled,
   });
 
   const popularTVQuery = useQuery({
     queryKey: ["popular", "tv", language, includeAdult],
-    queryFn: () => getPopularTV(1, language, includeAdult),
+    queryFn: async () => {
+      return getPopularTV(1, language, includeAdult);
+    },
     enabled: deferredEnabled,
   });
 
@@ -165,13 +152,17 @@ export function useHomePageData({
 
   const topRatedMoviesQuery = useQuery({
     queryKey: ["top-rated", "movie", language, includeAdult],
-    queryFn: () => getTopRatedMovies(1, language, includeAdult),
+    queryFn: async () => {
+      return getTopRatedMovies(1, language, includeAdult);
+    },
     enabled: deferredEnabled,
   });
 
   const topRatedTVQuery = useQuery({
     queryKey: ["top-rated", "tv", language, includeAdult],
-    queryFn: () => getTopRatedTV(1, language, includeAdult),
+    queryFn: async () => {
+      return getTopRatedTV(1, language, includeAdult);
+    },
     enabled: deferredEnabled,
   });
 

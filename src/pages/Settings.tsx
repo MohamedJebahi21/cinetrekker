@@ -56,12 +56,28 @@ export default function Settings() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
-  
-  const initialStateRef = useRef({
-    publicProfile: DEFAULT_SETTINGS.publicProfile,
-    showWatchlist: DEFAULT_SETTINGS.showWatchlist,
-    showStats: DEFAULT_SETTINGS.showStats,
-    allowRecommendations: DEFAULT_SETTINGS.allowRecommendations,
+  const [settingsLoadRetryCount, setSettingsLoadRetryCount] = useState(0);
+  const [settingsLoadTimedOut, setSettingsLoadTimedOut] = useState(false);
+  const [pulseRowId, setPulseRowId] = useState<string | null>(null);
+  const [isMobileSectionCollapse, setIsMobileSectionCollapse] = useState(false);
+  const [isExportingData, setIsExportingData] = useState(false);
+  const [isDeletingData, setIsDeletingData] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [confirmResetAccessibilityOpen, setConfirmResetAccessibilityOpen] =
+    useState(false);
+  const resetAccessibilityButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [fontSize, setFontSize] = useState<number>(
+    () => readAccessibilityPreferences().fontSize,
+  );
+  const [reduceMotion, setReduceMotion] = useState<boolean>(
+    () => readAccessibilityPreferences().reduceMotion,
+  );
+  const [mobileExpandedSections, setMobileExpandedSections] = useState({
+    account: true,
+    accessibility: true,
+    privacy: true,
+    contentSafety: true,
+    dataManagement: true,
   });
 
   const hasSettingsChanged = useCallback(() => {
@@ -165,7 +181,21 @@ export default function Settings() {
         subscription.unsubscribe();
       }
     };
-  }, [user?.id, profileKey, toast]);
+  }, [profileKey, settingsLoadRetryCount, text, toast, user?.id, withTimeout]);
+
+  useEffect(() => {
+    if (!isLoadingSettings) {
+      setSettingsLoadTimedOut(false);
+      return;
+    }
+
+    setSettingsLoadTimedOut(false);
+    const timeoutId = window.setTimeout(() => {
+      setSettingsLoadTimedOut(true);
+    }, 15000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [isLoadingSettings, settingsLoadRetryCount]);
 
   // Track unsaved changes - only when actual changes are made
   useEffect(() => {
@@ -245,7 +275,165 @@ export default function Settings() {
     });
   };
 
-  const currentLanguage = languages.find((lang) => lang.code === i18n.language) || languages[0];
+  const currentLanguage =
+    languages.find((lang) => lang.code === i18n.language) || languages[0];
+  const ageLabel = isAgeKnown
+    ? text("contentPolicy.verified", "Verified")
+    : text("contentPolicy.notSet", "Not set");
+  const familyFriendlyEnabled = maturityRating === SafetyLevel.STRICT;
+  const teenSafeEnabled =
+    maturityRating === SafetyLevel.STRICT ||
+    maturityRating === SafetyLevel.MODERATE;
+
+  const updateSafetyMode = async (nextLevel: SafetyLevel) => {
+    if (maturityRating === nextLevel) return;
+    triggerRowPulse("content-safety");
+    const { syncedRemotely } = await setMaturityRating(nextLevel);
+    toast({
+      title: syncedRemotely
+        ? text("contentPolicy.savedTitle", "Safety settings updated")
+        : text("contentPolicy.savedLocallyTitle", "Saved on this device"),
+      description: text(
+        syncedRemotely
+          ? "contentPolicy.savedDescription"
+          : "contentPolicy.savedLocallyDescription",
+        syncedRemotely
+          ? "Your content visibility preferences were saved right away."
+          : "Your safety preference is active now and will sync when the server is available.",
+      ),
+    });
+  };
+
+  const exportData = async () => {
+    setIsExportingData(true);
+
+    try {
+      const storedProfile = readStoredProfileData(localStorage.getItem(profileKey));
+      const remoteProfile = user?.id ? await profileService.getProfile(user.id) : null;
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        app: "CineTrekker",
+        version: "settings-export-v1",
+        account: user
+          ? {
+              userId: user.id,
+              email: user.email ?? null,
+            }
+          : {
+              userId: "guest",
+              email: null,
+            },
+        profile: remoteProfile ?? storedProfile,
+        settings,
+        contentSafety: {
+          maturityRating,
+          isAgeKnown,
+        },
+        watchlist,
+        watched,
+        hiddenRecommendations,
+      };
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `cinetrekker-account-export-${new Date().toISOString().split("T")[0]}.json`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: text("settings.exportReadyTitle", "Export ready"),
+        description: text(
+          "settings.exportReadyDesc",
+          "Your profile, settings, and list data were downloaded as JSON.",
+        ),
+      });
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      toast({
+        title: text("settings.exportFailedTitle", "Export failed"),
+        description: text(
+          "settings.exportFailedDesc",
+          "Could not generate your data export. Please try again.",
+        ),
+        variant: "destructive",
+      });
+    } finally {
+      setIsExportingData(false);
+    }
+  };
+
+  const clearLocalAccountData = useCallback(() => {
+    localStorage.removeItem(profileKey);
+    localStorage.removeItem(`cinetrekker_profile_favorites_${user?.id || "guest"}`);
+    localStorage.removeItem(
+      user?.id ? `${STORAGE_KEYS.hidden}_${user.id}` : STORAGE_KEYS.hidden,
+    );
+
+    clearGuestWatchlist();
+    clearGuestWatched();
+    localStorage.setItem(
+      user?.id ? `${STORAGE_KEYS.hidden}_${user.id}` : STORAGE_KEYS.hidden,
+      JSON.stringify([]),
+    );
+  }, [profileKey, user?.id]);
+
+  const deleteAccountData = async () => {
+    setIsDeletingData(true);
+
+    try {
+      clearLocalAccountData();
+
+      if (user?.id) {
+        const deleteRequests = await Promise.all([
+          supabase.from("user_watchlist").delete().eq("user_id", user.id),
+          supabase.from("user_watched").delete().eq("user_id", user.id),
+          supabase.from("profiles").delete().eq("user_id", user.id),
+        ]);
+
+        const deletionError = deleteRequests.find((result) => result.error)?.error;
+        if (deletionError) {
+          throw deletionError;
+        }
+
+        await supabase.storage.from("avatars").remove([`${user.id}/avatar.jpg`]);
+        await signOut();
+      }
+
+      toast({
+        title: text("settings.accountDeletedTitle", "Account data deleted"),
+        description: user?.id
+          ? text(
+              "settings.accountDeletedSignedInDesc",
+              "Your CineTrekker profile data was removed and you were signed out.",
+            )
+          : text(
+              "settings.accountDeletedGuestDesc",
+              "This device's CineTrekker data was cleared.",
+            ),
+      });
+
+      navigate(user?.id ? "/login" : "/");
+    } catch (error) {
+      console.error("Error deleting account data:", error);
+      toast({
+        title: text("settings.deletionFailedTitle", "Deletion failed"),
+        description: text(
+          "settings.deletionFailedDesc",
+          "We could not remove all account data. Please try again.",
+        ),
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeletingData(false);
+      setIsDeleteDialogOpen(false);
+    }
+  };
 
   return (
     <>
@@ -280,9 +468,27 @@ export default function Settings() {
           </Card>
         </motion.section>
 
-        {isLoadingSettings && (
+        {isLoadingSettings && !settingsLoadTimedOut && (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        )}
+
+        {isLoadingSettings && settingsLoadTimedOut && (
+          <div className="mx-auto max-w-md rounded-lg border border-border/60 bg-card/70 p-5 text-center">
+            <p className="text-sm text-muted-foreground">
+              {text(
+                "settings.loadTimeoutDesc",
+                "Loading settings is taking longer than expected.",
+              )}
+            </p>
+            <Button
+              type="button"
+              className="mt-4"
+              onClick={() => setSettingsLoadRetryCount((count) => count + 1)}
+            >
+              {text("common.retry", "Retry")}
+            </Button>
           </div>
         )}
 

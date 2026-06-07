@@ -67,7 +67,10 @@ const STREAMING_SERVICES = [
 ];
 
 const currentYear = new Date().getFullYear();
-const YEARS = Array.from({ length: 50 }, (_, i) => (currentYear - i).toString());
+const YEARS = Array.from({ length: 50 }, (_, i) =>
+  (currentYear - i).toString(),
+);
+
 
 type SearchSortOption =
   | 'popularity.desc'
@@ -135,7 +138,16 @@ type PagedMedia = {
 export default function Search() {
   const { t, i18n } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
-  
+  const fallbackSubmittedQueryRef = useRef(
+    (
+      location.state as
+        | {
+            submittedQuery?: string;
+          }
+        | undefined
+    )?.submittedQuery || ""
+  );
+
   // Initialize from URL params
   const initialQuery = searchParams.get('q') || '';
   const initialType = (searchParams.get('type') as MediaType) || 'all';
@@ -155,8 +167,63 @@ export default function Search() {
   const [languageFilter, setLanguageFilter] = useState<string>(initialLang);
   const [sortBy, setSortBy] = useState<SearchSortOption>(initialSort);
   const [runtimeFilter, setRuntimeFilter] = useState<string>(initialRuntime);
-  const [streamingFilter, setStreamingFilter] = useState<string>(initialStreaming);
-  
+  const [streamingFilters, setStreamingFilters] =
+    useState<string[]>(initialStreaming);
+  const normalizedLocationSearch = useMemo(
+    () => new URLSearchParams(location.search).toString(),
+    [location.search],
+  );
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const nextQuery =
+      params.get("q") ||
+      params.get("query") ||
+      "";
+    const nextType = (params.get("type") as MediaType) || "all";
+    const nextGenres = parseMultiValue(params.get("genre"));
+    const nextYear = params.get("year") || "";
+    const nextLanguages = parseMultiValue(params.get("lang"));
+    const nextSort = normalizeSortBy(
+      params.get("sort") || "popularity.desc",
+    );
+    const nextRuntime = params.get("runtime") || "";
+    const nextStreaming = parseMultiValue(params.get("streaming"));
+
+    if (nextQuery !== query) setQuery(nextQuery);
+    if (nextType !== mediaTypeFilter) setMediaTypeFilter(nextType);
+    if (nextGenres.join("|") !== genreFilters.join("|")) {
+      setGenreFilters(nextGenres);
+    }
+    if (nextYear !== yearFilter) setYearFilter(nextYear);
+    if (nextLanguages.join("|") !== languageFilters.join("|")) {
+      setLanguageFilters(nextLanguages);
+    }
+    if (nextSort !== sortBy) setSortBy(nextSort);
+    if (nextRuntime !== runtimeFilter) setRuntimeFilter(nextRuntime);
+    if (nextStreaming.join("|") !== streamingFilters.join("|")) {
+      setStreamingFilters(nextStreaming);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    location.search,
+  ]);
+
+  useEffect(() => {
+    const hasUrlQuery = Boolean(
+      searchParams.get("q") || searchParams.get("query"),
+    );
+    const fallbackQuery = fallbackSubmittedQueryRef.current.trim();
+
+    if (!hasUrlQuery && fallbackQuery) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.set("q", fallbackQuery);
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
+
+
   // Quick preview modal removed - navigation to details is used instead
   
   const language = i18n.language;
@@ -207,8 +274,9 @@ export default function Search() {
 
   // Text search query (infinite)
   const searchQuery = useInfiniteQuery({
-    queryKey: ['search', normalizedQuery, language],
-    queryFn: ({ pageParam = 1 }) => searchMulti(normalizedQuery, pageParam as number, language),
+    queryKey: ["search", normalizedQuery, language, includeAdult],
+    queryFn: ({ pageParam = 1, signal }) =>
+      searchMulti(normalizedQuery, pageParam as number, language, includeAdult, signal),
     enabled: Boolean(useSearchMode),
     retry: 1,
     initialPageParam: 1,
@@ -218,8 +286,20 @@ export default function Search() {
 
   // Discover query (combined movies + TV when needed)
   const discoverQuery = useInfiniteQuery<PagedMedia>({
-    queryKey: ['discover', mediaTypeFilter, effectiveGenres, yearFilter, languageFilter, sortBy, runtimeConfig?.gte, runtimeConfig?.lte, streamingFilter, language],
-    queryFn: async ({ pageParam = 1 }) => {
+    queryKey: [
+      "discover",
+      mediaTypeFilter,
+      genreFilters.join("|"),
+      yearFilter,
+      languageFilters.join("|"),
+      sortBy,
+      runtimeConfig?.gte,
+      runtimeConfig?.lte,
+      streamingFilters.join("|"),
+      language,
+      includeAdult,
+    ],
+    queryFn: async ({ pageParam = 1, signal }) => {
       const page = pageParam as number;
       const common = {
         with_genres: effectiveGenres,
@@ -230,9 +310,59 @@ export default function Search() {
         watch_region: streamingFilter ? 'US' : undefined,
       };
 
-      if (mediaTypeFilter === 'movie') {
-        const resp = await discoverMovies({
-          ...common,
+      const selectedLanguages = effectiveLanguages.length > 0 ? effectiveLanguages : [undefined];
+
+      const fetchMovieResults = async (selectedLanguage?: string) => {
+        const resp = await discoverMovies(
+          {
+            ...common,
+            page,
+            primary_release_year: yearFilter || undefined,
+            with_original_language: selectedLanguage,
+            sort_by: getDiscoverSort(sortBy, "movie"),
+            include_adult: includeAdult ? "true" : "false",
+          },
+          language,
+          signal
+        );
+        return {
+          totalPages: resp.total_pages,
+          results: resp.results.map((m) => ({
+            ...m,
+            media_type: "movie" as const,
+          })),
+        };
+      };
+
+      const fetchTVResults = async (selectedLanguage?: string) => {
+        const resp = await discoverTV(
+          {
+            ...common,
+            page,
+            first_air_date_year: yearFilter || undefined,
+            with_original_language: selectedLanguage,
+            sort_by: getDiscoverSort(sortBy, "tv"),
+            include_adult: includeAdult ? "true" : "false",
+          },
+          language,
+          signal
+        );
+        return {
+          totalPages: resp.total_pages,
+          results: resp.results.map((show) => ({
+            ...show,
+            media_type: "tv" as const,
+          })),
+        };
+      };
+
+      if (mediaTypeFilter === "movie") {
+        const movieResponses = await Promise.all(
+          selectedLanguages.map((selectedLanguage) =>
+            fetchMovieResults(selectedLanguage),
+          ),
+        );
+        return {
           page,
           primary_release_year: yearFilter || undefined,
           sort_by: getDiscoverSort(sortBy, 'movie'),
@@ -290,8 +420,9 @@ export default function Search() {
 
   // Trending for default view (infinite)
   const trendingQuery = useInfiniteQuery({
-    queryKey: ['trending', 'all', 'week', language],
-    queryFn: ({ pageParam = 1 }) => getTrending('all', 'week', language, pageParam as number),
+    queryKey: ["trending", "all", "week", language, includeAdult],
+    queryFn: ({ pageParam = 1, signal }) =>
+      getTrending("all", "week", language, pageParam as number, includeAdult, signal),
     enabled: Boolean(showTrending),
     initialPageParam: 1,
     getNextPageParam: (lastPage) =>

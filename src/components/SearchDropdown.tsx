@@ -1,13 +1,39 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
-import { Search, X, Film, Tv, User, ArrowRight } from 'lucide-react';
-import { searchMulti, getImageUrl, getMediaTitle, getMediaYear, getMediaType } from '@/services/tmdb';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
-import { useDebounce } from '@/hooks/useDebounce';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Search,
+  X,
+  Film,
+  Tv,
+  User,
+  ArrowRight,
+  Clock3,
+  Trash2,
+  Mic,
+  MicOff,
+} from "lucide-react";
+import {
+  searchMovies,
+  searchPeople,
+  searchTV,
+  getImageUrl,
+} from "@/services/tmdb";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { useDebounce } from "@/hooks/useDebounce";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Image } from "@/components/ui/Image";
+import { useContentPolicy } from "@/contexts/content-policy-context";
+import { applySafetyFilter, type SafetyMedia } from "@/lib/contentFilter";
+import {
+  addToSearchHistory,
+  clearSearchHistory,
+  getSearchHistory,
+  removeFromSearchHistory,
+  type SearchHistoryItem,
+} from "@/lib/searchHistory";
 
 // Skeleton for dropdown search results
 function SearchResultSkeleton() {
@@ -41,16 +67,66 @@ interface SearchDropdownProps {
   onNavigate?: () => void;
 }
 
+const PENDING_SEARCH_QUERY_KEY = "cinetrekker_pending_search_query";
+const MIN_SEARCH_LENGTH = 2;
+let searchDropdownInstanceCounter = 0;
+
+function normalizeSearchQuery(value: string): string {
+  return value.normalize("NFKC").trim().toLowerCase();
+}
+
 export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const [query, setQuery] = useState('');
-  const debouncedQuery = useDebounce(query, 500); // 500ms debounce for bot protection
+  const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounce(query, 350); // 350ms: feels instant, ~28% fewer requests vs 250ms
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const instanceIdRef = useRef(`search-dropdown-${++searchDropdownInstanceCounter}`);
+  const resultsListId = `${instanceIdRef.current}-results`;
+  const optionIdPrefix = `${instanceIdRef.current}-option`;
   const language = i18n.language;
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<{ stop: () => void } | null>(null);
+  const speechSupported = typeof window !== "undefined" &&
+    ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
+
+  const startVoiceSearch = useCallback(() => {
+    if (!speechSupported) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SpeechRecognitionCtor: new () => any =
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).SpeechRecognition ||
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionCtor) return;
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = language;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognitionRef.current = recognition as { stop: () => void };
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onresult = (event: any) => {
+      const transcript: string = event.results?.[0]?.[0]?.transcript ?? "";
+      if (transcript.trim().length >= MIN_SEARCH_LENGTH) {
+        setQuery(transcript.trim());
+        setIsOpen(true);
+      }
+    };
+    recognition.start();
+  }, [speechSupported, isListening, language]);
 
   // Keyboard shortcut: "/" to focus search
   useEffect(() => {
@@ -79,17 +155,118 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const { data: searchResults, isLoading, isFetching } = useQuery({
-    queryKey: ['search-dropdown', debouncedQuery, language],
-    queryFn: () => searchMulti(debouncedQuery, 1, language),
-    enabled: debouncedQuery.length >= 2,
+  const {
+    data: searchResults,
+    isLoading,
+    isFetching,
+  } = useQuery({
+    queryKey: ["search-dropdown", debouncedQuery, language, includeAdult],
+    queryFn: async ({ signal }) => {
+      const q = normalizeSearchQuery(debouncedQuery);
+      if (!q) return [] as SearchResult[];
+
+      // Pass the abort signal to all three calls so that if the user types
+      // another character before these complete, in-flight requests are
+      // cancelled immediately and don't waste bandwidth or overwrite results.
+      const [movieResponse, tvResponse, peopleResponse] = await Promise.all([
+        searchMovies(q, 1, language, includeAdult, signal),
+        searchTV(q, 1, language, includeAdult, signal),
+        searchPeople(q, 1, language, signal),
+      ]);
+
+      const movies = ((movieResponse?.results || []) as SearchResult[])
+        .slice(0, 4)
+        .map((item) => ({ ...item, media_type: "movie" as const }));
+      const shows = ((tvResponse?.results || []) as SearchResult[])
+        .slice(0, 4)
+        .map((item) => ({ ...item, media_type: "tv" as const }));
+
+      const peopleRaw = (peopleResponse?.results || []) as SearchResult[];
+      const peopleWithRole = peopleRaw
+        .map((person) => {
+          const department = (
+            (person as { known_for_department?: string })
+              .known_for_department || ""
+          ).toLowerCase();
+          let personRole: "actor" | "director" | undefined;
+
+          if (department.includes("direct")) {
+            personRole = "director";
+          } else if (department.includes("actor")) {
+            personRole = "actor";
+          }
+
+          return personRole
+            ? {
+                ...person,
+                media_type: "person" as const,
+                person_role: personRole,
+              }
+            : null;
+        })
+        .filter(Boolean) as SearchResult[];
+
+      const actors = peopleWithRole
+        .filter((p) => p.person_role === "actor")
+        .slice(0, 3);
+      const directors = peopleWithRole
+        .filter((p) => p.person_role === "director")
+        .slice(0, 3);
+
+      const merged = [...movies, ...shows, ...actors, ...directors];
+      const deduped = merged.filter(
+        (item, index, arr) =>
+          arr.findIndex(
+            (x) => x.media_type === item.media_type && x.id === item.id,
+          ) === index,
+      );
+
+      return deduped.slice(0, 8);
+    },
+    enabled: normalizeSearchQuery(debouncedQuery).length >= MIN_SEARCH_LENGTH,
     staleTime: 30000,
   });
 
-  // Filter and limit results (top 5)
-  const results: SearchResult[] = ((searchResults?.results as unknown as SearchResult[])?.filter(
-    (item) => item.media_type === 'movie' || item.media_type === 'tv' || item.media_type === 'person'
-  ) || []).slice(0, 5);
+  const results: SearchResult[] = applySafetyFilter(
+    (searchResults || []) as unknown as SafetyMedia[],
+    strictFiltering,
+    moderateFiltering,
+  ) as unknown as SearchResult[];
+  const activeOptionId =
+    selectedIndex >= 0 && results[selectedIndex]
+      ? `${optionIdPrefix}-${results[selectedIndex].media_type}-${results[selectedIndex].id}`
+      : undefined;
+
+  const shouldShowRecentSearches =
+    isOpen && query.trim().length === 0 && recentSearches.length > 0;
+
+  const submitSearch = useCallback(
+    (nextQuery: string) => {
+      const normalizedQuery = normalizeSearchQuery(nextQuery);
+      if (normalizedQuery.length < MIN_SEARCH_LENGTH) {
+        setFeedbackMessage(
+          t(
+            "search.minLengthError",
+            "Type at least 2 characters to search.",
+          ),
+        );
+        setIsOpen(true);
+        return false;
+      }
+
+      setFeedbackMessage(null);
+      addToSearchHistory(normalizedQuery);
+      refreshRecentSearches();
+      sessionStorage.setItem(PENDING_SEARCH_QUERY_KEY, normalizedQuery);
+      navigate(`/search?q=${encodeURIComponent(normalizedQuery)}`, {
+        state: { submittedQuery: normalizedQuery },
+      });
+      setIsOpen(false);
+      onNavigate?.();
+      return true;
+    },
+    [navigate, onNavigate, refreshRecentSearches, t],
+  );
 
   const getItemRoute = (item: SearchResult): string => {
     if (item.media_type === 'person') return `/person/${item.id}`;
@@ -184,12 +361,29 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
           aria-expanded={isOpen}
           aria-haspopup="listbox"
         />
-        
-        {/* Keyboard hint */}
-        {!query && (
-          <kbd className="absolute right-10 top-1/2 -translate-y-1/2 hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border border-border/50 bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+
+        {/* Keyboard hint — hide when query is set or voice is active */}
+        {!query && !isListening && (
+          <kbd className="absolute right-10 top-1/2 -translate-y-1/2 hidden h-5 select-none items-center gap-1 rounded border border-border/50 bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
             /
           </kbd>
+        )}
+
+        {/* Voice search button */}
+        {speechSupported && !query && (
+          <button
+            type="button"
+            onClick={startVoiceSearch}
+            className={cn(
+              "absolute right-3 top-1/2 -translate-y-1/2 flex h-7 w-7 min-h-[44px] min-w-[44px] items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+              isListening
+                ? "text-red-500 animate-pulse"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+            aria-label={isListening ? "Stop voice search" : "Start voice search"}
+          >
+            {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+          </button>
         )}
 
         {/* Clear button */}
@@ -205,49 +399,77 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
       </div>
 
       {/* Dropdown Results */}
-      {isOpen && debouncedQuery.length >= 2 && (
-        <div
-          id="search-dropdown-results"
-          role="listbox"
-          className="absolute top-full left-0 right-0 mt-2 bg-popover/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl overflow-y-auto max-h-screen z-50 animate-fade-in"
-        >
-          {isLoading || (isFetching && query !== debouncedQuery) ? (
-            <div className="py-2">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <SearchResultSkeleton key={i} />
-              ))}
-            </div>
-          ) : results.length > 0 ? (
-            <>
-              <ul className="py-2">
-                {results.map((item, index) => (
-                  <li key={`${item.media_type}-${item.id}`}>
-                    <button
-                      role="option"
-                      aria-selected={selectedIndex === index}
-                      onClick={() => handleItemClick(item)}
-                      className={cn(
-                        "w-full flex items-center gap-3 px-4 py-2 text-left transition-colors",
-                        selectedIndex === index ? "bg-accent" : "hover:bg-accent/50"
-                      )}
-                    >
-                      {/* Thumbnail */}
-                      <div className="w-10 h-14 rounded overflow-hidden bg-muted flex-shrink-0">
-                        {getItemImage(item) ? (
-                          <img
-                            src={getImageUrl(item.poster_path || item.profile_path, 'w185')!}
-                            srcSet={`${getImageUrl(item.poster_path || item.profile_path, 'w92')!} 92w, ${getImageUrl(item.poster_path || item.profile_path, 'w185')!} 185w`}
-                            sizes="40px"
-                            width={92}
-                            height={138}
-                            alt=""
-                            className="w-full h-full object-cover bg-muted"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            {getItemIcon(item)}
-                          </div>
+      {isOpen &&
+        (debouncedQuery.trim().length >= 1 || shouldShowRecentSearches) && (
+          <div
+            id={resultsListId}
+            className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[72vh] overflow-y-auto rounded-xl border border-border/50 bg-popover shadow-2xl animate-fade-in sm:max-h-screen"
+          >
+            {shouldShowRecentSearches ? (
+              <div className="py-2">
+                <div className="flex items-center justify-between px-4 pb-2 pt-1">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Recent searches
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleClearRecentSearches}
+                    className="rounded-sm px-1 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  >
+                    Clear
+                  </button>
+                </div>
+                <ul>
+                  {recentSearches.map((item) => (
+                    <li key={item.timestamp}>
+                      <div className="group flex items-center gap-3 px-4 py-1 transition-colors hover:bg-accent/50">
+                        <button
+                          type="button"
+                          onClick={() => handleRecentSearchClick(item.query)}
+                          className="flex min-h-[44px] flex-1 items-center gap-3 rounded-md py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                        >
+                          <Clock3 className="h-4 w-4 text-muted-foreground" />
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                            {item.query}
+                          </span>
+                        </button>
+                        <div className="flex min-h-[44px] min-w-[44px] items-center justify-center">
+                          <button
+                            type="button"
+                            onClick={(event) =>
+                              handleRemoveRecentSearch(event, item.query)
+                            }
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground opacity-70 transition-all hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+                            aria-label={`Remove ${item.query} from recent searches`}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : isLoading || (isFetching && query !== debouncedQuery) ? (
+              <div className="py-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <SearchResultSkeleton key={i} />
+                ))}
+              </div>
+            ) : results.length > 0 ? (
+              <>
+                <ul className="py-2">
+                  {results.map((item, index) => (
+                    <li key={`${item.media_type}-${item.id}`}>
+                      <button
+                        type="button"
+                        id={`${optionIdPrefix}-${item.media_type}-${item.id}`}
+                        onClick={() => handleItemClick(item)}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-4 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
+                          selectedIndex === index
+                            ? "bg-accent"
+                            : "hover:bg-accent/50",
                         )}
                       </div>
 

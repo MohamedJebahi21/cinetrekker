@@ -5,6 +5,7 @@ import {
 } from "@/services/tmdb";
 import { createFallbackMedia } from "@/lib/mediaFallback";
 import { createLogger } from "@/lib/logger";
+import { mapWithConcurrency } from "@/lib/requestUtils";
 import type { Media } from "@/types/media";
 
 const enrichmentLogger = createLogger("media-enrichment");
@@ -68,9 +69,17 @@ export async function enrichMediaItems<
     logScope = "media-enrichment",
   } = options;
 
-  const settled = await Promise.allSettled(
-    items.map((item) => fetchMediaDetailsByReference(getReference(item), language)),
-  );
+  const settled = await mapWithConcurrency(items, 4, async (item) => {
+    try {
+      const value = await fetchMediaDetailsByReference(
+        getReference(item),
+        language,
+      );
+      return { status: "fulfilled" as const, value };
+    } catch (reason) {
+      return { status: "rejected" as const, reason };
+    }
+  });
 
   const fallbackEntries = settled.flatMap((result, index) => {
     if (result.status === "fulfilled") {

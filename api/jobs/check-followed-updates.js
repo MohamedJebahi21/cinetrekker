@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { json } from "../_lib/http.js";
 import { getSupabaseAdminClient } from "../_lib/supabaseAdmin.js";
 import { getServerEnv } from "../_lib/env.js";
@@ -8,16 +9,32 @@ const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const DEFAULT_BATCH_SIZE = 5;
 const logger = createServerLogger("check-followed-updates");
 
+function safeCompare(a, b) {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
 function isAuthorizedCronCall(req) {
   const cronSecret = getServerEnv("CRON_SECRET");
-  if (!cronSecret) return false;
+  if (!cronSecret) {
+    logger.warn("CRON_SECRET is not configured — cron endpoint is unsecured. Set CRON_SECRET in Vercel environment variables.");
+    return false;
+  }
 
-  const cronHeader =
-    typeof req?.headers?.["x-cron-secret"] === "string"
-      ? req.headers["x-cron-secret"].trim()
-      : "";
+  // Vercel sends Authorization: Bearer <CRON_SECRET> for scheduled cron jobs.
+  const authHeader = typeof req?.headers?.authorization === "string"
+    ? req.headers.authorization.trim()
+    : "";
+  if (safeCompare(authHeader, `Bearer ${cronSecret}`)) return true;
 
-  return cronHeader === cronSecret;
+  // Fallback: allow x-cron-secret header for manual/local testing.
+  const cronHeader = typeof req?.headers?.["x-cron-secret"] === "string"
+    ? req.headers["x-cron-secret"].trim()
+    : "";
+  return safeCompare(cronHeader, cronSecret);
 }
 
 function parseMovieKey(movieId) {
@@ -34,9 +51,14 @@ function parseMovieKey(movieId) {
 
 async function fetchTmdbDetails(mediaType, tmdbId, tmdbApiKey) {
   const endpoint = mediaType === "tv" ? "tv" : "movie";
-  const response = await fetch(
-    `${TMDB_BASE_URL}/${endpoint}/${tmdbId}?api_key=${encodeURIComponent(tmdbApiKey)}&language=en-US`,
-  );
+  const isV4Token = tmdbApiKey.includes(".");
+  const url = isV4Token
+    ? `${TMDB_BASE_URL}/${endpoint}/${tmdbId}?language=en-US`
+    : `${TMDB_BASE_URL}/${endpoint}/${tmdbId}?api_key=${encodeURIComponent(tmdbApiKey)}&language=en-US`;
+  const fetchOptions = isV4Token
+    ? { headers: { Authorization: `Bearer ${tmdbApiKey}`, "Content-Type": "application/json" } }
+    : {};
+  const response = await fetch(url, fetchOptions);
 
   if (!response.ok) {
     throw new Error(
@@ -167,7 +189,7 @@ async function insertNotifications(supabase, rows) {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
+  if (req.method !== "GET" && req.method !== "POST") {
     return json(res, 405, { error: "Method Not Allowed" });
   }
 
@@ -236,7 +258,7 @@ export default async function handler(req, res) {
     const movieIdList = parsedKeys.map((parsed) => parsed.movieKey).filter((id) => typeof id === "string" && id.length > 0);
     if (followerUserIds.length > 0 && movieIdList.length > 0) {
       const result = await supabase
-        .from("followed_title_state")
+        .from("followed_title_state_user")
         .select("*")
         .in("user_id", followerUserIds)
         .in("movie_id", movieIdList);
@@ -310,7 +332,7 @@ export default async function handler(req, res) {
             );
 
             const { error: upsertError } = await supabase
-              .from("followed_title_state")
+              .from("followed_title_state_user")
               .upsert(stateRowsToUpsert, { onConflict: "user_id,movie_id" });
 
             if (upsertError) {

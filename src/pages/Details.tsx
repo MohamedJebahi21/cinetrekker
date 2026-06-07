@@ -150,17 +150,44 @@ export default function Details() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pt-16">
-        <div className="page-container grid grid-cols-1 md:grid-cols-3 gap-8 items-start pb-24 md:pb-0">
-          <div className="md:col-span-1">
-            <div className="poster-skeleton" />
-          </div>
-          <div className="md:col-span-2 space-y-4">
-            <div className="h-8 w-3/4 skeleton-shimmer rounded" />
-            <div className="h-4 w-1/2 skeleton-shimmer rounded" />
-            <div className="grid grid-cols-2 gap-4">
-              <div className="h-6 skeleton-shimmer rounded" />
-              <div className="h-6 skeleton-shimmer rounded" />
+      details?.seasons
+        ?.map((season) => season.season_number)
+        .filter(
+          (seasonNumber, index) =>
+            seasonNumber > 0 &&
+            (details.seasons?.[index]?.air_date
+              ? details.seasons[index].air_date! <= todayDateKey
+              : true),
+        ) ?? seasons
+    ).sort((a, b) => b - a);
+  }, [details?.seasons, mediaType, seasons, todayDateKey]);
+
+  // Must be called unconditionally before any early return (Rules of Hooks)
+  useEffect(() => {
+    if (mediaType !== "tv") return;
+    if (selectedSeason && availableSeasonNumbers.includes(selectedSeason)) return;
+    if (availableSeasonNumbers.length > 0) {
+      setSelectedSeason(availableSeasonNumbers[0]);
+      return;
+    }
+    if (!selectedSeason && seasons.length > 0) {
+      setSelectedSeason(seasons[seasons.length - 1]);
+    }
+  }, [availableSeasonNumbers, mediaType, seasons, selectedSeason]);
+
+  if (isLoading && !detailsLoadingTimedOut) {
+    return (
+      <div className="min-h-screen">
+        <div className="relative h-[50vh] overflow-hidden -mt-16 md:h-[70vh]">
+          <div className="backdrop-skeleton h-full w-full" />
+          <div className="backdrop-fade absolute inset-0" />
+          <div className="absolute left-4 top-20 z-10 h-10 w-28 rounded-lg skeleton-shimmer bg-background/60" />
+        </div>
+
+        <div className="page-container relative z-10 -mt-16 sm:-mt-24 md:-mt-48 pb-24 md:pb-0">
+          <div className="flex flex-col gap-8 md:flex-row">
+            <div className="mx-auto w-48 flex-shrink-0 md:mx-0 md:w-64">
+              <div className="poster-skeleton rounded-xl shadow-2xl" />
             </div>
             <div className="space-y-2">
               <div className="h-4 skeleton-shimmer rounded" />
@@ -207,7 +234,18 @@ export default function Details() {
   
   const following = user ? isFollowing(mediaId) : false;
 
-  const handleAddToWatchlist = async () => {
+  type PreventableEvent = {
+    preventDefault: () => void;
+    stopPropagation: () => void;
+  };
+
+  const suppressActionNavigation = (event?: PreventableEvent) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+  };
+
+  const handleAddToWatchlist = async (event?: PreventableEvent) => {
+    suppressActionNavigation(event);
     const nextState = !optimisticInWatchlist;
     setOptimisticInWatchlist(nextState);
     try {
@@ -221,7 +259,8 @@ export default function Details() {
     }
   };
 
-  const handleMarkAsWatched = async () => {
+  const handleMarkAsWatched = async (event?: PreventableEvent) => {
+    suppressActionNavigation(event);
     if (optimisticWatched) {
       setOptimisticWatched(false);
       try {
@@ -440,14 +479,35 @@ export default function Details() {
         canonical={seoCanonical}
         keywords={seoKeywords}
       />
-      {mediaType === 'movie' && (
-        <MovieSchema
-          title={title}
-          description={overview}
-          image={posterUrl}
-        />
-      )}
-      
+      <MovieSchema
+        schemaType={mediaType === "movie" ? "Movie" : "TVSeries"}
+        title={title}
+        description={overview}
+        image={posterUrl}
+        releaseDate={releaseDate || undefined}
+        rating={rating || undefined}
+        ratingCount={details.vote_count}
+        url={seoCanonical}
+        genres={details.genres?.map((g) => g.name)}
+        actors={details.credits?.cast?.slice(0, 10).map((person) => ({
+          name: person.name,
+          image: person.profile_path ? getImageUrl(person.profile_path, "w185") : undefined,
+        }))}
+        directors={
+          mediaType === "movie"
+            ? details.credits?.crew
+                ?.filter((member) => member.job === "Director")
+                .map((member) => ({ name: member.name }))
+            : undefined
+        }
+        creators={
+          mediaType === "tv"
+            ? details.created_by?.map((creator) => ({ name: creator.name }))
+            : undefined
+        }
+        duration={runtime || undefined}
+      />
+
       <div className="relative h-[50vh] md:h-[70vh] overflow-hidden -mt-16">
         {backdropUrl && (
           <img
@@ -472,18 +532,23 @@ export default function Details() {
         </Link>
       </div>
 
-      <div className="page-container -mt-32 md:-mt-48 relative z-10">
-        <div className="flex flex-col md:flex-row gap-8">
+      <div className="page-container relative z-10 -mt-16 sm:-mt-24 md:-mt-48 pb-24 md:pb-0">
+        <div className="flex flex-col gap-8 md:flex-row">
           <div className="flex-shrink-0 mx-auto md:mx-0">
-            {posterUrl ? (
-              <img
-                src={posterUrl}
-                srcSet={posterSrcSet || undefined}
-                sizes="(max-width: 768px) 192px, 256px"
-                alt={title}
-                loading="lazy"
-                className="w-48 md:w-64 rounded-xl shadow-2xl"
-              />
+            {details.poster_path ? (
+              <div className="w-48 md:w-64 aspect-[2/3] relative overflow-hidden rounded-xl shadow-2xl bg-muted/20">
+                <Image
+                  src={posterUrl}
+                  srcSet={posterSrcSet || undefined}
+                  sizes="(max-width: 768px) 192px, 256px"
+                  alt={getMediaAltText(title, mediaType, "poster")}
+                  width={500}
+                  height={750}
+                  loading="lazy"
+                  showSkeleton
+                  className="w-full h-full object-cover"
+                />
+              </div>
             ) : (
               <div className="w-48 md:w-64 aspect-[2/3] bg-muted rounded-xl flex items-center justify-center">
                 <span className="text-muted-foreground">{t('common.noResults')}</span>
@@ -542,10 +607,21 @@ export default function Details() {
 
             <div className="flex flex-wrap gap-3">
               <Button
-                variant={optimisticInWatchlist ? "secondary" : "default"}
-                className="gap-2"
-                onClick={handleAddToWatchlist}
-                aria-label={optimisticInWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
+                variant="default"
+                className={cn(
+                  "w-full gap-2 sm:w-auto sm:min-w-[180px]",
+                  optimisticInWatchlist
+                    ? "border-red-500/70 bg-red-600 text-white hover:bg-red-700"
+                    : "bg-primary text-primary-foreground hover:bg-primary/90",
+                )}
+                onClick={(event) => void handleAddToWatchlist(event)}
+                disabled={isWatchlistPending}
+                aria-busy={isWatchlistPending}
+                aria-label={
+                  optimisticInWatchlist
+                    ? t("actions.removeFromWatchlist")
+                    : t("actions.addToWatchlist")
+                }
               >
                 {optimisticInWatchlist ? (
                   <>
@@ -561,10 +637,21 @@ export default function Details() {
               </Button>
 
               <Button
-                variant={watched ? "secondary" : "outline"}
-                className="gap-2"
-                onClick={handleMarkAsWatched}
-                aria-label={optimisticWatched ? t('actions.updateWatched') : t('actions.markAsWatched')}
+                variant="outline"
+                className={cn(
+                  "w-full gap-2 sm:w-auto sm:min-w-[160px]",
+                  optimisticWatched
+                    ? "border-emerald-500/70 bg-emerald-600 text-white hover:bg-emerald-700"
+                    : "border-border bg-background text-foreground hover:bg-accent",
+                )}
+                onClick={(event) => void handleMarkAsWatched(event)}
+                disabled={isWatchedPending}
+                aria-busy={isWatchedPending}
+                aria-label={
+                  optimisticWatched
+                    ? t("actions.updateWatched")
+                    : t("actions.markAsWatched")
+                }
               >
                 {optimisticWatched ? (
                   <>

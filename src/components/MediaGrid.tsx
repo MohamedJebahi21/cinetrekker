@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { motion, type Variants } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Media } from '@/types/media';
@@ -36,6 +36,9 @@ export function MediaGrid({
   skeletonCount = 12,
 }: MediaGridProps) {
   const { t } = useTranslation();
+  // Only animate on the very first mount. After that, items may be added/
+  // removed but we don't want to re-animate the whole grid.
+  const hasAnimated = useRef(false);
 
   const containerVariants = {
     initial: { opacity: 0 },
@@ -83,13 +86,14 @@ export function MediaGrid({
     <motion.div
       className={`grid ${gridColsMap[columns]} ${gapMap[gap]} ${className}`}
       variants={containerVariants}
-      initial="initial"
+      initial={hasAnimated.current ? false : "initial"}
       animate="animate"
+      onAnimationComplete={() => { hasAnimated.current = true; }}
     >
       {items.map((media) => (
         <motion.div
           key={`${media.media_type}-${media.id}`}
-          variants={itemVariants}
+          variants={hasAnimated.current ? undefined : itemVariants}
           className="h-full"
         >
           <MediaCard media={media} />

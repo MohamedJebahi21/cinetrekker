@@ -98,15 +98,19 @@ export function SEO({
 
     // JSON-LD Structured Data
     if (jsonLd) {
-      const id = 'cinetrekker-jsonld';
-      let script = document.getElementById(id) as HTMLScriptElement | null;
-      if (!script) {
-        script = document.createElement('script');
-        script.type = 'application/ld+json';
-        script.id = id;
-        document.head.appendChild(script);
-      }
-      script.textContent = JSON.stringify(jsonLd);
+      const payloads = Array.isArray(jsonLd) ? jsonLd : [jsonLd];
+      payloads
+        .filter(Boolean)
+        .map((item) => sanitizeJsonLd(item))
+        .forEach((payload, index) => {
+          const script = document.createElement("script");
+          script.type = "application/ld+json";
+          script.dataset.cinetrekkerJsonld = "true";
+          script.id = `cinetrekker-jsonld-${index}`;
+          const safeJson = JSON.stringify(payload).replace(/</g, "\\u003c");
+          script.text = safeJson;
+          document.head.appendChild(script);
+        });
     }
   }, [title, description, image, url, canonical, jsonLd, keywords, location]);
 

@@ -12,8 +12,93 @@ const TMDB_PROXY_URL = import.meta.env.DEV
   ? TMDB_PROXY_PATH
   : `${SUPABASE_URL}${TMDB_PROXY_PATH}`;
 
-export const getImageUrl = (path: string | null, size: 'w92' | 'w154' | 'w185' | 'w342' | 'w500' | 'w780' = 'w342') => {
-  if (!path) return null;
+const CONTENT_POLICY_STORAGE_KEY = "cinetrekker_content_policy";
+const TMDB_CACHE_MAX_ENTRIES = 300;
+const TMDB_REQUEST_TIMEOUT_MS = 12_000;
+const tmdbResponseCache = new Map<string, { expiresAt: number; data: unknown }>();
+const tmdbInFlight = new Map<string, Promise<unknown>>();
+
+function getCacheTTL(endpoint: string): number {
+  if (endpoint.startsWith('/trending')) return 5 * 60_000; // 5 min
+  if (endpoint.startsWith('/search')) return 30_000; // short-lived search cache
+  if (endpoint.startsWith('/movie/') || endpoint.startsWith('/tv/')) {
+    return 24 * 60 * 60_000; // 24 hours for media details
+  }
+  if (endpoint.startsWith('/person/')) {
+    return 24 * 60 * 60_000;
+  }
+  return 2 * 60_000;
+}
+
+function makeCacheKey(endpoint: string, language: string, extraParams: Record<string, string>, maturityLevel: MaturityRating): string {
+  const params = Object.entries(extraParams)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}=${v}`)
+    .join('&');
+  return `${endpoint}|lang=${language}|maturity=${maturityLevel}|${params}`;
+}
+
+function setCachedResponse(cacheKey: string, ttlMs: number, data: unknown): void {
+  if (tmdbResponseCache.size >= TMDB_CACHE_MAX_ENTRIES) {
+    const oldestKey = tmdbResponseCache.keys().next().value;
+    if (oldestKey) tmdbResponseCache.delete(oldestKey);
+  }
+  tmdbResponseCache.set(cacheKey, { expiresAt: Date.now() + ttlMs, data });
+}
+
+function parseMaturityFromStorage(): {
+  maturityLevel: MaturityRating;
+  ageVerified: boolean;
+} {
+  if (typeof window === "undefined") {
+    return { maturityLevel: SafetyLevel.STRICT, ageVerified: false };
+  }
+
+  try {
+    const raw = window.localStorage.getItem(CONTENT_POLICY_STORAGE_KEY);
+    if (!raw) return { maturityLevel: SafetyLevel.STRICT, ageVerified: false };
+
+    let parsed: Record<string, unknown>;
+    try {
+      const parsedJson = JSON.parse(raw);
+      if (!parsedJson || typeof parsedJson !== "object") {
+        return { maturityLevel: SafetyLevel.STRICT, ageVerified: false };
+      }
+      parsed = parsedJson as Record<string, unknown>;
+    } catch {
+      return { maturityLevel: SafetyLevel.STRICT, ageVerified: false };
+    }
+
+    const ageVerified =
+      parsed.ageVerified === true || typeof parsed.age === "number";
+    const tier =
+      (typeof parsed.safetyLevel === "string" ? parsed.safetyLevel : null) ??
+      (typeof parsed.maturityRating === "string" ? parsed.maturityRating : null);
+    if (
+      tier === SafetyLevel.STRICT ||
+      tier === SafetyLevel.MODERATE ||
+      tier === SafetyLevel.NONE
+    ) {
+      return { maturityLevel: tier, ageVerified };
+    }
+
+    if (parsed.strictFiltering === true)
+      return { maturityLevel: SafetyLevel.STRICT, ageVerified };
+    if (parsed.moderateFiltering === true)
+      return { maturityLevel: SafetyLevel.MODERATE, ageVerified };
+    if (parsed.adultContentEnabled === true)
+      return { maturityLevel: SafetyLevel.NONE, ageVerified };
+    return { maturityLevel: SafetyLevel.STRICT, ageVerified };
+  } catch {
+    return { maturityLevel: SafetyLevel.STRICT, ageVerified: false };
+  }
+}
+
+export const getImageUrl = (
+  path: string | null,
+  size: "w92" | "w154" | "w185" | "w342" | "w500" | "w780" = "w342",
+) => {
+  if (!path) return "/placeholder.svg";
   return `${TMDB_IMAGE_BASE}/${size}${path}`;
 };
 
@@ -32,9 +117,34 @@ export const getBackdropUrl = (
  * @param language - Language code (default: 'en')
  * @param extraParams - Additional query parameters
  */
-const fetchTMDB = async <T>(endpoint: string, language: string = 'en', extraParams: Record<string, string> = {}): Promise<T> => {
-  if (!SUPABASE_URL || !SUPABASE_API_KEY) {
-    throw new Error('TMDB proxy not configured. Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env');
+const fetchTMDB = async <T>(
+  endpoint: string,
+  language: string = "en",
+  extraParams: Record<string, string> = {},
+  signal?: AbortSignal,
+): Promise<T> => {
+  if (USE_SUPABASE_EDGE_PROXY && (!SUPABASE_URL || !SUPABASE_API_KEY)) {
+    throw new Error(
+      "TMDB proxy not configured. Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env",
+    );
+  }
+
+  const { maturityLevel } = parseMaturityFromStorage();
+  const includeAdultFromStorage =
+    maturityLevel === SafetyLevel.NONE ? "true" : "false";
+  const cacheKey = makeCacheKey(endpoint, language, extraParams, maturityLevel);
+  const now = Date.now();
+
+  const cached = tmdbResponseCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    tmdbResponseCache.delete(cacheKey);
+    tmdbResponseCache.set(cacheKey, cached);
+    return cached.data as T;
+  }
+
+  const inFlight = tmdbInFlight.get(cacheKey);
+  if (inFlight) {
+    return (await inFlight) as T;
   }
 
   const params = new URLSearchParams({
@@ -44,14 +154,23 @@ const fetchTMDB = async <T>(endpoint: string, language: string = 'en', extraPara
   });
 
   try {
-    const response = await fetch(
-      `${TMDB_PROXY_URL}?${params.toString()}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${SUPABASE_API_KEY}`,
-          'apikey': SUPABASE_API_KEY,
-          'Content-Type': 'application/json',
-        },
+    const requestPromise = (async () => {
+      const controller = new AbortController();
+      const timeoutId = globalThis.setTimeout(() => {
+        controller.abort();
+      }, TMDB_REQUEST_TIMEOUT_MS);
+
+      if (signal) {
+        signal.addEventListener("abort", () => controller.abort());
+      }
+
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      if (USE_SUPABASE_EDGE_PROXY && SUPABASE_API_KEY) {
+        headers.Authorization = `Bearer ${SUPABASE_API_KEY}`;
+        headers.apikey = SUPABASE_API_KEY;
       }
     );
 
@@ -87,28 +206,71 @@ const fetchTMDB = async <T>(endpoint: string, language: string = 'en', extraPara
 };
 
 export const getTrending = async (
-  mediaType: 'all' | 'movie' | 'tv' = 'all',
-  timeWindow: TimeWindow = 'day',
-  language: string = 'en',
-  page: number = 1
+  mediaType: "all" | "movie" | "tv" = "all",
+  timeWindow: TimeWindow = "day",
+  language: string = "en",
+  page: number = 1,
+  includeAdult: boolean = false,
+  signal?: AbortSignal,
 ): Promise<TMDBResponse<Media>> => {
-  return fetchTMDB(`/trending/${mediaType}/${timeWindow}`, language, { page: page.toString() });
+  return fetchTMDB(`/trending/${mediaType}/${timeWindow}`, language, {
+    page: page.toString(),
+    include_adult: includeAdult ? "true" : "false",
+  }, signal);
 };
 
-export const searchMulti = async (query: string, page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
-  return fetchTMDB(`/search/multi`, language, { query, page: page.toString() });
+export const searchMulti = async (
+  query: string,
+  page: number = 1,
+  language: string = "en",
+  includeAdult: boolean = false,
+  signal?: AbortSignal,
+): Promise<TMDBResponse<Media>> => {
+  return fetchTMDB(`/search/multi`, language, {
+    query,
+    page: page.toString(),
+    include_adult: includeAdult ? "true" : "false",
+  }, signal);
 };
 
-export const searchMovies = async (query: string, page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
-  return fetchTMDB(`/search/movie`, language, { query, page: page.toString() });
+export const searchMovies = async (
+  query: string,
+  page: number = 1,
+  language: string = "en",
+  includeAdult: boolean = false,
+  signal?: AbortSignal,
+): Promise<TMDBResponse<Media>> => {
+  return fetchTMDB(`/search/movie`, language, {
+    query,
+    page: page.toString(),
+    include_adult: includeAdult ? "true" : "false",
+  }, signal);
 };
 
-export const searchTV = async (query: string, page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
-  return fetchTMDB(`/search/tv`, language, { query, page: page.toString() });
+export const searchTV = async (
+  query: string,
+  page: number = 1,
+  language: string = "en",
+  includeAdult: boolean = false,
+  signal?: AbortSignal,
+): Promise<TMDBResponse<Media>> => {
+  return fetchTMDB(`/search/tv`, language, {
+    query,
+    page: page.toString(),
+    include_adult: includeAdult ? "true" : "false",
+  }, signal);
 };
 
-export const searchPeople = async (query: string, page: number = 1, language: string = 'en'): Promise<TMDBResponse<PersonSearchResult>> => {
-  return fetchTMDB(`/search/person`, language, { query, page: page.toString() });
+export const searchPeople = async (
+  query: string,
+  page: number = 1,
+  language: string = "en",
+  signal?: AbortSignal,
+): Promise<TMDBResponse<PersonSearchResult>> => {
+  return fetchTMDB(`/search/person`, language, {
+    query,
+    page: page.toString(),
+  }, signal);
 };
 
 export const getPopularPeople = async (page: number = 1, language: string = 'en'): Promise<TMDBResponse<PersonSearchResult>> => {
@@ -172,7 +334,8 @@ export const discoverMovies = async (
     with_watch_providers?: string;
     watch_region?: string;
   },
-  language: string = 'en'
+  language: string = "en",
+  signal?: AbortSignal,
 ): Promise<TMDBResponse<Media>> => {
   const queryParams: Record<string, string> = { page: (params.page || 1).toString() };
   if (params.with_genres) queryParams.with_genres = params.with_genres;
@@ -183,7 +346,8 @@ export const discoverMovies = async (
   if (params.with_runtime_lte) queryParams['with_runtime.lte'] = params.with_runtime_lte;
   if (params.with_watch_providers) queryParams.with_watch_providers = params.with_watch_providers;
   if (params.watch_region) queryParams.watch_region = params.watch_region;
-  return fetchTMDB(`/discover/movie`, language, queryParams);
+  if (params.include_adult) queryParams.include_adult = params.include_adult;
+  return fetchTMDB(`/discover/movie`, language, queryParams, signal);
 };
 
 export const discoverTV = async (
@@ -198,7 +362,8 @@ export const discoverTV = async (
     with_watch_providers?: string;
     watch_region?: string;
   },
-  language: string = 'en'
+  language: string = "en",
+  signal?: AbortSignal,
 ): Promise<TMDBResponse<Media>> => {
   const queryParams: Record<string, string> = { page: (params.page || 1).toString() };
   if (params.with_genres) queryParams.with_genres = params.with_genres;
@@ -209,7 +374,8 @@ export const discoverTV = async (
   if (params.with_runtime_lte) queryParams['with_runtime.lte'] = params.with_runtime_lte;
   if (params.with_watch_providers) queryParams.with_watch_providers = params.with_watch_providers;
   if (params.watch_region) queryParams.watch_region = params.watch_region;
-  return fetchTMDB(`/discover/tv`, language, queryParams);
+  if (params.include_adult) queryParams.include_adult = params.include_adult;
+  return fetchTMDB(`/discover/tv`, language, queryParams, signal);
 };
 
 // Get movie videos (trailers, etc.)

@@ -4,6 +4,13 @@
  * - Asks the model for a JSON array of movie/TV title suggestions
  * - Resolves suggestions via TMDB search and filters out adult content
  */
+import fs from "node:fs";
+import path from "node:path";
+import { enforceRequestSecurity } from "./_lib/requestSecurity.js";
+import { getMissingServerEnv, getServerEnv } from "./_lib/env.js";
+import { createServerLogger } from "./_lib/logger.js";
+import { parseBody } from "./_lib/http.js";
+
 const fetch = globalThis.fetch;
 
 const TMDB_BASE = 'https://api.themoviedb.org/3';
@@ -12,6 +19,7 @@ const MAX_REQUESTS_PER_WINDOW = 10;
 const MAX_PROMPT_LENGTH = 500;
 const MAX_LIMIT = 20;
 const MIN_LIMIT = 1;
+const UPSTREAM_TIMEOUT_MS = 12_000;
 
 const requestStore = new Map();
 
@@ -29,19 +37,51 @@ function getClientIP(req) {
   return req.socket?.remoteAddress || 'unknown';
 }
 
-function isRateLimited(key) {
-  const now = Date.now();
-  const entry = requestStore.get(key);
+function getTmdbRequest(baseUrl, endpoint, paramsObj, token) {
+  const isV4 = token.includes(".");
+  const params = new URLSearchParams(paramsObj);
+  if (!isV4) {
+    params.set("api_key", token);
+  }
+  const url = `${baseUrl}${endpoint}?${params.toString()}`;
+  const options = {
+    headers: isV4
+      ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
+      : { "Content-Type": "application/json" },
+  };
+  return { url, options };
+}
 
-  if (!entry || now > entry.resetAt) {
-    requestStore.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return { limited: false, retryAfter: 0 };
+async function fetchWithTimeout(url, options = {}, timeoutMs = UPSTREAM_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+
+  if (typeof fetch !== "function") {
+    return res.status(503).json({ error: "Service temporarily unavailable" });
   }
 
-  entry.count += 1;
-  if (entry.count > MAX_REQUESTS_PER_WINDOW) {
-    const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
-    return { limited: true, retryAfter };
+  const security = await enforceRequestSecurity(req, res, "recommend");
+  if (!security.ok) {
+    return res.status(security.status).json({ error: security.error });
+  }
+
+  const body = parseBody(req);
+  const { prompt, language = "en", limit = 12 } = body;
+  if (!prompt || typeof prompt !== "string") {
+    return res.status(400).json({ error: "Missing prompt" });
   }
 
   return { limited: false, retryAfter: 0 };
@@ -94,6 +134,11 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: `Prompt exceeds ${MAX_PROMPT_LENGTH} characters` });
   }
 
+  const normalizedLanguage =
+    typeof language === "string" && language.trim().length > 0
+      ? language.trim().slice(0, 16)
+      : "en";
+
   const normalizedLimit = Number.isFinite(Number(limit))
     ? Math.max(MIN_LIMIT, Math.min(MAX_LIMIT, Number(limit)))
     : 12;
@@ -109,11 +154,23 @@ module.exports = async (req, res) => {
   try {
     const system = `You are a helpful film expert. Given a short user prompt, return a strict JSON object with two keys: \"summary\" (a short 1-2 sentence summary as a film critic, no more than ~140 characters) and \"suggestions\" (an array of up to ${normalizedLimit} items). Each suggestion must be an object with keys: \"title\" (string), optionally \"year\" (number), and \"media_type\" which must be either \"movie\" or \"tv\". Do NOT include adult content. Output MUST be valid JSON and contain only the JSON object.`;
 
-    const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_ID}`,
+    const openaiRes = await fetchWithTimeout(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${openAiKey}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: system },
+            { role: "user", content: normalizedPrompt },
+          ],
+          max_tokens: 600,
+          temperature: 0.8,
+        }),
       },
       body: JSON.stringify({
         model: 'gpt-3.5-turbo',
@@ -178,15 +235,26 @@ module.exports = async (req, res) => {
 
     for (const sug of suggestions) {
       if (resolved.length >= normalizedLimit) break;
-      const media = sug.media_type === 'tv' ? 'tv' : 'movie';
-      const searchUrl = `${TMDB_BASE}/search/${media}?api_key=${TMDB_ID}&query=${encodeURIComponent(sug.title)}&include_adult=false&language=${encodeURIComponent(language)}`;
+      const media = suggestion.media_type === "tv" ? "tv" : "movie";
+      const { url: searchUrl, options: searchOptions } = getTmdbRequest(
+        TMDB_BASE,
+        `/search/${media}`,
+        {
+          query: suggestion.title,
+          include_adult: "false",
+          language: normalizedLanguage,
+        },
+        tmdbKey,
+      );
+
       try {
-        const sRes = await fetch(searchUrl);
-        if (!sRes.ok) continue;
-        const sJson = await sRes.json();
-        const first = (sJson.results || [])[0];
-        if (!first) continue;
-        if (first.adult) continue; // explicit filter
+        const searchResponse = await fetchWithTimeout(searchUrl, searchOptions);
+
+        if (!searchResponse.ok) continue;
+
+        const searchJson = await searchResponse.json();
+        const first = (searchJson.results || [])[0];
+        if (!first || first.adult) continue;
 
         pushIfNew({
           id: first.id,
@@ -199,11 +267,21 @@ module.exports = async (req, res) => {
 
         // Context awareness: fetch recommendations to include related tags/themes
         try {
-          const recUrl = `${TMDB_BASE}/${media}/${first.id}/recommendations?api_key=${TMDB_ID}&language=${encodeURIComponent(language)}`;
-          const recRes = await fetch(recUrl);
-          if (recRes.ok) {
-            const recJson = await recRes.json();
-            for (const r of (recJson.results || [])) {
+          const { url: recommendationsUrl, options: recommendationsOptions } =
+            getTmdbRequest(
+              TMDB_BASE,
+              `/${media}/${first.id}/recommendations`,
+              { language: normalizedLanguage },
+              tmdbKey,
+            );
+          const recommendationsResponse = await fetchWithTimeout(
+            recommendationsUrl,
+            recommendationsOptions,
+          );
+
+          if (recommendationsResponse.ok) {
+            const recommendationsJson = await recommendationsResponse.json();
+            for (const recommendation of recommendationsJson.results || []) {
               if (resolved.length >= normalizedLimit) break;
               if (r.adult) continue;
               pushIfNew({
@@ -228,11 +306,21 @@ module.exports = async (req, res) => {
     // Hybrid fallback: if AI suggestions didn't resolve, perform a TMDB multi search using the raw prompt
     if (resolved.length === 0) {
       try {
-        const searchUrl = `${TMDB_BASE}/search/multi?api_key=${TMDB_ID}&query=${encodeURIComponent(normalizedPrompt)}&include_adult=false&language=${encodeURIComponent(language)}`;
-        const sRes = await fetch(searchUrl);
-        if (sRes.ok) {
-          const sJson = await sRes.json();
-          for (const first of (sJson.results || [])) {
+        const { url: searchUrl, options: searchOptions } = getTmdbRequest(
+          TMDB_BASE,
+          `/search/multi`,
+          {
+            query: normalizedPrompt,
+            include_adult: "false",
+            language: normalizedLanguage,
+          },
+          tmdbKey,
+        );
+        const searchResponse = await fetchWithTimeout(searchUrl, searchOptions);
+
+        if (searchResponse.ok) {
+          const searchJson = await searchResponse.json();
+          for (const first of searchJson.results || []) {
             if (resolved.length >= normalizedLimit) break;
             if (first.adult) continue;
             const media = first.media_type === 'tv' ? 'tv' : 'movie';

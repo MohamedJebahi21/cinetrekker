@@ -4,6 +4,9 @@ import {
   enforceAuthenticatedRequestSecurity,
   enforceRequestSecurity,
 } from "./_lib/requestSecurity.js";
+import { createServerLogger } from "./_lib/logger.js";
+
+const logger = createServerLogger("notifications");
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 20;
@@ -73,7 +76,7 @@ export default async function handler(req, res) {
       },
     });
   } catch (error) {
-    console.error("GET /api/notifications error", error);
+    logger.error("GET /api/notifications error", error);
     return json(res, 500, { error: "Internal server error." });
   }
 }

@@ -4,6 +4,9 @@ import {
   enforceAuthenticatedRequestSecurity,
   enforceRequestSecurity,
 } from "../_lib/requestSecurity.js";
+import { createServerLogger } from "../_lib/logger.js";
+
+const logger = createServerLogger("notifications-unread-count");
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
@@ -49,7 +52,7 @@ export default async function handler(req, res) {
       unreadCount: Number(count ?? 0),
     });
   } catch (error) {
-    console.error("GET /api/notifications/unread-count error", error);
+    logger.error("GET /api/notifications/unread-count error", error);
     return json(res, 500, { error: "Internal server error." });
   }
 }

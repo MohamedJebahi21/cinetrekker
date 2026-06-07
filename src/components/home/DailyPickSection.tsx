@@ -35,7 +35,13 @@ export function DailyPickSection({
   ];
   const watched = isWatched(pick.id, mediaType);
 
-  const handleWatchedToggle = async () => {
+  const handleWatchedToggle = async (event?: {
+    preventDefault: () => void;
+    stopPropagation: () => void;
+  }) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+
     if (watched) {
       await removeFromWatched(pick.id, mediaType);
       return;
@@ -99,8 +105,8 @@ export function DailyPickSection({
               type="button"
               variant={watched ? "secondary" : "outline"}
               className="border-white/15 bg-white/5"
-              onClick={() => {
-                void handleWatchedToggle();
+              onClick={(event) => {
+                void handleWatchedToggle(event);
               }}
             >
               <Check className="h-4 w-4" />

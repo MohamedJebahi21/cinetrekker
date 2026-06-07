@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getMovieDetails, getTVDetails } from "@/services/tmdb";
 import { supabase } from "@/integrations/supabase/client";
+import { mapWithConcurrency } from "@/lib/requestUtils";
 import {
   appendGuestNotifications,
   readGuestNotifications,
@@ -167,8 +168,10 @@ export function FollowNotificationMonitor() {
     refetchInterval: 10 * 60_000,
     refetchOnWindowFocus: false,
     queryFn: async () => {
-      const currentStates = await Promise.all(
-        followedTitles.map(async (follow) => {
+      const currentStates = await mapWithConcurrency(
+        followedTitles,
+        3,
+        async (follow) => {
           const details =
             follow.mediaType === "movie"
               ? await getMovieDetails(follow.mediaId)
@@ -186,7 +189,7 @@ export function FollowNotificationMonitor() {
               details,
             ),
           };
-        }),
+        },
       );
 
       const currentById = Object.fromEntries(
@@ -236,22 +239,23 @@ export function FollowNotificationMonitor() {
       }
 
 
-      const movieIds = currentStates.map((item) => item.state.movie_id).filter((id) => typeof id === "string" && id.length > 0);
+      const movieIds = currentStates
+        .map((item) => item.state.movie_id)
+        .filter((id): id is string => typeof id === "string" && id.length > 0);
       let previousById: Record<string, FollowedTitleState> = {};
       if (movieIds.length > 0) {
-        const { data: previousRows, error: previousError } = await (supabase
-          .from("followed_title_state")
+        const { data: previousRows, error: previousError } = await supabase
+          .from("followed_title_state_user")
           .select(
             "movie_id, media_type, tmdb_id, release_date, status, number_of_seasons, last_episode_air_date, last_episode_season_number, last_episode_number, updated_at",
-          ) as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+          )
           .eq("user_id", user.id)
           .in("movie_id", movieIds);
         if (previousError) {
           throw previousError;
         }
         previousById = Object.fromEntries(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (previousRows || []).map((row: any) => [row.movie_id, row]),
+          (previousRows || []).map((row) => [row.movie_id, row]),
         ) as Record<string, FollowedTitleState>;
       }
 
@@ -287,7 +291,7 @@ export function FollowNotificationMonitor() {
       }
 
       const { error: stateError } = await supabase
-        .from("followed_title_state")
+        .from("followed_title_state_user")
         .upsert(
           currentStates.map(({ state }) => ({
             user_id: user.id,

@@ -71,17 +71,43 @@ export function AuthenticatedUserListsProvider({
   );
   const loading = user ? Boolean(watchlistLoading || watchedLoading) : false;
 
+  // O(1) Set-based lookup — avoids O(n) linear scans per card render.
+  // With a 100-item grid and 500-item watchlist the old .some() approach
+  // was O(n²); this is O(n) to build once, O(1) per lookup.
+  const watchlistSet = useMemo(
+    () => new Set(watchlist.map((i) => `${i.mediaType}-${i.mediaId}`)),
+    [watchlist],
+  );
+  const watchedSet = useMemo(
+    () => new Set(watched.map((i) => `${i.mediaType}-${i.mediaId}`)),
+    [watched],
+  );
+
   useEffect(() => {
     const storageKey = user
       ? `${STORAGE_KEYS.hidden}_${user.id}`
       : STORAGE_KEYS.hidden;
     const storedHidden = localStorage.getItem(storageKey);
-    if (storedHidden) {
-      setHiddenRecommendations(JSON.parse(storedHidden));
-      return;
+    const nextHidden: HiddenRecommendation[] = storedHidden ? JSON.parse(storedHidden) : [];
+
+    // Migrate guest hidden items
+    if (user) {
+      const guestHiddenStr = localStorage.getItem(STORAGE_KEYS.hidden);
+      if (guestHiddenStr) {
+        const guestHidden: HiddenRecommendation[] = JSON.parse(guestHiddenStr);
+        if (guestHidden.length > 0) {
+           const existingIds = new Set(nextHidden.map(h => h.id));
+           for (const item of guestHidden) {
+             if (!existingIds.has(item.id)) {
+               nextHidden.push({ ...item, userId: user.id });
+             }
+           }
+           localStorage.removeItem(STORAGE_KEYS.hidden);
+        }
+      }
     }
 
-    setHiddenRecommendations([]);
+    setHiddenRecommendations(nextHidden);
   }, [user]);
 
   useEffect(() => {
@@ -251,20 +277,14 @@ export function AuthenticatedUserListsProvider({
 
   const isInWatchlist = useCallback(
     (mediaId: number, mediaType: "movie" | "tv") =>
-      watchlist.some(
-        (item: UserMediaItem) =>
-          item.mediaId === mediaId && item.mediaType === mediaType,
-      ),
-    [watchlist],
+      watchlistSet.has(`${mediaType}-${mediaId}`),
+    [watchlistSet],
   );
 
   const isWatched = useCallback(
     (mediaId: number, mediaType: "movie" | "tv") =>
-      watched.some(
-        (item: UserMediaItem) =>
-          item.mediaId === mediaId && item.mediaType === mediaType,
-      ),
-    [watched],
+      watchedSet.has(`${mediaType}-${mediaId}`),
+    [watchedSet],
   );
 
   const getWatchedItem = useCallback(

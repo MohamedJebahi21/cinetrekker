@@ -1,6 +1,34 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+type GuardedPage = Page & {
+  __trustedTypesViolations?: string[];
+};
+
+const TRUSTED_TYPES_SEO_ERROR_PATTERN =
+  /Trusted Types: script sinks are not allowed|ErrorBoundary caught an error:\s*TypeError:\s*Trusted Types/i;
 
 test.describe('CineTrekker smoke', () => {
+  test.beforeEach(async ({ page }) => {
+    const guardedPage = page as GuardedPage;
+    guardedPage.__trustedTypesViolations = [];
+
+    page.on('console', (msg) => {
+      if (msg.type() !== 'error') return;
+      const text = msg.text();
+      if (TRUSTED_TYPES_SEO_ERROR_PATTERN.test(text)) {
+        guardedPage.__trustedTypesViolations?.push(text);
+      }
+    });
+  });
+
+  test.afterEach(async ({ page }) => {
+    const violations = (page as GuardedPage).__trustedTypesViolations ?? [];
+    expect(
+      violations,
+      'Trusted Types SEO runtime violations were emitted in browser console.',
+    ).toEqual([]);
+  });
+
   test('home page loads and shows header', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveTitle(/CineTrekker|CineTrekker/i);

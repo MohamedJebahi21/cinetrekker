@@ -238,16 +238,86 @@ export default function Watchlist() {
                     to={`/${mediaType}/${media.id}`}
                     className="flex items-center gap-4 p-4 transition-colors hover:bg-accent/30"
                   >
-                    <div className="h-20 w-14 flex-shrink-0 overflow-hidden rounded-md bg-muted">
-                      {poster ? (
-                        <img
-                          src={poster}
-                          alt={`${title} poster`}
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="h-full w-full bg-muted" />
+                    <CheckSquare className="mr-2 h-4 w-4" />
+                    {t("actions.watched", "Watched")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    disabled={selectedCount === 0}
+                    onClick={() => void handleBulkRemove()}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    {t("common.delete", "Remove")}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={clearSelection}>
+                    {t("common.cancel", "Cancel")}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {isLoading ? (
+            <MediaGrid items={[]} isLoading columns="normal" gap="md" />
+          ) : filteredMedia.length > 0 ? (
+            viewMode === "grid" ? (
+              <MediaGrid
+                items={filteredMedia}
+                columns="normal"
+                gap="md"
+                selectable={selectionMode}
+                selectedKeys={selectedKeys}
+                onToggleSelect={toggleSelect}
+              />
+            ) : (
+              <div className="ct-list-surface divide-y divide-border/60">
+                {filteredMedia.map((media) => {
+                  const title = getMediaTitle(media);
+                  const year = getMediaYear(media);
+                  const mediaType = getMediaType(media);
+                  const poster = getImageUrl(media.poster_path, "w154");
+
+                  return (
+                    <Link
+                      key={`${mediaType}-${media.id}`}
+                      to={`/${mediaType}/${media.id}`}
+                      className="ct-list-row group items-start gap-4 p-4 sm:items-center sm:gap-5 sm:p-5"
+                    >
+                      {selectionMode && (
+                        <button
+                          type="button"
+                          className={`mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${
+                            selectedKeys.has(`${mediaType}-${media.id}`)
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border/60 bg-card text-muted-foreground"
+                          }`}
+                          onPointerDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            toggleSelect(media.id, mediaType);
+                          }}
+                          aria-current={
+                            selectedKeys.has(`${mediaType}-${media.id}`)
+                              ? "true"
+                              : undefined
+                          }
+                          aria-label={
+                            selectedKeys.has(`${mediaType}-${media.id}`)
+                              ? t("mediaCard.deselectTitle", "Deselect title")
+                              : t("mediaCard.selectTitle", "Select title")
+                          }
+                        >
+                          {selectedKeys.has(`${mediaType}-${media.id}`) ? (
+                            <CheckSquare className="h-4 w-4" />
+                          ) : (
+                            <Square className="h-4 w-4" />
+                          )}
+                        </button>
                       )}
                     </div>
                     <div className="min-w-0 flex-1">

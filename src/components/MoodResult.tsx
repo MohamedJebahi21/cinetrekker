@@ -27,7 +27,13 @@ export default function MoodResult({ mood, time, onTryAnother, className = '' }:
     retry: 1,
   });
 
-  const handleAdd = async () => {
+  const handleAdd = async (event?: {
+    preventDefault: () => void;
+    stopPropagation: () => void;
+  }) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+
     if (!match) return;
     try {
       addToWatchlist?.(match.id, (match.media_type || 'movie') as 'movie' | 'tv');
@@ -95,8 +101,14 @@ export default function MoodResult({ mood, time, onTryAnother, className = '' }:
         <p className="text-base text-muted-foreground leading-relaxed">{match.overview}</p>
 
         <div className="mt-6 flex flex-wrap gap-3">
-          <Button onClick={handleAdd} className="gap-2">
-            {t('mood.addToWatchlist', 'Add to Watchlist')}
+          <Button
+            type="button"
+            onClick={(event) => {
+              void handleAdd(event);
+            }}
+            className="gap-2"
+          >
+            Watchlist
           </Button>
           <Button onClick={handleTryAnother} variant="outline" disabled={isFetching}>
             {isFetching ? t('common.loading') : t('mood.tryAnother', 'Try Another')}

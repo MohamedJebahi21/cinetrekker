@@ -1,0 +1,101 @@
+# VS Code Settings for AI Vibe Coding
+# Add these settings to your VS Code settings.json (Ctrl+Shift+P → "Preferences: Open User Settings (JSON)")
+
+{
+  "## ============================================" : "AI VIBE CODING SETTINGS",
+  
+  "## Cline Configuration": {
+    "cline.apiProvider": "gemini",
+    "cline.modelId": "gemini-2.0-flash",
+    "cline.temperature": 0.3,
+    "cline.maxTokens": 8000,
+    "cline.autoSave": true,
+    "cline.parallelTools": true
+  },
+
+  "## Copilot Configuration (autocomplete only)": {
+    "github.copilot.enable": {
+      "*": true,
+      "plaintext": false,
+      "markdown": false
+    },
+    "github.copilot.chat.enabled": false,
+    "editor.inlineSuggest.enabled": true
+  },
+
+  "## Editor Optimization": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit",
+      "source.fixAll": "explicit"
+    },
+    "editor.wordWrap": "on",
+    "editor.renderWhitespace": "trailing",
+    "editor.tabSize": 2
+  },
+
+  "## ESLint & Prettier": {
+    "eslint.validate": [
+      "javascript",
+      "javascriptreact",
+      "typescript",
+      "typescriptreact"
+    ],
+    "eslint.format.enable": true,
+    "[typescript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true
+    },
+    "[typescriptreact]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true
+    },
+    "[json]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true
+    }
+  },
+
+  "## Git & GitLens": {
+    "gitlens.defaultDateFormat": "MMMM Do YYYY, h:mm a",
+    "gitlens.hovers.enabled": true,
+    "git.ignoreMissingGitWarning": false,
+    "gitlens.showWhatsNewAfterUpgrades": false
+  },
+
+  "## TypeScript": {
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    "typescript.preferences.importModuleSpecifierFormat": "absolute"
+  },
+
+  "## File Exclusions (for performance)": {
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/.next": true,
+      "**/dist": true,
+      "**/build": true,
+      "**/.turbo": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/.next": true,
+      "**/dist": true,
+      "**/build": true
+    }
+  },
+
+  "## Terminal": {
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    "terminal.integrated.fontSize": 12
+  },
+
+  "## Optional: Disable features to reduce RAM usage": {
+    "files.watcherExclude": {
+      "**/.git/objects/**": true,
+      "**/.git/subtree-cache/**": true,
+      "**/node_modules/*/**": true
+    }
+  }
+}

@@ -23,15 +23,17 @@ export function mediaToJsonLd(media: Media) {
 }
 
 export function websiteJsonLd({
-  name = 'CineTrekker',
-  url = 'https://cinetrekker.vercel.app',
-  description = 'Track movies and TV shows you love',
-  logo = '/placeholder.svg',
+  name = "CineTrekker",
+  url = buildCanonicalUrl("/"),
+  description = "Track movies and TV shows you love with a structured movie tracker.",
+  logo = buildCanonicalUrl("/favicon.ico"),
+  alternateName = ["Cine Trekker", "CineTrekker Movie Tracker"],
 } = {}) {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name,
+    alternateName,
     url,
     description,
     publisher: {

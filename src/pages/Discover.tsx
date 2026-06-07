@@ -111,6 +111,29 @@ export default function Discover() {
                   <Link to="/search">{t("discover.searchAll", "Search Everything")}</Link>
                 </Button>
               </div>
+
+              <div className="mt-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground mb-3">
+                  {t("discover.browseByMood", "Browse by Mood")}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {moodFilters.map((mood) => (
+                    <Button
+                      key={mood.label}
+                      asChild
+                      variant="outline"
+                      className="rounded-full bg-white/[0.02] border-white/10 hover:border-primary/40 hover:bg-primary/5 transition-all text-xs h-9 px-4"
+                    >
+                      <Link to={mood.href}>
+                        {mood.label === "Cozy" ? "😊 Cozy" :
+                         mood.label === "Intense" ? "⚡ Intense" :
+                         mood.label === "Mind-bending" ? "🧠 Mind-bending" :
+                         mood.label === "Funny" ? "🍿 Funny" : mood.label}
+                      </Link>
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3 md:grid-cols-1">

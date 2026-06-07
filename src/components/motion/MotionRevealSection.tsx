@@ -1,4 +1,4 @@
-import { Suspense, lazy, type ReactNode } from "react";
+import { Suspense, lazy, useState, useEffect, type ReactNode } from "react";
 import { useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useInView } from "@/hooks/useInView";
@@ -18,6 +18,8 @@ type MotionRevealSectionProps = {
   delayClassName?: string;
 };
 
+const REVEAL_IN_VIEW_OPTIONS = { rootMargin: "200px", triggerOnce: false };
+
 export function MotionRevealSection({
   children,
   className,
@@ -27,7 +29,14 @@ export function MotionRevealSection({
 }: MotionRevealSectionProps) {
   const reduceMotion = useReducedMotion();
   const motionIntensity = useMotionIntensityPreference();
-  const [ref, inView] = useInView<HTMLElement>({ rootMargin: "200px" });
+  const [ref, inView] = useInView<HTMLElement>(REVEAL_IN_VIEW_OPTIONS);
+  const [hasBeenRevealed, setHasBeenRevealed] = useState(false);
+
+  useEffect(() => {
+    if (inView) {
+      setHasBeenRevealed(true);
+    }
+  }, [inView]);
 
   const toneClasses =
     tone === "bold"
@@ -56,7 +65,7 @@ export function MotionRevealSection({
         reduceMotion
           ? "opacity-100"
           : cn("transition-all ease-out", toneClasses.hidden, toneClasses.duration, delayClassName),
-        inView && toneClasses.active,
+        (reduceMotion || hasBeenRevealed) && toneClasses.active,
         className,
       )}
     >

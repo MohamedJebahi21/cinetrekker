@@ -125,7 +125,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
     } catch (error) {
-      console.warn("[Auth] Sign out failed", toAuthError(error));
+      logger.warn("Sign out failed.", toAuthError(error));
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    if (!isSupabaseConfigured()) {
+      return { error: new Error(MISSING_ENV_AUTH_ERROR) };
+    }
+
+    try {
+      const { supabase } = await loadSupabaseModule();
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/login`,
+      });
+      return { error: (error as Error | null) ?? null };
+    } catch (error) {
+      return { error: toAuthError(error) };
     }
   };
 

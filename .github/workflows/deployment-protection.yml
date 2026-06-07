@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -82,8 +81,49 @@ jobs:
       - name: Verify TypeScript compilation
         run: npx tsc --noEmit --skipLibCheck
 
-      - name: Check ESLint
-        run: npm run lint || echo "⚠️ Lint warnings detected (non-blocking)"
+      - name: Enforce bundle budget
+        run: npm run test:bundle-budget
+
+      - name: Run API security tests
+        run: npm run test:security
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Install Playwright WebKit
+        run: npx playwright install --with-deps webkit
+
+      - name: Run mobile feature tests
+        run: npm run test:e2e:mobile
+
+      - name: Upload Playwright artifacts (on failure)
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts-deployment-protection
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+
+  dependency-check:
+    name: Runtime Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=moderate
 
   security-config:
     name: Validate Security Configuration

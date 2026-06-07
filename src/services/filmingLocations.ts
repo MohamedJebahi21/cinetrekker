@@ -1,6 +1,7 @@
 import type { Media } from "@/types/media";
 import { CURATED_FILMING_LOCATIONS } from "@/data/filmingLocationsDataset";
 import { getFilmingLocation, type FilmingLocation } from "@/lib/filmingLocations";
+import { requestJson } from "@/services/api";
 
 export interface EnrichedFilmingLocation extends FilmingLocation {
   source: "curated" | "shotonwhat" | "fallback";
@@ -65,18 +66,7 @@ async function fromShotOnWhat(title: string): Promise<EnrichedFilmingLocation[]>
     const endpoint = new URL(SHOT_ON_WHAT_BASE_URL);
     endpoint.searchParams.set("title", title);
 
-    const response = await fetch(endpoint.toString(), {
-      headers: {
-        Authorization: `Bearer ${SHOT_ON_WHAT_KEY}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      return [];
-    }
-
-    const data = (await response.json()) as {
+    const data = await requestJson<{
       locations?: Array<{
         name?: string;
         city?: string;
@@ -85,7 +75,13 @@ async function fromShotOnWhat(title: string): Promise<EnrichedFilmingLocation[]>
         lng?: number;
         scene?: string;
       }>;
-    };
+    }>(endpoint.toString(), {
+      method: "GET",
+      timeoutMs: 8_000,
+      headers: {
+        Authorization: `Bearer ${SHOT_ON_WHAT_KEY}`,
+      },
+    });
 
     return (data.locations || [])
       .filter((location) => Number.isFinite(location.lat) && Number.isFinite(location.lng))

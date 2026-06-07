@@ -1,7 +1,7 @@
 export const GENERIC_AUTH_ERROR =
   "Authentication failed. Please check your credentials.";
 export const GENERIC_SIGNUP_SUCCESS =
-  "Please check your email to complete setup.";
+  "Registration successful! You can now sign in to your account.";
 
 const pW = "pass" + "word";
 export const AUTH_RESET_NOTIF =
@@ -16,10 +16,54 @@ export function processAuthError(error: unknown): {
 } {
   const logContext = error instanceof Error ? error.message : String(error);
 
+  // Debug log for auth errors — development only
+  if (import.meta.env.DEV) {
+    console.error("[AUTH DEBUG]", {
+      rawError: error,
+      errorCode,
+      errorMessage,
+      logContext,
+    });
+  }
+
   if (logContext.includes("Supabase environment is not configured")) {
     return {
       userMessage:
         "Authentication is unavailable: missing Supabase configuration. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.local and restart the app.",
+      shouldLog: false,
+      logContext,
+    };
+  }
+
+  // Handle common Supabase errors
+  if (errorMessage.includes("invalid login credentials")) {
+    return {
+      userMessage: "Invalid email or password. Please try again.",
+      shouldLog: false,
+      logContext,
+    };
+  }
+
+  if (errorMessage.includes("user already registered")) {
+    return {
+      userMessage: "An account with this email already exists.",
+      shouldLog: false,
+      logContext,
+    };
+  }
+
+  if (errorMessage.includes("rate limit") || errorCode === "429") {
+    return {
+      userMessage:
+        "Too many attempts. Please wait a moment before trying again.",
+      shouldLog: true,
+      logContext,
+    };
+  }
+
+  if (errorMessage.includes("email_address_invalid") || errorMessage.includes("invalid email")) {
+    return {
+      userMessage: "This email address or domain is not supported. Please try a different email (e.g., Gmail).",
       shouldLog: false,
       logContext,
     };

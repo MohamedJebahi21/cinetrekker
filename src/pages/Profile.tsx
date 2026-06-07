@@ -79,8 +79,150 @@ export default function Profile() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
-  const missingActorDataLogged = useRef(false);
-  
+  const [profileLoadRetryCount, setProfileLoadRetryCount] = useState(0);
+  const [profileLoadTimedOut, setProfileLoadTimedOut] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isAvatarDragActive, setIsAvatarDragActive] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [isFavoritesPickerOpen, setIsFavoritesPickerOpen] = useState(false);
+  const [activeProfileTab, setActiveProfileTab] = useState<
+    "overview" | "favorites" | "taste" | "edit"
+  >("overview");
+  const [favoriteSearchQuery, setFavoriteSearchQuery] = useState("");
+  const favoriteMoviesCarouselRef = useRef<HTMLDivElement>(null);
+  const favoriteSeriesCarouselRef = useRef<HTMLDivElement>(null);
+  const [favoriteMoviesCarouselState, setFavoriteMoviesCarouselState] =
+    useState<CarouselState>(DEFAULT_CAROUSEL_STATE);
+  const [favoriteSeriesCarouselState, setFavoriteSeriesCarouselState] =
+    useState<CarouselState>(DEFAULT_CAROUSEL_STATE);
+  const [favoriteSearchType, setFavoriteSearchType] = useState<
+    "all" | "movie" | "tv"
+  >("all");
+  const profilePhotoInputRef = useRef<HTMLInputElement | null>(null);
+  const {
+    pinnedFavoriteKeys,
+    pinnedFavoritesStorageKey,
+    persistPinnedFavorites,
+    setPinnedFavoriteKeys,
+  } = usePinnedFavorites({
+    userId: user?.id,
+    onSyncError: (error) => {
+      console.error("Error syncing favorites:", error);
+      toast({
+        title: t("profile.favoritesSyncDelayed", "Favorites sync delayed"),
+        description: t(
+          "profile.favoritesSyncDelayedDesc",
+          "Saved locally. Will retry on your next update.",
+        ),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const text = useCallback(
+    (key: string, fallback: string) => humanizeUiText(String(t(key, fallback))),
+    [t],
+  );
+
+  const parseLocalDate = useCallback((value: string): Date | null => {
+    const [year, month, day] = value.split("-").map(Number);
+    if (!year || !month || !day) return null;
+    const parsed = new Date(year, month - 1, day, 12, 0, 0);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }, []);
+
+  const persistGuestProfile = useCallback(
+    (draft: LocalProfileDraft) => {
+      if (typeof window === "undefined") return;
+      if (user?.id) return;
+
+      const currentRaw = localStorage.getItem(profileKey);
+      const currentParsed = currentRaw
+        ? (JSON.parse(currentRaw) as Record<string, unknown>)
+        : {};
+      const merged = {
+        ...currentParsed,
+        ...draft,
+      };
+
+      localStorage.setItem(profileKey, JSON.stringify(merged));
+    },
+    [profileKey, user?.id],
+  );
+
+  const maskEmail = useCallback((email: string): string => {
+    const atIndex = email.indexOf("@");
+    if (atIndex <= 0) return text("common.hidden", "Hidden");
+    const localPart = email.slice(0, atIndex);
+    const domain = email.slice(atIndex + 1);
+    if (!domain) return text("common.hidden", "Hidden");
+
+    if (localPart.length <= 2) {
+      return `${localPart[0] ?? "*"}****@${domain}`;
+    }
+
+    return `${localPart[0]}****${localPart[localPart.length - 1]}@${domain}`;
+  }, [text]);
+
+  const visibleEmail = useMemo(() => {
+    if (!user?.email) return "";
+    return isEmailRevealed ? user.email : maskEmail(user.email);
+  }, [isEmailRevealed, maskEmail, user?.email]);
+
+  useEffect(() => {
+    if (!shareCopied) return;
+    const timer = window.setTimeout(() => setShareCopied(false), 1600);
+    return () => window.clearTimeout(timer);
+  }, [shareCopied]);
+
+  useEffect(() => {
+    if (!isLoadingProfile) {
+      setProfileLoadTimedOut(false);
+      return;
+    }
+
+    setProfileLoadTimedOut(false);
+    const timeoutId = window.setTimeout(() => {
+      setProfileLoadTimedOut(true);
+    }, 15000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [isLoadingProfile, profileLoadRetryCount]);
+
+  useEffect(() => {
+    if (isEditMode) {
+      setActiveProfileTab("edit");
+    } else if (activeProfileTab === "edit") {
+      setActiveProfileTab("overview");
+    }
+  }, [activeProfileTab, isEditMode]);
+
+  const optimisticGenresMutation = useMutation({
+    mutationFn: async (nextGenres: number[]) => {
+      if (!user?.id) return;
+      await profileService.saveProfile(user.id, {
+        favorite_genres: nextGenres,
+      });
+    },
+    onSuccess: (_, nextGenres) => {
+      initialStateRef.current = {
+        ...initialStateRef.current,
+        favoriteGenres: [...nextGenres],
+      };
+      void queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+    },
+    onError: () => {
+      toast({
+        title: t("profile.syncFailed", "Sync failed"),
+        description: t(
+          "profile.syncGenreChangesFailed",
+          "Could not sync genre changes. Please try again.",
+        ),
+        variant: "destructive",
+      });
+    },
+  });
+
   // Store initial state for change detection
   const initialStateRef = useRef({
     profilePhoto: '',
@@ -239,7 +381,15 @@ export default function Profile() {
         subscription.unsubscribe();
       }
     };
-  }, [user?.id, profileKey, toast]);
+  }, [
+    user?.id,
+    profileKey,
+    pinnedFavoritesStorageKey,
+    profileLoadRetryCount,
+    setPinnedFavoriteKeys,
+    t,
+    toast,
+  ]);
 
   // Track unsaved changes (only after initial load)
   useEffect(() => {
@@ -617,36 +767,46 @@ export default function Profile() {
         description="View your watching statistics and preferences"
         canonical="https://cinetrekker.vercel.app/profile"
       />
-    <motion.div 
-      className="page-container pt-20 pb-24 md:pb-0 max-w-7xl"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      {isLoadingProfile && (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      )}
+      <motion.div
+        className="profile-page page-container ct-page-shell max-w-full overflow-x-hidden pt-20 pb-24 md:pb-0"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {isLoadingProfile && !profileLoadTimedOut && (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        )}
 
-      {!isLoadingProfile && (
-      <>
-      {/* Premium Profile Hero */}
-      <motion.section variants={itemVariants} className="mb-8">
-        <Card className="relative overflow-hidden border-neutral-800/50 bg-gradient-to-br from-neutral-900/90 via-neutral-900/70 to-neutral-800/90 backdrop-blur-md shadow-2xl">
-          {/* Gradient Background Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-red-900/10 via-transparent to-purple-900/10 pointer-events-none" />
-          
-          <CardContent className="pt-8 pb-6 relative z-10">
-            <div className="flex items-start gap-6 flex-col sm:flex-row">
-              {/* Avatar with Gradient Ring */}
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-br from-red-500 via-purple-500 to-blue-500 rounded-full blur-md opacity-60 group-hover:opacity-80 transition-opacity" />
-                <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-neutral-800 flex items-center justify-center overflow-hidden border-4 border-neutral-900/50">
-                  {profilePhoto ? (
-                    <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    <User className="w-12 h-12 sm:w-14 sm:h-14 text-neutral-500" />
+        {isLoadingProfile && profileLoadTimedOut && (
+          <div className="mx-auto max-w-md rounded-lg border border-border/60 bg-card/70 p-5 text-center">
+            <p className="text-sm text-muted-foreground">
+              {t(
+                "profile.loadingTimedOut",
+                "Loading your profile is taking longer than expected.",
+              )}
+            </p>
+            <Button
+              type="button"
+              className="mt-4"
+              onClick={() => setProfileLoadRetryCount((count) => count + 1)}
+            >
+              {t("common.retry", "Retry")}
+            </Button>
+          </div>
+        )}
+
+        {!isLoadingProfile && (
+          <TooltipProvider>
+            <>
+              <motion.section variants={itemVariants} className="mb-8">
+                <Card
+                  className={cn(
+                    "ct-panel-strong relative overflow-hidden shadow-2xl",
+                    isLightTheme
+                      ? "border-border/70 bg-card"
+                      : "border-border/60 bg-card/95",
                   )}
                 </div>
                 <Input

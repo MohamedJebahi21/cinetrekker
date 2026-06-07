@@ -1,3 +1,18 @@
+# Temp / cache
+.tmp
+tsconfig.tsbuildinfo
+lighthouse-desktop-report
+lighthouse-accessibility-report.html
+playwright-report
+supabase/.temp
+*.report.html
+
+# Dev server logs
+dev.log
+dev-full.log
+devserver.err.log
+devserver.out.log
+
 # Logs
 logs
 *.log

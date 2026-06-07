@@ -14,6 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
+      followed_title_state_user: {
+        Row: {
+          user_id: string;
+          movie_id: string;
+          media_type: string;
+          tmdb_id: number;
+          release_date: string | null;
+          status: string | null;
+          number_of_seasons: number | null;
+          last_episode_air_date: string | null;
+          last_episode_season_number: number | null;
+          last_episode_number: number | null;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          movie_id: string;
+          media_type: string;
+          tmdb_id: number;
+          release_date?: string | null;
+          status?: string | null;
+          number_of_seasons?: number | null;
+          last_episode_air_date?: string | null;
+          last_episode_season_number?: number | null;
+          last_episode_number?: number | null;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          movie_id?: string;
+          media_type?: string;
+          tmdb_id?: number;
+          release_date?: string | null;
+          status?: string | null;
+          number_of_seasons?: number | null;
+          last_episode_air_date?: string | null;
+          last_episode_season_number?: number | null;
+          last_episode_number?: number | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      movie_followers: {
+        Row: {
+          id: string;
+          user_id: string;
+          movie_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          movie_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          movie_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          movie_id: string;
+          event_key: string | null;
+          type: string;
+          message: string;
+          created_at: string;
+          is_read: boolean;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          movie_id: string;
+          event_key?: string | null;
+          type: string;
+          message: string;
+          created_at?: string;
+          is_read?: boolean;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          movie_id?: string;
+          event_key?: string | null;
+          type?: string;
+          message?: string;
+          created_at?: string;
+          is_read?: boolean;
+        };
+        Relationships: [];
+      };
       followed_shows: {
         Row: {
           followed_at: string
