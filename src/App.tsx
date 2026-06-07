@@ -723,22 +723,22 @@ const App = () => {
                       </Button>
                     </div>
                   </DialogContent>
-                </Dialog>
-              </ErrorBoundary>
-            </UserListsProvider>
-          </ContentPolicyProvider>
-        </AuthProvider>
-      </TooltipProvider>
-      {enableEnhancements && Analytics && (
+                  </Dialog>
+                </ErrorBoundary>
+                <Suspense fallback={null}>
+                  <GuestSyncStickyBar />
+                </Suspense>
+              </UserListsProvider>
+            </ContentPolicyProvider>
+          </AuthProvider>
+        </TooltipProvider>
+        {enableEnhancements && Analytics && (
         <Suspense fallback={null}>
           <Analytics />
         </Suspense>
       )}
       <Suspense fallback={null}>
         <CookieConsent />
-      </Suspense>
-      <Suspense fallback={null}>
-        <GuestSyncStickyBar />
       </Suspense>
     </ThemeProvider>
   );
