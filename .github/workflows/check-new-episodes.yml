@@ -15,12 +15,14 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           # We use /dynamic-worker because that is your function's URL Slug
           response=$(curl -X POST \
             "${SUPABASE_URL}/functions/v1/dynamic-worker" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
             -H "Content-Type: application/json" \
+            -H "x-cron-secret: ${CRON_SECRET}" \
             -w "\n%{http_code}" \
             -s)
           

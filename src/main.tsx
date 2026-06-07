@@ -42,10 +42,15 @@ try {
         .catch(() => undefined);
     };
 
-    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      window.requestIdleCallback(injectInsights, { timeout: 2500 });
-    } else {
-      window.setTimeout(injectInsights, 600);
+    if (typeof window !== "undefined") {
+      const g = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number };
+      if ("requestIdleCallback" in g) {
+        g.requestIdleCallback!(injectInsights, { timeout: 2500 });
+      } else {
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(injectInsights);
+        });
+      }
     }
   }
 } catch (err) {

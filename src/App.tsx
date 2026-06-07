@@ -137,10 +137,13 @@ const App = () => {
 
     const enable = () => setEnableEnhancements(true);
 
-    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      idleId = window.requestIdleCallback(enable, { timeout: 1500 });
-    } else {
-      timeoutId = window.setTimeout(enable, 200);
+    if (typeof window !== "undefined") {
+      const g = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number };
+      if ("requestIdleCallback" in g) {
+        idleId = g.requestIdleCallback!(enable, { timeout: 1500 });
+      } else {
+        frameId = window.requestAnimationFrame(enable);
+      }
     }
 
     return () => {
