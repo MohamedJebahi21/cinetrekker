@@ -1,45 +1,37 @@
-import { Component, ErrorInfo, ReactNode } from "react";
-import { RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ErrorBanner } from "@/components/ErrorBanner";
+import { Component, ErrorInfo, ReactNode } from 'react';
+import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
-  onRetry?: () => Promise<void> | void;
 }
 
 interface State {
   hasError: boolean;
   error: Error | null;
-  isRetrying: boolean;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
     error: null,
-    isRetrying: false,
   };
 
   public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error, isRetrying: false };
+    return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 
-  private handleRetry = async () => {
-    this.setState({ isRetrying: true });
+  private handleRetry = () => {
+    this.setState({ hasError: false, error: null });
+  };
 
-    try {
-      await this.props.onRetry?.();
-    } catch (retryError) {
-      console.error("ErrorBoundary retry failed:", retryError);
-    } finally {
-      this.setState({ hasError: false, error: null, isRetrying: false });
-    }
+  private handleGoHome = () => {
+    window.location.href = '/';
   };
 
   public render() {
@@ -50,14 +42,25 @@ export class ErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="min-h-[400px] flex items-center justify-center p-8">
-            <div className="w-full max-w-md mx-auto">
-              <ErrorBanner
-                message="Something went wrong. Please try again."
-                actionLabel={this.state.isRetrying ? "Retrying..." : "Retry"}
-                onAction={this.handleRetry}
-                className="mb-4"
-              />
+          <div className="text-center max-w-md">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 mb-6">
+              <AlertTriangle className="w-8 h-8 text-destructive" />
             </div>
+            <h2 className="text-xl font-bold mb-2">Something went wrong</h2>
+            <p className="text-muted-foreground text-sm mb-6">
+              We encountered an unexpected error. Please try again or return to the home page.
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <Button variant="outline" onClick={this.handleGoHome}>
+                <Home className="w-4 h-4 mr-2" />
+                Go Home
+              </Button>
+              <Button onClick={this.handleRetry}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Try Again
+              </Button>
+            </div>
+          </div>
         </div>
       );
     }
@@ -75,16 +78,19 @@ interface ApiErrorProps {
 export function ApiError({ message, onRetry }: ApiErrorProps) {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-      <div className="w-full max-w-md mx-auto">
-        <ErrorBanner
-          message={
-            message ||
-            "We couldn't fetch the data. Please check your connection and try again."
-          }
-          actionLabel={onRetry ? "Retry" : undefined}
-          onAction={onRetry}
-        />
+      <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-destructive/10 mb-4">
+        <AlertTriangle className="w-6 h-6 text-destructive" />
       </div>
+      <h3 className="font-semibold mb-2">Failed to load content</h3>
+      <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+        {message || "We couldn't fetch the data. Please check your connection and try again."}
+      </p>
+      {onRetry && (
+        <Button variant="outline" size="sm" onClick={onRetry}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Retry
+        </Button>
+      )}
     </div>
   );
 }
@@ -96,9 +102,7 @@ export function OfflineIndicator() {
       <div className="bg-destructive text-destructive-foreground px-4 py-3 rounded-lg shadow-lg flex items-center gap-3">
         <div className="w-2 h-2 rounded-full bg-destructive-foreground animate-pulse" />
         <span className="text-sm font-medium">You're offline</span>
-        <span className="text-sm opacity-80">
-          — Some features may be unavailable
-        </span>
+        <span className="text-sm opacity-80">— Some features may be unavailable</span>
       </div>
     </div>
   );

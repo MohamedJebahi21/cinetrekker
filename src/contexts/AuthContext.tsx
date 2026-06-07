@@ -1,247 +1,77 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import type { User, Session } from "@supabase/supabase-js";
-import { isSupabaseConfigured } from "@/lib/envValidation";
-import { createLogger } from "@/lib/logger";
-import { loadSupabaseModule } from "@/lib/loadSupabaseModule";
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
-export interface AuthContextType {
+interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, code: string) => Promise<{ error: Error | null }>;
-  signIn: (email: string, code: string) => Promise<{ error: Error | null }>;
-  signInWithProvider: (
-    provider: "google" | "facebook" | "apple",
-  ) => Promise<{ error: Error | null }>;
-  resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(
-  undefined,
-);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const logger = createLogger("auth");
-const AUTH_INIT_TIMEOUT_MS = 4000;
-const MISSING_ENV_AUTH_ERROR =
-  "Supabase environment is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local and restart the dev server.";
-let didWarnMissingSupabaseEnv = false;
-
-function toAuthError(error: unknown): Error {
-  return error instanceof Error ? error : new Error(String(error));
-}
-
-export function useAuth(): AuthContextType {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-}
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isSupabaseConfigured()) {
-      setSession(null);
-      setUser(null);
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
       setLoading(false);
-      if (!didWarnMissingSupabaseEnv) {
-        didWarnMissingSupabaseEnv = true;
-        logger.warn(
-          "Supabase env is missing. Auth requests are disabled until environment variables are configured.",
-        );
-      }
-      return;
-    }
+    });
 
-    let isMounted = true;
-    let unsubscribe: () => void = () => {};
-
-    const applySession = (nextSession: Session | null) => {
-      if (!isMounted) return;
-      setSession(nextSession);
-      setUser(nextSession?.user ?? null);
-    };
-
-    void (async () => {
-      try {
-        const { supabase } = await loadSupabaseModule();
-
-        if (!isMounted) {
-          return;
-        }
-
-        const {
-          data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-          applySession(nextSession);
-          if (isMounted) {
-            setLoading(false);
-          }
-        });
-
-        unsubscribe = () => subscription.unsubscribe();
-
-        let timeoutId: number | null = null;
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          timeoutId = window.setTimeout(() => {
-            reject(new Error("Auth session check timed out."));
-          }, AUTH_INIT_TIMEOUT_MS);
-        });
-
-        let sessionResult: Awaited<ReturnType<typeof supabase.auth.getSession>>;
-        try {
-          sessionResult = await Promise.race([
-            supabase.auth.getSession(),
-            timeoutPromise,
-          ]);
-        } finally {
-          if (timeoutId !== null) {
-            window.clearTimeout(timeoutId);
-            timeoutId = null;
-          }
-        }
-
-        const {
-          data: { session: currentSession },
-          error,
-        } = sessionResult;
-
-        if (error) {
-          throw error;
-        }
-
-        applySession(currentSession);
-      } catch (error) {
-        logger.warn("Failed to initialize session state.", toAuthError(error));
-        applySession(null);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    })();
-
-    return () => {
-      isMounted = false;
-      unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, code: string) => {
-    if (!isSupabaseConfigured()) {
-      return { error: new Error(MISSING_ENV_AUTH_ERROR) };
-    }
-
-    try {
-      const { supabase } = await loadSupabaseModule();
-      const { error } = await supabase.auth.signUp({
-        email,
-        password: code,
-      });
-      return { error: (error as Error | null) ?? null };
-    } catch (error) {
-      return { error: toAuthError(error) };
-    }
+  const signUp = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: window.location.origin,
+      },
+    });
+    return { error: error as Error | null };
   };
 
-  const signIn = async (email: string, code: string) => {
-    if (!isSupabaseConfigured()) {
-      return { error: new Error(MISSING_ENV_AUTH_ERROR) };
-    }
-
-    try {
-      const { supabase } = await loadSupabaseModule();
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password: code,
-      });
-      return { error: (error as Error | null) ?? null };
-    } catch (error) {
-      return { error: toAuthError(error) };
-    }
-  };
-
-  const signInWithProvider = async (
-    provider: "google" | "facebook" | "apple",
-  ) => {
-    if (!isSupabaseConfigured()) {
-      return { error: new Error(MISSING_ENV_AUTH_ERROR) };
-    }
-
-    try {
-      const { supabase } = await loadSupabaseModule();
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      return { error: (error as Error | null) ?? null };
-    } catch (error) {
-      return { error: toAuthError(error) };
-    }
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    return { error: error as Error | null };
   };
 
   const signOut = async () => {
-    if (!isSupabaseConfigured()) {
-      return;
-    }
-
-    try {
-      const { supabase } = await loadSupabaseModule();
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        throw error;
-      }
-
-      const signedOutUserId = session?.user?.id;
-      if (signedOutUserId && typeof window !== "undefined") {
-        window.localStorage.removeItem(`cinetrekker_profile_${signedOutUserId}`);
-      }
-
-      setSession(null);
-      setUser(null);
-      window.dispatchEvent(new Event("cinetrekker:sign-out"));
-    } catch (error) {
-      logger.warn("Sign out failed.", toAuthError(error));
-    }
-  };
-
-  const resetPassword = async (email: string) => {
-    if (!isSupabaseConfigured()) {
-      return { error: new Error(MISSING_ENV_AUTH_ERROR) };
-    }
-
-    try {
-      const { supabase } = await loadSupabaseModule();
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth`,
-      });
-      return { error: (error as Error | null) ?? null };
-    } catch (error) {
-      return { error: toAuthError(error) };
-    }
+    await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        loading,
-        signUp,
-        signIn,
-        signInWithProvider,
-        resetPassword,
-        signOut,
-      }}
-    >
+    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 }

@@ -19,27 +19,22 @@ export function GlobalLoader() {
   if (!isLoading) return null;
 
   return (
-    <div
-      className="fixed top-0 left-0 right-0 z-[100] h-1 bg-transparent"
-      role="status"
-      aria-live="polite"
-      aria-label="Loading"
-    >
-      <div
-        aria-hidden="true"
+    <div className="fixed top-0 left-0 right-0 z-[100] h-1 bg-transparent">
+      <div 
         className={cn(
-          "h-full w-1/2 bg-gradient-to-r from-primary via-red-500 to-primary",
+          "h-full bg-gradient-to-r from-primary via-red-500 to-primary",
           "animate-pulse shadow-[0_0_10px_rgba(229,9,20,0.5)]"
         )}
         style={{
+          width: '30%',
           animation: 'load 1s cubic-bezier(0.4, 0, 0.6, 1) infinite'
         }}
       />
       <style>{`
         @keyframes load {
-          0% { transform: translateX(-100%) scaleX(0.4); opacity: 0.5; }
-          50% { transform: translateX(50%) scaleX(1); opacity: 1; }
-          100% { transform: translateX(200%) scaleX(0.4); opacity: 0.5; }
+          0% { width: 0%; margin-left: 0%; }
+          50% { width: 50%; margin-left: 25%; }
+          100% { width: 0%; margin-left: 100%; }
         }
       `}</style>
     </div>

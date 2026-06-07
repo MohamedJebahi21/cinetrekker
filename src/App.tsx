@@ -1,720 +1,201 @@
+import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  Routes,
-  Route,
-  useNavigate,
-  Navigate,
-  useLocation,
-} from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { Loader2 } from "lucide-react";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { Analytics } from "@vercel/analytics/react";
+import { lazy, Suspense } from 'react';
 import { AuthProvider } from "@/contexts/AuthContext";
 import { UserListsProvider } from "@/contexts/UserListsContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { ContentPolicyProvider } from "@/contexts/content-policy-context";
-import ScrollToTop from "@/components/ScrollToTop";
-import { UnifiedNav } from "@/components/UnifiedNav";
+import { Header } from "@/components/Header";
+import { BottomNav } from "@/components/BottomNav";
+import { Footer } from "@/components/Footer";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { GlobalLoader } from "@/components/GlobalLoader";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
-import { usePullToRefresh } from "@/hooks/usePullToRefresh";
-import SEO from "@/components/SEO";
-import { websiteJsonLd } from "@/lib/schema";
-import { siteMetadata } from "@/lib/metadata";
-import { applyAccessibilityPreferencesToRoot } from "@/lib/accessibility-preferences";
-import { useCookieConsent } from "@/hooks/useCookieConsent";
+import SEO from '@/components/SEO';
+import { websiteJsonLd } from '@/lib/schema';
+
+// Critical pages - load immediately
 import Index from "./pages/Index";
-const KeyboardShortcuts = lazy(() => import("@/components/KeyboardShortcuts"));
-const CommandPalette = lazy(() => import("@/components/CommandPalette"));
-const GlobalLoader = lazy(() =>
-  import("@/components/GlobalLoader").then((mod) => ({
-    default: mod.GlobalLoader,
-  })),
-);
-const FollowNotificationMonitor = lazy(
-  () =>
-    import("@/components/FollowNotificationMonitor").then((mod) => ({
-      default: mod.FollowNotificationMonitor,
-    })),
-);
-const Footer = lazy(() =>
-  import("@/components/Footer").then((mod) => ({ default: mod.Footer })),
-);
-const MobileBottomNav = lazy(() =>
-  import("@/components/MobileBottomNav").then((mod) => ({
-    default: mod.MobileBottomNav,
-  })),
-);
-const CookieConsent = lazy(() =>
-  import("@/components/CookieConsent").then((mod) => ({
-    default: mod.CookieConsent,
-  })),
-);
+import Auth from "./pages/Auth";
+import AuthCallback from "./pages/AuthCallback";
+import NotFound from "./pages/NotFound";
 
-const Auth = lazy(() => import("./pages/Auth"));
-const Login = lazy(() => import("./pages/Login"));
-const Signup = lazy(() => import("./pages/Signup"));
-const AuthCallback = lazy(() => import("./pages/AuthCallback"));
-const TitleStatus = lazy(() => import("./pages/TitleStatus"));
-
+// Heavy pages - lazy load to reduce initial bundle
 const Search = lazy(() => import("./pages/Search"));
-const Trending = lazy(() => import("./pages/Trending"));
 const Details = lazy(() => import("./pages/Details"));
 const Person = lazy(() => import("./pages/Person"));
 const Watchlist = lazy(() => import("./pages/Watchlist"));
 const Watched = lazy(() => import("./pages/Watched"));
-const Following = lazy(() => import("./pages/Following"));
-const Notifications = lazy(() => import("./pages/Notifications"));
 const Recommendations = lazy(() => import("./pages/Recommendations"));
 const Profile = lazy(() => import("./pages/Profile"));
-const Settings = lazy(() => import("./pages/Settings"));
 const Privacy = lazy(() => import("./pages/Privacy"));
-const About = lazy(() => import("./pages/About"));
-const Feedback = lazy(() => import("./pages/Feedback"));
-const Terms = lazy(() => import("./pages/Terms"));
-const Cookies = lazy(() => import("./pages/Cookies"));
-const AccessibilitySettings = lazy(() => import("./pages/AccessibilitySettings"));
 const Calendar = lazy(() => import("./pages/Calendar"));
-const EnhancedStats = lazy(() => import("./pages/EnhancedStats"));
-const GenreBrowser = lazy(() => import("./pages/GenreBrowser"));
-const Discover = lazy(() => import("./pages/Discover"));
-const DecadeExplorer = lazy(() => import("./pages/DecadeExplorer"));
-const Achievements = lazy(() => import("./pages/Achievements"));
-const PrintWatchlist = lazy(() => import("./pages/PrintWatchlist"));
-const AwardWinners = lazy(() => import("./pages/AwardWinners"));
-const YearInReview = lazy(() => import("./pages/YearInReview"));
-const isVercelHost =
-  typeof window !== "undefined" &&
-  /(?:^|\.)vercel\.app$/i.test(window.location.hostname);
-const shouldLoadVercelAnalytics =
-  import.meta.env.VITE_ENABLE_VERCEL_ANALYTICS === "true" ||
-  (import.meta.env.PROD && isVercelHost);
-const Analytics = lazy(() =>
-  import("@vercel/analytics/react").then((mod) => ({
-    default: mod.Analytics,
-  })),
-);
+const Stats = lazy(() => import("./pages/Stats"));
 
+// Page transition variants - subtle and fast
+const pageVariants = {
+  initial: { opacity: 0 },
+  enter: { opacity: 1, transition: { duration: 0.2 } },
+  exit: { opacity: 0, transition: { duration: 0.15 } },
+};
+
+// Network status monitor component
 function NetworkMonitor() {
-  const { isOnline } = useNetworkStatus();
-  const { t } = useTranslation();
-
-  if (isOnline) return null;
-
-  return (
-    <div
-      className="sticky top-0 z-[90] border-b border-primary/25 bg-primary/10 px-4 py-2 text-center text-sm text-primary backdrop-blur-sm"
-      role="status"
-      aria-live="polite"
-    >
-      {t(
-        "common.offlineBanner",
-        "You're offline. Browsing still works, but syncing actions may be delayed.",
-      )}
-    </div>
-  );
-}
-
-function RouteSpinner() {
-  const { t } = useTranslation();
-
-  return (
-    <div
-      className="page-container pt-20 flex items-center justify-center"
-      role="status"
-      aria-live="polite"
-    >
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      <span className="sr-only">{t("common.loadingPage", "Loading page...")}</span>
-    </div>
-  );
+  useNetworkStatus();
+  return null;
 }
 
 function AnimatedRoutes() {
   const location = useLocation();
-
+  console.log("🛣️  AnimatedRoutes rendering for path:", location.pathname);
+  
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={location.pathname}
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+        variants={pageVariants}
+        initial="initial"
+        animate="enter"
+        exit="exit"
       >
         <Routes location={location}>
-          <Route
-            path="/"
-            element={<Index />}
-          />
-          <Route
-            path="/search"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Search />
+          {/* Public routes */}
+          <Route path="/" element={<Index />} />
+          <Route path="/search" element={
+            <Suspense fallback={<PageSkeleton />}>
+              <Search />
+            </Suspense>
+          } />
+          <Route path="/movie/:id" element={
+            <Suspense fallback={<PageSkeleton />}>
+              <Details />
+            </Suspense>
+          } />
+          <Route path="/tv/:id" element={
+            <Suspense fallback={<PageSkeleton />}>
+              <Details />
+            </Suspense>
+          } />
+          <Route path="/person/:id" element={
+            <Suspense fallback={<PageSkeleton />}>
+              <Person />
+            </Suspense>
+          } />
+          <Route path="/privacy" element={
+            <Suspense fallback={<PageSkeleton />}>
+              <Privacy />
+            </Suspense>
+          } />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          
+          {/* Protected routes */}
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <Suspense fallback={<PageSkeleton />}>
+                <Profile />
               </Suspense>
-            }
-          />
-          <Route
-            path="/trending"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Trending />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/movie/:id/:slug?"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Details />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/tv/:id/:slug?"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Details />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/person/:id/:slug?"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Person />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/privacy"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Privacy />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/about"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <About />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/feedback"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Feedback />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/terms"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Terms />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/cookies"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Cookies />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/auth"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Auth />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/login"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Login />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/signup"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Signup />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/auth/callback"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <AuthCallback />
-              </Suspense>
-            }
-          />
-
-          <Route
-            path="/discover"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <Discover />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteSpinner />}>
-                  <Profile />
-                </Suspense>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteSpinner />}>
-                  <Settings />
-                </Suspense>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/watchlist"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
+            </ProtectedRoute>
+          } />
+          <Route path="/watchlist" element={
+            <ProtectedRoute>
+              <Suspense fallback={<PageSkeleton />}>
                 <Watchlist />
               </Suspense>
-            }
-          />
-          <Route
-            path="/watched"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
+            </ProtectedRoute>
+          } />
+          <Route path="/watched" element={
+            <ProtectedRoute>
+              <Suspense fallback={<PageSkeleton />}>
                 <Watched />
               </Suspense>
-            }
-          />
-          <Route
-            path="/following"
-            element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteSpinner />}>
-                  <Following />
-                </Suspense>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/notifications"
-            element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteSpinner />}>
-                  <Notifications />
-                </Suspense>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/recommendations"
-            element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteSpinner />}>
-                  <Recommendations />
-                </Suspense>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/calendar"
-            element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteSpinner />}>
-                  <Calendar />
-                </Suspense>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/upcoming"
-            element={<Navigate to="/calendar" replace />}
-          />
-
-          <Route
-            path="/movies"
-            element={<Navigate to="/search?type=movie&sort=popularity.desc" replace />}
-          />
-
-          <Route
-            path="/tv"
-            element={<Navigate to="/search?type=tv&sort=popularity.desc" replace />}
-          />
-          <Route
-            path="/stats"
-            element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteSpinner />}>
-                  <EnhancedStats />
-                </Suspense>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/enhanced-stats"
-            element={<Navigate to="/stats" replace />}
-          />
-          <Route
-            path="/achievements"
-            element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteSpinner />}>
-                  <Achievements />
-                </Suspense>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/print-watchlist"
-            element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteSpinner />}>
-                  <PrintWatchlist />
-                </Suspense>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/genres"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <GenreBrowser />
+            </ProtectedRoute>
+          } />
+          <Route path="/recommendations" element={
+            <ProtectedRoute>
+              <Suspense fallback={<PageSkeleton />}>
+                <Recommendations />
               </Suspense>
-            }
-          />
-          <Route
-            path="/decades"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <DecadeExplorer />
+            </ProtectedRoute>
+          } />
+          <Route path="/calendar" element={
+            <ProtectedRoute>
+              <Suspense fallback={<PageSkeleton />}>
+                <Calendar />
               </Suspense>
-            }
-          />
-          <Route
-            path="/awards"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <AwardWinners />
+            </ProtectedRoute>
+          } />
+          <Route path="/stats" element={
+            <ProtectedRoute>
+              <Suspense fallback={<PageSkeleton />}>
+                <Stats />
               </Suspense>
-            }
-          />
-          <Route
-            path="/year-in-review"
-            element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteSpinner />}>
-                  <YearInReview />
-                </Suspense>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/watch-history"
-            element={<Navigate to="/watched" replace />}
-          />
-          <Route
-            path="/accessibility"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <AccessibilitySettings />
-              </Suspense>
-            }
-          />
-
-          <Route
-            path="*"
-            element={
-              <Suspense fallback={<RouteSpinner />}>
-                <TitleStatus />
-              </Suspense>
-            }
-          />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </motion.div>
     </AnimatePresence>
   );
 }
 
+/**
+ * Security: Route Protection
+ * Protected routes require authentication and email verification.
+ */
 const App = () => {
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const { t } = useTranslation();
-  const { hasAcceptedConsent } = useCookieConsent();
-  const [enableEnhancements, setEnableEnhancements] = useState(false);
-  const [authPromptOpen, setAuthPromptOpen] = useState(false);
-  const refreshableQueryKeys = new Set([
-    "details",
-    "trending",
-    "trending-movies",
-    "trending-tv",
-    "popular",
-    "top-rated",
-    "nowPlaying",
-    "airingToday",
-    "videos",
-    "search",
-    "search-dropdown",
-    "search-overlay",
-    "genres",
-    "genre-media",
-    "watch-providers",
-    "watchProviders",
-    "tv-details",
-    "tv-seasons",
-    "season-details",
-    "home-critical",
-    "followed-titles-details",
-    "print-watchlist",
-    "recommendations",
-    "continue-watching",
-    "new-episodes",
-  ]);
-
-  useEffect(() => {
-    applyAccessibilityPreferencesToRoot();
-
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key && !event.key.startsWith("cinetrekker_")) return;
-      applyAccessibilityPreferencesToRoot();
-    };
-
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
-  }, []);
-
-  useEffect(() => {
-    const openAuthPrompt = () => setAuthPromptOpen(true);
-    window.addEventListener(
-      "cinetrekker:auth-required",
-      openAuthPrompt as EventListener,
-    );
-
-    return () => {
-      window.removeEventListener(
-        "cinetrekker:auth-required",
-        openAuthPrompt as EventListener,
-      );
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleSignOut = () => {
-      queryClient.clear();
-    };
-
-    window.addEventListener("cinetrekker:sign-out", handleSignOut);
-    return () => window.removeEventListener("cinetrekker:sign-out", handleSignOut);
-  }, [queryClient]);
-
-  useEffect(() => {
-    let idleId: number | null = null;
-    let frameId: number | null = null;
-
-    const enable = () => setEnableEnhancements(true);
-
-    if (typeof window !== "undefined") {
-      if ("requestIdleCallback" in window) {
-        idleId = window.requestIdleCallback(enable, { timeout: 1500 });
-      } else {
-        frameId = window.requestAnimationFrame(enable);
-      }
-    }
-
-    return () => {
-      if (idleId !== null && "cancelIdleCallback" in window) {
-        window.cancelIdleCallback(idleId);
-      }
-      if (frameId !== null) {
-        window.cancelAnimationFrame(frameId);
-      }
-    };
-  }, []);
-
-  const { handlers, containerRef } = usePullToRefresh({
-    onRefresh: async () => {
-      await queryClient.invalidateQueries({
-        predicate: (query) => {
-          const head = query.queryKey[0];
-          const key = typeof head === "string" ? head : "";
-          return refreshableQueryKeys.has(key);
-        },
-      });
-    },
-    threshold: 100,
-    maxPull: 150,
-  });
-
-  const handleBoundaryRetry = async () => {
-    await queryClient.invalidateQueries({
-      predicate: (query) => {
-        const head = query.queryKey[0];
-        const key = typeof head === "string" ? head : "";
-        return refreshableQueryKeys.has(key);
-      },
-    });
-
-    await queryClient.refetchQueries({
-      type: "active",
-      predicate: (query) => {
-        const head = query.queryKey[0];
-        const key = typeof head === "string" ? head : "";
-        return refreshableQueryKeys.has(key);
-      },
-    });
-  };
-
-  return (
-    <ThemeProvider>
-      <TooltipProvider>
-        <AuthProvider>
-          <ContentPolicyProvider>
+  console.log("📱 App component is rendering...");
+  console.log("🎨 Setting up providers...");
+  
+  try {
+    return (
+      <ThemeProvider>
+        <TooltipProvider>
+          <AuthProvider>
             <UserListsProvider>
-              <ErrorBoundary onRetry={handleBoundaryRetry}>
-                {enableEnhancements && (
-                  <Suspense fallback={null}>
-                    <KeyboardShortcuts />
-                  </Suspense>
-                )}
-                {enableEnhancements && (
-                  <Suspense fallback={null}>
-                    <CommandPalette />
-                  </Suspense>
-                )}
+              <ErrorBoundary>
+                <Toaster />
                 <Sonner position="bottom-right" />
-                <SEO
-                  jsonLd={websiteJsonLd({
-                    name: siteMetadata.siteName,
-                    url: siteMetadata.canonical,
-                    description: siteMetadata.description,
-                  })}
-                  title={siteMetadata.title}
-                  description={siteMetadata.description}
-                  keywords={siteMetadata.keywords}
-                />
-                {enableEnhancements && (
-                  <Suspense fallback={null}>
-                    <GlobalLoader />
-                  </Suspense>
-                )}
-                {enableEnhancements && <NetworkMonitor />}
-                {enableEnhancements && (
-                  <Suspense fallback={null}>
-                    <FollowNotificationMonitor />
-                  </Suspense>
-                )}
-                <div className="ct-page-shell flex min-h-[100dvh] flex-col">
-                  <UnifiedNav />
-                  <ScrollToTop />
-                  <main
-                    id="main"
-                    tabIndex={-1}
-                    ref={containerRef}
-                    className={`flex-1 ${
-                      hasAcceptedConsent
-                        ? "pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] md:pb-10"
-                        : "pb-[max(10rem,var(--ct-cookie-consent-offset,10rem))] md:pb-10"
-                    }`}
-                    {...handlers}
-                  >
-                    <ErrorBoundary onRetry={handleBoundaryRetry}>
-                      <AnimatedRoutes />
-                    </ErrorBoundary>
-                  </main>
-                  <Suspense fallback={null}>
+                <SEO jsonLd={websiteJsonLd()} title="CineTrekker — Track Your Movies & TV Shows" description="Track movies and TV shows you love" canonical="https://cinetrekker.lovable.app" />
+                <BrowserRouter>
+                  <GlobalLoader />
+                  <NetworkMonitor />
+                  <div className="flex min-h-screen flex-col">
+                    <Header />
+                    <main className="flex-1 pb-16 md:pb-0">
+                      <ErrorBoundary>
+                        <AnimatedRoutes />
+                      </ErrorBoundary>
+                    </main>
+                    <BottomNav />
                     <Footer />
-                  </Suspense>
-                  <Suspense fallback={null}>
-                    <MobileBottomNav />
-                  </Suspense>
-                </div>
-
-                <Dialog open={authPromptOpen} onOpenChange={setAuthPromptOpen}>
-                  <DialogContent className="max-w-sm border-border bg-card text-card-foreground">
-                    <DialogHeader>
-                      <DialogTitle>
-                        {t("authPrompt.title", "Create a free account to save your watchlist")}
-                      </DialogTitle>
-                      <DialogDescription className="text-muted-foreground">
-                        {t(
-                          "authPrompt.description",
-                          "Save titles, mark them watched, and keep your progress synced across devices.",
-                        )}
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="mt-4 flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => setAuthPromptOpen(false)}
-                      >
-                        {t("authPrompt.notNow", "Not now")}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setAuthPromptOpen(false);
-                          navigate("/login");
-                        }}
-                      >
-                        {t("nav.signIn", "Sign In")}
-                      </Button>
-                      <Button
-                        className="bg-primary text-primary-foreground hover:bg-primary/90"
-                        onClick={() => {
-                          setAuthPromptOpen(false);
-                          navigate("/signup");
-                        }}
-                      >
-                        {t("authPrompt.createAccount", "Create Account")}
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                  </div>
+                </BrowserRouter>
               </ErrorBoundary>
             </UserListsProvider>
-          </ContentPolicyProvider>
-        </AuthProvider>
-      </TooltipProvider>
-      {enableEnhancements && shouldLoadVercelAnalytics && hasAcceptedConsent && (
-        <Suspense fallback={null}>
-          <Analytics />
-        </Suspense>
-      )}
-      <Suspense fallback={null}>
-        <CookieConsent />
-      </Suspense>
-    </ThemeProvider>
-  );
+          </AuthProvider>
+        </TooltipProvider>
+        {/* Vercel Analytics */}
+        <Analytics />
+      </ThemeProvider>
+    );
+  } catch (err) {
+    console.error("❌ FATAL ERROR in App component:", err);
+    return (
+      <div style={{ padding: '40px', fontFamily: 'system-ui' }}>
+        <h1 style={{ color: '#dc2626' }}>❌ App Component Error</h1>
+        <pre style={{ background: '#f3f4f6', padding: '16px', borderRadius: '8px', overflow: 'auto' }}>
+          {err instanceof Error ? err.stack : String(err)}
+        </pre>
+      </div>
+    );
+  }
 };
 
 export default App;

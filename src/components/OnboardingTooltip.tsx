@@ -1,11 +1,10 @@
-import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { X, Sparkles, BookmarkPlus, Play, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { PaginationDots, PaginationDotStatic } from "@/components/ui/pagination-dots";
-import { cn } from "../lib/utils";
+import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { X, Sparkles, BookmarkPlus, Play, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
-const ONBOARDING_ID = "cinetrekker_onboarding_completed";
+const ONBOARDING_KEY = 'cinetrekker_onboarding_completed';
 
 interface OnboardingStep {
   id: number;
@@ -22,7 +21,7 @@ export function OnboardingTooltip() {
 
   useEffect(() => {
     // Check if onboarding was already completed
-    const completed = localStorage.getItem(ONBOARDING_ID);
+    const completed = localStorage.getItem(ONBOARDING_KEY);
     if (!completed) {
       // Show after a short delay for better UX
       const timer = setTimeout(() => setIsVisible(true), 1500);
@@ -34,29 +33,20 @@ export function OnboardingTooltip() {
     {
       id: 1,
       icon: <Sparkles className="w-6 h-6 text-primary" />,
-      title: t("onboarding.step1Title", "Welcome to CineTrekker!"),
-      description: t(
-        "onboarding.step1Desc",
-        "Your personal hub for tracking movies and TV shows. Let's get you started.",
-      ),
+      title: t('onboarding.step1Title', 'Welcome to CineTrekker!'),
+      description: t('onboarding.step1Desc', 'Your personal hub for tracking movies and TV shows. Let\'s get you started.'),
     },
     {
       id: 2,
       icon: <BookmarkPlus className="w-6 h-6 text-primary" />,
-      title: t("onboarding.step2Title", "Build Your Watchlist"),
-      description: t(
-        "onboarding.step2Desc",
-        "Click the bookmark icon on any title to save it to your watchlist for later.",
-      ),
+      title: t('onboarding.step2Title', 'Build Your Watchlist'),
+      description: t('onboarding.step2Desc', 'Click the bookmark icon on any title to save it to your watchlist for later.'),
     },
     {
       id: 3,
       icon: <Play className="w-6 h-6 text-primary" />,
-      title: t("onboarding.step3Title", "Start Discovering"),
-      description: t(
-        "onboarding.step3Desc",
-        'Browse trending titles, search by mood or genre, and jump straight into your next watch.',
-      ),
+      title: t('onboarding.step3Title', 'Start Your Trek'),
+      description: t('onboarding.step3Desc', 'Use "Random Trek" to discover highly-rated titles, or browse trending content.'),
     },
   ];
 
@@ -64,7 +54,7 @@ export function OnboardingTooltip() {
     if (currentStep < steps.length - 1) {
       setIsAnimating(true);
       setTimeout(() => {
-        setCurrentStep((prev) => prev + 1);
+        setCurrentStep(prev => prev + 1);
         setIsAnimating(false);
       }, 150);
     } else {
@@ -73,12 +63,12 @@ export function OnboardingTooltip() {
   };
 
   const handleComplete = () => {
-    localStorage.setItem(ONBOARDING_ID, "true");
+    localStorage.setItem(ONBOARDING_KEY, 'true');
     setIsVisible(false);
   };
 
   const handleSkip = () => {
-    localStorage.setItem(ONBOARDING_ID, "true");
+    localStorage.setItem(ONBOARDING_KEY, 'true');
     setIsVisible(false);
   };
 
@@ -99,27 +89,27 @@ export function OnboardingTooltip() {
         </button>
 
         {/* Content */}
-        <div
-          className={cn(
-            "p-8 text-center transition-opacity duration-150",
-            isAnimating && "opacity-0",
-          )}
-        >
+        <div className={cn(
+          "p-8 text-center transition-opacity duration-150",
+          isAnimating && "opacity-0"
+        )}>
           {/* Icon */}
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-6">
             {step.icon}
           </div>
 
           {/* Step indicator */}
-          <PaginationDots className="mb-4 mt-0">
+          <div className="flex items-center justify-center gap-2 mb-4">
             {steps.map((_, i) => (
-              <PaginationDotStatic
+              <div
                 key={i}
-                active={i === currentStep}
-                aria-hidden="true"
+                className={cn(
+                  "h-1.5 rounded-full transition-all",
+                  i === currentStep ? "w-6 bg-primary" : "w-1.5 bg-muted"
+                )}
               />
             ))}
-          </PaginationDots>
+          </div>
 
           {/* Text */}
           <h2 className="text-xl font-bold mb-3">{step.title}</h2>
@@ -135,15 +125,18 @@ export function OnboardingTooltip() {
               onClick={handleSkip}
               className="text-muted-foreground"
             >
-              {t("onboarding.skip", "Skip")}
+              {t('onboarding.skip', 'Skip')}
             </Button>
 
-            <Button onClick={handleNext} className="gap-2 btn-primary-glow">
+            <Button
+              onClick={handleNext}
+              className="gap-2 btn-primary-glow"
+            >
               {currentStep === steps.length - 1 ? (
-                t("onboarding.start", "Get Started")
+                t('onboarding.start', 'Get Started')
               ) : (
                 <>
-                  {t("onboarding.next", "Next")}
+                  {t('onboarding.next', 'Next')}
                   <ChevronRight className="w-4 h-4" />
                 </>
               )}

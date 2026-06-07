@@ -7,7 +7,7 @@ interface LastViewedMedia {
   timestamp: number;
 }
 
-const STORAGE_ID = 'cinetrekker_last_viewed';
+const STORAGE_KEY = 'cinetrekker_last_viewed';
 const MAX_ITEMS = 3;
 
 export function useLastViewed() {
@@ -15,7 +15,7 @@ export function useLastViewed() {
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_ID);
+      const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
         // Handle migration from single item to array
@@ -46,7 +46,7 @@ export function useLastViewed() {
       const updated = [newItem, ...filtered].slice(0, MAX_ITEMS);
       
       try {
-        localStorage.setItem(STORAGE_ID, JSON.stringify(updated));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       } catch {
         // Ignore storage errors
       }
@@ -57,7 +57,7 @@ export function useLastViewed() {
 
   const clearLastViewed = useCallback(() => {
     try {
-      localStorage.removeItem(STORAGE_ID);
+      localStorage.removeItem(STORAGE_KEY);
       setLastViewedList([]);
     } catch {
       // Ignore storage errors

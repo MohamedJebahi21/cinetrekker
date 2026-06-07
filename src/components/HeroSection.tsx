@@ -1,431 +1,215 @@
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Bookmark, Check, Info, Star } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState, type TouchEvent } from "react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { getBackdropUrl, getImageUrl, getMediaTitle, getTrending } from "@/services/tmdb";
-import { useContentPolicy } from "@/contexts/content-policy-context";
-import { useUserLists } from "@/contexts/UserListsContext";
-
-const AUTO_PLAY_MS = 6000;
-const SWIPE_THRESHOLD = 42;
-
-type TouchPoint = { x: number; y: number };
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
+import { Play, Bookmark, BookmarkCheck, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { getTrending, getBackdropUrl, getMediaTitle, getMovieVideos, getTVVideos, getMediaType } from '@/services/tmdb';
+import { Button } from '@/components/ui/button';
+import { useUserLists } from '@/contexts/UserListsContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { cn } from '@/lib/utils';
 
 export function HeroSection() {
   const { t, i18n } = useTranslation();
-  const {
-    addToWatchlist, removeFromWatchlist,
-    addToWatched, removeFromWatched,
-    isInWatchlist, isWatched,
-  } = useUserLists();
-  const { strictFiltering, moderateFiltering } = useContentPolicy();
-  const includeAdult = !(strictFiltering || moderateFiltering);
-  const prefersReducedMotion = useReducedMotion();
+  const { user } = useAuth();
+  const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useUserLists();
   const language = i18n.language;
+  const [showTrailer, setShowTrailer] = useState(false);
 
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [touchStart, setTouchStart] = useState<TouchPoint | null>(null);
-
-  const { data: weeklyResponse } = useQuery({
-    queryKey: ["hero-top-weekly", language, includeAdult],
-    queryFn: () => getTrending("all", "week", language, 1, includeAdult),
+  const { data: trendingDay, isLoading } = useQuery({
+    queryKey: ['trending', 'day', language],
+    queryFn: () => getTrending('all', 'day', language),
   });
 
-  const topWeekly = useMemo(
-    () => (weeklyResponse?.results || []).filter((item) => item.backdrop_path).slice(0, 5),
-    [weeklyResponse],
+  const heroMedia = trendingDay?.results?.[0];
+  const mediaType = heroMedia ? getMediaType(heroMedia) : 'movie';
+  const heroBackdropUrl = heroMedia?.backdrop_path 
+    ? getBackdropUrl(heroMedia.backdrop_path, 'w1280')
+    : null;
+
+  // Fetch trailer
+  const { data: videos } = useQuery({
+    queryKey: ['videos', mediaType, heroMedia?.id, language],
+    queryFn: () => mediaType === 'movie' 
+      ? getMovieVideos(heroMedia!.id, language)
+      : getTVVideos(heroMedia!.id, language),
+    enabled: !!heroMedia?.id,
+  });
+
+  const trailer = videos?.results?.find(
+    (v) => v.type === 'Trailer' && v.site === 'YouTube'
+  ) || videos?.results?.find(
+    (v) => v.site === 'YouTube'
   );
 
-  useEffect(() => { setActiveIndex(0); }, [topWeekly.length]);
+  const inWatchlist = heroMedia ? isInWatchlist(heroMedia.id, mediaType) : false;
 
-  // Auto-play timer
-  useEffect(() => {
-    if (prefersReducedMotion || topWeekly.length <= 1 || isPaused) return;
-    const tickMs = 30;
-    const step = 100 / (AUTO_PLAY_MS / tickMs);
-    const timer = window.setInterval(() => {
-      setProgress((c) => Math.min(100, c + step));
-    }, tickMs);
-    return () => window.clearInterval(timer);
-  }, [prefersReducedMotion, topWeekly.length, isPaused, activeIndex]);
-
-  // Advance slide when progress hits 100
-  useEffect(() => {
-    if (prefersReducedMotion || progress < 100 || topWeekly.length <= 1) return;
-    setActiveIndex((c) => (c + 1) % topWeekly.length);
-    setProgress(0);
-  }, [prefersReducedMotion, progress, topWeekly.length]);
-
-  // Preload next image
-  useEffect(() => {
-    if (topWeekly.length <= 1) return;
-    const next = topWeekly[(activeIndex + 1) % topWeekly.length];
-    if (!next?.backdrop_path) return;
-    const img = new Image();
-    img.src = getBackdropUrl(next.backdrop_path, "w1280") || "";
-  }, [activeIndex, topWeekly]);
-
-  if (topWeekly.length === 0) return null;
-
-  const activeItem = topWeekly[activeIndex];
-  const activeTitle = getMediaTitle(activeItem);
-  const heroImage = activeItem.backdrop_path
-    ? getBackdropUrl(activeItem.backdrop_path, "w1280") || ""
-    : "";
-  const activeYear =
-    activeItem.release_date?.slice(0, 4) ||
-    activeItem.first_air_date?.slice(0, 4) || "";
-  const activeMediaType = activeItem.media_type === "tv" ? "tv" : "movie";
-  const inWatchlist = isInWatchlist(activeItem.id, activeMediaType);
-  const inWatched = isWatched(activeItem.id, activeMediaType);
-
-  const goToSlide = (index: number) => {
-    const total = topWeekly.length;
-    setActiveIndex(((index % total) + total) % total);
-    setProgress(0);
-  };
-
-  const handleTouchStart = (e: TouchEvent<HTMLElement>) => {
-    setTouchStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
-    setIsPaused(true);
-  };
-
-  const handleTouchEnd = (e: TouchEvent<HTMLElement>) => {
-    if (!touchStart) { setIsPaused(false); return; }
-    const dx = e.changedTouches[0].clientX - touchStart.x;
-    const dy = e.changedTouches[0].clientY - touchStart.y;
-    if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)) {
-      goToSlide(activeIndex + (dx < 0 ? 1 : -1));
+  const handleWatchlist = () => {
+    if (!heroMedia || !user) return;
+    if (inWatchlist) {
+      removeFromWatchlist(heroMedia.id, mediaType);
+    } else {
+      addToWatchlist(heroMedia.id, mediaType);
     }
-    setTouchStart(null);
-    setIsPaused(false);
   };
 
-  const td = prefersReducedMotion ? 0 : 0.5;
+  if (isLoading || !heroMedia) {
+    return (
+      <section className="relative overflow-hidden -mt-16 min-h-[70vh] md:min-h-[80vh] flex items-center bg-background">
+        <div className="absolute inset-0 skeleton-shimmer" />
+      </section>
+    );
+  }
 
   return (
-    <section
-      className="w-full border-b border-border/30 bg-[#0d0d0f]"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={() => setIsPaused(false)}
-    >
-      {/* ── Desktop layout: backdrop left | sidebar right ── */}
-      <div className="hidden md:flex">
-
-        {/* LEFT: Full backdrop with overlay text */}
-        <div className="relative flex-1 min-h-[420px] lg:min-h-[480px] overflow-hidden">
-          {/* Animated backdrop */}
-          <AnimatePresence mode="wait">
-            <motion.img
-              key={`hero-bg-${activeItem.id}`}
-              src={heroImage}
-              alt=""
-              aria-hidden="true"
-              loading="eager"
-              fetchPriority="high"
-              className="absolute inset-0 h-full w-full object-cover"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: td }}
-            />
-          </AnimatePresence>
-
-          {/* Gradient overlays for text readability */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-
-          {/* Content anchored to bottom-left */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`hero-content-${activeItem.id}`}
-              className="absolute inset-x-0 bottom-0 p-6 lg:p-10 max-w-[680px]"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: td, ease: "easeOut" }}
-            >
-              {/* Kicker */}
-              <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-primary/90">
-                {t("home.topWatchedThisWeekKicker", "Weekly Spotlight")}
-              </p>
-
-              {/* Title */}
-              <h2 className="text-3xl font-black leading-tight tracking-tight text-white drop-shadow-lg lg:text-4xl xl:text-5xl">
-                {activeTitle}
-              </h2>
-
-              {/* Meta badges */}
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="rounded-sm bg-white/10 px-2.5 py-1 text-xs font-semibold text-white/80 ring-1 ring-white/10">
-                  {activeItem.media_type === "tv" ? t("common.tvShow", "TV Show") : t("common.movie", "Movie")}
-                </span>
-                {activeYear && (
-                  <span className="rounded-sm bg-white/10 px-2.5 py-1 text-xs font-semibold text-white/80 ring-1 ring-white/10">
-                    {activeYear}
-                  </span>
-                )}
-                {activeItem.vote_average > 0 && (
-                  <span className="inline-flex items-center gap-1 rounded-sm bg-white/10 px-2.5 py-1 text-xs font-semibold text-white/80 ring-1 ring-white/10">
-                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                    {activeItem.vote_average.toFixed(1)}
-                  </span>
-                )}
-              </div>
-
-              {/* Description */}
-              {activeItem.overview && (
-                <p className="mt-3 line-clamp-3 max-w-lg text-sm leading-relaxed text-white/75 lg:text-base">
-                  {activeItem.overview}
-                </p>
-              )}
-
-              {/* Actions */}
-              <div className="mt-5 flex flex-wrap items-center gap-3">
-                <Button asChild className="h-10 rounded-sm bg-white text-black hover:bg-white/90 font-bold px-6 shadow-lg">
-                  <Link to={`/${activeMediaType}/${activeItem.id}`}>
-                    <Info className="mr-2 h-4 w-4" />
-                    {t("common.details", "Details")}
-                  </Link>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-10 rounded-sm border-white/25 bg-black/30 text-white hover:bg-white/10 font-semibold px-5 backdrop-blur-sm"
-                  onClick={() => { void (inWatchlist ? removeFromWatchlist(activeItem.id, activeMediaType) : addToWatchlist(activeItem.id, activeMediaType)); }}
-                >
-                  <Bookmark className={cn("mr-2 h-4 w-4", inWatchlist && "fill-white")} />
-                  {inWatchlist ? t("actions.inWatchlist", "In Watchlist") : t("actions.addToWatchlist", "Watchlist")}
-                </Button>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "h-10 rounded-sm border-white/25 bg-black/30 text-white hover:bg-white/10 font-semibold px-5 backdrop-blur-sm",
-                    inWatched && "border-green-400/40 bg-green-900/20 text-green-300"
-                  )}
-                  onClick={() => { void (inWatched ? removeFromWatched(activeItem.id, activeMediaType) : addToWatched(activeItem.id, activeMediaType, undefined, undefined, "completed")); }}
-                >
-                  <Check className="mr-2 h-4 w-4" />
-                  {inWatched ? t("actions.watched", "Watched") : t("actions.markAsWatched", "Watched")}
-                </Button>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Progress bars overlay (bottom of image, subtle) */}
-          <div className="absolute bottom-0 left-0 right-0 flex gap-1 px-6 pb-0 lg:px-10">
-            {topWeekly.map((item, i) => {
-              const isActive = i === activeIndex;
-              const fill = isActive ? progress : i < activeIndex ? 100 : 0;
-              return (
-                <button
-                  key={`pb-${item.id}-${i}`}
-                  type="button"
-                  aria-label={`Go to slide ${i + 1}`}
-                  onClick={() => goToSlide(i)}
-                  className="h-1 flex-1 overflow-hidden rounded-t-full bg-white/20 transition-all hover:bg-white/30"
-                >
-                  <motion.div
-                    className="h-full bg-primary"
-                    animate={{ width: `${fill}%` }}
-                    transition={{ width: { duration: isActive ? 0.03 : 0.3, ease: "linear" } }}
-                  />
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* RIGHT: Vertical thumbnail sidebar */}
-        <div className="w-[240px] flex-shrink-0 flex flex-col divide-y divide-white/5 bg-[#141418] xl:w-[280px]">
-          {topWeekly.map((item, index) => {
-            const isActive = index === activeIndex;
-            const itemTitle = getMediaTitle(item);
-            const thumb = item.poster_path
-              ? getImageUrl(item.poster_path, "w185")
-              : item.backdrop_path
-                ? getBackdropUrl(item.backdrop_path, "w300") || ""
-                : "";
-            return (
-              <button
-                key={`hero-sidebar-${item.id}-${index}`}
-                type="button"
-                onClick={() => goToSlide(index)}
-                className={cn(
-                  "group flex items-center gap-3 px-4 py-3 text-left transition-colors duration-200",
-                  isActive
-                    ? "bg-white/8 border-l-2 border-primary"
-                    : "border-l-2 border-transparent hover:bg-white/5"
-                )}
-              >
-                {/* Thumbnail */}
-                <div className="relative h-14 w-10 flex-shrink-0 overflow-hidden rounded-sm shadow-md">
-                  {thumb ? (
-                    <img
-                      src={thumb}
-                      alt=""
-                      loading="lazy"
-                      className={cn(
-                        "h-full w-full object-cover transition duration-300",
-                        !isActive && "opacity-60 group-hover:opacity-100"
-                      )}
-                    />
-                  ) : (
-                    <div className="h-full w-full bg-white/5" />
-                  )}
-                </div>
-
-                {/* Title */}
-                <span className={cn(
-                  "line-clamp-2 text-sm font-semibold leading-snug transition-colors",
-                  isActive ? "text-white" : "text-white/55 group-hover:text-white/85"
-                )}>
-                  {itemTitle}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ── Mobile layout: full-width stacked ── */}
-      <div className="md:hidden">
-        {/* Backdrop */}
-        <div className="relative aspect-video w-full overflow-hidden">
-          <AnimatePresence mode="wait">
-            <motion.img
-              key={`hero-mob-bg-${activeItem.id}`}
-              src={heroImage}
-              alt=""
-              aria-hidden="true"
-              loading="eager"
-              className="absolute inset-0 h-full w-full object-cover"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: td }}
-            />
-          </AnimatePresence>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-          {/* Progress bars */}
-          <div className="absolute bottom-0 left-0 right-0 flex gap-1 px-3 pb-0">
-            {topWeekly.map((item, i) => {
-              const isActive = i === activeIndex;
-              const fill = isActive ? progress : i < activeIndex ? 100 : 0;
-              return (
-                <button
-                  key={`mob-pb-${item.id}-${i}`}
-                  type="button"
-                  onClick={() => goToSlide(i)}
-                  className="h-0.5 flex-1 overflow-hidden rounded-t-full bg-white/20"
-                >
-                  <motion.div
-                    className="h-full bg-primary"
-                    animate={{ width: `${fill}%` }}
-                    transition={{ width: { duration: isActive ? 0.03 : 0.3, ease: "linear" } }}
-                  />
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Text content */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`hero-mob-content-${activeItem.id}`}
-            className="px-4 pt-4 pb-2"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: td }}
+    <section className="relative overflow-hidden -mt-16 min-h-[60vh] md:min-h-[80vh] flex items-center">
+      {/* Optimized Backdrop Image */}
+      {heroBackdropUrl && (
+        <img
+          src={heroBackdropUrl}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+          loading="eager"
+          fetchPriority="high"
+        />
+      )}
+      
+      {/* Enhanced Gradient Overlays - Deeper bottom for content readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent" style={{ backgroundSize: '100% 100%' }} />
+      <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-transparent md:via-background/50" />
+      {/* Extra bottom gradient for "Because You Liked" section readability */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#050505] to-transparent" />
+      
+      {/* Trailer Overlay */}
+      {showTrailer && trailer && (
+        <div className="absolute inset-0 z-20 bg-black/95 flex items-center justify-center">
+          <button 
+            onClick={() => setShowTrailer(false)}
+            className="absolute top-4 right-4 z-30 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            aria-label={t('actions.close', 'Close')}
           >
-            <h2 className="text-xl font-black leading-tight text-white">
-              {activeTitle}
-            </h2>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="rounded-sm bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-white/70">
-                {activeItem.media_type === "tv" ? t("common.tvShow", "TV Show") : t("common.movie", "Movie")}
-              </span>
-              {activeYear && (
-                <span className="rounded-sm bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-white/70">
-                  {activeYear}
-                </span>
-              )}
-              {activeItem.vote_average > 0 && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-white/70">
-                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                  {activeItem.vote_average.toFixed(1)}
-                </span>
-              )}
-            </div>
-            {activeItem.overview && (
-              <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-white/60">
-                {activeItem.overview}
-              </p>
-            )}
-            <div className="mt-4 flex gap-3">
-              <Button asChild className="h-9 flex-1 rounded-sm bg-white text-black font-bold hover:bg-white/90">
-                <Link to={`/${activeMediaType}/${activeItem.id}`}>
-                  <Info className="mr-2 h-4 w-4" />{t("common.details", "Details")}
-                </Link>
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-9 w-9 rounded-sm border-white/20 bg-black/20 text-white"
-                onClick={() => { void (inWatchlist ? removeFromWatchlist(activeItem.id, activeMediaType) : addToWatchlist(activeItem.id, activeMediaType)); }}
-              >
-                <Bookmark className={cn("h-4 w-4", inWatchlist && "fill-white")} />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className={cn("h-9 w-9 rounded-sm border-white/20 bg-black/20 text-white", inWatched && "border-green-400/40 text-green-300")}
-                onClick={() => { void (inWatched ? removeFromWatched(activeItem.id, activeMediaType) : addToWatched(activeItem.id, activeMediaType, undefined, undefined, "completed")); }}
-              >
-                <Check className="h-4 w-4" />
-              </Button>
-            </div>
-          </motion.div>
-        </AnimatePresence>
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <div className="w-full max-w-5xl aspect-video mx-4">
+            <iframe
+              src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&rel=0`}
+              title={trailer.name}
+              className="w-full h-full rounded-xl"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )}
+      
+      <div className="relative container mx-auto px-4 py-24 md:py-40 pt-20 md:pt-32 z-10">
+        <div className="max-w-2xl">
+          {/* Main Page Heading */}
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">
+            {user ? t('home.welcome', 'Hey there!') : t('home.welcomeBack', 'Welcome to CineTrekker!')}
+          </h1>
+          <p className="text-base md:text-lg text-muted-foreground mb-4 md:mb-6">
+            {t('home.subtitle', 'Ready to dive in?')}
+          </p>
 
-        {/* Horizontal thumbnail strip */}
-        <div className="scrollbar-hide flex gap-2 overflow-x-auto px-4 pb-4 pt-3">
-          {topWeekly.map((item, index) => {
-            const isActive = index === activeIndex;
-            const thumb = item.backdrop_path
-              ? getBackdropUrl(item.backdrop_path, "w300") || ""
-              : "";
-            return (
-              <button
-                key={`hero-mob-thumb-${item.id}-${index}`}
-                type="button"
-                onClick={() => goToSlide(index)}
-                className={cn(
-                  "flex-shrink-0 overflow-hidden rounded-md border transition",
-                  isActive
-                    ? "border-primary shadow-[0_0_0_2px_rgba(220,38,38,0.4)]"
-                    : "border-white/10 opacity-60"
-                )}
+          {/* Featured Badge */}
+          <div className="flex items-center gap-2 mb-3 md:mb-4">
+            <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+            <span className="text-xs md:text-sm font-medium text-primary uppercase tracking-wider">
+              #1 {t('home.trending', 'Trending')} {t('home.today', 'Today')}
+            </span>
+          </div>
+
+          {/* Trending Media Title */}
+          <h2 className="text-3xl md:text-6xl lg:text-7xl font-bold mb-3 md:mb-4 leading-tight heading-cinematic">
+            {getMediaTitle(heroMedia)}
+          </h2>
+
+          {/* Overview - max 2 lines on mobile with ellipsis */}
+          {heroMedia.overview && (
+            <p className="text-sm md:text-lg text-muted-foreground max-w-xl leading-relaxed mb-4 md:mb-6 line-clamp-2 md:line-clamp-3">
+              {heroMedia.overview}
+            </p>
+          )}
+
+          {/* Rating & Meta - Compact on mobile */}
+          <div className="flex flex-wrap items-center gap-2 md:gap-4 mb-6 md:mb-8 text-xs md:text-sm">
+            {heroMedia.vote_average > 0 && (
+              <span className="flex items-center gap-1 md:gap-1.5 px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-primary/20 text-primary font-semibold">
+                ★ {heroMedia.vote_average.toFixed(1)}
+              </span>
+            )}
+            {(heroMedia.release_date || heroMedia.first_air_date) && (
+              <span className="text-muted-foreground">
+                {new Date(heroMedia.release_date || heroMedia.first_air_date || '').getFullYear()}
+              </span>
+            )}
+            <span className="px-2 py-1 rounded bg-secondary text-secondary-foreground text-[10px] md:text-xs uppercase">
+              {mediaType === 'movie' ? t('common.movie') : t('common.tvShow')}
+            </span>
+          </div>
+          
+          {/* CTA Buttons - Side by side on mobile for vertical space savings */}
+          <div className="flex flex-row items-center gap-2 md:gap-3">
+            {/* Watch Trailer Button */}
+            {trailer && (
+              <Button 
+                size="default"
+                onClick={() => setShowTrailer(true)}
+                className="btn-primary-glow gap-2 h-11 md:h-12 px-4 md:px-6 text-sm md:text-base flex-1 md:flex-none"
+                aria-label={t('actions.watchTrailer', 'Watch Trailer')}
               >
-                {thumb ? (
-                  <img src={thumb} alt="" loading="lazy" className="h-14 w-24 object-cover" />
-                ) : (
-                  <div className="h-14 w-24 bg-white/5" />
+                <Play className="w-4 h-4 md:w-5 md:h-5 fill-current" />
+                <span className="hidden xs:inline">{t('actions.watchTrailer', 'Watch Trailer')}</span>
+                <span className="xs:hidden">Trailer</span>
+              </Button>
+            )}
+
+            {/* View Details Button */}
+            <Link to={`/${mediaType}/${heroMedia.id}`} className="flex-1 md:flex-none">
+              <Button 
+                size="default"
+                variant={trailer ? "outline" : "default"}
+                className={cn(
+                  "gap-2 h-11 md:h-12 px-4 md:px-6 text-sm md:text-base w-full",
+                  trailer ? "border-white/20 hover:bg-white/10" : "btn-primary-glow"
                 )}
-              </button>
-            );
-          })}
+                aria-label={t('home.viewDetails', 'View Details')}
+              >
+                {t('home.viewDetails', 'More Info')}
+              </Button>
+            </Link>
+
+            {/* Add to Watchlist Button - Icon only on mobile */}
+            {user && (
+              <Button 
+                size="default"
+                variant="outline"
+                onClick={handleWatchlist}
+                className={cn(
+                  "gap-2 h-11 md:h-12 px-3 md:px-6 text-sm md:text-base border-white/20 transition-all action-bounce",
+                  inWatchlist 
+                    ? "bg-primary/20 border-primary/50 text-primary hover:bg-primary/30" 
+                    : "hover:bg-white/10"
+                )}
+                aria-label={inWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
+              >
+                {inWatchlist ? (
+                  <>
+                    <BookmarkCheck className="w-4 h-4 md:w-5 md:h-5" />
+                    <span className="hidden md:inline">{t('actions.inWatchlist', 'In Watchlist')}</span>
+                  </>
+                ) : (
+                  <>
+                    <Bookmark className="w-4 h-4 md:w-5 md:h-5" />
+                    <span className="hidden md:inline">{t('actions.addToWatchlist')}</span>
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </section>

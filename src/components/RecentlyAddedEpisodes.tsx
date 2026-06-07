@@ -5,13 +5,9 @@ import { ChevronRight, Play } from 'lucide-react';
 import { getAiringTodayTV, getImageUrl, getMediaTitle } from '@/services/tmdb';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Image } from '@/components/ui/Image';
-import { useContentPolicy } from '@/contexts/content-policy-context';
-import { applySafetyFilter } from '@/lib/contentFilter';
 import {
   Carousel,
   CarouselContent,
-  CarouselDots,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
@@ -19,16 +15,14 @@ import {
 
 export function RecentlyAddedEpisodes() {
   const { t, i18n } = useTranslation();
-  const { strictFiltering, moderateFiltering } = useContentPolicy();
-  const includeAdult = !(strictFiltering || moderateFiltering);
   const language = i18n.language;
 
   const { data, isLoading } = useQuery({
-    queryKey: ['airingToday', language, includeAdult],
-    queryFn: () => getAiringTodayTV(1, language, includeAdult),
+    queryKey: ['airingToday', language],
+    queryFn: () => getAiringTodayTV(1, language),
   });
 
-  const shows = applySafetyFilter(data?.results || [], strictFiltering, moderateFiltering).slice(0, 12);
+  const shows = data?.results?.slice(0, 12) || [];
 
   if (!isLoading && shows.length === 0) return null;
 
@@ -82,16 +76,11 @@ export function RecentlyAddedEpisodes() {
                   >
                     <div className="aspect-video relative">
                       {backdropUrl ? (
-                        <Image
+                        <img
                           src={backdropUrl}
-                          srcSet={`${getImageUrl(show.backdrop_path || show.poster_path, 'w185')} 185w, ${getImageUrl(show.backdrop_path || show.poster_path, 'w342')} 342w, ${getImageUrl(show.backdrop_path || show.poster_path, 'w780')} 780w`}
-                          sizes="(max-width: 639px) 80vw, 320px"
-                          alt={`${title} backdrop`}
-                          width={342}
-                          height={192}
+                          alt={title}
                           className="w-full h-full object-cover"
                           loading="lazy"
-                          showSkeleton
                         />
                       ) : (
                         <div className="w-full h-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
@@ -119,10 +108,8 @@ export function RecentlyAddedEpisodes() {
           </CarouselContent>
           <CarouselPrevious className="hidden md:flex -left-4 bg-background/80 backdrop-blur-sm border-border" />
           <CarouselNext className="hidden md:flex -right-4 bg-background/80 backdrop-blur-sm border-border" />
-          <CarouselDots />
         </Carousel>
       )}
     </section>
   );
 }
-

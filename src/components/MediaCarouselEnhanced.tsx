@@ -1,276 +1,173 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Media } from "@/types/media";
-import { MediaCard, MediaCardSkeleton } from "@/components/MediaCard";
-import { Button } from "@/components/ui/button";
-import {
-  PaginationDotButton,
-  PaginationDots,
-  PaginationDotStatic,
-} from "@/components/ui/pagination-dots";
-
-type ScrollState = {
-  canScrollLeft: boolean;
-  canScrollRight: boolean;
-  activePage: number;
-  pageCount: number;
-};
+import { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
+import { Media } from '@/types/media';
+import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
+import { Button } from '@/components/ui/button';
 
 interface MediaCarouselProps {
   title: string;
   items: Media[];
   loading?: boolean;
   showMoreLink?: string;
-  showMoreLabel?: string;
   emptyMessage?: string;
   showManualNav?: boolean;
+  scrollSnap?: 'mandatory' | 'proximity';
 }
 
-const DEFAULT_SCROLL_STATE: ScrollState = {
-  canScrollLeft: false,
-  canScrollRight: true,
-  activePage: 0,
-  pageCount: 1,
-};
-
-function toTitleCaseLabel(value: string): string {
-  return value
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function areScrollStatesEqual(a: ScrollState, b: ScrollState): boolean {
-  return (
-    a.canScrollLeft === b.canScrollLeft &&
-    a.canScrollRight === b.canScrollRight &&
-    a.activePage === b.activePage &&
-    a.pageCount === b.pageCount
-  );
-}
-
-function getScrollState(container: HTMLDivElement, itemCount: number): ScrollState {
-  const maxScrollLeft = Math.max(0, container.scrollWidth - container.clientWidth);
-  const hasScrollableWidth = maxScrollLeft > 0;
-  const pageCount = hasScrollableWidth
-    ? Math.max(1, Math.round(maxScrollLeft / container.clientWidth) + 1)
-    : 1;
-
-  const activePage = hasScrollableWidth && pageCount > 1
-    ? Math.min(
-        pageCount - 1,
-        Math.max(
-          0,
-          Math.round((container.scrollLeft / maxScrollLeft) * (pageCount - 1)),
-        ),
-      )
-    : 0;
-
-  return {
-    canScrollLeft: hasScrollableWidth && container.scrollLeft > 10,
-    canScrollRight: hasScrollableWidth && container.scrollLeft < maxScrollLeft - 10,
-    activePage,
-    pageCount,
-  };
-}
-
+/**
+ * Enhanced MediaCarousel with scroll-snap support and manual navigation
+ * Features:
+ * - Native CSS scroll-snap for smooth, performant scrolling
+ * - Manual left/right navigation buttons with scroll detection
+ * - Responsive sizing across all breakpoints
+ * - Touch-optimized with smooth scrolling behavior
+ * - Disabled state for nav buttons when at scroll boundaries
+ */
 export function MediaCarouselEnhanced({
   title,
   items,
   loading = false,
   showMoreLink,
-  showMoreLabel,
   emptyMessage,
   showManualNav = true,
+  scrollSnap = 'proximity',
 }: MediaCarouselProps) {
   const { t } = useTranslation();
+  const [isHovered, setIsHovered] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const scrollCheckFrameRef = useRef<number | null>(null);
+  const [canScroll, setCanScroll] = useState({ left: false, right: true });
 
-  const [scrollState, setScrollState] = useState<ScrollState>(DEFAULT_SCROLL_STATE);
+  // Check if horizontal scrolling is possible and current position
+  const checkScroll = () => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const hasScroll = container.scrollWidth > container.clientWidth;
+    setCanScroll({
+      left: hasScroll && container.scrollLeft > 10,
+      right: hasScroll && container.scrollLeft < container.scrollWidth - container.clientWidth - 10,
+    });
+  };
 
-  const syncScrollState = useCallback(() => {
+  // Initialize scroll state and listen for changes
+  useEffect(() => {
+    checkScroll();
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    const nextState = getScrollState(container, items.length);
-    setScrollState((prev) => (areScrollStatesEqual(prev, nextState) ? prev : nextState));
+    const handleScroll = () => checkScroll();
+    const handleResize = () => checkScroll();
+    
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleResize);
+    
+    // Recheck when items change
+    const resizeObserver = new ResizeObserver(() => checkScroll());
+    resizeObserver.observe(container);
+    
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
+    };
   }, [items.length]);
 
-  const scheduleScrollSync = useCallback(() => {
-    if (scrollCheckFrameRef.current !== null) return;
-
-    scrollCheckFrameRef.current = window.requestAnimationFrame(() => {
-      scrollCheckFrameRef.current = null;
-      syncScrollState();
-    });
-  }, [syncScrollState]);
-
-  useEffect(() => {
-    syncScrollState();
-
+  // Manual scroll handler for navigation buttons
+  const handleManualScroll = (direction: 'left' | 'right') => {
     const container = scrollContainerRef.current;
     if (!container) return;
-
-    const handleScroll = () => scheduleScrollSync();
-    const handleResize = () => scheduleScrollSync();
-
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", handleResize);
-
-    const resizeObserver = new ResizeObserver(() => scheduleScrollSync());
-    resizeObserver.observe(container);
-
-    return () => {
-      container.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleResize);
-      resizeObserver.disconnect();
-
-      if (scrollCheckFrameRef.current !== null) {
-        window.cancelAnimationFrame(scrollCheckFrameRef.current);
-        scrollCheckFrameRef.current = null;
-      }
-    };
-  }, [scheduleScrollSync, syncScrollState]);
-
-  const handleManualScroll = useCallback((direction: "left" | "right") => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const scrollDistance = Math.floor(container.clientWidth * 0.85);
-    container.scrollBy({
-      left: direction === "left" ? -scrollDistance : scrollDistance,
-      behavior: "smooth",
-    });
-  }, []);
-
-  const scrollToPage = useCallback((index: number) => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const maxScrollLeft = Math.max(0, container.scrollWidth - container.clientWidth);
-    if (maxScrollLeft <= 0) return;
-
-    const pageCount = Math.max(1, Math.round(maxScrollLeft / container.clientWidth) + 1);
-    const clampedIndex = Math.max(0, Math.min(pageCount - 1, index));
-    const targetLeft =
-      pageCount <= 1 ? 0 : (clampedIndex / (pageCount - 1)) * maxScrollLeft;
-
-    container.scrollTo({
-      left: targetLeft,
-      behavior: "smooth",
-    });
-  }, []);
-
-  const headingText =
-    typeof title === "string" ? toTitleCaseLabel(title) : title;
-  const seeAllText = toTitleCaseLabel(showMoreLabel || t("common.seeAll"));
-  const emptyText = toTitleCaseLabel(emptyMessage || t("common.noResults"));
-  const previousText = t("common.previous")
-    ? toTitleCaseLabel(t("common.previous"))
-    : "Previous";
-  const nextText = t("common.next") ? toTitleCaseLabel(t("common.next")) : "Next";
+    const scrollDistance = 400; // Scroll approximately 2 cards
+    const targetScroll = container.scrollLeft + (direction === 'left' ? -scrollDistance : scrollDistance);
+    container.scrollTo({ left: targetScroll, behavior: 'smooth' });
+  };
 
   return (
-    <section className="animate-fade-in group/carousel">
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-xl font-bold md:text-2xl">{headingText}</h2>
-
-        {showMoreLink ? (
+    <section 
+      className="animate-fade-in group/carousel"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl md:text-2xl font-bold">{title}</h2>
+        {showMoreLink && (
           <Link to={showMoreLink}>
-            <Button variant="ghost" size="sm" className="w-full gap-1 sm:w-auto">
-              {seeAllText}
-              <ChevronRight className="h-4 w-4" />
+            <Button variant="ghost" size="sm" className="gap-1">
+              {t('common.seeAll')}
+              <ChevronRight className="w-4 h-4" />
             </Button>
           </Link>
-        ) : null}
+        )}
       </div>
 
       {loading ? (
-        <div className="min-h-[420px] sm:min-h-[520px]">
-          <div className="hide-scrollbar flex gap-3 overflow-hidden px-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))]">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div
-                key={index}
-                className="w-[calc(50vw-1.5rem)] flex-shrink-0 sm:min-w-[180px] md:min-w-[200px] lg:min-w-[220px] xl:min-w-[240px]"
-              >
-                <MediaCardSkeleton />
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-4 flex justify-center">
-            <PaginationDots>
-              {Array.from({ length: 4 }).map((_, index) => (
-                <PaginationDotStatic
-                  key={index}
-                  active={index === 0}
-                  aria-hidden="true"
-                />
-              ))}
-            </PaginationDots>
-          </div>
+        <div className="flex gap-4 overflow-hidden">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="min-w-[160px] md:min-w-[180px]">
+              <MediaCardSkeleton />
+            </div>
+          ))}
         </div>
       ) : items.length > 0 ? (
-        <div className="group/scroll relative pb-8">
-          {showManualNav ? (
+        <div className="relative group/scroll">
+          {/* Manual scroll buttons for desktop - visible on hover or always for mobile */}
+          {showManualNav && (
             <>
               <button
-                type="button"
-                onClick={() => handleManualScroll("left")}
-                disabled={!scrollState.canScrollLeft}
-                className="absolute left-2 top-[40%] z-10 inline-flex min-h-[48px] min-w-[48px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 backdrop-blur-sm transition-all duration-200 hover:bg-background disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:left-3 md:opacity-0 md:group-hover/scroll:opacity-100 md:focus-visible:opacity-100"
-                aria-label={previousText}
+                onClick={() => handleManualScroll('left')}
+                disabled={!canScroll.left}
+                className="absolute -left-4 md:-left-6 top-1/3 z-10 hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 group-hover/scroll:opacity-100"
+                aria-label={t('common.previous') || 'Previous'}
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="w-5 h-5" />
               </button>
-
               <button
-                type="button"
-                onClick={() => handleManualScroll("right")}
-                disabled={!scrollState.canScrollRight}
-                className="absolute right-2 top-[40%] z-10 inline-flex min-h-[48px] min-w-[48px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 backdrop-blur-sm transition-all duration-200 hover:bg-background disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:right-3 md:opacity-0 md:group-hover/scroll:opacity-100 md:focus-visible:opacity-100"
-                aria-label={nextText}
+                onClick={() => handleManualScroll('right')}
+                disabled={!canScroll.right}
+                className="absolute -right-4 md:-right-6 top-1/3 z-10 hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 group-hover/scroll:opacity-100"
+                aria-label={t('common.next') || 'Next'}
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="w-5 h-5" />
               </button>
             </>
-          ) : null}
+          )}
 
+          {/* Scrollable container with scroll-snap */}
           <div
             ref={scrollContainerRef}
-            className="hide-scrollbar flex snap-x snap-proximity gap-3 overflow-x-auto pb-2 overscroll-x-contain px-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] [scrollbar-width:none]"
+            className="flex gap-4 overflow-x-auto scroll-smooth overscroll-contain pb-2"
+            style={{
+              scrollSnapType: `x ${scrollSnap}`,
+              WebkitOverflowScrolling: 'touch',
+              msOverflowStyle: 'none', // Hide scrollbar in IE/Edge
+              scrollbarWidth: 'none', // Hide scrollbar in Firefox
+            }}
+            onScroll={checkScroll}
           >
+            {/* Hide scrollbar in Webkit browsers */}
+            <style>{`
+              div[style*="scroll-snap-type"] {
+                scrollbar-width: none;
+              }
+              div[style*="scroll-snap-type"]::-webkit-scrollbar {
+                display: none;
+              }
+            `}</style>
+
             {items.map((item) => (
               <div
-                key={`${item.id}-${item.media_type || "unknown"}`}
-                className="w-[calc(50vw-1.5rem)] flex-shrink-0 snap-start [content-visibility:auto] [contain-intrinsic-size:220px_420px] sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
+                key={`${item.id}-${item.media_type || 'unknown'}`}
+                className="flex-shrink-0 w-[160px] sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
+                style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
               >
-                <MediaCard media={item} interactionMode="rail" />
+                <MediaCard media={item} />
               </div>
             ))}
           </div>
-
-          {scrollState.pageCount > 1 ? (
-            <div className="mt-4 flex justify-center">
-              <PaginationDots>
-                {Array.from({ length: scrollState.pageCount }).map((_, index) => (
-                  <PaginationDotButton
-                    key={`${title}-page-${index}`}
-                    onClick={() => scrollToPage(index)}
-                    active={index === scrollState.activePage}
-                    aria-label={`Go to carousel page ${index + 1}`}
-                    aria-pressed={index === scrollState.activePage}
-                  />
-                ))}
-              </PaginationDots>
-            </div>
-          ) : null}
         </div>
       ) : (
-        <div className="flex min-h-[420px] items-center justify-center text-center text-muted-foreground sm:min-h-[520px]">
-          <p className="max-w-md px-4">{emptyText}</p>
+        <div className="text-center py-12 text-muted-foreground">
+          {emptyMessage || t('common.noResults')}
         </div>
       )}
     </section>

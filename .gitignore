@@ -1,17 +1,3 @@
-# Temp / cache
-.tmp
-lighthouse-desktop-report
-lighthouse-accessibility-report.html
-playwright-report
-supabase/.temp
-*.report.html
-
-# Dev server logs
-dev.log
-dev-full.log
-devserver.err.log
-devserver.out.log
-
 # Logs
 logs
 *.log
@@ -24,30 +10,15 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
-.next
-test-results
 *.local
-i18n-coverage-report.md
-
-# Environment files
-.env
-.env.local
-.env.*.local
-.env.production
-.env.development
-
-# Supabase
-.supabase
-supabase/functions/.env
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-!.vscode/settings.json
 .idea
 .DS_Store
 *.suo
 *.ntvs*
-*.njsproj*
+*.njsproj
 *.sln
 *.sw?
