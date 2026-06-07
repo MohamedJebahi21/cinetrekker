@@ -127,8 +127,7 @@ module.exports = async (req, res) => {
     });
 
     if (!openaiRes.ok) {
-      const text = await openaiRes.text().catch(() => '');
-      return res.status(502).json({ error: 'AI request failed', detail: text });
+      return res.status(502).json({ error: 'AI service temporarily unavailable' });
     }
 
     const openaiJson = await openaiRes.json();

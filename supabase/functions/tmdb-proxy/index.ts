@@ -62,6 +62,20 @@ serve(async (req) => {
       throw new Error('Missing endpoint parameter');
     }
 
+    // Validate endpoint: must be a path-only string (no query params - those are
+    // handled separately via tmdbParams). Must start with '/', must not contain
+    // '..' (path traversal), and must only contain characters valid in TMDB API paths.
+    if (
+      !endpoint.startsWith('/') ||
+      endpoint.includes('..') ||
+      !/^\/[a-zA-Z0-9/_-]+$/.test(endpoint)
+    ) {
+      return new Response(JSON.stringify({ error: 'Invalid endpoint' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // 2. Build TMDB URL
     const tmdbParams = new URLSearchParams();
     for (const [key, value] of url.searchParams.entries()) {
@@ -107,7 +121,7 @@ serve(async (req) => {
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error in tmdb-proxy:', errorMessage);
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
