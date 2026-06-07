@@ -15,6 +15,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserLists } from "@/contexts/UserListsContext";
 import { useHomePageData } from "@/hooks/useHomePageData";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
+import { WatchedShowsNewEpisodes } from "@/components/WatchedShowsNewEpisodes";
+import { RecentlyAddedMovies } from "@/components/RecentlyAddedMovies";
 import { HomeSectionState } from "@/components/home/HomeSectionState";
 import { HomeStatsSnapshot } from "@/components/home/HomeStatsSnapshot";
 import { HomeWatchlistSkeleton } from "@/components/home/HomeWatchlistSkeleton";
@@ -162,29 +164,24 @@ export default function Index() {
 
   // State for tab selections
   const [topThisWeekType, setTopThisWeekType] = useState<'movie' | 'tv'>('movie');
-  const [topRatedType, setTopRatedType] = useState<'movie' | 'tv'>('movie');
-  const [popularType, setPopularType] = useState<'movie' | 'tv'>('movie');
-
-  const [deferredEnabled, setDeferredEnabled] = useState(false);
 
   const {
-    data: criticalData,
-    isLoading: loadingCritical,
-    error: criticalError,
-  } = useQuery({
-    queryKey: ['home-critical', language],
-    queryFn: async () => {
-      const [popularMoviesData, trendingWeekData] = await Promise.all([
-        getPopularMovies(1, language),
-        getTrending('all', 'week', language),
-      ]);
-
-      return {
-        popularMovies: popularMoviesData,
-        trendingWeek: trendingWeekData,
-      };
-    },
-  });
+    shouldGateRecommendations,
+    discoverTab,
+    deferredEnabled,
+    lastGenreId,
+    lastGenreName,
+    filteredGenreItems,
+    moreInGenreQuery,
+    criticalDataQuery,
+    watchlistPreviewQuery,
+    topRatedMoviesQuery,
+    topRatedTVQuery,
+    trendingDayQuery,
+    popularMoviesQuery,
+    popularTVQuery,
+    hasDeferredErrors,
+  } = useHomePageData({ language, watched, watchlist });
 
   const newReleases = criticalDataQuery.data?.newReleases;
   const trendingWeek = criticalDataQuery.data?.trendingWeek;
@@ -610,7 +607,6 @@ export default function Index() {
                   title={t("home.trendingToday", "Trending Today")}
                   items={trendingDayQuery.data?.results || []}
                   showMoreLink="/discover"
-                  showMoreLabel={t("home.seeAllTrending", "See All Trending")}
                 />
               ) : null}
               {discoverTab === "trending-week" ? (
@@ -618,7 +614,6 @@ export default function Index() {
                   title={t("home.trendingWeek", "Trending This Week")}
                   items={trendingWeek?.results || []}
                   showMoreLink="/discover"
-                  showMoreLabel={t("home.seeAllTrending", "See All Trending")}
                 />
               ) : null}
               {discoverTab === "new-releases" ? (
@@ -626,7 +621,6 @@ export default function Index() {
                   title={t("home.newReleases", "New Releases")}
                   items={newReleases?.results || []}
                   showMoreLink="/discover"
-                  showMoreLabel={t("home.seeAllNewMovieReleases", "See All New Movie Releases")}
                 />
               ) : null}
             </div>
