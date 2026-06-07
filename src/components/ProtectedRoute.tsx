@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
  * Security: Protected Route Component
  *
  * This component guards routes that require authentication.
- * Unauthenticated users are redirected to /.
+ * Unauthenticated users are redirected to /login.
  */
 
 interface ProtectedRouteProps {
@@ -29,14 +29,9 @@ export function ProtectedRoute({
     );
   }
 
-  // Redirect home if not logged in
+  // Redirect to login if not authenticated
   if (!user) {
-    return <Navigate to="/" state={{ from: location.pathname }} replace />;
-  }
-
-  // Require verified email for protected routes
-  if (!user.email_confirmed_at) {
-    return <Navigate to="/" state={{ from: location.pathname }} replace />;
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
   return <>{children}</>;
