@@ -30,6 +30,7 @@ import { useWatchedEpisodes } from "@/hooks/useFollowedShows";
 import { useEffect } from "react";
 import { Image } from "@/components/ui/Image";
 import { cn } from "../lib/utils";
+import { getMediaAltText } from "@/lib/seo";
 
 export interface MediaCardProps {
   media: Media & { watchStatus?: string };
