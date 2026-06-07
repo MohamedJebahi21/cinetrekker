@@ -1,4 +1,5 @@
 import { Media } from '@/types/media';
+import { buildCanonicalUrl } from '@/lib/seo';
 
 export function mediaToJsonLd(media: Media) {
   const isMovie = media.media_type === 'movie' || (media as Media & { title?: string }).title != null;
