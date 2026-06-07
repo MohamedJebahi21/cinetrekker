@@ -211,7 +211,7 @@ SELECT * FROM new_episodes_cache LIMIT 5;
 ```bash
 # HTTP test (replace YOUR_ANON_KEY)
 curl -X POST \
-  https://wzlcekvieglnidfempap.supabase.co/functions/v1/check-new-episodes \
+  https://YOUR_PROJECT_ID.supabase.co/functions/v1/check-new-episodes \
   -H "Authorization: Bearer YOUR_ANON_KEY"
 ```
 
