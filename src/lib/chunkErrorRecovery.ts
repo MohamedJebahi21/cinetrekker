@@ -17,6 +17,37 @@ interface ChunkErrorRecoveryConfig {
   storageKey?: string;
 }
 
+const extensionConnectionErrorRegex = /^Could not establish connection\. Receiving end does not exist\.?$/i;
+
+function getRejectionMessage(reason: unknown): string {
+  if (typeof reason === 'string') return reason;
+  if (reason instanceof Error) return reason.message;
+  if (reason && typeof reason === 'object' && 'message' in reason) {
+    const message = (reason as { message?: unknown }).message;
+    return typeof message === 'string' ? message : '';
+  }
+  return '';
+}
+
+function getRejectionStack(reason: unknown): string {
+  if (reason instanceof Error) return reason.stack ?? '';
+  if (reason && typeof reason === 'object' && 'stack' in reason) {
+    const stack = (reason as { stack?: unknown }).stack;
+    return typeof stack === 'string' ? stack : '';
+  }
+  return '';
+}
+
+function isExtensionConnectionNoise(reason: unknown): boolean {
+  const message = getRejectionMessage(reason).trim();
+  if (!extensionConnectionErrorRegex.test(message)) {
+    return false;
+  }
+
+  const stack = getRejectionStack(reason);
+  return stack.includes('chrome-extension://') || stack.includes('moz-extension://') || stack === '';
+}
+
 class ChunkErrorRecovery {
   private static instance: ChunkErrorRecovery;
   private retryCount: number = 0;
@@ -246,8 +277,18 @@ export const chunkErrorRecovery = ChunkErrorRecovery.getInstance({
  * Call this once at app initialization (in main.tsx)
  */
 export function installChunkErrorHandlers(): void {
+  const isDev = Boolean(
+    (typeof import.meta !== 'undefined' && import.meta.env?.DEV) ||
+    (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development')
+  );
+
   // Handle unhandled promise rejections (common for dynamic imports)
   window.addEventListener('unhandledrejection', (event) => {
+    if (!isDev && isExtensionConnectionNoise(event.reason)) {
+      event.preventDefault();
+      return;
+    }
+
     if (chunkErrorRecovery.handleError(new Error(event.reason?.message || 'Unknown error'))) {
       event.preventDefault(); // Prevent default error logging
     }
@@ -267,5 +308,7 @@ export function installChunkErrorHandlers(): void {
     }, 5000); // Reset after 5 seconds of successful operation
   });
 
-  console.log('✅ Chunk error recovery handlers installed');
+  if (isDev) {
+    console.log('✅ Chunk error recovery handlers installed');
+  }
 }

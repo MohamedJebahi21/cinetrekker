@@ -3,9 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
 import { Routes, Route, useLocation } from "react-router-dom";
-import { Analytics } from "@vercel/analytics/react";
 import { Loader2 } from 'lucide-react';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { AuthProvider } from "@/contexts/auth-context";
 import { UserListsProvider } from "@/contexts/user-lists-context";
 import { ThemeProvider } from "@/contexts/theme-context";
@@ -13,6 +12,7 @@ import KeyboardShortcuts from '@/components/KeyboardShortcuts';
 import ScrollToTop from '@/components/ScrollToTop';
 import { UnifiedNav } from "@/components/UnifiedNav";
 import { Footer } from "@/components/Footer";
+import { BottomNav } from "@/components/BottomNav";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { GlobalLoader } from "@/components/GlobalLoader";
@@ -56,6 +56,7 @@ const AwardWinners = lazy(() => import("./pages/AwardWinners"));
 const YearInReview = lazy(() => import("./pages/YearInReview"));
 const WatchHistory = lazy(() => import("./pages/WatchHistory"));
 const AccessibilitySettings = lazy(() => import("./pages/AccessibilitySettings"));
+const Analytics = lazy(() => import("@vercel/analytics/react").then((mod) => ({ default: mod.Analytics })));
 
 function NetworkMonitor() {
   useNetworkStatus();
@@ -121,6 +122,30 @@ function AnimatedRoutes() {
 
 const App = () => {
   const queryClient = useQueryClient();
+  const [enableEnhancements, setEnableEnhancements] = useState(false);
+
+  useEffect(() => {
+    let idleId: number | null = null;
+    let timeoutId: number | null = null;
+
+    const enable = () => setEnableEnhancements(true);
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      idleId = window.requestIdleCallback(enable, { timeout: 1500 });
+    } else {
+      timeoutId = window.setTimeout(enable, 200);
+    }
+
+    return () => {
+      if (idleId !== null && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, []);
+
   const { handlers, containerStyle } = usePullToRefresh({
     onRefresh: async () => { await queryClient.invalidateQueries(); },
     threshold: 100,
@@ -134,7 +159,7 @@ const App = () => {
           <UserListsProvider>
             <ErrorBoundary>
               <Toaster />
-              <KeyboardShortcuts />
+              {enableEnhancements && <KeyboardShortcuts />}
               <Sonner position="bottom-right" />
               <SEO
                 jsonLd={websiteJsonLd({
@@ -146,9 +171,9 @@ const App = () => {
                 description={siteMetadata.description}
                 canonical={siteMetadata.canonical}
               />
-              <GlobalLoader />
-              <NetworkMonitor />
-              <div className="flex min-h-screen flex-col">
+              {enableEnhancements && <GlobalLoader />}
+              {enableEnhancements && <NetworkMonitor />}
+              <div className="flex min-h-[100dvh] flex-col">
                 <UnifiedNav />
                 <ScrollToTop />
                 <main id="main" tabIndex={-1} className="flex-1 pb-0" style={containerStyle} {...handlers}>
@@ -156,13 +181,18 @@ const App = () => {
                     <AnimatedRoutes />
                   </ErrorBoundary>
                 </main>
+                <BottomNav />
                 <Footer />
               </div>
             </ErrorBoundary>
           </UserListsProvider>
         </AuthProvider>
       </TooltipProvider>
-      <Analytics />
+      {enableEnhancements && (
+        <Suspense fallback={null}>
+          <Analytics />
+        </Suspense>
+      )}
     </ThemeProvider>
   );
 };

@@ -1,12 +1,42 @@
-import { enforceRequestSecurity } from './_lib/requestSecurity.js';
-import { verifyBotProtection } from './_lib/botProtection.js';
-import { createServerLogger } from './_lib/logger.js';
-import { reportSecurityEvent } from './_lib/securityMonitor.js';
-
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const MAX_REQUESTS_PER_WINDOW = 5;
 const MAX_NAME_LENGTH = 120;
 const MAX_EMAIL_LENGTH = 254;
 const MAX_MESSAGE_LENGTH = 4000;
-const logger = createServerLogger("feedback");
+
+const requestStore = new Map();
+
+function getClientIP(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string' && forwarded.length > 0) {
+    return forwarded.split(',')[0].trim();
+  }
+
+  const realIp = req.headers['x-real-ip'];
+  if (typeof realIp === 'string' && realIp.length > 0) {
+    return realIp;
+  }
+
+  return req.socket?.remoteAddress || 'unknown';
+}
+
+function isRateLimited(key) {
+  const now = Date.now();
+  const entry = requestStore.get(key);
+
+  if (!entry || now > entry.resetAt) {
+    requestStore.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return { limited: false, retryAfter: 0 };
+  }
+
+  entry.count += 1;
+  if (entry.count > MAX_REQUESTS_PER_WINDOW) {
+    const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
+    return { limited: true, retryAfter };
+  }
+
+  return { limited: false, retryAfter: 0 };
+}
 
 function normalizeText(value, maxLength) {
   if (typeof value !== 'string') return '';
@@ -31,24 +61,17 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  // CORS origin validation
-  const securityCheck = await enforceRequestSecurity(req, res, 'feedback');
-  if (!securityCheck.ok) {
-    if (securityCheck.status === 403) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-    return res.status(securityCheck.status).json({ error: securityCheck.error });
+  const ip = getClientIP(req);
+  const limitCheck = isRateLimited(`feedback:${ip}`);
+  if (limitCheck.limited) {
+    res.setHeader('Retry-After', String(limitCheck.retryAfter));
+    return res.status(429).json({ error: 'Too many requests. Please try again later.' });
   }
 
   const body = parseBody(req);
   const name = normalizeText(body?.name, MAX_NAME_LENGTH);
   const email = normalizeText(body?.email, MAX_EMAIL_LENGTH);
   const message = normalizeText(body?.message, MAX_MESSAGE_LENGTH);
-
-  const botCheck = await verifyBotProtection(req, body, "feedback");
-  if (!botCheck.ok) {
-    return res.status(botCheck.status).json({ error: botCheck.error });
-  }
 
   if (!name || !email || !message) {
     return res.status(400).json({ error: 'Name, email, and message are required.' });
@@ -65,14 +88,16 @@ export default async function handler(req, res) {
 
   if (!RESEND_API_KEY || !FEEDBACK_TO_EMAIL) {
     return res.status(503).json({
-      error: 'Feedback service is temporarily unavailable.',
+      error: 'Feedback service is not configured.',
+      detail: 'Missing RESEND_API_KEY or FEEDBACK_TO_EMAIL.',
     });
   }
 
   const runtimeFetch = typeof globalThis.fetch === 'function' ? globalThis.fetch.bind(globalThis) : null;
   if (!runtimeFetch) {
     return res.status(500).json({
-      error: 'Feedback service is temporarily unavailable.',
+      error: 'Feedback service runtime error.',
+      detail: 'Fetch API is unavailable in this server runtime.',
     });
   }
 
@@ -93,34 +118,19 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      await reportSecurityEvent({
-        event: "feedback_delivery_failed",
-        severity: "error",
-        scope: "feedback",
-        message: "Feedback email delivery failed.",
-        req,
-        details: { status: response.status },
-        shouldAlert: true,
-      });
+      const detail = await response.text().catch(() => '');
       return res.status(502).json({
-        error: 'Failed to send feedback. Please try again later.',
+        error: 'Failed to send feedback via provider.',
+        detail: detail || 'Resend returned a non-OK response.',
       });
     }
 
     return res.status(200).json({ ok: true });
   } catch (error) {
-    logger.error('feedback function error', error);
-    await reportSecurityEvent({
-      event: "feedback_handler_error",
-      severity: "error",
-      scope: "feedback",
-      message: "Feedback handler threw an error.",
-      req,
-      details: error,
-      shouldAlert: true,
-    });
+    console.error('feedback function error', error);
     return res.status(500).json({
       error: 'Internal feedback service error.',
+      detail: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }

@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { getTrending, getPopularMovies, getPopularTV, getTopRatedMovies, getTopRatedTV } from '@/services/tmdb';
 import { MediaSection } from '@/components/MediaSection';
 import { MediaCarousel } from '@/components/MediaCarousel';
 import { MediaCard } from '@/components/MediaCard';
-import { WatchedShowsNewEpisodes } from '@/components/WatchedShowsNewEpisodes';
-import { RecentlyAddedMovies } from '@/components/RecentlyAddedMovies';
-import { BecauseYouLiked } from '@/components/BecauseYouLiked';
-import { OnboardingTooltip } from '@/components/OnboardingTooltip';
 import { HeroSection } from '@/components/HeroSection';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SEO from '@/components/SEO';
+
+const BecauseYouLiked = lazy(() => import('@/components/BecauseYouLiked').then((mod) => ({ default: mod.BecauseYouLiked })));
+const WatchedShowsNewEpisodes = lazy(() => import('@/components/WatchedShowsNewEpisodes').then((mod) => ({ default: mod.WatchedShowsNewEpisodes })));
+const RecentlyAddedMovies = lazy(() => import('@/components/RecentlyAddedMovies').then((mod) => ({ default: mod.RecentlyAddedMovies })));
 
 export default function Index() {
   const { t, i18n } = useTranslation();
@@ -46,7 +46,7 @@ export default function Index() {
   useEffect(() => {
     setDeferredEnabled(false);
 
-    let timeoutId: number | undefined;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
     let idleId: number | undefined;
 
     const enableDeferred = () => setDeferredEnabled(true);
@@ -54,7 +54,7 @@ export default function Index() {
     if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
       idleId = window.requestIdleCallback(enableDeferred, { timeout: 1200 });
     } else {
-      timeoutId = window.setTimeout(enableDeferred, 0);
+      timeoutId = globalThis.setTimeout(enableDeferred, 0);
     }
 
     return () => {
@@ -62,7 +62,7 @@ export default function Index() {
         window.cancelIdleCallback(idleId);
       }
       if (timeoutId !== undefined) {
-        window.clearTimeout(timeoutId);
+        globalThis.clearTimeout(timeoutId);
       }
     };
   }, [language]);
@@ -119,9 +119,7 @@ export default function Index() {
 
   return (
     <div className="min-h-screen">
-      <SEO title="CineTrekker — Track Your Movies & TV Shows" description="Discover trending movies and TV shows, track your watchlist, and get personalized recommendations." canonical="https://cinetrekker.vercel.app" />
-      {/* Onboarding for new users */}
-      <OnboardingTooltip />
+      <SEO title="CineTrekker - Track Your Movies & TV Shows" description="Discover trending movies and TV shows, track your watchlist, and get personalized recommendations." canonical="https://cinetrekker.vercel.app" />
       {/* High-Conversion Hero Section */}
       <HeroSection />
 
@@ -143,19 +141,31 @@ export default function Index() {
         {/* Personalized Recommendations removed */}
 
         {/* Phase 3: "Because You Liked" personalized row */}
-        <BecauseYouLiked />
+        {deferredEnabled && (
+          <Suspense fallback={null}>
+            <BecauseYouLiked />
+          </Suspense>
+        )}
 
         {/* Did You Watch? - New episodes for watched TV shows */}
-        <WatchedShowsNewEpisodes />
+        {deferredEnabled && (
+          <Suspense fallback={null}>
+            <WatchedShowsNewEpisodes />
+          </Suspense>
+        )}
 
         {/* Recently Added Movies */}
-        <RecentlyAddedMovies />
+        {deferredEnabled && (
+          <Suspense fallback={null}>
+            <RecentlyAddedMovies />
+          </Suspense>
+        )}
 
         {/* New Episodes Section removed per UI cleanup */}
 
         {/* Top This Week - Movies/Series Toggle */}
         <section>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
             <h2 className="section-title mb-0">{t('home.topThisWeek') || 'Top This Week'}</h2>
             <div className="flex gap-2 bg-card/50 border border-white/5 rounded-lg p-1">
               <button
@@ -200,7 +210,7 @@ export default function Index() {
 
         {/* Top Rated - Movies/Series Toggle */}
         <section>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
             <h2 className="section-title mb-0">{t('home.topRated') || 'Top Rated'}</h2>
             <div className="flex gap-2 bg-card/50 border border-white/5 rounded-lg p-1">
               <button
@@ -246,7 +256,7 @@ export default function Index() {
         {/* Trending Section with Tabs */}
         <section>
           <Tabs defaultValue="day" className="w-full">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
               <h2 className="section-title mb-0">{t('home.trending')}</h2>
               <TabsList className="bg-card/50 border border-white/5">
                 <TabsTrigger value="day" className="text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
@@ -280,7 +290,7 @@ export default function Index() {
 
         {/* Popular - Movies/Series Toggle */}
         <section>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
             <h2 className="section-title mb-0">{t('home.popular') || 'Popular'}</h2>
             <div className="flex gap-2 bg-card/50 border border-white/5 rounded-lg p-1">
               <button
@@ -326,3 +336,5 @@ export default function Index() {
     </div>
   );
 }
+
+

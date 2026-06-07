@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { searchMulti, getImageUrl } from '@/services/tmdb';
 import { useDebounce } from '@/hooks/useDebounce';
 import { X, Search, Film, Tv, User, ArrowRight } from 'lucide-react';
+import type { Media } from '@/types/media';
 
 export default function SearchOverlay() {
   const { t, i18n } = useTranslation();
@@ -27,6 +28,14 @@ export default function SearchOverlay() {
       if ((e.ctrlKey || e.metaKey) && e.key === '/') {
         e.preventDefault();
         setOpen((v) => !v);
+      }
+      // "/" to open search when not focused on input/textarea/select
+      if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const tag = (document.activeElement?.tagName || '').toLowerCase();
+        if (!['input', 'textarea', 'select'].includes(tag)) {
+          e.preventDefault();
+          setOpen(true);
+        }
       }
     };
     window.addEventListener('keydown', onKey);
@@ -128,7 +137,9 @@ export default function SearchOverlay() {
                               sizes="48px"
                               width={48}
                               height={64}
-                              alt=""
+                              alt={item.media_type === 'person'
+                                ? `${item.name} profile`
+                                : `${item.title || item.name} poster`}
                               className="w-full h-full object-cover bg-muted"
                             />
                           ) : (
@@ -139,7 +150,7 @@ export default function SearchOverlay() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-sm truncate">{item.title || item.name}</div>
-                          <div className="text-xs text-muted-foreground mt-1">{item.media_type}{item.release_date ? ` • ${new Date(item.release_date).getFullYear()}` : ''}</div>
+                          <div className="text-xs text-muted-foreground mt-1">{item.media_type}{item.release_date ? ` | ${new Date(item.release_date).getFullYear()}` : ''}</div>
                         </div>
                         <ArrowRight className="w-4 h-4 text-muted-foreground" />
                       </button>
@@ -156,4 +167,5 @@ export default function SearchOverlay() {
     </>
   );
 }
+
 

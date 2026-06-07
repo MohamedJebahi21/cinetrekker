@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Search as SearchIcon, Filter, SlidersHorizontal, X, TrendingUp } from 'lucide-react';
 import SEO from '@/components/SEO';
 import { Dialog, DialogContent, DialogTrigger, DialogClose } from '@/components/ui/dialog';
@@ -15,7 +15,7 @@ import {
   getTrending 
 } from '@/services/tmdb';
 import { Media } from '@/types/media';
-import { MediaCard } from '@/components/MediaCard';
+import { InfiniteMediaGrid } from '@/components/MediaGrid';
 import SkeletonCard from '@/components/ui/SkeletonCard';
 import { RandomTrekButton } from '@/components/RandomTrekButton';
 import { Input } from '@/components/ui/input';
@@ -126,6 +126,12 @@ function getDiscoverSort(sortBy: SearchSortOption, mediaType: 'movie' | 'tv'): s
   return sortBy;
 }
 
+type PagedMedia = {
+  page: number;
+  total_pages: number;
+  results: Media[];
+};
+
 export default function Search() {
   const { t, i18n } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -151,7 +157,7 @@ export default function Search() {
   const [runtimeFilter, setRuntimeFilter] = useState<string>(initialRuntime);
   const [streamingFilter, setStreamingFilter] = useState<string>(initialStreaming);
   
-  // Quick preview modal removed — navigation to details is used instead
+  // Quick preview modal removed - navigation to details is used instead
   
   const language = i18n.language;
 
@@ -199,64 +205,120 @@ export default function Search() {
   const useSearchMode = normalizedQuery.length > 0;
   const showTrending = !useDiscoverMode && !useSearchMode;
 
-  // Text search query
-  const { data: searchResults, isLoading: isSearching, isError: isSearchError, error: searchError } = useQuery({
+  // Text search query (infinite)
+  const searchQuery = useInfiniteQuery({
     queryKey: ['search', normalizedQuery, language],
-    queryFn: () => searchMulti(normalizedQuery, 1, language),
+    queryFn: ({ pageParam = 1 }) => searchMulti(normalizedQuery, pageParam as number, language),
     enabled: Boolean(useSearchMode),
     retry: 1,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined,
   });
 
-  // Discover movies query
-  const { data: discoverMoviesResults, isLoading: isDiscoveringMovies, isError: isDiscoverMoviesError, error: discoverMoviesError } = useQuery({
-    queryKey: ['discover', 'movie', effectiveGenres, yearFilter, languageFilter, sortBy, runtimeConfig?.gte, runtimeConfig?.lte, streamingFilter, language],
-    queryFn: () => discoverMovies({
-      with_genres: effectiveGenres,
-      primary_release_year: yearFilter || undefined,
-      with_original_language: languageFilter || undefined,
-      sort_by: getDiscoverSort(sortBy, 'movie'),
-      with_runtime_gte: runtimeConfig?.gte,
-      with_runtime_lte: runtimeConfig?.lte,
-      with_watch_providers: streamingFilter || undefined,
-      watch_region: streamingFilter ? 'US' : undefined,
-    }, language),
-    enabled: Boolean(useDiscoverMode && (mediaTypeFilter === 'movie' || mediaTypeFilter === 'all')),
+  // Discover query (combined movies + TV when needed)
+  const discoverQuery = useInfiniteQuery<PagedMedia>({
+    queryKey: ['discover', mediaTypeFilter, effectiveGenres, yearFilter, languageFilter, sortBy, runtimeConfig?.gte, runtimeConfig?.lte, streamingFilter, language],
+    queryFn: async ({ pageParam = 1 }) => {
+      const page = pageParam as number;
+      const common = {
+        with_genres: effectiveGenres,
+        with_original_language: languageFilter || undefined,
+        with_runtime_gte: runtimeConfig?.gte,
+        with_runtime_lte: runtimeConfig?.lte,
+        with_watch_providers: streamingFilter || undefined,
+        watch_region: streamingFilter ? 'US' : undefined,
+      };
+
+      if (mediaTypeFilter === 'movie') {
+        const resp = await discoverMovies({
+          ...common,
+          page,
+          primary_release_year: yearFilter || undefined,
+          sort_by: getDiscoverSort(sortBy, 'movie'),
+        }, language);
+        return {
+          page: resp.page,
+          total_pages: resp.total_pages,
+          results: resp.results.map((m) => ({ ...m, media_type: 'movie' as const })),
+        };
+      }
+
+      if (mediaTypeFilter === 'tv') {
+        const resp = await discoverTV({
+          ...common,
+          page,
+          first_air_date_year: yearFilter || undefined,
+          sort_by: getDiscoverSort(sortBy, 'tv'),
+        }, language);
+        return {
+          page: resp.page,
+          total_pages: resp.total_pages,
+          results: resp.results.map((s) => ({ ...s, media_type: 'tv' as const })),
+        };
+      }
+
+      const [moviesResp, tvResp] = await Promise.all([
+        discoverMovies({
+          ...common,
+          page,
+          primary_release_year: yearFilter || undefined,
+          sort_by: getDiscoverSort(sortBy, 'movie'),
+        }, language),
+        discoverTV({
+          ...common,
+          page,
+          first_air_date_year: yearFilter || undefined,
+          sort_by: getDiscoverSort(sortBy, 'tv'),
+        }, language),
+      ]);
+
+      return {
+        page,
+        total_pages: Math.max(moviesResp.total_pages, tvResp.total_pages),
+        results: [
+          ...moviesResp.results.map((m) => ({ ...m, media_type: 'movie' as const })),
+          ...tvResp.results.map((s) => ({ ...s, media_type: 'tv' as const })),
+        ],
+      };
+    },
+    enabled: Boolean(useDiscoverMode),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined,
   });
 
-  // Discover TV query
-  const { data: discoverTVResults, isLoading: isDiscoveringTV, isError: isDiscoverTVError, error: discoverTVError } = useQuery({
-    queryKey: ['discover', 'tv', effectiveGenres, yearFilter, languageFilter, sortBy, runtimeConfig?.gte, runtimeConfig?.lte, streamingFilter, language],
-    queryFn: () => discoverTV({
-      with_genres: effectiveGenres,
-      first_air_date_year: yearFilter || undefined,
-      with_original_language: languageFilter || undefined,
-      sort_by: getDiscoverSort(sortBy, 'tv'),
-      with_runtime_gte: runtimeConfig?.gte,
-      with_runtime_lte: runtimeConfig?.lte,
-      with_watch_providers: streamingFilter || undefined,
-      watch_region: streamingFilter ? 'US' : undefined,
-    }, language),
-    enabled: Boolean(useDiscoverMode && (mediaTypeFilter === 'tv' || mediaTypeFilter === 'all')),
-  });
-
-  // Trending for default view
-  const { data: trendingResults, isLoading: isTrendingLoading, isError: isTrendingError, error: trendingError } = useQuery({
+  // Trending for default view (infinite)
+  const trendingQuery = useInfiniteQuery({
     queryKey: ['trending', 'all', 'week', language],
-    queryFn: () => getTrending('all', 'week', language),
+    queryFn: ({ pageParam = 1 }) => getTrending('all', 'week', language, pageParam as number),
     enabled: Boolean(showTrending),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined,
   });
 
-  const isLoading = isSearching || isDiscoveringMovies || isDiscoveringTV || isTrendingLoading;
-  const isError = isSearchError || isDiscoverMoviesError || isDiscoverTVError || isTrendingError;
-  const activeError = (searchError || discoverMoviesError || discoverTVError || trendingError) as Error | null;
+  const activeQuery = useSearchMode ? searchQuery : useDiscoverMode ? discoverQuery : trendingQuery;
+  const isLoading = activeQuery.isLoading;
+  const isError = activeQuery.isError;
+  const activeError = activeQuery.error as Error | null;
+  const hasMore = Boolean(activeQuery.hasNextPage);
+
+  const handleLoadMore = () => {
+    if (!activeQuery.hasNextPage || activeQuery.isFetchingNextPage) return;
+    activeQuery.fetchNextPage();
+  };
 
   // Combine and filter results
   const results = useMemo(() => {
+    const pages = activeQuery.data?.pages ?? [];
+    const combined = pages.flatMap((page) => page.results || []);
+
     if (useSearchMode) {
       // Filter search results by type and genre
-      let filtered = searchResults?.results?.filter(item => 
+      let filtered = combined.filter(item =>
         item.media_type === 'movie' || item.media_type === 'tv'
-      ) || [];
+      );
 
       if (mediaTypeFilter !== 'all') {
         filtered = filtered.filter(item => item.media_type === mediaTypeFilter);
@@ -271,21 +333,14 @@ export default function Search() {
     }
 
     if (useDiscoverMode) {
-      const movies = (discoverMoviesResults?.results || []).map(m => ({ ...m, media_type: 'movie' as const }));
-      const tvShows = (discoverTVResults?.results || []).map(s => ({ ...s, media_type: 'tv' as const }));
-
-      if (mediaTypeFilter === 'movie') return sortClientResults(movies as Media[], sortBy);
-      if (mediaTypeFilter === 'tv') return sortClientResults(tvShows as Media[], sortBy);
-
-      return sortClientResults(([...movies, ...tvShows]) as Media[], sortBy);
+      return sortClientResults((combined as Media[]), sortBy);
     }
 
-    // Default: show trending
-    const trending = trendingResults?.results?.filter(item => 
+    const trending = combined.filter(item =>
       item.media_type === 'movie' || item.media_type === 'tv'
-    ) || [];
+    );
     return sortClientResults(trending as Media[], sortBy);
-  }, [useSearchMode, useDiscoverMode, searchResults, discoverMoviesResults, discoverTVResults, trendingResults, mediaTypeFilter, genreFilter, sortBy]);
+  }, [activeQuery.data, useSearchMode, useDiscoverMode, mediaTypeFilter, genreFilter, sortBy]);
 
   const clearFilters = () => {
     setMediaTypeFilter('all');
@@ -630,11 +685,13 @@ export default function Search() {
           </p>
         </div>
       ) : results.length > 0 ? (
-        <div className="media-grid">
-          {results.map((item) => (
-            <MediaCard key={`${item.id}-${item.media_type}`} media={item} />
-          ))}
-        </div>
+        <InfiniteMediaGrid
+          items={results}
+          hasMore={hasMore}
+          onLoadMore={handleLoadMore}
+          columns="normal"
+          gap="md"
+        />
       ) : (
         <div className="text-center py-20 max-w-md mx-auto">
           <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
@@ -669,3 +726,6 @@ export default function Search() {
     </div>
   );
 }
+
+
+

@@ -6,7 +6,7 @@ export const useWatchProviders = (mediaType: 'movie' | 'tv', id: number, country
   return useQuery({
     queryKey: ['watchProviders', mediaType, id, region],
     queryFn: async () => {
-      const res = await getWatchProviders(mediaType, id, region);
+      const res = await getWatchProviders(mediaType, id);
       // TMDB returns an object with `results` keyed by country code
       return res.results ? res.results[region] || null : null;
     },

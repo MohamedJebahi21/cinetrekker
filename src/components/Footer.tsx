@@ -35,7 +35,7 @@ export function Footer() {
                 {t('footer.trending', 'Trending')}
               </Link>
               <Link 
-                to="/calendar" 
+                to="/search?sort=primary_release_date.desc" 
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 {t('footer.upcoming', 'Upcoming')}
@@ -52,7 +52,9 @@ export function Footer() {
           {/* Support Column */}
           <div>
             <h3 className="font-semibold text-sm uppercase tracking-wider text-foreground mb-4">
-              {t('footer.support', 'Support')}
+              <Link to="/about" className="hover:text-primary transition-colors">
+                {t('footer.support', 'Support')}
+              </Link>
             </h3>
             <nav className="flex flex-col gap-3" aria-label="Support links">
               <Link 
@@ -81,7 +83,9 @@ export function Footer() {
           {/* Legal Column */}
           <div>
             <h3 className="font-semibold text-sm uppercase tracking-wider text-foreground mb-4">
-              {t('footer.legal', 'Legal')}
+              <Link to="/privacy" className="hover:text-primary transition-colors">
+                {t('footer.legal', 'Legal')}
+              </Link>
             </h3>
             <nav className="flex flex-col gap-3" aria-label="Legal links">
               <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -102,7 +106,7 @@ export function Footer() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Copyright */}
             <p className="text-xs text-muted-foreground text-center md:text-left">
-              © {currentYear} {t('common.appName')}. {t('footer.allRightsReserved', 'All rights reserved.')}
+              (c) {currentYear} {t('common.appName')}. {t('footer.allRightsReserved', 'All rights reserved.')}
             </p>
 
             {/* TMDB Attribution */}
@@ -120,7 +124,7 @@ export function Footer() {
                   <img 
                     src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg" 
                     alt="TMDB Logo" 
-                    className="h-3"
+                    className="h-3 logo-image"
                     loading="lazy"
                     width="81"
                     height="12"
@@ -139,3 +143,5 @@ export function Footer() {
     </footer>
   );
 }
+
+

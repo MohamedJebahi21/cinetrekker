@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import Play from 'lucide-react/dist/esm/icons/play';
@@ -19,6 +19,29 @@ export function HeroSection() {
   const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useUserLists();
   const language = i18n.language;
   const [showTrailer, setShowTrailer] = useState(false);
+  const [allowTrailerFetch, setAllowTrailerFetch] = useState(false);
+
+  useEffect(() => {
+    let idleId: number | null = null;
+    let timeoutId: number | null = null;
+
+    const enable = () => setAllowTrailerFetch(true);
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      idleId = window.requestIdleCallback(enable, { timeout: 1800 });
+    } else {
+      timeoutId = window.setTimeout(enable, 300);
+    }
+
+    return () => {
+      if (idleId !== null && 'cancelIdleCallback' in window) {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, []);
 
   const { data: trendingDay, isLoading } = useQuery({
     queryKey: ['trending', 'day', language],
@@ -29,10 +52,10 @@ export function HeroSection() {
   const heroTitle = heroMedia ? getMediaTitle(heroMedia) : '';
   const mediaType = heroMedia ? getMediaType(heroMedia) : 'movie';
   const heroBackdropSrc = heroMedia?.backdrop_path
-    ? getBackdropUrl(heroMedia.backdrop_path, 'w1280')
+    ? getBackdropUrl(heroMedia.backdrop_path, 'w780')
     : null;
   const heroBackdropSrcSet = heroMedia?.backdrop_path
-    ? `${getBackdropUrl(heroMedia.backdrop_path, 'w780')} 780w, ${getBackdropUrl(heroMedia.backdrop_path, 'w1280')} 1280w`
+    ? `${getBackdropUrl(heroMedia.backdrop_path, 'w342')} 342w, ${getBackdropUrl(heroMedia.backdrop_path, 'w780')} 780w, ${getBackdropUrl(heroMedia.backdrop_path, 'w1280')} 1280w`
     : null;
 
   // Fetch trailer
@@ -41,7 +64,7 @@ export function HeroSection() {
     queryFn: () => mediaType === 'movie' 
       ? getMovieVideos(heroMedia!.id, language)
       : getTVVideos(heroMedia!.id, language),
-    enabled: !!heroMedia?.id,
+    enabled: allowTrailerFetch && !!heroMedia?.id,
   });
 
   const trailer = videos?.results?.find(
@@ -159,7 +182,7 @@ export function HeroSection() {
           <div className="flex flex-wrap items-center gap-2 md:gap-4 mb-6 md:mb-8 text-xs md:text-sm">
             {heroMedia.vote_average > 0 && (
               <span className="flex items-center gap-1 md:gap-1.5 px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-primary/20 text-primary font-semibold">
-                ★ {heroMedia.vote_average.toFixed(1)}
+                * {heroMedia.vote_average.toFixed(1)}
               </span>
             )}
             {(heroMedia.release_date || heroMedia.first_air_date) && (
@@ -173,13 +196,13 @@ export function HeroSection() {
           </div>
           
           {/* CTA Buttons - Side by side on mobile for vertical space savings */}
-          <div className="flex flex-row items-center gap-2 md:gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 md:gap-3">
             {/* Watch Trailer Button */}
             {trailer && (
               <Button 
                   size="default"
                   onClick={() => setShowTrailer(true)}
-                  className="btn-primary-glow gap-2 h-11 md:h-12 px-4 md:px-6 text-sm md:text-base flex-1 md:flex-none bg-primary text-white"
+                  className="btn-primary-glow gap-2 h-11 md:h-12 px-4 md:px-6 text-sm md:text-base w-full sm:w-auto bg-primary text-white"
                   aria-label={t('actions.watchTrailer', 'Watch Trailer')}
                 >
                 <Play className="w-4 h-4 md:w-5 md:h-5 fill-current" />
@@ -189,19 +212,20 @@ export function HeroSection() {
             )}
 
             {/* View Details Button */}
-            <Link to={`/${mediaType}/${heroMedia.id}`} className="flex-1 md:flex-none">
-              <Button 
-                size="default"
-                variant={trailer ? "outline" : "default"}
-                className={cn(
-                  "gap-2 h-11 md:h-12 px-4 md:px-6 text-sm md:text-base w-full",
-                  trailer ? "border-[rgba(255,255,255,0.2)] hover:bg-white/10" : "btn-primary-glow"
-                )}
-                aria-label={`More about ${heroTitle}`}
-              >
+            <Button 
+              asChild
+              size="default"
+              variant={trailer ? "outline" : "default"}
+              className={cn(
+                "gap-2 h-11 md:h-12 px-4 md:px-6 text-sm md:text-base w-full sm:w-auto",
+                trailer ? "border-[rgba(255,255,255,0.2)] hover:bg-white/10" : "btn-primary-glow"
+              )}
+              aria-label={`More about ${heroTitle}`}
+            >
+              <Link to={`/${mediaType}/${heroMedia.id}`}>
                 {`More about ${heroTitle}`}
-              </Button>
-            </Link>
+              </Link>
+            </Button>
 
             {/* Add to Watchlist Button - Icon only on mobile */}
             {user && (
@@ -210,7 +234,7 @@ export function HeroSection() {
                 variant="outline"
                 onClick={handleWatchlist}
                 className={cn(
-                  "gap-2 h-11 md:h-12 px-3 md:px-6 text-sm md:text-base border-white/20 transition-all action-bounce",
+                  "gap-2 h-11 md:h-12 px-3 md:px-6 text-sm md:text-base border-white/20 transition-all action-bounce w-full sm:w-auto",
                   inWatchlist 
                     ? "bg-primary/20 border-primary/50 text-primary hover:bg-primary/30" 
                     : "hover:bg-white/10"
@@ -236,3 +260,4 @@ export function HeroSection() {
     </section>
   );
 }
+
