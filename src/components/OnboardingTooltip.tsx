@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Sparkles, BookmarkPlus, Play, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn } from "../lib/utils";
 
-const ONBOARDING_KEY = 'cinetrekker_onboarding_completed';
+const ONBOARDING_ID = 'cinetrekker_onboarding_completed';
 
 interface OnboardingStep {
   id: number;
@@ -21,7 +21,7 @@ export function OnboardingTooltip() {
 
   useEffect(() => {
     // Check if onboarding was already completed
-    const completed = localStorage.getItem(ONBOARDING_KEY);
+    const completed = localStorage.getItem(ONBOARDING_ID);
     if (!completed) {
       // Show after a short delay for better UX
       const timer = setTimeout(() => setIsVisible(true), 1500);
@@ -63,12 +63,12 @@ export function OnboardingTooltip() {
   };
 
   const handleComplete = () => {
-    localStorage.setItem(ONBOARDING_KEY, 'true');
+    localStorage.setItem(ONBOARDING_ID, 'true');
     setIsVisible(false);
   };
 
   const handleSkip = () => {
-    localStorage.setItem(ONBOARDING_KEY, 'true');
+    localStorage.setItem(ONBOARDING_ID, 'true');
     setIsVisible(false);
   };
 

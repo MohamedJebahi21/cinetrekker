@@ -7,17 +7,20 @@ import type { Plugin } from 'vite';
 const cspPlugin = (): Plugin => {
   const policy = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com",
-    "script-src-elem 'self' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com",
-    "img-src 'self' blob: data: https://image.tmdb.org https://www.themoviedb.org",
+    "script-src 'self' 'wasm-unsafe-eval' https://vercel.live https://va.vercel-scripts.com",
+    "script-src-elem 'self' https://vercel.live https://va.vercel-scripts.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' data: https://fonts.gstatic.com https://r2cdn.perplexity.ai",
-    "connect-src 'self' https://api.themoviedb.org https://va.vercel-scripts.com https://*.supabase.co wss://*.supabase.co",
-    "media-src 'self' blob:",
-    "frame-src 'self' https://www.youtube.com https://player.vimeo.com",
+    "img-src 'self' blob: data: https: https://image.tmdb.org https://www.themoviedb.org https://*.supabase.co",
+    "media-src 'self' blob: https:",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.themoviedb.org https://vercel.live https://va.vercel-scripts.com wss://*.vercel.com",
+    "frame-src 'self' https://www.youtube.com https://player.vimeo.com https://vercel.live",
+    "frame-ancestors 'none'",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
+    "upgrade-insecure-requests",
+    "block-all-mixed-content",
   ].join('; ');
 
   return {
@@ -25,13 +28,19 @@ const cspPlugin = (): Plugin => {
     transformIndexHtml(html) {
       return html.replace(
         '<head>',
-        `<head>\n    <meta http-equiv="Content-Security-Policy" content="${policy}">`
+        `<head>` // Removed meta http-equiv="Content-Security-Policy"
       );
     },
     configureServer(server) {
       // set CSP header on all responses during dev
       server.middlewares.use((req, res, next) => {
         res.setHeader('Content-Security-Policy', policy);
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('X-Frame-Options', 'DENY');
+        res.setHeader('X-XSS-Protection', '1; mode=block');
+        res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+        res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()');
+        res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
         next();
       });
     },
@@ -51,6 +60,9 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      react: path.resolve(__dirname, 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
+      'react-dom/client': path.resolve(__dirname, 'node_modules/react-dom/client'),
     },
     dedupe: ["react", "react-dom"],
   },

@@ -8,15 +8,20 @@ const nextConfig = {
     ],
   },
   async headers() {
-    // CSP expanded to allow Vercel analytics and external font host (perplexity CDN)
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com",
-      "script-src-elem 'self' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com",
-      "img-src 'self' blob: data: https://image.tmdb.org https://www.themoviedb.org",
-      "connect-src 'self' https://api.themoviedb.org https://va.vercel-scripts.com",
+      "script-src 'self' 'sha256-L0E2mSS27KxsHfOa0MiC8gBkUaCQNYpiRGh6VJxueVc=' https://va.vercel-scripts.com https://vercel.live",
+      "script-src-elem 'self' 'sha256-L0E2mSS27KxsHfOa0MiC8gBkUaCQNYpiRGh6VJxueVc=' https://va.vercel-scripts.com https://vercel.live",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' data: https://fonts.gstatic.com https://r2cdn.perplexity.ai",
+      "img-src 'self' blob: data: https://image.tmdb.org https://www.themoviedb.org",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.themoviedb.org https://va.vercel-scripts.com https://vercel.live",
+      "frame-src 'self' https://www.youtube.com https://player.vimeo.com",
+      "frame-ancestors 'self'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "upgrade-insecure-requests",
+      "block-all-mixed-content",
     ].join('; ');
 
     return [

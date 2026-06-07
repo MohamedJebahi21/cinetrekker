@@ -30,7 +30,15 @@
     "discoverTrending": "Discover Trending",
     "optional": "Optional",
     "items": "items",
-    "clearFilter": "Show All"
+    "clearFilter": "Show All",
+    "confirm": "Confirm",
+    "back": "Back",
+    "previous": "Previous",
+    "next": "Next",
+    "updated": "Updated",
+    "refresh": "Refresh",
+    "episode_one": "{{count}} episode",
+    "episode_other": "{{count}} episodes"
   },
   "nav": {
     "home": "Home",
@@ -69,10 +77,14 @@
   },
   "home": {
     "trending": "Trending",
+    "today": "Today",
     "trendingToday": "Today",
     "trendingWeek": "This Week",
+    "topThisWeek": "Top This Week",
     "popular": "Popular",
     "topRated": "Top Rated",
+    "topRatedMovies": "Top Rated Movies",
+    "topRatedSeries": "Top Rated Series",
     "newEpisodes": "New Episodes",
     "topMoviesWeek": "Top Movies This Week",
     "topSeriesWeek": "Top Series This Week",
@@ -92,6 +104,9 @@
     "welcome": "Hey there!",
     "welcomeBack": "Welcome to CineTrekker!",
     "subtitle": "Ready to dive in?",
+    "featured": "Featured",
+    "viewDetails": "More Info",
+    "startTracking": "Start Tracking",
     "hero": {
       "title": "Track Your Entertainment Journey",
       "subtitle": "Discover, track, and remember every movie and TV show you watch"
@@ -146,6 +161,9 @@
     "addNote": "Add Note",
     "inWatchlist": "In Watchlist",
     "watched": "Watched",
+    "watchlist": "Watchlist",
+    "mark": "Mark",
+    "share": "Share",
     "quickView": "Quick View",
     "watchTrailer": "Watch Trailer",
     "close": "Close",
@@ -190,7 +208,55 @@
     "showsFollowed": "Shows Followed",
     "episodesWatched": "Episodes Watched",
     "settings": "Settings",
-    "language": "Language"
+    "language": "Language",
+    "profileCompletion": "Profile Completion",
+    "profileDetails": "Profile Details",
+    "displayName": "Display Name",
+    "displayNamePlaceholder": "How should we call you?",
+    "dateOfBirth": "Date of Birth",
+    "currentAge": "Current age",
+    "about": "About",
+    "bio": "Bio",
+    "bioPlaceholder": "Tell us about your cinematic journey...",
+    "characters": "characters",
+    "favoriteGenres": "Favorite Genres",
+    "privacySettings": "Privacy Settings",
+    "publicProfile": "Public Profile",
+    "publicProfileDesc": "Allow others to view your profile",
+    "showWatchlist": "Show Watchlist",
+    "showWatchlistDesc": "Display your watchlist on your profile",
+    "showStats": "Show Statistics",
+    "showStatsDesc": "Display your watching statistics",
+    "overview": "Overview",
+    "myFavorites": "My Favorites",
+    "addFavorites": "Add Favorite",
+    "noFavoritesYet": "No favorites yet",
+    "noFavoritesDesc": "Start adding your all-time favorite movies and shows to create your personal collection.",
+    "recentActivity": "Recent Activity",
+    "noRecentActivity": "No activity yet",
+    "noActivityDesc": "Your watching journey starts here. Discover trending content and start tracking!",
+    "browseTrending": "Browse Trending",
+    "totalRatings": "Total Ratings",
+    "watchTime": "Watch Time",
+    "actorMatches": "Actor Matches",
+    "sameBirthday": "Same Birthday",
+    "sameAge": "Same Age"
+  },
+  "settings": {
+    "language": "Language",
+    "languageDesc": "Choose your preferred language for the interface",
+    "selectLanguage": "Select Language",
+    "languageChanged": "Language updated",
+    "privacySettings": "Privacy Settings",
+    "privacyDesc": "Control what others can see on your profile",
+    "preferences": "Preferences",
+    "preferencesDesc": "Customize your experience",
+    "allowRecommendations": "Allow Recommendations",
+    "allowRecommendationsDesc": "Get personalized movie and show recommendations based on your taste",
+    "saveChanges": "Save Changes",
+    "unsavedChanges": "You have unsaved changes",
+    "settingsSaved": "Settings saved successfully!",
+    "settingsSavedDesc": "Your preferences have been updated."
   },
   "auth": {
     "signIn": "Sign In",
@@ -218,11 +284,19 @@
     "allEpisodes": "All Episodes",
     "watchedEpisodes": "Watched Episodes"
   },
+  "tv": {
+    "watchStatusChoice": "How would you like to mark this show?",
+    "selectEpisodes": "Select Episodes",
+    "watchAll": "Mark Entire Series as Watched",
+    "watchAllDesc": "Mark all episodes as watched",
+    "selectEpisodesDesc": "Choose specific episodes to mark as watched",
+    "season": "Season {{number}}"
+  },
   "privacy": {
     "title": "Privacy Policy",
     "lastUpdated": "Last updated: {{date}}",
     "dataCollected": "Data We Collect",
-    "dataCollectedDesc": "We collect the following information when you use MyWatch:",
+    "dataCollectedDesc": "We collect the following information when you use CineTrekker:",
     "dataList": {
       "email": "Email address (for authentication)",
       "watchlist": "Your watchlist and watched items",
@@ -284,6 +358,11 @@
     "cookies": "Cookie Policy"
   },
   "onboarding": {
+    "welcome": "Welcome to CineTrekker!",
+    "description": "Track your movies and TV shows, get recommendations, and more.",
+    "feature1": "Add to your watchlist with the bookmark icon",
+    "feature2": "Mark as watched and leave ratings",
+    "feature3": "Discover trending and personalized picks",
     "step1Title": "Welcome to CineTrekker!",
     "step1Desc": "Your personal hub for tracking movies and TV shows. Let's get you started.",
     "step2Title": "Build Your Watchlist",
@@ -294,58 +373,5 @@
     "next": "Next",
     "start": "Get Started"
   },
-  "home": {
-    "trending": "Trending",
-    "today": "Today",
-    "trendingToday": "Today",
-    "trendingWeek": "This Week",
-    "popular": "Popular",
-    "topRated": "Top Rated",
-    "newEpisodes": "New Episodes",
-    "topMoviesWeek": "Top Movies This Week",
-    "topSeriesWeek": "Top Series This Week",
-    "recentMovies": "Recently Added Movies",
-    "recentEpisodes": "Recently Added Episodes",
-    "newEpisode": "New Episode",
-    "popularMovies": "Popular Movies",
-    "popularSeries": "Popular Series",
-    "didYouWatch": "Did You Watch?",
-    "didYouWatchPrompt": "New episode is out!",
-    "didYouWatchEmpty": "No new episodes to watch",
-    "didYouWatchEmptyDesc": "Episodes will appear here after they air",
-    "justReleased": "Just released",
-    "releasedToday": "Today",
-    "releasedHoursAgo": "{{hours}}h ago",
-    "becauseYouLiked": "Because You Liked {{title}}",
-    "featured": "Featured",
-    "viewDetails": "More Info",
-    "startTracking": "Start Tracking",
-    "hero": {
-      "title": "Track Your Entertainment Journey",
-      "subtitle": "Discover, track, and remember every movie and TV show you watch"
-    }
-  },
-  "status": {
-    "all": "All",
-    "watching": "Watching",
-    "completed": "Completed",
-    "dropped": "Dropped",
-    "plan_to_watch": "Plan to Watch"
-  },
-  "actions": {
-    "watchStatus": "Watch Status",
-    "rateAndReview": "Rate & Review",
-    "yourRating": "Your Rating",
-    "yourThoughts": "Your Thoughts",
-    "notePlaceholder": "Share your thoughts about this title...",
-    "markAsWatched": "Mark as Watched",
-    "updateWatched": "Update Status"
-  },
-  "rating": {
-    "yourRating": "Your Rating",
-    "averageRating": "Average Rating",
-    "rateThis": "Rate this {{type}}",
-    "note": "Note",
-    "notePlaceholder": "Add your thoughts about this title..."
-  }
+  "comingSoon": "Coming Soon"
 }

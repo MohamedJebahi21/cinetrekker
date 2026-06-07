@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Search, X, Film, Tv, User, ArrowRight, Loader2 } from 'lucide-react';
+import { Search, X, Film, Tv, User, ArrowRight } from 'lucide-react';
 import { searchMulti, getImageUrl, getMediaTitle, getMediaYear, getMediaType } from '@/services/tmdb';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -45,7 +45,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
-  const debouncedQuery = useDebounce(query, 300);
+  const debouncedQuery = useDebounce(query, 500); // 500ms debounce for bot protection
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -194,7 +194,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
         {query && (
           <button
             onClick={clearSearch}
-            className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors min-w-[44px] min-h-[44px]"
             aria-label="Clear search"
           >
             <X className="w-3 h-3" />
@@ -207,7 +207,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
         <div
           id="search-dropdown-results"
           role="listbox"
-          className="absolute top-full left-0 right-0 mt-2 bg-popover/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in"
+          className="absolute top-full left-0 right-0 mt-2 bg-popover/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl overflow-y-auto max-h-screen z-50 animate-fade-in"
         >
           {isLoading || (isFetching && query !== debouncedQuery) ? (
             <div className="py-2">
@@ -233,9 +233,13 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
                       <div className="w-10 h-14 rounded overflow-hidden bg-muted flex-shrink-0">
                         {getItemImage(item) ? (
                           <img
-                            src={getItemImage(item)!}
+                            src={getImageUrl(item.poster_path || item.profile_path, 'w185')!}
+                            srcSet={`${getImageUrl(item.poster_path || item.profile_path, 'w92')!} 92w, ${getImageUrl(item.poster_path || item.profile_path, 'w185')!} 185w`}
+                            sizes="40px"
+                            width={92}
+                            height={138}
                             alt=""
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover bg-muted"
                             loading="lazy"
                           />
                         ) : (
@@ -282,7 +286,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
           ) : (
             <div className="py-8 px-4 text-center">
               <p className="text-sm text-muted-foreground mb-2">
-                {t('search.noResults', `No results found for "${debouncedQuery}"`)}
+                {t('search.noResults', `No results available for "${debouncedQuery}"`)}
               </p>
               <p className="text-xs text-muted-foreground/60">
                 {t('search.tryDifferent', 'Try different keywords or check spelling')}

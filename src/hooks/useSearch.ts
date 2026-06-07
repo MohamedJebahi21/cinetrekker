@@ -1,20 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { searchMulti, searchMovies, searchTV, searchPeople } from '@/services/tmdb';
-import { RequestCanceller } from '@/lib/requestUtils';
+import { RequestCanceller, RequestThrottler } from '@/lib/requestUtils';
 import { Media, PersonSearchResult, TMDBResponse } from '@/types/media';
+import { validateSearchQuery } from '@/lib/validation';
 
 const canceller = new RequestCanceller();
+const searchThrottler = new RequestThrottler(1000); // 1 request per second
 
 type SearchType = 'all' | 'movie' | 'tv' | 'person';
 
 interface UseSearchOptions {
-  debounceMs?: number;
+  debounceMs?: number; // Recommended: 500ms for production (bot protection)
   enabled?: boolean;
 }
 
 /**
  * Hook for searching with debounce and request cancellation
+ * Default debounce: 500ms (increased from 300ms for better bot protection)
  */
 export function useSearch(
   query: string,
@@ -50,19 +53,28 @@ export function useSearch(
 
   // Create search function based on type
   const searchFn = async (): Promise<TMDBResponse<Media | PersonSearchResult>> => {
+    // Validate search query
+    const validatedQuery = validateSearchQuery(debouncedQuery);
+    
+    // Rate limit check
+    if (!searchThrottler.canMakeRequest('search')) {
+      throw new Error('Too many requests. Please slow down.');
+    }
+    searchThrottler.recordRequest('search');
+    
     const signal = canceller.getAbortController(`search-${type}-${debouncedQuery}-${page}`).signal;
 
     try {
       switch (type) {
         case 'movie':
-          return await searchMovies(debouncedQuery, page, language);
+          return await searchMovies(validatedQuery, page, language);
         case 'tv':
-          return await searchTV(debouncedQuery, page, language);
+          return await searchTV(validatedQuery, page, language);
         case 'person':
-          return await searchPeople(debouncedQuery, page, language);
+          return await searchPeople(validatedQuery, page, language);
         case 'all':
         default:
-          return await searchMulti(debouncedQuery, page, language);
+          return await searchMulti(validatedQuery, page, language);
       }
     } catch (error) {
       if ((error as Error).name === 'AbortError') {

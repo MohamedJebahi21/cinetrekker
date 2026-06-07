@@ -1,10 +1,31 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Menu, X, Globe, LogIn, LogOut, User } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { useTheme } from '@/contexts/ThemeContext';
-import { Sun, Moon } from 'lucide-react';
+import Menu from 'lucide-react/dist/esm/icons/menu';
+import X from 'lucide-react/dist/esm/icons/x';
+import Globe from 'lucide-react/dist/esm/icons/globe';
+import LogIn from 'lucide-react/dist/esm/icons/log-in';
+import LogOut from 'lucide-react/dist/esm/icons/log-out';
+import User from 'lucide-react/dist/esm/icons/user';
+import Settings from 'lucide-react/dist/esm/icons/settings';
+import Home from 'lucide-react/dist/esm/icons/home';
+import Search from 'lucide-react/dist/esm/icons/search';
+import Bookmark from 'lucide-react/dist/esm/icons/bookmark';
+import Eye from 'lucide-react/dist/esm/icons/eye';
+import Sparkles from 'lucide-react/dist/esm/icons/sparkles';
+import Trophy from 'lucide-react/dist/esm/icons/trophy';
+import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3';
+import Calendar from 'lucide-react/dist/esm/icons/calendar';
+import Award from 'lucide-react/dist/esm/icons/award';
+import Clock from 'lucide-react/dist/esm/icons/clock';
+import Grid3x3 from 'lucide-react/dist/esm/icons/grid-3x3';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,26 +34,59 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { languages } from '@/i18n';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
+import { useUserLists } from '@/contexts/user-lists-context';
 import { SearchDropdown } from '@/components/SearchDropdown';
 import { cn } from '@/lib/utils';
+import GuestSyncBanner from '@/components/GuestSyncBanner';
+import { UserProfileDropdown } from '@/components/UserProfileDropdown';
 
 export function Header() {
   const { t, i18n } = useTranslation();
-  const { theme, toggle } = useTheme();
   const location = useLocation();
   const { user, signOut, loading } = useAuth();
+  const { watchlist } = useUserLists();
+  const watchlistCount = watchlist.length;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string>('');
+
+  const profileKey = useMemo(() => `cinetrekker_profile_${user?.id || 'guest'}`, [user?.id]);
 
   // Track scroll for enhanced glass effect
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
+      setIsScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Load profile data
+  useEffect(() => {
+    const loadProfile = () => {
+      try {
+        const stored = localStorage.getItem(profileKey);
+        if (!stored) return;
+        const parsed = JSON.parse(stored) as { 
+          photo?: string; 
+          displayName?: string;
+        };
+        setProfilePhoto(parsed.photo || null);
+        setDisplayName(parsed.displayName || '');
+      } catch {
+        setProfilePhoto(null);
+        setDisplayName('');
+      }
+    };
+
+    loadProfile();
+
+    // Listen for profile updates
+    window.addEventListener('profileUpdated', loadProfile);
+    return () => window.removeEventListener('profileUpdated', loadProfile);
+  }, [profileKey]);
 
   const navLinks = [
     { path: '/', label: t('nav.home'), exact: true },
@@ -40,8 +94,41 @@ export function Header() {
     { path: '/watchlist', label: t('nav.watchlist'), exact: false },
     { path: '/watched', label: t('nav.watched'), exact: false },
     { path: '/recommendations', label: t('nav.recommendations'), exact: false },
-    { path: '/stats', label: t('nav.stats'), exact: false },
+    { path: '/achievements', label: 'Achievements', exact: false },
+    { path: '/enhanced-stats', label: 'Stats', exact: false },
     { path: '/calendar', label: t('nav.calendar'), exact: false },
+    { path: '/awards', label: 'Awards', exact: false },
+    { path: '/year-in-review', label: 'Year in Review', exact: false },
+    { path: '/watch-history', label: 'History', exact: false },
+  ];
+
+  const menuCategories = [
+    {
+      title: 'Main',
+      items: [
+        { path: '/', label: t('nav.home'), icon: Home },
+        { path: '/search', label: t('nav.search'), icon: Search },
+        { path: '/watchlist', label: t('nav.watchlist'), icon: Bookmark, count: watchlistCount },
+        { path: '/watched', label: t('nav.watched'), icon: Eye },
+      ]
+    },
+    {
+      title: 'Discover',
+      items: [
+        { path: '/recommendations', label: t('nav.recommendations'), icon: Sparkles },
+        { path: '/calendar', label: t('nav.calendar'), icon: Calendar },
+        { path: '/awards', label: 'Awards', icon: Award },
+      ]
+    },
+    {
+      title: 'Analytics',
+      items: [
+        { path: '/enhanced-stats', label: 'Stats', icon: BarChart3 },
+        { path: '/achievements', label: 'Achievements', icon: Trophy },
+        { path: '/year-in-review', label: 'Year in Review', icon: Calendar },
+        { path: '/watch-history', label: 'History', icon: Clock },
+      ]
+    },
   ];
 
   const currentLanguage = languages.find(l => l.code === i18n.language) || languages[0];
@@ -55,11 +142,11 @@ export function Header() {
   };
 
   return (
-    <header className={cn(
-      "glass-nav h-16 transition-all duration-300 sticky top-0 z-50",
-      isScrolled && "shadow-lg border-b border-white/10 backdrop-blur-xl bg-background/95"
+    <header role="banner" className={cn(
+      "glass-nav transition-all duration-300",
+      isScrolled && "scrolled"
     )}>
-      <div className="container mx-auto flex h-full items-center justify-between px-4 gap-4">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4 gap-4 pt-[env(safe-area-inset-top)] md:pt-0">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 group flex-shrink-0">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary transition-all duration-300 group-hover:shadow-[0_0_20px_hsl(358_94%_46%/0.5)]">
@@ -75,42 +162,68 @@ export function Header() {
           <SearchDropdown />
         </div>
 
-        {/* Desktop Navigation - Primary Links */}
-        <nav className="hidden lg:flex items-center gap-1 flex-shrink-0" aria-label="Primary navigation">
-          {navLinks.slice(0, 5).map((link) => {
-            const isActive = link.exact 
-              ? location.pathname === link.path
-              : location.pathname.startsWith(link.path) && link.path !== '/';
-            return (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={cn(
-                  "px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-md"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                )}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Current Page Indicator */}
+        <div className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 text-primary font-medium">
+          {menuCategories.flatMap(cat => cat.items).find(item => {
+            if (item.path === '/') return location.pathname === '/';
+            return location.pathname.startsWith(item.path);
+          })?.label || t('nav.home')}
+        </div>
 
         {/* Right Section */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Dark mode toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Toggle dark mode"
-            onClick={toggle}
-            className="min-w-[44px] min-h-[44px]"
-          >
-            {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          </Button>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {/* All Menus Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="gap-2 hover:bg-accent min-w-[44px] min-h-[44px]"
+                aria-label="All menus"
+              >
+                <span>Menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[400px] max-h-[600px] overflow-y-auto bg-popover/95 backdrop-blur-xl border-border/50">
+              <div className="p-2">
+                {menuCategories.map((category, idx) => (
+                  <div key={category.title}>
+                    {idx > 0 && <DropdownMenuSeparator className="my-2" />}
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      {category.title}
+                    </div>
+                    <div className="grid grid-cols-2 gap-1">
+                      {category.items.map((item) => {
+                        const isActive = location.pathname === item.path || 
+                          (item.path !== '/' && location.pathname.startsWith(item.path));
+                        const ItemIcon = item.icon;
+                        return (
+                          <DropdownMenuItem key={item.path} asChild>
+                            <Link
+                              to={item.path}
+                              className={cn(
+                                "flex items-center gap-3 cursor-pointer p-3 rounded-lg",
+                                isActive && "bg-primary text-primary-foreground"
+                              )}
+                            >
+                              <ItemIcon className="h-4 w-4 flex-shrink-0" />
+                              <span className="flex-1 text-sm">{item.label}</span>
+                              {item.count !== undefined && item.count > 0 && (
+                                <span className="min-w-[18px] h-[18px] px-1 rounded-full text-[10px] leading-[18px] bg-primary text-primary-foreground text-center">
+                                  {item.count}
+                                </span>
+                              )}
+                            </Link>
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {/* Language Switcher */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -137,39 +250,38 @@ export function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* Settings Button */}
+          {user && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    asChild
+                    className="hover:bg-white/5 min-w-[44px] min-h-[44px]"
+                  >
+                    <Link to="/settings" aria-label={t('nav.settings', 'Settings')}>
+                      <Settings className="h-5 w-5" />
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="bg-popover/95 backdrop-blur-xl border-border/50">
+                  <p>{t('nav.settings', 'Settings')}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
           {/* User Menu / Auth */}
           {!loading && (
             user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="gap-2 hover:bg-white/5 min-w-[44px] min-h-[44px]"
-                    aria-label="User menu"
-                  >
-                    <User className="h-4 w-4" />
-                    <span className="hidden sm:inline max-w-[100px] truncate">
-                      {user.email?.split('@')[0]}
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-[160px] bg-popover/95 backdrop-blur-xl border-border/50">
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile" className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      {t('nav.profile')}
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
-                    <LogOut className="h-4 w-4 mr-2" />
-                    {t('nav.signOut')}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <UserProfileDropdown
+                profilePhoto={profilePhoto}
+                displayName={displayName}
+              />
             ) : (
-              <Link to="/auth">
+              <Link to="/login">
                 <Button 
                   variant="default" 
                   size="sm" 
@@ -197,13 +309,15 @@ export function Header() {
         </div>
       </div>
 
+      <GuestSyncBanner />
+
       {/* Mobile Menu */}
       {isMenuOpen && (
         <nav 
           className="lg:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl animate-fade-in"
           aria-label="Mobile navigation"
         >
-          <div className="container mx-auto px-4 py-4 flex flex-col gap-2">
+          <div className="container mx-auto px-4 py-4 flex flex-col gap-3">
             {/* Mobile Search */}
             <div className="mb-2">
               <SearchDropdown onNavigate={() => setIsMenuOpen(false)} />
@@ -213,12 +327,12 @@ export function Header() {
               const isActive = link.exact
                 ? location.pathname === link.path
                 : location.pathname.startsWith(link.path) && link.path !== '/';
-              return (
+                return (
                 <Link
                   key={link.path}
                   to={link.path}
                   className={cn(
-                    "px-4 py-3 rounded-lg text-sm font-medium transition-colors min-h-[44px] flex items-center",
+                    "px-4 py-4 rounded-lg text-sm font-medium transition-colors min-h-[44px] flex items-center",
                     isActive
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -226,7 +340,14 @@ export function Header() {
                   onClick={() => setIsMenuOpen(false)}
                   aria-current={isActive ? 'page' : undefined}
                 >
-                  {link.label}
+                  <span className="flex items-center gap-2">
+                    {link.label}
+                    {link.path === '/watchlist' && watchlistCount > 0 && (
+                      <span className="min-w-[18px] h-[18px] px-1 rounded-full text-[10px] leading-[18px] text-primary-foreground bg-primary/90 text-center">
+                        {watchlistCount}
+                      </span>
+                    )}
+                  </span>
                 </Link>
               );
             })}
@@ -234,7 +355,7 @@ export function Header() {
             {/* Mobile Auth Button */}
             {!user ? (
               <Link
-                to="/auth"
+                to="/login"
                 className="px-4 py-3 rounded-lg text-sm font-medium bg-primary text-primary-foreground text-center mt-2 min-h-[44px] flex items-center justify-center"
                 onClick={() => setIsMenuOpen(false)}
               >

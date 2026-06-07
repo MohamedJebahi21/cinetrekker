@@ -1,31 +1,39 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 
 export function OnboardingModal() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   useEffect(() => {
-    if (!localStorage.getItem("onboarding_complete")) {
+    try {
+      const seen = localStorage.getItem("hasSeenOnboarding");
+      if (!seen) setTimeout(() => setOpen(true), 1000);
+    } catch (e) {
+      // ignore (SSR or restricted storage)
       setTimeout(() => setOpen(true), 1000);
     }
   }, []);
   const handleClose = () => {
     setOpen(false);
-    localStorage.setItem("onboarding_complete", "1");
+    try { localStorage.setItem("hasSeenOnboarding", "1"); } catch (e) { console.warn('Failed to save onboarding state:', e); }
   };
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent>
-        <DialogTitle>Welcome to CineTrekker!</DialogTitle>
+      <DialogContent className="top-4 md:top-auto">
+        <DialogTitle>{t('onboarding.welcome')}</DialogTitle>
         <div className="space-y-4">
-          <p>Track your movies and TV shows, get recommendations, and more.</p>
+          <p>{t('onboarding.description')}</p>
           <ul className="list-disc pl-6 text-sm text-muted-foreground">
-            <li>Add to your watchlist with the bookmark icon</li>
-            <li>Mark as watched and leave ratings</li>
-            <li>Discover trending and personalized picks</li>
-            <li>Switch between dark and light mode</li>
+            <li>{t('onboarding.feature1')}</li>
+            <li>{t('onboarding.feature2')}</li>
+            <li>{t('onboarding.feature3')}</li>
           </ul>
-          <Button onClick={handleClose} className="w-full mt-4">Get Started</Button>
+          <div className="flex gap-2 mt-4">
+            <Button onClick={handleClose} className="flex-1">{t('onboarding.start')}</Button>
+            <Button variant="outline" onClick={handleClose} className="flex-1">{t('onboarding.skip')}</Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

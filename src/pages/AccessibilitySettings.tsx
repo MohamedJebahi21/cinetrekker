@@ -1,424 +1,203 @@
-import { useState, useEffect, useRef } from "react";
-import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
-import {
-  Accessibility,
-  Type,
-  Eye,
-  RotateCcw,
-  Check,
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
-import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import SEO from "@/components/SEO";
-import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
-import {
-  applyAccessibilityPreferencesToRoot,
-  type MotionIntensity,
-  readAccessibilityPreferences,
-  saveFontSizePreference,
-  saveMotionIntensityPreference,
-  saveReduceMotionPreference,
-} from "@/lib/accessibility-preferences";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useState, useEffect } from 'react';
+import { Card } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
+import { Button } from '@/components/ui/button';
+import { SEO } from '@/components/SEO';
+import Settings from 'lucide-react/dist/esm/icons/settings';
+import Eye from 'lucide-react/dist/esm/icons/eye';
+import Type from 'lucide-react/dist/esm/icons/type';
+import Contrast from 'lucide-react/dist/esm/icons/contrast';
+import { useToast } from '@/hooks/use-toast';
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.1 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4 },
-  },
-};
+const FONT_SIZE_ID = 'cinetrekker_font_size';
+const HIGH_CONTRAST_ID = 'cinetrekker_high_contrast';
+const REDUCE_MOTION_ID = 'cinetrekker_reduce_motion';
 
 export default function AccessibilitySettings() {
-  const { t } = useTranslation();
-  const MIN_FONT_SIZE = 80;
-  const MAX_FONT_SIZE = 150;
-  const FONT_SIZE_STEP = 10;
   const { toast } = useToast();
-  const { theme, setTheme } = useTheme();
-  const [confirmResetOpen, setConfirmResetOpen] = useState(false);
-  const resetButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [fontSize, setFontSize] = useState<number>(
-    () => readAccessibilityPreferences().fontSize,
-  );
-  const [reduceMotion, setReduceMotion] = useState<boolean>(
-    () => readAccessibilityPreferences().reduceMotion,
-  );
-  const [motionIntensity, setMotionIntensity] = useState<MotionIntensity>(
-    () => readAccessibilityPreferences().motionIntensity,
-  );
+  const [fontSize, setFontSize] = useState<number>(() => {
+    try {
+      const stored = localStorage.getItem(FONT_SIZE_ID);
+      return stored ? parseInt(stored) : 100;
+    } catch {
+      return 100;
+    }
+  });
+  
+  const [highContrast, setHighContrast] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(HIGH_CONTRAST_ID) === 'true';
+    } catch {
+      return false;
+    }
+  });
+  
+  const [reduceMotion, setReduceMotion] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(REDUCE_MOTION_ID) === 'true';
+    } catch {
+      return false;
+    }
+  });
 
   // Apply font size
   useEffect(() => {
-    const clamped = saveFontSizePreference(fontSize);
-    if (clamped !== fontSize) {
-      setFontSize(clamped);
-      return;
-    }
-    applyAccessibilityPreferencesToRoot();
+    document.documentElement.style.fontSize = `${fontSize}%`;
+    localStorage.setItem(FONT_SIZE_ID, fontSize.toString());
   }, [fontSize]);
+
+  // Apply high contrast
+  useEffect(() => {
+    if (highContrast) {
+      document.documentElement.classList.add('high-contrast');
+    } else {
+      document.documentElement.classList.remove('high-contrast');
+    }
+    localStorage.setItem(HIGH_CONTRAST_ID, highContrast.toString());
+  }, [highContrast]);
 
   // Apply reduce motion
   useEffect(() => {
-    saveReduceMotionPreference(reduceMotion);
-    applyAccessibilityPreferencesToRoot();
-  }, [reduceMotion]);
-
-  // Apply motion intensity
-  useEffect(() => {
-    const normalized = saveMotionIntensityPreference(motionIntensity);
-    if (normalized !== motionIntensity) {
-      setMotionIntensity(normalized);
-      return;
+    if (reduceMotion) {
+      document.documentElement.classList.add('reduce-motion');
+    } else {
+      document.documentElement.classList.remove('reduce-motion');
     }
-    applyAccessibilityPreferencesToRoot();
-  }, [motionIntensity]);
+    localStorage.setItem(REDUCE_MOTION_ID, reduceMotion.toString());
+  }, [reduceMotion]);
 
   const resetToDefaults = () => {
     setFontSize(100);
+    setHighContrast(false);
     setReduceMotion(false);
-    setMotionIntensity("medium");
-    setTheme("dark");
     toast({
-      title: t("accessibility.resetToastTitle", "Settings Reset"),
-      description: t("accessibility.resetToastDesc", "Theme and accessibility settings have been reset to defaults."),
+      title: 'Settings Reset',
+      description: 'All accessibility settings have been reset to defaults.',
     });
-  };
-
-  const decreaseFontSize = () => {
-    setFontSize((current) => Math.max(MIN_FONT_SIZE, current - FONT_SIZE_STEP));
-  };
-
-  const increaseFontSize = () => {
-    setFontSize((current) => Math.min(MAX_FONT_SIZE, current + FONT_SIZE_STEP));
   };
 
   return (
     <>
-      <SEO
-        title={t("accessibility.seoTitle", "Accessibility Settings - CineTrekker")}
-        description={t("accessibility.seoDescription", "Customize your viewing experience with font size, theme, and motion settings")}
-        canonical="https://cinetrekker.vercel.app/accessibility"
+      <SEO 
+        title="Accessibility Settings"
+        description="Customize your viewing experience with accessibility options"
       />
+      
+      <div className="page-container pt-20 pb-24 md:pb-0">
+        <div className="flex items-center gap-3 mb-6">
+          <Settings className="h-8 w-8 text-primary" />
+          <div>
+            <h1 className="text-3xl font-bold">Accessibility Settings</h1>
+            <p className="text-muted-foreground mt-1">
+              Customize your experience for better readability and usability
+            </p>
+          </div>
+        </div>
 
-      <motion.div
-        className="page-container ct-page-shell max-w-4xl pt-20 pb-24 md:pb-10"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {/* Hero Header */}
-        <motion.section variants={itemVariants} className="mb-8">
-          <Card className="ct-panel-strong relative overflow-hidden shadow-2xl">
-            <div className="absolute inset-0 bg-gradient-to-br from-red-900/10 via-transparent to-red-500/5 pointer-events-none" />
-            <CardContent className="pt-8 pb-6 relative z-10">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-red-500/20 to-red-700/20 flex items-center justify-center backdrop-blur-sm">
-                  <Accessibility className="w-7 h-7 text-red-400" />
-                </div>
-                <div>
-                  <h1 className="section-title mb-0 text-2xl md:text-3xl">{t("accessibility.title", "Accessibility Settings")}</h1>
-                  <p className="text-muted-foreground">
-                    {t("accessibility.subtitle", "Customize the app for better readability and usability.")}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.section>
-
-        {/* Font Size */}
-        <motion.div variants={itemVariants} className="mb-6">
-          <p className="ct-kicker mb-3 inline-flex items-center gap-2">
-            <Type className="h-3.5 w-3.5 text-red-400" />
-            {t("accessibility.textSizeKicker", "Text Size")}
-          </p>
-          <Card className="ct-panel">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-white/10 to-white/5">
-                  <Type className="h-5 w-5 text-red-400" />
-                </div>
-                <span>{t("accessibility.fontSize", "Font Size")}</span>
-              </CardTitle>
-              <CardDescription>{t("accessibility.fontSizeDesc", "Adjust text size throughout the app.")}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <div className="space-y-2">
-                <div className="flex items-center gap-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="h-11 w-11 shrink-0 border-border/60 bg-card/80 text-foreground hover:bg-card sm:h-9 sm:w-9"
-                    onClick={decreaseFontSize}
-                    aria-label="Decrease font size"
-                    disabled={fontSize <= MIN_FONT_SIZE}
-                  >
-                    -
-                  </Button>
-                  <Slider
-                    value={[fontSize]}
-                    onValueChange={(value) => setFontSize(value[0])}
-                    min={MIN_FONT_SIZE}
-                    max={MAX_FONT_SIZE}
-                    step={FONT_SIZE_STEP}
-                    className="flex-1"
-                    aria-label="Font size"
-                    aria-valuemin={MIN_FONT_SIZE}
-                    aria-valuemax={MAX_FONT_SIZE}
-                    aria-valuenow={fontSize}
-                    aria-valuetext={`${fontSize}%`}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="h-11 w-11 shrink-0 border-border/60 bg-card/80 text-foreground hover:bg-card sm:h-9 sm:w-9"
-                    onClick={increaseFontSize}
-                    aria-label="Increase font size"
-                    disabled={fontSize >= MAX_FONT_SIZE}
-                  >
-                    +
-                  </Button>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-center" aria-live="polite" aria-atomic="true">
-                <span className="text-3xl font-bold text-foreground">{fontSize}%</span>
-              </div>
-
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Theme & Motion */}
-        <motion.div variants={itemVariants} className="mb-6">
-          <p className="ct-kicker mb-3 inline-flex items-center gap-2">
-            <Accessibility className="h-3.5 w-3.5 text-red-400" />
-            {t("accessibility.displayPreferencesKicker", "Display Preferences")}
-          </p>
-          <Card className="ct-panel">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-white/10 to-white/5">
-                  <Accessibility className="h-5 w-5 text-red-400" />
-                </div>
-                <span>{t("accessibility.themeMotion", "Theme & Motion")}</span>
-              </CardTitle>
-              <CardDescription>{t("accessibility.themeMotionDesc", "Choose a visual theme and motion behavior.")}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Theme Switcher */}
-              <div
-                className={cn(
-                  "flex items-center justify-between gap-4 rounded-xl border px-4 py-4 transition-all duration-300",
-                  "border-border/60 bg-card/70",
-                )}
-              >
-                <div className="min-w-0 flex-1">
-                  <p id="theme-switcher-label" className="text-sm font-semibold text-foreground">
-                    {t("accessibility.appTheme", "App Theme")}
-                  </p>
-                  <p id="theme-switcher-description" className="mt-1 text-sm text-muted-foreground">
-                    {t("accessibility.appThemeDesc", "Pick Dark, Light, or OLED mode for the full app.")}
-                  </p>
-                </div>
-                <div
-                  role="group"
-                  aria-labelledby="theme-switcher-label"
-                  aria-describedby="theme-switcher-description"
-                  className="ct-toggle-group"
-                >
-                  {(["dark", "light", "oled"] as const).map((option) => {
-                    const active = theme === option;
-                    const label = option === "oled" ? "OLED" : option[0].toUpperCase() + option.slice(1);
-                    return (
-                      <button
-                        key={option}
-                        type="button"
-                        className={cn(
-                          "rounded-lg px-3 py-2 text-xs font-semibold transition-colors",
-                          active
-                            ? "ct-toggle-button-active"
-                            : "ct-toggle-button hover:text-foreground",
-                        )}
-                        onClick={() => setTheme(option)}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Reduce Motion Row */}
-              <div
-                className={cn(
-                  "flex items-center justify-between gap-4 rounded-xl border px-4 py-4 transition-all duration-300",
-                  "border-border/60 bg-card/70",
-                )}
-              >
-                <div className="min-w-0 flex-1">
-                  <Label
-                    htmlFor="reduceMotion"
-                    id="reduceMotion-label"
-                    className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-foreground"
-                  >
-                    <Eye className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    {t("accessibility.reduceMotion", "Reduce Motion")}
-                  </Label>
-                  <p id="reduceMotion-description" className="mt-1 text-sm text-muted-foreground">
-                    {t("accessibility.reduceMotionDesc", "Minimize animations and transitions.")}
-                  </p>
-                </div>
-                <Switch
-                  id="reduceMotion"
-                  checked={reduceMotion}
-                  onCheckedChange={setReduceMotion}
-                  aria-labelledby="reduceMotion-label"
-                  aria-describedby="reduceMotion-description"
-                />
-              </div>
-
-              {/* Motion Intensity Row */}
-              <div
-                className={cn(
-                  "flex items-center justify-between gap-4 rounded-xl border px-4 py-4 transition-all duration-300",
-                  "border-border/60 bg-card/70",
-                )}
-              >
-                <div className="min-w-0 flex-1">
-                  <p id="motionIntensity-label" className="text-sm font-semibold text-foreground">
-                    {t("accessibility.motionDensity", "Motion Density")}
-                  </p>
-                  <p id="motionIntensity-description" className="mt-1 text-sm text-muted-foreground">
-                    {t("accessibility.motionDensityDesc", "Control how dense cinematic motion effects feel.")}
-                  </p>
-                </div>
-                <div
-                  role="group"
-                  aria-labelledby="motionIntensity-label"
-                  aria-describedby="motionIntensity-description"
-                  className="ct-toggle-group"
-                >
-                  {([
-                    { value: "low", label: t("accessibility.motionLow", "Low") },
-                    { value: "medium", label: t("accessibility.motionMedium", "Medium") },
-                    { value: "high", label: t("accessibility.motionHigh", "High") },
-                  ] as const).map((option) => {
-                    const active = motionIntensity === option.value;
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        className={cn(
-                          "rounded-lg px-3 py-2 text-xs font-semibold transition-colors",
-                          active
-                            ? "ct-toggle-button-active"
-                            : "ct-toggle-button hover:text-foreground",
-                        )}
-                        onClick={() => setMotionIntensity(option.value)}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Built-in Features Info */}
-        <motion.div variants={itemVariants} className="mb-6">
-          <p className="ct-kicker mb-3 inline-flex items-center gap-2">
-            <Accessibility className="h-3.5 w-3.5 text-red-400" />
-            {t("accessibility.featuresKicker", "Built-in Features")}
-          </p>
-          <Card className="ct-panel">
-            <CardContent className="px-5 py-4 space-y-2">
-              {[
-                t("accessibility.feature1", "Keyboard navigation support throughout the app"),
-                t("accessibility.feature2", "Screen reader compatible with ARIA labels"),
-                t("accessibility.feature3", "Focus indicators for better navigation"),
-                t("accessibility.feature4", "Skip to content links"),
-                t("accessibility.feature5", "Alt text for all images"),
-              ].map((feature) => (
-                <p key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Check className="h-4 w-4 shrink-0 text-red-400" aria-hidden="true" />
-                  {feature}
+        <div className="max-w-2xl space-y-6">
+          {/* Font Size Control */}
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Type className="h-5 w-5 text-primary" />
+              <div>
+                <Label className="text-lg font-semibold">Font Size</Label>
+                <p className="text-sm text-muted-foreground">
+                  Adjust text size throughout the app
                 </p>
-              ))}
-            </CardContent>
-          </Card>
-        </motion.div>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <span className="text-sm w-16">Small</span>
+                <Slider
+                  value={[fontSize]}
+                  onValueChange={(value) => setFontSize(value[0])}
+                  min={80}
+                  max={150}
+                  step={10}
+                  className="flex-1"
+                />
+                <span className="text-sm w-16 text-right">Large</span>
+              </div>
+              
+              <div className="text-center">
+                <span className="text-2xl font-bold">{fontSize}%</span>
+              </div>
 
-        {/* Reset Button */}
-        <motion.div variants={itemVariants}>
+              <div className="pt-4 border-t">
+                <p className="text-sm">
+                  Preview: This is how text will look at {fontSize}% size. 
+                  The quick brown fox jumps over the lazy dog.
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          {/* High Contrast Mode */}
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Contrast className="h-5 w-5 text-primary" />
+                <div>
+                  <Label className="text-lg font-semibold">High Contrast Mode</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Increase contrast for better visibility
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={highContrast}
+                onCheckedChange={setHighContrast}
+                aria-label="Toggle high contrast mode"
+              />
+            </div>
+          </Card>
+
+          {/* Reduce Motion */}
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Eye className="h-5 w-5 text-primary" />
+                <div>
+                  <Label className="text-lg font-semibold">Reduce Motion</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Minimize animations and transitions
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={reduceMotion}
+                onCheckedChange={setReduceMotion}
+                aria-label="Toggle reduce motion"
+              />
+            </div>
+          </Card>
+
+          {/* Other Accessibility Features */}
+          <Card className="p-6 bg-muted/50">
+            <h3 className="font-semibold mb-3">Additional Features</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>✓ Keyboard navigation support throughout the app</li>
+              <li>✓ Screen reader compatible with ARIA labels</li>
+              <li>✓ Focus indicators for better navigation</li>
+              <li>✓ Skip to content links</li>
+              <li>✓ Alt text for all images</li>
+            </ul>
+          </Card>
+
+          {/* Reset Button */}
           <Button
-            ref={resetButtonRef}
-            onClick={() => setConfirmResetOpen(true)}
+            onClick={resetToDefaults}
             variant="outline"
-            className="w-full gap-2 border border-red-500/80 bg-transparent text-red-400 hover:bg-red-500/10 hover:text-red-300"
-            aria-label={t("accessibility.resetButton", "Reset to Default Settings")}
+            className="w-full"
           >
-            <RotateCcw className="h-4 w-4" />
-            {t("accessibility.resetButton", "Reset to Default Settings")}
+            Reset to Default Settings
           </Button>
-        </motion.div>
-        <AlertDialog open={confirmResetOpen} onOpenChange={setConfirmResetOpen}>
-          <AlertDialogContent
-            role="alertdialog"
-            aria-modal="true"
-            className="border-border/60 bg-card text-foreground"
-            onCloseAutoFocus={(event) => {
-              event.preventDefault();
-              resetButtonRef.current?.focus();
-            }}
-          >
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t("accessibility.resetConfirmTitle", "Reset accessibility settings?")}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t("accessibility.resetConfirmDesc", "This will restore theme, font size, and motion preferences to their default values.")}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{t("accessibility.resetCancel", "Cancel")}</AlertDialogCancel>
-              <AlertDialogAction
-                className="bg-red-600 text-white hover:bg-red-700"
-                onClick={resetToDefaults}
-              >
-                {t("accessibility.resetConfirm", "Reset")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </motion.div>
+        </div>
+      </div>
     </>
   );
 }

@@ -1,74 +1,128 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5.0, viewport-fit=cover" />
     
-    <!-- Primary SEO -->
-    <title>CineTrekker — Discover & Track Movies & TV Shows | Trending Now</title>
-    <meta name="description" content="Track your favorite movies and TV shows. Discover trending content, manage your watchlist, and get personalized recommendations.">
-    <meta name="keywords" content="movies, TV shows, tracking, watchlist, recommendations, TMDB, streaming">
+    <!-- Preload critical CSS -->
+    <link rel="preload" href="/src/index.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="/src/index.css"></noscript>
+
+    <script>
+      // Force dark mode - clear any stored theme preferences and ensure dark class
+      (function () {
+        try {
+          // Clear stored theme preferences
+          localStorage.removeItem('theme');
+          localStorage.removeItem('cinetrekker:theme');
+          
+          // Force dark mode on root element
+          var root = document.documentElement;
+          root.classList.add('dark');
+          root.setAttribute('data-theme', 'dark');
+          root.style.colorScheme = 'dark';
+        } catch (e) {
+          // ignore - SSR or localStorage not available
+        }
+      })();
+    </script>
+
+    <script src="/loading.js" defer></script>
+
+    <title>CineTrekker | Track Movies & TV Shows - Your Personal Watchlist</title>
+    <meta name="description" content="Discover, track, and organize your favorite movies and TV shows with CineTrekker. Create watchlists, mark watched, and explore filming locations.">
+    <meta name="keywords" content="movie tracker, TV show tracker, watchlist, filming locations, cinema, movies, TV series, film tracking, TMDB">
     <meta name="author" content="CineTrekker" />
     <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://cinetrekker.lovable.app" />
     
-    <!-- Open Graph / Facebook -->
+    <link rel="canonical" href="https://cinetrekker.vercel.app/" />
+    
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://cinetrekker.lovable.app" />
-    <meta property="og:title" content="CineTrekker — Track Your Movies & TV Shows">
-    <meta property="og:description" content="Your personal hub for tracking movies and TV shows">
-    <meta property="og:image" content="https://cinetrekker.lovable.app/og-image.png" />
+    <meta property="og:url" content="https://cinetrekker.vercel.app/" />
+    <meta property="og:title" content="CineTrekker | Track Movies & TV Shows">
+    <meta property="og:description" content="Your personal hub for tracking movies, TV shows, and exploring real-world filming locations.">
+    <meta property="og:image" content="https://cinetrekker.vercel.app/ct-icon.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:site_name" content="CineTrekker" />
+    <meta property="og:locale" content="en_US" />
 
-    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:url" content="https://cinetrekker.lovable.app" />
-    <meta name="twitter:title" content="CineTrekker — Track Your Movies & TV Shows">
-    <meta name="twitter:description" content="Track movies and TV shows you love">
-    <meta name="twitter:image" content="https://cinetrekker.lovable.app/og-image.png" />
-
-    <!-- PWA & Mobile -->
+    <meta name="twitter:url" content="https://cinetrekker.vercel.app/" />
+    <meta name="twitter:title" content="CineTrekker | Track Movies & TV Shows">
+    <meta name="twitter:description" content="Discover movies, track your watchlist, and explore filming locations.">
+    <meta name="twitter:image" content="https://cinetrekker.vercel.app/ct-icon.png" />
+    <meta name="twitter:image:alt" content="CineTrekker - Movie Tracking App" />
     <meta name="theme-color" content="#E50914" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="CineTrekker" />
     
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="apple-touch-icon" href="/favicon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/png" href="/ct-icon.png?v=4" />
+    <link rel="apple-touch-icon" href="/ct-icon.png?v=4" />
 
-    <!-- Preconnect to improve performance -->
     <link rel="preconnect" href="https://api.themoviedb.org">
     <link rel="preconnect" href="https://image.tmdb.org">
-    <link rel="preconnect" href="https://wzlcekvieglnidfempap.supabase.co">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
 
-    <!-- Inline critical CSS for instant render -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "CineTrekker",
+      "description": "Track movies and TV shows with personalized watchlists and filming location discovery",
+      "url": "https://cinetrekker.vercel.app",
+      "applicationCategory": "EntertainmentApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
     <style>
       /* Reset & Base Styles */
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      html { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-      body { background: #050505; color: #fff; overflow-x: hidden; }
+      *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+      html { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; scroll-behavior: smooth; background: #f8fafc; color: #0f172a; }
+      body { background: #f8fafc; color: #0f172a; overflow-x: hidden; line-height: 1.5; }
+      html.dark, html.dark body { background: #050505; color: #ffffff; }
       
-      /* App Shell */
+      /* App Shell Loading State */
       .app-shell {
         min-height: 100vh;
+        background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+        opacity: 1;
+        transition: opacity 0.3s ease-out;
+      }
+      html.dark .app-shell {
         background: linear-gradient(180deg, #050505 0%, #0a0a0a 100%);
+      }
+      
+      .app-shell.loaded {
+        opacity: 0;
+        pointer-events: none;
       }
       
       /* Loading Header */
       .loading-header {
-        height: 64px;
+        height: calc(64px + env(safe-area-inset-top, 0px));
         border-bottom: 1px solid rgba(255,255,255,0.05);
         display: flex;
         align-items: center;
-        padding: 0 1rem;
-        background: rgba(0,0,0,0.8);
+        padding: env(safe-area-inset-top, 0px) 1rem 0 1rem;
+        background: rgba(248,250,252,0.9);
         backdrop-filter: blur(10px);
         position: sticky;
         top: 0;
         z-index: 50;
       }
+      html.dark .loading-header { background: rgba(0,0,0,0.8); }
       
       .loading-logo {
         width: 40px;
@@ -80,15 +134,18 @@
         justify-content: center;
         font-weight: bold;
         font-size: 18px;
+        color: white;
         box-shadow: 0 0 20px rgba(229, 9, 20, 0.3);
       }
       
       .loading-title {
         margin-left: 12px;
-        font-weight: bold;
+        font-weight: 700;
         font-size: 1.25rem;
         letter-spacing: -0.02em;
+        color: #0f172a;
       }
+      html.dark .loading-title { color: #ffffff; }
       
       /* Loading Content */
       .loading-content {
@@ -98,22 +155,25 @@
       }
       
       /* Skeleton Animation */
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      
       .skeleton {
-        background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+        background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
         background-size: 200% 100%;
         animation: shimmer 1.5s infinite;
         border-radius: 8px;
       }
-      
-      @keyframes shimmer {
-        0% { background-position: 200% 0; }
-        100% { background-position: -200% 0; }
+      html.dark .skeleton {
+        background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
       }
       
       /* Grid Layout */
-      .grid {
+      .loading-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
         gap: 1rem;
         margin-top: 2rem;
       }
@@ -129,73 +189,57 @@
         border-radius: 4px;
       }
       
-      /* Responsive */
+      /* Responsive Breakpoints */
+      @media (min-width: 480px) {
+        .loading-grid { grid-template-columns: repeat(3, 1fr); }
+      }
+      
       @media (min-width: 768px) {
-        .grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+        .loading-grid { grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
         .loading-content { padding: 3rem 2rem; }
+        .loading-header { padding: 0 2rem; }
       }
       
       @media (min-width: 1024px) {
-        .grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; }
+        .loading-grid { grid-template-columns: repeat(5, 1fr); gap: 1.5rem; }
       }
       
-      /* Fade out animation when React takes over */
-      .app-shell.loaded {
-        animation: fadeOut 0.3s ease-out forwards;
+      @media (min-width: 1400px) {
+        .loading-grid { grid-template-columns: repeat(6, 1fr); }
       }
       
-      @keyframes fadeOut {
-        to { opacity: 0; pointer-events: none; }
+      /* Reduced Motion */
+      @media (prefers-reduced-motion: reduce) {
+        .skeleton { animation: none; background: #1a1a1a; }
+        html { scroll-behavior: auto; }
       }
     </style>
   </head>
 
   <body>
     <div id="root">
-      <!-- Pre-rendered loading shell - shows instantly while JS loads -->
-      <div class="app-shell">
+      <div class="app-shell" id="app-shell">
         <header class="loading-header">
-          <div class="loading-logo">CT</div>
+          <div class="loading-logo" aria-hidden="true">CT</div>
           <div class="loading-title">CineTrekker</div>
         </header>
         
         <main class="loading-content">
-          <div class="text-skeleton skeleton" style="width: 240px; height: 2.5rem; margin-bottom: 0.75rem;"></div>
-          <div class="text-skeleton skeleton" style="width: 320px; height: 1.25rem;"></div>
+          <div class="text-skeleton skeleton" style="width: 60%; max-width: 280px; height: 2rem; margin-bottom: 0.75rem;"></div>
+          <div class="text-skeleton skeleton" style="width: 40%; max-width: 200px; height: 1rem; margin-bottom: 2rem;"></div>
           
-          <div class="grid">
-            <div class="card-skeleton skeleton"></div>
-            <div class="card-skeleton skeleton"></div>
-            <div class="card-skeleton skeleton"></div>
-            <div class="card-skeleton skeleton"></div>
-            <div class="card-skeleton skeleton"></div>
-            <div class="card-skeleton skeleton"></div>
-            <div class="card-skeleton skeleton"></div>
-            <div class="card-skeleton skeleton"></div>
-            <div class="card-skeleton skeleton"></div>
-            <div class="card-skeleton skeleton"></div>
-            <div class="card-skeleton skeleton"></div>
-            <div class="card-skeleton skeleton"></div>
+          <div class="loading-grid" role="status" aria-label="Loading content">
+            <div class="card-skeleton skeleton" aria-hidden="true"></div>
+            <div class="card-skeleton skeleton" aria-hidden="true"></div>
+            <div class="card-skeleton skeleton" aria-hidden="true"></div>
+            <div class="card-skeleton skeleton" aria-hidden="true"></div>
+            <div class="card-skeleton skeleton" aria-hidden="true"></div>
+            <div class="card-skeleton skeleton" aria-hidden="true"></div>
           </div>
         </main>
       </div>
     </div>
-
-    <!-- JS Required Fallback (only shows if JS is completely disabled) -->
-    <noscript>
-      <div style="padding: 40px; text-align: center; font-family: system-ui; background: #050505; color: white; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-        <div style="max-width: 500px;">
-          <h1 style="margin-bottom: 1rem; font-size: 2rem;">JavaScript Required</h1>
-          <p style="color: #999; line-height: 1.6; margin-bottom: 1.5rem;">
-            CineTrekker requires JavaScript to function properly. Please enable JavaScript in your browser settings to enjoy the full experience.
-          </p>
-          <p style="font-size: 14px; color: #666;">
-            While JavaScript is loading, you're seeing a preview of the interface.
-          </p>
-        </div>
-      </div>
-    </noscript>
-
+    
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

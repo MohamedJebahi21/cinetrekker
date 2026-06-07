@@ -6,12 +6,12 @@ export const useWatchProviders = (mediaType: 'movie' | 'tv', id: number, country
   return useQuery({
     queryKey: ['watchProviders', mediaType, id, region],
     queryFn: async () => {
-      const res = await getWatchProviders(mediaType, id);
+      const res = await getWatchProviders(mediaType, id, region);
       // TMDB returns an object with `results` keyed by country code
       return res.results ? res.results[region] || null : null;
     },
     staleTime: 1000 * 60 * 60, // 1 hour
-    gcTime: 1000 * 60 * 60 * 24, // 24 hours
+    cacheTime: 1000 * 60 * 60 * 24, // 24 hours
     retry: 1,
   });
 };

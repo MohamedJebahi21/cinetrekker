@@ -1,6 +1,14 @@
 import { useLocation, useNavigate } from 'react-router-dom';
+import type { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Home, Search, Bookmark, CheckCircle2, MoreHorizontal, LucideIcon, BarChart3 } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
+import Home from 'lucide-react/dist/esm/icons/home';
+import SearchIcon from 'lucide-react/dist/esm/icons/search';
+import Bookmark from 'lucide-react/dist/esm/icons/bookmark';
+import CheckCircle2 from 'lucide-react/dist/esm/icons/check-circle-2';
+import MoreHorizontal from 'lucide-react/dist/esm/icons/more-horizontal';
+import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3';
+import Settings from 'lucide-react/dist/esm/icons/settings';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -13,13 +21,13 @@ import { Button } from '@/components/ui/button';
 interface NavItem {
   path: string;
   label: string;
-  icon: LucideIcon;
+  icon: ComponentType<{ className?: string }>;
   badge?: number | boolean;
 }
 
 const PRIMARY_NAV_ITEMS: NavItem[] = [
   { path: '/', label: 'Home', icon: Home },
-  { path: '/search', label: 'Discover', icon: Search },
+  { path: '/search', label: 'Discover', icon: SearchIcon },
   { path: '/stats', label: 'Stats', icon: BarChart3 },
   { path: '/watchlist', label: 'Watchlist', icon: Bookmark },
 ];
@@ -28,6 +36,7 @@ const SECONDARY_NAV_ITEMS: NavItem[] = [
   { path: '/watched', label: 'Watched', icon: CheckCircle2 },
   { path: '/calendar', label: 'Calendar', icon: Home },
   { path: '/recommendations', label: 'Recommendations', icon: Home },
+  { path: '/accessibility', label: 'Accessibility', icon: Settings },
   { path: '/profile', label: 'Profile', icon: Home },
 ];
 
@@ -44,20 +53,26 @@ export function BottomNav({ showOnMobile = true, watchlistCount, watchedCount }:
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { user } = useAuth();
 
   if (!showOnMobile) return null;
 
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
 
   const handleNavigate = (path: string) => {
-    navigate(path);
+    // Redirect to signup if trying to access profile without authentication
+    if (path === '/profile' && !user) {
+      navigate('/signup');
+    } else {
+      navigate(path);
+    }
   };
 
   return (
     <>
       {/* Mobile Bottom Nav (only visible on small screens) */}
-      <nav className="fixed bottom-0 left-0 right-0 border-t border-border bg-background/95 backdrop-blur-sm md:hidden z-40">
-        <div className="flex items-center justify-between h-16 px-2">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden border-t border-white/5 bg-gradient-to-t from-surface-dark-1 to-surface-dark-2 backdrop-blur-xl shadow-glow bg-opacity-95">
+        <div className="flex items-center justify-between h-20 px-2 gap-2">
           {PRIMARY_NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
@@ -74,35 +89,43 @@ export function BottomNav({ showOnMobile = true, watchlistCount, watchedCount }:
                 key={item.path}
                 onClick={() => handleNavigate(item.path)}
                 aria-label={item.label}
+                aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-1 p-2 rounded-lg transition-all duration-200 flex-1 relative',
-                  active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                  'flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-xl transition-all duration-200 interactive-element',
+                  active
+                    ? 'bg-primary/10 text-primary shadow-glow'
+                    : 'text-muted-foreground hover:bg-surface-dark-3 hover:text-foreground'
                 )}
               >
                 <div className="relative">
-                  <Icon className={cn('h-6 w-6', active && 'fill-current')} />
+                  <Icon className={cn(
+                    'h-5 w-5 transition-transform duration-200',
+                    active && 'fill-current scale-110'
+                  )} />
                   {badge && (
-                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                    <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-[10px] rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-glow">
                       {typeof badge === 'number' && badge > 99 ? '99+' : badge}
                     </span>
                   )}
                 </div>
-                <span className={cn('text-xs font-medium leading-none', active && 'text-primary')}>
-                  {item.label}
-                </span>
+                <span className="text-[10px] font-semibold leading-none">{item.label}</span>
               </button>
             );
           })}
 
           {/* More Menu */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button aria-label="More" className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg transition-all duration-200 flex-1 text-muted-foreground hover:text-foreground">
-                <MoreHorizontal className="h-6 w-6" />
-                <span className="text-xs font-medium leading-none">More</span>
+              <DropdownMenuTrigger asChild>
+              <button
+                aria-label="More"
+                aria-haspopup="menu"
+                className="flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-xl transition-all duration-200 interactive-element text-muted-foreground hover:bg-surface-dark-3 hover:text-foreground"
+              >
+                <MoreHorizontal className="h-5 w-5" />
+                <span className="text-[10px] font-semibold leading-none">More</span>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" side="top" className="w-48 mb-16">
+            <DropdownMenuContent align="end" side="top" className="w-48 mb-20">
               {SECONDARY_NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.path);
@@ -123,7 +146,7 @@ export function BottomNav({ showOnMobile = true, watchlistCount, watchedCount }:
       </nav>
 
       {/* Spacer to prevent content overlap */}
-      <div className="h-16 md:hidden" />
+      <div className="h-20 md:hidden" />
     </>
   );
 }

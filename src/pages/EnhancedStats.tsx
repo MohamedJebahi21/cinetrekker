@@ -1,260 +1,222 @@
-import { useTranslation } from "react-i18next";
-import { Clock, Film, Star, Tv } from "lucide-react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from "recharts";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { GlassStatCard } from "@/components/GlassStatCard";
-import { useEnhancedStatsData, type MediaTypeFilter } from "@/hooks/useEnhancedStatsData";
-import { useIsMobile } from "@/hooks/use-mobile";
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useUserLists } from '@/contexts/user-lists-context';
+import { Genre } from '@/types/media';
+import { getMovieDetails, getTVDetails } from '@/services/tmdb';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Flame, Clock, Star, TrendingUp, Calendar, Award, Film, Tv } from 'lucide-react';
+import { GlassStatCard } from '@/components/GlassStatCard';
+import { useTranslation } from 'react-i18next';
+import SEO from '@/components/SEO';
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 
-const CINEMATIC_CHART_COLORS = [
-  "#E50914",
-  "#F97316",
-  "#F2C572",
-  "#FB7185",
-  "#B91C1C",
-  "#FDBA74",
-  "#7F1D1D",
-  "#FCD34D",
-];
+interface GenreStats {
+  name: string;
+  count: number;
+  hours: number;
+}
 
 export default function EnhancedStats() {
-  const { i18n, t } = useTranslation();
-  const isMobile = useIsMobile();
+  const { watched } = useUserLists();
+  const { i18n } = useTranslation();
   const language = i18n.language;
-  const {
-    mediaLoading,
-    selectedYear,
-    setSelectedYear,
-    selectedType,
-    setSelectedType,
-    selectedLang,
-    setSelectedLang,
-    years,
-    languages,
-    filteredMedia,
-    totalMovies,
-    totalTV,
-    totalEpisodes,
-    totalHours,
-    genreStats,
-  } = useEnhancedStatsData(language);
 
-  if (mediaLoading) {
-    return (
-      <div className="page-container flex min-h-[40vh] items-center justify-center pt-20">
-        <div className="ct-panel px-6 py-10 text-center">
-          <span className="text-lg text-muted-foreground">Loading stats...</span>
-        </div>
-      </div>
-    );
+  const { data: mediaDetails } = useQuery({
+    queryKey: ['stats-details', watched.map((i) => `${i.mediaType}-${i.mediaId}`), language],
+    queryFn: async () => {
+      const results = await Promise.all(
+        watched.map(async (item) => {
+          try {
+            const details =
+              item.mediaType === 'movie'
+                ? await getMovieDetails(item.mediaId, language)
+                : await getTVDetails(item.mediaId, language);
+            return { ...details, media_type: item.mediaType, userRating: item.rating, watchedAt: item.addedAt };
+          } catch {
+            return null;
+          }
+        })
+      );
+      return results.filter(Boolean);
+    },
+    enabled: watched.length > 0,
+  });
+
+  // Calculate stats
+  const totalMovies = mediaDetails?.filter((m) => m.media_type === 'movie').length || 0;
+  const totalTV = mediaDetails?.filter((m) => m.media_type === 'tv').length || 0;
+
+  const totalHours =
+    mediaDetails?.reduce((acc, item) => {
+      const runtime = item.runtime || (item.episode_run_time && item.episode_run_time[0]) || 0;
+      const episodes = item.media_type === 'tv' ? (item.number_of_episodes || 1) : 1;
+      return acc + (runtime * episodes) / 60;
+    }, 0) || 0;
+
+  const avgRating =
+    mediaDetails && mediaDetails.length > 0
+      ? mediaDetails.reduce((acc, item) => acc + (item.vote_average || 0), 0) / mediaDetails.length
+      : 0;
+
+  // Genre breakdown
+  const genreMap = new Map<number, { name: string; count: number; hours: number }>();
+  mediaDetails?.forEach((item) => {
+    const runtime = item.runtime || (item.episode_run_time && item.episode_run_time[0]) || 0;
+    const episodes = item.media_type === 'tv' ? (item.number_of_episodes || 1) : 1;
+    const hours = (runtime * episodes) / 60;
+
+    item.genres?.forEach((genre: Genre) => {
+      const existing = genreMap.get(genre.id) || { name: genre.name, count: 0, hours: 0 };
+      genreMap.set(genre.id, {
+        name: genre.name,
+        count: existing.count + 1,
+        hours: existing.hours + hours,
+      });
+    });
+  });
+
+  const genreStats = Array.from(genreMap.values())
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 8);
+
+  // Calculate watching streak
+  const sortedWatched = [...watched].sort(
+    (a, b) => new Date(b.addedAt || 0).getTime() - new Date(a.addedAt || 0).getTime()
+  );
+
+  let currentStreak = 0;
+  let longestStreak = 0;
+  let tempStreak = 0;
+  let lastDate: Date | null = null;
+
+  sortedWatched.forEach((item) => {
+    const itemDate = new Date(item.addedAt || 0);
+    itemDate.setHours(0, 0, 0, 0);
+
+    if (!lastDate) {
+      tempStreak = 1;
+    } else {
+      const dayDiff = Math.floor((lastDate.getTime() - itemDate.getTime()) / (1000 * 60 * 60 * 24));
+      if (dayDiff === 1) {
+        tempStreak++;
+      } else if (dayDiff > 1) {
+        longestStreak = Math.max(longestStreak, tempStreak);
+        tempStreak = 1;
+      }
+    }
+
+    lastDate = itemDate;
+  });
+
+  longestStreak = Math.max(longestStreak, tempStreak);
+
+  // Check if watching recently for current streak
+  if (sortedWatched.length > 0) {
+    const mostRecent = new Date(sortedWatched[0].addedAt || 0);
+    const today = new Date();
+    const daysSinceLastWatch = Math.floor((today.getTime() - mostRecent.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysSinceLastWatch <= 1) {
+      currentStreak = tempStreak;
+    }
   }
 
-  return (
-    <div className="ct-page-shell min-h-screen">
-      <div className="page-container w-full max-w-6xl space-y-10 pt-20 pb-24 md:pb-10">
-        <div className="ct-panel-strong relative flex flex-col items-center justify-center py-10 text-center">
-          <Clock className="mb-4 h-12 w-12 text-primary drop-shadow-lg" />
-          <p className="ct-kicker mb-3">Annual Watching Snapshot</p>
-          <div className="mb-2 text-6xl font-extrabold tracking-tight text-foreground drop-shadow-xl md:text-7xl">
-            {Math.round(totalHours)}
-            <span className="align-super text-2xl font-bold text-primary">h</span>
-          </div>
-          <div className="mb-1 text-lg font-medium text-foreground md:text-xl">
-            {t("stats.hoursWatched", "Hours Watched")}
-          </div>
-          <div className="text-sm text-muted-foreground">
-            {t("stats.daysTotal", "{{count}} days total", {
-              count: Math.round(totalHours / 24),
-            })}
-          </div>
-        </div>
+  // Pie chart colors
+  const COLORS = ['#8b5cf6', '#ec4899', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1', '#14b8a6'];
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+  return (
+    <>
+      <SEO
+        title="Enhanced Stats — CineTrekker"
+        description="View detailed statistics about your watching habits"
+        canonical="https://cinetrekker.vercel.app/stats"
+      />
+      <div className="page-container pt-20 pb-24 md:pb-0">
+        <h1 className="section-title">Your Stats</h1>
+
+        {/* Overview Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
           <GlassStatCard
             icon={Film}
-            label={t("stats.totalMovies", "Total Movies")}
-            value={totalMovies}
-            description={t("stats.moviesWatched", "Movies watched")}
+            label="Total Watched"
+            value={watched.length}
+            description={`${totalMovies} movies, ${totalTV} shows`}
             variant="primary"
             size="md"
             delay={0}
           />
+
           <GlassStatCard
-            icon={Tv}
-            label={t("stats.totalTVShows", "Total TV Shows")}
-            value={totalTV}
-            description={t("stats.tvShowsWatched", "TV shows watched")}
-            variant="warning"
-            size="md"
-            delay={0.05}
-          />
-          <GlassStatCard
-            icon={Star}
-            label={t("stats.episodesWatched", "Episodes Watched")}
-            value={totalEpisodes}
-            description={t("stats.episodesTotal", "Total episodes watched")}
-            variant="danger"
+            icon={Clock}
+            label="Hours Watched"
+            value={`${Math.round(totalHours)}h`}
+            description={`${Math.round(totalHours / 24)} days total`}
+            variant="success"
             size="md"
             delay={0.1}
           />
+
           <GlassStatCard
-            icon={Clock}
-            label={t("stats.totalWatched", "Total Watched")}
-            value={filteredMedia.length}
-            description={`${totalMovies} ${t("common.movies", "Movies").toLowerCase()}, ${totalTV} ${t("common.tvShows", "TV Shows").toLowerCase()}`}
-            variant="success"
+            icon={Star}
+            label="Average Rating"
+            value={avgRating.toFixed(1)}
+            description="out of 10"
+            variant="warning"
             size="md"
-            delay={0.15}
+            delay={0.2}
+          />
+
+          <GlassStatCard
+            icon={Flame}
+            label="Current Streak"
+            value={`${currentStreak} days`}
+            description={`Longest: ${longestStreak} days`}
+            variant="danger"
+            size="md"
+            delay={0.3}
           />
         </div>
 
-        <div className="ct-toolbar grid w-full grid-cols-1 justify-center gap-3 sm:flex sm:w-auto sm:flex-wrap">
-          <div className="ct-filter-field w-full sm:w-auto">
-            <label className="ct-filter-label">Year</label>
-            <Select
-              value={selectedYear.toString()}
-              onValueChange={(value) =>
-                setSelectedYear(value === "all" ? "all" : Number(value))
-              }
-            >
-              <SelectTrigger className="rounded-2xl border-border/60 bg-card/70 text-foreground">
-                <SelectValue placeholder="All years" />
-              </SelectTrigger>
-              <SelectContent className="rounded-2xl border-border/60 bg-popover/95">
-                <SelectItem value="all">All</SelectItem>
-                {years.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="ct-filter-field w-full sm:w-auto">
-            <label className="ct-filter-label">Type</label>
-            <Select
-              value={selectedType}
-              onValueChange={(value) => setSelectedType(value as MediaTypeFilter)}
-            >
-              <SelectTrigger className="rounded-2xl border-border/60 bg-card/70 text-foreground">
-                <SelectValue placeholder="All types" />
-              </SelectTrigger>
-              <SelectContent className="rounded-2xl border-border/60 bg-popover/95">
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="movie">Movie</SelectItem>
-                <SelectItem value="tv">TV</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="ct-filter-field w-full sm:w-auto">
-            <label className="ct-filter-label">Language</label>
-            <Select value={selectedLang} onValueChange={setSelectedLang}>
-              <SelectTrigger className="rounded-2xl border-border/60 bg-card/70 text-foreground">
-                <SelectValue placeholder="All languages" />
-              </SelectTrigger>
-              <SelectContent className="rounded-2xl border-border/60 bg-popover/95">
-                <SelectItem value="all">All</SelectItem>
-                {languages.map((lang) => (
-                  <SelectItem key={lang} value={lang}>
-                    {lang}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
+        {/* Genre Breakdown */}
         {genreStats.length > 0 && (
-          <div className="grid gap-8 md:grid-cols-2">
-            <Card className="ct-panel">
+          <div className="grid gap-4 md:grid-cols-2 mb-8">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-lg font-bold text-foreground">
-                  {t("stats.genreDistribution", "Genre Distribution")}
-                </CardTitle>
+                <CardTitle>Genre Distribution</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={isMobile ? 240 : 300}>
+                <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
                       data={genreStats}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={isMobile ? false : (entry) => `${entry.name} (${entry.count})`}
-                      outerRadius={isMobile ? 72 : 90}
+                      label={(entry) => `${entry.name} (${entry.count})`}
+                      outerRadius={80}
+                      fill="#8884d8"
                       dataKey="count"
                     >
                       {genreStats.map((entry, index) => (
-                        <Cell
-                          key={`cell-${entry.name}`}
-                          fill={
-                            CINEMATIC_CHART_COLORS[
-                              index % CINEMATIC_CHART_COLORS.length
-                            ]
-                          }
-                        />
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        background: "rgba(22,22,22,0.95)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        color: "#fff",
-                      }}
-                    />
+                    <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
-            <Card className="ct-panel">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-lg font-bold text-foreground">
-                  {t("stats.hoursByGenre", "Hours by Genre")}
-                </CardTitle>
+                <CardTitle>Hours by Genre</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={isMobile ? 240 : 300}>
+                <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={genreStats}>
-                    <XAxis
-                      dataKey="name"
-                      angle={-45}
-                      textAnchor="end"
-                      height={isMobile ? 64 : 80}
-                      stroke="#a3a3a3"
-                      tick={{ fill: "#d4d4d8", fontSize: isMobile ? 10 : 12 }}
-                    />
-                    <YAxis
-                      stroke="#a3a3a3"
-                      tick={{ fill: "#d4d4d8", fontSize: isMobile ? 10 : 12 }}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        background: "rgba(22,22,22,0.95)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        color: "#fff",
-                      }}
-                    />
-                    <Bar dataKey="hours" fill="#E50914" radius={[8, 8, 0, 0]} />
+                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="hours" fill="#8b5cf6" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -262,6 +224,6 @@ export default function EnhancedStats() {
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 }

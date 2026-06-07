@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "MyWatch",
+    "appName": "CineTrekker",
     "loading": "Yükleniyor...",
     "error": "Bir hata oluştu",
     "retry": "Tekrar dene",
@@ -15,7 +15,12 @@
     "tvShow": "Dizi",
     "movies": "Filmler",
     "tvShows": "Diziler",
-    "all": "Tümü"
+    "all": "Tümü",
+    "yes": "Evet",
+    "no": "Hayır",
+    "details": "Detaylar",
+    "updated": "Güncellendi",
+    "refresh": "Yenile"
   },
   "nav": {
     "home": "Ana Sayfa",
@@ -32,8 +37,33 @@
     "trending": "Trend",
     "trendingToday": "Bugün Trend",
     "trendingWeek": "Bu Hafta Trend",
+    "topThisWeek": "Bu Haftanın En İyileri",
     "popular": "Popüler",
     "topRated": "En Beğenilenler",
+    "topRatedMovies": "En İyi Filmler",
+    "topRatedSeries": "En İyi Diziler",
+    "newEpisodes": "Yeni Bölümler",
+    "topMoviesWeek": "Haftanın En İyi Filmleri",
+    "topSeriesWeek": "Haftanın En İyi Dizileri",
+    "recentMovies": "Son Eklenen Filmler",
+    "recentEpisodes": "Son Eklenen Bölümler",
+    "newEpisode": "Yeni Bölüm",
+    "popularMovies": "Popüler Filmler",
+    "popularSeries": "Popüler Diziler",
+    "didYouWatch": "İzledin mi?",
+    "didYouWatchPrompt": "Yeni bölüm çıktı!",
+    "didYouWatchEmpty": "İzlenecek yeni bölüm yok",
+    "didYouWatchEmptyDesc": "Bölümler yayınlandıktan sonra burada görünecek",
+    "justReleased": "Yeni çıktı",
+    "releasedToday": "Bugün",
+    "releasedHoursAgo": "{{hours}} saat önce",
+    "becauseYouLiked": "{{title}} beğendiğin için",
+    "welcome": "Merhaba!",
+    "welcomeBack": "CineTrekker'a hoş geldiniz!",
+    "subtitle": "Başlamaya hazır mısın?",
+    "featured": "Öne Çıkan",
+    "viewDetails": "Daha Fazla Bilgi",
+    "startTracking": "Takibe Başla",
     "hero": {
       "title": "Eğlence Yolculuğunuzu Takip Edin",
       "subtitle": "İzlediğiniz her film ve diziyi keşfedin, takip edin ve hatırlayın"
@@ -68,7 +98,10 @@
     "rateTitle": "Puanla",
     "addNote": "Not Ekle",
     "inWatchlist": "Listede",
-    "watched": "İzlendi"
+    "watched": "İzlendi",
+    "watchlist": "İzleme Listesi",
+    "mark": "İşaretle",
+    "share": "Paylaş"
   },
   "watchlist": {
     "title": "İzleme Listem",
@@ -93,8 +126,28 @@
     "moviesWatched": "İzlenen Film",
     "showsWatched": "İzlenen Dizi",
     "totalWatchlist": "Listede",
+    "showsFollowed": "Takip edilen diziler",
+    "episodesWatched": "İzlenen bölümler",
     "settings": "Ayarlar",
-    "language": "Dil"
+    "language": "Dil",
+    "profileCompletion": "Profil tamamlanma",
+    "profileDetails": "Profil detayları",
+    "displayName": "Görünen ad",
+    "displayNamePlaceholder": "Size nasıl hitap etmeliyiz?",
+    "dateOfBirth": "Doğum tarihi",
+    "currentAge": "Geçerli yaş",
+    "about": "Hakkında",
+    "bio": "Biyografi",
+    "bioPlaceholder": "Sinema yolculuğunuz hakkında bize bilgi verin...",
+    "characters": "karakter",
+    "favoriteGenres": "Favori türler",
+    "privacySettings": "Gizlilik ayarları",
+    "publicProfile": "Kamuya açık profil",
+    "publicProfileDesc": "Başkalarının profilinizi görmesine izin ver",
+    "showWatchlist": "İzleme listesini göster",
+    "showWatchlistDesc": "İzleme listenizi profilinizde görüntüle",
+    "showStats": "İstatistikleri göster",
+    "showStatsDesc": "Seyir istatistiklerinizi görüntüle"
   },
   "auth": {
     "signIn": "Giriş Yap",
@@ -112,7 +165,7 @@
     "title": "Gizlilik Politikası",
     "lastUpdated": "Son güncelleme: {{date}}",
     "dataCollected": "Topladığımız Veriler",
-    "dataCollectedDesc": "MyWatch'u kullandığınızda aşağıdaki bilgileri toplarız:",
+    "dataCollectedDesc": "CineTrekker'ı kullandığınızda aşağıdaki bilgileri toplarız:",
     "dataList": {
       "email": "E-posta adresi (kimlik doğrulama için)",
       "watchlist": "İzleme listeniz ve izlediğiniz içerikler",
@@ -154,5 +207,15 @@
     "rateThis": "Bu {{type}} puanlayın",
     "note": "Not",
     "notePlaceholder": "Bu içerik hakkındaki düşüncelerinizi ekleyin..."
-  }
+  },
+  "onboarding": {
+    "welcome": "CineTrekker'a Hoş Geldiniz!",
+    "description": "Film ve dizilerinizi takip edin, öneriler alın ve daha fazlasını yapın.",
+    "feature1": "Yer imi simgesiyle izleme listenize ekleyin",
+    "feature2": "İzlendi olarak işaretleyin ve puan verin",
+    "feature3": "Trendleri ve kişiselleştirilmiş önerileri keşfedin",
+    "skip": "Atla",
+    "start": "Başla"
+  },
+  "comingSoon": "Çıkışta"
 }

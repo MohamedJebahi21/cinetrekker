@@ -1,13 +1,17 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Play, Bookmark, BookmarkCheck, Sparkles } from 'lucide-react';
+import Play from 'lucide-react/dist/esm/icons/play';
+import Bookmark from 'lucide-react/dist/esm/icons/bookmark';
+import BookmarkCheck from 'lucide-react/dist/esm/icons/bookmark-check';
+import Sparkles from 'lucide-react/dist/esm/icons/sparkles';
 import { Link } from 'react-router-dom';
 import { getTrending, getBackdropUrl, getMediaTitle, getMovieVideos, getTVVideos, getMediaType } from '@/services/tmdb';
 import { Button } from '@/components/ui/button';
-import { useUserLists } from '@/contexts/UserListsContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useUserLists } from '@/contexts/user-lists-context';
+import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
+import { Image } from '@/components/ui/Image';
 
 export function HeroSection() {
   const { t, i18n } = useTranslation();
@@ -24,7 +28,7 @@ export function HeroSection() {
   const heroMedia = trendingDay?.results?.[0];
   const mediaType = heroMedia ? getMediaType(heroMedia) : 'movie';
   const heroBackdropUrl = heroMedia?.backdrop_path 
-    ? getBackdropUrl(heroMedia.backdrop_path, 'w1280')
+    ? `${getBackdropUrl(heroMedia.backdrop_path, 'w780')} 780w, ${getBackdropUrl(heroMedia.backdrop_path, 'w1280')} 1280w`
     : null;
 
   // Fetch trailer
@@ -55,28 +59,38 @@ export function HeroSection() {
 
   if (isLoading || !heroMedia) {
     return (
-      <section className="relative overflow-hidden -mt-16 min-h-[70vh] md:min-h-[80vh] flex items-center bg-background">
+      <section className="relative overflow-hidden min-h-[70vh] md:min-h-[80vh] flex items-center bg-background">
         <div className="absolute inset-0 skeleton-shimmer" />
       </section>
     );
   }
 
   return (
-    <section className="relative overflow-hidden -mt-16 min-h-[60vh] md:min-h-[80vh] flex items-center">
+    <section className="relative overflow-hidden min-h-[60vh] md:min-h-[80vh] flex items-center">
       {/* Optimized Backdrop Image */}
       {heroBackdropUrl && (
-        <img
+        <Image
           src={heroBackdropUrl}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover"
-          loading="eager"
+          alt={getMediaTitle(heroMedia)}
+          width={1280}
+          height={720}
           fetchPriority="high"
+          className="absolute inset-0 w-full h-full object-cover"
         />
       )}
+      {/* Vignette to softly fade poster edges into True Black */}
+      <div className="vignette-overlay" />
       
       {/* Enhanced Gradient Overlays - Deeper bottom for content readability */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent" style={{ backgroundSize: '100% 100%' }} />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#080808] via-[#080808]/60 to-transparent" style={{ backgroundSize: '100% 100%' }} />
       <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-transparent md:via-background/50" />
+      {/* Subtle red-to-transparent overlay (bottom -> top) to blend poster into the page */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'linear-gradient(to top, rgba(229,9,20,0.12) 0%, rgba(229,9,20,0.06) 25%, transparent 60%)'
+        }}
+      />
       {/* Extra bottom gradient for "Because You Liked" section readability */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#050505] to-transparent" />
       
@@ -114,12 +128,12 @@ export function HeroSection() {
             {t('home.subtitle', 'Ready to dive in?')}
           </p>
 
-          {/* Featured Badge */}
+          {/* Featured / Trending Badge */}
           <div className="flex items-center gap-2 mb-3 md:mb-4">
-            <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-primary" />
-            <span className="text-xs md:text-sm font-medium text-primary uppercase tracking-wider">
-              #1 {t('home.trending', 'Trending')} {t('home.today', 'Today')}
-            </span>
+            <div className="trending-badge">
+              <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-white" />
+              <span className="uppercase tracking-wider">#1 {t('home.trending', 'Trending')} {t('home.today', 'Today')}</span>
+            </div>
           </div>
 
           {/* Trending Media Title */}
@@ -156,11 +170,11 @@ export function HeroSection() {
             {/* Watch Trailer Button */}
             {trailer && (
               <Button 
-                size="default"
-                onClick={() => setShowTrailer(true)}
-                className="btn-primary-glow gap-2 h-11 md:h-12 px-4 md:px-6 text-sm md:text-base flex-1 md:flex-none"
-                aria-label={t('actions.watchTrailer', 'Watch Trailer')}
-              >
+                  size="default"
+                  onClick={() => setShowTrailer(true)}
+                  className="btn-primary-glow gap-2 h-11 md:h-12 px-4 md:px-6 text-sm md:text-base flex-1 md:flex-none bg-primary text-white"
+                  aria-label={t('actions.watchTrailer', 'Watch Trailer')}
+                >
                 <Play className="w-4 h-4 md:w-5 md:h-5 fill-current" />
                 <span className="hidden xs:inline">{t('actions.watchTrailer', 'Watch Trailer')}</span>
                 <span className="xs:hidden">Trailer</span>
@@ -174,9 +188,9 @@ export function HeroSection() {
                 variant={trailer ? "outline" : "default"}
                 className={cn(
                   "gap-2 h-11 md:h-12 px-4 md:px-6 text-sm md:text-base w-full",
-                  trailer ? "border-white/20 hover:bg-white/10" : "btn-primary-glow"
+                  trailer ? "border-[rgba(255,255,255,0.2)] hover:bg-white/10" : "btn-primary-glow"
                 )}
-                aria-label={t('home.viewDetails', 'View Details')}
+                aria-label={t('home.viewDetails', `View details for ${heroMedia.title}`)}
               >
                 {t('home.viewDetails', 'More Info')}
               </Button>

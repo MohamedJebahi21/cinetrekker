@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "MyWatch",
+    "appName": "CineTrekker",
     "loading": "Cargando...",
     "error": "Se produjo un error",
     "retry": "Reintentar",
@@ -15,7 +15,12 @@
     "tvShow": "Serie",
     "movies": "Películas",
     "tvShows": "Series",
-    "all": "Todo"
+    "all": "Todo",
+    "yes": "Sí",
+    "no": "No",
+    "details": "Detalles",
+    "updated": "Actualizado",
+    "refresh": "Actualizar"
   },
   "nav": {
     "home": "Inicio",
@@ -32,8 +37,33 @@
     "trending": "Tendencias",
     "trendingToday": "Tendencias de hoy",
     "trendingWeek": "Tendencias de la semana",
+    "topThisWeek": "Lo Mejor de Esta Semana",
     "popular": "Populares",
     "topRated": "Mejor valorados",
+    "topRatedMovies": "Mejores películas",
+    "topRatedSeries": "Mejores series",
+    "newEpisodes": "Nuevos episodios",
+    "topMoviesWeek": "Mejores películas de la semana",
+    "topSeriesWeek": "Mejores series de la semana",
+    "recentMovies": "Películas agregadas recientemente",
+    "recentEpisodes": "Episodios agregados recientemente",
+    "newEpisode": "Nuevo episodio",
+    "popularMovies": "Películas populares",
+    "popularSeries": "Series populares",
+    "didYouWatch": "¿Ya lo viste?",
+    "didYouWatchPrompt": "¡Nuevo episodio disponible!",
+    "didYouWatchEmpty": "No hay nuevos episodios para ver",
+    "didYouWatchEmptyDesc": "Los episodios aparecerán aquí después de su emisión",
+    "justReleased": "Recién lanzado",
+    "releasedToday": "Hoy",
+    "releasedHoursAgo": "Hace {{hours}}h",
+    "becauseYouLiked": "Porque te gustó {{title}}",
+    "welcome": "¡Hola!",
+    "welcomeBack": "¡Bienvenido a CineTrekker!",
+    "subtitle": "¿Listo para empezar?",
+    "featured": "Destacado",
+    "viewDetails": "Más información",
+    "startTracking": "Comenzar seguimiento",
     "hero": {
       "title": "Sigue tu viaje de entretenimiento",
       "subtitle": "Descubre, sigue y recuerda cada película y serie que ves"
@@ -68,7 +98,10 @@
     "rateTitle": "Valorar",
     "addNote": "Añadir nota",
     "inWatchlist": "En mi lista",
-    "watched": "Visto"
+    "watched": "Visto",
+    "watchlist": "Mi lista",
+    "mark": "Marcar",
+    "share": "Compartir"
   },
   "watchlist": {
     "title": "Mi lista",
@@ -93,8 +126,28 @@
     "moviesWatched": "Películas vistas",
     "showsWatched": "Series vistas",
     "totalWatchlist": "En mi lista",
+    "showsFollowed": "Series seguidas",
+    "episodesWatched": "Episodios vistos",
     "settings": "Configuración",
-    "language": "Idioma"
+    "language": "Idioma",
+    "profileCompletion": "Completitud del perfil",
+    "profileDetails": "Detalles del perfil",
+    "displayName": "Nombre para mostrar",
+    "displayNamePlaceholder": "¿Cómo deberíamos llamarte?",
+    "dateOfBirth": "Fecha de nacimiento",
+    "currentAge": "Edad actual",
+    "about": "Acerca de",
+    "bio": "Biografía",
+    "bioPlaceholder": "Cuéntanos sobre tu viaje cinematográfico...",
+    "characters": "caracteres",
+    "favoriteGenres": "Géneros favoritos",
+    "privacySettings": "Configuración de privacidad",
+    "publicProfile": "Perfil público",
+    "publicProfileDesc": "Permitir que otros vean tu perfil",
+    "showWatchlist": "Mostrar lista de seguimiento",
+    "showWatchlistDesc": "Mostrar tu lista de seguimiento en tu perfil",
+    "showStats": "Mostrar estadísticas",
+    "showStatsDesc": "Mostrar tus estadísticas de visualización"
   },
   "auth": {
     "signIn": "Iniciar sesión",
@@ -112,7 +165,7 @@
     "title": "Política de privacidad",
     "lastUpdated": "Última actualización: {{date}}",
     "dataCollected": "Datos que recopilamos",
-    "dataCollectedDesc": "Recopilamos la siguiente información cuando usas MyWatch:",
+      "dataCollectedDesc": "Recopilamos la siguiente información cuando usas CineTrekker:",
     "dataList": {
       "email": "Correo electrónico (para autenticación)",
       "watchlist": "Tu lista y títulos vistos",
@@ -155,4 +208,5 @@
     "note": "Nota",
     "notePlaceholder": "Añade tus impresiones sobre este título..."
   }
+  ,"comingSoon": "Próximamente"
 }

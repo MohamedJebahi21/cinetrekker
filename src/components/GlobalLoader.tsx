@@ -19,8 +19,14 @@ export function GlobalLoader() {
   if (!isLoading) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[100] h-1 bg-transparent">
-      <div 
+    <div
+      className="fixed top-0 left-0 right-0 z-[100] h-1 bg-transparent"
+      role="status"
+      aria-live="polite"
+      aria-label="Loading"
+    >
+      <div
+        aria-hidden="true"
         className={cn(
           "h-full bg-gradient-to-r from-primary via-red-500 to-primary",
           "animate-pulse shadow-[0_0_10px_rgba(229,9,20,0.5)]"

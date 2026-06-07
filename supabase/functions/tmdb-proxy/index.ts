@@ -1,94 +1,94 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-// Allowed origins for CORS - restrict to known domains
+// Environment-based CORS configuration
+// Only allow localhost if NOT in production AND NOT deployed
+const isDev = Deno.env.get('ENVIRONMENT') !== 'production' && 
+              Deno.env.get('DENO_DEPLOYMENT_ID') === undefined;
+
 const ALLOWED_ORIGINS = [
-  'https://id-preview--d285a624-146f-4e47-902a-6348ef29940b.lovable.app',
-  'https://d285a624-146f-4e47-902a-6348ef29940b.lovableproject.com',
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://localhost:8080',
+  'https://cinetrekker.vercel.app',
+  'https://www.cinetrekker.vercel.app',
+  ...(isDev ? [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:8080',
+    'http://localhost:4173',
+  ] : [])
 ];
+
+const VERCEL_PREVIEW_PATTERN = /^https:\/\/cinetrekker-[a-z0-9-]+\.vercel\.app$/;
 
 function getCorsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get('origin') || '';
   
-  // Check if origin is in allowed list or matches lovable patterns
-  const isAllowed = ALLOWED_ORIGINS.includes(origin) || 
-    origin.endsWith('.lovable.app') || 
-    origin.endsWith('.lovableproject.com');
-  
+  // LOGIC FIX: We check if the origin is allowed. If not, we EXPLICITLY 
+  // return the production URL instead of letting it fall back to a local one.
+  const isAllowed = ALLOWED_ORIGINS.includes(origin) || VERCEL_PREVIEW_PATTERN.test(origin);
+  const allowedOrigin = isAllowed ? origin : 'https://cinetrekker.vercel.app';
+
   return {
-    'Access-Control-Allow-Origin': isAllowed ? origin : ALLOWED_ORIGINS[0],
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-requested-with',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Max-Age': '86400',
   };
 }
 
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
-
-// Parameters that should not be forwarded to TMDB
 const EXCLUDED_PARAMS = new Set(['endpoint']);
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
-  
-  // Handle CORS preflight requests
+
+  // 1. Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      status: 204, 
+      headers: corsHeaders 
+    });
   }
 
   try {
-    const TMDB_API_KEY = Deno.env.get('TMDB_API_KEY');
-    
-    if (!TMDB_API_KEY) {
+    const TMDB_API_ID = Deno.env.get('TMDB_API_KEY');
+    if (!TMDB_API_ID) {
+      console.error('[TMDB Proxy] TMDB_API_KEY not found');
       throw new Error('TMDB_API_KEY is not configured');
     }
 
     const url = new URL(req.url);
     const endpoint = url.searchParams.get('endpoint');
-
     if (!endpoint) {
       throw new Error('Missing endpoint parameter');
     }
 
-    // Build TMDB URL - forward ALL query parameters except 'endpoint'
+    // 2. Build TMDB URL
     const tmdbParams = new URLSearchParams();
-    
     for (const [key, value] of url.searchParams.entries()) {
       if (!EXCLUDED_PARAMS.has(key) && value) {
         tmdbParams.set(key, value);
       }
     }
-    
-    // Set defaults if not provided
-    if (!tmdbParams.has('language')) {
-      tmdbParams.set('language', 'en');
-    }
-    if (!tmdbParams.has('page')) {
-      tmdbParams.set('page', '1');
-    }
+
+    if (!tmdbParams.has('language')) tmdbParams.set('language', 'en');
+    if (!tmdbParams.has('page')) tmdbParams.set('page', '1');
     tmdbParams.set('include_adult', 'false');
 
-    // TMDB supports either:
-    // - v4 "API Read Access Token" via Authorization: Bearer <token> (JWT-like, contains '.')
-    // - v3 "API Key" via ?api_key=<key> query param
-    const isV4Token = TMDB_API_KEY.includes('.');
+    const isV4Token = TMDB_API_ID.includes('.');
     if (!isV4Token) {
-      tmdbParams.set('api_key', TMDB_API_KEY);
+      tmdbParams.set('api_key', TMDB_API_ID);
     }
 
     const tmdbUrl = `${TMDB_BASE_URL}${endpoint}?${tmdbParams.toString()}`;
-    console.log(`Fetching TMDB: ${tmdbUrl}`);
-
+    
+    // 3. Fetch from TMDB
     const response = await fetch(tmdbUrl, {
       headers: isV4Token
         ? {
-            'Authorization': `Bearer ${TMDB_API_KEY}`,
+            'Authorization': `Bearer ${TMDB_API_ID}`,
             'Content-Type': 'application/json',
           }
-        : {
-            'Content-Type': 'application/json',
-          },
+        : { 'Content-Type': 'application/json' },
     });
 
     if (!response.ok) {
@@ -99,9 +99,11 @@ serve(async (req) => {
 
     const data = await response.json();
 
+    // 4. Return Response
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
+
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error in tmdb-proxy:', errorMessage);

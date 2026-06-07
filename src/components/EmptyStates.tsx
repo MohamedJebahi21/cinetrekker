@@ -57,8 +57,8 @@ export function EmptySearchResults({ query, onNewSearch }: { query: string; onNe
   return (
     <EmptyState
       icon={Search}
-      title="No results found"
-      description={`We couldn't find anything for "${query}". Try a different search term or browse our recommendations.`}
+      title="No results available"
+      description={query ? `No results available. Try different keywords or filters.` : 'Try searching for movies, TV shows, or actors.'}
       action={{ label: 'Browse Trending', onClick: onNewSearch }}
       className="min-h-96"
     />
@@ -73,8 +73,8 @@ export function EmptyWatchlist({ onDiscover }: { onDiscover: () => void }) {
     <EmptyState
       icon={Bookmark}
       title="Your watchlist is empty"
-      description="Start building your watchlist by adding movies and TV shows you want to watch."
-      action={{ label: 'Discover Content', onClick: onDiscover }}
+      description="Your watchlist is empty. Start adding movies!"
+      action={{ label: 'Browse Popular', onClick: onDiscover }}
       className="min-h-96"
     />
   );

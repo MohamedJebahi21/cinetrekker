@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "ماي ووتش",
+    "appName": "CineTrekker",
     "loading": "جارٍ التحميل...",
     "error": "حدث خطأ",
     "retry": "إعادة المحاولة",
@@ -15,7 +15,12 @@
     "tvShow": "مسلسل",
     "movies": "أفلام",
     "tvShows": "مسلسلات",
-    "all": "الكل"
+    "all": "الكل",
+    "yes": "نعم",
+    "no": "لا",
+    "details": "تفاصيل",
+    "updated": "محدث",
+    "refresh": "تحديث"
   },
   "nav": {
     "home": "الرئيسية",
@@ -32,8 +37,33 @@
     "trending": "الرائج",
     "trendingToday": "الرائج اليوم",
     "trendingWeek": "الرائج هذا الأسبوع",
+    "topThisWeek": "الأفضل هذا الأسبوع",
     "popular": "الأكثر شعبية",
     "topRated": "الأعلى تقييماً",
+    "topRatedMovies": "أفضل الأفلام",
+    "topRatedSeries": "أفضل المسلسلات",
+    "newEpisodes": "حلقات جديدة",
+    "topMoviesWeek": "أفضل الأفلام هذا الأسبوع",
+    "topSeriesWeek": "أفضل المسلسلات هذا الأسبوع",
+    "recentMovies": "أفلام مضافة مؤخراً",
+    "recentEpisodes": "حلقات مضافة مؤخراً",
+    "newEpisode": "حلقة جديدة",
+    "popularMovies": "أفلام شائعة",
+    "popularSeries": "مسلسلات شائعة",
+    "didYouWatch": "هل شاهدت؟",
+    "didYouWatchPrompt": "حلقة جديدة متاحة!",
+    "didYouWatchEmpty": "لا توجد حلقات جديدة للمشاهدة",
+    "didYouWatchEmptyDesc": "ستظهر الحلقات هنا بعد عرضها",
+    "justReleased": "صدرت للتو",
+    "releasedToday": "اليوم",
+    "releasedHoursAgo": "منذ {{hours}} ساعة",
+    "becauseYouLiked": "لأنك أحببت {{title}}",
+    "welcome": "مرحباً!",
+    "welcomeBack": "مرحباً بك في CineTrekker!",
+    "subtitle": "مستعد للبدء؟",
+    "featured": "مميز",
+    "viewDetails": "المزيد من المعلومات",
+    "startTracking": "ابدأ التتبع",
     "hero": {
       "title": "تتبع رحلتك الترفيهية",
       "subtitle": "اكتشف وتتبع وتذكر كل فيلم ومسلسل تشاهده"
@@ -68,7 +98,10 @@
     "rateTitle": "تقييم",
     "addNote": "إضافة ملاحظة",
     "inWatchlist": "في قائمة المشاهدة",
-    "watched": "تمت المشاهدة"
+    "watched": "تمت المشاهدة",
+    "watchlist": "قائمة المشاهدة",
+    "mark": "تحديد",
+    "share": "مشاركة"
   },
   "watchlist": {
     "title": "قائمة المشاهدة",
@@ -93,8 +126,28 @@
     "moviesWatched": "أفلام مُشاهَدة",
     "showsWatched": "مسلسلات مُشاهَدة",
     "totalWatchlist": "في قائمة المشاهدة",
+    "showsFollowed": "مسلسلات متابعة",
+    "episodesWatched": "حلقات مشاهدة",
     "settings": "الإعدادات",
-    "language": "اللغة"
+    "language": "اللغة",
+    "profileCompletion": "اكتمال الملف الشخصي",
+    "profileDetails": "تفاصيل الملف الشخصي",
+    "displayName": "اسم العرض",
+    "displayNamePlaceholder": "كيف يجب أن نناديك؟",
+    "dateOfBirth": "تاريخ الميلاد",
+    "currentAge": "العمر الحالي",
+    "about": "عني",
+    "bio": "السيرة الذاتية",
+    "bioPlaceholder": "أخبرنا عن رحلتك السينمائية...",
+    "characters": "حرف",
+    "favoriteGenres": "الأنواع المفضلة",
+    "privacySettings": "إعدادات الخصوصية",
+    "publicProfile": "ملف عام",
+    "publicProfileDesc": "السماح للآخرين بعرض ملفك الشخصي",
+    "showWatchlist": "عرض قائمة المشاهدة",
+    "showWatchlistDesc": "عرض قائمة مشاهدتك على ملفك الشخصي",
+    "showStats": "عرض الإحصائيات",
+    "showStatsDesc": "عرض إحصائيات المشاهدة الخاصة بك"
   },
   "auth": {
     "signIn": "تسجيل الدخول",
@@ -112,7 +165,7 @@
     "title": "سياسة الخصوصية",
     "lastUpdated": "آخر تحديث: {{date}}",
     "dataCollected": "البيانات التي نجمعها",
-    "dataCollectedDesc": "نجمع المعلومات التالية عند استخدامك لـ ماي ووتش:",
+    "dataCollectedDesc": "نجمع المعلومات التالية عند استخدامك لـ CineTrekker:",
     "dataList": {
       "email": "عنوان البريد الإلكتروني (للمصادقة)",
       "watchlist": "قائمة المشاهدة والعناوين المُشاهَدة",
@@ -146,7 +199,9 @@
   },
   "footer": {
     "attribution": "هذا المنتج يستخدم واجهة TMDB البرمجية ولكنه غير معتمد أو مصدق من TMDB.",
-    "allRightsReserved": "جميع الحقوق محفوظة."
+    "allRightsReserved": "جميع الحقوق محفوظة.",
+    "terms": "شروط الخدمة",
+    "cookies": "سياسة ملفات تعريف الارتباط"
   },
   "rating": {
     "yourRating": "تقييمك",
@@ -154,5 +209,15 @@
     "rateThis": "قيّم هذا {{type}}",
     "note": "ملاحظة",
     "notePlaceholder": "أضف أفكارك حول هذا العنوان..."
-  }
+  },
+  "onboarding": {
+    "welcome": "مرحباً بك في CineTrekker!",
+    "description": "تتبع أفلامك ومسلسلاتك، واحصل على التوصيات، والمزيد.",
+    "feature1": "أضف إلى قائمة مشاهدتك باستخدام أيقونة الإشارة المرجعية",
+    "feature2": "حدد كمُشاهَد وأضف تقييمات",
+    "feature3": "اكتشف الاتجاهات والاختيارات المخصصة",
+    "skip": "تخطي",
+    "start": "ابدأ الآن"
+  },
+  "comingSoon": "قريبًا"
 }

@@ -10,7 +10,7 @@ export const TRANSITION_CLASS = 'cinetrekker-theme-transition';
 export const TRANSITION_MS = 300;
 
 // Theme types
-export type Theme = 'light' | 'dark' | 'oled';
+export type Theme = 'light' | 'dark';
 
 export type ThemeContextValue = {
   theme: Theme;

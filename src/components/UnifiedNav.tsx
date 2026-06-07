@@ -1,556 +1,359 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
-import { Link, useLocation } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import Settings from "lucide-react/dist/esm/icons/settings";
-import Palette from "lucide-react/dist/esm/icons/palette";
-import Globe from "lucide-react/dist/esm/icons/globe";
-import Layers from "lucide-react/dist/esm/icons/layers";
-import CalendarDays from "lucide-react/dist/esm/icons/calendar-days";
-import Award from "lucide-react/dist/esm/icons/award";
-import User from "lucide-react/dist/esm/icons/user";
-import Menu from "lucide-react/dist/esm/icons/menu";
-import X from "lucide-react/dist/esm/icons/x";
-import Compass from "lucide-react/dist/esm/icons/compass";
-import Film from "lucide-react/dist/esm/icons/film";
-import Info from "lucide-react/dist/esm/icons/info";
-import MessageSquare from "lucide-react/dist/esm/icons/message-square";
-import { useQuery } from "@tanstack/react-query";
-import { motion, useReducedMotion } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useMotionIntensityPreference } from "@/hooks/useMotionIntensityPreference";
-import { useAuth } from "@/contexts/AuthContext";
-import { useTheme } from "@/contexts/ThemeContext";
-import { profileService } from "@/services/profile";
-import { UserProfileDropdown } from "@/components/UserProfileDropdown";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { languages } from "@/i18n";
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
+import Menu from 'lucide-react/dist/esm/icons/menu';
+import X from 'lucide-react/dist/esm/icons/x';
+import LogIn from 'lucide-react/dist/esm/icons/log-in';
+import LogOut from 'lucide-react/dist/esm/icons/log-out';
+import Settings from 'lucide-react/dist/esm/icons/settings';
+import House from 'lucide-react/dist/esm/icons/house';
+import Search from 'lucide-react/dist/esm/icons/search';
+import Bookmark from 'lucide-react/dist/esm/icons/bookmark';
+import CheckCheck from 'lucide-react/dist/esm/icons/check-check';
+import Sparkles from 'lucide-react/dist/esm/icons/sparkles';
+import Calendar from 'lucide-react/dist/esm/icons/calendar';
+import ChartNoAxesCombined from 'lucide-react/dist/esm/icons/chart-no-axes-combined';
+import type { LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth-context';
+import { SearchDropdown } from '@/components/SearchDropdown';
+import { profileService } from '@/services/profile';
 
-const SearchDropdown = lazy(() =>
-  import("@/components/SearchDropdown").then((mod) => ({
-    default: mod.SearchDropdown,
-  })),
-);
+interface NavItem {
+  path: string;
+  key: string;
+  fallback: string;
+  icon: LucideIcon;
+  exact?: boolean;
+}
 
-const RemotionAurora = lazy(() =>
-  import("@/components/motion/RemotionAurora").then((mod) => ({
-    default: mod.RemotionAurora,
-  })),
-);
-
-const menuLinks = [
-  { path: "/profile", labelKey: "nav.profile", defaultLabel: "Profile", icon: User },
-  { path: "/discover", labelKey: "nav.discover", defaultLabel: "Discover", icon: Compass },
-  { path: "/trending", labelKey: "nav.trending", defaultLabel: "Trending", icon: Film },
-  { path: "/search", labelKey: "nav.search", defaultLabel: "Search", icon: Compass },
-  { path: "/recommendations", labelKey: "nav.recommendations", defaultLabel: "Recommendations", icon: Film },
-  { path: "/calendar", labelKey: "nav.calendar", defaultLabel: "Calendar", icon: CalendarDays },
-  { path: "/stats", labelKey: "nav.stats", defaultLabel: "Stats", icon: Award },
-  { path: "/achievements", labelKey: "nav.achievements", defaultLabel: "Achievements", icon: Award },
-  { path: "/print-watchlist", labelKey: "nav.printWatchlist", defaultLabel: "Print Watchlist", icon: Film },
-  { path: "/genres", labelKey: "nav.genres", defaultLabel: "Genres", icon: Layers },
-  { path: "/decades", labelKey: "nav.decades", defaultLabel: "Decades", icon: CalendarDays },
-  { path: "/awards", labelKey: "nav.awards", defaultLabel: "Awards", icon: Award },
-  { path: "/year-in-review", labelKey: "nav.yearInReview", defaultLabel: "Year In Review", icon: Award },
-  { path: "/following", labelKey: "nav.following", defaultLabel: "Following", icon: User },
+const NAV_ITEMS: NavItem[] = [
+  { path: '/', key: 'nav.home', fallback: 'Home', icon: House, exact: true },
+  { path: '/search', key: 'nav.search', fallback: 'Search', icon: Search },
+  { path: '/watchlist', key: 'nav.watchlist', fallback: 'Watchlist', icon: Bookmark },
+  { path: '/watched', key: 'nav.watched', fallback: 'Watched', icon: CheckCheck },
+  { path: '/recommendations', key: 'nav.recommendations', fallback: 'Recommendations', icon: Sparkles },
+  { path: '/calendar', key: 'nav.calendar', fallback: 'Calendar', icon: Calendar },
+  { path: '/enhanced-stats', key: 'nav.stats', fallback: 'Stats', icon: ChartNoAxesCombined },
 ];
 
-const desktopMenuGridVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.04,
-      delayChildren: 0.08,
-    },
-  },
-};
-
-const menuItemVariants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.24,
-      ease: "easeOut" as const,
-    },
-  },
-};
-
-const mobileMenuListVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.035,
-      delayChildren: 0.06,
-    },
-  },
-};
-
 export function UnifiedNav() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { pathname } = useLocation();
-  const { user } = useAuth();
-  const { theme, setTheme } = useTheme();
-  const reduceMotion = useReducedMotion();
-  const motionIntensity = useMotionIntensityPreference();
+  const isSearchPage = pathname.startsWith('/search');
+  const { user, signOut, loading } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
-  const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
+  const desktopMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const mobileToggleButtonRef = useRef<HTMLButtonElement>(null);
+  const desktopToggleButtonRef = useRef<HTMLButtonElement>(null);
 
+  // Fetch profile from Supabase to get the uploaded profile photo
   const { data: profile } = useQuery({
-    queryKey: ["profile", user?.id],
+    queryKey: ['profile', user?.id],
     queryFn: () => profileService.getProfile(user!.id),
     enabled: !!user?.id,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const profileImageUrl = useMemo(() => {
-    if (profile?.avatar_url) return profile.avatar_url;
-    if (profile?.profile_photo) return profile.profile_photo;
+    // Prefer uploaded profile photo from database
+    if (profile?.profile_photo) {
+      return profile.profile_photo;
+    }
+    
+    // Fallback to auth metadata
     const metadata = user?.user_metadata as Record<string, unknown> | undefined;
     const candidates = [metadata?.avatar_url, metadata?.picture, metadata?.photo_url];
-    return (
-      candidates.find(
-        (value): value is string => typeof value === "string" && value.trim().length > 0,
-      ) ?? null
-    );
+    return candidates.find((value): value is string => typeof value === 'string' && value.trim().length > 0) ?? null;
   }, [profile, user]);
 
+  const profileInitial = useMemo(() => {
+    const metadata = user?.user_metadata as Record<string, unknown> | undefined;
+    const rawName = [metadata?.full_name, metadata?.name, metadata?.preferred_username, user?.email].find(
+      (value): value is string => typeof value === 'string' && value.trim().length > 0
+    );
+    return rawName?.trim().charAt(0).toUpperCase() ?? 'P';
+  }, [user]);
+
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
-    setIsDesktopMenuOpen(false);
-  }, [pathname]);
+    const onClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (!isMenuOpen) return;
 
-  useEffect(() => {
-    const handleOpen = () => {
-      if (window.innerWidth >= 768) {
-        setIsMobileSheetOpen(false);
-        setIsDesktopMenuOpen(true);
-        return;
+      const target = event.target as Node;
+      const clickedInsideDesktopMenu = desktopMenuRef.current?.contains(target);
+      const clickedInsideMobileMenu = mobileMenuRef.current?.contains(target);
+      const clickedMobileToggle = mobileToggleButtonRef.current?.contains(target);
+      const clickedDesktopToggle = desktopToggleButtonRef.current?.contains(target);
+
+      if (!clickedInsideDesktopMenu && !clickedInsideMobileMenu && !clickedMobileToggle && !clickedDesktopToggle) {
+        setIsMenuOpen(false);
       }
-      setIsDesktopMenuOpen(false);
-      setIsMobileSheetOpen(true);
     };
 
-    window.addEventListener("cinetrekker:open-mobile-menu", handleOpen);
-    return () => window.removeEventListener("cinetrekker:open-mobile-menu", handleOpen);
-  }, []);
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsMenuOpen(false);
+      }
+    };
 
-  const searchFallback = (
-    <div aria-hidden="true" className="h-11 w-full rounded-xl border border-border/50 bg-card/40" />
-  );
+    document.addEventListener('mousedown', onClickOutside);
+    document.addEventListener('touchstart', onClickOutside);
+    document.addEventListener('keydown', onEscape);
 
-  const currentPageLabel = useMemo(() => {
-    if (pathname === "/") return t("nav.home", "Home");
+    return () => {
+      document.removeEventListener('mousedown', onClickOutside);
+      document.removeEventListener('touchstart', onClickOutside);
+      document.removeEventListener('keydown', onEscape);
+    };
+  }, [isMenuOpen]);
 
-    const routeLabels: Array<{ path: string; label: string }> = [
-      { path: "/settings", label: t("nav.settings", "Settings") },
-      { path: "/login", label: t("nav.signIn", "Sign In") },
-      { path: "/signup", label: t("nav.signUp", "Sign Up") },
-      { path: "/accessibility", label: t("accessibility.title", "Accessibility Settings") },
-      ...menuLinks.map(item => ({ path: item.path, label: t(item.labelKey, item.defaultLabel) })),
-    ];
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [pathname]);
 
-    const matched = routeLabels
-      .filter((item) => pathname === item.path || pathname.startsWith(`${item.path}/`))
-      .sort((a, b) => b.path.length - a.path.length)[0];
-
-    if (matched) return matched.label;
-
-    const segment = pathname.split("/").filter(Boolean)[0];
-    if (!segment) return t("nav.home", "Home");
-    return segment.charAt(0).toUpperCase() + segment.slice(1);
-  }, [pathname, t]);
+  const activePath = useMemo(() => {
+    return NAV_ITEMS.find((item) => {
+      if (item.exact) return pathname === item.path;
+      return pathname.startsWith(item.path);
+    })?.path;
+  }, [pathname]);
 
   return (
     <header
       role="banner"
-      className={cn(
-        "sticky top-0 left-0 right-0 z-[90] border-b border-border/50 bg-background/88 pt-[env(safe-area-inset-top,0px)] backdrop-blur-[18px] transition-[background-color,box-shadow] duration-300",
-        isScrolled && "bg-[hsl(var(--background)/0.96)] shadow-[0_10px_28px_hsl(var(--foreground)/0.08)]",
-      )}
+      className={cn('glass-nav min-h-[calc(4rem+env(safe-area-inset-top,0px)+0.4rem)] pt-[calc(env(safe-area-inset-top,0px)+0.4rem)] transition-all duration-300', isScrolled && 'scrolled')}
     >
-      <div className="container mx-auto flex h-16 items-center gap-3 px-3 sm:px-4">
-        <Link to="/" className="group flex shrink-0 items-center gap-3">
-          <img
-            src="/apple-touch-icon.png"
-            alt="CineTrekker logo"
-            className="h-11 w-11 rounded-2xl object-cover shadow-[0_8px_20px_hsl(var(--primary)/0.2)]"
-          />
-          <span className="hidden text-base font-semibold text-foreground sm:block lg:text-lg">
-            {t("common.appName", "CineTrekker")}
-          </span>
+      <div className="container mx-auto flex h-full items-center justify-between px-4 gap-4">
+        <Link to="/" className="flex items-center gap-3 group flex-shrink-0" aria-label={t('common.appName', 'CineTrekker')}>
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary transition-all duration-300 group-hover:shadow-[0_0_20px_hsl(358_94%_46%/0.5)]">
+            <span className="text-xl font-bold text-primary-foreground">CT</span>
+          </div>
+          <span className="text-xl font-bold text-foreground hidden lg:block">{t('common.appName', 'CineTrekker')}</span>
         </Link>
 
-        <div className="hidden items-center md:flex">
-          <span className="rounded-lg px-4 py-2 text-sm font-semibold text-primary">
-            {currentPageLabel}
-          </span>
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <Suspense fallback={searchFallback}>
+        {!isSearchPage && (
+          <div className="hidden md:block flex-1 max-w-xl mx-4">
             <SearchDropdown />
-          </Suspense>
+          </div>
+        )}
+
+        <div className="hidden md:flex items-center gap-1">
+          <Link
+            to="/profile"
+            className={cn(
+              'inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent',
+              pathname.startsWith('/profile') && 'bg-primary text-primary-foreground'
+            )}
+            aria-label={t('nav.profile', 'Profile')}
+          >
+            {profileImageUrl ? (
+              <img
+                src={profileImageUrl}
+                alt={t('nav.profile', 'Profile')}
+                className="h-8 w-8 rounded-full object-cover"
+                loading="lazy"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <span className="h-8 w-8 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center">
+                {profileInitial}
+              </span>
+            )}
+          </Link>
+
+          <Link
+            to="/settings"
+            className={cn(
+              'inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent',
+              pathname.startsWith('/settings') && 'bg-primary text-primary-foreground'
+            )}
+            aria-label={t('nav.settings', 'Settings')}
+          >
+            <Settings className="h-5 w-5" />
+          </Link>
+
+          <button
+            ref={desktopToggleButtonRef}
+            type="button"
+            className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground hover:bg-accent transition-colors"
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            aria-label={isMenuOpen ? t('nav.closeMenu', 'Close menu') : t('nav.openMenu', 'Open menu')}
+            aria-expanded={isMenuOpen}
+          >
+            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
 
-        <div className="ml-auto hidden items-center gap-1 md:flex">
-          {user ? (
-            <UserProfileDropdown
-              profilePhoto={profileImageUrl}
-              displayName={profile?.display_name ?? undefined}
-            />
-          ) : (
-            <Button asChild variant="ghost" size="icon" className="rounded-full">
-              <Link to="/login" aria-label={t("nav.signIn", "Sign In")}>
-                <User className="h-5 w-5" />
-              </Link>
-            </Button>
-          )}
-
-          <Button asChild variant="ghost" size="icon" className="rounded-full">
-            <Link to="/settings" aria-label={t("nav.settings", "Settings")}>
-              <Settings className="h-5 w-5" />
-            </Link>
-          </Button>
-
-          {/* Language Switcher */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full"
-                aria-label={t("nav.changeLanguage", "Change language")}
-              >
-                <Globe className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[160px] bg-popover border-border/50">
-              {languages.map((lang) => (
-                <DropdownMenuItem
-                  key={lang.code}
-                  onClick={() => i18n.changeLanguage(lang.code)}
-                  className={i18n.language === lang.code ? "bg-accent" : ""}
-                >
-                  {lang.name}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Theme Switcher */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full"
-                aria-label={t("nav.changeTheme", "Change theme")}
-              >
-                <Palette className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[140px] bg-popover border-border/50">
-              {(["dark", "light", "oled"] as const).map((option) => (
-                <DropdownMenuItem
-                  key={option}
-                  onClick={() => setTheme(option)}
-                  className={theme === option ? "bg-accent" : ""}
-                >
-                  {option === "dark"
-                    ? t("nav.themeDark", "Dark")
-                    : option === "light"
-                      ? t("nav.themeLight", "Light")
-                      : t("nav.themeOled", "OLED")}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative rounded-full text-foreground/90"
-            onClick={() => setIsDesktopMenuOpen((current) => !current)}
-            aria-label={isDesktopMenuOpen ? t("common.close", "Close") : t("nav.menu", "Menu")}
-            aria-expanded={isDesktopMenuOpen}
-            aria-controls="desktop-menu-overlay"
+        <div className="md:hidden flex items-center gap-1">
+          <Link
+            to="/profile"
+            className={cn(
+              'inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent',
+              pathname.startsWith('/profile') && 'bg-primary text-primary-foreground'
+            )}
+            aria-label={t('nav.profile', 'Profile')}
           >
-            <span className="relative h-5 w-5">
-              <Menu
-                className={cn(
-                  "absolute inset-0 h-5 w-5 transition-all duration-200",
-                  isDesktopMenuOpen ? "scale-75 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100",
-                )}
+            {profileImageUrl ? (
+              <img
+                src={profileImageUrl}
+                alt={t('nav.profile', 'Profile')}
+                className="h-8 w-8 rounded-full object-cover"
+                loading="lazy"
+                referrerPolicy="no-referrer"
               />
-              <X
-                className={cn(
-                  "absolute inset-0 h-5 w-5 transition-all duration-200",
-                  isDesktopMenuOpen ? "scale-100 rotate-0 opacity-100" : "scale-75 -rotate-90 opacity-0",
-                )}
-              />
-            </span>
-          </Button>
-        </div>
+            ) : (
+              <span className="h-8 w-8 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center">
+                {profileInitial}
+              </span>
+            )}
+          </Link>
 
-        <div className="ml-auto flex items-center gap-1 md:hidden">
-          <Button asChild variant="ghost" size="icon" className="rounded-full">
-            <Link to={user ? "/profile" : "/login"} aria-label={t("nav.profile", "Profile")}>
-              {profileImageUrl ? (
-                <img
-                  src={profileImageUrl}
-                  alt={t("nav.profile", "Profile")}
-                  className="h-7 w-7 rounded-full object-cover"
-                />
-              ) : (
-                <User className="h-5 w-5" />
-              )}
-            </Link>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full"
-            onClick={() => setIsMobileSheetOpen((current) => !current)}
-            aria-label={isMobileSheetOpen ? t("common.close", "Close") : t("nav.menu", "Menu")}
-            aria-expanded={isMobileSheetOpen}
-            aria-controls="mobile-menu-panel"
+          <Link
+            to="/settings"
+            className={cn(
+              'inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground transition-colors hover:bg-accent',
+              pathname.startsWith('/settings') && 'bg-primary text-primary-foreground'
+            )}
+            aria-label={t('nav.settings', 'Settings')}
           >
-            <span className="relative h-5 w-5">
-              <Menu
-                className={cn(
-                  "absolute inset-0 h-5 w-5 transition-all duration-200",
-                  isMobileSheetOpen ? "scale-75 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100",
-                )}
-              />
-              <X
-                className={cn(
-                  "absolute inset-0 h-5 w-5 transition-all duration-200",
-                  isMobileSheetOpen ? "scale-100 rotate-0 opacity-100" : "scale-75 -rotate-90 opacity-0",
-                )}
-              />
-            </span>
-          </Button>
+            <Settings className="h-5 w-5" />
+          </Link>
+
+          <button
+            ref={mobileToggleButtonRef}
+            type="button"
+            className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] rounded-lg text-foreground hover:bg-accent transition-colors"
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            aria-label={isMenuOpen ? t('nav.closeMenu', 'Close menu') : t('nav.openMenu', 'Open menu')}
+            aria-expanded={isMenuOpen}
+          >
+            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
       </div>
 
-      {typeof document !== "undefined" && isDesktopMenuOpen
-        ? createPortal(
-            <div
-              id="desktop-menu-overlay"
-              className="fixed bottom-0 left-0 right-0 top-[calc(4rem+env(safe-area-inset-top,0px))] z-40 hidden md:block"
-              role="dialog"
-              aria-label={t("nav.menu", "Menu")}
-              aria-modal="true"
-            >
-              {motionIntensity !== "low" ? (
-                <div className={cn("pointer-events-none absolute inset-0", motionIntensity === "high" ? "opacity-72" : "opacity-48")}>
-                  <Suspense fallback={null}>
-                    <RemotionAurora className={motionIntensity === "high" ? "opacity-85" : "opacity-60"} />
-                  </Suspense>
-                </div>
-              ) : null}
+      <div
+        ref={desktopMenuRef}
+        className={cn(
+          'hidden md:block absolute right-4 z-50 w-80 rounded-xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl overflow-hidden transition-all duration-300 ease-out',
+          isMenuOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'
+        )}
+        style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px) + 0.4rem)' }}
+      >
+        <nav className="p-3 flex flex-col gap-1" aria-label={t('nav.main', 'Main navigation')}>
+          {NAV_ITEMS.map((item) => {
+            const isActive = item.exact ? pathname === item.path : pathname.startsWith(item.path);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  'px-4 py-3 rounded-lg text-sm font-medium transition-colors min-h-[48px] flex items-center',
+                  isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                )}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <Icon className="h-4 w-4 mr-2" />
+                {t(item.key, item.fallback)}
+              </Link>
+            );
+          })}
 
+          {!loading && (
+            user ? (
               <button
                 type="button"
-                className="absolute inset-0 z-10 bg-black/55 backdrop-blur-sm"
-                aria-label={t("common.close", "Close")}
-                onClick={() => setIsDesktopMenuOpen(false)}
-              />
-
-              <motion.div
-                className="relative z-20 mx-auto h-full w-full overflow-y-auto border-t border-border/60 bg-background px-6 py-6 shadow-[0_25px_60px_rgba(0,0,0,0.3)]"
-                initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.994 }}
-                animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: reduceMotion ? 0.16 : 0.32, ease: [0.22, 1, 0.36, 1] }}
+                onClick={() => {
+                  signOut();
+                  setIsMenuOpen(false);
+                }}
+                className="px-4 py-3 rounded-lg text-sm font-medium text-left text-destructive hover:bg-destructive/10 min-h-[48px]"
               >
-                <div className="mx-auto max-w-6xl space-y-6">
-                  <div className="flex items-start gap-4">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/85">
-                        {t("nav.more", "More")}
-                      </p>
-                      <h2 className="mt-1 text-2xl font-bold text-foreground">
-                        {t("nav.menu", "Menu")}
-                      </h2>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {t("nav.mobileSubtitle", "Browse tools and extra pages live here.")}
-                      </p>
-                    </div>
-                  </div>
+                {t('nav.signOut', 'Sign Out')}
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="px-4 py-3 rounded-lg text-sm font-medium min-h-[48px] flex items-center justify-center bg-primary text-primary-foreground"
+              >
+                <LogIn className="h-4 w-4 mr-2" />
+                {t('nav.signIn', 'Sign In')}
+              </Link>
+            )
+          )}
+        </nav>
+      </div>
 
-                  <motion.div
-                    className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
-                    variants={desktopMenuGridVariants}
-                    initial="hidden"
-                    animate="visible"
-                    transition={reduceMotion ? { delayChildren: 0.01, staggerChildren: 0.01 } : undefined}
-                  >
-                    {menuLinks.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <motion.div
-                          key={item.path}
-                          variants={menuItemVariants}
-                          transition={reduceMotion ? { duration: 0.12 } : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                        >
-                          <Link
-                            to={item.path}
-                            onClick={() => setIsDesktopMenuOpen(false)}
-                            className="flex min-h-[64px] items-center gap-3 rounded-2xl border border-border/60 bg-card px-5 py-4 text-base font-medium text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/50"
-                          >
-                            <Icon className="h-5 w-5 shrink-0 text-muted-foreground" />
-                            {t(item.labelKey, item.defaultLabel)}
-                          </Link>
-                        </motion.div>
-                      );
-                    })}
-                  </motion.div>
+      <div
+        ref={mobileMenuRef}
+        className={cn(
+          'md:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl overflow-hidden transition-all duration-300 ease-out',
+          isMenuOpen ? 'max-h-[520px] opacity-100' : 'max-h-0 opacity-0'
+        )}
+      >
+        <nav className="container mx-auto px-4 py-4 flex flex-col gap-2" aria-label={t('nav.mobile', 'Mobile navigation')}>
+          <div className="mb-1">
+            <SearchDropdown onNavigate={() => setIsMenuOpen(false)} />
+          </div>
 
-                </div>
-              </motion.div>
-            </div>,
-            document.body,
-          )
-        : null}
-
-      <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
-        <SheetContent
-          id="mobile-menu-panel"
-          side="right"
-          showCloseButton={false}
-          overlayClassName="top-[calc(4rem+env(safe-area-inset-top,0px))]"
-          className="safe-area-insets top-[calc(4rem+env(safe-area-inset-top,0px))] h-[calc(100dvh-4rem-env(safe-area-inset-top,0px))] w-full max-w-none overflow-y-auto border-l-0 bg-background px-0 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-4 sm:w-[24rem] sm:border-l sm:pt-[max(1rem,env(safe-area-inset-top,0px))]"
-        >
-          {motionIntensity !== "low" ? (
-            <div className={cn("pointer-events-none absolute inset-0", motionIntensity === "high" ? "opacity-56" : "opacity-34")}>
-              <Suspense fallback={null}>
-                <RemotionAurora className={motionIntensity === "high" ? "opacity-70" : "opacity-50"} />
-              </Suspense>
-            </div>
-          ) : null}
-
-          <motion.div
-            className="relative z-10 px-4 sm:px-5"
-            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
-            animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-            transition={{ duration: reduceMotion ? 0.14 : 0.24, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <SheetHeader className="rounded-2xl border border-border/60 bg-card px-4 py-4 text-left">
-              <SheetTitle className="text-xl">{t("nav.menu", "Menu")}</SheetTitle>
-              <p className="text-sm text-muted-foreground">
-                {t("nav.mobileSubtitle", "Browse tools and extra pages live here.")}
-              </p>
-            </SheetHeader>
-
-            <motion.div
-              className="mt-5 space-y-5"
-              variants={mobileMenuListVariants}
-              initial="hidden"
-              animate="visible"
-              transition={reduceMotion ? { delayChildren: 0.01, staggerChildren: 0.01 } : undefined}
-            >
-              <motion.div variants={menuItemVariants}>
-                <Link
-                  to="/"
-                  onClick={() => setIsMobileSheetOpen(false)}
-                  className="flex min-h-[56px] items-center gap-3 rounded-2xl border border-border/50 bg-card px-4 py-3 text-sm font-medium text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/45"
-                >
-                  <Compass className="h-4 w-4 shrink-0 text-primary" />
-                  {t("nav.home", "Home")}
-                </Link>
-              </motion.div>
-
-              <div className="space-y-2 border-t border-border/50 pt-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                  {t("nav.browse", "Browse")}
-                </p>
-                {menuLinks.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <motion.div
-                      key={item.path}
-                      variants={menuItemVariants}
-                      transition={reduceMotion ? { duration: 0.12 } : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                    >
-                      <Link
-                        to={item.path}
-                        onClick={() => setIsMobileSheetOpen(false)}
-                        className="flex min-h-[56px] items-center gap-3 rounded-2xl border border-border/50 bg-card px-4 py-3 text-sm font-medium text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/45"
-                      >
-                        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        {t(item.labelKey, item.defaultLabel)}
-                      </Link>
-                    </motion.div>
-                  );
-                })}
-              </div>
-
-              {/* Settings & Auth */}
-              <div className="space-y-2 border-t border-border/50 pt-4">
-                <motion.div variants={menuItemVariants}>
-                  <Link
-                    to="/settings"
-                    onClick={() => setIsMobileSheetOpen(false)}
-                    className="flex min-h-[56px] items-center gap-3 rounded-2xl border border-border/50 bg-card px-4 py-3 text-sm font-medium text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/45"
-                  >
-                    <Settings className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    {t("nav.settings", "Settings")}
-                  </Link>
-                </motion.div>
-                {user ? (
-                  <motion.div variants={menuItemVariants}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsMobileSheetOpen(false);
-                        window.dispatchEvent(new Event("cinetrekker:sign-out"));
-                      }}
-                      className="flex min-h-[56px] w-full items-center gap-3 rounded-2xl border border-destructive/30 bg-card px-4 py-3 text-sm font-medium text-destructive transition-all duration-200 hover:bg-destructive/10"
-                    >
-                      <User className="h-4 w-4 shrink-0" />
-                      {t("nav.signOut", "Sign Out")}
-                    </button>
-                  </motion.div>
-                ) : (
-                  <motion.div variants={menuItemVariants}>
-                    <Link
-                      to="/login"
-                      onClick={() => setIsMobileSheetOpen(false)}
-                      className="flex min-h-[56px] items-center gap-3 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-primary transition-all duration-200 hover:bg-primary/20"
-                    >
-                      <User className="h-4 w-4 shrink-0" />
-                      {t("nav.signIn", "Sign In")}
-                    </Link>
-                  </motion.div>
+          {NAV_ITEMS.map((item) => {
+            const isActive = item.exact ? pathname === item.path : pathname.startsWith(item.path);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  'px-4 py-3 rounded-lg text-sm font-medium transition-colors min-h-[44px] flex items-center',
+                  isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                 )}
-              </div>
-            </motion.div>
-          </motion.div>
-        </SheetContent>
-      </Sheet>
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <Icon className="h-4 w-4 mr-2" />
+                {t(item.key, item.fallback)}
+              </Link>
+            );
+          })}
+
+          {!loading && (
+            user ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    signOut();
+                    setIsMenuOpen(false);
+                  }}
+                  className="px-4 py-3 rounded-lg text-sm font-medium text-left text-destructive hover:bg-destructive/10 min-h-[44px]"
+                >
+                  {t('nav.signOut', 'Sign Out')}
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                className="px-4 py-3 rounded-lg text-sm font-medium min-h-[44px] flex items-center justify-center bg-primary text-primary-foreground"
+              >
+                {t('nav.signIn', 'Sign In')}
+              </Link>
+            )
+          )}
+        </nav>
+      </div>
     </header>
   );
 }
+
+export default UnifiedNav;

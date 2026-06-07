@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Sparkles, EyeOff, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useUserLists } from '@/contexts/UserListsContext';
+import { useUserLists } from '@/contexts/user-lists-context';
 import { getRecommendations, getSimilar } from '@/services/tmdb';
 import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
 import { Media } from '@/types/media';
@@ -77,9 +77,9 @@ export default function Recommendations() {
       <SEO 
         title="Recommendations — CineTrekker" 
         description="Personalized movie and TV show recommendations based on what you've watched"
-        canonical="https://cinetrekker.lovable.app/recommendations"
+        canonical="https://cinetrekker.vercel.app/recommendations"
       />
-    <div className="page-container pt-20">
+    <div className="page-container pt-20 pb-24 md:pb-0">
       <div className="mb-8">
         <h1 className="section-title flex items-center gap-3">
           <Sparkles className="w-8 h-8 text-primary" />
@@ -102,7 +102,7 @@ export default function Recommendations() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm hover:bg-background"
+                className="absolute top-2 right-2 opacity-0 md:group-hover:opacity-100 focus-within:opacity-100 focus-visible:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm md:hover:bg-background active:bg-background"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();

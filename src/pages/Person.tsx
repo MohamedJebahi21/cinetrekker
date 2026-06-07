@@ -21,8 +21,20 @@ export default function Person() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pt-16 flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">{t('common.loading')}</div>
+      <div className="min-h-screen pt-16">
+        <div className="page-container pt-6">
+          <div className="flex flex-col md:flex-row gap-8 mb-12">
+            <div className="flex-shrink-0 mx-auto md:mx-0">
+              <div className="w-48 md:w-64 poster-skeleton" />
+            </div>
+
+            <div className="flex-1 space-y-4">
+              <div className="h-8 w-3/4 skeleton-shimmer rounded" />
+              <div className="h-4 w-1/2 skeleton-shimmer rounded" />
+              <div className="h-24 skeleton-shimmer rounded" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -69,14 +81,14 @@ export default function Person() {
         title={seoTitle}
         description={seoDescription}
         image={seoImage}
-        canonical={`https://cinetrekker.lovable.app/person/${personId}`}
+        canonical={`https://cinetrekker.vercel.app/person/${personId}`}
       />
     <div className="min-h-screen pt-16">
       {/* Header */}
       <div className="page-container pt-6">
         <Link 
           to="/" 
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground md:hover:text-foreground transition-colors mb-6 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary"
         >
           <ChevronLeft className="w-4 h-4" />
           {t('nav.home')}

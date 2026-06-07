@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "MyWatch",
+    "appName": "CineTrekker",
     "loading": "Chargement...",
     "error": "Une erreur s'est produite",
     "retry": "Réessayer",
@@ -15,7 +15,12 @@
     "tvShow": "Série TV",
     "movies": "Films",
     "tvShows": "Séries TV",
-    "all": "Tout"
+    "all": "Tout",
+    "yes": "Oui",
+    "no": "Non",
+    "details": "Détails",
+    "updated": "Mis à jour",
+    "refresh": "Actualiser"
   },
   "nav": {
     "home": "Accueil",
@@ -32,8 +37,33 @@
     "trending": "Tendances",
     "trendingToday": "Tendances du jour",
     "trendingWeek": "Tendances de la semaine",
+    "topThisWeek": "Top de la Semaine",
     "popular": "Populaires",
     "topRated": "Les mieux notés",
+    "topRatedMovies": "Films les mieux notés",
+    "topRatedSeries": "Séries les mieux notées",
+    "newEpisodes": "Nouveaux épisodes",
+    "topMoviesWeek": "Top films de la semaine",
+    "topSeriesWeek": "Top séries de la semaine",
+    "recentMovies": "Films récemment ajoutés",
+    "recentEpisodes": "Épisodes récemment ajoutés",
+    "newEpisode": "Nouvel épisode",
+    "popularMovies": "Films populaires",
+    "popularSeries": "Séries populaires",
+    "didYouWatch": "Avez-vous regardé ?",
+    "didYouWatchPrompt": "Nouvel épisode disponible !",
+    "didYouWatchEmpty": "Aucun nouvel épisode à regarder",
+    "didYouWatchEmptyDesc": "Les épisodes apparaîtront ici après leur diffusion",
+    "justReleased": "Vient de sortir",
+    "releasedToday": "Aujourd'hui",
+    "releasedHoursAgo": "Il y a {{hours}}h",
+    "becauseYouLiked": "Parce que vous avez aimé {{title}}",
+    "welcome": "Salut !",
+    "welcomeBack": "Bienvenue sur CineTrekker !",
+    "subtitle": "Prêt à plonger ?",
+    "featured": "En vedette",
+    "viewDetails": "Plus d'infos",
+    "startTracking": "Commencer le suivi",
     "hero": {
       "title": "Suivez votre parcours de divertissement",
       "subtitle": "Découvrez, suivez et souvenez-vous de chaque film et série que vous regardez"
@@ -68,7 +98,10 @@
     "rateTitle": "Noter",
     "addNote": "Ajouter une note",
     "inWatchlist": "Dans ma liste",
-    "watched": "Vu"
+    "watched": "Vu",
+    "watchlist": "Ma liste",
+    "mark": "Marquer",
+    "share": "Partager"
   },
   "watchlist": {
     "title": "Ma liste à voir",
@@ -93,8 +126,28 @@
     "moviesWatched": "Films vus",
     "showsWatched": "Séries vues",
     "totalWatchlist": "Dans la liste",
+    "showsFollowed": "Séries suivies",
+    "episodesWatched": "Épisodes visionnés",
     "settings": "Paramètres",
-    "language": "Langue"
+    "language": "Langue",
+    "profileCompletion": "Achèvement du profil",
+    "profileDetails": "Détails du profil",
+    "displayName": "Nom d'affichage",
+    "displayNamePlaceholder": "Comment devrions-nous vous appeler?",
+    "dateOfBirth": "Date de naissance",
+    "currentAge": "Âge actuel",
+    "about": "À propos",
+    "bio": "Biographie",
+    "bioPlaceholder": "Parlez-nous de votre parcours cinématographique...",
+    "characters": "caractères",
+    "favoriteGenres": "Genres préférés",
+    "privacySettings": "Paramètres de confidentialité",
+    "publicProfile": "Profil public",
+    "publicProfileDesc": "Permettre aux autres de voir votre profil",
+    "showWatchlist": "Afficher la liste de suivi",
+    "showWatchlistDesc": "Afficher votre liste de suivi sur votre profil",
+    "showStats": "Afficher les statistiques",
+    "showStatsDesc": "Afficher vos statistiques de visionnage"
   },
   "auth": {
     "signIn": "Connexion",
@@ -112,7 +165,7 @@
     "title": "Politique de confidentialité",
     "lastUpdated": "Dernière mise à jour : {{date}}",
     "dataCollected": "Données collectées",
-    "dataCollectedDesc": "Nous collectons les informations suivantes lorsque vous utilisez MyWatch :",
+    "dataCollectedDesc": "Nous collectons les informations suivantes lorsque vous utilisez CineTrekker :",
     "dataList": {
       "email": "Adresse email (pour l'authentification)",
       "watchlist": "Votre liste à voir et titres vus",
@@ -154,5 +207,15 @@
     "rateThis": "Noter ce {{type}}",
     "note": "Commentaire",
     "notePlaceholder": "Ajoutez vos impressions sur ce titre..."
-  }
+  },
+  "onboarding": {
+    "welcome": "Bienvenue sur CineTrekker !",
+    "description": "Suivez vos films et séries, obtenez des recommandations, et plus encore.",
+    "feature1": "Ajoutez à votre liste avec l'icône de signet",
+    "feature2": "Marquez comme vu et laissez des notes",
+    "feature3": "Découvrez les tendances et les sélections personnalisées",
+    "skip": "Passer",
+    "start": "Commencer"
+  },
+  "comingSoon": "Bientôt"
 }

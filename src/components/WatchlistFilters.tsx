@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion, type Variants } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import {
   Select,
@@ -12,7 +12,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { safeT } from '@/lib/i18n';
 
 interface WatchlistFiltersProps {
   statusFilter: string;
@@ -45,25 +44,21 @@ export function WatchlistFilters({
     { value: 'added-desc', label: t('sort.recentlyAdded') || 'Recently Added' },
     { value: 'rating-desc', label: t('sort.highestRated') || 'Highest Rated' },
     { value: 'rating-asc', label: t('sort.lowestRated') || 'Lowest Rated' },
-    { value: 'date-desc', label: t('sort.releaseYearNew', 'Release Year: Newest') },
-    { value: 'date-asc', label: t('sort.releaseYearOld', 'Release Year: Oldest') },
-    { value: 'runtime-desc', label: t('sort.runtimeLong', 'Runtime: Longest') },
-    { value: 'runtime-asc', label: t('sort.runtimeShort', 'Runtime: Shortest') },
     { value: 'title-asc', label: t('sort.titleAZ') || 'Title A-Z' },
     { value: 'title-desc', label: t('sort.titleZA') || 'Title Z-A' },
   ];
 
-  const containerVariants: Variants = {
+  const containerVariants = {
     initial: { height: 0, opacity: 0 },
     animate: {
       height: 'auto',
       opacity: 1,
-      transition: { duration: 0.3 },
+      transition: { duration: 0.3, ease: 'easeOut' },
     },
     exit: {
       height: 0,
       opacity: 0,
-      transition: { duration: 0.2 },
+      transition: { duration: 0.2, ease: 'easeIn' },
     },
   };
 
@@ -72,7 +67,7 @@ export function WatchlistFilters({
       <CardContent className="p-4">
         {/* Header with toggle */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-sm">{safeT(t, 'watchlistPage.filtersAndSort', 'Filters & Sort')}</h3>
+          <h3 className="font-semibold text-sm">{t('filters.title') || 'Filters & Sort'}</h3>
           <Button
             variant="ghost"
             size="sm"
@@ -116,7 +111,7 @@ export function WatchlistFilters({
             {/* Sort */}
             <div className="space-y-2">
               <Label className="text-xs font-medium text-muted-foreground">
-                {t('filters.sortBy') || t('filters.sort') || 'Sort By'}
+                {t('filters.sortBy') || 'Sort By'}
               </Label>
               <Select value={sortBy} onValueChange={onSortChange}>
                 <SelectTrigger className="h-9">
@@ -144,8 +139,6 @@ interface FilterBadgeProps {
 }
 
 export function FilterBadge({ label, onRemove }: FilterBadgeProps) {
-  const { t } = useTranslation();
-
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
@@ -155,9 +148,7 @@ export function FilterBadge({ label, onRemove }: FilterBadgeProps) {
     >
       <span>{label}</span>
       <button
-        type="button"
         onClick={onRemove}
-        aria-label={t('watchlistPage.removeFilter', 'Remove filter')}
         className="ml-1 text-primary/60 hover:text-primary transition-colors"
       >
         ×

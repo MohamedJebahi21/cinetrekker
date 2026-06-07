@@ -14,8 +14,8 @@ import {
   isAfter,
 } from 'date-fns';
 import { CalendarIcon, ChevronLeft, ChevronRight, Film, Tv, Star, Filter, Clock } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useUserLists } from '@/contexts/UserListsContext';
+import { useAuth } from '@/contexts/auth-context';
+import { useUserLists } from '@/contexts/user-lists-context';
 import { useFollowedShows } from '@/hooks/useFollowedShows';
 import { getUpcomingMovies, getOnTheAirTV, getImageUrl, getTVDetails } from '@/services/tmdb';
 import { Media } from '@/types/media';
@@ -149,7 +149,7 @@ export default function Calendar() {
 
     // Add TV shows with episode info
     if (onAirTV && (mediaTypeFilter === 'all' || mediaTypeFilter === 'tv')) {
-      onAirTV.forEach((show: any) => {
+      onAirTV.forEach((show: TVShow) => {
         const nextEp = show.next_episode_to_air || show.last_episode_to_air;
         const airDate = nextEp?.air_date || show.first_air_date;
         
@@ -224,18 +224,18 @@ export default function Calendar() {
         <div className={`
           relative overflow-hidden rounded-xl bg-card border border-border
           transition-all duration-300 ease-out
-          hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5
-          hover:-translate-y-1
+          md:hover:border-primary/30 md:hover:shadow-lg md:hover:shadow-primary/5
+          md:hover:-translate-y-1 active:-translate-y-0
           ${item.isFollowed ? 'ring-2 ring-primary/40' : ''}
           ${isPast ? 'opacity-80' : ''}
         `}>
           {/* Poster with aspect ratio */}
           <div className="relative aspect-[2/3] overflow-hidden">
-            {item.posterPath ? (
+              {item.posterPath ? (
               <img
                 src={getImageUrl(item.posterPath, 'w342')}
                 alt={item.title}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                className="w-full h-full object-cover transition-transform duration-300 md:group-hover:scale-105 active:scale-105 focus-visible:scale-105"
                 loading="lazy"
               />
             ) : (
@@ -301,7 +301,7 @@ export default function Calendar() {
           {/* Content */}
           <div className="p-3 space-y-2">
             {/* Title */}
-            <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-tight group-hover:text-primary transition-colors">
+            <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-tight md:group-hover:text-primary transition-colors active:text-primary focus-visible:text-primary">
               {item.title}
             </h3>
             
@@ -409,9 +409,9 @@ export default function Calendar() {
       <SEO 
         title="Release Calendar — CineTrekker" 
         description="Upcoming movie and TV show releases this week"
-        canonical="https://cinetrekker.lovable.app/calendar"
+        canonical="https://cinetrekker.vercel.app/calendar"
       />
-    <div className="page-container pt-20 py-6">
+    <div className="page-container pt-20 py-6 pb-24 md:pb-0">
       {/* Header */}
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex items-center gap-3">

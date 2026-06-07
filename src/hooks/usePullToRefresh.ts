@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useRef, useState } from 'react';
 
 interface PullToRefreshOptions {
   onRefresh: () => Promise<void> | void;
@@ -18,7 +18,6 @@ export function usePullToRefresh({
   threshold = 100,
   maxPull = 150,
 }: PullToRefreshOptions) {
-  const containerRef = useRef<HTMLElement | null>(null);
   const startYRef = useRef<number | null>(null);
   const isPullingRef = useRef(false);
   const [pullDistance, setPullDistance] = useState(0);
@@ -32,41 +31,20 @@ export function usePullToRefresh({
 
   const handlers: PullToRefreshHandlers = {
     onTouchStart: (event) => {
-      // Only start pull gesture if at top of page, not already pulling, and not refreshing
-      if (window.scrollY !== 0 || isRefreshing || isPullingRef.current) return;
+      if (window.scrollY !== 0 || isRefreshing) return;
       startYRef.current = event.touches[0].clientY;
       isPullingRef.current = true;
     },
     onTouchMove: (event) => {
-      // Validate pulling state and position
-      if (!isPullingRef.current || startYRef.current === null || isRefreshing) {
-        resetPull();
-        return;
-      }
-      
-      // If user scrolls past top, abort pull gesture
-      if (window.scrollY !== 0) {
-        resetPull();
-        return;
-      }
+      if (!isPullingRef.current || startYRef.current === null || isRefreshing) return;
+      if (window.scrollY !== 0) return;
 
       const delta = event.touches[0].clientY - startYRef.current;
-      
-      // Only pull downward
-      if (delta <= 0) {
-        resetPull();
-        return;
-      }
+      if (delta <= 0) return;
 
-      // Calculate visual resistance
       const resisted = Math.min(maxPull, delta * 0.6);
       setPullDistance(resisted);
-      
-      // Only prevent default if actively pulling (delta > threshold)
-      // This prevents interference with normal scrolling
-      if (delta > 20) {
-        event.preventDefault();
-      }
+      event.preventDefault();
     },
     onTouchEnd: async () => {
       if (!isPullingRef.current || isRefreshing) {
@@ -91,20 +69,18 @@ export function usePullToRefresh({
     },
   };
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    container.style.transform = `translateY(${pullDistance}px)`;
-    container.style.transition = isPullingRef.current
-      ? "none"
-      : "transform 240ms ease-out";
-    container.style.willChange = "transform";
-  }, [pullDistance]);
+  const containerStyle = useMemo(
+    () => ({
+      transform: `translateY(${pullDistance}px)`,
+      transition: isPullingRef.current ? 'none' : 'transform 240ms ease-out',
+      willChange: 'transform',
+    }),
+    [pullDistance]
+  );
 
   return {
     handlers,
-    containerRef,
+    containerStyle,
     pullDistance,
     isRefreshing,
     threshold,

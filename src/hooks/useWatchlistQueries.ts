@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import { supabase } from '@/integrations/supabase/client';
 import { UserMediaItem } from '@/types/media';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 
-const WATCHLIST_QUERY_KEY = 'watchlist';
-const WATCHLIST_STORAGE_KEY = 'mywatch_watchlist';
+const WATCHLIST_QUERY_ID = 'watchlist';
+const WATCHLIST_STORAGE_ID = 'mywatch_watchlist';
 
 /**
  * Hook to fetch watchlist items from Supabase or localStorage
@@ -15,18 +15,18 @@ export function useWatchlistQuery() {
   const { user } = useAuth();
   
   return useQuery({
-    queryKey: [WATCHLIST_QUERY_KEY, user?.id],
+    queryKey: [WATCHLIST_QUERY_ID, user?.id],
     queryFn: async () => {
       if (user) {
         try {
-          // Fetch from Supabase with error handling for missing tables
+          // Verify table schema is accessible
           const { data, error } = await supabase
             .from('user_watchlist')
             .select('*')
             .eq('user_id', user.id);
 
           if (error) {
-            console.error("Watchlist fetch error (check if table exists):", error);
+            console.error("Watchlist query error:", error);
             return [];
           }
           
@@ -43,7 +43,7 @@ export function useWatchlistQuery() {
         }
       } else {
         // Fetch from localStorage
-        const stored = localStorage.getItem(WATCHLIST_STORAGE_KEY);
+        const stored = localStorage.getItem(WATCHLIST_STORAGE_ID);
         return stored ? JSON.parse(stored) : [];
       }
     },
@@ -75,14 +75,14 @@ export function useAddToWatchlist() {
       return params;
     },
     onMutate: async (params) => {
-      await queryClient.cancelQueries({ queryKey: [WATCHLIST_QUERY_KEY] });
+      await queryClient.cancelQueries({ queryKey: [WATCHLIST_QUERY_ID, user?.id] });
 
       const previousWatchlist = queryClient.getQueryData<UserMediaItem[]>([
-        WATCHLIST_QUERY_KEY,
+        WATCHLIST_QUERY_ID,
         user?.id,
       ]);
 
-      queryClient.setQueryData([WATCHLIST_QUERY_KEY, user?.id], (old: UserMediaItem[] = []) => {
+      queryClient.setQueryData([WATCHLIST_QUERY_ID, user?.id], (old: UserMediaItem[] = []) => {
         const filtered = old.filter(item => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType));
         const newItem: UserMediaItem = {
           id: `${params.mediaType}-${params.mediaId}`,
@@ -95,7 +95,7 @@ export function useAddToWatchlist() {
       });
 
       if (!user) {
-        const stored = localStorage.getItem(WATCHLIST_STORAGE_KEY);
+        const stored = localStorage.getItem(WATCHLIST_STORAGE_ID);
         const list = stored ? JSON.parse(stored) : [];
         const newList = list.filter((item: UserMediaItem) => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType));
         newList.push({
@@ -105,14 +105,14 @@ export function useAddToWatchlist() {
           userId: 'local',
           addedAt: new Date().toISOString(),
         });
-        localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(newList));
+        localStorage.setItem(WATCHLIST_STORAGE_ID, JSON.stringify(newList));
       }
 
       return { previousWatchlist };
     },
     onError: (error, variables, context) => {
       if (context?.previousWatchlist) {
-        queryClient.setQueryData([WATCHLIST_QUERY_KEY, user?.id], context.previousWatchlist);
+        queryClient.setQueryData([WATCHLIST_QUERY_ID, user?.id], context.previousWatchlist);
       }
       console.error('Failed to add to watchlist:', error);
       toast({
@@ -127,7 +127,7 @@ export function useAddToWatchlist() {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: [WATCHLIST_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [WATCHLIST_QUERY_ID, user?.id] });
     },
   });
 }
@@ -156,29 +156,29 @@ export function useRemoveFromWatchlist() {
       return params;
     },
     onMutate: async (params) => {
-      await queryClient.cancelQueries({ queryKey: [WATCHLIST_QUERY_KEY] });
+      await queryClient.cancelQueries({ queryKey: [WATCHLIST_QUERY_ID, user?.id] });
 
       const previousWatchlist = queryClient.getQueryData<UserMediaItem[]>([
-        WATCHLIST_QUERY_KEY,
+        WATCHLIST_QUERY_ID,
         user?.id,
       ]);
 
-      queryClient.setQueryData([WATCHLIST_QUERY_KEY, user?.id], (old: UserMediaItem[] = []) =>
+      queryClient.setQueryData([WATCHLIST_QUERY_ID, user?.id], (old: UserMediaItem[] = []) =>
         old.filter(item => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType))
       );
 
       if (!user) {
-        const stored = localStorage.getItem(WATCHLIST_STORAGE_KEY);
+        const stored = localStorage.getItem(WATCHLIST_STORAGE_ID);
         const list = stored ? JSON.parse(stored) : [];
         const newList = list.filter((item: UserMediaItem) => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType));
-        localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(newList));
+        localStorage.setItem(WATCHLIST_STORAGE_ID, JSON.stringify(newList));
       }
 
       return { previousWatchlist };
     },
     onError: (error, variables, context) => {
       if (context?.previousWatchlist) {
-        queryClient.setQueryData([WATCHLIST_QUERY_KEY, user?.id], context.previousWatchlist);
+        queryClient.setQueryData([WATCHLIST_QUERY_ID, user?.id], context.previousWatchlist);
       }
       console.error('Failed to remove from watchlist:', error);
       toast({
@@ -193,7 +193,7 @@ export function useRemoveFromWatchlist() {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: [WATCHLIST_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [WATCHLIST_QUERY_ID, user?.id] });
     },
   });
 }

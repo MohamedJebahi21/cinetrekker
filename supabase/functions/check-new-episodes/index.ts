@@ -1,39 +1,31 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getCandidateSeasons } from "./seasonSelection.ts";
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const isDev =
-  Deno.env.get("ENVIRONMENT") !== "production" &&
-  Deno.env.get("DENO_DEPLOYMENT_ID") === undefined;
+const isDev = Deno.env.get('ENVIRONMENT') !== 'production' && Deno.env.get('DENO_DEPLOYMENT_ID') === undefined;
 
 const ALLOWED_ORIGINS = [
-  "https://cinetrekker.vercel.app",
-  "https://www.cinetrekker.vercel.app",
+  'https://cinetrekker.vercel.app',
+  'https://www.cinetrekker.vercel.app',
   ...(isDev
     ? [
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:8080",
-        "http://localhost:4173",
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'http://localhost:8080',
+        'http://localhost:4173',
       ]
     : []),
 ];
-const LOCAL_ORIGIN_PATTERN =
-  /^https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])(?::\d{1,5})?$/i;
 
 function getCorsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get("origin") || "";
-  const isLocal = isDev && LOCAL_ORIGIN_PATTERN.test(origin);
-  const allowedOrigin =
-    ALLOWED_ORIGINS.includes(origin) || isLocal
-      ? origin
-      : "https://cinetrekker.vercel.app";
+  const origin = req.headers.get('origin') || '';
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin)
+    ? origin
+    : 'https://cinetrekker.vercel.app';
 
   return {
-    "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Headers":
-      "authorization, x-client-info, apikey, content-type, x-cron-secret",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
   };
 }
 
@@ -59,7 +51,7 @@ async function checkNewEpisodesForUser(
   userId: string,
   watchedShows: WatchedShow[],
   tmdbApiKey: string,
-  watchedEpisodes: Set<string>,
+  watchedEpisodes: Set<string>
 ): Promise<NewEpisode[]> {
   const newEpisodes: NewEpisode[] = [];
   const today = new Date();
@@ -70,58 +62,55 @@ async function checkNewEpisodesForUser(
   const batchSize = 5;
   for (let i = 0; i < watchedShows.length; i += batchSize) {
     const batch = watchedShows.slice(i, i + batchSize);
-
+    
     const batchPromises = batch.map(async (show) => {
       try {
         // Fetch TV show details
         const detailsRes = await fetch(
-          `https://api.themoviedb.org/3/tv/${show.media_id}?api_key=${tmdbApiKey}`,
+          `https://api.themoviedb.org/3/tv/${show.media_id}?api_key=${tmdbApiKey}`
         );
         if (!detailsRes.ok) return [];
         const details = await detailsRes.json();
 
         // Skip ended/canceled shows
-        if (details.status === "Ended" || details.status === "Canceled") {
+        if (details.status === 'Ended' || details.status === 'Canceled') {
           return [];
         }
 
-        const candidateSeasons = getCandidateSeasons(details);
+        const currentSeason = details.number_of_seasons || 1;
+
+        // Check current season
+        const seasonRes = await fetch(
+          `https://api.themoviedb.org/3/tv/${show.media_id}/season/${currentSeason}?api_key=${tmdbApiKey}`
+        );
+        if (!seasonRes.ok) return [];
+        const seasonDetails = await seasonRes.json();
 
         const recentEpisodes: NewEpisode[] = [];
-        const processedEpisodeKeys = new Set<string>();
 
-        for (const seasonNumber of candidateSeasons) {
-          const seasonRes = await fetch(
-            `https://api.themoviedb.org/3/tv/${show.media_id}/season/${seasonNumber}?api_key=${tmdbApiKey}`,
-          );
-          if (!seasonRes.ok) continue;
-          const seasonDetails = await seasonRes.json();
+        for (const episode of seasonDetails.episodes || []) {
+          if (!episode.air_date) continue;
 
-          for (const episode of seasonDetails.episodes || []) {
-            if (!episode.air_date) continue;
+          const airDate = new Date(episode.air_date);
+          const isRecent = airDate >= sevenDaysAgo && airDate <= today;
+          
+          if (!isRecent) continue;
 
-            const airDate = new Date(episode.air_date);
-            const isRecent = airDate >= sevenDaysAgo && airDate <= today;
-            if (!isRecent) continue;
+          const episodeKey = `${show.media_id}-${currentSeason}-${episode.episode_number}`;
+          const isWatched = watchedEpisodes.has(episodeKey);
 
-            const episodeKey = `${show.media_id}-${seasonNumber}-${episode.episode_number}`;
-            if (processedEpisodeKeys.has(episodeKey)) continue;
-            processedEpisodeKeys.add(episodeKey);
-
-            const isWatched = watchedEpisodes.has(episodeKey);
-            if (!isWatched) {
-              recentEpisodes.push({
-                show_id: show.media_id,
-                show_name: details.name,
-                show_poster_path: details.poster_path,
-                episode_number: episode.episode_number,
-                season_number: seasonNumber,
-                episode_name: episode.name,
-                air_date: episode.air_date,
-                episode_id: episode.id,
-                overview: episode.overview,
-              });
-            }
+          if (!isWatched) {
+            recentEpisodes.push({
+              show_id: show.media_id,
+              show_name: details.name,
+              show_poster_path: details.poster_path,
+              episode_number: episode.episode_number,
+              season_number: currentSeason,
+              episode_name: episode.name,
+              air_date: episode.air_date,
+              episode_id: episode.id,
+              overview: episode.overview,
+            });
           }
         }
 
@@ -143,62 +132,52 @@ serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
 
   // Handle CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
   }
 
-  if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 405,
     });
   }
 
   try {
-    const cronSecret = Deno.env.get("CRON_SECRET");
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const tmdbApiKey = Deno.env.get("TMDB_API_KEY");
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+    const SUPABASE_SERVICE_ID = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const TMDB_API_ID = Deno.env.get('TMDB_API_KEY')!;
+    const CRON_SECRET = Deno.env.get('CRON_SECRET');
 
-    if (!cronSecret || !supabaseUrl || !supabaseServiceRoleKey || !tmdbApiKey) {
-      return new Response(
-        JSON.stringify({ error: "Missing required environment variables" }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 500,
-        },
-      );
-    }
-
-    const cronHeader = (req.headers.get("x-cron-secret") || "").trim();
-
-    if (cronHeader !== cronSecret) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (!CRON_SECRET || req.headers.get('x-cron-secret') !== CRON_SECRET) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 401,
       });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ID);
 
-    // Fetch all watched TV shows and group them by user.
-    const { data: watchedShows, error: watchedShowsError } = await supabase
-      .from("user_watched")
-      .select("user_id, media_id, media_type")
-      .eq("media_type", "tv");
+    console.log('🔍 Starting background episode check...');
 
-    if (watchedShowsError) {
-      throw watchedShowsError;
-    }
+    // 1. Get all users with watched TV shows
+    const { data: watchedShows, error: watchedError } = await supabase
+      .from('watched')
+      .select('user_id, media_id, media_type')
+      .eq('media_type', 'tv');
 
+    if (watchedError) throw watchedError;
+
+    // Group by user
     const userShows = new Map<string, WatchedShow[]>();
     for (const show of watchedShows || []) {
-      const userId = show.user_id;
-      if (!userShows.has(userId)) {
-        userShows.set(userId, []);
+      if (!userShows.has(show.user_id)) {
+        userShows.set(show.user_id, []);
       }
-      userShows.get(userId)!.push(show as WatchedShow);
+      userShows.get(show.user_id)!.push(show);
     }
+
+    console.log(`📺 Processing ${userShows.size} users with watched TV shows`);
 
     let totalUpdated = 0;
 
@@ -207,46 +186,41 @@ serve(async (req) => {
       try {
         // Get watched episodes for this user
         const { data: watchedEps } = await supabase
-          .from("watched_episodes")
-          .select("show_id, season_number, episode_number")
-          .eq("user_id", userId);
+          .from('watched_episodes')
+          .select('show_id, season_number, episode_number')
+          .eq('user_id', userId);
 
         const watchedSet = new Set(
           (watchedEps || []).map(
-            (ep) => `${ep.show_id}-${ep.season_number}-${ep.episode_number}`,
-          ),
+            ep => `${ep.show_id}-${ep.season_number}-${ep.episode_number}`
+          )
         );
 
         // Check for new episodes
         const newEpisodes = await checkNewEpisodesForUser(
           userId,
           shows,
-          tmdbApiKey,
-          watchedSet,
+          TMDB_API_ID,
+          watchedSet
         );
 
         if (newEpisodes.length > 0) {
           // Store in cache table
           const { error: cacheError } = await supabase
-            .from("new_episodes_cache")
-            .upsert(
-              {
-                user_id: userId,
-                episodes: newEpisodes,
-                updated_at: new Date().toISOString(),
-              },
-              {
-                onConflict: "user_id",
-              },
-            );
+            .from('new_episodes_cache')
+            .upsert({
+              user_id: userId,
+              episodes: newEpisodes,
+              updated_at: new Date().toISOString(),
+            }, {
+              onConflict: 'user_id'
+            });
 
           if (cacheError) {
             console.error(`Error caching for user ${userId}:`, cacheError);
           } else {
             totalUpdated++;
-            console.log(
-              `✅ Updated cache for user ${userId}: ${newEpisodes.length} episodes`,
-            );
+            console.log(`✅ Updated cache for user ${userId}: ${newEpisodes.length} episodes`);
           }
         }
       } catch (err) {
@@ -258,24 +232,24 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        ok: true,
-        processedCount: totalUpdated,
         success: true,
         usersProcessed: userShows.size,
         usersUpdated: totalUpdated,
         timestamp: new Date().toISOString(),
       }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
-      },
+      }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("❌ Background check failed:", error);
-    return new Response(JSON.stringify({ error: message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    console.error('❌ Background check failed:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      }
+    );
   }
 });

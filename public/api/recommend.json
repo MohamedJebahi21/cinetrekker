@@ -1,0 +1,26 @@
+[
+  {
+    "id": 27205,
+    "media_type": "movie",
+    "title": "Inception",
+    "poster_path": "/qmDpIHrmpJINaRKAfWQfftjCdyi.jpg",
+    "overview": "A thief who steals corporate secrets through the use of dream-sharing technology...",
+    "vote_average": 8.3
+  },
+  {
+    "id": 157336,
+    "media_type": "movie",
+    "title": "Interstellar",
+    "poster_path": "/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
+    "overview": "A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival.",
+    "vote_average": 8.1
+  },
+  {
+    "id": 272,
+    "media_type": "movie",
+    "title": "The Dark Knight",
+    "poster_path": "/1hRoyzDtpgMU7Dz4JF22RANzQO7.jpg",
+    "overview": "Batman raises the stakes in his war on crime.",
+    "vote_average": 8.4
+  }
+]

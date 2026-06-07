@@ -16,6 +16,8 @@ export interface Media {
   genres?: Genre[];
   media_type?: 'movie' | 'tv';
   adult?: boolean;
+  runtime?: number;
+  episode_run_time?: number[];
 }
 
 export interface Movie extends Media {
@@ -90,6 +92,17 @@ export interface MediaDetails extends Media {
   networks?: TVNetwork[];
   next_episode_to_air?: TVEpisodeInfo | null;
   last_episode_to_air?: TVEpisodeInfo | null;
+  seasons?: Season[];
+}
+
+export interface Season {
+  id: number;
+  name?: string;
+  overview?: string;
+  episode_count: number;
+  season_number: number;
+  air_date?: string;
+  poster_path?: string | null;
 }
 
 export interface TMDBResponse<T> {
@@ -131,4 +144,60 @@ export interface HiddenRecommendation {
   mediaType: 'movie' | 'tv';
   userId: string;
   hiddenAt: string;
+}
+
+// Watch Providers types
+export interface Provider {
+  provider_id: number;
+  provider_name: string;
+  logo_path: string | null;
+  display_priority: number;
+}
+
+export interface WatchProviderDetails {
+  link: string | null;
+  rent?: Provider[];
+  buy?: Provider[];
+  flatrate?: Provider[];
+}
+
+export interface WatchProviders {
+  results: Record<string, WatchProviderDetails>;
+}
+
+// Genre response type
+export interface GenreResponse {
+  genres: Genre[];
+}
+
+// AI recommendation types
+export interface RankingResult {
+  title: string;
+  score: number;
+  reason?: string;
+}
+
+export interface AIRecommendationItem extends Omit<Media, 'genre_ids'> {
+  confidence: string;
+  ai_reason: string;
+}
+
+export interface AIRecommendationResponse {
+  summary: string;
+  results: AIRecommendationItem[];
+}
+
+// Generic TV episode collection type
+export interface EpisodeCollectionResult {
+  episodes: TVEpisodeInfo[];
+  [key: string]: unknown;
+}
+
+// Provider data for utility functions
+export interface ProviderDataResult {
+  link?: string;
+  rent?: Provider[];
+  buy?: Provider[];
+  flatrate?: Provider[];
+  [key: string]: unknown;
 }

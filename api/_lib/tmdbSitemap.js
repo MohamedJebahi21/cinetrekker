@@ -1,19 +1,19 @@
-import { getRequiredServerEnv } from "./env.js";
-
 const fetch = globalThis.fetch;
 
-const TMDB_BASE = "https://api.themoviedb.org/3";
+const TMDB_BASE = 'https://api.themoviedb.org/3';
 const DEFAULT_DYNAMIC_LIMIT = 60;
 
 async function fetchTmdb(pathname, params = {}) {
-  const apiKey = getRequiredServerEnv("TMDB_API_KEY");
+  const apiKey = process.env.TMDB_API_KEY;
+  if (!apiKey) {
+    throw new Error('TMDB_API_KEY is required to generate dynamic sitemap routes.');
+  }
+
   const query = new URLSearchParams({ api_key: apiKey, ...params });
   const response = await fetch(`${TMDB_BASE}${pathname}?${query.toString()}`);
 
   if (!response.ok) {
-    throw new Error(
-      `TMDB sitemap fetch failed (${response.status}) for ${pathname}`,
-    );
+    throw new Error(`TMDB sitemap fetch failed (${response.status}) for ${pathname}`);
   }
 
   return response.json();
@@ -21,15 +21,18 @@ async function fetchTmdb(pathname, params = {}) {
 
 async function fetchIdsForType(mediaType, limit = DEFAULT_DYNAMIC_LIMIT) {
   const [trending, popular] = await Promise.all([
-    fetchTmdb(`/trending/${mediaType}/week`, { language: "en-US" }),
-    fetchTmdb(`/${mediaType}/popular`, { language: "en-US", page: "1" }),
+    fetchTmdb(`/trending/${mediaType}/week`, { language: 'en-US' }),
+    fetchTmdb(`/${mediaType}/popular`, { language: 'en-US', page: '1' }),
   ]);
 
   const ids = new Set();
-  const combined = [...(trending?.results || []), ...(popular?.results || [])];
+  const combined = [
+    ...(trending?.results || []),
+    ...(popular?.results || []),
+  ];
 
   for (const item of combined) {
-    if (typeof item?.id !== "number") continue;
+    if (typeof item?.id !== 'number') continue;
     ids.add(item.id);
     if (ids.size >= limit) break;
   }
@@ -37,10 +40,10 @@ async function fetchIdsForType(mediaType, limit = DEFAULT_DYNAMIC_LIMIT) {
   return Array.from(ids);
 }
 
-export async function fetchDynamicContentRoutes() {
+async function fetchDynamicContentRoutes() {
   const [movieIds, tvIds] = await Promise.all([
-    fetchIdsForType("movie"),
-    fetchIdsForType("tv"),
+    fetchIdsForType('movie'),
+    fetchIdsForType('tv'),
   ]);
 
   return [
@@ -48,3 +51,7 @@ export async function fetchDynamicContentRoutes() {
     ...tvIds.map((id) => `/tv/${id}`),
   ];
 }
+
+module.exports = {
+  fetchDynamicContentRoutes,
+};

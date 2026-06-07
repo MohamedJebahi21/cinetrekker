@@ -1,62 +1,20 @@
 import React from 'react';
 import { Download, Upload, FileText, FileJson } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState, useRef, useEffect } from 'react';
-import { toast } from 'sonner';
-import { useUserLists } from '@/contexts/UserListsContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
+import { useUserLists } from '@/contexts/user-lists-context';
 import { UserMediaItem } from '@/types/media';
-import { z } from 'zod';
-// Zod schema for import validation
-const ImportSchema = z.object({
-  watchlist: z
-    .array(
-      z.object({
-        mediaId: z.number(),
-        mediaType: z.enum(["movie", "tv"]),
-      }),
-    )
-    .optional(),
-  watched: z
-    .array(
-      z.object({
-        mediaId: z.number(),
-        mediaType: z.enum(["movie", "tv"]),
-        rating: z.number().min(1).max(10).optional(),
-        note: z.string().max(500).optional(),
-        status: z
-          .enum(["watching", "completed", "dropped", "plan_to_watch"])
-          .optional(),
-      }),
-    )
-    .optional(),
-});
-
-function dedupeByKey<T>(items: T[], getKey: (item: T) => string): T[] {
-  const seen = new Set();
-  const result = [];
-  for (const item of items) {
-    const key = getKey(item);
-    if (!seen.has(key)) {
-      seen.add(key);
-      result.push(item);
-    }
-  }
-  return result;
-}
 
 export function ExportImportButton() {
-  const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const { toast } = useToast();
   const { watchlist, watched, addToWatchlist, addToWatched } = useUserLists();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -78,7 +36,8 @@ export function ExportImportButton() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    toast.success('Export successful!', {
+    toast({
+      title: 'Export successful!',
       description: 'Your data has been exported to a JSON file.',
     });
   };
@@ -108,7 +67,8 @@ export function ExportImportButton() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    toast.success('Export successful!', {
+    toast({
+      title: 'Export successful!',
       description: `Your ${type} has been exported to a CSV file.`,
     });
   };
@@ -118,102 +78,82 @@ export function ExportImportButton() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = async (e: ProgressEvent<FileReader>) => {
+    reader.onload = (e) => {
       try {
         const content = e.target?.result as string;
-        const parsed = ImportSchema.parse(JSON.parse(content));
+        const data = JSON.parse(content);
 
-        const uniqueWatchlist = dedupeByKey(
-          parsed.watchlist ?? [],
-          (i) => `${i.mediaType}:${i.mediaId}`,
-        );
-        const uniqueWatched = dedupeByKey(
-          parsed.watched ?? [],
-          (i) => `${i.mediaType}:${i.mediaId}`,
-        );
+        if (!data.watchlist && !data.watched) {
+          throw new Error('Invalid file format');
+        }
 
-        await Promise.all(
-          uniqueWatchlist.map((i) => addToWatchlist(i.mediaId, i.mediaType)),
-        );
-        await Promise.all(
-          uniqueWatched.map((i) =>
-            addToWatched(i.mediaId, i.mediaType, i.rating, i.note, i.status),
-          ),
-        );
+        let imported = 0;
+        
+        // Import watchlist
+        if (data.watchlist) {
+          data.watchlist.forEach((item: UserMediaItem) => {
+            addToWatchlist(item.mediaId, item.mediaType);
+            imported++;
+          });
+        }
 
-        toast.success('Import successful!', {
-          description: `Imported ${uniqueWatchlist.length + uniqueWatched.length} items from backup.`,
+        // Import watched
+        if (data.watched) {
+          data.watched.forEach((item: UserMediaItem) => {
+            addToWatched(item.mediaId, item.mediaType, item.rating, item.note, item.status);
+            imported++;
+          });
+        }
+
+        toast({
+          title: 'Import successful!',
+          description: `Imported ${imported} items from backup.`,
         });
-      } catch (err) {
-        toast.error('Import failed', {
-          description: 'Could not parse the file or file is invalid.',
+      } catch (error) {
+        toast({
+          title: 'Import failed',
+          description: 'Could not parse the file. Please check the format.',
+          variant: 'destructive',
         });
       }
     };
 
     reader.readAsText(file);
-    event.target.value = '';
+    event.target.value = ''; // Reset input
   };
 
   return (
     <>
-      <div className="relative inline-block text-left" ref={menuRef}>
-        <Button variant="outline" size="sm" onClick={() => setIsOpen(!isOpen)}>
-          <Download className="h-4 w-4 mr-2" />
-          Export/Import
-        </Button>
-        
-        {isOpen && (
-          <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-popover ring-1 ring-black ring-opacity-5 z-50">
-            <div className="py-1" role="menu">
-              <div className="px-4 py-2 text-sm font-semibold text-popover-foreground border-b border-border">
-                Export Data
-              </div>
-              
-              <button
-                role="menuitem"
-                onClick={() => { setIsOpen(false); exportToJSON(); }}
-                className="w-full text-left px-4 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground flex items-center"
-              >
-                <FileJson className="h-4 w-4 mr-2" />
-                Export all (JSON)
-              </button>
-
-              <button
-                role="menuitem"
-                onClick={() => { setIsOpen(false); exportToCSV('watchlist'); }}
-                className="w-full text-left px-4 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground flex items-center"
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Export Watchlist (CSV)
-              </button>
-
-              <button
-                role="menuitem"
-                onClick={() => { setIsOpen(false); exportToCSV('watched'); }}
-                className="w-full text-left px-4 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground flex items-center"
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Export Watched (CSV)
-              </button>
-
-              <div className="border-b border-border my-1" />
-              <div className="px-4 py-2 text-sm font-semibold text-popover-foreground border-b border-border shadow-sm">
-                Import Data
-              </div>
-
-              <button
-                role="menuitem"
-                onClick={() => { setIsOpen(false); fileInputRef.current?.click(); }}
-                className="w-full text-left px-4 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground flex items-center"
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                Import from JSON
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            Export/Import
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Export Data</DropdownMenuLabel>
+          <DropdownMenuItem onClick={exportToJSON}>
+            <FileJson className="h-4 w-4 mr-2" />
+            Export all (JSON)
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => exportToCSV('watchlist')}>
+            <FileText className="h-4 w-4 mr-2" />
+            Export Watchlist (CSV)
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => exportToCSV('watched')}>
+            <FileText className="h-4 w-4 mr-2" />
+            Export Watched (CSV)
+          </DropdownMenuItem>
+          
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel>Import Data</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+            <Upload className="h-4 w-4 mr-2" />
+            Import from JSON
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <input
         ref={fileInputRef}
@@ -221,9 +161,6 @@ export function ExportImportButton() {
         accept=".json"
         onChange={handleImport}
         className="hidden"
-        aria-label="Import JSON file"
-        title="Import JSON file"
-        placeholder="Import JSON file"
       />
     </>
   );

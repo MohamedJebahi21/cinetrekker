@@ -24,8 +24,9 @@ export function getReleaseTimeInfo(dateString: string | null | undefined): Relea
       // Full ISO datetime
       releaseDate = parseISO(dateString);
     } else {
-      // Date only - assume midnight local time for consistency
-      releaseDate = new Date(dateString + 'T00:00:00');
+      // Date only - assume end of day (23:59) for episodes without specific time
+      // This prevents showing episodes as "released" before the day is actually over
+      releaseDate = new Date(dateString + 'T23:59:00');
     }
   } catch {
     return null;
@@ -90,7 +91,7 @@ export function formatReleaseDateTime(dateString: string | null | undefined, loc
   if (!dateString) return '';
   
   try {
-    const date = dateString.includes('T') ? parseISO(dateString) : new Date(dateString + 'T00:00:00');
+    const date = dateString.includes('T') ? parseISO(dateString) : new Date(dateString + 'T23:59:00');
     
     if (isNaN(date.getTime())) return '';
     

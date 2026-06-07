@@ -1,16 +1,11 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { GENERIC_AUTH_ERROR } from '@/lib/authErrorHandler';
 
-/**
- * OAuth Callback Handler
- * 
- * Handles the redirect from OAuth providers (Google, etc.)
- * Processes the authentication tokens and redirects to home
- */
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -19,43 +14,48 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Check for error in URL params
         const error = searchParams.get('error');
-        const errorDescription = searchParams.get('error_description');
-        
+
         if (error) {
-          throw new Error(errorDescription || error);
+          // Single error path - show generic message
+          toast({
+            title: t('common.error'),
+            description: GENERIC_AUTH_ERROR,
+            variant: 'destructive',
+          });
+          navigate('/login', { replace: true });
+          return;
         }
 
-        // Supabase automatically handles the OAuth callback
-        // We just need to wait for the session to be established
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) throw sessionError;
-        
-        if (session) {
+
+        if (sessionError || !session) {
+          // No session - generic error
           toast({
-            title: t('auth.signIn', 'Sign In'),
-            description: `Welcome ${session.user.email}!`,
+            title: t('common.error'),
+            description: GENERIC_AUTH_ERROR,
+            variant: 'destructive',
           });
-          
-          // Redirect to home after successful authentication
-          navigate('/', { replace: true });
-        } else {
-          // No session found, redirect to auth page
-          throw new Error('No session established');
+          navigate('/login', { replace: true });
+          return;
         }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to complete sign in';
-        console.error('OAuth callback error:', error);
+
+        // Success path
         toast({
-          title: t('common.error', 'Error'),
-          description: errorMessage,
+          title: t('auth.signIn'),
+          description: 'Welcome!',
+        });
+        navigate('/', { replace: true });
+      } catch {
+        // Catch block - do NOT log error object
+        console.warn('[Auth] Callback processed');
+        
+        toast({
+          title: t('common.error'),
+          description: GENERIC_AUTH_ERROR,
           variant: 'destructive',
         });
-        
-        // Redirect to auth page on error
-        navigate('/auth', { replace: true });
+        navigate('/login', { replace: true });
       }
     };
 
@@ -63,9 +63,9 @@ export default function AuthCallback() {
   }, [navigate, searchParams, t]);
 
   return (
-    <div className="page-container pt-20 flex flex-col items-center justify-center min-h-[70vh]">
-      <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
-      <p className="text-muted-foreground">{t('auth.completing', 'Completing sign in...')}</p>
+    <div className="page-container pt-20 flex flex-col items-center justify-center min-h-[70vh] pb-24 md:pb-0">
+      <Skeleton className="backdrop-skeleton w-48 mb-4" />
+      <p className="text-muted-foreground">{t('auth.completing', 'Processing...')}</p>
     </div>
   );
 }

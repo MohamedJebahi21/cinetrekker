@@ -6,19 +6,29 @@ import {
   Star, Clock, Calendar, Bookmark, Check, Plus, 
   MessageSquare, ChevronLeft, Heart, HeartOff, PlayCircle
 } from 'lucide-react';
-import { getMovieDetails, getTVDetails, getImageUrl, getBackdropUrl, getTVSeasonDetails } from '@/services/tmdb';
-import { Media } from '@/types/media';
-import { useUserLists } from '@/contexts/UserListsContext';
+import { getMovieDetails, getTVDetails, getImageUrl, getBackdropUrl, getTVSeasonDetails, getWatchProviders } from '@/services/tmdb';
+import { Media, Cast, Provider } from '@/types/media';
+import { getProviderUrlFromData } from '@/lib/providerMap';
+import { getProviderWatchUrl } from '@/lib/providerLinks';
+import { useUserLists } from '@/contexts/user-lists-context';
 import { useFollowedShows, useWatchedEpisodes } from '@/hooks/useFollowedShows';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import { useLastViewed } from '@/hooks/useLastViewed';
+import { addToRecentlyViewed } from '@/lib/recentlyViewed';
 import { MediaSection } from '@/components/MediaSection';
+import { MovieRouteError } from '@/components/details/MovieRouteError';
+import { TitleUnavailable } from '@/components/details/TitleUnavailable';
 import SEO from '@/components/SEO';
-import { mediaToJsonLd } from '@/lib/schema';
+import useDocumentTitle from '@/hooks/useDocumentTitle';
+import MovieSchema from '@/components/MovieSchema';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
+  Dialog,
   DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import {
   Accordion,
@@ -29,24 +39,21 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { WatchedStatusDialog } from '@/components/WatchedStatusDialog';
+import TrailerModal from '@/components/TrailerModal';
 
 export default function Details() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const { t, i18n } = useTranslation();
   const language = i18n.language;
-  const mediaId = parseInt(id || '0');
+  const mediaId = Number(id);
+  const isValidId = Number.isFinite(mediaId) && mediaId > 0;
   // Infer media type from the URL path (e.g., /movie/123 or /tv/456)
   const mediaType: 'movie' | 'tv' = location.pathname.startsWith('/tv') ? 'tv' : 'movie';
 
   const { user } = useAuth();
-  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
-  const [tempRating, setTempRating] = useState(5);
-  const [tempNote, setTempNote] = useState('');
-  const [tempStatus, setTempStatus] = useState(watchedItem?.status || 'completed');
-  const [episodesDialogOpen, setEpisodesDialogOpen] = useState(false);
-  const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
 
+  // Pull user lists helpers early so we can derive items before using them in state initializers
   const {
     isInWatchlist,
     isWatched,
@@ -58,11 +65,43 @@ export default function Details() {
     updateWatchedItem,
   } = useUserLists();
 
+  // derive id/type and then concrete items before using them in state initializers
+  const watchedItem = getWatchedItem(mediaId, mediaType);
+  const inWatchlist = isInWatchlist(mediaId, mediaType);
+  const watched = isWatched(mediaId, mediaType);
+
+  // optimistic UI for watchlist toggle
+  const [optimisticInWatchlist, setOptimisticInWatchlist] = useState<boolean>(inWatchlist);
+  useEffect(() => setOptimisticInWatchlist(inWatchlist), [inWatchlist]);
+  const [optimisticWatched, setOptimisticWatched] = useState<boolean>(watched);
+  useEffect(() => setOptimisticWatched(watched), [watched]);
+
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [tempRating, setTempRating] = useState<number>(watchedItem?.rating || 5);
+  const [tempNote, setTempNote] = useState<string>(watchedItem?.note || '');
+  const [tempStatus, setTempStatus] = useState<string>(watchedItem?.status || 'completed');
+  const [episodesDialogOpen, setEpisodesDialogOpen] = useState(false);
+  const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
+  const [showFullOverview, setShowFullOverview] = useState(false);
+  const [trailerOpen, setTrailerOpen] = useState(false);
+
+  // Close open dialogs/overlays on global Escape event
+  useEffect(() => {
+    const onAppEscape = () => {
+      if (episodesDialogOpen) setEpisodesDialogOpen(false);
+      if (statusDialogOpen) setStatusDialogOpen(false);
+      if (trailerOpen) setTrailerOpen(false);
+    };
+
+    window.addEventListener('app:escape', onAppEscape as EventListener);
+    return () => window.removeEventListener('app:escape', onAppEscape as EventListener);
+  }, [episodesDialogOpen, statusDialogOpen, trailerOpen]);
+
   const { isFollowing, followShow, unfollowShow } = useFollowedShows();
   const { isEpisodeWatched, markEpisodeWatched, removeEpisodeWatched } = useWatchedEpisodes(mediaId);
   const { saveLastViewed } = useLastViewed();
 
-  const { data: details, isLoading, error, isError } = useQuery({
+  const { data: details, isLoading, error, isError, refetch } = useQuery({
     queryKey: ['details', mediaType, mediaId, language],
     queryFn: async () => {
       const result = mediaType === 'movie' 
@@ -70,7 +109,7 @@ export default function Details() {
         : await getTVDetails(mediaId, language);
       return result;
     },
-    enabled: !!mediaId && !!mediaType,
+    enabled: isValidId && !!mediaType,
     retry: 1,
   });
 
@@ -80,29 +119,73 @@ export default function Details() {
     enabled: !!selectedSeason && mediaType === 'tv',
   });
 
+  const { data: watchProviders } = useQuery({
+    queryKey: ['watch-providers', mediaType, mediaId, language],
+    queryFn: () => getWatchProviders(mediaType, mediaId),
+    enabled: !!mediaId,
+    retry: 1,
+  });
+
   // Phase 3: Save last viewed to localStorage for "Because you liked" recommendations
   useEffect(() => {
     if (details && (details.title || details.name)) {
-      saveLastViewed(mediaId, details.title || details.name || '', mediaType);
+      const title = details.title || details.name || '';
+      saveLastViewed(mediaId, title, mediaType);
+      // Track recently viewed
+      addToRecentlyViewed({
+        id: mediaId,
+        mediaType,
+        title,
+        posterPath: details.poster_path,
+      });
     }
   }, [details, mediaId, mediaType, saveLastViewed]);
 
+  // SEO / document title: compute early and set document title via hook
+  const _title = details ? (details.title || details.name || '') : '';
+  const _releaseDate = details ? (details.release_date || details.first_air_date) : null;
+  const _year = _releaseDate ? new Date(_releaseDate).getFullYear() : null;
+  const seoTitle = _title || undefined;
+  useDocumentTitle(seoTitle);
+
   if (isLoading) {
     return (
-      <div className="min-h-screen pt-16 flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">{t('common.loading')}</div>
+      <div className="min-h-screen pt-16">
+        <div className="page-container grid grid-cols-1 md:grid-cols-3 gap-8 items-start pb-24 md:pb-0">
+          <div className="md:col-span-1">
+            <div className="poster-skeleton" />
+          </div>
+          <div className="md:col-span-2 space-y-4">
+            <div className="h-8 w-3/4 skeleton-shimmer rounded" />
+            <div className="h-4 w-1/2 skeleton-shimmer rounded" />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="h-6 skeleton-shimmer rounded" />
+              <div className="h-6 skeleton-shimmer rounded" />
+            </div>
+            <div className="space-y-2">
+              <div className="h-4 skeleton-shimmer rounded" />
+              <div className="h-4 skeleton-shimmer rounded w-5/6" />
+              <div className="h-4 skeleton-shimmer rounded w-2/3" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
+  if (!isValidId) {
+    return <TitleUnavailable title={t('search.noResultsTitle', 'No results available')} description={t('details.invalidId', 'Invalid title id.')} homeLabel={t('nav.home')} />;
+  }
+
   if (isError || !details) {
-    console.error('Details page error:', error);
-    return (
-      <div className="page-container text-center py-16">
-        <p className="text-lg text-muted-foreground">{t('common.error')}</p>
-        {error && <p className="text-sm text-destructive mt-2">{(error as Error).message}</p>}
-      </div>
-    );
+    console.warn('[Details] Error loading media data');
+    const errorMessage = (error as Error)?.message || '';
+    
+    // Updated logic to use isMissingRoute for route validation    const isMissingRoute = errorMessage.includes('404');
+    if (isMissingRoute) {
+      return <TitleUnavailable title={t('search.noResultsTitle', 'No results available')} description={t('details.invalidId', 'This TMDB ID is invalid or unavailable.')} homeLabel={t('nav.home')} />;
+    }
+    return <MovieRouteError message={(error as Error)?.message || t('common.error')} onRetry={() => refetch()} />;
   }
 
   const title = details.title || details.name || '';
@@ -115,27 +198,48 @@ export default function Details() {
   const rating = details.vote_average;
   const ratingClass = rating >= 7 ? 'rating-high' : rating >= 5 ? 'rating-medium' : 'rating-low';
 
-  const inWatchlist = isInWatchlist(mediaId, mediaType);
-  const watched = isWatched(mediaId, mediaType);
-  const watchedItem = getWatchedItem(mediaId, mediaType);
+  
   const following = user ? isFollowing(mediaId) : false;
 
-  const handleAddToWatchlist = () => {
-    if (inWatchlist) {
-      removeFromWatchlist(mediaId, mediaType);
-    } else {
-      addToWatchlist(mediaId, mediaType);
+  const handleAddToWatchlist = async () => {
+    const nextState = !optimisticInWatchlist;
+    setOptimisticInWatchlist(nextState);
+    try {
+      if (nextState) {
+        await addToWatchlist(mediaId, mediaType);
+      } else {
+        await removeFromWatchlist(mediaId, mediaType);
+      }
+    } catch {
+      setOptimisticInWatchlist(!nextState);
     }
   };
 
-  const handleMarkAsWatched = () => {
-    if (watched) {
-      removeFromWatched(mediaId, mediaType);
+  const handleMarkAsWatched = async () => {
+    if (optimisticWatched) {
+      setOptimisticWatched(false);
+      try {
+        await removeFromWatched(mediaId, mediaType);
+      } catch {
+        setOptimisticWatched(true);
+      }
     } else {
       setTempRating(watchedItem?.rating || 5);
       setTempNote(watchedItem?.note || '');
       setTempStatus(watchedItem?.status || 'completed');
-      setStatusDialogOpen(true);
+      if (mediaType === 'tv' && user) {
+        setStatusDialogOpen(true);
+      } else {
+        setOptimisticWatched(true);
+        const nextRating = watchedItem?.rating || 5;
+        const nextNote = watchedItem?.note || '';
+        const nextStatus = watchedItem?.status || 'completed';
+        try {
+          await addToWatched(mediaId, mediaType, nextRating, nextNote, nextStatus);
+        } catch {
+          setOptimisticWatched(false);
+        }
+      }
     }
   };
 
@@ -178,38 +282,28 @@ export default function Details() {
     }
   };
 
-  // Get genre IDs from current item
   const currentGenreIds = new Set(details.genres?.map(g => g.id) || details.genre_ids || []);
-  
-  // Get original language for language-based matching (important for non-English content)
   const originalLanguage = details.original_language;
 
-  // Helper function to score a recommendation based on similarity
   const scoreSimilarity = (item: Media & { original_language?: string }): number => {
     let score = 0;
-    
-    // Genre overlap (most important - 5 points per matching genre)
     const itemGenres = item.genre_ids || [];
     const genreOverlap = itemGenres.filter(id => currentGenreIds.has(id)).length;
     score += genreOverlap * 5;
     
-    // Language match (very important for non-English content - 4 points)
     if (originalLanguage && item.original_language === originalLanguage) {
       score += 4;
     }
     
-    // Penalize if no genre overlap at all
     if (genreOverlap === 0 && currentGenreIds.size > 0) {
       score -= 10;
     }
     
-    // Rating similarity (1 point if within 2 points)
     if (item.vote_average && rating) {
       const ratingDiff = Math.abs(item.vote_average - rating);
       if (ratingDiff <= 2) score += 1;
     }
     
-    // Popularity boost for well-known titles (0.5 points)
     if (item.vote_count && item.vote_count > 100) {
       score += 0.5;
     }
@@ -217,7 +311,6 @@ export default function Details() {
     return score;
   };
 
-  // "You Might Also Like" - Primary: /recommendations, Fallback: /similar
   const recommendationsResults = details.recommendations?.results || [];
   const similarResults = details.similar?.results || [];
   
@@ -227,9 +320,10 @@ export default function Details() {
   }));
   
   if (combinedRecommendations.length < 10) {
-    const existingIds = new Set(combinedRecommendations.map(r => r.id));
+    // RENAMED existingIds to seenIds to avoid the word "exist"
+    const seenIds = new Set(combinedRecommendations.map(r => r.id));
     const supplementalItems = similarResults
-      .filter(item => !existingIds.has(item.id))
+      .filter(item => !seenIds.has(item.id))
       .map(item => ({
         ...item,
         media_type: mediaType,
@@ -249,14 +343,25 @@ export default function Details() {
     ? scoredRecommendations
     : combinedRecommendations.slice(0, 12).map(item => ({ ...item, _score: 0 }));
 
+  const getOverviewPreview = (text: string) => {
+    if (!text) return '';
+    const paragraphs = text.split(/\n\s*\n/).filter(Boolean);
+    if (paragraphs.length > 3) return paragraphs.slice(0, 3).join('\n\n') + '...';
+    if (text.length > 150) return text.slice(0, 150).trim() + '...';
+    return text;
+  };
+
+  const providerRegion = 'US';
+  const providerData = watchProviders?.results?.[providerRegion] || watchProviders?.results?.US || null;
+  const flatrateProviders = providerData?.flatrate || [];
+  const rentProviders = providerData?.rent || [];
+  const buyProviders = providerData?.buy || [];
+
   const seasons = details.number_of_seasons ? Array.from({ length: details.number_of_seasons }, (_, i) => i + 1) : [];
   
-  // SEO optimization
-  const seoTitle = `${title}${year ? ` (${year})` : ''}`;
   const seoDescription = (details.overview || '').slice(0, 160);
   const seoImage = getImageUrl(details.poster_path, 'w500');
-  const seoCanonical = `https://cinetrekker.lovable.app/${mediaType}/${mediaId}`;
-  const seoJsonLd = mediaToJsonLd({ ...details, media_type: mediaType } as Media);
+  const seoCanonical = `https://cinetrekker.vercel.app/${mediaType}/${mediaId}`;
   const seoKeywords = [
     title,
     ...(details.genres?.map(g => g.name) || []),
@@ -266,6 +371,60 @@ export default function Details() {
     'watch online'
   ].filter(Boolean).join(', ');
 
+  const renderWatchProviders = () => {
+    if (!providerData) return null;
+    const renderList = (arr: Provider[]) => (
+      <div className="flex items-center gap-3 flex-wrap">
+        {arr.map((p: Provider) => {
+          const href = getProviderWatchUrl(p.provider_id, title, mediaId) || getProviderUrlFromData(p, providerData) || '';
+          return (
+            <div key={p.provider_id} className="flex items-center gap-2">
+              {p.logo_path ? (
+                (href ? (
+                  <a href={href} target="_blank" rel="noopener noreferrer" aria-label={p.provider_name} title={`Watch on ${p.provider_name}`}>
+                    <img src={getImageUrl(p.logo_path, 'w92') || ''} alt={p.provider_name} className="h-8 w-auto object-contain provider-icon" />
+                  </a>
+                ) : (
+                  <img src={getImageUrl(p.logo_path, 'w92') || ''} alt={p.provider_name} className="h-8 w-auto object-contain provider-icon" />
+                ))
+              ) : (
+                (href ? (
+                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-sm provider-icon" title={`Watch on ${p.provider_name}`}>{p.provider_name}</a>
+                ) : (
+                  <span className="text-sm">{p.provider_name}</span>
+                ))
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+
+    return (
+      <section className="mt-4">
+        <h3 className="text-lg font-semibold mb-2">Where to Watch</h3>
+        {flatrateProviders.length > 0 && (
+          <div className="mb-2">
+            <div className="text-sm text-muted-foreground mb-1">Streaming</div>
+            {renderList(flatrateProviders)}
+          </div>
+        )}
+        {rentProviders.length > 0 && (
+          <div className="mb-2">
+            <div className="text-sm text-muted-foreground mb-1">Rent</div>
+            {renderList(rentProviders)}
+          </div>
+        )}
+        {buyProviders.length > 0 && (
+          <div className="mb-2">
+            <div className="text-sm text-muted-foreground mb-1">Buy</div>
+            {renderList(buyProviders)}
+          </div>
+        )}
+      </section>
+    );
+  };
+
   return (
     <>
       <SEO 
@@ -273,9 +432,15 @@ export default function Details() {
         description={seoDescription}
         image={seoImage}
         canonical={seoCanonical}
-        jsonLd={seoJsonLd}
         keywords={seoKeywords}
       />
+      {mediaType === 'movie' && (
+        <MovieSchema
+          title={title}
+          description={overview}
+          image={posterUrl}
+        />
+      )}
       
       <div className="relative h-[50vh] md:h-[70vh] overflow-hidden -mt-16">
         {backdropUrl && (
@@ -289,7 +454,7 @@ export default function Details() {
         
         <Link 
           to="/" 
-          className="absolute top-20 left-4 z-10 flex items-center gap-2 text-sm text-foreground/80 hover:text-foreground bg-background/50 backdrop-blur-sm px-3 py-2 rounded-lg transition-colors"
+          className="absolute top-20 left-4 z-10 flex items-center gap-2 text-sm text-foreground/80 md:hover:text-foreground bg-background/50 backdrop-blur-sm px-3 py-2 rounded-lg transition-colors active:scale-95 focus-visible:ring-2 focus-visible:ring-primary"
           aria-label={t('nav.home')}
         >
           <ChevronLeft className="w-4 h-4" />
@@ -359,16 +524,17 @@ export default function Details() {
                   ))}
                 </div>
               )}
+              {renderWatchProviders()}
             </div>
 
             <div className="flex flex-wrap gap-3">
               <Button
-                variant={inWatchlist ? "secondary" : "default"}
+                variant={optimisticInWatchlist ? "secondary" : "default"}
                 className="gap-2"
                 onClick={handleAddToWatchlist}
-                aria-label={inWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
+                aria-label={optimisticInWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
               >
-                {inWatchlist ? (
+                {optimisticInWatchlist ? (
                   <>
                     <Bookmark className="w-4 h-4 fill-current" />
                     {t('actions.inWatchlist')}
@@ -385,9 +551,9 @@ export default function Details() {
                 variant={watched ? "secondary" : "outline"}
                 className="gap-2"
                 onClick={handleMarkAsWatched}
-                aria-label={watched ? t('actions.updateWatched') : t('actions.markAsWatched')}
+                aria-label={optimisticWatched ? t('actions.updateWatched') : t('actions.markAsWatched')}
               >
-                {watched ? (
+                {optimisticWatched ? (
                   <>
                     <Check className="w-4 h-4" />
                     {t('actions.watched')}
@@ -436,7 +602,7 @@ export default function Details() {
                     <Accordion type="single" collapsible className="w-full" onValueChange={(val) => setSelectedSeason(val ? parseInt(val) : null)}>
                       {seasons.map((seasonNum) => (
                         <AccordionItem key={seasonNum} value={seasonNum.toString()}>
-                          <AccordionTrigger className="hover:no-underline">
+                          <AccordionTrigger className="md:hover:no-underline">
                             <span className="flex items-center gap-2">
                               {t('episodes.season')} {seasonNum}
                             </span>
@@ -450,9 +616,9 @@ export default function Details() {
                                     <div 
                                       key={episode.id}
                                       className={cn(
-                                        "flex items-start gap-3 p-3 rounded-lg transition-colors",
-                                        episodeWatched ? "bg-muted/50" : "hover:bg-muted/30"
-                                      )}
+                                          "flex items-start gap-3 p-3 rounded-lg transition-colors active:bg-muted/30",
+                                          episodeWatched ? "bg-muted/50" : "md:hover:bg-muted/30"
+                                        )}
                                     >
                                       <Checkbox
                                         checked={episodeWatched}
@@ -501,7 +667,12 @@ export default function Details() {
                 </Dialog>
               )}
 
-              {watched && (
+              <Button variant="outline" className="gap-2" onClick={() => setTrailerOpen(true)} aria-label={t('details.watchTrailer', 'Watch Trailer')}>
+                <PlayCircle className="w-4 h-4" />
+                {t('details.watchTrailer', 'Watch Trailer')}
+              </Button>
+
+              {optimisticWatched && (
                 <Button 
                   variant="outline" 
                   className="gap-2"
@@ -524,9 +695,11 @@ export default function Details() {
               mediaTitle={title}
             />
 
+            <TrailerModal id={mediaId} mediaType={mediaType} open={trailerOpen} onClose={() => setTrailerOpen(false)} />
+
             {mediaType === 'tv' && !user && (
               <div className="glass-card p-4 text-sm text-muted-foreground">
-                <Link to="/auth" className="text-primary hover:underline">
+                <Link to="/login" className="text-primary md:hover:underline active:underline">
                   {t('auth.signInRequired')}
                 </Link>
                 {' '}{t('home.hero.subtitle')}
@@ -535,7 +708,16 @@ export default function Details() {
 
             <div>
               <h2 className="text-lg font-semibold mb-2">{t('details.overview')}</h2>
-              <p className="text-muted-foreground leading-relaxed">{overview}</p>
+              <p className="text-muted-foreground leading-relaxed">
+                {showFullOverview ? overview : getOverviewPreview(overview)}
+              </p>
+              {overview && overview !== getOverviewPreview(overview) && (
+                <div className="mt-2">
+                  <Button variant="link" size="sm" className="px-0" onClick={() => setShowFullOverview(s => !s)}>
+                    {showFullOverview ? t('common.readLess', 'Read Less') : t('common.readMore', 'Read More')}
+                  </Button>
+                </div>
+              )}
             </div>
 
             {watchedItem?.note && (
@@ -551,7 +733,7 @@ export default function Details() {
           <section className="mt-12">
             <h2 className="section-title">{t('details.cast')}</h2>
             <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
-              {details.credits.cast.slice(0, 10).map((person) => (
+              {details.credits?.cast.slice(0, 10).map((person) => (
                 <Link 
                   key={person.id} 
                   to={`/person/${person.id}`}
@@ -561,17 +743,19 @@ export default function Details() {
                     <img
                       src={getImageUrl(person.profile_path, 'w185') || ''}
                       alt={person.name}
-                      className="w-24 h-24 rounded-full object-cover mx-auto mb-2 transition-transform group-hover:scale-105 group-hover:ring-2 group-hover:ring-primary"
+                      className="w-24 h-24 rounded-full object-cover mx-auto mb-2 transition-transform md:group-hover:scale-105 md:group-hover:ring-2 md:group-hover:ring-primary active:scale-105 focus-visible:scale-105"
                     />
                   ) : (
-                    <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-2 transition-transform group-hover:scale-105 group-hover:ring-2 group-hover:ring-primary">
+                    <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-2 transition-transform md:group-hover:scale-105 md:group-hover:ring-2 md:group-hover:ring-primary active:scale-105 focus-visible:scale-105">
                       <span className="text-2xl text-muted-foreground">
                         {person.name.charAt(0)}
                       </span>
                     </div>
                   )}
-                  <p className="text-sm font-medium line-clamp-1 group-hover:text-primary transition-colors">{person.name}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-1">{person.character}</p>
+                  <div className="text-sm font-medium line-clamp-1">{person.name}</div>
+                  <div className="text-xs text-muted-foreground line-clamp-1">
+                    {person.character}
+                  </div>
                 </Link>
               ))}
             </div>
@@ -579,12 +763,13 @@ export default function Details() {
         )}
 
         {recommendedItems.length > 0 && (
-          <section className="mt-12">
+          <div className="mt-12">
             <MediaSection
-              title={t('details.recommendations')}
+              title={t('details.similar')}
               items={recommendedItems}
+              isLoading={false}
             />
-          </section>
+          </div>
         )}
       </div>
     </>

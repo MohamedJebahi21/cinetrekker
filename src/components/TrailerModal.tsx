@@ -1,25 +1,24 @@
-import React, { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { X } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { getMovieVideos, getTVVideos, VideoResult } from "@/services/tmdb";
+import React, { useEffect, useRef, useState } from 'react';
+import { X } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { getMovieVideos, getTVVideos, VideoResult } from '@/services/tmdb';
 
 type Props = {
   id: number;
-  mediaType: "movie" | "tv";
+  mediaType: 'movie' | 'tv';
   open: boolean;
   onClose: () => void;
 };
 
 export default function TrailerModal({ id, mediaType, open, onClose }: Props) {
+  const backdropRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [selected, setSelected] = useState<VideoResult | null>(null);
 
-  const queryKey = ["videos", mediaType, id];
+  const queryKey = ['videos', mediaType, id];
   const { data, isLoading } = useQuery<{ results: VideoResult[] } | undefined>({
     queryKey,
-    queryFn: () =>
-      mediaType === "movie" ? getMovieVideos(id) : getTVVideos(id),
+    queryFn: () => (mediaType === 'movie' ? getMovieVideos(id) : getTVVideos(id)),
     enabled: open && !!id,
     staleTime: 1000 * 60 * 10,
   });
@@ -29,10 +28,9 @@ export default function TrailerModal({ id, mediaType, open, onClose }: Props) {
       setSelected(null);
       return;
     }
-    const trailer =
-      data.results.find((v) => v.type === "Trailer" && v.site === "YouTube") ||
-      data.results.find((v) => v.site === "YouTube") ||
-      data.results[0];
+    const trailer = data.results.find(v => v.type === 'Trailer' && v.site === 'YouTube')
+      || data.results.find(v => v.site === 'YouTube')
+      || data.results[0];
     setSelected(trailer || null);
   }, [data]);
 
@@ -40,10 +38,10 @@ export default function TrailerModal({ id, mediaType, open, onClose }: Props) {
   useEffect(() => {
     if (!open) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === 'Escape') onClose();
     };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
   }, [open, onClose]);
 
   // Click outside handler
@@ -55,26 +53,15 @@ export default function TrailerModal({ id, mediaType, open, onClose }: Props) {
         onClose();
       }
     };
-    document.addEventListener("mousedown", handleMouseDown);
-    return () => document.removeEventListener("mousedown", handleMouseDown);
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
   }, [open, onClose]);
-
-  // Lock page scroll while modal is open
-  useEffect(() => {
-    if (!open) return;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [open]);
 
   if (!open) return null;
 
-  const modal = (
+  return (
     <div
+      ref={backdropRef}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
       aria-modal="true"
       role="dialog"
@@ -94,14 +81,12 @@ export default function TrailerModal({ id, mediaType, open, onClose }: Props) {
         <div className="w-full bg-black">
           {isLoading ? (
             <div className="flex items-center justify-center h-56 md:h-[360px]">
-              <div className="text-sm text-muted-foreground">
-                Loading trailer…
-              </div>
+              <div className="text-sm text-muted-foreground">Loading trailer…</div>
             </div>
           ) : selected ? (
             <div className="w-full aspect-video">
               <iframe
-                title={selected.name || "Trailer"}
+                title={selected.name || 'Trailer'}
                 src={`https://www.youtube.com/embed/${selected.key}?rel=0`}
                 className="w-full h-full"
                 frameBorder="0"
@@ -118,6 +103,4 @@ export default function TrailerModal({ id, mediaType, open, onClose }: Props) {
       </div>
     </div>
   );
-
-  return createPortal(modal, document.body);
 }

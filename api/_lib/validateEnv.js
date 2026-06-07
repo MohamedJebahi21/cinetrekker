@@ -1,58 +1,83 @@
-import {
-  getMissingServerEnv,
-  getServerEnv,
-  isServerProduction,
-} from "./env.js";
-import { createServerLogger } from "./logger.js";
+/**
+ * Environment Variable Validation Utility
+ * 
+ * Validates required environment variables for serverless functions
+ * Throws descriptive errors if any are missing in production
+ * 
+ * Usage:
+ * ```javascript
+ * const { validateEnv } = require('./_lib/validateEnv');
+ * 
+ * // At the top of your serverless function
+ * validateEnv(['OPENAI_API_KEY', 'TMDB_API_KEY']);
+ * ```
+ */
 
-const logger = createServerLogger("env");
-
-export function validateEnv(required) {
+/**
+ * Validates that required environment variables are set
+ * @param {string[]} required - Array of required environment variable names
+ * @throws {Error} In production if any required variables are missing
+ */
+function validateEnv(required) {
   if (!Array.isArray(required) || required.length === 0) {
-    throw new Error(
-      "validateEnv requires an array of environment variable names",
-    );
+    throw new Error('validateEnv requires an array of environment variable names');
   }
 
-  const missing = getMissingServerEnv(required);
-
+  const missing = required.filter(key => !process.env[key]);
+  
   if (missing.length === 0) {
+    // All required variables present
     return;
   }
 
-  if (!isServerProduction()) {
-    logger.warn(
-      `Missing environment variables in development: ${missing.join(", ")}.`,
+  // In development, log warning but don't throw
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn(
+      `⚠️  Missing environment variables in development: ${missing.join(', ')}\n` +
+      `   Add these to your .env.local file (see .env.example for reference)`
     );
-    logger.warn("Add them to .env.local or your Vercel environment settings.");
     return;
   }
 
-  const errorMessage =
-    `Missing required environment variables: ${missing.join(", ")}\n\n` +
-    "Configure these in Vercel Dashboard:\n" +
-    "  1. Go to: https://vercel.com/dashboard -> Your Project -> Settings\n" +
-    "  2. Navigate to: Environment Variables\n" +
-    "  3. Add each missing variable with its value\n" +
-    "  4. Redeploy your application\n\n" +
-    "See .env.example for variable descriptions and how to obtain API keys.";
-
+  // In production, throw error
+  const errorMessage = 
+    `❌ Missing required environment variables: ${missing.join(', ')}\n\n` +
+    `Configure these in Vercel Dashboard:\n` +
+    `  1. Go to: https://vercel.com/dashboard → Your Project → Settings\n` +
+    `  2. Navigate to: Environment Variables\n` +
+    `  3. Add each missing variable with its value\n` +
+    `  4. Redeploy your application\n\n` +
+    `See .env.example for variable descriptions and how to obtain API keys.`;
+  
   throw new Error(errorMessage);
 }
 
-export function validateEnvFormat(rules) {
+/**
+ * Validates that environment variables match expected patterns
+ * @param {Object} rules - Object mapping env var names to validation rules
+ * @returns {Object} Validation results
+ * 
+ * Example:
+ * ```javascript
+ * validateEnvFormat({
+ *   OPENAI_API_KEY: { pattern: /^sk-/, message: 'OpenAI key must start with sk-' },
+ *   SUPABASE_URL: { pattern: /^https:\/\/.+\.supabase\.co$/, message: 'Invalid Supabase URL' }
+ * });
+ * ```
+ */
+function validateEnvFormat(rules) {
   const errors = [];
 
   for (const [key, rule] of Object.entries(rules)) {
-    const value = getServerEnv(key);
-
+    const value = process.env[key];
+    
     if (!value) {
       errors.push(`${key}: Missing`);
       continue;
     }
 
     if (rule.pattern && !rule.pattern.test(value)) {
-      errors.push(`${key}: ${rule.message || "Invalid format"}`);
+      errors.push(`${key}: ${rule.message || 'Invalid format'}`);
     }
 
     if (rule.minLength && value.length < rule.minLength) {
@@ -61,26 +86,38 @@ export function validateEnvFormat(rules) {
   }
 
   if (errors.length > 0) {
-    logger.error("Environment variable validation errors:");
-    errors.forEach((err) => logger.error(`  - ${err}`));
-
-    if (isServerProduction()) {
-      throw new Error(`Environment validation failed: ${errors.join("; ")}`);
+    console.error('Environment variable validation errors:');
+    errors.forEach(err => console.error(`  - ${err}`));
+    
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(`Environment validation failed: ${errors.join('; ')}`);
     }
   }
 
   return { valid: errors.length === 0, errors };
 }
 
-export function isProduction() {
-  return isServerProduction();
+/**
+ * Checks if running in a production environment
+ * @returns {boolean}
+ */
+function isProduction() {
+  return process.env.NODE_ENV === 'production' || 
+         process.env.VERCEL_ENV === 'production';
 }
 
-export function getEnv(key, defaultValue = "", required = false) {
-  const value = getServerEnv(key);
+/**
+ * Gets environment variable with fallback and optional validation
+ * @param {string} key - Environment variable name
+ * @param {string} [defaultValue] - Fallback value if not set
+ * @param {boolean} [required=false] - Throw error if missing in production
+ * @returns {string}
+ */
+function getEnv(key, defaultValue = '', required = false) {
+  const value = process.env[key];
 
   if (!value) {
-    if (required && isServerProduction()) {
+    if (required && isProduction()) {
       throw new Error(`Required environment variable missing: ${key}`);
     }
     return defaultValue;
@@ -88,3 +125,10 @@ export function getEnv(key, defaultValue = "", required = false) {
 
   return value;
 }
+
+module.exports = {
+  validateEnv,
+  validateEnvFormat,
+  isProduction,
+  getEnv,
+};

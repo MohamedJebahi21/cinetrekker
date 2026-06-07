@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { siteMetadata } from '@/lib/metadata';
 
 export interface SEOProps {
   title?: string;
@@ -11,9 +12,18 @@ export interface SEOProps {
   keywords?: string;
 }
 
-const DEFAULT_TITLE = 'CineTrekker — Discover & Track Movies & TV Shows | Trending Now';
-const DEFAULT_DESCRIPTION = 'Track your favorite movies and TV shows. Discover trending content, manage your watchlist, and get personalized recommendations.';
-const DEFAULT_IMAGE = 'https://cinetrekker.lovable.app/og-image.png';
+const SITE_NAME = siteMetadata.siteName;
+const TITLE_TEMPLATE = `%s | ${SITE_NAME}`;
+const DEFAULT_TITLE = siteMetadata.title;
+const DEFAULT_DESCRIPTION = siteMetadata.description;
+const DEFAULT_IMAGE = siteMetadata.openGraph.images[0];
+
+const formatTitle = (title?: string) => {
+  if (!title) return DEFAULT_TITLE;
+  return title.toLowerCase().includes(SITE_NAME.toLowerCase())
+    ? title
+    : TITLE_TEMPLATE.replace('%s', title);
+};
 
 export function SEO({ 
   title, 
@@ -27,10 +37,11 @@ export function SEO({
   const location = useLocation();
 
   useEffect(() => {
-    // Set page title with brand suffix
-    const fullTitle = title 
-      ? `${title} — CineTrekker` 
-      : DEFAULT_TITLE;
+    const fullTitle = formatTitle(title);
+    const descriptionText = description || DEFAULT_DESCRIPTION;
+    const urlValue = canonical || url || `${siteMetadata.canonical}${location.pathname}`;
+    const imageValue = image || DEFAULT_IMAGE;
+
     document.title = fullTitle;
 
     // Helper function to set meta tags
@@ -55,29 +66,34 @@ export function SEO({
     };
 
     // Set meta tags
-    setMeta('description', description || DEFAULT_DESCRIPTION);
+    setMeta('description', descriptionText);
     if (keywords) setMeta('keywords', keywords);
     
-    // Open Graph
+    // Open Graph (for Discord, Twitter, etc.)
+    setProp('og:site_name', SITE_NAME);
+    setProp('og:type', siteMetadata.openGraph.type);
+    setProp('og:locale', siteMetadata.openGraph.locale);
     setProp('og:title', fullTitle);
-    setProp('og:description', description || DEFAULT_DESCRIPTION);
-    setProp('og:image', image || DEFAULT_IMAGE);
-    setProp('og:url', url || window.location.href);
+    setProp('og:description', descriptionText);
+    setProp('og:image', imageValue);
+    setProp('og:url', urlValue);
     
     // Twitter Card
+    setMeta('twitter:card', siteMetadata.twitter.card);
     setMeta('twitter:title', fullTitle);
-    setMeta('twitter:description', description || DEFAULT_DESCRIPTION);
-    setMeta('twitter:image', image || DEFAULT_IMAGE);
+    setMeta('twitter:description', descriptionText);
+    setMeta('twitter:image', imageValue);
+    setMeta('twitter:image:alt', siteMetadata.twitter.imageAlt);
 
     // Canonical URL
-    if (canonical) {
+    if (urlValue) {
       let link: HTMLLinkElement | null = document.querySelector("link[rel='canonical']");
       if (!link) {
         link = document.createElement('link');
         link.setAttribute('rel', 'canonical');
         document.head.appendChild(link);
       }
-      link.setAttribute('href', canonical);
+      link.setAttribute('href', urlValue);
     }
 
     // JSON-LD Structured Data

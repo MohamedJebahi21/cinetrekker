@@ -29,6 +29,17 @@ const resources = {
   de: { translation: de },
 };
 
+const isDev = (typeof import.meta !== 'undefined' && (import.meta as Record<string, unknown>).env?.DEV) || process.env.NODE_ENV !== 'production';
+
+function lastSegmentTitleCase(key: string) {
+  const seg = key.split('.').pop() || key;
+  return seg
+    .replace(/[_-]+/g, ' ')
+    .split(/\s+/)
+    .map((s) => (s ? s[0].toUpperCase() + s.slice(1) : ''))
+    .join(' ');
+}
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -36,12 +47,23 @@ i18n
     resources,
     fallbackLng: 'en',
     supportedLngs: languages.map(l => l.code),
+    load: 'languageOnly',
+    nonExplicitSupportedLngs: true,
+    returnNull: false,
+    returnEmptyString: false,
+    returnObjects: true,
     interpolation: {
       escapeValue: false,
     },
     detection: {
       order: ['localStorage', 'navigator'],
       caches: ['localStorage'],
+    },
+    parseMissingKeyHandler: (key) => {
+      if (isDev) {
+        console.warn(`[i18n] Missing translation key: ${key}`);
+      }
+      return lastSegmentTitleCase(key);
     },
   });
 

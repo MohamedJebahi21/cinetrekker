@@ -1,13 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import { supabase } from '@/integrations/supabase/client';
 import { UserMediaItem } from '@/types/media';
 import { validateNote, validateRating } from '@/lib/validation';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 
-const WATCHED_QUERY_KEY = 'watched';
-const WATCHED_STORAGE_KEY = 'mywatch_watched';
+const WATCHED_QUERY_ID = 'watched';
+const WATCHED_STORAGE_ID = 'mywatch_watched';
 
 /**
  * Hook to fetch watched items from Supabase or localStorage
@@ -16,7 +16,7 @@ export function useWatchedQuery() {
   const { user } = useAuth();
   
   return useQuery({
-    queryKey: [WATCHED_QUERY_KEY, user?.id],
+    queryKey: [WATCHED_QUERY_ID, user?.id],
     queryFn: async () => {
       if (user) {
         // Fetch from Supabase
@@ -40,7 +40,7 @@ export function useWatchedQuery() {
         })) as UserMediaItem[];
       } else {
         // Fetch from localStorage
-        const stored = localStorage.getItem(WATCHED_STORAGE_KEY);
+        const stored = localStorage.getItem(WATCHED_STORAGE_ID);
         return stored ? JSON.parse(stored) : [];
       }
     },
@@ -85,16 +85,16 @@ export function useAddToWatched() {
     },
     onMutate: async (params) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: [WATCHED_QUERY_KEY] });
+      await queryClient.cancelQueries({ queryKey: [WATCHED_QUERY_ID, user?.id] });
 
       // Snapshot previous state
       const previousWatched = queryClient.getQueryData<UserMediaItem[]>([
-        WATCHED_QUERY_KEY,
+        WATCHED_QUERY_ID,
         user?.id,
       ]);
 
       // Optimistic update
-      queryClient.setQueryData([WATCHED_QUERY_KEY, user?.id], (old: UserMediaItem[] = []) => {
+      queryClient.setQueryData([WATCHED_QUERY_ID, user?.id], (old: UserMediaItem[] = []) => {
         const filtered = old.filter(item => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType));
         const newItem: UserMediaItem = {
           id: `${params.mediaType}-${params.mediaId}`,
@@ -112,7 +112,7 @@ export function useAddToWatched() {
 
       // Update localStorage if not authenticated
       if (!user) {
-        const stored = localStorage.getItem(WATCHED_STORAGE_KEY);
+        const stored = localStorage.getItem(WATCHED_STORAGE_ID);
         const list = stored ? JSON.parse(stored) : [];
         const newList = list.filter((item: UserMediaItem) => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType));
         newList.push({
@@ -126,14 +126,14 @@ export function useAddToWatched() {
           addedAt: new Date().toISOString(),
           watchedAt: new Date().toISOString(),
         });
-        localStorage.setItem(WATCHED_STORAGE_KEY, JSON.stringify(newList));
+        localStorage.setItem(WATCHED_STORAGE_ID, JSON.stringify(newList));
       }
 
       return { previousWatched };
     },
     onError: (error, variables, context) => {
       if (context?.previousWatched) {
-        queryClient.setQueryData([WATCHED_QUERY_KEY, user?.id], context.previousWatched);
+        queryClient.setQueryData([WATCHED_QUERY_ID, user?.id], context.previousWatched);
       }
       console.error('Failed to add to watched:', error);
       toast({
@@ -148,7 +148,7 @@ export function useAddToWatched() {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: [WATCHED_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [WATCHED_QUERY_ID, user?.id] });
     },
   });
 }
@@ -178,32 +178,32 @@ export function useRemoveFromWatched() {
     },
     onMutate: async (params) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: [WATCHED_QUERY_KEY] });
+      await queryClient.cancelQueries({ queryKey: [WATCHED_QUERY_ID, user?.id] });
 
       // Snapshot previous state
       const previousWatched = queryClient.getQueryData<UserMediaItem[]>([
-        WATCHED_QUERY_KEY,
+        WATCHED_QUERY_ID,
         user?.id,
       ]);
 
       // Optimistic update
-      queryClient.setQueryData([WATCHED_QUERY_KEY, user?.id], (old: UserMediaItem[] = []) =>
+      queryClient.setQueryData([WATCHED_QUERY_ID, user?.id], (old: UserMediaItem[] = []) =>
         old.filter(item => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType))
       );
 
       // Update localStorage if not authenticated
       if (!user) {
-        const stored = localStorage.getItem(WATCHED_STORAGE_KEY);
+        const stored = localStorage.getItem(WATCHED_STORAGE_ID);
         const list = stored ? JSON.parse(stored) : [];
         const newList = list.filter((item: UserMediaItem) => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType));
-        localStorage.setItem(WATCHED_STORAGE_KEY, JSON.stringify(newList));
+        localStorage.setItem(WATCHED_STORAGE_ID, JSON.stringify(newList));
       }
 
       return { previousWatched };
     },
     onError: (error, variables, context) => {
       if (context?.previousWatched) {
-        queryClient.setQueryData([WATCHED_QUERY_KEY, user?.id], context.previousWatched);
+        queryClient.setQueryData([WATCHED_QUERY_ID, user?.id], context.previousWatched);
       }
       console.error('Failed to remove from watched:', error);
       toast({
@@ -218,7 +218,7 @@ export function useRemoveFromWatched() {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: [WATCHED_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [WATCHED_QUERY_ID, user?.id] });
     },
   });
 }
@@ -265,16 +265,16 @@ export function useUpdateWatched() {
     },
     onMutate: async (params) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: [WATCHED_QUERY_KEY] });
+      await queryClient.cancelQueries({ queryKey: [WATCHED_QUERY_ID, user?.id] });
 
       // Snapshot previous state
       const previousWatched = queryClient.getQueryData<UserMediaItem[]>([
-        WATCHED_QUERY_KEY,
+        WATCHED_QUERY_ID,
         user?.id,
       ]);
 
       // Optimistic update
-      queryClient.setQueryData([WATCHED_QUERY_KEY, user?.id], (old: UserMediaItem[] = []) =>
+      queryClient.setQueryData([WATCHED_QUERY_ID, user?.id], (old: UserMediaItem[] = []) =>
         old.map(item =>
           item.mediaId === params.mediaId && item.mediaType === params.mediaType
             ? { ...item, ...params.updates }
@@ -284,21 +284,21 @@ export function useUpdateWatched() {
 
       // Update localStorage if not authenticated
       if (!user) {
-        const stored = localStorage.getItem(WATCHED_STORAGE_KEY);
+        const stored = localStorage.getItem(WATCHED_STORAGE_ID);
         const list = stored ? JSON.parse(stored) : [];
         const newList = list.map((item: UserMediaItem) =>
           item.mediaId === params.mediaId && item.mediaType === params.mediaType
             ? { ...item, ...params.updates }
             : item
         );
-        localStorage.setItem(WATCHED_STORAGE_KEY, JSON.stringify(newList));
+        localStorage.setItem(WATCHED_STORAGE_ID, JSON.stringify(newList));
       }
 
       return { previousWatched };
     },
     onError: (error, variables, context) => {
       if (context?.previousWatched) {
-        queryClient.setQueryData([WATCHED_QUERY_KEY, user?.id], context.previousWatched);
+        queryClient.setQueryData([WATCHED_QUERY_ID, user?.id], context.previousWatched);
       }
       console.error('Failed to update watched item:', error);
       toast({
@@ -313,7 +313,7 @@ export function useUpdateWatched() {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: [WATCHED_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [WATCHED_QUERY_ID, user?.id] });
     },
   });
 }

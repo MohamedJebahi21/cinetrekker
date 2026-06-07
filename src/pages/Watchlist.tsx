@@ -1,22 +1,31 @@
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Bookmark, TrendingUp, Filter } from 'lucide-react';
+import { Bookmark, Printer } from 'lucide-react';
 import { useState } from 'react';
-import { useUserLists } from '@/contexts/UserListsContext';
+import { motion } from 'framer-motion';
+import { useUserLists } from '@/contexts/user-lists-context';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
-import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
 import { Media } from '@/types/media';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import SEO from '@/components/SEO';
+import { EmptyState } from '@/components/EmptyState';
+import { sortMedia } from '@/lib/sortFilter';
+import { RandomPicker } from '@/components/RandomPicker';
+import { ShareButton } from '@/components/ShareButton';
+import { ExportImportButton } from '@/components/ExportImportButton';
+import { MediaGrid } from '@/components/MediaGrid';
+import { WatchlistFilters } from '@/components/WatchlistFilters';
+import { WatchlistStats, WatchlistStatsLine } from '@/components/WatchlistStats';
 
 export default function Watchlist() {
   const { t, i18n } = useTranslation();
   const { watchlist, watched } = useUserLists();
   const language = i18n.language;
   const [statusFilter, setStatusFilter] = useState<'all' | 'watching' | 'plan_to_watch' | 'completed' | 'dropped'>('all');
+  const [sortBy, setSortBy] = useState('added-desc');
+  const [filterExpanded, setFilterExpanded] = useState(true);
 
   // Fetch details for all watchlist items
   const { data: mediaDetails, isLoading } = useQuery({
@@ -29,7 +38,7 @@ export default function Watchlist() {
               ? await getMovieDetails(item.mediaId, language)
               : await getTVDetails(item.mediaId, language);
             
-            // Get watch status if exists
+            // Get current watch status
             const watchedItem = watched.find(
               w => w.mediaId === item.mediaId && w.mediaType === item.mediaType
             );
@@ -51,10 +60,22 @@ export default function Watchlist() {
   });
 
   // Filter by status
-  const filteredMedia = mediaDetails?.filter(media => {
-    if (statusFilter === 'all') return true;
-    return media.watchStatus === statusFilter;
+  let filteredMedia = mediaDetails?.filter(media => {
+    if (statusFilter !== 'all' && media.watchStatus !== statusFilter) return false;
+    return true;
   });
+
+  // Create added dates map for sorting
+  const addedDates = new Map<string, Date>();
+  watchlist.forEach((item) => {
+    const key = `${item.mediaType}-${item.mediaId}`;
+    addedDates.set(key, new Date(item.addedAt || 0));
+  });
+
+  // Apply sorting
+  if (filteredMedia) {
+    filteredMedia = sortMedia(filteredMedia, sortBy as SortOption, addedDates);
+  }
 
   const statusCounts = {
     all: mediaDetails?.length || 0,
@@ -69,96 +90,116 @@ export default function Watchlist() {
       <SEO 
         title="My Watchlist — CineTrekker" 
         description="Movies and TV shows you want to watch"
-        canonical="https://cinetrekker.lovable.app/watchlist"
+        canonical="https://cinetrekker.vercel.app/watchlist"
       />
-      <div className="page-container pt-20">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="section-title mb-0">{t('watchlist.title')}</h1>
-          <Badge variant="secondary" className="text-lg px-3 py-1">
-            {watchlist.length} {t('common.items', 'items')}
-          </Badge>
-        </div>
+      <div className="page-container pt-20 pb-24 md:pb-0">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="flex items-center justify-between mb-8 flex-wrap gap-4"
+        >
+          <div>
+            <h1 className="section-title mb-2">{t('watchlist.title')}</h1>
+            <WatchlistStatsLine 
+              totalCount={statusCounts.all}
+              watchingCount={statusCounts.watching}
+              completedCount={statusCounts.completed}
+              planToWatchCount={statusCounts.plan_to_watch}
+            />
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <RandomPicker source="watchlist" variant="outline" size="sm" label="Random" />
+            <ShareButton
+              title="My CineTrekker Watchlist"
+              url={window.location.origin + '/watchlist'}
+              text={`Check out my watchlist of ${watchlist.length} movies and shows!`}
+              variant="ghost"
+              size="sm"
+            />
+            <ExportImportButton />
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/print-watchlist">
+                <Printer className="h-4 w-4 mr-2" />
+                Print
+              </Link>
+            </Button>
+          </div>
+        </motion.div>
 
-        {/* Status Filter Tabs */}
+        {/* Stats Card */}
         {mediaDetails && mediaDetails.length > 0 && (
-          <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)} className="mb-6">
-            <TabsList className="w-full justify-start overflow-x-auto flex-nowrap">
-              <TabsTrigger value="all" className="gap-2">
-                {t('status.all', 'All')}
-                {statusCounts.all > 0 && (
-                  <Badge variant="secondary" className="ml-1">{statusCounts.all}</Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="watching" className="gap-2">
-                📺 {t('status.watching', 'Watching')}
-                {statusCounts.watching > 0 && (
-                  <Badge variant="secondary" className="ml-1">{statusCounts.watching}</Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="plan_to_watch" className="gap-2">
-                📋 {t('status.plan_to_watch', 'Plan to Watch')}
-                {statusCounts.plan_to_watch > 0 && (
-                  <Badge variant="secondary" className="ml-1">{statusCounts.plan_to_watch}</Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="completed" className="gap-2">
-                ✅ {t('status.completed', 'Completed')}
-                {statusCounts.completed > 0 && (
-                  <Badge variant="secondary" className="ml-1">{statusCounts.completed}</Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="dropped" className="gap-2">
-                ❌ {t('status.dropped', 'Dropped')}
-                {statusCounts.dropped > 0 && (
-                  <Badge variant="secondary" className="ml-1">{statusCounts.dropped}</Badge>
-                )}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+            className="mb-8"
+          >
+            <WatchlistStats
+              totalCount={statusCounts.all}
+              watchingCount={statusCounts.watching}
+              completedCount={statusCounts.completed}
+              planToWatchCount={statusCounts.plan_to_watch}
+            />
+          </motion.div>
         )}
 
-      {isLoading ? (
-        <div className="media-grid">
-          {Array.from({ length: watchlist.length || 4 }).map((_, i) => (
-            <MediaCardSkeleton key={i} />
-          ))}
-        </div>
-      ) : filteredMedia && filteredMedia.length > 0 ? (
-        <div className="media-grid">
-          {filteredMedia.map((media) => (
-            <MediaCard 
-              key={`${media.id}-${media.media_type}`} 
-              media={media}
-              showStatus={true}
+        {/* Filters */}
+        {mediaDetails && mediaDetails.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+            className="mb-8"
+          >
+            <WatchlistFilters
+              statusFilter={statusFilter}
+              sortBy={sortBy}
+              onStatusChange={setStatusFilter}
+              onSortChange={setSortBy}
+              isExpanded={filterExpanded}
+              onToggleExpand={setFilterExpanded}
             />
-          ))}
-        </div>
-      ) : mediaDetails && mediaDetails.length > 0 ? (
-        <div className="text-center py-16">
-          <Filter className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
-          <h2 className="text-xl font-semibold mb-2">
-            {t('watchlist.noItemsInFilter', `No items with status "${statusFilter}"`)}
-          </h2>
-          <Button variant="outline" onClick={() => setStatusFilter('all')} className="mt-4">
-            {t('common.clearFilter', 'Show All')}
-          </Button>
-        </div>
-      ) : (
-        <div className="text-center py-16 max-w-md mx-auto">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-            <Bookmark className="w-10 h-10 text-primary" />
-          </div>
-          <h2 className="text-2xl font-bold mb-3 title-display">{t('watchlist.empty')}</h2>
-          <p className="text-muted-foreground mb-6 leading-relaxed">{t('watchlist.emptyDesc')}</p>
-          <Link to="/search">
-            <Button className="gap-2">
-              <TrendingUp className="w-4 h-4" />
-              {t('common.discoverTrending')}
+          </motion.div>
+        )}
+
+        {/* Content */}
+        {isLoading ? (
+          <MediaGrid items={[]} isLoading columns="normal" gap="md" />
+        ) : filteredMedia && filteredMedia.length > 0 ? (
+          <MediaGrid 
+            items={filteredMedia} 
+            columns="normal"
+            gap="md"
+          />
+        ) : mediaDetails && mediaDetails.length > 0 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-16"
+          >
+            <Bookmark className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
+            <h2 className="text-xl font-semibold mb-2">
+              {t('watchlist.noItemsInFilter', 'No items match your filters')}
+            </h2>
+            <Button variant="outline" onClick={() => {
+              setStatusFilter('all');
+              setSortBy('added-desc');
+            }} className="mt-4">
+              {t('common.clearFilter', 'Clear Filters')}
             </Button>
-          </Link>
-        </div>
-      )}
-    </div>
+          </motion.div>
+        ) : (
+          <EmptyState
+            icon={Bookmark}
+            title={t('watchlist.empty', 'Your watchlist is empty')}
+            description={t('watchlist.emptyDesc', 'Start adding movies and TV shows you want to watch!')}
+            actionLabel={t('common.discoverTrending', 'Discover Trending')}
+            actionLink="/search?sort=popularity.desc"
+          />
+        )}
+      </div>
     </>
   );
 }

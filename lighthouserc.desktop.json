@@ -1,17 +1,11 @@
 {
   "ci": {
     "collect": {
-      "numberOfRuns": 1,
+      "numberOfRuns": 3,
       "url": ["http://localhost:4173/"],
       "settings": {
         "preset": "desktop",
-        "onlyCategories": [
-          "performance",
-          "accessibility",
-          "best-practices",
-          "seo"
-        ],
-        "chromeFlags": "--headless=new --no-sandbox --disable-gpu"
+        "onlyCategories": ["performance", "accessibility", "best-practices", "seo"]
       }
     },
     "upload": {

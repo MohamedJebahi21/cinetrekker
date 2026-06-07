@@ -183,4 +183,9 @@ function useToast() {
   };
 }
 
+// Expose toast globally for error handlers and other utilities
+if (typeof window !== 'undefined') {
+  (window as Window & { toast?: typeof toast }).toast = toast;
+}
+
 export { useToast, toast };

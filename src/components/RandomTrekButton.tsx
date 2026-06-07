@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Shuffle, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { getTopRatedMovies, getTopRatedTV } from '@/services/tmdb';
 import { Media } from '@/types/media';
 import { Button } from '@/components/ui/button';
-import { MediaPreviewModal } from './MediaPreviewModal';
-import { cn } from '@/lib/utils';
+import { cn } from "../lib/utils";
 
 interface RandomTrekButtonProps {
   className?: string;
@@ -17,7 +17,7 @@ export function RandomTrekButton({ className, variant = 'default' }: RandomTrekB
   const { t, i18n } = useTranslation();
   const language = i18n.language;
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
+  const navigate = useNavigate();
   const [isAnimating, setIsAnimating] = useState(false);
 
   const { data: topMovies } = useQuery({
@@ -46,15 +46,21 @@ export function RandomTrekButton({ className, variant = 'default' }: RandomTrekB
     
     // Simulate "shuffling" effect
     let shuffleCount = 0;
+    let lastSelected: Media | null = null;
     const shuffleInterval = setInterval(() => {
       const randomIndex = Math.floor(Math.random() * allMedia.length);
-      setSelectedMedia(allMedia[randomIndex]);
+      lastSelected = allMedia[randomIndex];
+      setSelectedMedia(lastSelected);
       shuffleCount++;
-      
+
       if (shuffleCount >= 8) {
         clearInterval(shuffleInterval);
         setIsAnimating(false);
-        setModalOpen(true);
+        // Navigate to selected media details page instead of opening preview modal
+        if (lastSelected) {
+          const mediaType = lastSelected.media_type === 'tv' ? 'tv' : 'movie';
+          navigate(`/${mediaType}/${lastSelected.id}`);
+        }
       }
     }, 100);
   };
@@ -82,11 +88,7 @@ export function RandomTrekButton({ className, variant = 'default' }: RandomTrekB
           {t('randomTrek.button') || 'Random Trek'}
         </Button>
 
-        <MediaPreviewModal
-          media={selectedMedia}
-          open={modalOpen}
-          onOpenChange={setModalOpen}
-        />
+        {/* Media preview removed; navigates to details */}
       </>
     );
   }
@@ -111,11 +113,7 @@ export function RandomTrekButton({ className, variant = 'default' }: RandomTrekB
         {t('randomTrek.button') || 'Random Trek'}
       </Button>
 
-      <MediaPreviewModal
-        media={selectedMedia}
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-      />
+      {/* Media preview removed; navigates to details */}
     </>
   );
 }

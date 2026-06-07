@@ -56,13 +56,13 @@ export function Footer() {
             </h3>
             <nav className="flex flex-col gap-3" aria-label="Support links">
               <Link 
-                to="/" 
+                to="/about" 
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 {t('footer.about', 'About')}
               </Link>
               <Link 
-                to="/" 
+                to="/feedback" 
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 {t('footer.feedback', 'Feedback')}
@@ -84,22 +84,13 @@ export function Footer() {
               {t('footer.legal', 'Legal')}
             </h3>
             <nav className="flex flex-col gap-3" aria-label="Legal links">
-              <Link 
-                to="/privacy" 
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
+              <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 {t('nav.privacy', 'Privacy Policy')}
               </Link>
-              <Link 
-                to="/" 
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
+              <Link to="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 {t('footer.terms', 'Terms of Service')}
               </Link>
-              <Link 
-                to="/" 
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
+              <Link to="/cookies" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 {t('footer.cookies', 'Cookie Policy')}
               </Link>
             </nav>
@@ -131,6 +122,8 @@ export function Footer() {
                     alt="TMDB Logo" 
                     className="h-3"
                     loading="lazy"
+                    width="81"
+                    height="12"
                   />
                 </a>
               </div>
@@ -138,7 +131,7 @@ export function Footer() {
           </div>
           
           {/* TMDB Attribution Text */}
-          <p className="text-[10px] text-muted-foreground/60 text-center mt-4 max-w-2xl mx-auto">
+          <p className="text-[10px] text-muted-foreground text-center mt-4 max-w-2xl mx-auto">
             {t('footer.attribution', 'This product uses the TMDB API but is not endorsed or certified by TMDB. All movie and TV show data, including images and metadata, is provided by The Movie Database (TMDB).')}
           </p>
         </div>

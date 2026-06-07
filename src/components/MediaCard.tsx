@@ -1,96 +1,191 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Star, Bookmark, Check, Plus, Expand, BookmarkCheck } from 'lucide-react';
-import { Media } from '@/types/media';
+import { Star, ChevronRight } from 'lucide-react';
+import { Media, type UserMediaItem } from '@/types/media';
 import { getImageUrl, getMediaTitle, getMediaYear, getMediaType } from '@/services/tmdb';
-import { useUserLists } from '@/contexts/UserListsContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useInView } from '@/hooks/useInView';
+import { useUserLists } from '@/contexts/user-lists-context';
+import { useAuth } from '@/contexts/auth-context';
+import { getWatchlistIds, addToLocalWatchlist, removeFromLocalWatchlist, toggleLocalWatchlist, isInLocalWatchlist } from '@/lib/watchlist';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { MediaPreviewModal } from '@/components/MediaPreviewModal';
-import { cn } from '@/lib/utils';
+import { TVWatchStatusModal } from '@/components/TVWatchStatusModal';
+import { useWatchedEpisodes } from '@/hooks/useFollowedShows';
+import { useEffect } from 'react';
+import { Image } from '@/components/ui/Image';
+import { cn } from "../lib/utils";
 
-interface MediaCardProps {
+export interface MediaCardProps {
   media: Media & { watchStatus?: string };
+  mediaType?: 'movie' | 'tv';
   showType?: boolean;
   showStatus?: boolean;
   onAction?: () => void;
 }
 
-const STATUS_CONFIG = {
+export interface WatchStatusConfig {
+  icon: string;
+  label: string;
+  color: string;
+}
+
+const STATUS_CONFIG: Record<string, WatchStatusConfig> = {
   watching: { icon: '📺', label: 'Watching', color: 'bg-blue-500' },
   completed: { icon: '✅', label: 'Completed', color: 'bg-green-500' },
   dropped: { icon: '❌', label: 'Dropped', color: 'bg-red-500' },
   plan_to_watch: { icon: '📋', label: 'Plan to Watch', color: 'bg-yellow-500' },
 };
 
-export const MediaCard = React.memo(function MediaCard({ media, showType = true, showStatus = false }: MediaCardProps) {
-  const { t } = useTranslation();
+function PosterImage({ posterPath, alt }: { posterPath: string | null; alt: string }) {
+  const [ref, inView] = useInView<HTMLDivElement>({ rootMargin: '300px' });
+
+  const small = posterPath ? getImageUrl(posterPath, 'w342') : null;
+  const medium = posterPath ? getImageUrl(posterPath, 'w780') : null;
+
+  return (
+    <div ref={ref} className="w-full h-full aspect-[2/3] relative overflow-hidden bg-muted">
+      {inView ? (
+        medium ? (
+          <img
+            src={medium}
+            srcSet={`${small ? `${small} 342w, ` : ''}${medium} 780w`}
+            sizes="(max-width: 640px) 115px, (max-width: 1024px) 180px, 250px"
+            alt={alt}
+            className="w-full h-auto object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full skeleton-shimmer" />
+        )
+      ) : (
+        <div className="w-full h-full skeleton-shimmer" />
+      )}
+    </div>
+  );
+}
+
+export const MediaCard = React.memo(function MediaCard({ media, mediaType: mediaTypeProp, showType = true, showStatus = false }: MediaCardProps) {
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { isInWatchlist, isWatched, addToWatchlist, removeFromWatchlist, addToWatched, removeFromWatched } = useUserLists();
-  const [showPreview, setShowPreview] = useState(false);
+  const { markEpisodeWatched } = useWatchedEpisodes();
+  const [localInWatchlist, setLocalInWatchlist] = useState<boolean>(() => isInLocalWatchlist(media.id));
+  const [optimisticInWatchlist, setOptimisticInWatchlist] = useState(false);
+  const [optimisticWatched, setOptimisticWatched] = useState(false);
+  const [watchStatusModalOpen, setWatchStatusModalOpen] = useState(false);
   
   const title = useMemo(() => getMediaTitle(media), [media]);
   const year = useMemo(() => getMediaYear(media), [media]);
-  const mediaType = useMemo(() => getMediaType(media), [media]);
+  const mediaType = useMemo(() => mediaTypeProp ?? getMediaType(media), [mediaTypeProp, media]);
   const posterUrl = useMemo(() => getImageUrl(media.poster_path, 'w342'), [media.poster_path]);
-  const inWatchlist = isInWatchlist(media.id, mediaType);
+  const posterAlt = `${title} Poster`;
+  const inWatchlist = user ? isInWatchlist(media.id, mediaType) : localInWatchlist;
   const watched = isWatched(media.id, mediaType);
   const watchStatus = media.watchStatus;
   const rating = media.vote_average;
   const ratingClass = rating >= 7 ? 'rating-high' : rating >= 5 ? 'rating-medium' : 'rating-low';
 
-  const handleWatchlistClick = (e: React.MouseEvent) => {
+  useEffect(() => {
+    setOptimisticInWatchlist(inWatchlist);
+  }, [inWatchlist]);
+
+  useEffect(() => {
+    setOptimisticWatched(watched);
+  }, [watched]);
+
+  const handleWatchlistClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (inWatchlist) {
-      removeFromWatchlist(media.id, mediaType);
+    if (user) {
+      const nextState = !optimisticInWatchlist;
+      setOptimisticInWatchlist(nextState);
+      try {
+        if (nextState) {
+          await addToWatchlist(media.id, mediaType);
+          try { if (typeof navigator !== 'undefined' && 'vibrate' in navigator) (navigator as Navigator).vibrate?.(10); } catch (e) { /* TODO: add optional debug logging for vibration API failures */ }
+        } else {
+          await removeFromWatchlist(media.id, mediaType);
+        }
+      } catch {
+        setOptimisticInWatchlist(!nextState);
+      }
     } else {
-      addToWatchlist(media.id, mediaType);
+      const newState = toggleLocalWatchlist(media.id);
+      setLocalInWatchlist(newState);
+      setOptimisticInWatchlist(newState);
+      if (newState) {
+        try { if (typeof navigator !== 'undefined' && 'vibrate' in navigator) (navigator as Navigator).vibrate?.(10); } catch (e) { /* TODO: add optional debug logging for vibration API failures */ }
+      }
     }
   };
 
-  const handleWatchedClick = (e: React.MouseEvent) => {
+  const handleWatchedClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (watched) {
-      removeFromWatched(media.id, mediaType);
+    if (optimisticWatched) {
+      setOptimisticWatched(false);
+      try {
+        await removeFromWatched(media.id, mediaType);
+      } catch {
+        setOptimisticWatched(true);
+      }
     } else {
-      addToWatched(media.id, mediaType);
+      // For TV shows, open modal to choose watch type
+      if (mediaType === 'tv' && user) {
+        setWatchStatusModalOpen(true);
+      } else {
+        // For movies or guests, just mark as watched
+        setOptimisticWatched(true);
+        try {
+          await addToWatched(media.id, mediaType);
+        } catch {
+          setOptimisticWatched(false);
+        }
+      }
     }
   };
 
-  const handleQuickView = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setShowPreview(true);
+  const handleWatchAllSeries = () => {
+    addToWatched(media.id, mediaType);
   };
+
+  const handleSelectEpisodes = (episodes: Array<{ season: number; episode: number }>): void => {
+    // Mark selected episodes as watched
+    for (const ep of episodes) {
+      markEpisodeWatched({
+        showId: media.id,
+        seasonNumber: ep.season,
+        episodeNumber: ep.episode,
+        episodeName: undefined,
+        airDate: undefined,
+      });
+    }
+  };
+
+  // Quick view removed — card links to details page via the surrounding <Link>
 
   return (
     <>
       <Link
         to={`/${mediaType}/${media.id}`}
-        className="group relative glass-card-hover overflow-hidden block focus:outline-none focus:ring-2 focus:ring-primary"
+        className="group relative glass-card-hover overflow-hidden block focus-ring rounded-xl border border-white/5 shadow-card hover:shadow-card-hover hover:border-primary/20 hover:scale-[1.03] hover:-translate-y-1 transition-all duration-300"
         aria-label={`${title} — open details`}
         tabIndex={0}
       >
         {/* Poster with gradient overlay for text readability */}
-        <div className="aspect-[2/3] relative overflow-hidden rounded-t-xl poster-overlay">
+        <div className="aspect-[2/3] relative overflow-hidden rounded-t-xl bg-surface-dark-3">
           {posterUrl ? (
-            <img
-              src={posterUrl}
-              alt={title}
-              className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-              loading="lazy"
-              decoding="async"
-            />
+            <PosterImage posterPath={media.poster_path} alt={title} />
           ) : (
             <div className="w-full h-full skeleton-shimmer flex items-center justify-center">
               <span className="text-muted-foreground text-xs">{t('common.noResults')}</span>
             </div>
           )}
+
+          {/* Enhanced gradient overlay - darker on hover */}
+          <div className="absolute inset-0 bg-gradient-to-t from-surface-dark-2 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
           {/* Status Badges - positioned above gradient */}
           <div className="absolute top-2 left-2 right-2 flex justify-between items-start z-10">
@@ -115,7 +210,7 @@ export const MediaCard = React.memo(function MediaCard({ media, showType = true,
               </Badge>
             )}
             
-            {watched && (
+            {optimisticWatched && (
               <span className="px-2 py-1 text-[10px] font-medium rounded bg-success/90 text-success-foreground flex items-center gap-1">
                 <Check className="w-3 h-3" />
               </span>
@@ -134,21 +229,21 @@ export const MediaCard = React.memo(function MediaCard({ media, showType = true,
 
           {/* Quick Action Buttons - 32x32px circles with blur background */}
           {user && (
-            <div className="absolute bottom-2 right-2 z-10 flex gap-1.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
+            <div className="absolute left-1/2 bottom-2 transform -translate-x-1/2 z-10 flex gap-1.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
               {/* Watchlist Button */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     onClick={handleWatchlistClick}
                     className={cn(
-                      "w-8 h-8 min-w-[32px] min-h-[32px] rounded-full flex items-center justify-center transition-all duration-200 action-bounce",
-                      inWatchlist 
-                        ? "bg-primary text-primary-foreground" 
-                        : "bg-background/80 backdrop-blur-md text-foreground hover:bg-background/90"
+                      "w-8 h-8 min-w-[48px] min-h-[48px] rounded-full flex items-center justify-center transform transition-all duration-200 ease-in-out",
+                      optimisticInWatchlist
+                        ? "bg-primary text-primary-foreground hover:scale-110"
+                        : "bg-background/80 backdrop-blur-md text-foreground hover:bg-[#E50914] hover:text-white hover:scale-110"
                     )}
-                    aria-label={inWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
+                    aria-label={optimisticInWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
                   >
-                    {inWatchlist ? (
+                    {optimisticInWatchlist ? (
                       <BookmarkCheck className="w-3.5 h-3.5" />
                     ) : (
                       <Plus className="w-3.5 h-3.5" />
@@ -156,7 +251,7 @@ export const MediaCard = React.memo(function MediaCard({ media, showType = true,
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="bg-popover text-popover-foreground">
-                  {inWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
+                  {optimisticInWatchlist ? t('actions.removeFromWatchlist') : t('actions.addToWatchlist')}
                 </TooltipContent>
               </Tooltip>
 
@@ -166,41 +261,24 @@ export const MediaCard = React.memo(function MediaCard({ media, showType = true,
                   <button
                     onClick={handleWatchedClick}
                     className={cn(
-                      "w-8 h-8 min-w-[32px] min-h-[32px] rounded-full flex items-center justify-center transition-all duration-200 action-bounce",
-                      watched 
-                        ? "bg-success text-success-foreground" 
-                        : "bg-background/80 backdrop-blur-md text-foreground hover:bg-background/90"
+                      "w-8 h-8 min-w-[48px] min-h-[48px] rounded-full flex items-center justify-center transform transition-all duration-200 ease-in-out",
+                      optimisticWatched
+                        ? "bg-success text-success-foreground hover:scale-110"
+                        : "bg-background/80 backdrop-blur-md text-foreground hover:bg-success hover:text-success-foreground hover:scale-110"
                     )}
-                    aria-label={watched ? t('actions.removeFromWatched') : t('actions.markAsWatched')}
+                    aria-label={optimisticWatched ? t('actions.removeFromWatched') : t('actions.markAsWatched')}
                   >
                     <Check className="w-3.5 h-3.5" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="bg-popover text-popover-foreground">
-                  {watched ? t('actions.removeFromWatched') : t('actions.markAsWatched')}
+                  {optimisticWatched ? t('actions.removeFromWatched') : t('actions.markAsWatched')}
                 </TooltipContent>
               </Tooltip>
             </div>
           )}
 
-          {/* Hover Actions - Quick View (Desktop only) */}
-          <div className="hidden md:flex card-actions z-10">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  className="h-9 w-9 bg-background/90 backdrop-blur-sm hover:bg-background"
-                  onClick={handleQuickView}
-                >
-                  <Expand className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="bg-popover text-popover-foreground">
-                {t('actions.quickView')}
-              </TooltipContent>
-            </Tooltip>
-          </div>
+          {/* Quick preview removed; click card to open details */}
         </div>
 
         {/* Info - Using Playfair Display for title */}
@@ -214,27 +292,73 @@ export const MediaCard = React.memo(function MediaCard({ media, showType = true,
         </div>
       </Link>
 
-      {/* Quick View Modal */}
-      <MediaPreviewModal
-        media={media}
-        open={showPreview}
-        onOpenChange={setShowPreview}
-      />
+      {/* Media preview removed */}
+      
+      {/* TV Watch Status Modal - only for TV shows when user is authenticated */}
+      {mediaType === 'tv' && user && (
+        <TVWatchStatusModal
+          open={watchStatusModalOpen}
+          onOpenChange={setWatchStatusModalOpen}
+          showId={media.id}
+          showName={title}
+          onWatchAll={handleWatchAllSeries}
+          onSelectEpisodes={handleSelectEpisodes}
+          language={i18n.language}
+        />
+      )}
     </>
   );
 });
 
-export const MediaCardSkeleton = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  (props, ref) => {
-    return (
-      <div ref={ref} className="glass-card overflow-hidden rounded-xl" {...props}>
-        <div className="poster-skeleton" />
-        <div className="p-3 space-y-2">
-          <div className="h-4 skeleton-shimmer rounded" />
-          <div className="h-3 skeleton-shimmer rounded w-1/2" />
+export const MediaCardSkeleton = React.forwardRef<
+  HTMLDivElement,
+  { delay?: number; className?: string }
+>(({ delay = 0, className }, ref) => {
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        'glass-card overflow-hidden rounded-xl',
+        'border border-border/50',
+        className
+      )}
+      aria-busy="true"
+      aria-live="polite"
+      role="status"
+    >
+      {/* Poster placeholder with aspect ratio */}
+      <div className="poster-skeleton" style={{ animationDelay: `${delay}ms` }} />
+
+      {/* Content area */}
+      <div className="p-3 space-y-2">
+        {/* Title placeholder */}
+        <div
+          className="h-4 skeleton-shimmer rounded"
+          style={{ animationDelay: `${delay + 100}ms` }}
+        />
+
+        {/* Metadata placeholder */}
+        <div
+          className="h-3 skeleton-shimmer rounded w-1/2"
+          style={{ animationDelay: `${delay + 200}ms` }}
+        />
+
+        {/* Tags/badges placeholder */}
+        <div className="flex gap-2 mt-2">
+          <div
+            className="h-6 w-12 skeleton-shimmer rounded-full"
+            style={{ animationDelay: `${delay + 300}ms` }}
+          />
+          <div
+            className="h-6 w-16 skeleton-shimmer rounded-full"
+            style={{ animationDelay: `${delay + 350}ms` }}
+          />
         </div>
       </div>
-    );
-  }
-);
-MediaCardSkeleton.displayName = "MediaCardSkeleton";
+
+      {/* Screen reader announcement */}
+      <span className="sr-only">Loading media content...</span>
+    </div>
+  );
+});
+MediaCardSkeleton.displayName = 'MediaCardSkeleton';

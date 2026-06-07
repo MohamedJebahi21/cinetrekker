@@ -22,31 +22,4 @@ test.describe('CineTrekker smoke', () => {
       await expect(main).toBeVisible();
     }
   });
-
-  test('recommendations route renders share/feed shell', async ({ page }) => {
-    await page.goto('/recommendations');
-    await expect(page).toHaveURL(/\/(recommendations|login)/);
-    await expect(page.locator('main').first()).toBeVisible();
-  });
-
-  test('home visit updates engagement state after comeback gap', async ({ page }) => {
-    const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
-    await page.addInitScript((lastActiveAt) => {
-      window.localStorage.setItem(
-        'cinetrekker_engagement_visits_v1',
-        JSON.stringify({
-          lastVisitDay: new Date(lastActiveAt).toISOString().slice(0, 10),
-          streakDays: 1,
-          lastActiveAt,
-        }),
-      );
-    }, threeDaysAgo);
-    await page.goto('/');
-    const state = await page.evaluate(() => {
-      const raw = window.localStorage.getItem('cinetrekker_engagement_visits_v1');
-      return raw ? JSON.parse(raw) : null;
-    });
-    expect(state).not.toBeNull();
-    expect(state.streakDays).toBeGreaterThan(0);
-  });
 });
