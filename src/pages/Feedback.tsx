@@ -1,5 +1,6 @@
 import { FormEvent, useState } from 'react';
 import SEO from '@/components/SEO';
+import { toTrustedScriptURL } from '@/lib/trustedTypes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -122,10 +123,11 @@ export default function Feedback() {
     }
 
     const script = document.createElement('script');
-    script.src =
+    script.src = toTrustedScriptURL(
       CAPTCHA_PROVIDER === 'turnstile'
         ? 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
-        : 'https://www.google.com/recaptcha/api.js?render=explicit';
+        : 'https://www.google.com/recaptcha/api.js?render=explicit',
+    ) as string;
     script.async = true;
     script.defer = true;
     if (CAPTCHA_PROVIDER === 'turnstile') {
