@@ -17,7 +17,10 @@ export const getImageUrl = (path: string | null, size: 'w92' | 'w154' | 'w185' |
   return `${TMDB_IMAGE_BASE}/${size}${path}`;
 };
 
-export const getBackdropUrl = (path: string | null, size: 'w342' | 'w780' | 'w1280' = 'w780') => {
+export const getBackdropUrl = (
+  path: string | null,
+  size: "w342" | "w780" | "w1280" | "original" = "w780",
+) => {
   if (!path) return null;
   return `${TMDB_IMAGE_BASE}/${size}${path}`;
 };

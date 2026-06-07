@@ -23,22 +23,22 @@ export function HeroSection() {
 
   useEffect(() => {
     let idleId: number | null = null;
-    let timeoutId: number | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const enable = () => setAllowTrailerFetch(true);
 
     if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
       idleId = window.requestIdleCallback(enable, { timeout: 1800 });
     } else {
-      timeoutId = window.setTimeout(enable, 300);
+      timeoutId = setTimeout(enable, 300);
     }
 
     return () => {
-      if (idleId !== null && 'cancelIdleCallback' in window) {
+      if (idleId !== null && typeof window !== "undefined" && "cancelIdleCallback" in window) {
         window.cancelIdleCallback(idleId);
       }
       if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
+        clearTimeout(timeoutId);
       }
     };
   }, []);
