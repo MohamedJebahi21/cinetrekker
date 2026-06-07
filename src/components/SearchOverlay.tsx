@@ -121,13 +121,13 @@ export default function SearchOverlay() {
                         className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-accent/30 transition-colors"
                       >
                         <div className="w-12 h-16 rounded overflow-hidden bg-muted flex-shrink-0">
-                          {getImageUrl(item.poster_path || item.profile_path, 'w154') ? (
+                          {getImageUrl(item.poster_path || item.profile_path, 'w92') ? (
                             <img
-                              src={getImageUrl(item.poster_path || item.profile_path, 'w342')!}
-                              srcSet={`${getImageUrl(item.poster_path || item.profile_path, 'w185')!} 185w, ${getImageUrl(item.poster_path || item.profile_path, 'w342')!} 342w`}
-                              sizes="(max-width: 640px) 185px, 342px"
-                              width={185}
-                              height={278}
+                              src={getImageUrl(item.poster_path || item.profile_path, 'w92')!}
+                              srcSet={`${getImageUrl(item.poster_path || item.profile_path, 'w92')!} 92w, ${getImageUrl(item.poster_path || item.profile_path, 'w185')!} 185w`}
+                              sizes="48px"
+                              width={48}
+                              height={64}
                               alt=""
                               className="w-full h-full object-cover bg-muted"
                             />
