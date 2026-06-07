@@ -27,7 +27,10 @@ export function HeroSection() {
 
   const heroMedia = trendingDay?.results?.[0];
   const mediaType = heroMedia ? getMediaType(heroMedia) : 'movie';
-  const heroBackdropUrl = heroMedia?.backdrop_path 
+  const heroBackdropSrc = heroMedia?.backdrop_path
+    ? getBackdropUrl(heroMedia.backdrop_path, 'w1280')
+    : null;
+  const heroBackdropSrcSet = heroMedia?.backdrop_path
     ? `${getBackdropUrl(heroMedia.backdrop_path, 'w780')} 780w, ${getBackdropUrl(heroMedia.backdrop_path, 'w1280')} 1280w`
     : null;
 
@@ -68,13 +71,16 @@ export function HeroSection() {
   return (
     <section className="relative overflow-hidden min-h-[60vh] md:min-h-[80vh] flex items-center">
       {/* Optimized Backdrop Image */}
-      {heroBackdropUrl && (
+      {heroBackdropSrc && (
         <Image
-          src={heroBackdropUrl}
+          src={heroBackdropSrc}
+          srcSet={heroBackdropSrcSet ?? undefined}
+          sizes="100vw"
           alt={getMediaTitle(heroMedia)}
           width={1280}
           height={720}
           fetchPriority="high"
+          loading="eager"
           className="absolute inset-0 w-full h-full object-cover"
         />
       )}

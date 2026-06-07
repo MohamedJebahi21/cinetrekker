@@ -178,9 +178,11 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
           onKeyDown={handleKeyDown}
           className="pl-9 pr-16 h-10 bg-card/50 border-white/10 rounded-lg focus:border-primary focus:ring-primary/20 transition-all"
           aria-label={t('search.placeholder')}
+          role="combobox"
           aria-autocomplete="list"
           aria-controls="search-dropdown-results"
           aria-expanded={isOpen}
+          aria-haspopup="listbox"
         />
         
         {/* Keyboard hint */}
