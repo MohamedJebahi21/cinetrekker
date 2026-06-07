@@ -26,6 +26,7 @@ export function HeroSection() {
   });
 
   const heroMedia = trendingDay?.results?.[0];
+  const heroTitle = heroMedia ? getMediaTitle(heroMedia) : '';
   const mediaType = heroMedia ? getMediaType(heroMedia) : 'movie';
   const heroBackdropSrc = heroMedia?.backdrop_path
     ? getBackdropUrl(heroMedia.backdrop_path, 'w1280')
@@ -196,9 +197,9 @@ export function HeroSection() {
                   "gap-2 h-11 md:h-12 px-4 md:px-6 text-sm md:text-base w-full",
                   trailer ? "border-[rgba(255,255,255,0.2)] hover:bg-white/10" : "btn-primary-glow"
                 )}
-                aria-label={t('home.viewDetails', `View details for ${heroMedia.title}`)}
+                aria-label={`More about ${heroTitle}`}
               >
-                {t('home.viewDetails', 'More Info')}
+                {`More about ${heroTitle}`}
               </Button>
             </Link>
 

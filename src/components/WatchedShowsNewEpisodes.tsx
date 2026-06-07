@@ -311,8 +311,12 @@ export function WatchedShowsNewEpisodes() {
               {episode.showPosterPath ? (
                 <img
                   src={getImageUrl(episode.showPosterPath, 'w342') || ''}
+                  srcSet={`${getImageUrl(episode.showPosterPath, 'w185') || ''} 185w, ${getImageUrl(episode.showPosterPath, 'w342') || ''} 342w`}
+                  sizes="(max-width: 768px) 113px, 170px"
                   alt={episode.showName}
-                  className="w-full h-auto object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                  width={113}
+                  height={170}
+                  className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                   loading="lazy"
                 />
               ) : (
