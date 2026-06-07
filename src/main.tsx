@@ -51,10 +51,7 @@ if (typeof window !== "undefined") {
       };
 
       const createSafeScriptUrl = (value: string): string => {
-        if (import.meta.env.DEV) {
-          return value;
-        }
-        throw new TypeError("Trusted Types: script URL sinks are not allowed.");
+        return value;
       };
 
       const createPolicy = (
