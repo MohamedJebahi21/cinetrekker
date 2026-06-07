@@ -6,6 +6,7 @@ interface MovieImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   width: number;
   height: number;
   priority?: boolean;
+  fetchPriority?: 'high' | 'low' | 'auto';
 }
 
 export const MovieImage: React.FC<MovieImageProps> = ({
@@ -15,9 +16,16 @@ export const MovieImage: React.FC<MovieImageProps> = ({
   height,
   priority = false,
   alt = '',
+  fetchPriority,
   ...props
 }) => {
   const src = `https://image.tmdb.org/t/p/${size}${path}`;
+  const effectiveFetchPriority = fetchPriority ?? (priority ? 'high' : 'auto');
+  const fetchPriorityAttr =
+    effectiveFetchPriority && effectiveFetchPriority !== 'auto'
+      ? ({ fetchpriority: effectiveFetchPriority } as { fetchpriority: 'high' | 'low' })
+      : {};
+
   return (
     <img
       src={src}
@@ -25,7 +33,7 @@ export const MovieImage: React.FC<MovieImageProps> = ({
       width={width}
       height={height}
       loading={priority ? 'eager' : 'lazy'}
-      fetchPriority={priority ? 'high' : 'auto'}
+      {...fetchPriorityAttr}
       {...props}
     />
   );

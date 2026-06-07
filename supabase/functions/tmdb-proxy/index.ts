@@ -18,13 +18,18 @@ const ALLOWED_ORIGINS = [
 ];
 
 const VERCEL_PREVIEW_PATTERN = /^https:\/\/cinetrekker-[a-z0-9-]+\.vercel\.app$/;
+const LOCAL_ORIGIN_PATTERN =
+  /^https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])(?::\d{1,5})?$/i;
 
 function getCorsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get('origin') || '';
   
   // LOGIC FIX: We check if the origin is allowed. If not, we EXPLICITLY 
   // return the production URL instead of letting it fall back to a local one.
-  const isAllowed = ALLOWED_ORIGINS.includes(origin) || VERCEL_PREVIEW_PATTERN.test(origin);
+  const isAllowed =
+    ALLOWED_ORIGINS.includes(origin) ||
+    VERCEL_PREVIEW_PATTERN.test(origin) ||
+    LOCAL_ORIGIN_PATTERN.test(origin);
   const allowedOrigin = isAllowed ? origin : 'https://cinetrekker.vercel.app';
 
   return {

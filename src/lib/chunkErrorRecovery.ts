@@ -18,7 +18,7 @@ interface ChunkErrorRecoveryConfig {
 }
 
 const extensionConnectionErrorRegex =
-  /^(?:Error:\s*)?Could not establish connection\. Receiving end does not exist\.?$/i;
+  /Could not establish connection\. Receiving end does not exist\.?/i;
 
 function getRejectionMessage(reason: unknown): string {
   if (typeof reason === "string") return reason;
@@ -26,6 +26,9 @@ function getRejectionMessage(reason: unknown): string {
   if (reason && typeof reason === "object" && "message" in reason) {
     const message = (reason as { message?: unknown }).message;
     return typeof message === "string" ? message : "";
+  }
+  if (reason && typeof (reason as { toString?: unknown }).toString === "function") {
+    return String(reason);
   }
   return "";
 }
@@ -298,6 +301,11 @@ export function installChunkErrorHandlers(): void {
     (typeof import.meta !== "undefined" && import.meta.env?.DEV) ||
     (typeof process !== "undefined" && process.env?.NODE_ENV === "development"),
   );
+  const chunkDebugEnabled =
+    (typeof import.meta !== "undefined" &&
+      import.meta.env?.VITE_CHUNK_ERROR_DEBUG === "true") ||
+    (typeof process !== "undefined" &&
+      process.env?.VITE_CHUNK_ERROR_DEBUG === "true");
 
   // Handle unhandled promise rejections (common for dynamic imports)
   window.addEventListener(
@@ -342,7 +350,7 @@ export function installChunkErrorHandlers(): void {
     }, 5000); // Reset after 5 seconds of successful operation
   });
 
-  if (isDev) {
+  if (isDev && chunkDebugEnabled) {
     console.log("✅ Chunk error recovery handlers installed");
   }
 }

@@ -51,7 +51,10 @@
     "signIn": "Sign In",
     "signOut": "Sign Out",
     "calendar": "Calendar",
-    "stats": "Stats"
+    "stats": "Stats",
+    "settings": "Settings",
+    "openMenu": "Open menu",
+    "main": "Main navigation"
   },
   "calendar": {
     "title": "Release Calendar",

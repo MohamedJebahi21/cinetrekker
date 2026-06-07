@@ -33,6 +33,13 @@ const isDev = Boolean(
   (typeof import.meta !== "undefined" && import.meta.env?.DEV) ||
   (typeof process !== "undefined" && process.env?.NODE_ENV === "development"),
 );
+const i18nDebugEnabled =
+  (typeof import.meta !== "undefined" &&
+    import.meta.env?.VITE_I18N_DEBUG === "true") ||
+  (typeof process !== "undefined" &&
+    process.env?.VITE_I18N_DEBUG === "true");
+
+const warnedMissingKeys = new Set<string>();
 
 // Custom logger that suppresses the i18next locize advertisement
 const LOCIZE_AD_PREFIX = '🌐 i18next is maintained with support from Locize';
@@ -61,7 +68,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    debug: isDev,
+    debug: i18nDebugEnabled,
     showSupportNotice: false,
     fallbackLng: "en",
     supportedLngs: languages.map((l) => l.code),
@@ -79,7 +86,10 @@ i18n
     },
     parseMissingKeyHandler: (key) => {
       if (isDev) {
-        console.warn(`[i18n] Missing translation key: ${key}`);
+        if (!warnedMissingKeys.has(key)) {
+          warnedMissingKeys.add(key);
+          console.warn(`[i18n] Missing translation key: ${key}`);
+        }
       }
       return lastSegmentTitleCase(key);
     },

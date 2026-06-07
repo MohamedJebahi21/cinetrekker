@@ -56,7 +56,14 @@ const AwardWinners = lazy(() => import("./pages/AwardWinners"));
 const YearInReview = lazy(() => import("./pages/YearInReview"));
 const WatchHistory = lazy(() => import("./pages/WatchHistory"));
 const AccessibilitySettings = lazy(() => import("./pages/AccessibilitySettings"));
-const Analytics = lazy(() => import("@vercel/analytics/react").then((mod) => ({ default: mod.Analytics })));
+const shouldLoadVercelAnalytics =
+  import.meta.env.PROD ||
+  import.meta.env.VITE_ENABLE_VERCEL_ANALYTICS === "true";
+const Analytics = shouldLoadVercelAnalytics
+  ? lazy(() =>
+      import("@vercel/analytics/react").then((mod) => ({ default: mod.Analytics })),
+    )
+  : null;
 
 function NetworkMonitor() {
   useNetworkStatus();
@@ -188,7 +195,7 @@ const App = () => {
           </UserListsProvider>
         </AuthProvider>
       </TooltipProvider>
-      {enableEnhancements && (
+      {enableEnhancements && Analytics && (
         <Suspense fallback={null}>
           <Analytics />
         </Suspense>

@@ -30,28 +30,50 @@ export type {
   ProviderDataResult,
   MediaType,
   TimeWindow,
-} from './media';
+} from "./media";
 
 // Context types
-export type { User, Session } from '@supabase/supabase-js';
+export type { User, Session } from "@supabase/supabase-js";
 
-import type { User, Session } from '@supabase/supabase-js';
+import type { User, Session } from "@supabase/supabase-js";
 
 // User lists context type
 export interface UserListsContextType {
   watchlist: UserMediaItem[];
   watched: UserMediaItem[];
   hiddenRecommendations: HiddenRecommendation[];
-  addToWatchlist: (mediaId: number, mediaType: 'movie' | 'tv') => Promise<void>;
-  removeFromWatchlist: (mediaId: number, mediaType: 'movie' | 'tv') => Promise<void>;
-  addToWatched: (mediaId: number, mediaType: 'movie' | 'tv', rating?: number, note?: string, status?: string) => Promise<void>;
-  removeFromWatched: (mediaId: number, mediaType: 'movie' | 'tv') => Promise<void>;
-  updateWatchedItem: (mediaId: number, mediaType: 'movie' | 'tv', updates: Partial<UserMediaItem>) => void;
-  isInWatchlist: (mediaId: number, mediaType: 'movie' | 'tv') => boolean;
-  isWatched: (mediaId: number, mediaType: 'movie' | 'tv') => boolean;
-  getWatchedItem: (mediaId: number, mediaType: 'movie' | 'tv') => UserMediaItem | undefined;
-  hideFromRecommendations: (mediaId: number, mediaType: 'movie' | 'tv') => void;
-  isHiddenFromRecommendations: (mediaId: number, mediaType: 'movie' | 'tv') => boolean;
+  addToWatchlist: (mediaId: number, mediaType: "movie" | "tv") => Promise<void>;
+  removeFromWatchlist: (
+    mediaId: number,
+    mediaType: "movie" | "tv",
+  ) => Promise<void>;
+  addToWatched: (
+    mediaId: number,
+    mediaType: "movie" | "tv",
+    rating?: number,
+    note?: string,
+    status?: string,
+  ) => Promise<void>;
+  removeFromWatched: (
+    mediaId: number,
+    mediaType: "movie" | "tv",
+  ) => Promise<void>;
+  updateWatchedItem: (
+    mediaId: number,
+    mediaType: "movie" | "tv",
+    updates: Partial<UserMediaItem>,
+  ) => void;
+  isInWatchlist: (mediaId: number, mediaType: "movie" | "tv") => boolean;
+  isWatched: (mediaId: number, mediaType: "movie" | "tv") => boolean;
+  getWatchedItem: (
+    mediaId: number,
+    mediaType: "movie" | "tv",
+  ) => UserMediaItem | undefined;
+  hideFromRecommendations: (mediaId: number, mediaType: "movie" | "tv") => void;
+  isHiddenFromRecommendations: (
+    mediaId: number,
+    mediaType: "movie" | "tv",
+  ) => boolean;
   loading: boolean;
 }
 

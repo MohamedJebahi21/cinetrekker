@@ -18,10 +18,8 @@ interface EnvConfig {
   VITE_SUPABASE_ANON_KEY: string;
 }
 
-const requiredClientVars: (keyof EnvConfig)[] = [
-  "VITE_SUPABASE_URL",
-  "VITE_SUPABASE_ANON_KEY",
-];
+const PLACEHOLDER_SUPABASE_URL = "https://placeholder.supabase.co";
+const PLACEHOLDER_SUPABASE_ANON_KEY = "placeholder-anon-key";
 
 /**
  * Validates that all required client-side environment variables are present
@@ -31,11 +29,24 @@ const requiredClientVars: (keyof EnvConfig)[] = [
 export function validateClientEnv(): EnvConfig {
   const missing: string[] = [];
 
-  requiredClientVars.forEach((key) => {
-    if (!import.meta.env[key]) {
-      missing.push(key);
-    }
-  });
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
+  const supabaseProjectId = import.meta.env.VITE_SUPABASE_PROJECT_ID?.trim();
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
+  const supabasePublishableKey =
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
+
+  const resolvedSupabaseUrl =
+    supabaseUrl ||
+    (supabaseProjectId ? `https://${supabaseProjectId}.supabase.co` : "");
+  const resolvedSupabaseAnonKey = supabaseAnonKey || supabasePublishableKey;
+
+  if (!resolvedSupabaseUrl) {
+    missing.push("VITE_SUPABASE_URL or VITE_SUPABASE_PROJECT_ID");
+  }
+
+  if (!resolvedSupabaseAnonKey) {
+    missing.push("VITE_SUPABASE_ANON_KEY or VITE_SUPABASE_PUBLISHABLE_KEY");
+  }
 
   if (missing.length > 0) {
     const errorMsg =
@@ -59,11 +70,17 @@ export function validateClientEnv(): EnvConfig {
   }
 
   return {
-    VITE_SUPABASE_URL:
-      import.meta.env.VITE_SUPABASE_URL || "https://placeholder.supabase.co",
+    VITE_SUPABASE_URL: resolvedSupabaseUrl || PLACEHOLDER_SUPABASE_URL,
     VITE_SUPABASE_ANON_KEY:
-      import.meta.env.VITE_SUPABASE_ANON_KEY || "placeholder-anon-key",
+      resolvedSupabaseAnonKey || PLACEHOLDER_SUPABASE_ANON_KEY,
   };
+}
+
+export function isSupabaseConfigured(env: EnvConfig = ENV): boolean {
+  return (
+    env.VITE_SUPABASE_URL !== PLACEHOLDER_SUPABASE_URL &&
+    env.VITE_SUPABASE_ANON_KEY !== PLACEHOLDER_SUPABASE_ANON_KEY
+  );
 }
 
 /**
@@ -104,6 +121,10 @@ export function isDevelopment(): boolean {
   return import.meta.env.DEV === true;
 }
 
+function isEnvDebugEnabled(): boolean {
+  return import.meta.env.VITE_ENV_DEBUG === "true";
+}
+
 /**
  * Pre-validated environment configuration
  * Use this throughout your app to avoid repeated validation
@@ -116,7 +137,7 @@ const JWT_PATTERN = new RegExp(
 );
 
 // Validate format of environment variables (only if present)
-if (ENV.VITE_SUPABASE_URL !== "https://placeholder.supabase.co") {
+if (ENV.VITE_SUPABASE_URL !== PLACEHOLDER_SUPABASE_URL) {
   validateEnvFormat(
     "VITE_SUPABASE_URL",
     ENV.VITE_SUPABASE_URL,
@@ -125,7 +146,7 @@ if (ENV.VITE_SUPABASE_URL !== "https://placeholder.supabase.co") {
   );
 }
 
-if (ENV.VITE_SUPABASE_ANON_KEY !== "placeholder-anon-key") {
+if (ENV.VITE_SUPABASE_ANON_KEY !== PLACEHOLDER_SUPABASE_ANON_KEY) {
   validateEnvFormat(
     "VITE_SUPABASE_ANON_KEY",
     ENV.VITE_SUPABASE_ANON_KEY,
@@ -135,7 +156,7 @@ if (ENV.VITE_SUPABASE_ANON_KEY !== "placeholder-anon-key") {
 }
 
 // Log environment info on startup (development only)
-if (isDevelopment()) {
+if (isDevelopment() && isEnvDebugEnabled()) {
   console.log("🔧 Environment Configuration:");
   console.log(`  - Mode: ${import.meta.env.MODE}`);
   console.log(
