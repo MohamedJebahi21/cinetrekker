@@ -5,7 +5,6 @@ import { getTrending, getPopularMovies, getPopularTV, getTopRatedMovies, getTopR
 import { MediaSection } from '@/components/MediaSection';
 import { MediaCarousel } from '@/components/MediaCarousel';
 import { MediaCard } from '@/components/MediaCard';
-import { MediaGrid } from '@/components/MediaGrid';
 import { WatchedShowsNewEpisodes } from '@/components/WatchedShowsNewEpisodes';
 import { RecentlyAddedMovies } from '@/components/RecentlyAddedMovies';
 import { BecauseYouLiked } from '@/components/BecauseYouLiked';
