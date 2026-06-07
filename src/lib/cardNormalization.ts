@@ -66,7 +66,7 @@ export function formatRating(rating: number | undefined): string {
 export function getRatingColorClass(rating: number | undefined): string {
   if (!rating) return 'text-muted-foreground';
   if (rating >= 8) return 'text-green-500';
-  if (rating >= 7) return 'text-primary';
+  if (rating >= 7) return 'text-blue-500';
   if (rating >= 6) return 'text-yellow-500';
   if (rating >= 5) return 'text-orange-500';
   return 'text-red-500';

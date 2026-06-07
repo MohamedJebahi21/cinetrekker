@@ -1,114 +1,52 @@
 export const WATCHLIST_ID = 'cine-watchlist';
 
-/**
- * Get all watchlist IDs from localStorage
- */
 export function getWatchlistIds(): number[] {
   try {
     const raw = localStorage.getItem(WATCHLIST_ID);
     if (!raw) return [];
-
     const parsed = JSON.parse(raw);
-
-    if (!Array.isArray(parsed)) return [];
-
-    // Convert to numbers and filter out invalid values
-    return parsed
-      .map((v) => Number(v))
-      .filter((id) => Number.isInteger(id) && id > 0);
+    if (Array.isArray(parsed)) return parsed.map((v) => Number(v)).filter(Boolean);
+    return [];
   } catch (e) {
-    console.error('Failed to read watchlist from localStorage:', e);
+    console.error('Failed to read watchlist from localStorage', e);
     return [];
   }
 }
 
-/**
- * Save watchlist IDs to localStorage (removes duplicates)
- */
-export function saveWatchlistIds(ids: number[]): void {
+export function saveWatchlistIds(ids: number[]) {
   try {
-    const uniqueIds = Array.from(new Set(ids.map((id) => Number(id))))
-      .filter((id) => Number.isInteger(id) && id > 0)
-      .sort((a, b) => a - b); // optional: keep sorted for consistency
-
-    localStorage.setItem(WATCHLIST_ID, JSON.stringify(uniqueIds));
+    const unique = Array.from(new Set(ids.map((i) => Number(i))));
+    localStorage.setItem(WATCHLIST_ID, JSON.stringify(unique));
   } catch (e) {
-    console.error('Failed to save watchlist to localStorage:', e);
+    console.error('Failed to save watchlist to localStorage', e);
   }
 }
 
-/**
- * Add a single ID to the watchlist
- */
-export function addToLocalWatchlist(id: number): boolean {
-  if (!id || !Number.isInteger(id) || id <= 0) return false;
-
+export function addToLocalWatchlist(id: number) {
   const ids = getWatchlistIds();
+  if (!ids.includes(id)) {
+    ids.push(id);
+    saveWatchlistIds(ids);
+  }
+}
 
-  if (ids.includes(id)) return false; // already exists
-
-  ids.push(id);
+export function removeFromLocalWatchlist(id: number) {
+  const ids = getWatchlistIds().filter((i) => i !== id);
   saveWatchlistIds(ids);
-  return true;
 }
 
-/**
- * Remove a single ID from the watchlist
- */
-export function removeFromLocalWatchlist(id: number): boolean {
-  if (!id || !Number.isInteger(id) || id <= 0) return false;
-
+export function toggleLocalWatchlist(id: number) {
   const ids = getWatchlistIds();
-  const filtered = ids.filter((existingId) => existingId !== id);
-
-  if (filtered.length === ids.length) return false; // nothing was removed
-
-  saveWatchlistIds(filtered);
-  return true;
-}
-
-/**
- * Toggle an ID in/out of the watchlist
- * Returns true if it was added, false if it was removed
- */
-export function toggleLocalWatchlist(id: number): boolean {
-  if (!id || !Number.isInteger(id) || id <= 0) return false;
-
-  const ids = getWatchlistIds();
-
   if (ids.includes(id)) {
     removeFromLocalWatchlist(id);
-    return false; // removed
+    return false;
   } else {
     addToLocalWatchlist(id);
-    return true; // added
+    return true;
   }
 }
 
-/**
- * Check if an ID is in the watchlist
- */
-export function isInLocalWatchlist(id: number): boolean {
-  if (!id || !Number.isInteger(id) || id <= 0) return false;
-
+export function isInLocalWatchlist(id: number) {
   const ids = getWatchlistIds();
   return ids.includes(id);
-}
-
-/**
- * Clear the entire watchlist
- */
-export function clearLocalWatchlist(): void {
-  try {
-    localStorage.removeItem(WATCHLIST_ID);
-  } catch (e) {
-    console.error('Failed to clear watchlist from localStorage:', e);
-  }
-}
-
-/**
- * Get the total count of items in the watchlist
- */
-export function getWatchlistCount(): number {
-  return getWatchlistIds().length;
 }

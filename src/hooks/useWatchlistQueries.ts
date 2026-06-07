@@ -1,14 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import { supabase } from '@/integrations/supabase/client';
 import { UserMediaItem } from '@/types/media';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
-import { logSupabaseIssue } from '@/lib/supabaseRuntime';
 
 const WATCHLIST_QUERY_ID = 'watchlist';
 const WATCHLIST_STORAGE_ID = 'mywatch_watchlist';
-const WATCHLIST_OFFLINE_CACHE_PREFIX = 'mywatch_watchlist_cache_';
 
 /**
  * Hook to fetch watchlist items from Supabase or localStorage
@@ -28,38 +26,28 @@ export function useWatchlistQuery() {
             .eq('user_id', user.id);
 
           if (error) {
-            logSupabaseIssue("watchlist query fallback", error);
-            const cached = localStorage.getItem(`${WATCHLIST_OFFLINE_CACHE_PREFIX}${user.id}`);
-            return cached ? (JSON.parse(cached) as UserMediaItem[]) : [];
+            console.error("Watchlist query error:", error);
+            return [];
           }
-
-          const mapped = (data || []).map(item => ({
+          
+          return (data || []).map(item => ({
             id: item.id,
             mediaId: item.media_id,
             mediaType: item.media_type as 'movie' | 'tv',
             userId: item.user_id,
             addedAt: item.added_at,
           })) as UserMediaItem[];
-
-          localStorage.setItem(
-            `${WATCHLIST_OFFLINE_CACHE_PREFIX}${user.id}`,
-            JSON.stringify(mapped),
-          );
-
-          return mapped;
         } catch (err) {
-          logSupabaseIssue("watchlist fetch fallback", err);
-          const cached = localStorage.getItem(`${WATCHLIST_OFFLINE_CACHE_PREFIX}${user.id}`);
-          return cached ? (JSON.parse(cached) as UserMediaItem[]) : [];
+          console.error("Critical error fetching watchlist:", err);
+          return [];
         }
       } else {
         // Fetch from localStorage
         const stored = localStorage.getItem(WATCHLIST_STORAGE_ID);
-        return stored ? (JSON.parse(stored) as UserMediaItem[]) : [];
+        return stored ? JSON.parse(stored) : [];
       }
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: false,
   });
 }
 
@@ -108,7 +96,7 @@ export function useAddToWatchlist() {
 
       if (!user) {
         const stored = localStorage.getItem(WATCHLIST_STORAGE_ID);
-        const list: UserMediaItem[] = stored ? JSON.parse(stored) as UserMediaItem[] : [];
+        const list = stored ? JSON.parse(stored) : [];
         const newList = list.filter((item: UserMediaItem) => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType));
         newList.push({
           id: `${params.mediaType}-${params.mediaId}`,
@@ -126,7 +114,7 @@ export function useAddToWatchlist() {
       if (context?.previousWatchlist) {
         queryClient.setQueryData([WATCHLIST_QUERY_ID, user?.id], context.previousWatchlist);
       }
-      logSupabaseIssue('failed to add to watchlist', error);
+      console.error('Failed to add to watchlist:', error);
       toast({
         title: t('actions.error', 'Error'),
         description: t('actions.watchlistAddError', 'Failed to add to watchlist'),
@@ -181,7 +169,7 @@ export function useRemoveFromWatchlist() {
 
       if (!user) {
         const stored = localStorage.getItem(WATCHLIST_STORAGE_ID);
-        const list: UserMediaItem[] = stored ? JSON.parse(stored) as UserMediaItem[] : [];
+        const list = stored ? JSON.parse(stored) : [];
         const newList = list.filter((item: UserMediaItem) => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType));
         localStorage.setItem(WATCHLIST_STORAGE_ID, JSON.stringify(newList));
       }
@@ -192,7 +180,7 @@ export function useRemoveFromWatchlist() {
       if (context?.previousWatchlist) {
         queryClient.setQueryData([WATCHLIST_QUERY_ID, user?.id], context.previousWatchlist);
       }
-      logSupabaseIssue('failed to remove from watchlist', error);
+      console.error('Failed to remove from watchlist:', error);
       toast({
         title: t('actions.error', 'Error'),
         description: t('actions.watchlistRemoveError', 'Failed to remove from watchlist'),
@@ -215,5 +203,5 @@ export function useRemoveFromWatchlist() {
  */
 export function useIsInWatchlist(mediaId: number, mediaType: 'movie' | 'tv') {
   const { data: watchlist = [] } = useWatchlistQuery();
-  return watchlist.some((item: UserMediaItem) => item.mediaId === mediaId && item.mediaType === mediaType);
+  return watchlist.some(item => item.mediaId === mediaId && item.mediaType === mediaType);
 }

@@ -41,21 +41,50 @@ export function validateCredential(credential: string): CredentialValidationResu
   let strengthScore = 0;
   let failedChecks = 0;
 
-  // Only length is a hard blocker for 'isValid'
+  // Check minimum length
   if (credential.length < CREDENTIAL_PATTERNS.minLength) {
-    errors.push(`Password must be at least ${CREDENTIAL_PATTERNS.minLength} characters`);
     failedChecks++;
   } else {
     strengthScore++;
+    // Bonus for longer credentials
     if (credential.length >= 12) strengthScore++;
     if (credential.length >= 16) strengthScore++;
   }
 
-  // Other checks contribute to strength but don't force !isValid unless very bad
-  if (CREDENTIAL_PATTERNS.hasUppercase.test(credential)) strengthScore++;
-  if (CREDENTIAL_PATTERNS.hasLowercase.test(credential)) strengthScore++;
-  if (CREDENTIAL_PATTERNS.hasNumber.test(credential)) strengthScore++;
-  if (CREDENTIAL_PATTERNS.hasSpecial.test(credential)) strengthScore++;
+  // Check for uppercase
+  if (!CREDENTIAL_PATTERNS.hasUppercase.test(credential)) {
+    failedChecks++;
+  } else {
+    strengthScore++;
+  }
+
+  // Check for lowercase
+  if (!CREDENTIAL_PATTERNS.hasLowercase.test(credential)) {
+    failedChecks++;
+  } else {
+    strengthScore++;
+  }
+
+  // Check for number
+  if (!CREDENTIAL_PATTERNS.hasNumber.test(credential)) {
+    failedChecks++;
+  } else {
+    strengthScore++;
+  }
+
+  // Check for special character
+  if (!CREDENTIAL_PATTERNS.hasSpecial.test(credential)) {
+    failedChecks++;
+  } else {
+    strengthScore++;
+  }
+
+  // Generic error messages to prevent enumeration attacks
+  if (failedChecks > 2) {
+    errors.push('Value does not meet minimum security requirements');
+  } else if (failedChecks > 0) {
+    errors.push('Strength insufficient. Use a mix of uppercase, lowercase, numbers, and special characters');
+  }
 
   // Check against common strings (case-insensitive)
   if (COMMON_STRINGS.has(credential.toLowerCase())) {
@@ -96,6 +125,22 @@ export function validateCredential(credential: string): CredentialValidationResu
 export const credentialSchema = z
   .string()
   .min(CREDENTIAL_PATTERNS.minLength, `Must be at least ${CREDENTIAL_PATTERNS.minLength} characters`)
+  .refine(
+    (credential) => CREDENTIAL_PATTERNS.hasUppercase.test(credential),
+    'Must contain at least one uppercase letter'
+  )
+  .refine(
+    (credential) => CREDENTIAL_PATTERNS.hasLowercase.test(credential),
+    'Must contain at least one lowercase letter'
+  )
+  .refine(
+    (credential) => CREDENTIAL_PATTERNS.hasNumber.test(credential),
+    'Must contain at least one number'
+  )
+  .refine(
+    (credential) => CREDENTIAL_PATTERNS.hasSpecial.test(credential),
+    'Must contain at least one special character'
+  )
   .refine(
     (credential) => !COMMON_STRINGS.has(credential.toLowerCase()),
     'This value is too common. Please choose something more unique'

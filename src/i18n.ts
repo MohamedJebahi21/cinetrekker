@@ -1,66 +1,8 @@
-﻿import i18n from "i18next";
+import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 
 import en from "./locales/en.json";
-import ar from "./locales/ar.json";
-import fr from "./locales/fr.json";
-import tr from "./locales/tr.json";
-import es from "./locales/es.json";
-import de from "./locales/de.json";
-
-type TranslationTree = Record<string, unknown>;
-const MOJIBAKE_PATTERN = /[ÃÂØÙÐ]/;
-
-function sanitizeTranslations(input: TranslationTree): TranslationTree {
-  const cleaned: TranslationTree = {};
-
-  for (const [key, value] of Object.entries(input)) {
-    if (typeof value === "string") {
-      if (!MOJIBAKE_PATTERN.test(value)) {
-        cleaned[key] = value;
-      }
-      continue;
-    }
-
-    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-      cleaned[key] = sanitizeTranslations(value as TranslationTree);
-      continue;
-    }
-
-    cleaned[key] = value;
-  }
-
-  return cleaned;
-}
-
-function deepMergeTranslations(
-  base: TranslationTree,
-  override: TranslationTree,
-): TranslationTree {
-  const merged: TranslationTree = { ...base };
-
-  for (const [key, value] of Object.entries(override)) {
-    const baseValue = merged[key];
-    const baseIsObject =
-      typeof baseValue === "object" &&
-      baseValue !== null &&
-      !Array.isArray(baseValue);
-    const valueIsObject =
-      typeof value === "object" && value !== null && !Array.isArray(value);
-
-    if (baseIsObject && valueIsObject) {
-      merged[key] = deepMergeTranslations(
-        baseValue as TranslationTree,
-        value as TranslationTree,
-      );
-    } else {
-      merged[key] = value;
-    }
-  }
-
-  return merged;
-}
 
 export const languages = [
   { code: "en", name: "English", dir: "ltr" },
@@ -75,12 +17,33 @@ export type LanguageCode = (typeof languages)[number]["code"];
 
 const resources = {
   en: { translation: en },
-  ar: { translation: deepMergeTranslations(en, sanitizeTranslations(ar)) },
-  fr: { translation: deepMergeTranslations(en, sanitizeTranslations(fr)) },
-  tr: { translation: deepMergeTranslations(en, sanitizeTranslations(tr)) },
-  es: { translation: deepMergeTranslations(en, sanitizeTranslations(es)) },
-  de: { translation: deepMergeTranslations(en, sanitizeTranslations(de)) },
 };
+
+const localeLoaders = {
+  ar: () => import("./locales/ar.json"),
+  fr: () => import("./locales/fr.json"),
+  tr: () => import("./locales/tr.json"),
+  es: () => import("./locales/es.json"),
+  de: () => import("./locales/de.json"),
+} as const satisfies Partial<Record<Exclude<LanguageCode, "en">, () => Promise<{ default: Record<string, string> }>>>;
+
+const loadedLanguages = new Set<LanguageCode>(["en"]);
+
+async function ensureLanguageResources(language: LanguageCode) {
+  if (loadedLanguages.has(language) || language === "en") {
+    return;
+  }
+
+  const loader = localeLoaders[language as keyof typeof localeLoaders];
+  if (!loader) {
+    loadedLanguages.add(language);
+    return;
+  }
+
+  const module = await loader();
+  i18n.addResourceBundle(language, "translation", module.default, true, true);
+  loadedLanguages.add(language);
+}
 
 const isDev = Boolean(
   (typeof import.meta !== "undefined" && import.meta.env?.DEV) ||
@@ -94,6 +57,18 @@ const i18nDebugEnabled =
 
 const warnedMissingKeys = new Set<string>();
 
+// Custom logger that suppresses the i18next locize advertisement
+const LOCIZE_AD_PREFIX = '🌐 i18next is maintained with support from Locize';
+const i18nLogger = {
+  type: 'logger' as const,
+  log(...args: unknown[]) {
+    if (args.some((a) => typeof a === 'string' && a.startsWith(LOCIZE_AD_PREFIX))) return;
+    if (isDev) console.log(...args);
+  },
+  warn(...args: unknown[]) { if (isDev) console.warn(...args); },
+  error(...args: unknown[]) { console.error(...args); },
+};
+
 function lastSegmentTitleCase(key: string) {
   const seg = key.split(".").pop() || key;
   return seg
@@ -103,34 +78,49 @@ function lastSegmentTitleCase(key: string) {
     .join(" ");
 }
 
-i18n.use(LanguageDetector).use(initReactI18next).init({
-  resources,
-  debug: i18nDebugEnabled,
-  showSupportNotice: false,
-  fallbackLng: "en",
-  supportedLngs: languages.map((l) => l.code),
-  load: "languageOnly",
-  nonExplicitSupportedLngs: true,
-  returnNull: false,
-  returnEmptyString: false,
-  returnObjects: true,
-  interpolation: {
-    escapeValue: false,
-  },
-  detection: {
-    order: ["localStorage", "navigator"],
-    caches: ["localStorage"],
-  },
-  parseMissingKeyHandler: i18nDebugEnabled
-    ? (key) => {
-        if (isDev && !warnedMissingKeys.has(key)) {
+i18n
+  .use(i18nLogger)
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    resources,
+    debug: i18nDebugEnabled,
+    showSupportNotice: false,
+    fallbackLng: "en",
+    supportedLngs: languages.map((l) => l.code),
+    load: "languageOnly",
+    nonExplicitSupportedLngs: true,
+    returnNull: false,
+    returnEmptyString: false,
+    returnObjects: true,
+    interpolation: {
+      escapeValue: false,
+    },
+    detection: {
+      order: ["localStorage", "navigator"],
+      caches: ["localStorage"],
+    },
+    parseMissingKeyHandler: (key) => {
+      if (isDev) {
+        if (!warnedMissingKeys.has(key)) {
           warnedMissingKeys.add(key);
           console.warn(`[i18n] Missing translation key: ${key}`);
         }
-        return lastSegmentTitleCase(key);
       }
-    : undefined,
-});
+      return lastSegmentTitleCase(key);
+    },
+  });
+
+const originalChangeLanguage = i18n.changeLanguage.bind(i18n);
+i18n.changeLanguage = (async (language?: string, ...args: unknown[]) => {
+  const nextLanguage = (language || "en") as LanguageCode;
+  await ensureLanguageResources(nextLanguage);
+  return originalChangeLanguage(nextLanguage, ...(args as []));
+}) as typeof i18n.changeLanguage;
+
+if (i18n.language !== "en") {
+  void i18n.changeLanguage(i18n.language);
+}
 
 // Update document direction when language changes
 i18n.on("languageChanged", (lng) => {
@@ -145,4 +135,3 @@ document.documentElement.dir = currentLang?.dir || "ltr";
 document.documentElement.lang = i18n.language;
 
 export default i18n;
-

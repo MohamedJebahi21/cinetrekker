@@ -1,32 +1,18 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { createLogger } from '@/lib/logger';
-import type { PostgrestError } from '@supabase/supabase-js';
-
-const logger = createLogger('collections');
-
-export type CollectionsFetchStatus =
-  | 'idle'
-  | 'ok'
-  | 'schema_missing'
-  | 'network_error';
-
-interface CollectionsQueryResult {
-  items: Array<Record<string, unknown>>;
-  fetchStatus: CollectionsFetchStatus;
-}
 
 export const useCollections = () => {
   const { user } = useAuth();
+  const DISABLE_ID = 'cinetrekker:collections_disabled';
+  const [disabledFlag] = useState(() => typeof window !== 'undefined' && localStorage.getItem(DISABLE_ID) === '1');
   return useQuery({
     queryKey: ['collections', user?.id],
-    enabled: !!user,
-    queryFn: async (): Promise<CollectionsQueryResult> => {
-      if (!user) {
-        return { items: [], fetchStatus: 'idle' };
-      }
+    enabled: !!user && !disabledFlag,
+    queryFn: async () => {
+      if (!user) return [];
       try {
         const { data, error } = await supabase
           .from('collections')
@@ -35,28 +21,26 @@ export const useCollections = () => {
           .order('created_at', { ascending: false });
 
         if (error) {
-          const typedError = error as PostgrestError;
-          const errorCode = typedError.code;
-          const errorMessage = typedError.message;
+          // If the Supabase instance doesn't have the table, disable future fetches to avoid noisy console errors
+          const errorCode = (error as Record<string, unknown>).code as string | undefined;
+          const errorMessage = (error as Record<string, unknown>).message as string | undefined;
           if (errorCode === 'PGRST205' || errorMessage?.includes("Could not find the table")) {
-            logger.warn('Collections table missing in Supabase; returning empty list.');
-            return { items: [], fetchStatus: 'schema_missing' };
+            try { localStorage.setItem(DISABLE_ID, '1'); } catch (e) { console.warn('Failed to save collection disabled state:', e); }
+            console.warn('Collections table missing in Supabase; disabling collections fetch.');
+            return [];
           }
-          logger.error('Failed to fetch collections', error);
-          return { items: [], fetchStatus: 'network_error' };
+          console.error('Failed to fetch collections', error);
+          return [];
         }
 
-        return { items: (data || []) as Array<Record<string, unknown>>, fetchStatus: 'ok' };
+        return data || [];
       } catch (err) {
-        logger.error('Network error fetching collections', err);
-        return { items: [], fetchStatus: 'network_error' };
+        console.error('Network error fetching collections', err);
+        return [];
       }
     },
-    select: (result) => ({
-      data: result.items,
-      fetchStatus: result.fetchStatus,
-    }),
     staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -79,7 +63,7 @@ export const useCreateCollection = () => {
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['collections'] }),
     onError: (err) => {
-      logger.error('Create collection failed', err);
+      console.error('Create collection failed', err);
       toast({ title: 'Error creating collection', variant: 'destructive' });
     }
   });
@@ -104,7 +88,7 @@ export const useAddToCollection = () => {
       toast({ title: 'Added to collection' });
     },
     onError: (err) => {
-      logger.error('Add to collection failed', err);
+      console.error('Add to collection failed', err);
       toast({ title: 'Error adding to collection', variant: 'destructive' });
     }
   });
@@ -132,7 +116,7 @@ export const useRemoveFromCollection = () => {
       toast({ title: 'Removed from collection' });
     },
     onError: (err) => {
-      logger.error('Remove from collection failed', err);
+      console.error('Remove from collection failed', err);
       toast({ title: 'Error removing from collection', variant: 'destructive' });
     }
   });
@@ -150,13 +134,13 @@ export const useCollectionItems = (collectionId?: number) => {
           .eq('collection_id', collectionId);
 
         if (error) {
-          logger.error('Failed to fetch collection items', error);
+          console.error('Failed to fetch collection items', error);
           return [];
         }
 
         return (data || []).map((d: { media_id: number; media_type: string }) => ({ mediaId: d.media_id, mediaType: d.media_type }));
       } catch (err) {
-        logger.error('Network error fetching collection items', err);
+        console.error('Network error fetching collection items', err);
         return [];
       }
     },

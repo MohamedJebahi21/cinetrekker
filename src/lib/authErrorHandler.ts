@@ -1,7 +1,7 @@
 export const GENERIC_AUTH_ERROR =
   "Authentication failed. Please check your credentials.";
 export const GENERIC_SIGNUP_SUCCESS =
-  "Registration successful! Please check your email (including spam) for a confirmation link to activate your account.";
+  "Registration successful! You can now sign in to your account.";
 
 const pW = "pass" + "word";
 export const AUTH_RESET_NOTIF =
@@ -14,18 +14,17 @@ export function processAuthError(error: unknown): {
   shouldLog: boolean;
   logContext?: string;
 } {
-  const candidate =
-    error && typeof error === "object"
-      ? (error as {
-          code?: string | number;
-          status?: string | number;
-          message?: string;
-        })
-      : null;
   const logContext = error instanceof Error ? error.message : String(error);
-  const errorCode =
-    candidate?.code?.toString() || candidate?.status?.toString();
-  const errorMessage = candidate?.message?.toLowerCase() || "";
+
+  // Debug log for auth errors — development only
+  if (import.meta.env.DEV) {
+    console.error("[AUTH DEBUG]", {
+      rawError: error,
+      errorCode,
+      errorMessage,
+      logContext,
+    });
+  }
 
   if (logContext.includes("Supabase environment is not configured")) {
     return {
@@ -70,14 +69,6 @@ export function processAuthError(error: unknown): {
     };
   }
 
-  if (errorMessage.includes("email not confirmed") || errorMessage.includes("confirmation_sent")) {
-    return {
-      userMessage: "Please check your email and click the confirmation link before signing in.",
-      shouldLog: false,
-      logContext,
-    };
-  }
-
   return {
     userMessage: GENERIC_AUTH_ERROR,
     shouldLog: true,
@@ -85,7 +76,7 @@ export function processAuthError(error: unknown): {
   };
 }
 
-export function processSignupResult(): {
+export function processSignupResult(error: unknown | null): {
   userMessage: string;
   isSuccess: boolean;
 } {

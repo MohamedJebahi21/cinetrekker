@@ -55,7 +55,7 @@ export function TVWatchStatusModal({
       if (!showDetails) return [];
       
       const seasons = [];
-      for (let i = 1; i <= (showDetails.number_of_seasons ?? 1); i++) {
+      for (let i = 1; i <= showDetails.number_of_seasons; i++) {
         try {
           const seasonDetails = await getTVSeasonDetails(showId, i, language);
           seasons.push(seasonDetails);
@@ -209,6 +209,7 @@ export function TVWatchStatusModal({
                             </span>
                             <Checkbox
                               checked={seasonSelected}
+                              ref={undefined}
                               onCheckedChange={() => handleSelectSeason(seasonNum, episodeCount)}
                               className={partialSelected && !seasonSelected ? 'data-[state=checked]:opacity-50' : ''}
                             />

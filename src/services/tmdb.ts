@@ -1,25 +1,16 @@
 // TMDB API Service - handles all TMDB API requests via edge function proxy
 // SECURITY: All requests routed through Supabase Edge Function - API key NEVER exposed to client
-import {
-  Media,
-  MediaDetails,
-  TMDBResponse,
-  TimeWindow,
-  Genre,
-  PersonSearchResult,
-  WatchProviders,
-} from "@/types/media";
-import { SafetyLevel, type MaturityRating } from "@/lib/contentFilter";
-import { createLogger } from "@/lib/logger";
-import { ENV, getTmdbProxyUrl } from "@/lib/envValidation";
-import { toDisplayTitle } from "@/lib/displayTitle";
+import { Media, MediaDetails, TMDBResponse, TimeWindow, Genre, PersonSearchResult, WatchProviders } from '@/types/media';
 
-const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p";
-const logger = createLogger("tmdb-client");
-const SUPABASE_URL = ENV.VITE_SUPABASE_URL;
-const SUPABASE_API_KEY = ENV.VITE_SUPABASE_ANON_KEY;
-const USE_SUPABASE_EDGE_PROXY = import.meta.env.DEV;
-const TMDB_PROXY_URL = getTmdbProxyUrl();
+const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
+const TMDB_PROXY_PATH = '/functions/v1/tmdb-proxy';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_API_KEY =
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const TMDB_PROXY_URL = import.meta.env.DEV
+  ? TMDB_PROXY_PATH
+  : `${SUPABASE_URL}${TMDB_PROXY_PATH}`;
 
 const CONTENT_POLICY_STORAGE_KEY = "cinetrekker_content_policy";
 const TMDB_CACHE_MAX_ENTRIES = 300;
@@ -67,19 +58,22 @@ function parseMaturityFromStorage(): {
     const raw = window.localStorage.getItem(CONTENT_POLICY_STORAGE_KEY);
     if (!raw) return { maturityLevel: SafetyLevel.STRICT, ageVerified: false };
 
-    const parsed = JSON.parse(raw) as {
-      safetyLevel?: string;
-      maturityRating?: string;
-      ageVerified?: boolean;
-      age?: number | null;
-      strictFiltering?: boolean;
-      moderateFiltering?: boolean;
-      adultContentEnabled?: boolean;
-    };
+    let parsed: Record<string, unknown>;
+    try {
+      const parsedJson = JSON.parse(raw);
+      if (!parsedJson || typeof parsedJson !== "object") {
+        return { maturityLevel: SafetyLevel.STRICT, ageVerified: false };
+      }
+      parsed = parsedJson as Record<string, unknown>;
+    } catch {
+      return { maturityLevel: SafetyLevel.STRICT, ageVerified: false };
+    }
 
     const ageVerified =
       parsed.ageVerified === true || typeof parsed.age === "number";
-    const tier = parsed.safetyLevel ?? parsed.maturityRating;
+    const tier =
+      (typeof parsed.safetyLevel === "string" ? parsed.safetyLevel : null) ??
+      (typeof parsed.maturityRating === "string" ? parsed.maturityRating : null);
     if (
       tier === SafetyLevel.STRICT ||
       tier === SafetyLevel.MODERATE ||
@@ -110,7 +104,7 @@ export const getImageUrl = (
 
 export const getBackdropUrl = (
   path: string | null,
-  size: "w300" | "w342" | "w780" | "w1280" | "original" = "w780",
+  size: "w342" | "w780" | "w1280" | "original" = "w780",
 ) => {
   if (!path) return null;
   return `${TMDB_IMAGE_BASE}/${size}${path}`;
@@ -127,6 +121,7 @@ const fetchTMDB = async <T>(
   endpoint: string,
   language: string = "en",
   extraParams: Record<string, string> = {},
+  signal?: AbortSignal,
 ): Promise<T> => {
   if (USE_SUPABASE_EDGE_PROXY && (!SUPABASE_URL || !SUPABASE_API_KEY)) {
     throw new Error(
@@ -155,39 +150,38 @@ const fetchTMDB = async <T>(
   const params = new URLSearchParams({
     endpoint,
     language,
+    include_adult: extraParams.include_adult ?? includeAdultFromStorage,
     ...extraParams,
   });
-  params.set("maturity_level", maturityLevel);
-  params.set("include_adult", includeAdultFromStorage);
 
-  try {
-    const requestPromise = (async () => {
-      const controller = new AbortController();
-      const timeoutId = globalThis.setTimeout(() => {
-        controller.abort();
-      }, TMDB_REQUEST_TIMEOUT_MS);
+  const requestPromise = (async () => {
+    const controller = new AbortController();
+    const timeoutId = globalThis.setTimeout(() => {
+      controller.abort();
+    }, TMDB_REQUEST_TIMEOUT_MS);
 
-      const headers: HeadersInit = {
-        "Content-Type": "application/json",
-      };
+    if (signal) {
+      signal.addEventListener("abort", () => controller.abort(), { once: true });
+    }
 
-      if (USE_SUPABASE_EDGE_PROXY && SUPABASE_API_KEY) {
-        headers.Authorization = `Bearer ${SUPABASE_API_KEY}`;
-        headers.apikey = SUPABASE_API_KEY;
-      }
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
 
+    if (USE_SUPABASE_EDGE_PROXY && SUPABASE_API_KEY) {
+      headers.Authorization = `Bearer ${SUPABASE_API_KEY}`;
+      headers.apikey = SUPABASE_API_KEY;
+    }
+
+    try {
       const response = await fetch(`${TMDB_PROXY_URL}?${params.toString()}`, {
+        method: "GET",
         headers,
         signal: controller.signal,
-      }).finally(() => {
-        globalThis.clearTimeout(timeoutId);
       });
 
-      // Explicit 401 handling - Stop retries immediately
       if (response.status === 401) {
-        logger.error(
-          "401 Unauthorized: Invalid Supabase API key or expired session",
-        );
+        console.error("401 Unauthorized: Invalid Supabase API key or expired session");
         throw new Error("AUTHENTICATION_ERROR");
       }
 
@@ -197,9 +191,9 @@ const fetchTMDB = async <T>(
           response.status === 404
             ? "Unavailable - Invalid endpoint"
             : response.status >= 500
-              ? "Server Error - TMDB proxy issue"
+              ? "Server Error - TMDB or Supabase issue"
               : `HTTP ${response.status}`;
-        logger.error(`TMDB Proxy Error [${response.status}]`, {
+        console.error(`TMDB Proxy Error [${response.status}]:`, {
           endpoint,
           status: response.status,
           statusText,
@@ -209,25 +203,33 @@ const fetchTMDB = async <T>(
         throw new Error(errorData.error || `TMDB API error: ${statusText}`);
       }
 
-      const data = await response.json();
-      setCachedResponse(cacheKey, getCacheTTL(endpoint), data);
-      return data;
-    })();
-
-    tmdbInFlight.set(cacheKey, requestPromise);
-    const result = await requestPromise;
-    tmdbInFlight.delete(cacheKey);
-    return result as T;
-  } catch (error) {
-    tmdbInFlight.delete(cacheKey);
-    if (error instanceof DOMException && error.name === "AbortError") {
-      throw new Error("Request timed out. Please try again.");
+      return (await response.json()) as T;
+    } finally {
+      globalThis.clearTimeout(timeoutId);
     }
-    // Ensure authentication errors propagate with correct type
+  })();
+
+  tmdbInFlight.set(cacheKey, requestPromise);
+
+  try {
+    const data = (await requestPromise) as T;
+    const ttl = getCacheTTL(endpoint);
+    const expiresAt = Date.now() + ttl;
+    tmdbResponseCache.set(cacheKey, { expiresAt, data });
+    if (tmdbResponseCache.size > TMDB_CACHE_MAX_ENTRIES) {
+      const oldestKey = tmdbResponseCache.keys().next().value;
+      if (oldestKey) {
+        tmdbResponseCache.delete(oldestKey);
+      }
+    }
+    return data;
+  } catch (error) {
     if (error instanceof Error && error.message === "AUTHENTICATION_ERROR") {
       throw error;
     }
     throw error;
+  } finally {
+    tmdbInFlight.delete(cacheKey);
   }
 };
 
@@ -237,11 +239,12 @@ export const getTrending = async (
   language: string = "en",
   page: number = 1,
   includeAdult: boolean = false,
+  signal?: AbortSignal,
 ): Promise<TMDBResponse<Media>> => {
   return fetchTMDB(`/trending/${mediaType}/${timeWindow}`, language, {
     page: page.toString(),
     include_adult: includeAdult ? "true" : "false",
-  });
+  }, signal);
 };
 
 export const searchMulti = async (
@@ -249,12 +252,13 @@ export const searchMulti = async (
   page: number = 1,
   language: string = "en",
   includeAdult: boolean = false,
+  signal?: AbortSignal,
 ): Promise<TMDBResponse<Media>> => {
   return fetchTMDB(`/search/multi`, language, {
     query,
     page: page.toString(),
     include_adult: includeAdult ? "true" : "false",
-  });
+  }, signal);
 };
 
 export const searchMovies = async (
@@ -262,12 +266,13 @@ export const searchMovies = async (
   page: number = 1,
   language: string = "en",
   includeAdult: boolean = false,
+  signal?: AbortSignal,
 ): Promise<TMDBResponse<Media>> => {
   return fetchTMDB(`/search/movie`, language, {
     query,
     page: page.toString(),
     include_adult: includeAdult ? "true" : "false",
-  });
+  }, signal);
 };
 
 export const searchTV = async (
@@ -275,144 +280,73 @@ export const searchTV = async (
   page: number = 1,
   language: string = "en",
   includeAdult: boolean = false,
+  signal?: AbortSignal,
 ): Promise<TMDBResponse<Media>> => {
   return fetchTMDB(`/search/tv`, language, {
     query,
     page: page.toString(),
     include_adult: includeAdult ? "true" : "false",
-  });
+  }, signal);
 };
 
 export const searchPeople = async (
   query: string,
   page: number = 1,
   language: string = "en",
+  signal?: AbortSignal,
 ): Promise<TMDBResponse<PersonSearchResult>> => {
   return fetchTMDB(`/search/person`, language, {
     query,
     page: page.toString(),
-  });
+  }, signal);
 };
 
-export const getPopularPeople = async (
-  page: number = 1,
-  language: string = "en",
-): Promise<TMDBResponse<PersonSearchResult>> => {
+export const getPopularPeople = async (page: number = 1, language: string = 'en'): Promise<TMDBResponse<PersonSearchResult>> => {
   return fetchTMDB(`/person/popular`, language, { page: page.toString() });
 };
 
-export const getMovieDetails = async (
-  id: number,
-  language: string = "en",
-): Promise<MediaDetails> => {
-  return fetchTMDB(`/movie/${id}`, language, {
-    append_to_response: "credits,similar,recommendations,release_dates",
-  });
+export const getMovieDetails = async (id: number, language: string = 'en'): Promise<MediaDetails> => {
+  return fetchTMDB(`/movie/${id}`, language, { append_to_response: 'credits,similar,recommendations' });
 };
 
-export const getTVDetails = async (
-  id: number,
-  language: string = "en",
-): Promise<MediaDetails> => {
-  return fetchTMDB(`/tv/${id}`, language, {
-    append_to_response: "credits,similar,recommendations,content_ratings",
-  });
+export const getTVDetails = async (id: number, language: string = 'en'): Promise<MediaDetails> => {
+  return fetchTMDB(`/tv/${id}`, language, { append_to_response: 'credits,similar,recommendations' });
 };
 
-export const getTVSeasonDetails = async (
-  tvId: number,
-  seasonNumber: number,
-  language: string = "en",
-): Promise<TVSeason> => {
+export const getTVSeasonDetails = async (tvId: number, seasonNumber: number, language: string = 'en'): Promise<TVSeason> => {
   return fetchTMDB(`/tv/${tvId}/season/${seasonNumber}`, language);
 };
 
-export const getPopularMovies = async (
-  page: number = 1,
-  language: string = "en",
-  includeAdult: boolean = false,
-): Promise<TMDBResponse<Media>> => {
-  return fetchTMDB(`/movie/popular`, language, {
-    page: page.toString(),
-    include_adult: includeAdult ? "true" : "false",
-  });
+export const getPopularMovies = async (page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
+  return fetchTMDB(`/movie/popular`, language, { page: page.toString() });
 };
 
-export const getPopularTV = async (
-  page: number = 1,
-  language: string = "en",
-  includeAdult: boolean = false,
-): Promise<TMDBResponse<Media>> => {
-  return fetchTMDB(`/tv/popular`, language, {
-    page: page.toString(),
-    include_adult: includeAdult ? "true" : "false",
-  });
+export const getPopularTV = async (page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
+  return fetchTMDB(`/tv/popular`, language, { page: page.toString() });
 };
 
-export const getTopRatedMovies = async (
-  page: number = 1,
-  language: string = "en",
-  includeAdult: boolean = false,
-): Promise<TMDBResponse<Media>> => {
-  return fetchTMDB(`/movie/top_rated`, language, {
-    page: page.toString(),
-    include_adult: includeAdult ? "true" : "false",
-  });
+export const getTopRatedMovies = async (page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
+  return fetchTMDB(`/movie/top_rated`, language, { page: page.toString() });
 };
 
-export const getTopRatedTV = async (
-  page: number = 1,
-  language: string = "en",
-  includeAdult: boolean = false,
-): Promise<TMDBResponse<Media>> => {
-  return fetchTMDB(`/tv/top_rated`, language, {
-    page: page.toString(),
-    include_adult: includeAdult ? "true" : "false",
-  });
+export const getTopRatedTV = async (page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
+  return fetchTMDB(`/tv/top_rated`, language, { page: page.toString() });
 };
 
-export const getNowPlayingMovies = async (
-  page: number = 1,
-  language: string = "en",
-  includeAdult: boolean = false,
-): Promise<TMDBResponse<Media>> => {
-  return fetchTMDB(`/movie/now_playing`, language, {
-    page: page.toString(),
-    include_adult: includeAdult ? "true" : "false",
-  });
+export const getNowPlayingMovies = async (page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
+  return fetchTMDB(`/movie/now_playing`, language, { page: page.toString() });
 };
 
-export const getUpcomingMovies = async (
-  page: number = 1,
-  language: string = "en",
-  includeAdult: boolean = false,
-): Promise<TMDBResponse<Media>> => {
-  return fetchTMDB(`/movie/upcoming`, language, {
-    page: page.toString(),
-    include_adult: includeAdult ? "true" : "false",
-  });
+export const getUpcomingMovies = async (page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
+  return fetchTMDB(`/movie/upcoming`, language, { page: page.toString() });
 };
 
-export const getAiringTodayTV = async (
-  page: number = 1,
-  language: string = "en",
-  includeAdult: boolean = false,
-): Promise<TMDBResponse<Media>> => {
-  return fetchTMDB(`/tv/airing_today`, language, {
-    page: page.toString(),
-    include_adult: includeAdult ? "true" : "false",
-  });
+export const getAiringTodayTV = async (page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
+  return fetchTMDB(`/tv/airing_today`, language, { page: page.toString() });
 };
 
-export const getOnTheAirTV = async (
-  page: number = 1,
-  language: string = "en",
-  includeAdult: boolean = false,
-): Promise<TMDBResponse<Media>> => {
-  return fetchTMDB(`/tv/on_the_air`, language, {
-    page: page.toString(),
-    include_adult: includeAdult ? "true" : "false",
-  });
+export const getOnTheAirTV = async (page: number = 1, language: string = 'en'): Promise<TMDBResponse<Media>> => {
+  return fetchTMDB(`/tv/on_the_air`, language, { page: page.toString() });
 };
 
 // Discover endpoints for filter-based search
@@ -421,43 +355,27 @@ export const discoverMovies = async (
     page?: number;
     with_genres?: string;
     primary_release_year?: string;
-    primary_release_date_gte?: string;
-    primary_release_date_lte?: string;
     with_original_language?: string;
     sort_by?: string;
-    vote_count_gte?: string;
     with_runtime_gte?: string;
     with_runtime_lte?: string;
     with_watch_providers?: string;
     watch_region?: string;
-    include_adult?: string;
   },
   language: string = "en",
+  signal?: AbortSignal,
 ): Promise<TMDBResponse<Media>> => {
-  const queryParams: Record<string, string> = {
-    page: (params.page || 1).toString(),
-  };
+  const queryParams: Record<string, string> = { page: (params.page || 1).toString() };
   if (params.with_genres) queryParams.with_genres = params.with_genres;
-  if (params.primary_release_year)
-    queryParams.primary_release_year = params.primary_release_year;
-  if (params.primary_release_date_gte)
-    queryParams["primary_release_date.gte"] = params.primary_release_date_gte;
-  if (params.primary_release_date_lte)
-    queryParams["primary_release_date.lte"] = params.primary_release_date_lte;
-  if (params.with_original_language)
-    queryParams.with_original_language = params.with_original_language;
+  if (params.primary_release_year) queryParams.primary_release_year = params.primary_release_year;
+  if (params.with_original_language) queryParams.with_original_language = params.with_original_language;
   if (params.sort_by) queryParams.sort_by = params.sort_by;
-  if (params.vote_count_gte)
-    queryParams["vote_count.gte"] = params.vote_count_gte;
-  if (params.with_runtime_gte)
-    queryParams["with_runtime.gte"] = params.with_runtime_gte;
-  if (params.with_runtime_lte)
-    queryParams["with_runtime.lte"] = params.with_runtime_lte;
-  if (params.with_watch_providers)
-    queryParams.with_watch_providers = params.with_watch_providers;
+  if (params.with_runtime_gte) queryParams['with_runtime.gte'] = params.with_runtime_gte;
+  if (params.with_runtime_lte) queryParams['with_runtime.lte'] = params.with_runtime_lte;
+  if (params.with_watch_providers) queryParams.with_watch_providers = params.with_watch_providers;
   if (params.watch_region) queryParams.watch_region = params.watch_region;
   if (params.include_adult) queryParams.include_adult = params.include_adult;
-  return fetchTMDB(`/discover/movie`, language, queryParams);
+  return fetchTMDB(`/discover/movie`, language, queryParams, signal);
 };
 
 export const discoverTV = async (
@@ -465,57 +383,35 @@ export const discoverTV = async (
     page?: number;
     with_genres?: string;
     first_air_date_year?: string;
-    first_air_date_gte?: string;
-    first_air_date_lte?: string;
     with_original_language?: string;
     sort_by?: string;
-    vote_count_gte?: string;
     with_runtime_gte?: string;
     with_runtime_lte?: string;
     with_watch_providers?: string;
     watch_region?: string;
-    include_adult?: string;
   },
   language: string = "en",
+  signal?: AbortSignal,
 ): Promise<TMDBResponse<Media>> => {
-  const queryParams: Record<string, string> = {
-    page: (params.page || 1).toString(),
-  };
+  const queryParams: Record<string, string> = { page: (params.page || 1).toString() };
   if (params.with_genres) queryParams.with_genres = params.with_genres;
-  if (params.first_air_date_year)
-    queryParams.first_air_date_year = params.first_air_date_year;
-  if (params.first_air_date_gte)
-    queryParams["first_air_date.gte"] = params.first_air_date_gte;
-  if (params.first_air_date_lte)
-    queryParams["first_air_date.lte"] = params.first_air_date_lte;
-  if (params.with_original_language)
-    queryParams.with_original_language = params.with_original_language;
+  if (params.first_air_date_year) queryParams.first_air_date_year = params.first_air_date_year;
+  if (params.with_original_language) queryParams.with_original_language = params.with_original_language;
   if (params.sort_by) queryParams.sort_by = params.sort_by;
-  if (params.vote_count_gte)
-    queryParams["vote_count.gte"] = params.vote_count_gte;
-  if (params.with_runtime_gte)
-    queryParams["with_runtime.gte"] = params.with_runtime_gte;
-  if (params.with_runtime_lte)
-    queryParams["with_runtime.lte"] = params.with_runtime_lte;
-  if (params.with_watch_providers)
-    queryParams.with_watch_providers = params.with_watch_providers;
+  if (params.with_runtime_gte) queryParams['with_runtime.gte'] = params.with_runtime_gte;
+  if (params.with_runtime_lte) queryParams['with_runtime.lte'] = params.with_runtime_lte;
+  if (params.with_watch_providers) queryParams.with_watch_providers = params.with_watch_providers;
   if (params.watch_region) queryParams.watch_region = params.watch_region;
   if (params.include_adult) queryParams.include_adult = params.include_adult;
-  return fetchTMDB(`/discover/tv`, language, queryParams);
+  return fetchTMDB(`/discover/tv`, language, queryParams, signal);
 };
 
 // Get movie videos (trailers, etc.)
-export const getMovieVideos = async (
-  id: number,
-  language: string = "en",
-): Promise<{ results: VideoResult[] }> => {
+export const getMovieVideos = async (id: number, language: string = 'en'): Promise<{ results: VideoResult[] }> => {
   return fetchTMDB(`/movie/${id}/videos`, language);
 };
 
-export const getTVVideos = async (
-  id: number,
-  language: string = "en",
-): Promise<{ results: VideoResult[] }> => {
+export const getTVVideos = async (id: number, language: string = 'en'): Promise<{ results: VideoResult[] }> => {
   return fetchTMDB(`/tv/${id}/videos`, language);
 };
 
@@ -528,74 +424,44 @@ export interface VideoResult {
   official: boolean;
 }
 
-export const getSimilar = async (
-  mediaType: "movie" | "tv",
-  id: number,
-  language: string = "en",
-): Promise<TMDBResponse<Media>> => {
+export const getSimilar = async (mediaType: 'movie' | 'tv', id: number, language: string = 'en'): Promise<TMDBResponse<Media>> => {
   return fetchTMDB(`/${mediaType}/${id}/similar`, language);
 };
 
-export const getRecommendations = async (
-  mediaType: "movie" | "tv",
-  id: number,
-  language: string = "en",
-): Promise<TMDBResponse<Media>> => {
+export const getRecommendations = async (mediaType: 'movie' | 'tv', id: number, language: string = 'en'): Promise<TMDBResponse<Media>> => {
   return fetchTMDB(`/${mediaType}/${id}/recommendations`, language);
 };
 
-export const getPersonDetails = async (
-  id: number,
-  language: string = "en",
-): Promise<PersonDetails> => {
-  return fetchTMDB(`/person/${id}`, language, {
-    append_to_response: "combined_credits",
-  });
+export const getPersonDetails = async (id: number, language: string = 'en'): Promise<PersonDetails> => {
+  return fetchTMDB(`/person/${id}`, language, { append_to_response: 'combined_credits' });
 };
 
-export const getMovieGenres = async (
-  language: string = "en",
-): Promise<{ genres: Genre[] }> => {
+export const getMovieGenres = async (language: string = 'en'): Promise<{ genres: Genre[] }> => {
   return fetchTMDB(`/genre/movie/list`, language);
 };
 
-export const getWatchProviders = async (
-  mediaType: "movie" | "tv",
-  id: number,
-): Promise<WatchProviders> => {
+export const getWatchProviders = async (mediaType: 'movie' | 'tv', id: number): Promise<WatchProviders> => {
   return fetchTMDB(`/${mediaType}/${id}/watch/providers`);
 };
 
-export const getTVGenres = async (
-  language: string = "en",
-): Promise<{ genres: Genre[] }> => {
+export const getTVGenres = async (language: string = 'en'): Promise<{ genres: Genre[] }> => {
   return fetchTMDB(`/genre/tv/list`, language);
 };
 
 export const getMediaTitle = (media: Media): string => {
-  // Prefer original title/name so media names stay in their source language.
-  return toDisplayTitle(
-    media.original_title ||
-      media.original_name ||
-      media.title ||
-      media.name ||
-      "Unknown Title",
-  );
+  return media.title || media.name || 'Unknown Title';
 };
 
 export const getMediaYear = (media: Media): string => {
   const date = media.release_date || media.first_air_date;
-  return date ? new Date(date).getFullYear().toString() : "";
+  return date ? new Date(date).getFullYear().toString() : '';
 };
 
-export const getMediaType = (media: Media): "movie" | "tv" => {
-  if (media.media_type === "tv") return "tv";
-  if (media.media_type === "movie") return "movie";
-  if ("title" in media && media.title) return "movie";
-  return "tv";
+export const getMediaType = (media: Media): 'movie' | 'tv' => {
+  if (media.media_type) return media.media_type;
+  if ('title' in media && media.title) return 'movie';
+  return 'tv';
 };
-
-export type { MediaDetails } from "@/types/media";
 
 // TV Season & Episode Types
 export interface TVEpisode {
@@ -630,8 +496,6 @@ export interface PersonCredit extends Media {
 }
 
 export interface PersonDetails {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any;
   id: number;
   name: string;
   biography: string;
@@ -640,9 +504,15 @@ export interface PersonDetails {
   place_of_birth: string | null;
   profile_path: string | null;
   known_for_department: string;
-  popularity?: number;
   combined_credits?: {
     cast: PersonCredit[];
     crew: PersonCredit[];
   };
+  episode_count: number;
+  air_date: string | null;
+  poster_path: string | null;
+  episodes: TVEpisode[];
 }
+
+
+

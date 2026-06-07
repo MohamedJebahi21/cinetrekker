@@ -1,23 +1,14 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence, type Variants } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users,
   LogOut,
   User as UserIcon,
-  Compass,
-  Bookmark,
-  Settings,
-  Bell,
-  Palette,
-  Globe,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
-import { Image } from '@/components/ui/Image';
-import { languages } from '@/i18n';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,7 +30,7 @@ interface UserProfileDropdownProps {
   className?: string;
 }
 
-const dropdownVariants: Variants = {
+const dropdownVariants = {
   hidden: { opacity: 0, scale: 0.95, y: -10 },
   visible: {
     opacity: 1,
@@ -47,7 +38,7 @@ const dropdownVariants: Variants = {
     y: 0,
     transition: {
       duration: 0.2,
-      ease: "easeOut" as const,
+      ease: 'easeOut',
     },
   },
   exit: {
@@ -56,7 +47,7 @@ const dropdownVariants: Variants = {
     y: -10,
     transition: {
       duration: 0.15,
-      ease: "easeIn" as const,
+      ease: 'easeIn',
     },
   },
 };
@@ -78,9 +69,8 @@ export function UserProfileDropdown({
   displayName,
   className,
 }: UserProfileDropdownProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { user, signOut } = useAuth();
-  const { theme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = React.useState(false);
   const navigate = useNavigate();
 
@@ -90,35 +80,14 @@ export function UserProfileDropdown({
   const handleSignOut = async () => {
     setIsOpen(false);
     await signOut();
-    navigate("/", { replace: true });
   };
 
   // Social section items
-  const menuItems = [
-    {
-      icon: Compass,
-      label: t('nav.discover', 'Discover'),
-      path: '/discover',
-    },
-    {
-      icon: Bookmark,
-      label: t('nav.watchlist', 'Watchlist'),
-      path: '/watchlist',
-    },
+  const socialItems = [
     {
       icon: Users,
       label: t('profile.following', 'Following'),
       path: '/following',
-    },
-    {
-      icon: Bell,
-      label: t('nav.notifications', 'Notifications'),
-      path: '/notifications',
-    },
-    {
-      icon: Settings,
-      label: t('nav.settings', 'Settings'),
-      path: '/settings',
     },
   ];
 
@@ -132,20 +101,17 @@ export function UserProfileDropdown({
                 variant="ghost"
                 size="icon"
                 className={cn(
-                  'rounded-full overflow-hidden hover:bg-white/5 min-w-[44px] min-h-[44px] w-[44px] h-[44px] p-0 transition-transform duration-200',
+                  'rounded-full hover:bg-white/5 min-w-[44px] min-h-[44px] w-[44px] h-[44px] p-0 transition-transform duration-200',
                   isOpen && 'ring-2 ring-primary/50',
                   className
                 )}
                 aria-label={t('nav.userMenu', 'User menu')}
               >
                 {profilePhoto ? (
-                  <Image
+                  <img
                     src={profilePhoto}
                     alt={userName}
-                    width={44}
-                    height={44}
-                    className="w-full h-full rounded-full object-cover object-center"
-                    loading="lazy"
+                    className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
                   <UserIcon className="h-5 w-5" />
@@ -153,7 +119,7 @@ export function UserProfileDropdown({
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
-          <TooltipContent side="bottom" className="bg-popover border-border/50">
+          <TooltipContent side="bottom" className="bg-popover/95 backdrop-blur-xl border-border/50">
             <p>{userName}</p>
           </TooltipContent>
         </Tooltip>
@@ -166,11 +132,12 @@ export function UserProfileDropdown({
             initial="hidden"
             animate="visible"
             exit="exit"
+            forceMount
           >
             <DropdownMenuContent
               align="end"
               className={cn(
-                'w-56 bg-background border-border/50 shadow-xl',
+                'w-56 bg-background/80 backdrop-blur-md border-border/50 shadow-xl',
                 'p-0 overflow-hidden'
               )}
               style={{
@@ -196,18 +163,15 @@ export function UserProfileDropdown({
                     }
                   }}
                 >
-                  <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full">
+                  <div className="relative">
                     {profilePhoto ? (
-                      <Image
+                      <img
                         src={profilePhoto}
                         alt={userName}
-                        width={40}
-                        height={40}
-                        className="h-full w-full object-cover object-center ring-2 ring-primary/30 group-hover:ring-primary/60 transition-all"
-                        loading="lazy"
+                        className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/30 group-hover:ring-primary/60 transition-all"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center rounded-full bg-primary/20 ring-2 ring-primary/30 group-hover:ring-primary/60 transition-all">
+                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center ring-2 ring-primary/30 group-hover:ring-primary/60 transition-all">
                         <UserIcon className="w-5 h-5 text-primary" />
                       </div>
                     )}
@@ -223,12 +187,12 @@ export function UserProfileDropdown({
                 </div>
               </motion.div>
 
-              {/* Navigation Section */}
+              {/* Social Section */}
               <motion.div className="py-2">
                 <div className="px-4 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  {t('nav.account', 'Account')}
+                  {t('profile.social', 'Social')}
                 </div>
-                {menuItems.map((item, idx) => {
+                {socialItems.map((item, idx) => {
                   const Icon = item.icon;
                   return (
                     <motion.div
@@ -259,80 +223,10 @@ export function UserProfileDropdown({
 
               <DropdownMenuSeparator className="my-0 bg-border/30" />
 
-              <motion.div
-                variants={itemVariants}
-                custom={menuItems.length + 1}
-                initial="hidden"
-                animate="visible"
-                className="px-4 py-3"
-              >
-                <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  <Palette className="h-3.5 w-3.5" />
-                  {t('nav.theme', 'Theme')}
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {([
-                    ['dark', t('nav.themeDark', 'Dark')],
-                    ['light', t('nav.themeLight', 'Light')],
-                    ['oled', t('nav.themeOled', 'OLED')],
-                  ] as const).map(([value, label]) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setTheme(value)}
-                      className={cn(
-                        'rounded-lg border px-2 py-2 text-xs font-medium transition-colors',
-                        theme === value
-                          ? 'border-primary/40 bg-primary/10 text-primary'
-                          : 'border-border/60 bg-card/70 text-foreground hover:bg-accent',
-                      )}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-
-              <DropdownMenuSeparator className="my-0 bg-border/30" />
-
-              <motion.div
-                variants={itemVariants}
-                custom={menuItems.length + 2}
-                initial="hidden"
-                animate="visible"
-                className="px-4 py-3"
-              >
-                <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  <Globe className="h-3.5 w-3.5" />
-                  {t('nav.language', 'Language')}
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {languages.slice(0, 6).map((language) => (
-                    <button
-                      key={language.code}
-                      type="button"
-                      onClick={() => {
-                        void i18n.changeLanguage(language.code);
-                      }}
-                      className={cn(
-                        'rounded-lg border px-2 py-2 text-left text-xs font-medium transition-colors',
-                        i18n.language === language.code
-                          ? 'border-primary/40 bg-primary/10 text-primary'
-                          : 'border-border/60 bg-card/70 text-foreground hover:bg-accent',
-                      )}
-                    >
-                      {language.name}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-
-              <DropdownMenuSeparator className="my-0 bg-border/30" />
-
               {/* Logout Section */}
               <motion.div
                 variants={itemVariants}
-                custom={menuItems.length + 3}
+                custom={socialItems.length + 1}
                 initial="hidden"
                 animate="visible"
                 className="py-2"

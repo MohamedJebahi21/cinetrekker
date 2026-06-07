@@ -8,7 +8,7 @@ on:
 
 jobs:
   quality-gate:
-    name: Lint, Build, Security, Smoke
+    name: Lint, Build, Security, Smoke, Mobile
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -29,6 +29,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Bundle budget
+        run: npm run test:bundle-budget
+
       - name: Security tests
         run: npm run test:security
 
@@ -37,3 +40,19 @@ jobs:
 
       - name: Smoke tests
         run: npm run test:smoke
+
+      - name: Install Playwright WebKit
+        run: npx playwright install --with-deps webkit
+
+      - name: Mobile feature tests
+        run: npm run test:e2e:mobile
+
+      - name: Upload Playwright artifacts (on failure)
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts-quality-gate
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore

@@ -2,30 +2,68 @@
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=5.0, viewport-fit=cover"
+    />
 
-    <title>CineTrekker Movie Tracker | Track Movies, TV Shows, and Watchlists</title>
+    <!-- Bootstrap scripts (CSP-compatible external scripts only). -->
+    <script src="/bootstrap.js"></script>
+
+    <title>
+      CineTrekker | Track Movies & TV Shows - Your Personal Watchlist
+    </title>
     <meta
       name="description"
-      content="CineTrekker is a movie tracker for discovering movies and TV shows, building watchlists, tracking progress, and exploring filming locations."
+      content="Discover, track, and organize your favorite movies and TV shows with CineTrekker. Create watchlists, mark watched, and explore filming locations."
     />
     <meta
       name="keywords"
-      content="movie tracker, TV show tracker, watchlist app, movie discovery, filming locations, trending movies, track movies"
+      content="movie tracker, TV show tracker, watchlist, filming locations, cinema, movies, TV series, film tracking, TMDB"
     />
     <meta name="author" content="CineTrekker" />
-    <meta name="application-name" content="CineTrekker" />
     <meta name="robots" content="index, follow" />
+
     <link rel="canonical" href="https://cinetrekker.vercel.app/" />
+
+    <!-- Google Site Name Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "@id": "https://cinetrekker.vercel.app/#website",
+      "url": "https://cinetrekker.vercel.app/",
+      "name": "CineTrekker",
+      "alternateName": ["Cine Trekker", "CineTrekker Movie Tracker"],
+      "publisher": {
+        "@type": "Organization",
+        "@id": "https://cinetrekker.vercel.app/#organization",
+        "name": "CineTrekker",
+        "url": "https://cinetrekker.vercel.app/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://cinetrekker.vercel.app/favicon.ico"
+        }
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://cinetrekker.vercel.app/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://cinetrekker.vercel.app/" />
-    <meta property="og:title" content="CineTrekker Movie Tracker | Track Movies, TV Shows, and Watchlists" />
+    <meta property="og:title" content="CineTrekker | Track Movies & TV Shows" />
     <meta
       property="og:description"
-      content="A movie tracker for organizing watchlists, finding trending titles, and following movie and TV updates."
+      content="Your personal hub for tracking movies, TV shows, and exploring real-world filming locations."
     />
-    <meta property="og:image" content="/og-image.png" />
+    <meta
+      property="og:image"
+      content="https://cinetrekker.vercel.app/ct-icon.png"
+    />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -36,14 +74,18 @@
     <meta name="twitter:url" content="https://cinetrekker.vercel.app/" />
     <meta
       name="twitter:title"
-      content="CineTrekker Movie Tracker | Track Movies, TV Shows, and Watchlists"
+      content="CineTrekker | Track Movies & TV Shows"
     />
     <meta
       name="twitter:description"
-      content="Track movies, TV shows, and watchlist progress with a movie tracker built for discovery and speed."
+      content="Discover movies, track your watchlist, and explore filming locations."
     />
-    <meta name="twitter:image" content="https://cinetrekker.vercel.app/og-image.png" />
-    <meta name="twitter:image:alt" content="CineTrekker movie tracker preview" />
+    <meta
+      name="twitter:image"
+      content="https://cinetrekker.vercel.app/ct-icon.png"
+    />
+    <meta name="twitter:image:alt" content="CineTrekker - Movie Tracking App" />
+    <meta name="theme-color" content="#E50914" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta
@@ -52,17 +94,209 @@
     />
     <meta name="apple-mobile-web-app-title" content="CineTrekker" />
 
-    <link rel="icon" href="/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/png" href="/ct-icon.png?v=4" />
+    <link rel="apple-touch-icon" href="/ct-icon.png?v=4" />
+
     <link rel="preconnect" href="https://image.tmdb.org" />
     <link
       rel="preconnect"
       href="https://nvssyuxghwlubxklvgrn.supabase.co"
       crossorigin
     />
-    <!-- <link rel="stylesheet" href="/app-shell.css" /> -->
+
+    <script type="application/ld+json" src="/schema/webapp.json"></script>
+
+    <style>
+      /* Reset & Base Styles */
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html {
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        scroll-behavior: smooth;
+        background: #f8fafc;
+        color: #0f172a;
+      }
+      body {
+        background: #f8fafc;
+        color: #0f172a;
+        overflow-x: hidden;
+        line-height: 1.5;
+      }
+      html.dark,
+      html.dark body {
+        background: #050505;
+        color: #ffffff;
+      }
+
+      /* App Shell Loading State */
+      .app-shell {
+        min-height: 100vh;
+        background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+        opacity: 1;
+        transition: opacity 0.3s ease-out;
+      }
+      html.dark .app-shell {
+        background: linear-gradient(180deg, #050505 0%, #0a0a0a 100%);
+      }
+
+      .app-shell.loaded {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* Loading Header */
+      .loading-header {
+        height: calc(64px + env(safe-area-inset-top, 0px));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        align-items: center;
+        padding: env(safe-area-inset-top, 0px) 1rem 0 1rem;
+        background: rgba(248, 250, 252, 0.9);
+        backdrop-filter: blur(10px);
+        position: sticky;
+        top: 0;
+        z-index: 50;
+      }
+      html.dark .loading-header {
+        background: rgba(0, 0, 0, 0.8);
+      }
+
+      .loading-logo {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #e50914 0%, #c20812 100%);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 18px;
+        color: white;
+        box-shadow: 0 0 20px rgba(229, 9, 20, 0.3);
+      }
+
+      .loading-title {
+        margin-left: 12px;
+        font-weight: 700;
+        font-size: 1.25rem;
+        letter-spacing: -0.02em;
+        color: #0f172a;
+      }
+      html.dark .loading-title {
+        color: #ffffff;
+      }
+
+      /* Loading Content */
+      .loading-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+      }
+
+      /* Skeleton Animation */
+      @keyframes shimmer {
+        0% {
+          background-position: -200% 0;
+        }
+        100% {
+          background-position: 200% 0;
+        }
+      }
+
+      .skeleton {
+        background: linear-gradient(
+          90deg,
+          #e2e8f0 25%,
+          #f1f5f9 50%,
+          #e2e8f0 75%
+        );
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 8px;
+      }
+      html.dark .skeleton {
+        background: linear-gradient(
+          90deg,
+          #1a1a1a 25%,
+          #2a2a2a 50%,
+          #1a1a1a 75%
+        );
+      }
+
+      /* Grid Layout */
+      .loading-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+
+      .card-skeleton {
+        aspect-ratio: 2/3;
+        border-radius: 12px;
+      }
+
+      .text-skeleton {
+        height: 1.5rem;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+      }
+
+      /* Responsive Breakpoints */
+      @media (min-width: 480px) {
+        .loading-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+
+      @media (min-width: 768px) {
+        .loading-grid {
+          grid-template-columns: repeat(4, 1fr);
+          gap: 1.25rem;
+        }
+        .loading-content {
+          padding: 3rem 2rem;
+        }
+        .loading-header {
+          padding: 0 2rem;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .loading-grid {
+          grid-template-columns: repeat(5, 1fr);
+          gap: 1.5rem;
+        }
+      }
+
+      @media (min-width: 1400px) {
+        .loading-grid {
+          grid-template-columns: repeat(6, 1fr);
+        }
+      }
+
+      /* Reduced Motion */
+      @media (prefers-reduced-motion: reduce) {
+        .skeleton {
+          animation: none;
+          background: #1a1a1a;
+        }
+        html {
+          scroll-behavior: auto;
+        }
+      }
+    </style>
   </head>
 
   <body>
@@ -74,8 +308,24 @@
         </header>
 
         <main class="loading-content">
-          <div class="text-skeleton text-skeleton-title skeleton"></div>
-          <div class="text-skeleton text-skeleton-subtitle skeleton"></div>
+          <div
+            class="text-skeleton skeleton"
+            style="
+              width: 60%;
+              max-width: 280px;
+              height: 2rem;
+              margin-bottom: 0.75rem;
+            "
+          ></div>
+          <div
+            class="text-skeleton skeleton"
+            style="
+              width: 40%;
+              max-width: 200px;
+              height: 1rem;
+              margin-bottom: 2rem;
+            "
+          ></div>
 
           <div class="loading-grid" role="status" aria-label="Loading content">
             <div class="card-skeleton skeleton" aria-hidden="true"></div>

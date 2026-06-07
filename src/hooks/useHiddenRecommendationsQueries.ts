@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import { HiddenRecommendation } from '@/types/media';
 
 const HIDDEN_RECOMMENDATIONS_QUERY_ID = 'hidden-recommendations';
@@ -17,11 +17,11 @@ export function useHiddenRecommendationsQuery() {
       if (user) {
         // Fall back to localStorage (user_hidden_recommendations table doesn't exist in schema)
         const storedHidden = localStorage.getItem(`${HIDDEN_RECOMMENDATIONS_STORAGE_ID}_${user.id}`);
-        return storedHidden ? (JSON.parse(storedHidden) as HiddenRecommendation[]) : [];
+        return storedHidden ? JSON.parse(storedHidden) : [];
       } else {
         // Fetch from localStorage for non-authenticated users
         const stored = localStorage.getItem(HIDDEN_RECOMMENDATIONS_STORAGE_ID);
-        return stored ? (JSON.parse(stored) as HiddenRecommendation[]) : [];
+        return stored ? JSON.parse(stored) : [];
       }
     },
     staleTime: 1000 * 60 * 10, // 10 minutes
@@ -40,7 +40,7 @@ export function useHideFromRecommendations() {
       if (user) {
         const storageKey = `${HIDDEN_RECOMMENDATIONS_STORAGE_ID}_${user.id}`;
         const stored = localStorage.getItem(storageKey);
-        const list: HiddenRecommendation[] = stored ? JSON.parse(stored) as HiddenRecommendation[] : [];
+        const list = stored ? JSON.parse(stored) : [];
         if (!list.some((item: HiddenRecommendation) => item.mediaId === params.mediaId && item.mediaType === params.mediaType)) {
           list.push({
             id: `${params.mediaType}-${params.mediaId}`,
@@ -66,7 +66,8 @@ export function useHideFromRecommendations() {
 
       // Optimistic update
       queryClient.setQueryData([HIDDEN_RECOMMENDATIONS_QUERY_ID, user?.id], (old: HiddenRecommendation[] = []) => {
-        if (old.some((item: HiddenRecommendation) => item.mediaId === params.mediaId && item.mediaType === params.mediaType)) {
+        // Check if already hidden
+        if (old.some(item => item.mediaId === params.mediaId && item.mediaType === params.mediaType)) {
           return old;
         }
         const newItem: HiddenRecommendation = {
@@ -82,7 +83,7 @@ export function useHideFromRecommendations() {
       // Update localStorage if not authenticated
       if (!user) {
         const stored = localStorage.getItem(HIDDEN_RECOMMENDATIONS_STORAGE_ID);
-        const list: HiddenRecommendation[] = stored ? JSON.parse(stored) as HiddenRecommendation[] : [];
+        const list = stored ? JSON.parse(stored) : [];
         if (!list.some((item: HiddenRecommendation) => item.mediaId === params.mediaId && item.mediaType === params.mediaType)) {
           list.push({
             id: `${params.mediaType}-${params.mediaId}`,
@@ -122,7 +123,7 @@ export function useUnhideFromRecommendations() {
       if (user) {
         const storageKey = `${HIDDEN_RECOMMENDATIONS_STORAGE_ID}_${user.id}`;
         const stored = localStorage.getItem(storageKey);
-        const list: HiddenRecommendation[] = stored ? JSON.parse(stored) as HiddenRecommendation[] : [];
+        const list = stored ? JSON.parse(stored) : [];
         const newList = list.filter((item: HiddenRecommendation) => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType));
         localStorage.setItem(storageKey, JSON.stringify(newList));
       }
@@ -140,13 +141,13 @@ export function useUnhideFromRecommendations() {
 
       // Optimistic update
       queryClient.setQueryData([HIDDEN_RECOMMENDATIONS_QUERY_ID, user?.id], (old: HiddenRecommendation[] = []) =>
-        old.filter((item: HiddenRecommendation) => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType))
+        old.filter(item => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType))
       );
 
       // Update localStorage if not authenticated
       if (!user) {
         const stored = localStorage.getItem(HIDDEN_RECOMMENDATIONS_STORAGE_ID);
-        const list: HiddenRecommendation[] = stored ? JSON.parse(stored) as HiddenRecommendation[] : [];
+        const list = stored ? JSON.parse(stored) : [];
         const newList = list.filter((item: HiddenRecommendation) => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType));
         localStorage.setItem(HIDDEN_RECOMMENDATIONS_STORAGE_ID, JSON.stringify(newList));
       }
@@ -171,5 +172,5 @@ export function useUnhideFromRecommendations() {
  */
 export function useIsHiddenFromRecommendations(mediaId: number, mediaType: 'movie' | 'tv') {
   const { data: hidden = [] } = useHiddenRecommendationsQuery();
-  return hidden.some((item: HiddenRecommendation) => item.mediaId === mediaId && item.mediaType === mediaType);
+  return hidden.some(item => item.mediaId === mediaId && item.mediaType === mediaType);
 }

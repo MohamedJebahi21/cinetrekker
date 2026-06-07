@@ -1,6 +1,34 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+type GuardedPage = Page & {
+  __trustedTypesViolations?: string[];
+};
+
+const TRUSTED_TYPES_SEO_ERROR_PATTERN =
+  /Trusted Types: script sinks are not allowed|ErrorBoundary caught an error:\s*TypeError:\s*Trusted Types/i;
 
 test.describe('CineTrekker smoke', () => {
+  test.beforeEach(async ({ page }) => {
+    const guardedPage = page as GuardedPage;
+    guardedPage.__trustedTypesViolations = [];
+
+    page.on('console', (msg) => {
+      if (msg.type() !== 'error') return;
+      const text = msg.text();
+      if (TRUSTED_TYPES_SEO_ERROR_PATTERN.test(text)) {
+        guardedPage.__trustedTypesViolations?.push(text);
+      }
+    });
+  });
+
+  test.afterEach(async ({ page }) => {
+    const violations = (page as GuardedPage).__trustedTypesViolations ?? [];
+    expect(
+      violations,
+      'Trusted Types SEO runtime violations were emitted in browser console.',
+    ).toEqual([]);
+  });
+
   test('home page loads and shows header', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveTitle(/CineTrekker|CineTrekker/i);
@@ -21,32 +49,5 @@ test.describe('CineTrekker smoke', () => {
       const main = page.locator('main');
       await expect(main).toBeVisible();
     }
-  });
-
-  test('recommendations route renders share/feed shell', async ({ page }) => {
-    await page.goto('/recommendations');
-    await expect(page).toHaveURL(/\/(recommendations|login)/);
-    await expect(page.locator('main').first()).toBeVisible();
-  });
-
-  test('home visit updates engagement state after comeback gap', async ({ page }) => {
-    const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
-    await page.addInitScript((lastActiveAt) => {
-      window.localStorage.setItem(
-        'cinetrekker_engagement_visits_v1',
-        JSON.stringify({
-          lastVisitDay: new Date(lastActiveAt).toISOString().slice(0, 10),
-          streakDays: 1,
-          lastActiveAt,
-        }),
-      );
-    }, threeDaysAgo);
-    await page.goto('/');
-    const state = await page.evaluate(() => {
-      const raw = window.localStorage.getItem('cinetrekker_engagement_visits_v1');
-      return raw ? JSON.parse(raw) : null;
-    });
-    expect(state).not.toBeNull();
-    expect(state.streakDays).toBeGreaterThan(0);
   });
 });

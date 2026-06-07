@@ -18,6 +18,10 @@ From the repository root:
 
 Copy the generated value.
 
+If you already have a value from the script output, use that exact value in both places below. You do not need the Supabase CLI just to set the secret in the dashboard.
+
+On Windows, do not install the Supabase CLI with `npm install -g supabase`; that install path is not supported. If you need the CLI, use a supported method such as `npx supabase` or the Scoop package manager.
+
 ## 2) Add `CRON_SECRET` in Supabase
 
 1. Open Supabase Dashboard.

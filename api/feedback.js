@@ -1,11 +1,9 @@
-import { enforceRequestSecurity } from './_lib/requestSecurity.js';
-import { verifyBotProtection } from './_lib/botProtection.js';
-import { createServerLogger } from './_lib/logger.js';
-import { reportSecurityEvent } from './_lib/securityMonitor.js';
-
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const MAX_REQUESTS_PER_WINDOW = 5;
 const MAX_NAME_LENGTH = 120;
 const MAX_EMAIL_LENGTH = 254;
 const MAX_MESSAGE_LENGTH = 4000;
+const RESEND_TIMEOUT_MS = 10_000;
 const logger = createServerLogger("feedback");
 
 function normalizeText(value, maxLength) {
@@ -32,23 +30,22 @@ export default async function handler(req, res) {
   }
 
   // CORS origin validation
-  const securityCheck = await enforceRequestSecurity(req, res, 'feedback');
-  if (!securityCheck.ok) {
-    if (securityCheck.status === 403) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-    return res.status(securityCheck.status).json({ error: securityCheck.error });
+  const origin = req.headers.origin;
+  if (origin && !isAllowedOrigin(origin)) {
+    return res.status(403).json({ error: 'Forbidden origin' });
+  }
+
+  const ip = getClientIP(req);
+  const limitCheck = isRateLimited(`feedback:${ip}`);
+  if (limitCheck.limited) {
+    res.setHeader('Retry-After', String(limitCheck.retryAfter));
+    return res.status(429).json({ error: 'Too many requests. Please try again later.' });
   }
 
   const body = parseBody(req);
   const name = normalizeText(body?.name, MAX_NAME_LENGTH);
   const email = normalizeText(body?.email, MAX_EMAIL_LENGTH);
   const message = normalizeText(body?.message, MAX_MESSAGE_LENGTH);
-
-  const botCheck = await verifyBotProtection(req, body, "feedback");
-  if (!botCheck.ok) {
-    return res.status(botCheck.status).json({ error: botCheck.error });
-  }
 
   if (!name || !email || !message) {
     return res.status(400).json({ error: 'Name, email, and message are required.' });
@@ -77,31 +74,31 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await runtimeFetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: FEEDBACK_FROM_EMAIL,
-        to: [FEEDBACK_TO_EMAIL],
-        reply_to: email,
-        subject: `New CineTrekker feedback from ${name}`,
-        text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
-      }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), RESEND_TIMEOUT_MS);
+
+    let response;
+    try {
+      response = await runtimeFetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          from: FEEDBACK_FROM_EMAIL,
+          to: [FEEDBACK_TO_EMAIL],
+          reply_to: email,
+          subject: `New CineTrekker feedback from ${name}`,
+          text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
+        }),
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
-      await reportSecurityEvent({
-        event: "feedback_delivery_failed",
-        severity: "error",
-        scope: "feedback",
-        message: "Feedback email delivery failed.",
-        req,
-        details: { status: response.status },
-        shouldAlert: true,
-      });
       return res.status(502).json({
         error: 'Failed to send feedback. Please try again later.',
       });
@@ -109,16 +106,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ ok: true });
   } catch (error) {
-    logger.error('feedback function error', error);
-    await reportSecurityEvent({
-      event: "feedback_handler_error",
-      severity: "error",
-      scope: "feedback",
-      message: "Feedback handler threw an error.",
-      req,
-      details: error,
-      shouldAlert: true,
-    });
+    console.error('feedback function error', error);
     return res.status(500).json({
       error: 'Internal feedback service error.',
     });

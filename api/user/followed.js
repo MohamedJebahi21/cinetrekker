@@ -5,6 +5,9 @@ import {
   enforceRequestSecurity,
 } from "../_lib/requestSecurity.js";
 import { reportSecurityEvent } from "../_lib/securityMonitor.js";
+import { createServerLogger } from "../_lib/logger.js";
+
+const logger = createServerLogger("user-followed");
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -81,7 +84,7 @@ export default async function handler(req, res) {
       data: data || [],
     });
   } catch (error) {
-    console.error("GET /api/user/followed error", error);
+    logger.error("GET /api/user/followed error", error);
     return json(res, 500, { error: "Internal server error." });
   }
 }

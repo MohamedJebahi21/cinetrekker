@@ -1,0 +1,36 @@
+# Aider Configuration
+# Copy to project root or ~/.aider.yml
+
+# Model configuration
+model: gemini-2.0-flash
+# Alternative models:
+# model: deepseek-chat
+# model: gpt-4o-mini
+
+# API Key (recommended: use environment variable)
+api-key: ${AIDER_API_KEY}
+
+# Performance tuning
+temperature: 0.3
+max-thinking-length: 5000
+
+# Auto-features
+auto-lint: true
+auto-test: false
+watch: true
+
+# Git integration
+commit: auto
+git-log: 20
+
+# File watching
+ignore-patterns:
+  - node_modules/
+  - .git/
+  - dist/
+  - build/
+  - coverage/
+  - .next/
+
+# Behavior
+dark-mode: true

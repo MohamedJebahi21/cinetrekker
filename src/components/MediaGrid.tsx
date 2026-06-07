@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { motion, type Variants } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Media } from '@/types/media';
@@ -13,21 +13,18 @@ interface MediaGridProps {
   gap?: 'sm' | 'md' | 'lg';
   /** Number of skeleton items to show while loading */
   skeletonCount?: number;
-  selectable?: boolean;
-  selectedKeys?: Set<string>;
-  onToggleSelect?: (mediaId: number, mediaType: "movie" | "tv") => void;
 }
 
 const gridColsMap = {
-  compact: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5',
+  compact: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4',
   normal: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4',
-  wide: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
+  wide: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4',
 };
 
 const gapMap = {
-  sm: 'gap-2 sm:gap-3',
+  sm: 'gap-3 lg:gap-4',
   md: 'gap-3 lg:gap-4',
-  lg: 'gap-4 xl:gap-5',
+  lg: 'gap-3 lg:gap-4',
 };
 
 export function MediaGrid({
@@ -37,11 +34,11 @@ export function MediaGrid({
   className = '',
   gap = 'md',
   skeletonCount = 12,
-  selectable = false,
-  selectedKeys,
-  onToggleSelect,
 }: MediaGridProps) {
   const { t } = useTranslation();
+  // Only animate on the very first mount. After that, items may be added/
+  // removed but we don't want to re-animate the whole grid.
+  const hasAnimated = useRef(false);
 
   const containerVariants = {
     initial: { opacity: 0 },
@@ -89,60 +86,63 @@ export function MediaGrid({
     <motion.div
       className={`grid ${gridColsMap[columns]} ${gapMap[gap]} ${className}`}
       variants={containerVariants}
-      initial="initial"
+      initial={hasAnimated.current ? false : "initial"}
       animate="animate"
+      onAnimationComplete={() => { hasAnimated.current = true; }}
     >
       {items.map((media) => (
         <motion.div
           key={`${media.media_type}-${media.id}`}
-          variants={itemVariants}
+          variants={hasAnimated.current ? undefined : itemVariants}
           className="h-full"
         >
-          <MediaCard
-            media={media}
-            selectable={selectable}
-            selected={
-              selectedKeys?.has(
-                `${(media.media_type ?? "movie") as "movie" | "tv"}-${media.id}`,
-              ) ?? false
-            }
-            onToggleSelect={onToggleSelect}
-          />
+          <MediaCard media={media} />
         </motion.div>
       ))}
     </motion.div>
   );
 }
 
-interface LoadMoreMediaGridProps extends Omit<MediaGridProps, 'items'> {
+interface InfiniteMediaGridProps extends Omit<MediaGridProps, 'items'> {
   items: (Media & { watchStatus?: string })[];
   hasMore?: boolean;
   onLoadMore?: () => void;
-  isLoadingMore?: boolean;
 }
 
-export function LoadMoreMediaGrid({
+export function InfiniteMediaGrid({
   items,
   hasMore = false,
   onLoadMore,
-  isLoadingMore = false,
   ...props
-}: LoadMoreMediaGridProps) {
+}: InfiniteMediaGridProps) {
   const { t } = useTranslation();
+  const observerTarget = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!hasMore || !onLoadMore) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          onLoadMore();
+        }
+      },
+      { rootMargin: '100px' }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, onLoadMore]);
 
   return (
     <>
       <MediaGrid items={items} {...props} />
       {hasMore && (
-        <div className="mt-8 flex justify-center pb-8">
-          <button
-            type="button"
-            onClick={onLoadMore}
-            disabled={isLoadingMore}
-            className="rounded-xl border border-border/50 bg-secondary/80 px-8 py-3 text-sm font-medium text-foreground backdrop-blur-md transition-all hover:bg-secondary hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50"
-          >
-            {isLoadingMore ? t('common.loading', 'Loading...') : t('search.loadMore', 'Load More')}
-          </button>
+        <div ref={observerTarget} className="h-20 flex items-center justify-center">
+          <div className="animate-pulse text-muted-foreground">{t('common.loading', 'Loading...')}</div>
         </div>
       )}
     </>

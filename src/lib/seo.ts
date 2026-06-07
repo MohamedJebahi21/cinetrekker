@@ -107,9 +107,10 @@ export function toWebsiteSearchJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "@id": `${absoluteSiteUrl("/") }#website`,
+    "@id": `${absoluteSiteUrl("/")}#website`,
     url: absoluteSiteUrl("/"),
     name: "CineTrekker",
+    alternateName: ["Cine Trekker", "CineTrekker Movie Tracker"],
     potentialAction: {
       "@type": "SearchAction",
       target: `${absoluteSiteUrl("/search")}?q={search_term_string}`,

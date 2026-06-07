@@ -5,6 +5,23 @@ import { createServerLogger } from "./_lib/logger.js";
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const EXCLUDED_PARAMS = new Set(["endpoint", "maturity_level"]);
 const logger = createServerLogger("tmdb-proxy");
+const TMDB_UPSTREAM_TIMEOUT_MS = 10_000;
+const ALLOWED_ENDPOINT_PREFIXES = [
+  "/trending",
+  "/search",
+  "/movie",
+  "/tv",
+  "/person",
+  "/discover",
+  "/genre",
+  "/configuration",
+];
+
+function isAllowedEndpoint(endpoint) {
+  return ALLOWED_ENDPOINT_PREFIXES.some(
+    (prefix) => endpoint === prefix || endpoint.startsWith(`${prefix}/`),
+  );
+}
 
 function getCacheControlHeader(endpoint) {
   if (endpoint.startsWith("/trending")) {
@@ -173,6 +190,10 @@ export default async function handler(req, res) {
     return json(res, 400, { error: "Invalid endpoint" });
   }
 
+  if (!isAllowedEndpoint(endpoint)) {
+    return json(res, 400, { error: "Unsupported endpoint" });
+  }
+
   const tmdbParams = new URLSearchParams();
   for (const [key, value] of Object.entries(req.query || {})) {
     if (EXCLUDED_PARAMS.has(key)) continue;
@@ -203,9 +224,12 @@ export default async function handler(req, res) {
   }
 
   const tmdbUrl = `${TMDB_BASE_URL}${endpoint}?${tmdbParams.toString()}`;
+  const controller = new AbortController();
+  const timeoutHandle = setTimeout(() => controller.abort(), TMDB_UPSTREAM_TIMEOUT_MS);
 
   try {
     const response = await fetch(tmdbUrl, {
+      signal: controller.signal,
       headers: isV4Token
         ? {
             Authorization: `Bearer ${tmdbApiKey}`,
@@ -222,7 +246,10 @@ export default async function handler(req, res) {
       });
       return json(res, response.status, {
         error: `TMDB API error: ${response.status}`,
-        details: errorText,
+        details:
+          process.env.NODE_ENV === "production"
+            ? "Upstream provider request failed."
+            : errorText,
       });
     }
 
@@ -233,10 +260,19 @@ export default async function handler(req, res) {
     res.setHeader("Cache-Control", getCacheControlHeader(endpoint));
     return json(res, 200, data);
   } catch (error) {
+    if (error?.name === "AbortError") {
+      logger.warn("TMDB upstream timeout.", { endpoint });
+      return json(res, 504, {
+        error: "TMDB upstream timeout",
+      });
+    }
+
     logger.error("Failed to reach TMDB.", error);
     return json(res, 502, {
       error: "Failed to reach TMDB",
       details: error instanceof Error ? error.message : String(error),
     });
+  } finally {
+    clearTimeout(timeoutHandle);
   }
 }

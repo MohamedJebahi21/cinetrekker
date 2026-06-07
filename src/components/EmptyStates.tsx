@@ -1,5 +1,4 @@
 import { ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
   Search,
@@ -35,28 +34,21 @@ export function EmptyState({
   action,
   className = '',
 }: EmptyStateProps) {
-  const { t } = useTranslation();
-
   return (
-    <div className={`flex flex-col items-center justify-center px-4 py-12 text-center ${className}`}>
-      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
-        {t("emptyState.nothingHereYet", "Nothing Here Yet")}
+    <div className={`flex flex-col items-center justify-center py-12 px-4 text-center ${className}`}>
+      <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+        <Icon className="w-8 h-8 text-primary" />
       </div>
-      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[1.35rem] border border-primary/15 bg-gradient-to-br from-primary/20 to-primary/5 shadow-[0_14px_36px_rgba(0,0,0,0.1)]">
-        <Icon className="h-8 w-8 text-primary" />
-      </div>
-      <h3 className="mb-2 text-2xl font-semibold text-foreground">{title}</h3>
-      {description && <p className="mb-6 max-w-md text-base leading-relaxed text-muted-foreground">{description}</p>}
+      <h3 className="text-xl font-bold mb-2 title-display">{title}</h3>
+      {description && <p className="text-muted-foreground mb-6 leading-relaxed max-w-md">{description}</p>}
       {action && (
-        <Button onClick={action.onClick} className="btn-primary-glow gap-2">
+        <Button onClick={action.onClick} className="gap-2">
           {action.label}
         </Button>
       )}
     </div>
   );
 }
-
-export type { EmptyStateProps };
 
 /**
  * Empty search results
@@ -81,7 +73,7 @@ export function EmptyWatchlist({ onDiscover }: { onDiscover: () => void }) {
     <EmptyState
       icon={Bookmark}
       title="Your watchlist is empty"
-      description="Your watchlist is empty. Start adding movies and TV shows."
+      description="Your watchlist is empty. Start adding movies!"
       action={{ label: 'Browse Popular', onClick: onDiscover }}
       className="min-h-96"
     />

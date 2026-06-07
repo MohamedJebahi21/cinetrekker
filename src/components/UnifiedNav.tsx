@@ -1,556 +1,226 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
+import { useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import Settings from "lucide-react/dist/esm/icons/settings";
-import Palette from "lucide-react/dist/esm/icons/palette";
-import Globe from "lucide-react/dist/esm/icons/globe";
-import Layers from "lucide-react/dist/esm/icons/layers";
-import CalendarDays from "lucide-react/dist/esm/icons/calendar-days";
-import Award from "lucide-react/dist/esm/icons/award";
-import User from "lucide-react/dist/esm/icons/user";
-import Menu from "lucide-react/dist/esm/icons/menu";
-import X from "lucide-react/dist/esm/icons/x";
-import Compass from "lucide-react/dist/esm/icons/compass";
-import Film from "lucide-react/dist/esm/icons/film";
-import Info from "lucide-react/dist/esm/icons/info";
-import MessageSquare from "lucide-react/dist/esm/icons/message-square";
-import { useQuery } from "@tanstack/react-query";
-import { motion, useReducedMotion } from "framer-motion";
+import { Award, CalendarDays, Compass, Film, Layers, LogIn, Menu, Palette, Settings, Star, User, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useMotionIntensityPreference } from "@/hooks/useMotionIntensityPreference";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { profileService } from "@/services/profile";
-import { UserProfileDropdown } from "@/components/UserProfileDropdown";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { languages } from "@/i18n";
+import { NotificationBell } from "@/components/NotificationBell";
+import { getCurrentStreak } from "@/lib/streak";
 
-const SearchDropdown = lazy(() =>
-  import("@/components/SearchDropdown").then((mod) => ({
-    default: mod.SearchDropdown,
-  })),
-);
+type NavItem = {
+  path: string;
+  label: string;
+  icon: typeof Compass;
+  auth?: boolean;
+};
 
-const RemotionAurora = lazy(() =>
-  import("@/components/motion/RemotionAurora").then((mod) => ({
-    default: mod.RemotionAurora,
-  })),
-);
-
-const menuLinks = [
-  { path: "/profile", labelKey: "nav.profile", defaultLabel: "Profile", icon: User },
-  { path: "/discover", labelKey: "nav.discover", defaultLabel: "Discover", icon: Compass },
-  { path: "/trending", labelKey: "nav.trending", defaultLabel: "Trending", icon: Film },
-  { path: "/search", labelKey: "nav.search", defaultLabel: "Search", icon: Compass },
-  { path: "/recommendations", labelKey: "nav.recommendations", defaultLabel: "Recommendations", icon: Film },
-  { path: "/calendar", labelKey: "nav.calendar", defaultLabel: "Calendar", icon: CalendarDays },
-  { path: "/stats", labelKey: "nav.stats", defaultLabel: "Stats", icon: Award },
-  { path: "/achievements", labelKey: "nav.achievements", defaultLabel: "Achievements", icon: Award },
-  { path: "/print-watchlist", labelKey: "nav.printWatchlist", defaultLabel: "Print Watchlist", icon: Film },
-  { path: "/genres", labelKey: "nav.genres", defaultLabel: "Genres", icon: Layers },
-  { path: "/decades", labelKey: "nav.decades", defaultLabel: "Decades", icon: CalendarDays },
-  { path: "/awards", labelKey: "nav.awards", defaultLabel: "Awards", icon: Award },
-  { path: "/year-in-review", labelKey: "nav.yearInReview", defaultLabel: "Year In Review", icon: Award },
-  { path: "/following", labelKey: "nav.following", defaultLabel: "Following", icon: User },
+const NAV_ITEMS: NavItem[] = [
+  { path: "/discover", label: "Discover", icon: Compass },
+  { path: "/trending", label: "Trending", icon: Film },
+  { path: "/genres", label: "Genres", icon: Layers },
+  { path: "/calendar", label: "Calendar", icon: CalendarDays, auth: true },
+  { path: "/stats", label: "Stats", icon: Award, auth: true },
+  { path: "/watchlist", label: "Watchlist", icon: Star, auth: true },
 ];
 
-const desktopMenuGridVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.04,
-      delayChildren: 0.08,
-    },
-  },
-};
-
-const menuItemVariants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.24,
-      ease: "easeOut" as const,
-    },
-  },
-};
-
-const mobileMenuListVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.035,
-      delayChildren: 0.06,
-    },
-  },
-};
-
-export function UnifiedNav() {
-  const { t, i18n } = useTranslation();
-  const { pathname } = useLocation();
-  const { user } = useAuth();
-  const { theme, setTheme } = useTheme();
-  const reduceMotion = useReducedMotion();
-  const motionIntensity = useMotionIntensityPreference();
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
-  const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
-
-  const { data: profile } = useQuery({
-    queryKey: ["profile", user?.id],
-    queryFn: () => profileService.getProfile(user!.id),
-    enabled: !!user?.id,
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const profileImageUrl = useMemo(() => {
-    if (profile?.avatar_url) return profile.avatar_url;
-    if (profile?.profile_photo) return profile.profile_photo;
-    const metadata = user?.user_metadata as Record<string, unknown> | undefined;
-    const candidates = [metadata?.avatar_url, metadata?.picture, metadata?.photo_url];
-    return (
-      candidates.find(
-        (value): value is string => typeof value === "string" && value.trim().length > 0,
-      ) ?? null
-    );
-  }, [profile, user]);
-
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    setIsDesktopMenuOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    const handleOpen = () => {
-      if (window.innerWidth >= 768) {
-        setIsMobileSheetOpen(false);
-        setIsDesktopMenuOpen(true);
-        return;
-      }
-      setIsDesktopMenuOpen(false);
-      setIsMobileSheetOpen(true);
-    };
-
-    window.addEventListener("cinetrekker:open-mobile-menu", handleOpen);
-    return () => window.removeEventListener("cinetrekker:open-mobile-menu", handleOpen);
-  }, []);
-
-  const searchFallback = (
-    <div aria-hidden="true" className="h-11 w-full rounded-xl border border-border/50 bg-card/40" />
-  );
-
-  const currentPageLabel = useMemo(() => {
-    if (pathname === "/") return t("nav.home", "Home");
-
-    const routeLabels: Array<{ path: string; label: string }> = [
-      { path: "/settings", label: t("nav.settings", "Settings") },
-      { path: "/login", label: t("nav.signIn", "Sign In") },
-      { path: "/signup", label: t("nav.signUp", "Sign Up") },
-      { path: "/accessibility", label: t("accessibility.title", "Accessibility Settings") },
-      ...menuLinks.map(item => ({ path: item.path, label: t(item.labelKey, item.defaultLabel) })),
-    ];
-
-    const matched = routeLabels
-      .filter((item) => pathname === item.path || pathname.startsWith(`${item.path}/`))
-      .sort((a, b) => b.path.length - a.path.length)[0];
-
-    if (matched) return matched.label;
-
-    const segment = pathname.split("/").filter(Boolean)[0];
-    if (!segment) return t("nav.home", "Home");
-    return segment.charAt(0).toUpperCase() + segment.slice(1);
-  }, [pathname, t]);
-
+function NavLink({
+  to,
+  active,
+  onClick,
+  children,
+}: {
+  to: string;
+  active: boolean;
+  onClick?: () => void;
+  children: ReactNode;
+}) {
   return (
-    <header
-      role="banner"
+    <Link
+      to={to}
+      onClick={onClick}
       className={cn(
-        "sticky top-0 left-0 right-0 z-[90] border-b border-border/50 bg-background/88 pt-[env(safe-area-inset-top,0px)] backdrop-blur-[18px] transition-[background-color,box-shadow] duration-300",
-        isScrolled && "bg-[hsl(var(--background)/0.96)] shadow-[0_10px_28px_hsl(var(--foreground)/0.08)]",
+        "inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-medium transition-colors",
+        active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground",
       )}
     >
-      <div className="container mx-auto flex h-16 items-center gap-3 px-3 sm:px-4">
-        <Link to="/" className="group flex shrink-0 items-center gap-3">
-          <img
-            src="/apple-touch-icon.png"
-            alt="CineTrekker logo"
-            className="h-11 w-11 rounded-2xl object-cover shadow-[0_8px_20px_hsl(var(--primary)/0.2)]"
-          />
-          <span className="hidden text-base font-semibold text-foreground sm:block lg:text-lg">
-            {t("common.appName", "CineTrekker")}
+      {children}
+    </Link>
+  );
+}
+
+export function UnifiedNav() {
+  const { t } = useTranslation();
+  const { pathname } = useLocation();
+  const { user, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const streak = getCurrentStreak();
+
+  const profileHref = user ? "/profile" : "/login";
+  const profileLabel = user ? t("nav.profile", "Profile") : t("nav.signIn", "Sign In");
+  const profileInitial = useMemo(() => {
+    const source = user?.email || "C";
+    return source.slice(0, 1).toUpperCase();
+  }, [user?.email]);
+
+  const cycleTheme = () => {
+    setTheme(theme === "dark" ? "light" : theme === "light" ? "oled" : "dark");
+  };
+
+  return (
+    <header className="sticky top-0 z-50 border-b border-border/50 bg-background/90 backdrop-blur-xl">
+      <div className="page-container flex h-16 items-center gap-3">
+        <Link to="/" className="flex items-center gap-2 font-semibold text-foreground">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
+            C
           </span>
+          <span className="hidden text-sm sm:inline">{t("common.appName", "CineTrekker")}</span>
         </Link>
 
-        <div className="hidden items-center md:flex">
-          <span className="rounded-lg px-4 py-2 text-sm font-semibold text-primary">
-            {currentPageLabel}
-          </span>
-        </div>
+        <nav className="hidden items-center gap-1 md:flex">
+          {NAV_ITEMS.filter((item) => !item.auth || user).map((item) => {
+            const active = pathname === item.path || pathname.startsWith(`${item.path}/`);
+            const Icon = item.icon;
+            return (
+              <NavLink key={item.path} to={item.path} active={active}>
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </NavLink>
+            );
+          })}
+        </nav>
 
-        <div className="min-w-0 flex-1">
-          <Suspense fallback={searchFallback}>
-            <SearchDropdown />
-          </Suspense>
-        </div>
+        <div className="ml-auto flex items-center gap-2">
+          {streak > 0 ? (
+            <div className="hidden rounded-full border border-orange-500/30 bg-orange-500/10 px-2 py-1 text-xs font-semibold text-orange-400 md:block">
+              {streak}d
+            </div>
+          ) : null}
 
-        <div className="ml-auto hidden items-center gap-1 md:flex">
           {user ? (
-            <UserProfileDropdown
-              profilePhoto={profileImageUrl}
-              displayName={profile?.display_name ?? undefined}
-            />
-          ) : (
-            <Button asChild variant="ghost" size="icon" className="rounded-full">
-              <Link to="/login" aria-label={t("nav.signIn", "Sign In")}>
+            <div className="hidden rounded-full border border-border/60 bg-card/60 px-1 py-1 shadow-sm backdrop-blur-xl md:flex">
+              <NotificationBell />
+            </div>
+          ) : null}
+
+          <Button variant="ghost" size="icon" className="rounded-full" onClick={cycleTheme} aria-label={t("nav.changeTheme", "Change theme")}>
+            <Palette className="h-5 w-5" />
+          </Button>
+
+          <Button asChild variant="ghost" size="icon" className="rounded-full">
+            <Link to={profileHref} aria-label={profileLabel}>
+              {user ? (
                 <User className="h-5 w-5" />
-              </Link>
-            </Button>
-          )}
-
-          <Button asChild variant="ghost" size="icon" className="rounded-full">
-            <Link to="/settings" aria-label={t("nav.settings", "Settings")}>
-              <Settings className="h-5 w-5" />
-            </Link>
-          </Button>
-
-          {/* Language Switcher */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full"
-                aria-label={t("nav.changeLanguage", "Change language")}
-              >
-                <Globe className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[160px] bg-popover border-border/50">
-              {languages.map((lang) => (
-                <DropdownMenuItem
-                  key={lang.code}
-                  onClick={() => i18n.changeLanguage(lang.code)}
-                  className={i18n.language === lang.code ? "bg-accent" : ""}
-                >
-                  {lang.name}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Theme Switcher */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full"
-                aria-label={t("nav.changeTheme", "Change theme")}
-              >
-                <Palette className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[140px] bg-popover border-border/50">
-              {(["dark", "light", "oled"] as const).map((option) => (
-                <DropdownMenuItem
-                  key={option}
-                  onClick={() => setTheme(option)}
-                  className={theme === option ? "bg-accent" : ""}
-                >
-                  {option === "dark"
-                    ? t("nav.themeDark", "Dark")
-                    : option === "light"
-                      ? t("nav.themeLight", "Light")
-                      : t("nav.themeOled", "OLED")}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative rounded-full text-foreground/90"
-            onClick={() => setIsDesktopMenuOpen((current) => !current)}
-            aria-label={isDesktopMenuOpen ? t("common.close", "Close") : t("nav.menu", "Menu")}
-            aria-expanded={isDesktopMenuOpen}
-            aria-controls="desktop-menu-overlay"
-          >
-            <span className="relative h-5 w-5">
-              <Menu
-                className={cn(
-                  "absolute inset-0 h-5 w-5 transition-all duration-200",
-                  isDesktopMenuOpen ? "scale-75 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100",
-                )}
-              />
-              <X
-                className={cn(
-                  "absolute inset-0 h-5 w-5 transition-all duration-200",
-                  isDesktopMenuOpen ? "scale-100 rotate-0 opacity-100" : "scale-75 -rotate-90 opacity-0",
-                )}
-              />
-            </span>
-          </Button>
-        </div>
-
-        <div className="ml-auto flex items-center gap-1 md:hidden">
-          <Button asChild variant="ghost" size="icon" className="rounded-full">
-            <Link to={user ? "/profile" : "/login"} aria-label={t("nav.profile", "Profile")}>
-              {profileImageUrl ? (
-                <img
-                  src={profileImageUrl}
-                  alt={t("nav.profile", "Profile")}
-                  className="h-7 w-7 rounded-full object-cover"
-                />
               ) : (
-                <User className="h-5 w-5" />
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                  {profileInitial}
+                </span>
               )}
             </Link>
           </Button>
+
           <Button
             variant="ghost"
             size="icon"
-            className="rounded-full"
-            onClick={() => setIsMobileSheetOpen((current) => !current)}
-            aria-label={isMobileSheetOpen ? t("common.close", "Close") : t("nav.menu", "Menu")}
-            aria-expanded={isMobileSheetOpen}
-            aria-controls="mobile-menu-panel"
+            className="rounded-full md:hidden"
+            onClick={() => setMobileOpen(true)}
+            aria-label={t("nav.openMenu", "Open menu")}
           >
-            <span className="relative h-5 w-5">
-              <Menu
-                className={cn(
-                  "absolute inset-0 h-5 w-5 transition-all duration-200",
-                  isMobileSheetOpen ? "scale-75 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100",
-                )}
-              />
-              <X
-                className={cn(
-                  "absolute inset-0 h-5 w-5 transition-all duration-200",
-                  isMobileSheetOpen ? "scale-100 rotate-0 opacity-100" : "scale-75 -rotate-90 opacity-0",
-                )}
-              />
-            </span>
+            <Menu className="h-5 w-5" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden rounded-full md:inline-flex"
+            onClick={() => setMobileOpen(true)}
+            aria-label={t("nav.openMenu", "Open menu")}
+          >
+            <Settings className="h-5 w-5" />
           </Button>
         </div>
       </div>
 
-      {typeof document !== "undefined" && isDesktopMenuOpen
-        ? createPortal(
-            <div
-              id="desktop-menu-overlay"
-              className="fixed bottom-0 left-0 right-0 top-[calc(4rem+env(safe-area-inset-top,0px))] z-40 hidden md:block"
-              role="dialog"
-              aria-label={t("nav.menu", "Menu")}
-              aria-modal="true"
-            >
-              {motionIntensity !== "low" ? (
-                <div className={cn("pointer-events-none absolute inset-0", motionIntensity === "high" ? "opacity-72" : "opacity-48")}>
-                  <Suspense fallback={null}>
-                    <RemotionAurora className={motionIntensity === "high" ? "opacity-85" : "opacity-60"} />
-                  </Suspense>
-                </div>
-              ) : null}
-
-              <button
-                type="button"
-                className="absolute inset-0 z-10 bg-black/55 backdrop-blur-sm"
-                aria-label={t("common.close", "Close")}
-                onClick={() => setIsDesktopMenuOpen(false)}
-              />
-
-              <motion.div
-                className="relative z-20 mx-auto h-full w-full overflow-y-auto border-t border-border/60 bg-background px-6 py-6 shadow-[0_25px_60px_rgba(0,0,0,0.3)]"
-                initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.994 }}
-                animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: reduceMotion ? 0.16 : 0.32, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <div className="mx-auto max-w-6xl space-y-6">
-                  <div className="flex items-start gap-4">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/85">
-                        {t("nav.more", "More")}
-                      </p>
-                      <h2 className="mt-1 text-2xl font-bold text-foreground">
-                        {t("nav.menu", "Menu")}
-                      </h2>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {t("nav.mobileSubtitle", "Browse tools and extra pages live here.")}
-                      </p>
-                    </div>
-                  </div>
-
-                  <motion.div
-                    className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
-                    variants={desktopMenuGridVariants}
-                    initial="hidden"
-                    animate="visible"
-                    transition={reduceMotion ? { delayChildren: 0.01, staggerChildren: 0.01 } : undefined}
-                  >
-                    {menuLinks.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <motion.div
-                          key={item.path}
-                          variants={menuItemVariants}
-                          transition={reduceMotion ? { duration: 0.12 } : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                        >
-                          <Link
-                            to={item.path}
-                            onClick={() => setIsDesktopMenuOpen(false)}
-                            className="flex min-h-[64px] items-center gap-3 rounded-2xl border border-border/60 bg-card px-5 py-4 text-base font-medium text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/50"
-                          >
-                            <Icon className="h-5 w-5 shrink-0 text-muted-foreground" />
-                            {t(item.labelKey, item.defaultLabel)}
-                          </Link>
-                        </motion.div>
-                      );
-                    })}
-                  </motion.div>
-
-                </div>
-              </motion.div>
-            </div>,
-            document.body,
-          )
-        : null}
-
-      <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent
-          id="mobile-menu-panel"
           side="right"
           showCloseButton={false}
-          overlayClassName="top-[calc(4rem+env(safe-area-inset-top,0px))]"
-          className="safe-area-insets top-[calc(4rem+env(safe-area-inset-top,0px))] h-[calc(100dvh-4rem-env(safe-area-inset-top,0px))] w-full max-w-none overflow-y-auto border-l-0 bg-background px-0 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-4 sm:w-[24rem] sm:border-l sm:pt-[max(1rem,env(safe-area-inset-top,0px))]"
+          aria-label={t("nav.menu", "Menu")}
+          className="w-[min(100vw,22rem)] p-0"
         >
-          {motionIntensity !== "low" ? (
-            <div className={cn("pointer-events-none absolute inset-0", motionIntensity === "high" ? "opacity-56" : "opacity-34")}>
-              <Suspense fallback={null}>
-                <RemotionAurora className={motionIntensity === "high" ? "opacity-70" : "opacity-50"} />
-              </Suspense>
-            </div>
-          ) : null}
-
-          <motion.div
-            className="relative z-10 px-4 sm:px-5"
-            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
-            animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-            transition={{ duration: reduceMotion ? 0.14 : 0.24, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <SheetHeader className="rounded-2xl border border-border/60 bg-card px-4 py-4 text-left">
-              <SheetTitle className="text-xl">{t("nav.menu", "Menu")}</SheetTitle>
-              <p className="text-sm text-muted-foreground">
-                {t("nav.mobileSubtitle", "Browse tools and extra pages live here.")}
-              </p>
+          <div className="flex h-full flex-col">
+            <SheetHeader className="border-b border-border/60 px-5 py-4">
+              <SheetTitle className="flex items-center justify-between text-left">
+                <span>{t("common.appName", "CineTrekker")}</span>
+                <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setMobileOpen(false)} aria-label={t("nav.closeMenu", "Close menu")}>
+                  <X className="h-5 w-5" />
+                </Button>
+              </SheetTitle>
             </SheetHeader>
 
-            <motion.div
-              className="mt-5 space-y-5"
-              variants={mobileMenuListVariants}
-              initial="hidden"
-              animate="visible"
-              transition={reduceMotion ? { delayChildren: 0.01, staggerChildren: 0.01 } : undefined}
-            >
-              <motion.div variants={menuItemVariants}>
-                <Link
-                  to="/"
-                  onClick={() => setIsMobileSheetOpen(false)}
-                  className="flex min-h-[56px] items-center gap-3 rounded-2xl border border-border/50 bg-card px-4 py-3 text-sm font-medium text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/45"
-                >
-                  <Compass className="h-4 w-4 shrink-0 text-primary" />
-                  {t("nav.home", "Home")}
-                </Link>
-              </motion.div>
-
-              <div className="space-y-2 border-t border-border/50 pt-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                  {t("nav.browse", "Browse")}
-                </p>
-                {menuLinks.map((item) => {
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="space-y-2">
+                {NAV_ITEMS.filter((item) => !item.auth || user).map((item) => {
+                  const active = pathname === item.path || pathname.startsWith(`${item.path}/`);
                   const Icon = item.icon;
                   return (
-                    <motion.div
+                    <Link
                       key={item.path}
-                      variants={menuItemVariants}
-                      transition={reduceMotion ? { duration: 0.12 } : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                      to={item.path}
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        "flex min-h-12 items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium transition-colors",
+                        active
+                          ? "border-primary/30 bg-primary/10 text-primary"
+                          : "border-border/60 bg-card/60 text-foreground hover:bg-accent/60",
+                      )}
                     >
-                      <Link
-                        to={item.path}
-                        onClick={() => setIsMobileSheetOpen(false)}
-                        className="flex min-h-[56px] items-center gap-3 rounded-2xl border border-border/50 bg-card px-4 py-3 text-sm font-medium text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/45"
-                      >
-                        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        {t(item.labelKey, item.defaultLabel)}
-                      </Link>
-                    </motion.div>
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </Link>
                   );
                 })}
               </div>
 
-              {/* Settings & Auth */}
-              <div className="space-y-2 border-t border-border/50 pt-4">
-                <motion.div variants={menuItemVariants}>
-                  <Link
-                    to="/settings"
-                    onClick={() => setIsMobileSheetOpen(false)}
-                    className="flex min-h-[56px] items-center gap-3 rounded-2xl border border-border/50 bg-card px-4 py-3 text-sm font-medium text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/45"
-                  >
-                    <Settings className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    {t("nav.settings", "Settings")}
-                  </Link>
-                </motion.div>
-                {user ? (
-                  <motion.div variants={menuItemVariants}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsMobileSheetOpen(false);
-                        window.dispatchEvent(new Event("cinetrekker:sign-out"));
-                      }}
-                      className="flex min-h-[56px] w-full items-center gap-3 rounded-2xl border border-destructive/30 bg-card px-4 py-3 text-sm font-medium text-destructive transition-all duration-200 hover:bg-destructive/10"
-                    >
-                      <User className="h-4 w-4 shrink-0" />
-                      {t("nav.signOut", "Sign Out")}
-                    </button>
-                  </motion.div>
-                ) : (
-                  <motion.div variants={menuItemVariants}>
-                    <Link
-                      to="/login"
-                      onClick={() => setIsMobileSheetOpen(false)}
-                      className="flex min-h-[56px] items-center gap-3 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-primary transition-all duration-200 hover:bg-primary/20"
-                    >
-                      <User className="h-4 w-4 shrink-0" />
-                      {t("nav.signIn", "Sign In")}
+              <div className="mt-6 rounded-3xl border border-border/60 bg-card/60 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  {t("nav.account", "Account")}
+                </p>
+                <div className="mt-3 flex flex-col gap-2">
+                  <Button asChild>
+                    <Link to={profileHref} onClick={() => setMobileOpen(false)}>
+                      {profileLabel}
                     </Link>
-                  </motion.div>
-                )}
+                  </Button>
+                  {user ? (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setMobileOpen(false);
+                        void signOut();
+                      }}
+                    >
+                      {t("nav.signOut", "Sign Out")}
+                    </Button>
+                  ) : (
+                    <Button asChild variant="outline">
+                      <Link to="/signup" onClick={() => setMobileOpen(false)}>
+                        <LogIn className="mr-2 h-4 w-4" />
+                        {t("authPrompt.createAccount", "Create Account")}
+                      </Link>
+                    </Button>
+                  )}
+                </div>
               </div>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         </SheetContent>
       </Sheet>
     </header>
   );
 }
+
+export default UnifiedNav;

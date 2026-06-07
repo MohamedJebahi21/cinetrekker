@@ -1,0 +1,10 @@
+origin/fix/csp-router-userlists origin/copilot/check-workflow-issues origin/copilot/improve-lcp-performance origin/copilot/improve-lcp-performance-again origin/copilot/improve-lighthouse-performance origin/copilot/fix-console-log-issues origin/copilot/fix-runtime-performance-security-issues origin/copilot/fix-performance-issues origin/copilot/fix-lighthouse-mobile-performance origin/copilot/fix-deployment-issues origin/copilot/fix-connection-error-login origin/copilot/fix-deployment-issues-again origin/copilot/fix-website-security-issues origin/copilot/fix-content-security-policy-errors origin/copilot/fix-connection-error origin/copilot/fix-login-page-authentication origin/copilot/audit-secrets-and-fix-auth origin/copilot/perform-website-functional-audit origin/copilot/audit-and-fix-issues origin/copilot/fix-pipeline-and-code-issues origin/copilot/fix-typescript-build-errors origin/copilot/analyze-deployment-errors origin/copilot/fix-deployment-protection-checks origin/copilot/fix-image-display-issue origin/copilot/fix-runtime-dependency-audit origin/copilot/fix-github-actions-checks-24 origin/copilot/upgrade-cinetrekker-app-codebase origin/copilot/audit-codebase-ui-mobile-desktop origin/copilot/audit-cinetrekker-website origin/copilot/queued-task-analysis origin/copilot/audit-cinetrekker-website-again origin/copilot/fix-github-actions-errors origin/copilot/fix-ci-workflow-errors origin/copilot/fix-content-security-policy-issues origin/website-enhancements origin/copilot/add-cron-secret-environment-variable = git for-each-ref --sort=committerdate refs/remotes/origin --format='%(refname:short)' | Where-Object {  -match "origin/" -and  -notmatch "origin/HEAD" -and  -notmatch "origin/main" }
+foreach ($b in $branches) {
+    Write-Host "Merging $b"
+    git merge $b -m "Merge $b into consolidate-all" -X theirs --allow-unrelated-histories
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Auto-resolving conflicts for $b..."
+        git add .
+        git commit -m "Auto-resolve conflicts for $b" --no-edit
+    }
+}

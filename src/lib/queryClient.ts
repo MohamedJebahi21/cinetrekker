@@ -29,7 +29,7 @@ export const queryClient = new QueryClient({
         
         if (authErrorCount >= MAX_AUTH_ERRORS && !circuitBreakerActive) {
           circuitBreakerActive = true;
-          console.error('Circuit breaker activated: Too many authentication failures');
+          console.error('🚨 Circuit breaker activated: Too many authentication failures');
           toast({
             title: 'Configuration Error',
             description: 'API authentication failed. Please check your configuration or contact support.',
@@ -56,7 +56,6 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 15, // Keep cached data around for quick back/forward navigation
       retry: (failureCount, error) => {
         // Circuit breaker: Stop all retries if activated
         if (circuitBreakerActive) {
@@ -69,13 +68,11 @@ export const queryClient = new QueryClient({
           return false;
         }
         
-        // Retry transient failures with exponential backoff.
-        return failureCount < 3;
+        // Retry transient failures with exponential backoff: 1 retry max.
+        return failureCount < 1;
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff: 1s, 2s, max 30s
       refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-      refetchOnMount: false,
     },
   },
 });

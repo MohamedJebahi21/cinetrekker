@@ -6,7 +6,6 @@ export interface Media {
   original_name?: string;
   overview: string;
   poster_path: string | null;
-  profile_path?: string | null;
   backdrop_path: string | null;
   release_date?: string;
   first_air_date?: string;
@@ -15,13 +14,10 @@ export interface Media {
   popularity: number;
   genre_ids?: number[];
   genres?: Genre[];
-  media_type?: "movie" | "tv" | "person";
-  original_language?: string;
+  media_type?: 'movie' | 'tv';
   adult?: boolean;
   runtime?: number;
   episode_run_time?: number[];
-  production_countries?: Array<{ iso_3166_1: string; name: string }>;
-  origin_country?: string[];
 }
 
 export interface Movie extends Media {
@@ -116,8 +112,8 @@ export interface TMDBResponse<T> {
   total_results: number;
 }
 
-export type MediaType = "movie" | "tv" | "all";
-export type TimeWindow = "day" | "week";
+export type MediaType = 'movie' | 'tv' | 'all';
+export type TimeWindow = 'day' | 'week';
 
 export interface PersonSearchResult {
   id: number;
@@ -127,17 +123,17 @@ export interface PersonSearchResult {
   known_for_department?: string;
   known_for?: Media[];
   adult?: boolean;
-  media_type: "person";
+  media_type: 'person';
 }
 
 export interface UserMediaItem {
   id: string;
   mediaId: number;
-  mediaType: "movie" | "tv";
+  mediaType: 'movie' | 'tv';
   userId: string;
   rating?: number;
   note?: string;
-  status?: "watching" | "completed" | "dropped" | "plan_to_watch";
+  status?: 'watching' | 'completed' | 'dropped' | 'plan_to_watch';
   addedAt: string;
   watchedAt?: string;
 }
@@ -145,7 +141,7 @@ export interface UserMediaItem {
 export interface HiddenRecommendation {
   id: string;
   mediaId: number;
-  mediaType: "movie" | "tv";
+  mediaType: 'movie' | 'tv';
   userId: string;
   hiddenAt: string;
 }
@@ -156,23 +152,13 @@ export interface Provider {
   provider_name: string;
   logo_path: string | null;
   display_priority: number;
-  short_name?: string;
-  clear_name?: string;
-  icon_url?: string | null;
-  provider_url?: string;
-  url?: string;
-  urls?: {
-    standard_web?: string;
-    web?: string;
-  } | null;
 }
 
 export interface WatchProviderDetails {
-  link?: string | null;
+  link: string | null;
   rent?: Provider[];
   buy?: Provider[];
   flatrate?: Provider[];
-  [key: string]: unknown;
 }
 
 export interface WatchProviders {
@@ -191,7 +177,7 @@ export interface RankingResult {
   reason?: string;
 }
 
-export interface AIRecommendationItem extends Omit<Media, "genre_ids"> {
+export interface AIRecommendationItem extends Omit<Media, 'genre_ids'> {
   confidence: string;
   ai_reason: string;
 }
@@ -209,7 +195,7 @@ export interface EpisodeCollectionResult {
 
 // Provider data for utility functions
 export interface ProviderDataResult {
-  link?: string | null;
+  link?: string;
   rent?: Provider[];
   buy?: Provider[];
   flatrate?: Provider[];

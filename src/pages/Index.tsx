@@ -15,6 +15,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserLists } from "@/contexts/UserListsContext";
 import { useHomePageData } from "@/hooks/useHomePageData";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
+import { WatchedShowsNewEpisodes } from "@/components/WatchedShowsNewEpisodes";
+import { RecentlyAddedMovies } from "@/components/RecentlyAddedMovies";
 import { HomeSectionState } from "@/components/home/HomeSectionState";
 import { HomeStatsSnapshot } from "@/components/home/HomeStatsSnapshot";
 import { HomeWatchlistSkeleton } from "@/components/home/HomeWatchlistSkeleton";
@@ -28,13 +30,8 @@ import {
   toFaqJsonLd,
   toWebsiteSearchJsonLd,
 } from "@/lib/seo";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { OnboardingTooltip } from "@/components/OnboardingTooltip";
+import { OnboardingChecklist } from "@/components/home/OnboardingChecklist";
 
 const BecauseYouLiked = lazy(() =>
   import("@/components/BecauseYouLiked").then((mod) => ({
@@ -70,6 +67,24 @@ function TrendingSectionSkeleton() {
           <PaginationDotStatic key={index} active={index === 0} aria-hidden="true" />
         ))}
       </PaginationDots>
+    </section>
+  );
+}
+
+function GridRailSkeleton() {
+  return (
+    <section className="ct-panel p-5 md:p-6 min-h-[360px]">
+      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-2">
+          <div className="h-6 w-48 rounded-md skeleton-shimmer" />
+        </div>
+        <div className="h-9 w-24 rounded-full skeleton-shimmer" />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="h-44 rounded-2xl border border-border/60 bg-card/60 skeleton-shimmer" />
+        ))}
+      </div>
     </section>
   );
 }
@@ -145,29 +160,28 @@ export default function Index() {
   const { t, i18n } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const { watched, watchlist } = useUserLists();
-  const [onboardingOpen, setOnboardingOpen] = useState(false);
   const language = i18n.language;
+
+  // State for tab selections
+  const [topThisWeekType, setTopThisWeekType] = useState<'movie' | 'tv'>('movie');
+
   const {
     shouldGateRecommendations,
     discoverTab,
-    setDiscoverTab,
     deferredEnabled,
     lastGenreId,
     lastGenreName,
     filteredGenreItems,
     moreInGenreQuery,
     criticalDataQuery,
-    trendingDayQuery,
     watchlistPreviewQuery,
     topRatedMoviesQuery,
     topRatedTVQuery,
+    trendingDayQuery,
     popularMoviesQuery,
     popularTVQuery,
-  } = useHomePageData({
-    language,
-    watched,
-    watchlist,
-  });
+    hasDeferredErrors,
+  } = useHomePageData({ language, watched, watchlist });
 
   const newReleases = criticalDataQuery.data?.newReleases;
   const trendingWeek = criticalDataQuery.data?.trendingWeek;
@@ -209,12 +223,22 @@ export default function Index() {
   const personalizedHasError = Boolean(
     moreInGenreQuery.error,
   );
+  const watchlistDestination = user ? "/watchlist" : "/signup";
   const hasListActivity = watchlist.length > 0 || watched.length > 0;
-  const dailyPick: Media | null =
-    watchlistPreviewQuery.data?.[0] ||
-    criticalDataQuery.data?.trendingWeek?.results?.[0] ||
-    trendingDayQuery.data?.results?.[0] ||
-    null;
+  const dailyPick: Media | null = (() => {
+    if (watchlistPreviewQuery.data?.[0]) {
+      return watchlistPreviewQuery.data[0];
+    }
+    const weeklyResults = criticalDataQuery.data?.trendingWeek?.results || [];
+    const dailyResults = trendingDayQuery.data?.results || [];
+    
+    // Shift index to index 3 or higher to ensure the title is distinct from the primary hero carousel
+    if (weeklyResults.length > 3) return weeklyResults[3] as Media;
+    if (dailyResults.length > 3) return dailyResults[3] as Media;
+    if (weeklyResults.length > 1) return weeklyResults[1] as Media;
+    if (dailyResults.length > 1) return dailyResults[1] as Media;
+    return weeklyResults[0] || dailyResults[0] || null;
+  })();
   const watchlistSection = hasListActivity ? (
     <HomeSectionState
       title={t("nav.watchlist", "Watchlist")}
@@ -237,7 +261,7 @@ export default function Index() {
           "home.watchlistEmptyQuickAccess",
           "Save a few titles and they will show up here for quick access.",
         )}
-        showMoreLink="/watchlist"
+        showMoreLink={watchlistDestination}
       />
     </HomeSectionState>
   ) : null;
@@ -255,7 +279,7 @@ export default function Index() {
       </p>
       <div className="mt-4 flex flex-col gap-3 sm:flex-row">
         <Button asChild className="btn-primary-glow">
-          <Link to="/watchlist">{t("home.startTracking", "Start Tracking")}</Link>
+          <Link to="/discover">{t("home.startTracking", "Start Tracking")}</Link>
         </Button>
         <Button asChild variant="outline">
           <Link to="/signup">{t("home.createFreeAccount", "Create Free Account")}</Link>
@@ -263,6 +287,36 @@ export default function Index() {
       </div>
     </section>
   ) : null;
+
+  const moodChipsSection = (
+    <section className="ct-panel p-5 md:p-6">
+      <h2 className="text-lg font-bold tracking-tight text-foreground md:text-xl mb-1">
+        {t("home.browseByMood", "How are you feeling tonight?")}
+      </h2>
+      <p className="text-xs text-muted-foreground mb-4">
+        {t("home.browseByMoodSub", "Choose a mood to instantly explore curated tracking lists.")}
+      </p>
+      <div className="flex flex-wrap gap-2.5">
+        {[
+          { label: "😊 Feel Good", href: "/search?genre=35&sort=popularity.desc" },
+          { label: "⚡ Adrenaline Rush", href: "/search?genre=28,12&sort=popularity.desc" },
+          { label: "🧠 Mind-bending", href: "/search?genre=9648,878&sort=vote_average.desc" },
+          { label: "🍿 Funny", href: "/search?genre=35&sort=popularity.desc" },
+          { label: "🕵️ Dark & Gritty", href: "/search?genre=80,53&sort=popularity.desc" },
+          { label: "👻 Chilling Horror", href: "/search?genre=27&sort=popularity.desc" },
+        ].map((mood) => (
+          <Button
+            key={mood.label}
+            asChild
+            variant="outline"
+            className="rounded-full bg-white/[0.02] border-white/10 hover:border-primary/45 hover:bg-primary/5 transition-all text-xs h-9 px-4"
+          >
+            <Link to={mood.href}>{mood.label}</Link>
+          </Button>
+        ))}
+      </div>
+    </section>
+  );
 
   const personalizedSection = (
     <HomeSectionState
@@ -287,7 +341,11 @@ export default function Index() {
             )}
           </p>
           <Button asChild className="btn-primary-glow mt-4">
-            <Link to="/watchlist">{t("home.buildWatchlist", "Build My Watchlist")}</Link>
+            <Link to={watchlistDestination}>
+              {user
+                ? t("home.buildWatchlist", "Build My Watchlist")
+                : t("home.createFreeAccount", "Create Free Account")}
+            </Link>
           </Button>
         </section>
       ) : (
@@ -317,68 +375,76 @@ export default function Index() {
 
   const sharedDiscoveryRails = (
     <>
-      <MediaSection
+      <HomeSectionState
         title={t("home.topRatedMovies", "Top Rated Movies")}
-        items={topRatedMoviesQuery.data?.results || []}
         loading={topRatedMoviesQuery.isLoading}
-        showMoreLink="/movies"
-        emptyMessage={t("home.topRatedMoviesEmpty", "Top rated movies will appear here soon.")}
-      />
+        error={topRatedMoviesQuery.error instanceof Error ? topRatedMoviesQuery.error : null}
+        onRetry={() => { void topRatedMoviesQuery.refetch(); }}
+        skeleton={<TrendingSectionSkeleton />}
+      >
+        <MediaSection
+          title={t("home.topRatedMovies", "Top Rated Movies")}
+          items={topRatedMoviesQuery.data?.results || []}
+          showMoreLink="/movies"
+          emptyMessage={t("home.topRatedMoviesEmpty", "Top rated movies will appear here soon.")}
+        />
+      </HomeSectionState>
 
-      <DiscoveryGridRail
+      <HomeSectionState
         title={t("home.popularTVShows", "Popular TV Shows")}
-        items={(popularTVQuery.data?.results || []).slice(0, 8)}
-        href="/tv"
-      />
+        loading={popularTVQuery.isLoading}
+        error={popularTVQuery.error instanceof Error ? popularTVQuery.error : null}
+        onRetry={() => { void popularTVQuery.refetch(); }}
+        skeleton={<GridRailSkeleton />}
+      >
+        <DiscoveryGridRail
+          title={t("home.popularTVShows", "Popular TV Shows")}
+          items={(popularTVQuery.data?.results || []).slice(0, 8)}
+          href="/tv"
+        />
+      </HomeSectionState>
 
-      <MediaSection
+      <HomeSectionState
         title={t("home.popularMovies", "Popular Movies")}
-        items={popularMoviesQuery.data?.results || []}
         loading={popularMoviesQuery.isLoading}
-        showMoreLink="/discover"
-        emptyMessage={t("home.popularMoviesEmpty", "Popular movies will appear here soon.")}
-      />
+        error={popularMoviesQuery.error instanceof Error ? popularMoviesQuery.error : null}
+        onRetry={() => { void popularMoviesQuery.refetch(); }}
+        skeleton={<TrendingSectionSkeleton />}
+      >
+        <MediaSection
+          title={t("home.popularMovies", "Popular Movies")}
+          items={popularMoviesQuery.data?.results || []}
+          showMoreLink="/discover"
+          emptyMessage={t("home.popularMoviesEmpty", "Popular movies will appear here soon.")}
+        />
+      </HomeSectionState>
 
-      <DiscoveryGridRail
+      <HomeSectionState
         title={t("home.criticallyAcclaimedTV", "Critically Acclaimed TV")}
-        items={(topRatedTVQuery.data?.results || []).slice(0, 8)}
-        href="/discover"
-      />
+        loading={topRatedTVQuery.isLoading}
+        error={topRatedTVQuery.error instanceof Error ? topRatedTVQuery.error : null}
+        onRetry={() => { void topRatedTVQuery.refetch(); }}
+        skeleton={<GridRailSkeleton />}
+      >
+        <DiscoveryGridRail
+          title={t("home.criticallyAcclaimedTV", "Critically Acclaimed TV")}
+          items={(topRatedTVQuery.data?.results || []).slice(0, 8)}
+          href="/discover"
+        />
+      </HomeSectionState>
     </>
   );
 
-  useEffect(() => {
-    if (typeof window === "undefined" || authLoading || user) return;
-    const hasSeenOnboarding = window.localStorage.getItem("cinetrekker_guest_onboarding_seen");
-    if (!hasSeenOnboarding) {
-      setOnboardingOpen(true);
-    }
-  }, [authLoading, user]);
 
-  const dismissOnboarding = () => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("cinetrekker_guest_onboarding_seen", "true");
-    }
-    setOnboardingOpen(false);
-  };
 
   return (
-    <div className="ct-page-shell min-h-screen">
-      <SEO
-        title="CineTrekker Movie Tracker | Track Movies, TV Shows, and Watchlists"
-        description="CineTrekker is a movie tracker for finding trending movies, managing your watchlist, following new releases, and organizing what to watch next."
-        canonical={buildCanonicalUrl("/")}
-        keywords="movie tracker, track movies, tv show tracker, watchlist app, discover trending movies, personalized recommendations"
-        jsonLd={[
-          toWebsiteSearchJsonLd(),
-          toBreadcrumbJsonLd([{ name: "Home", path: "/" }]),
-          toFaqJsonLd(faqItems),
-        ]}
-      />
-
+    <div className="min-h-screen">
+      <SEO title="CineTrekker - Track Your Movies & TV Shows" description="Discover trending movies and TV shows, track your watchlist, and get personalized recommendations." canonical="https://cinetrekker.vercel.app" />
+      {/* High-Conversion Hero Section */}
       <HeroSection />
 
-      <main className="page-container space-y-5 pb-24 pt-6 sm:pt-7 md:space-y-8 md:pb-0 md:pt-8">
+      <div className="page-container space-y-5 pb-8 pt-6 sm:pt-7 md:space-y-8 md:pb-0 md:pt-8">
+        {!authLoading && !user && <OnboardingChecklist />}
         {authLoading ? (
           <AuthHomeSkeleton />
         ) : user ? (
@@ -388,6 +454,9 @@ export default function Index() {
                 pick={dailyPick}
                 sourceLabel={t("home.dailyPick", "Tonight's Pick")}
               />
+            </MotionRevealSection>
+            <MotionRevealSection tone="soft" delayClassName="delay-75" accentOpacityClassName="opacity-15">
+              {moodChipsSection}
             </MotionRevealSection>
             <MotionRevealSection tone="standard" delayClassName="delay-100" accentOpacityClassName="opacity-25">
               <ContinueWatching />
@@ -421,6 +490,9 @@ export default function Index() {
                 sourceLabel={t("home.dailyPickGuests", "Start with tonight's pick")}
               />
             </MotionRevealSection>
+            <MotionRevealSection tone="soft" delayClassName="delay-100" accentOpacityClassName="opacity-15">
+              {moodChipsSection}
+            </MotionRevealSection>
             {watchlistSection ? (
               <MotionRevealSection tone="soft" delayClassName="delay-150" accentOpacityClassName="opacity-22">
                 {watchlistSection}
@@ -453,42 +525,62 @@ export default function Index() {
           </>
         )}
 
-        <section className="border-t border-border pt-8 md:pt-10">
-          <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="section-title mb-1">{t("home.freshDiscovery", "Fresh Discovery")}</h2>
-              <p className="text-sm text-muted-foreground">
-                {t(
-                  "home.globalDiscoveryHint",
-                  "Trending titles and fresh releases live here so the rest of the homepage can stay focused on your queue.",
-                )}
-              </p>
-            </div>
-            <div className="hide-scrollbar -mx-1 overflow-x-auto px-1 pb-1 sm:mx-0 sm:overflow-visible sm:px-0 sm:pb-0">
-              <div className="ct-toggle-group w-max sm:w-auto">
-                {[
-                  { key: "trending-day", label: t("home.trendingToday", "Trending Today") },
-                  { key: "trending-week", label: t("home.trendingWeek", "Trending This Week") },
-                  { key: "new-releases", label: t("home.newReleases", "New Releases") },
-                ].map((tab) => (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    onClick={() =>
-                      setDiscoverTab(
-                        tab.key as "trending-day" | "trending-week" | "new-releases",
-                      )
-                    }
-                    className={`ct-toggle-button whitespace-nowrap min-h-[44px] ${
-                      discoverTab === tab.key
-                        ? "ct-toggle-button-active"
-                        : "hover:text-foreground"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
+        {hasDeferredErrors && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">
+            {t('common.error', 'Some sections failed to load. You can keep browsing and retry shortly.')}
+          </div>
+        )}
+
+        {/* Personalized Recommendations removed */}
+
+        {/* Phase 3: "Because You Liked" personalized row */}
+        {deferredEnabled && (
+          <Suspense fallback={null}>
+            <BecauseYouLiked />
+          </Suspense>
+        )}
+
+        {/* Did You Watch? - New episodes for watched TV shows */}
+        {deferredEnabled && (
+          <Suspense fallback={null}>
+            <WatchedShowsNewEpisodes />
+          </Suspense>
+        )}
+
+        {/* Recently Added Movies */}
+        {deferredEnabled && (
+          <Suspense fallback={null}>
+            <RecentlyAddedMovies />
+          </Suspense>
+        )}
+
+        {/* New Episodes Section removed per UI cleanup */}
+
+        {/* Top This Week - Movies/Series Toggle */}
+        <section>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
+            <h2 className="section-title mb-0">{t('home.topThisWeek') || 'Top This Week'}</h2>
+            <div className="flex gap-2 bg-card/50 border border-white/5 rounded-lg p-1">
+              <button
+                onClick={() => setTopThisWeekType('movie')}
+                className={`px-4 py-2 rounded text-sm font-medium transition-all ${
+                  topThisWeekType === 'movie'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {t('common.movies')}
+              </button>
+              <button
+                onClick={() => setTopThisWeekType('tv')}
+                className={`px-4 py-2 rounded text-sm font-medium transition-all ${
+                  topThisWeekType === 'tv'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {t('common.tvShows')}
+              </button>
             </div>
           </div>
 
@@ -509,13 +601,12 @@ export default function Index() {
             }}
             skeleton={<TrendingSectionSkeleton />}
           >
-            <div key={discoverTab} className="animate-fade-in">
+            <div key={discoverTab} className="animate-fade-in min-h-[320px] md:min-h-[400px]">
               {discoverTab === "trending-day" ? (
                 <MediaCarouselEnhanced
                   title={t("home.trendingToday", "Trending Today")}
                   items={trendingDayQuery.data?.results || []}
                   showMoreLink="/discover"
-                  showMoreLabel={t("home.seeAllTrending", "See All Trending")}
                 />
               ) : null}
               {discoverTab === "trending-week" ? (
@@ -523,7 +614,6 @@ export default function Index() {
                   title={t("home.trendingWeek", "Trending This Week")}
                   items={trendingWeek?.results || []}
                   showMoreLink="/discover"
-                  showMoreLabel={t("home.seeAllTrending", "See All Trending")}
                 />
               ) : null}
               {discoverTab === "new-releases" ? (
@@ -531,65 +621,16 @@ export default function Index() {
                   title={t("home.newReleases", "New Releases")}
                   items={newReleases?.results || []}
                   showMoreLink="/discover"
-                  showMoreLabel={t("home.seeAllNewMovieReleases", "See All New Movie Releases")}
                 />
               ) : null}
             </div>
           </HomeSectionState>
         </section>
-      </main>
+      </div>
 
-      <Dialog open={onboardingOpen} onOpenChange={setOnboardingOpen}>
-        <DialogContent className="max-w-2xl border-border bg-card text-card-foreground">
-          <DialogHeader>
-            <DialogTitle>
-              {t("home.onboarding.title", "Welcome to CineTrekker")}
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              {t(
-                "home.onboarding.description",
-                "Here is the fast version so you know what the app does, what guest mode means, and how to keep your data safe.",
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-3 md:grid-cols-3">
-            {[
-              {
-                title: t("home.onboarding.step1", "1. What it does"),
-                body: t("home.onboarding.step1Body", "Track titles, build a watchlist, and discover new picks with a locations-first hook."),
-              },
-              {
-                title: t("home.onboarding.step2", "2. How saving works"),
-                body: t("home.onboarding.step2Body", "If you continue as a guest, your data stays on this device only until you create an account."),
-              },
-              {
-                title: t("home.onboarding.step3", "3. Choose your path"),
-                body: t("home.onboarding.step3Body", "Create a free account to sync across devices or continue as a guest and explore first."),
-              },
-            ].map((step) => (
-              <div key={step.title} className="rounded-2xl border border-border/60 bg-background/35 p-4">
-                <p className="text-sm font-semibold text-foreground">{step.title}</p>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{step.body}</p>
-              </div>
-            ))}
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-            <Button variant="outline" onClick={dismissOnboarding}>
-              {t("home.onboarding.continueGuest", "Continue as guest")}
-            </Button>
-            <Button asChild variant="outline">
-              <Link to="/login" onClick={dismissOnboarding}>
-                {t("nav.signIn", "Sign In")}
-              </Link>
-            </Button>
-            <Button asChild className="btn-primary-glow">
-              <Link to="/signup" onClick={dismissOnboarding}>
-                {t("home.createFreeAccount", "Create Free Account")}
-              </Link>
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <OnboardingTooltip />
     </div>
   );
 }
+
+

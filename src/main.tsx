@@ -3,23 +3,87 @@ import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { BrowserRouter } from "react-router-dom";
-import App from "./App";
+import App from "./App.tsx";
 import "./index.css";
 import "./i18n";
 import {
   applyThemeToDocument,
   readStoredTheme,
 } from "@/contexts/ThemeContext";
+import { sanitizeHTML } from "@/lib/sanitize";
+
+type IdleCallbackWindow = Window & {
+  requestIdleCallback?: (
+    callback: IdleRequestCallback,
+    options?: IdleRequestOptions,
+  ) => number;
+};
 
 // Install chunk error recovery handlers
 import { installChunkErrorHandlers } from "@/lib/chunkErrorRecovery";
-// Initialise Trusted Types policies (cinetrekker + default) before any React
-// code runs so that all DOM sink assignments are covered from the start.
-import "@/lib/trustedTypes";
 
 // Install chunk error handlers BEFORE React renders
 installChunkErrorHandlers();
 applyThemeToDocument(readStoredTheme());
+
+if (typeof window !== "undefined") {
+  try {
+    const tt = window.trustedTypes;
+    if (tt) {
+      const createSafeJsonScript = (value: string): string => {
+        const trimmed = value.trim();
+        if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+          throw new TypeError("Trusted Types: only JSON script payloads are allowed.");
+        }
+
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(trimmed);
+        } catch {
+          throw new TypeError("Trusted Types: invalid JSON script payload.");
+        }
+
+        return JSON.stringify(parsed).replace(/</g, "\\u003c");
+      };
+
+      const denyScriptSink = (_value: string): never => {
+        throw new TypeError("Trusted Types: script sinks are not allowed.");
+      };
+
+      const createSafeScriptUrl = (value: string): string => {
+        return value;
+      };
+
+      const createPolicy = (
+        name: string,
+        options: {
+          createHTML?: (value: string) => string;
+          createScript?: (value: string) => string;
+          createScriptURL?: (value: string) => string;
+        },
+      ) => {
+        try {
+          tt.createPolicy(name, options);
+        } catch {
+          // Reuse existing policy if already created by the browser/runtime.
+        }
+      };
+
+      createPolicy("default", {
+        createHTML: (value: string) => sanitizeHTML(value),
+        createScript: createSafeJsonScript,
+        createScriptURL: createSafeScriptUrl,
+      });
+      createPolicy("cinetrekker", {
+        createHTML: (value: string) => sanitizeHTML(value),
+        createScript: createSafeJsonScript,
+        createScriptURL: createSafeScriptUrl,
+      });
+    }
+  } catch (error) {
+    console.warn("Trusted Types initialization failed; continuing app bootstrap.", error);
+  }
+}
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
@@ -38,26 +102,25 @@ try {
     </StrictMode>
   );
 
-  const isVercelHost =
-    typeof window !== "undefined" && /(?:^|\.)vercel\.app$/i.test(window.location.hostname);
   const shouldLoadSpeedInsights =
-    import.meta.env.VITE_ENABLE_VERCEL_SPEED_INSIGHTS === "true" ||
-    (import.meta.env.PROD && isVercelHost);
+    import.meta.env.PROD ||
+    import.meta.env.VITE_ENABLE_VERCEL_SPEED_INSIGHTS === "true";
 
   if (shouldLoadSpeedInsights) {
     // Defer non-critical Speed Insights script to avoid competing with initial paint.
     const injectInsights = () => {
       import("@vercel/speed-insights")
-        .then((mod) => (mod as unknown as { default: () => void }).default())
+        .then((mod) => mod.injectSpeedInsights())
         .catch(() => undefined);
     };
 
     if (typeof window !== "undefined") {
-      if ("requestIdleCallback" in window) {
-        window.requestIdleCallback(injectInsights, { timeout: 2500 });
+      const win = window as IdleCallbackWindow;
+      if (typeof win.requestIdleCallback === "function") {
+        win.requestIdleCallback(injectInsights, { timeout: 2500 });
       } else {
-        window.requestAnimationFrame(() => {
-          window.requestAnimationFrame(injectInsights);
+        win.requestAnimationFrame(() => {
+          win.requestAnimationFrame(injectInsights);
         });
       }
     }

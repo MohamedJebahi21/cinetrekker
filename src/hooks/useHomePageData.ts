@@ -69,31 +69,46 @@ export function useHomePageData({
   const [discoverTab, setDiscoverTab] = useState<
     "trending-day" | "trending-week" | "new-releases"
   >("trending-day");
+
+  // Truly defer non-critical queries until after the critical fold paints.
+  // Without this, all 7 queries fire simultaneously on mount, flooding the
+  // network before the LCP backdrop image has had a chance to load.
   const [deferredEnabled, setDeferredEnabled] = useState(false);
-
   useEffect(() => {
-    setDeferredEnabled(false);
+    let idleId: number | null = null;
+    let timeoutId: number | null = null;
 
-    let frameId: number | undefined;
-    let idleId: number | undefined;
+    const enable = () => setDeferredEnabled(true);
 
-    const enableDeferred = () => setDeferredEnabled(true);
+    if (typeof window !== "undefined") {
+      const w = window as Window & {
+        requestIdleCallback?: (
+          callback: IdleRequestCallback,
+          options?: IdleRequestOptions,
+        ) => number;
+        cancelIdleCallback?: (handle: number) => void;
+      };
 
-    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      idleId = window.requestIdleCallback(enableDeferred, { timeout: 1200 });
-    } else {
-      frameId = window.requestAnimationFrame(enableDeferred);
+      if (typeof w.requestIdleCallback === "function") {
+        idleId = w.requestIdleCallback(enable, { timeout: 1500 });
+      } else {
+        timeoutId = window.setTimeout(enable, 400);
+      }
     }
 
     return () => {
-      if (idleId !== undefined && "cancelIdleCallback" in window) {
-        window.cancelIdleCallback(idleId);
+      const w = window as Window & {
+        cancelIdleCallback?: (handle: number) => void;
+      };
+
+      if (idleId !== null && typeof w.cancelIdleCallback === "function") {
+        w.cancelIdleCallback(idleId);
       }
-      if (frameId !== undefined) {
-        window.cancelAnimationFrame(frameId);
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
       }
     };
-  }, [language]);
+  }, []);
 
   const moreInGenreQuery = useQuery({
     queryKey: ["more-in-genre", lastGenreId, language],
@@ -133,13 +148,17 @@ export function useHomePageData({
 
   const popularMoviesQuery = useQuery({
     queryKey: ["popular", "movie", language, includeAdult],
-    queryFn: () => getPopularMovies(1, language, includeAdult),
+    queryFn: async () => {
+      return getPopularMovies(1, language, includeAdult);
+    },
     enabled: deferredEnabled,
   });
 
   const popularTVQuery = useQuery({
     queryKey: ["popular", "tv", language, includeAdult],
-    queryFn: () => getPopularTV(1, language, includeAdult),
+    queryFn: async () => {
+      return getPopularTV(1, language, includeAdult);
+    },
     enabled: deferredEnabled,
   });
 
@@ -164,13 +183,17 @@ export function useHomePageData({
 
   const topRatedMoviesQuery = useQuery({
     queryKey: ["top-rated", "movie", language, includeAdult],
-    queryFn: () => getTopRatedMovies(1, language, includeAdult),
+    queryFn: async () => {
+      return getTopRatedMovies(1, language, includeAdult);
+    },
     enabled: deferredEnabled,
   });
 
   const topRatedTVQuery = useQuery({
     queryKey: ["top-rated", "tv", language, includeAdult],
-    queryFn: () => getTopRatedTV(1, language, includeAdult),
+    queryFn: async () => {
+      return getTopRatedTV(1, language, includeAdult);
+    },
     enabled: deferredEnabled,
   });
 

@@ -21,7 +21,7 @@ export function StatCard({
     primary: 'from-red-500/20 to-orange-500/20',
     red: 'from-red-500/20 to-red-600/20',
     green: 'from-green-500/20 to-green-600/20',
-    blue: 'from-primary/20 to-red-700/20',
+    blue: 'from-blue-500/20 to-blue-600/20',
   };
 
   return (

@@ -40,7 +40,7 @@ export function getBotProtectionClientConfig() {
       ? "turnstile"
       : getServerEnv("VITE_RECAPTCHA_SITE_KEY")
         ? "recaptcha"
-        : null,
+        : "math",
     siteKey: siteKey || "",
     honeypotFieldName: DEFAULT_HONEYPOT_FIELD,
   };
@@ -60,6 +60,53 @@ export async function verifyBotProtection(req, body, scope = "feedback") {
     return { ok: false, status: 400, error: "Bot protection check failed." };
   }
 
+  const token = normalizeText(
+    body?.captchaToken || body?.turnstileToken || body?.recaptchaToken,
+    4096,
+  );
+
+  if (!token) {
+    return {
+      ok: false,
+      status: 400,
+      error: "Captcha verification is required.",
+    };
+  }
+
+  // Fallback Math Challenge Verification
+  if (token.startsWith("math:")) {
+    const parts = token.slice(5).split(".");
+    if (parts.length !== 2) {
+      return { ok: false, status: 400, error: "Invalid captcha challenge." };
+    }
+    const [base64Payload, signature] = parts;
+    try {
+      const crypto = await import("crypto");
+      const SIGNING_SECRET = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.TMDB_API_KEY || "fallback_salt_cinetrekker";
+      
+      const serialized = Buffer.from(base64Payload, "base64").toString("utf8");
+      const expectedSignature = crypto.createHmac("sha256", SIGNING_SECRET).update(serialized).digest("hex");
+      
+      if (signature !== expectedSignature) {
+        return { ok: false, status: 400, error: "Captcha validation failed." };
+      }
+      
+      const payload = JSON.parse(serialized);
+      if (Date.now() > payload.expiresAt) {
+        return { ok: false, status: 400, error: "Captcha challenge expired. Please try again." };
+      }
+      
+      const userAnswer = normalizeText(body?.captchaAnswer, 128);
+      if (!userAnswer || userAnswer.toLowerCase() !== payload.answer.toLowerCase()) {
+        return { ok: false, status: 400, error: "Incorrect bot protection answer." };
+      }
+      
+      return { ok: true, provider: "math" };
+    } catch (e) {
+      return { ok: false, status: 500, error: "Captcha verification error." };
+    }
+  }
+
   const captchaConfig = getCaptchaConfig();
   if (!captchaConfig) {
     await reportSecurityEvent({
@@ -74,19 +121,6 @@ export async function verifyBotProtection(req, body, scope = "feedback") {
       ok: false,
       status: 503,
       error: "Feedback bot protection is temporarily unavailable.",
-    };
-  }
-
-  const token = normalizeText(
-    body?.captchaToken || body?.turnstileToken || body?.recaptchaToken,
-    4096,
-  );
-
-  if (!token) {
-    return {
-      ok: false,
-      status: 400,
-      error: "Captcha verification is required.",
     };
   }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type FormEvent } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Search, Menu, X } from 'lucide-react';
@@ -17,13 +17,6 @@ interface StickyHeaderProps {
   searchPlaceholder?: string;
 }
 
-const PENDING_SEARCH_QUERY_KEY = 'cinetrekker_pending_search_query';
-const MIN_SEARCH_LENGTH = 2;
-
-function normalizeSearchQuery(value: string): string {
-  return value.normalize('NFKC').trim().toLowerCase();
-}
-
 export function StickyHeader({
   onSearch,
   searchPlaceholder = 'Search movies, shows, people...',
@@ -34,8 +27,6 @@ export function StickyHeader({
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   // Track scroll position
   useEffect(() => {
@@ -53,21 +44,6 @@ export function StickyHeader({
     setSearchOpen(false);
   }, [location.pathname]);
 
-  useEffect(() => {
-    const input = searchInputRef.current;
-    if (!input) return;
-
-    const handleBeforeInput = (event: Event) => {
-      const nativeEvent = event as InputEvent;
-      if (nativeEvent.inputType === "insertReplacementText") {
-        event.preventDefault();
-      }
-    };
-
-    input.addEventListener("beforeinput", handleBeforeInput);
-    return () => input.removeEventListener("beforeinput", handleBeforeInput);
-  }, []);
-
   const handleSearch = (value: string) => {
     setSearchQuery(value);
     if (onSearch) {
@@ -75,19 +51,12 @@ export function StickyHeader({
     }
   };
 
-  const handleSearchSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const nextQuery = normalizeSearchQuery(searchInputRef.current?.value ?? searchQuery);
-
-    if (nextQuery.length < MIN_SEARCH_LENGTH) {
-      return;
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery('');
     }
-
-    sessionStorage.setItem(PENDING_SEARCH_QUERY_KEY, nextQuery);
-    navigate(`/search?q=${encodeURIComponent(nextQuery)}`, {
-      state: { submittedQuery: nextQuery },
-    });
-    setSearchQuery('');
   };
 
   const toggleDark = () => {
@@ -114,15 +83,7 @@ export function StickyHeader({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
-              ref={searchInputRef}
-              name="searchInput"
-              type="text"
-              inputMode="search"
-              enterKeyHint="search"
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck={false}
+              type="search"
               placeholder={searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

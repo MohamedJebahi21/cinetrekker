@@ -1,9 +1,6 @@
-import React, { useEffect, useId } from "react";
-import { sanitizeJsonLd, sanitizeMetaText } from "@/lib/seo";
-import { toTrustedScript } from "@/lib/trustedTypes";
+import React from 'react';
 
 interface MovieSchemaProps {
-  schemaType?: "Movie" | "TVSeries";
   title: string;
   description?: string;
   image?: string;
@@ -11,6 +8,11 @@ interface MovieSchemaProps {
   rating?: number;
   ratingCount?: number;
   url?: string;
+  genres?: string[];
+  actors?: Array<{ name: string; image?: string }>;
+  directors?: Array<{ name: string }>;
+  creators?: Array<{ name: string }>;
+  duration?: number; // in minutes
 }
 
 export default function MovieSchema({
@@ -22,16 +24,42 @@ export default function MovieSchema({
   rating,
   ratingCount,
   url,
+  genres,
+  actors,
+  directors,
+  creators,
+  duration,
 }: MovieSchemaProps) {
   const id = useId().replace(/:/g, "-");
   const jsonLd = sanitizeJsonLd({
     '@context': 'https://schema.org',
-    '@type': schemaType,
-    name: sanitizeMetaText(title, 180),
-    description: description ? sanitizeMetaText(description, 500) : undefined,
+    '@type': 'Movie',
+    name: title,
+    description: description || undefined,
     image: image || undefined,
     url: url || undefined,
     datePublished: releaseDate || undefined,
+    genre: genres && genres.length > 0 ? genres : undefined,
+    actor: actors && actors.length > 0
+      ? actors.map(a => ({
+          '@type': 'Person',
+          name: a.name,
+          image: a.image || undefined
+        }))
+      : undefined,
+    director: directors && directors.length > 0
+      ? directors.map(d => ({
+          '@type': 'Person',
+          name: d.name
+        }))
+      : undefined,
+    creator: creators && creators.length > 0
+      ? creators.map(c => ({
+          '@type': 'Person',
+          name: c.name
+        }))
+      : undefined,
+    duration: duration ? `PT${duration}M` : undefined,
     aggregateRating:
       typeof rating === 'number' && Number.isFinite(rating)
         ? {
@@ -46,20 +74,10 @@ export default function MovieSchema({
         : undefined,
   });
 
-  useEffect(() => {
-    const scriptId = `movie-schema-${id}`;
-    const existing = document.getElementById(scriptId);
-    existing?.remove();
-
-    const script = document.createElement("script");
-    script.id = scriptId;
-    script.type = "application/ld+json";
-    script.dataset.cinetrekkerJsonld = "true";
-    script.text = toTrustedScript(JSON.stringify(jsonLd).replace(/</g, "\\u003c")) as string;
-    document.head.appendChild(script);
-
-    return () => script.remove();
-  }, [id, jsonLd]);
-
-  return null;
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
 }

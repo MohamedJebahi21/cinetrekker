@@ -243,7 +243,7 @@ export function useTitleFollows() {
 
       if (statesToSync.length > 0) {
         const { error } = await supabase
-          .from("followed_title_state")
+          .from("followed_title_state_user")
           .upsert(
             statesToSync.map((state) => ({
               user_id: user.id,
@@ -392,7 +392,7 @@ export function useTitleFollows() {
 
       if (initialState) {
         const { error } = await supabase
-          .from("followed_title_state")
+          .from("followed_title_state_user")
           .upsert(
             {
               user_id: user.id,
@@ -464,11 +464,14 @@ export function useTitleFollows() {
         }
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from("followed_title_state") as any)
+      const { error } = await supabase.from("followed_title_state_user")
         .delete()
         .eq("user_id", user.id)
         .eq("movie_id", followId);
+
+      if (error) {
+        throw error;
+      }
 
       return { followId, mediaType };
     },

@@ -11,18 +11,7 @@
  * https://upstash.com/docs/redis/features/ratelimiting
  */
 
-type VercelRequest = {
-  headers: Record<string, string | string[] | undefined>;
-  socket?: { remoteAddress?: string };
-  query?: Record<string, string | string[] | undefined>;
-};
-
-type VercelResponse = {
-  setHeader: (name: string, value: string) => void;
-  status: (code: number) => {
-    json: (payload: unknown) => void;
-  };
-};
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 interface RateLimitEntry {
   count: number;
@@ -149,18 +138,12 @@ export function createRateLimiter(config: RateLimitConfig) {
     if (entry.count > maxRequests) {
       const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
       res.setHeader('Retry-After', retryAfter.toString());
-      res.status(429).json({
+
+      return res.status(429).json({
         error: 'Too Many Requests',
         message,
         retryAfter,
-      });
-
-      return {
-        success: false,
-        remaining: 0,
-        resetAt: entry.resetAt,
-        retryAfter,
-      };
+      }) as unknown as RateLimitResult;
     }
 
     // Allow request

@@ -1,6 +1,13 @@
 import { expect, test } from "@playwright/test";
 import type { Page, Route } from "@playwright/test";
 
+type GuardedPage = Page & {
+  __trustedTypesViolations?: string[];
+};
+
+const TRUSTED_TYPES_SEO_ERROR_PATTERN =
+  /Trusted Types: script sinks are not allowed|ErrorBoundary caught an error:\s*TypeError:\s*Trusted Types/i;
+
 const tmdbResults = Array.from({ length: 8 }).map((_, index) => ({
   id: 1000 + index,
   title: `Mock Title ${index + 1}`,
@@ -51,6 +58,27 @@ async function mockTmdbProxy(page: Page) {
   });
 }
 
+test.beforeEach(async ({ page }) => {
+  const guardedPage = page as GuardedPage;
+  guardedPage.__trustedTypesViolations = [];
+
+  page.on("console", (msg) => {
+    if (msg.type() !== "error") return;
+    const text = msg.text();
+    if (TRUSTED_TYPES_SEO_ERROR_PATTERN.test(text)) {
+      guardedPage.__trustedTypesViolations?.push(text);
+    }
+  });
+});
+
+test.afterEach(async ({ page }) => {
+  const violations = (page as GuardedPage).__trustedTypesViolations ?? [];
+  expect(
+    violations,
+    "Trusted Types SEO runtime violations were emitted in browser console.",
+  ).toEqual([]);
+});
+
 test.describe("Mobile navigation", () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
@@ -69,10 +97,10 @@ test.describe("Mobile navigation", () => {
     await expect(
       mobileDialog.getByRole("navigation", { name: /main navigation/i }),
     ).toBeVisible();
-    await expect(mobileDialog.getByRole("link", { name: /^search$/i })).toBeVisible();
+    await expect(mobileDialog.getByRole("link", { name: /^discover$/i })).toBeVisible();
 
-    await mobileDialog.getByRole("link", { name: /^search$/i }).click();
-    await expect(page).toHaveURL(/\/search$/);
+    await mobileDialog.getByRole("link", { name: /^discover$/i }).click();
+    await expect(page).toHaveURL(/\/discover$/);
   });
 
   test("bottom navigation routes to search and protected destinations", async ({ page }) => {

@@ -1,6 +1,6 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import { Skeleton } from '@/components/ui/skeleton';
 
 /**
@@ -19,23 +19,9 @@ export function ProtectedRoute({
 }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
   const location = useLocation();
-  const [hasTimedOut, setHasTimedOut] = useState(false);
-
-  useEffect(() => {
-    if (!loading) {
-      setHasTimedOut(false);
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setHasTimedOut(true);
-    }, 4500);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [loading]);
 
   // Show loading state while checking auth
-  if (loading && !hasTimedOut) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <Skeleton className="w-20 h-28 rounded-lg" />
@@ -45,18 +31,7 @@ export function ProtectedRoute({
 
   // Redirect to login if not authenticated
   if (!user) {
-    return (
-      <Navigate
-        to="/login"
-        state={{
-          from: location.pathname,
-          authMessage: hasTimedOut
-            ? 'Your session check took too long. Please sign in to continue.'
-            : 'Please sign in to access this page.',
-        }}
-        replace
-      />
-    );
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
   return <>{children}</>;

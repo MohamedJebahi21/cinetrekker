@@ -78,7 +78,7 @@ The workflow file (`.github/workflows/check-new-episodes.yml`) is already commit
 
 **What it calls:**
 ```bash
-POST https://wzlcekvieglnidfempap.supabase.co/functions/v1/check-new-episodes
+POST https://YOUR_PROJECT_ID.supabase.co/functions/v1/check-new-episodes
 Headers:
   Authorization: Bearer <SUPABASE_ANON_KEY>
   x-cron-secret: <CRON_SECRET>

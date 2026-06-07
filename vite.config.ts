@@ -5,28 +5,20 @@ import type { Plugin } from "vite";
 
 // Security: Content Security Policy plugin
 const cspPlugin = (): Plugin => {
-  const isVsCodeSession = process.env.TERM_PROGRAM === "vscode";
-  const allowVsCodeSimpleBrowser =
-    process.env.ALLOW_VSCODE_SIMPLE_BROWSER === "true" || isVsCodeSession;
-
   const policy = [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://vercel.live https://va.vercel-scripts.com",
     "script-src-elem 'self' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com",
-    "style-src 'self' 'unsafe-inline'",
-    "font-src 'self' data: https://r2cdn.perplexity.ai",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' data: https://fonts.gstatic.com https://r2cdn.perplexity.ai https://frontend-cdn.perplexity.ai",
     "img-src 'self' blob: data: https: https://image.tmdb.org https://www.themoviedb.org https://*.supabase.co",
-    "media-src 'self' blob: https: data:",
+    "media-src 'self' blob: https:",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.themoviedb.org https://vercel.live https://va.vercel-scripts.com wss://*.vercel.com",
     "frame-src 'self' https://www.youtube.com https://player.vimeo.com https://vercel.live",
-    allowVsCodeSimpleBrowser
-      ? "frame-ancestors 'self' vscode-webview: https://*.vscode-cdn.net https://*.vscode-webview.net"
-      : "frame-ancestors 'none'",
+    "frame-ancestors 'none'",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "require-trusted-types-for 'script'",
-    "trusted-types cinetrekker default dompurify",
     "upgrade-insecure-requests",
     "block-all-mixed-content",
   ].join("; ");
@@ -44,11 +36,8 @@ const cspPlugin = (): Plugin => {
       server.middlewares.use((req, res, next) => {
         res.setHeader("Content-Security-Policy", policy);
         res.setHeader("X-Content-Type-Options", "nosniff");
-        // VS Code Simple Browser renders pages in an iframe/webview.
-        // When enabled, skip X-Frame-Options because DENY/SAMEORIGIN would block it.
-        if (!allowVsCodeSimpleBrowser) {
-          res.setHeader("X-Frame-Options", "SAMEORIGIN");
-        }
+        res.setHeader("X-Frame-Options", "DENY");
+        res.setHeader("X-XSS-Protection", "1; mode=block");
         res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
         res.setHeader(
           "Permissions-Policy",
@@ -70,9 +59,7 @@ export default defineConfig(({ mode }) => {
   const supabaseProjectId = env.VITE_SUPABASE_PROJECT_ID?.trim();
   const supabaseUrl =
     env.VITE_SUPABASE_URL?.trim() ||
-    (supabaseProjectId
-      ? `https://${supabaseProjectId}.supabase.co`
-      : undefined);
+    (supabaseProjectId ? `https://${supabaseProjectId}.supabase.co` : undefined);
 
   let supabaseOrigin: string | undefined;
   if (supabaseUrl) {
@@ -142,14 +129,28 @@ export default defineConfig(({ mode }) => {
               return "vendor-query";
             }
 
+            if (id.includes("node_modules/@radix-ui/")) {
+              return "vendor-radix";
+            }
+
             if (
-              id.includes("node_modules/@radix-ui/") ||
               id.includes("node_modules/react-hook-form/") ||
-              id.includes("node_modules/cmdk/") ||
-              id.includes("node_modules/sonner/") ||
+              id.includes("node_modules/input-otp/")
+            ) {
+              return "vendor-forms";
+            }
+
+            if (
               id.includes("node_modules/class-variance-authority/") ||
               id.includes("node_modules/clsx/") ||
-              id.includes("node_modules/tailwind-merge/") ||
+              id.includes("node_modules/tailwind-merge/")
+            ) {
+              return "vendor-utils";
+            }
+
+            if (
+              id.includes("node_modules/cmdk/") ||
+              id.includes("node_modules/sonner/") ||
               id.includes("node_modules/embla-carousel")
             ) {
               return "vendor-ui";

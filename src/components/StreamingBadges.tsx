@@ -1,7 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getImageUrl } from '@/services/tmdb';
-import { Image } from '@/components/ui/Image';
 
 export interface StreamingProvider {
   provider_id: number;
@@ -65,18 +64,15 @@ export function StreamingBadges({
         {displayed.map((provider) => (
           <Tooltip key={provider.provider_id}>
             <TooltipTrigger asChild>
-              <div className={`${sizeClasses[size]} overflow-hidden rounded-xl border border-white/10 bg-card/80 p-0.5 shadow-[0_8px_18px_rgba(0,0,0,0.18)] backdrop-blur-sm`}>
+              <div className={`${sizeClasses[size]} rounded-full overflow-hidden bg-muted flex items-center justify-center`}>
                 {provider.logo_path ? (
-                  <Image
+                  <img
                     src={getImageUrl(provider.logo_path, 'w92') || undefined}
                     alt={provider.provider_name}
-                    width={92}
-                    height={92}
-                    className="h-full w-full rounded-[0.65rem] object-cover"
-                    loading="lazy"
+                    className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="flex h-full w-full items-center justify-center rounded-[0.65rem] bg-muted text-xs font-bold text-white">
+                  <span className="text-xs font-bold text-white">
                     {provider.provider_name.substring(0, 2).toUpperCase()}
                   </span>
                 )}
@@ -88,7 +84,7 @@ export function StreamingBadges({
         {remaining > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className={`${sizeClasses[size]} flex items-center justify-center rounded-xl border border-white/10 bg-card/80 text-muted-foreground shadow-[0_8px_18px_rgba(0,0,0,0.18)] backdrop-blur-sm`}>
+              <div className={`${sizeClasses[size]} rounded-full bg-muted flex items-center justify-center border border-border`}>
                 <span className="text-xs font-bold text-muted-foreground">+{remaining}</span>
               </div>
             </TooltipTrigger>

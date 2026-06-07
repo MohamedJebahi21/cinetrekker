@@ -80,16 +80,18 @@ export function FilmingLocationsMap({ items = [], points: customPoints }: Filmin
     };
 
     const queueMapInit = () => {
-      if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-        idleIdRef.current = window.requestIdleCallback(() => {
+      if (typeof window !== "undefined") {
+        const w = window as any;
+        if ("requestIdleCallback" in w) {
+          idleIdRef.current = w.requestIdleCallback(() => {
+            void initMap();
+          }, { timeout: 1800 });
+          return;
+        }
+        frameIdRef.current = w.requestAnimationFrame(() => {
           void initMap();
-        }, { timeout: 1800 });
-        return;
+        });
       }
-
-      frameIdRef.current = window.requestAnimationFrame(() => {
-        void initMap();
-      });
     };
 
     observer = new IntersectionObserver(
@@ -107,12 +109,13 @@ export function FilmingLocationsMap({ items = [], points: customPoints }: Filmin
     return () => {
       cancelled = true;
       observer?.disconnect();
-      if (idleIdRef.current !== null && "cancelIdleCallback" in window) {
-        window.cancelIdleCallback(idleIdRef.current);
+      const w = window as any;
+      if (idleIdRef.current !== null && "cancelIdleCallback" in w) {
+        w.cancelIdleCallback(idleIdRef.current);
       }
       idleIdRef.current = null;
       if (frameIdRef.current !== null) {
-        window.cancelAnimationFrame(frameIdRef.current);
+        w.cancelAnimationFrame(frameIdRef.current);
       }
       frameIdRef.current = null;
       markerRefs.current.forEach((marker) => marker.remove());

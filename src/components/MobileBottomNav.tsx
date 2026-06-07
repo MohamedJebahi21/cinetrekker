@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import House from "lucide-react/dist/esm/icons/house";
 import Search from "lucide-react/dist/esm/icons/search";
+import Bookmark from "lucide-react/dist/esm/icons/bookmark";
 import User from "lucide-react/dist/esm/icons/user";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const NAV_ITEMS = [
   { path: "/", key: "nav.home", fallback: "Home", icon: House, exact: true as const },
   { path: "/search", key: "nav.search", fallback: "Search", icon: Search, exact: false as const },
+  { path: "/watchlist", key: "nav.watchlist", fallback: "Watchlist", icon: Bookmark, exact: false as const },
 ];
 
 export function MobileBottomNav() {
@@ -18,6 +20,13 @@ export function MobileBottomNav() {
   const { user } = useAuth();
   const profilePath = user ? "/profile" : "/login";
   const profileActive = pathname.startsWith("/profile") || pathname.startsWith("/login");
+
+  const haptic = () => {
+    try {
+      if (typeof navigator !== "undefined" && "vibrate" in navigator)
+        (navigator as Navigator).vibrate?.(10);
+    } catch { /* ignore */ }
+  };
 
   return (
     <nav
@@ -32,7 +41,7 @@ export function MobileBottomNav() {
             <button
               key={path}
               type="button"
-              onClick={() => navigate(path)}
+              onClick={() => { haptic(); navigate(path); }}
               className={cn(
                 "flex min-h-[3.25rem] min-w-11 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium leading-none transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground",
@@ -48,7 +57,7 @@ export function MobileBottomNav() {
 
         <button
           type="button"
-          onClick={() => navigate(profilePath)}
+          onClick={() => { haptic(); navigate(profilePath); }}
           className={cn(
             "flex min-h-[3.25rem] min-w-11 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium leading-none transition-colors",
             profileActive ? "text-primary" : "text-muted-foreground",

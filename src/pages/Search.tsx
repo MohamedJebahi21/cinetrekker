@@ -1,127 +1,69 @@
-import { useState, useEffect, useMemo, useRef, type FormEvent } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import type { TFunction } from "i18next";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import {
-  Search as SearchIcon,
-  Filter,
-  SlidersHorizontal,
-  X,
-  TrendingUp,
-  Check,
-  ChevronDown,
-} from "lucide-react";
-import SEO from "@/components/SEO";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerTrigger,
-  DrawerClose,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerFooter,
-} from "@/components/ui/drawer";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
-import {
-  searchMulti,
-  getMovieGenres,
-  getTVGenres,
-  discoverMovies,
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { Search as SearchIcon, Filter, SlidersHorizontal, X, TrendingUp } from 'lucide-react';
+import SEO from '@/components/SEO';
+import { Dialog, DialogContent, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { 
+  searchMulti, 
+  getMovieGenres, 
+  getTVGenres, 
+  discoverMovies, 
   discoverTV,
-  getTrending,
-} from "@/services/tmdb";
-import { Media } from "@/types/media";
-import { LoadMoreMediaGrid } from "@/components/MediaGrid";
-import SkeletonCard from "@/components/ui/SkeletonCard";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+  getTrending 
+} from '@/services/tmdb';
+import { Media } from '@/types/media';
+import { InfiniteMediaGrid } from '@/components/MediaGrid';
+import SkeletonCard from '@/components/ui/SkeletonCard';
+import { RandomTrekButton } from '@/components/RandomTrekButton';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
-import { MediaType, Genre } from "@/types/media";
-import { useDebounce } from "@/hooks/useDebounce";
-import { useContentPolicy } from "@/contexts/content-policy-context";
-import { applySafetyFilter } from "@/lib/contentFilter";
-import { FAQSection } from "@/components/FAQSection";
-import { InternalLinksSection } from "@/components/InternalLinksSection";
-import {
-  buildCanonicalUrl,
-  toBreadcrumbJsonLd,
-  toFaqJsonLd,
-} from "@/lib/seo";
-import { cn } from "@/lib/utils";
-import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
-import { safeT } from "@/lib/i18n";
-import { getSearchHistory, type SearchHistoryItem } from "@/lib/searchHistory";
+} from '@/components/ui/select';
+import { MediaType, Genre } from '@/types/media';
+import { useDebounce } from '@/hooks/useDebounce';
 
 const LANGUAGES = [
-  { code: "en", key: "search.langOptions.english", fallback: "English" },
-  { code: "es", key: "search.langOptions.spanish", fallback: "Spanish" },
-  { code: "fr", key: "search.langOptions.french", fallback: "French" },
-  { code: "de", key: "search.langOptions.german", fallback: "German" },
-  { code: "it", key: "search.langOptions.italian", fallback: "Italian" },
-  { code: "pt", key: "search.langOptions.portuguese", fallback: "Portuguese" },
-  { code: "ja", key: "search.langOptions.japanese", fallback: "Japanese" },
-  { code: "ko", key: "search.langOptions.korean", fallback: "Korean" },
-  { code: "zh", key: "search.langOptions.chinese", fallback: "Chinese" },
-  { code: "ar", key: "search.langOptions.arabic", fallback: "Arabic" },
-  { code: "hi", key: "search.langOptions.hindi", fallback: "Hindi" },
-  { code: "tr", key: "search.langOptions.turkish", fallback: "Turkish" },
-  { code: "ru", key: "search.langOptions.russian", fallback: "Russian" },
+  { code: 'en', name: 'English' },
+  { code: 'es', name: 'Spanish' },
+  { code: 'fr', name: 'French' },
+  { code: 'de', name: 'German' },
+  { code: 'it', name: 'Italian' },
+  { code: 'pt', name: 'Portuguese' },
+  { code: 'ja', name: 'Japanese' },
+  { code: 'ko', name: 'Korean' },
+  { code: 'zh', name: 'Chinese' },
+  { code: 'ar', name: 'Arabic' },
+  { code: 'hi', name: 'Hindi' },
+  { code: 'tr', name: 'Turkish' },
+  { code: 'ru', name: 'Russian' },
 ];
 
 // Runtime options
 const RUNTIMES = [
-  {
-    id: "short",
-    key: "search.runtimeOptions.short",
-    fallback: "Quick Watch (< 90 min)",
-    gte: "0",
-    lte: "90",
-  },
-  {
-    id: "medium",
-    key: "search.runtimeOptions.medium",
-    fallback: "Standard (90-120 min)",
-    gte: "90",
-    lte: "120",
-  },
-  {
-    id: "long",
-    key: "search.runtimeOptions.long",
-    fallback: "Epic (2h+)",
-    gte: "120",
-    lte: "500",
-  },
+  { id: 'short', name: 'Quick Watch (< 90 min)', gte: '0', lte: '90' },
+  { id: 'medium', name: 'Standard (90-120 min)', gte: '90', lte: '120' },
+  { id: 'long', name: 'Epic (2h+)', gte: '120', lte: '500' },
 ];
 
 // Streaming services (common provider IDs)
 const STREAMING_SERVICES = [
-  { id: "8", key: "search.streamingOptions.netflix", fallback: "Netflix" },
-  { id: "9", key: "search.streamingOptions.amazonPrime", fallback: "Amazon Prime" },
-  { id: "337", key: "search.streamingOptions.disneyPlus", fallback: "Disney+" },
-  { id: "1899", key: "search.streamingOptions.max", fallback: "Max" },
-  { id: "15", key: "search.streamingOptions.hulu", fallback: "Hulu" },
-  { id: "350", key: "search.streamingOptions.appleTv", fallback: "Apple TV+" },
-  { id: "531", key: "search.streamingOptions.paramount", fallback: "Paramount+" },
-  { id: "387", key: "search.streamingOptions.peacock", fallback: "Peacock" },
+  { id: '8', name: 'Netflix' },
+  { id: '9', name: 'Amazon Prime' },
+  { id: '337', name: 'Disney+' },
+  { id: '1899', name: 'Max' },
+  { id: '15', name: 'Hulu' },
+  { id: '350', name: 'Apple TV+' },
+  { id: '531', name: 'Paramount+' },
+  { id: '387', name: 'Peacock' },
 ];
 
 const currentYear = new Date().getFullYear();
@@ -129,74 +71,46 @@ const YEARS = Array.from({ length: 50 }, (_, i) =>
   (currentYear - i).toString(),
 );
 
-const PENDING_SEARCH_QUERY_KEY = "cinetrekker_pending_search_query";
 
 type SearchSortOption =
-  | "popularity.desc"
-  | "vote_average.desc"
-  | "primary_release_date.desc"
-  | "original_title.asc";
+  | 'popularity.desc'
+  | 'vote_average.desc'
+  | 'primary_release_date.desc'
+  | 'original_title.asc';
 
 const ALLOWED_SORTS = new Set<SearchSortOption>([
-  "popularity.desc",
-  "vote_average.desc",
-  "primary_release_date.desc",
-  "original_title.asc",
+  'popularity.desc',
+  'vote_average.desc',
+  'primary_release_date.desc',
+  'original_title.asc',
 ]);
 
 function normalizeSortBy(value: string): SearchSortOption {
-  const normalized = value.trim().toLowerCase();
-
-  // Backward compatibility for legacy sort aliases used in older links.
-  const aliases: Record<string, SearchSortOption> = {
-    popularity: "popularity.desc",
-    top_rated: "vote_average.desc",
-    rating: "vote_average.desc",
-    newest: "primary_release_date.desc",
-    latest: "primary_release_date.desc",
-    title_asc: "original_title.asc",
-  };
-
-  if (normalized in aliases) {
-    return aliases[normalized];
-  }
-
-  return ALLOWED_SORTS.has(normalized as SearchSortOption)
-    ? (normalized as SearchSortOption)
-    : "popularity.desc";
-}
-
-function getMediaYear(item: Media): string {
-  const date = item.release_date || item.first_air_date;
-  return typeof date === "string" && date.length >= 4 ? date.slice(0, 4) : "";
+  return ALLOWED_SORTS.has(value as SearchSortOption)
+    ? (value as SearchSortOption)
+    : 'popularity.desc';
 }
 
 function getMediaDateValue(item: Media): number {
-  return new Date(
-    item.release_date || item.first_air_date || "1900-01-01",
-  ).getTime();
+  return new Date(item.release_date || item.first_air_date || '1900-01-01').getTime();
 }
 
 function sortClientResults(items: Media[], sortBy: SearchSortOption): Media[] {
   const sorted = [...items];
 
   switch (sortBy) {
-    case "vote_average.desc":
+    case 'vote_average.desc':
       sorted.sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0));
       break;
-    case "primary_release_date.desc":
+    case 'primary_release_date.desc':
       sorted.sort((a, b) => getMediaDateValue(b) - getMediaDateValue(a));
       break;
-    case "original_title.asc":
+    case 'original_title.asc':
       sorted.sort((a, b) =>
-        (a.title || a.name || "").localeCompare(
-          b.title || b.name || "",
-          undefined,
-          { sensitivity: "base" },
-        ),
+        (a.title || a.name || '').localeCompare((b.title || b.name || ''), undefined, { sensitivity: 'base' })
       );
       break;
-    case "popularity.desc":
+    case 'popularity.desc':
     default:
       sorted.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
       break;
@@ -205,17 +119,12 @@ function sortClientResults(items: Media[], sortBy: SearchSortOption): Media[] {
   return sorted;
 }
 
-function getDiscoverSort(
-  sortBy: SearchSortOption,
-  mediaType: "movie" | "tv",
-): string {
-  if (sortBy === "primary_release_date.desc") {
-    return mediaType === "tv"
-      ? "first_air_date.desc"
-      : "primary_release_date.desc";
+function getDiscoverSort(sortBy: SearchSortOption, mediaType: 'movie' | 'tv'): string {
+  if (sortBy === 'primary_release_date.desc') {
+    return mediaType === 'tv' ? 'first_air_date.desc' : 'primary_release_date.desc';
   }
-  if (sortBy === "original_title.asc") {
-    return mediaType === "tv" ? "name.asc" : "original_title.asc";
+  if (sortBy === 'original_title.asc') {
+    return mediaType === 'tv' ? 'name.asc' : 'original_title.asc';
   }
   return sortBy;
 }
@@ -226,146 +135,8 @@ type PagedMedia = {
   results: Media[];
 };
 
-type MultiSelectOption = {
-  id: string;
-  label: string;
-};
-
-function parseMultiValue(value: string | null): string[] {
-  if (!value) return [];
-  return Array.from(
-    new Set(
-      value
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-    ),
-  );
-}
-
-function serializeMultiValue(values: string[]): string {
-  return values.join(",");
-}
-
-function toggleMultiValue(values: string[], value: string): string[] {
-  return values.includes(value)
-    ? values.filter((item) => item !== value)
-    : [...values, value];
-}
-
-function dedupeMedia(items: Media[]): Media[] {
-  const seen = new Set<string>();
-  return items.filter((item) => {
-    const mediaType = item.media_type || ("title" in item ? "movie" : "tv");
-    const key = `${mediaType}-${item.id}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-function SearchMultiSelect({
-  label,
-  options,
-  selectedValues,
-  onChange,
-  allLabel,
-  t,
-}: {
-  label: string;
-  options: MultiSelectOption[];
-  selectedValues: string[];
-  onChange: (values: string[]) => void;
-  allLabel: string;
-  t: TFunction;
-}) {
-  const selectedLabels = options
-    .filter((option) => selectedValues.includes(option.id))
-    .map((option) => option.label);
-
-  const summary =
-    selectedLabels.length === 0
-      ? allLabel
-      : selectedLabels.length <= 2
-        ? selectedLabels.join(", ")
-        : `${selectedLabels.slice(0, 2).join(", ")} +${selectedLabels.length - 2}`;
-
-  return (
-    <div className="space-y-1">
-      <label className="text-xs font-medium text-muted-foreground">{label}</label>
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 w-full justify-between bg-background/50 px-3 font-normal"
-          >
-            <span className="truncate text-left">{summary}</span>
-            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent align="start" className="w-[min(20rem,calc(100vw-2rem))] p-0">
-          <div className="border-b border-border/60 px-4 py-3">
-            <p className="text-sm font-semibold text-foreground">{label}</p>
-            <p className="text-xs text-muted-foreground">
-              {t("search.multiSelectHint", "Select one or more options.")}
-            </p>
-          </div>
-          <div className="max-h-72 space-y-1 overflow-y-auto p-2">
-            <button
-              type="button"
-              onClick={() => onChange([])}
-              className={cn(
-                "flex min-h-[44px] w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors",
-                selectedValues.length === 0 ? "bg-accent text-accent-foreground" : "hover:bg-accent/60",
-              )}
-            >
-              <div className="flex h-4 w-4 items-center justify-center rounded border border-border">
-                {selectedValues.length === 0 && <Check className="h-3 w-3" />}
-              </div>
-              <span>{allLabel}</span>
-            </button>
-            {options.map((option) => {
-              const checked = selectedValues.includes(option.id);
-              return (
-                <label
-                  key={option.id}
-                  className={cn(
-                    "flex min-h-[44px] cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                    checked ? "bg-accent text-accent-foreground" : "hover:bg-accent/60",
-                  )}
-                >
-                  <Checkbox
-                    checked={checked}
-                    onCheckedChange={() =>
-                      onChange(toggleMultiValue(selectedValues, option.id))
-                    }
-                    aria-label={
-                      checked
-                        ? t("search.removeOptionAria", "Remove {{label}}", {
-                            label: option.label,
-                          })
-                        : t("search.selectOptionAria", "Select {{label}}", {
-                            label: option.label,
-                          })
-                    }
-                  />
-                  <span className="flex-1">{option.label}</span>
-                </label>
-              );
-            })}
-          </div>
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-}
-
 export default function Search() {
   const { t, i18n } = useTranslation();
-  const { strictFiltering, moderateFiltering } = useContentPolicy();
-  const includeAdult = !(strictFiltering || moderateFiltering);
-  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const fallbackSubmittedQueryRef = useRef(
     (
@@ -374,44 +145,26 @@ export default function Search() {
             submittedQuery?: string;
           }
         | undefined
-    )?.submittedQuery ||
-      (typeof window !== "undefined"
-        ? window.sessionStorage.getItem(PENDING_SEARCH_QUERY_KEY) || ""
-        : ""),
+    )?.submittedQuery || ""
   );
 
   // Initialize from URL params
-  const initialQuery =
-    searchParams.get("q") ||
-    searchParams.get("query") ||
-    fallbackSubmittedQueryRef.current ||
-    "";
-  const initialType = (searchParams.get("type") as MediaType) || "all";
-  const initialGenres = parseMultiValue(searchParams.get("genre"));
-  const initialYear = searchParams.get("year") || "";
-  const initialLanguages = parseMultiValue(searchParams.get("lang"));
-  const initialSort = normalizeSortBy(
-    searchParams.get("sort") || "popularity.desc",
-  );
-  const initialRuntime = searchParams.get("runtime") || "";
-  const initialStreaming = parseMultiValue(searchParams.get("streaming"));
-
+  const initialQuery = searchParams.get('q') || '';
+  const initialType = (searchParams.get('type') as MediaType) || 'all';
+  const initialGenre = searchParams.get('genre') || '';
+  const initialYear = searchParams.get('year') || '';
+  const initialLang = searchParams.get('lang') || '';
+  const initialSort = normalizeSortBy(searchParams.get('sort') || 'popularity.desc');
+  const initialRuntime = searchParams.get('runtime') || '';
+  const initialStreaming = searchParams.get('streaming') || '';
+  
   const [query, setQuery] = useState(initialQuery);
   const debouncedQuery = useDebounce(query, 300);
-  const normalizedInputQuery = useMemo(
-    () => query.normalize("NFKC").trim().toLowerCase(),
-    [query],
-  );
-  const normalizedQuery = useMemo(
-    () => debouncedQuery.normalize("NFKC").trim().toLowerCase(),
-    [debouncedQuery],
-  );
-  const [mediaTypeFilter, setMediaTypeFilter] =
-    useState<MediaType>(initialType);
-  const [genreFilters, setGenreFilters] = useState<string[]>(initialGenres);
+  const normalizedQuery = useMemo(() => debouncedQuery.normalize('NFKC').trim(), [debouncedQuery]);
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaType>(initialType);
+  const [genreFilter, setGenreFilter] = useState<string>(initialGenre);
   const [yearFilter, setYearFilter] = useState<string>(initialYear);
-  const [languageFilters, setLanguageFilters] =
-    useState<string[]>(initialLanguages);
+  const [languageFilter, setLanguageFilter] = useState<string>(initialLang);
   const [sortBy, setSortBy] = useState<SearchSortOption>(initialSort);
   const [runtimeFilter, setRuntimeFilter] = useState<string>(initialRuntime);
   const [streamingFilters, setStreamingFilters] =
@@ -469,107 +222,61 @@ export default function Search() {
     }
   }, [searchParams, setSearchParams]);
 
-  useEffect(() => {
-    if (normalizedInputQuery) {
-      window.sessionStorage.setItem(
-        PENDING_SEARCH_QUERY_KEY,
-        normalizedInputQuery,
-      );
-      return;
-    }
 
-    if (location.pathname === "/search") {
-      window.sessionStorage.removeItem(PENDING_SEARCH_QUERY_KEY);
-    }
-  }, [location.pathname, normalizedInputQuery]);
 
   // Quick preview modal removed - navigation to details is used instead
-
+  
   const language = i18n.language;
 
   // Update URL params when filters change
   useEffect(() => {
     const params: Record<string, string> = {};
     if (normalizedQuery) params.q = normalizedQuery;
-    if (mediaTypeFilter !== "all") params.type = mediaTypeFilter;
-    if (genreFilters.length > 0) params.genre = serializeMultiValue(genreFilters);
+    if (mediaTypeFilter !== 'all') params.type = mediaTypeFilter;
+    if (genreFilter) params.genre = genreFilter;
     if (yearFilter) params.year = yearFilter;
-    if (languageFilters.length > 0) {
-      params.lang = serializeMultiValue(languageFilters);
-    }
-    if (sortBy !== "popularity.desc") params.sort = sortBy;
+    if (languageFilter) params.lang = languageFilter;
+    if (sortBy !== 'popularity.desc') params.sort = sortBy;
     if (runtimeFilter) params.runtime = runtimeFilter;
-    if (streamingFilters.length > 0) {
-      params.streaming = serializeMultiValue(streamingFilters);
-    }
-    const nextParams = new URLSearchParams(params);
-    const nextParamsString = nextParams.toString();
-
-    if (normalizedLocationSearch !== nextParamsString) {
-      setSearchParams(nextParams, { replace: true });
-    }
-  }, [
-    normalizedQuery,
-    mediaTypeFilter,
-    genreFilters,
-    yearFilter,
-    languageFilters,
-    sortBy,
-    runtimeFilter,
-    streamingFilters,
-    normalizedLocationSearch,
-    setSearchParams,
-  ]);
+    if (streamingFilter) params.streaming = streamingFilter;
+    setSearchParams(params);
+  }, [normalizedQuery, mediaTypeFilter, genreFilter, yearFilter, languageFilter, sortBy, runtimeFilter, streamingFilter, setSearchParams]);
 
   const { data: movieGenres } = useQuery({
-    queryKey: ["genres", "movie", language],
+    queryKey: ['genres', 'movie', language],
     queryFn: () => getMovieGenres(language),
   });
 
   const { data: tvGenres } = useQuery({
-    queryKey: ["genres", "tv", language],
+    queryKey: ['genres', 'tv', language],
     queryFn: () => getTVGenres(language),
   });
 
   // Combine and deduplicate genres
   const allGenres = useMemo(() => {
     const genreMap = new Map<number, Genre>();
-    movieGenres?.genres?.forEach((g) => genreMap.set(g.id, g));
-    tvGenres?.genres?.forEach((g) => genreMap.set(g.id, g));
-    return Array.from(genreMap.values()).sort((a, b) =>
-      a.name.localeCompare(b.name),
-    );
+    movieGenres?.genres?.forEach(g => genreMap.set(g.id, g));
+    tvGenres?.genres?.forEach(g => genreMap.set(g.id, g));
+    return Array.from(genreMap.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [movieGenres, tvGenres]);
 
   // Use genre filter directly
-  const effectiveGenres =
-    genreFilters.length > 0 ? genreFilters.join("|") : undefined;
-  const effectiveLanguages = languageFilters.length > 0 ? languageFilters : [];
-  const effectiveStreaming =
-    streamingFilters.length > 0 ? streamingFilters.join("|") : undefined;
+  const effectiveGenres = genreFilter || undefined;
 
   // Get runtime params
-  const runtimeConfig = runtimeFilter
-    ? RUNTIMES.find((r) => r.id === runtimeFilter)
-    : undefined;
+  const runtimeConfig = runtimeFilter ? RUNTIMES.find(r => r.id === runtimeFilter) : undefined;
 
   // Determine if we should use text search or discover API
-  const hasFilters =
-    mediaTypeFilter !== "all" ||
-    genreFilters.length > 0 ||
-    !!yearFilter ||
-    languageFilters.length > 0 ||
-    !!runtimeFilter ||
-    streamingFilters.length > 0;
-  const useDiscoverMode = normalizedQuery.length === 0 && hasFilters;
+  const hasFilters = mediaTypeFilter !== 'all' || !!genreFilter || !!yearFilter || !!languageFilter || !!runtimeFilter || !!streamingFilter;
+  const useDiscoverMode = !debouncedQuery && hasFilters;
   const useSearchMode = normalizedQuery.length > 0;
   const showTrending = !useDiscoverMode && !useSearchMode;
 
   // Text search query (infinite)
   const searchQuery = useInfiniteQuery({
     queryKey: ["search", normalizedQuery, language, includeAdult],
-    queryFn: ({ pageParam = 1 }) =>
-      searchMulti(normalizedQuery, pageParam as number, language, includeAdult),
+    queryFn: ({ pageParam = 1, signal }) =>
+      searchMulti(normalizedQuery, pageParam as number, language, includeAdult, signal),
     enabled: Boolean(useSearchMode),
     retry: 1,
     initialPageParam: 1,
@@ -592,14 +299,15 @@ export default function Search() {
       language,
       includeAdult,
     ],
-    queryFn: async ({ pageParam = 1 }) => {
+    queryFn: async ({ pageParam = 1, signal }) => {
       const page = pageParam as number;
       const common = {
         with_genres: effectiveGenres,
+        with_original_language: languageFilter || undefined,
         with_runtime_gte: runtimeConfig?.gte,
         with_runtime_lte: runtimeConfig?.lte,
-        with_watch_providers: effectiveStreaming,
-        watch_region: effectiveStreaming ? "US" : undefined,
+        with_watch_providers: streamingFilter || undefined,
+        watch_region: streamingFilter ? 'US' : undefined,
       };
 
       const selectedLanguages = effectiveLanguages.length > 0 ? effectiveLanguages : [undefined];
@@ -615,6 +323,7 @@ export default function Search() {
             include_adult: includeAdult ? "true" : "false",
           },
           language,
+          signal
         );
         return {
           totalPages: resp.total_pages,
@@ -636,6 +345,7 @@ export default function Search() {
             include_adult: includeAdult ? "true" : "false",
           },
           language,
+          signal
         );
         return {
           totalPages: resp.total_pages,
@@ -654,44 +364,47 @@ export default function Search() {
         );
         return {
           page,
-          total_pages: Math.max(...movieResponses.map((response) => response.totalPages)),
-          results: dedupeMedia(
-            movieResponses.flatMap((response) => response.results),
-          ),
+          total_pages: Math.max(...movieResponses.map((response) => response.totalPages), 1),
+          results: movieResponses.flatMap((response) => response.results),
         };
       }
 
-      if (mediaTypeFilter === "tv") {
-        const tvResponses = await Promise.all(
-          selectedLanguages.map((selectedLanguage) =>
-            fetchTVResults(selectedLanguage),
-          ),
-        );
-        return {
+      if (mediaTypeFilter === 'tv') {
+        const resp = await discoverTV({
+          ...common,
           page,
-          total_pages: Math.max(...tvResponses.map((response) => response.totalPages)),
-          results: dedupeMedia(
-            tvResponses.flatMap((response) => response.results),
-          ),
+          first_air_date_year: yearFilter || undefined,
+          sort_by: getDiscoverSort(sortBy, 'tv'),
+        }, language);
+        return {
+          page: resp.page,
+          total_pages: resp.total_pages,
+          results: resp.results.map((s) => ({ ...s, media_type: 'tv' as const })),
         };
       }
 
-      const combinedResponses = await Promise.all(
-        selectedLanguages.flatMap((selectedLanguage) => [
-            fetchMovieResults(selectedLanguage),
-            fetchTVResults(selectedLanguage),
-          ]),
-      );
+      const [moviesResp, tvResp] = await Promise.all([
+        discoverMovies({
+          ...common,
+          page,
+          primary_release_year: yearFilter || undefined,
+          sort_by: getDiscoverSort(sortBy, 'movie'),
+        }, language),
+        discoverTV({
+          ...common,
+          page,
+          first_air_date_year: yearFilter || undefined,
+          sort_by: getDiscoverSort(sortBy, 'tv'),
+        }, language),
+      ]);
 
       return {
         page,
-        total_pages: Math.max(
-          ...combinedResponses.map((response) => response.totalPages),
-        ),
-        results: dedupeMedia(
-          // @ts-expect-error - Combined responses can have mixed media types from multiple discover endpoints
-          combinedResponses.flatMap((response) => response.results),
-        ),
+        total_pages: Math.max(moviesResp.total_pages, tvResp.total_pages),
+        results: [
+          ...moviesResp.results.map((m) => ({ ...m, media_type: 'movie' as const })),
+          ...tvResp.results.map((s) => ({ ...s, media_type: 'tv' as const })),
+        ],
       };
     },
     enabled: Boolean(useDiscoverMode),
@@ -703,69 +416,19 @@ export default function Search() {
   // Trending for default view (infinite)
   const trendingQuery = useInfiniteQuery({
     queryKey: ["trending", "all", "week", language, includeAdult],
-    queryFn: ({ pageParam = 1 }) =>
-      getTrending("all", "week", language, pageParam as number, includeAdult),
+    queryFn: ({ pageParam = 1, signal }) =>
+      getTrending("all", "week", language, pageParam as number, includeAdult, signal),
     enabled: Boolean(showTrending),
     initialPageParam: 1,
     getNextPageParam: (lastPage) =>
       lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined,
   });
 
-  const activeQuery = useSearchMode
-    ? searchQuery
-    : useDiscoverMode
-      ? discoverQuery
-      : trendingQuery;
+  const activeQuery = useSearchMode ? searchQuery : useDiscoverMode ? discoverQuery : trendingQuery;
   const isLoading = activeQuery.isLoading;
-  const isRefreshingResults =
-    (useSearchMode || useDiscoverMode) &&
-    activeQuery.isFetching &&
-    !activeQuery.isFetchingNextPage;
   const isError = activeQuery.isError;
   const activeError = activeQuery.error as Error | null;
   const hasMore = Boolean(activeQuery.hasNextPage);
-  const isLoadingOrRefreshing = isLoading || isRefreshingResults;
-  const loadingTimedOut = useLoadingTimeout(isLoadingOrRefreshing, 12000);
-  const canonicalQuery = searchParams.toString();
-  const searchErrorMessage = loadingTimedOut
-    ? t("search.timeout", "Search took too long. Please try again.")
-    : t(
-        "search.loadError",
-        "We couldn't load search results. Please try again.",
-      );
-
-  useEffect(() => {
-    if (!activeError) {
-      return;
-    }
-
-    // Debug /search failures in development by checking the console for the original TMDB or query error.
-    if (import.meta.env.DEV) {
-      console.error("/search query failed:", activeError);
-    }
-  }, [activeError]);
-  const faqItems = [
-    {
-      question: t(
-        "search.faq.q1",
-        "What can I search for in CineTrekker?",
-      ),
-      answer: t(
-        "search.faq.a1",
-        "You can search for movies, TV shows, and people, then refine results with genre, year, language, runtime, and streaming filters.",
-      ),
-    },
-    {
-      question: t(
-        "search.faq.q2",
-        "Why use search inside a movie tracker?",
-      ),
-      answer: t(
-        "search.faq.a2",
-        "Search is connected to watchlist actions, detail pages, follow tools, and saved progress, so every result is immediately useful instead of isolated.",
-      ),
-    },
-  ];
 
   const handleLoadMore = () => {
     if (!activeQuery.hasNextPage || activeQuery.isFetchingNextPage) return;
@@ -779,206 +442,80 @@ export default function Search() {
 
     if (useSearchMode) {
       // Filter search results by type and genre
-      let filtered = combined.filter(
-        (item) => item.media_type === "movie" || item.media_type === "tv",
+      let filtered = combined.filter(item =>
+        item.media_type === 'movie' || item.media_type === 'tv'
       );
 
-      if (mediaTypeFilter !== "all") {
-        filtered = filtered.filter(
-          (item) => item.media_type === mediaTypeFilter,
-        );
+      if (mediaTypeFilter !== 'all') {
+        filtered = filtered.filter(item => item.media_type === mediaTypeFilter);
       }
 
-      if (genreFilters.length > 0) {
-        filtered = filtered.filter((item) =>
-          genreFilters.some((genreId) =>
-            item.genre_ids?.includes(Number.parseInt(genreId, 10)),
-          ),
-        );
+      if (genreFilter) {
+        const genreId = parseInt(genreFilter);
+        filtered = filtered.filter(item => item.genre_ids?.includes(genreId));
       }
 
-      if (yearFilter) {
-        filtered = filtered.filter((item) => getMediaYear(item) === yearFilter);
-      }
-
-      if (languageFilters.length > 0) {
-        filtered = filtered.filter(
-          (item) =>
-            !!item.original_language &&
-            languageFilters.includes(item.original_language),
-        );
-      }
-
-      return sortClientResults(
-        applySafetyFilter(filtered, strictFiltering, moderateFiltering),
-        sortBy,
-      );
+      return sortClientResults(filtered as Media[], sortBy);
     }
 
     if (useDiscoverMode) {
-      return sortClientResults(
-        applySafetyFilter(combined, strictFiltering, moderateFiltering),
-        sortBy,
-      );
+      return sortClientResults((combined as Media[]), sortBy);
     }
 
-    const trending = combined.filter(
-      (item) => item.media_type === "movie" || item.media_type === "tv",
+    const trending = combined.filter(item =>
+      item.media_type === 'movie' || item.media_type === 'tv'
     );
-    return sortClientResults(
-      applySafetyFilter(trending, strictFiltering, moderateFiltering),
-      sortBy,
-    );
-  }, [
-    activeQuery.data,
-    useSearchMode,
-    useDiscoverMode,
-    mediaTypeFilter,
-    genreFilters,
-    yearFilter,
-    languageFilters,
-    sortBy,
-    strictFiltering,
-    moderateFiltering,
-  ]);
+    return sortClientResults(trending as Media[], sortBy);
+  }, [activeQuery.data, useSearchMode, useDiscoverMode, mediaTypeFilter, genreFilter, sortBy]);
 
   const clearFilters = () => {
-    setMediaTypeFilter("all");
-    setGenreFilters([]);
-    setYearFilter("");
-    setLanguageFilters([]);
-    setSortBy("popularity.desc");
-    setRuntimeFilter("");
-    setStreamingFilters([]);
+    setMediaTypeFilter('all');
+    setGenreFilter('');
+    setYearFilter('');
+    setLanguageFilter('');
+    setSortBy('popularity.desc');
+    setRuntimeFilter('');
+    setStreamingFilter('');
   };
 
   const clearSearch = () => {
-    setQuery("");
-  };
-
-  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setQuery(normalizedInputQuery);
+    setQuery('');
   };
 
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const mobileFiltersRef = useRef<HTMLDivElement | null>(null);
-  const [desktopFiltersExpanded, setDesktopFiltersExpanded] = useState(
-    initialQuery.length === 0 && initialGenres.length === 0 && !initialYear
-      ? false
-      : true,
-  );
-  const [recentSearches, setRecentSearches] = useState<SearchHistoryItem[]>([]);
-  const activeFiltersCount = [
-    mediaTypeFilter !== "all",
-    genreFilters.length > 0,
-    yearFilter,
-    languageFilters.length > 0,
-    runtimeFilter,
-    streamingFilters.length > 0,
-  ].filter(Boolean).length;
 
   // Keyboard shortcut: 'f' to open filters on mobile when not focused on input
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (
-        e.key.toLowerCase() === "f" &&
-        document.activeElement?.tagName !== "INPUT" &&
-        document.activeElement?.tagName !== "TEXTAREA"
-      ) {
+      if (e.key.toLowerCase() === 'f' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
         e.preventDefault();
         setMobileFiltersOpen(true);
       }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   // When mobile filters open, scroll to top and focus first control for better UX
   useEffect(() => {
     if (mobileFiltersOpen) {
-      const frameId = window.requestAnimationFrame(() => {
-        mobileFiltersRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-        const first = mobileFiltersRef.current?.querySelector<HTMLElement>(
-          "button, input, select",
-        );
+      setTimeout(() => {
+        mobileFiltersRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        const first = mobileFiltersRef.current?.querySelector<HTMLElement>('button, input, select');
         first?.focus();
-      });
-
-      return () => window.cancelAnimationFrame(frameId);
+      }, 50);
     }
   }, [mobileFiltersOpen]);
 
-  useEffect(() => {
-    setRecentSearches(getSearchHistory().slice(0, 6));
-  }, [normalizedLocationSearch]);
-
-  useEffect(() => {
-    if (activeFiltersCount > 0) {
-      setDesktopFiltersExpanded(true);
-    }
-  }, [activeFiltersCount]);
-
-  const genreOptions = allGenres.map((genre) => ({
-    id: genre.id.toString(),
-    label: genre.name,
-  }));
-  const languageOptions = LANGUAGES.map((lang) => ({
-    id: lang.code,
-    label: t(lang.key, lang.fallback),
-  }));
-  const streamingOptions = STREAMING_SERVICES.map((service) => ({
-    id: service.id,
-    label: t(service.key, service.fallback),
-  }));
-
-  const activeFilterPills = [
-    mediaTypeFilter !== "all"
-      ? {
-          key: "type",
-          label: `${t("filters.type")}: ${t(
-            mediaTypeFilter === "movie" ? "common.movies" : "common.tvShows",
-          )}`,
-          clear: () => setMediaTypeFilter("all"),
-        }
-      : null,
-    ...genreFilters.map((genreId) => ({
-      key: `genre-${genreId}`,
-      label: genreOptions.find((option) => option.id === genreId)?.label ?? genreId,
-      clear: () => setGenreFilters((current) => current.filter((item) => item !== genreId)),
-    })),
-    yearFilter
-      ? {
-          key: "year",
-          label: `${t("filters.year")}: ${yearFilter}`,
-          clear: () => setYearFilter(""),
-        }
-      : null,
-    ...languageFilters.map((lang) => ({
-      key: `lang-${lang}`,
-      label: languageOptions.find((option) => option.id === lang)?.label ?? lang.toUpperCase(),
-      clear: () => setLanguageFilters((current) => current.filter((item) => item !== lang)),
-    })),
-    runtimeFilter
-      ? {
-          key: "runtime",
-          label:
-            RUNTIMES.find((runtime) => runtime.id === runtimeFilter)?.fallback ??
-            runtimeFilter,
-          clear: () => setRuntimeFilter(""),
-        }
-      : null,
-    ...streamingFilters.map((serviceId) => ({
-      key: `streaming-${serviceId}`,
-      label:
-        streamingOptions.find((option) => option.id === serviceId)?.label ??
-        serviceId,
-      clear: () =>
-        setStreamingFilters((current) =>
-          current.filter((item) => item !== serviceId),
-        ),
-    })),
-  ].filter(Boolean) as Array<{ key: string; label: string; clear: () => void }>;
+  const activeFiltersCount = [
+    mediaTypeFilter !== 'all',
+    genreFilter,
+    yearFilter,
+    languageFilter,
+    runtimeFilter,
+    streamingFilter,
+  ].filter(Boolean).length;
 
   // Card click navigates via the card's Link; quick preview removed
 
@@ -986,79 +523,72 @@ export default function Search() {
   const FiltersContent = () => (
     <>
       <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-primary" />
-            <span className="font-semibold">{safeT(t, "search.filters", "Filters")}</span>
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4 text-primary" />
+          <span className="font-semibold">{t('search.filters')}</span>
           {activeFiltersCount > 0 && (
-            <Badge
-              variant="secondary"
-              className="ml-2 bg-primary/10 text-primary border-0"
-            >
-              {activeFiltersCount} {t("search.active")}
+            <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary border-0">
+              {activeFiltersCount} {t('search.active')}
             </Badge>
           )}
         </div>
         {activeFiltersCount > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearFilters}
-            className="text-muted-foreground md:hover:text-primary active:text-primary focus-visible:text-primary"
-          >
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground md:hover:text-primary active:text-primary focus-visible:text-primary">
             <X className="w-4 h-4 mr-1" />
-            {t("search.clearFilters")}
+            {t('search.clearFilters')}
           </Button>
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {/* Type Filter */}
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">
-            {t("filters.type")}
-          </label>
-          <Select
-            value={mediaTypeFilter}
-            onValueChange={(v) => setMediaTypeFilter(v as MediaType)}
-          >
+          <label className="text-xs text-muted-foreground">{t('filters.type')}</label>
+          <Select value={mediaTypeFilter} onValueChange={(v) => setMediaTypeFilter(v as MediaType)}>
             <SelectTrigger className="bg-background/50">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t("common.all")}</SelectItem>
-              <SelectItem value="movie">{t("common.movies")}</SelectItem>
-              <SelectItem value="tv">{t("common.tvShows")}</SelectItem>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
+              <SelectItem value="movie">{t('common.movies')}</SelectItem>
+              <SelectItem value="tv">{t('common.tvShows')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         {/* Genre Filter */}
-        <SearchMultiSelect
-          label={t("filters.genre")}
-          options={genreOptions}
-          selectedValues={genreFilters}
-          onChange={setGenreFilters}
-          allLabel={t("common.all")}
-          t={t}
-        />
-
-        {/* Runtime Filter */}
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">
-            {t("filters.runtime") || "Runtime"}
-          </label>
+          <label className="text-xs text-muted-foreground">{t('filters.genre')}</label>
           <Select
-            value={runtimeFilter || "__all__"}
-            onValueChange={(v) => setRuntimeFilter(v === "__all__" ? "" : v)}
+            value={genreFilter || '__all__'}
+            onValueChange={(v) => setGenreFilter(v === '__all__' ? '' : v)}
           >
             <SelectTrigger className="bg-background/50">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all__">{t("common.all")}</SelectItem>
+              <SelectItem value="__all__">{t('common.all')}</SelectItem>
+              {allGenres.map((genre) => (
+                <SelectItem key={genre.id} value={genre.id.toString()}>
+                  {genre.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Runtime Filter */}
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">{t('filters.runtime') || 'Runtime'}</label>
+          <Select value={runtimeFilter || '__all__'} onValueChange={(v) => setRuntimeFilter(v === '__all__' ? '' : v)}>
+            <SelectTrigger className="bg-background/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">{t('common.all')}</SelectItem>
               {RUNTIMES.map((runtime) => (
                 <SelectItem key={runtime.id} value={runtime.id}>
-                  {t(runtime.key, runtime.fallback)}
+                  {runtime.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -1066,29 +596,32 @@ export default function Search() {
         </div>
 
         {/* Streaming Service Filter */}
-        <SearchMultiSelect
-          label={t("filters.streaming") || "Streaming"}
-          options={streamingOptions}
-          selectedValues={streamingFilters}
-          onChange={setStreamingFilters}
-          allLabel={t("common.all")}
-          t={t}
-        />
-
-        {/* Year Filter */}
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">
-            {t("filters.year")}
-          </label>
-          <Select
-            value={yearFilter || "__all__"}
-            onValueChange={(v) => setYearFilter(v === "__all__" ? "" : v)}
-          >
+          <label className="text-xs text-muted-foreground">{t('filters.streaming') || 'Streaming'}</label>
+          <Select value={streamingFilter || '__all__'} onValueChange={(v) => setStreamingFilter(v === '__all__' ? '' : v)}>
             <SelectTrigger className="bg-background/50">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all__">{t("common.all")}</SelectItem>
+              <SelectItem value="__all__">{t('common.all')}</SelectItem>
+              {STREAMING_SERVICES.map((service) => (
+                <SelectItem key={service.id} value={service.id}>
+                  {service.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Year Filter */}
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">{t('filters.year')}</label>
+          <Select value={yearFilter || '__all__'} onValueChange={(v) => setYearFilter(v === '__all__' ? '' : v)}>
+            <SelectTrigger className="bg-background/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">{t('common.all')}</SelectItem>
               {YEARS.map((year) => (
                 <SelectItem key={year} value={year}>
                   {year}
@@ -1099,40 +632,38 @@ export default function Search() {
         </div>
 
         {/* Language Filter */}
-        <SearchMultiSelect
-          label={t("filters.language")}
-          options={languageOptions}
-          selectedValues={languageFilters}
-          onChange={setLanguageFilters}
-          allLabel={t("common.all")}
-          t={t}
-        />
-
-        {/* Sort */}
-        <div className="space-y-1 sm:col-span-1">
-          <label className="text-xs font-medium text-muted-foreground">
-            {t("filters.sort")}
-          </label>
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">{t('filters.language')}</label>
           <Select
-            value={sortBy}
-            onValueChange={(v) => setSortBy(normalizeSortBy(v))}
+            value={languageFilter || '__all__'}
+            onValueChange={(v) => setLanguageFilter(v === '__all__' ? '' : v)}
           >
             <SelectTrigger className="bg-background/50">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="popularity.desc">
-                {t("filters.sortOptions.popularity")}
-              </SelectItem>
-              <SelectItem value="vote_average.desc">
-                {t("filters.sortOptions.rating")}
-              </SelectItem>
-              <SelectItem value="primary_release_date.desc">
-                {t("filters.sortOptions.newest")}
-              </SelectItem>
-              <SelectItem value="original_title.asc">
-                {t("filters.sortOptions.title")}
-              </SelectItem>
+              <SelectItem value="__all__">{t('common.all')}</SelectItem>
+              {LANGUAGES.map((lang) => (
+                <SelectItem key={lang.code} value={lang.code}>
+                  {lang.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Sort */}
+        <div className="space-y-1 col-span-2 sm:col-span-1">
+          <label className="text-xs text-muted-foreground">{t('filters.sort')}</label>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(normalizeSortBy(v))}>
+            <SelectTrigger className="bg-background/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="popularity.desc">{t('filters.sortOptions.popularity')}</SelectItem>
+              <SelectItem value="vote_average.desc">{t('filters.sortOptions.rating')}</SelectItem>
+              <SelectItem value="primary_release_date.desc">{t('filters.sortOptions.newest')}</SelectItem>
+              <SelectItem value="original_title.asc">{t('filters.sortOptions.title')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -1141,309 +672,149 @@ export default function Search() {
   );
 
   return (
-    <div className="page-container pt-20 pb-24 md:pb-4">
-      <SEO
-        title={
-          query
-            ? t(
-                "search.seoTitleWithQuery",
-                'Search "{{query}}" | CineTrekker Movie Tracker',
-                { query },
-              )
-            : t(
-                "search.seoTitleDefault",
-                "Search Movies and TV Shows | CineTrekker Movie Tracker",
-              )
+    <div className="page-container pt-20">
+      <SEO 
+        title={query ? `Search: ${query}` : 'Search Movies & TV Shows'}
+        description={query 
+          ? `Search results for "${query}" - Find movies, TV shows, and actors on CineTrekker`
+          : 'Search and discover movies and TV shows by genre, year, rating, and mood. Filter by streaming services and find your next watch.'
         }
-        description={
-          query
-            ? t(
-                "search.seoDescriptionWithQuery",
-                'Search results for "{{query}}" in CineTrekker, the movie tracker for finding movies, TV shows, people, and watchlist-ready picks.',
-                { query },
-              )
-            : t(
-                "search.seoDescriptionDefault",
-                "Search and discover movies and TV shows by genre, year, rating, runtime, and streaming service in CineTrekker.",
-              )
-        }
-        keywords={
-          query
-            ? t(
-                "search.seoKeywordsWithQuery",
-                "{{query}}, movie tracker search, movies, TV shows, streaming",
-                { query },
-              )
-            : t(
-                "search.seoKeywordsDefault",
-                "movie tracker search, TV show search, genre filter, streaming services, watchlist discovery",
-              )
-        }
-        canonical={
-          canonicalQuery
-            ? `${buildCanonicalUrl("/search")}?${canonicalQuery}`
-            : buildCanonicalUrl("/search")
-        }
-        jsonLd={[
-          toBreadcrumbJsonLd([
-            { name: t("nav.home", "Home"), path: "/" },
-            { name: t("nav.search", "Search"), path: "/search" },
-          ]),
-          toFaqJsonLd(faqItems),
-        ]}
+        keywords={query ? `${query}, movies, TV shows, search, streaming` : 'movie search, TV show search, genre filter, mood filter, streaming services'}
+        canonical={`https://cinetrekker.vercel.app/search${window.location.search}`}
       />
       {/* Search Header */}
-      <div className="mb-8 rounded-[2rem] border border-border/60 bg-[linear-gradient(180deg,hsla(var(--card)/0.92),hsla(var(--card)/0.72))] px-4 py-4 shadow-[0_18px_45px_rgba(0,0,0,0.12)] backdrop-blur-md sm:px-6">
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="ct-kicker mb-2">{t("search.discoveryLab", "Discovery Lab")}</p>
-            <h1 className="section-title mb-0">{t("nav.search")}</h1>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              {t(
-                "search.heroSubtitle",
-                "Search by title, then narrow fast with genre, runtime, language, release year, and streaming filters without losing momentum.",
-              )}
-            </p>
-          </div>
+      <div className="mb-8 bg-background/95 backdrop-blur-md border-b border-border/60 py-2">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="section-title mb-0">{t('nav.search')}</h1>
+          <RandomTrekButton />
         </div>
-
+        
         {/* Search Input with Clear Button */}
-        <form className="relative max-w-2xl" onSubmit={handleSearchSubmit}>
+        <div className="relative max-w-2xl">
           <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input
-            type="text"
+            type="search"
             inputMode="search"
             enterKeyHint="search"
             autoComplete="off"
-            placeholder={t("search.placeholder")}
+            placeholder={t('search.placeholder')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="pl-12 pr-12 h-14 text-lg bg-card/50 border-white/10 rounded-xl focus:border-primary focus:ring-primary/20 transition-all"
-            aria-label={t("search.placeholder")}
+            aria-label={t('search.placeholder')}
           />
           {query && (
             <button
-              type="button"
               onClick={clearSearch}
               className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary transition-all"
-              aria-label={t("search.clearSearch", "Clear search")}
+              aria-label="Clear search"
             >
               <X className="w-4 h-4" />
             </button>
           )}
-        </form>
+        </div>
 
+        {/* Filter hint */}
+        <p className="text-sm text-muted-foreground mt-3 flex items-center gap-2">
+          <SlidersHorizontal className="w-4 h-4" />
+          {t('search.filterHint')}
+        </p>
       </div>
+
       {/* Advanced Filters (desktop) */}
       <div className="hidden md:block">
-        <div className="glass-card sticky top-24 z-20 mb-8 overflow-hidden p-5">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                {t("search.filters", "Filters")}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {activeFiltersCount > 0
-                  ? t(
-                      "search.filtersSummaryActive",
-                      "{{count}} filters are shaping these results.",
-                      { count: activeFiltersCount },
-                    )
-                  : t(
-                      "search.filtersSummaryIdle",
-                      "Open filters when you want to narrow by genre, runtime, year, language, or service.",
-                    )}
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              className="gap-2"
-              onClick={() => setDesktopFiltersExpanded((current) => !current)}
-              aria-expanded={desktopFiltersExpanded}
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              {desktopFiltersExpanded
-                ? t("search.hideFilters", "Hide Filters")
-                : t("search.showFilters", "Show Filters")}
-            </Button>
-          </div>
-
-          {desktopFiltersExpanded ? (
-            <div className="mt-5 border-t border-border/50 pt-5">
-              <FiltersContent />
-            </div>
-          ) : null}
+        <div className="glass-card p-5 mb-8">
+          <FiltersContent />
         </div>
       </div>
 
       {/* Mobile filter button and dialog */}
-      <div className="mb-6 flex items-center justify-end gap-3 md:hidden">
-        <Drawer open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
-          <DrawerTrigger asChild>
-            <Button variant="default" className="flex min-h-11 items-center gap-2 whitespace-nowrap px-4">
-              <Filter className="w-4 h-4" />
-              {t("search.filters")}
-            </Button>
-          </DrawerTrigger>
-          <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-border/60 bg-background px-0 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
-            <DrawerHeader className="border-b border-border/60 px-4 pb-4 pt-3 text-left">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <DrawerTitle className="text-lg">{t("search.filters")}</DrawerTitle>
-                </div>
-                <DrawerClose asChild>
-                  <button
-                    type="button"
-                    aria-label={t("common.close", "Close")}
-                    title={t("common.close", "Close")}
-                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border/60 bg-background text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </DrawerClose>
-              </div>
-            </DrawerHeader>
+      <div className="md:hidden mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4" />
+                {t('search.filterHint')}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top">{t('search.openFilters', 'Open filters (Press F)')}</TooltipContent>
+          </Tooltip>
+        </div>
 
-            <div ref={mobileFiltersRef} className="max-h-[64vh] overflow-y-auto px-4 py-4">
+        <Dialog open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+          <DialogTrigger asChild>
+            <Button variant="default" className="flex items-center gap-2">
+              <Filter className="w-4 h-4" />
+              {t('search.filters')}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="fixed right-0 top-0 h-full w-full max-w-sm bg-background p-4 z-50">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-primary" />
+                <span className="font-semibold">{t('search.filters')}</span>
+              </div>
+              <DialogClose asChild>
+                <button className="p-2 rounded-md hover:bg-muted/30 ml-2 min-w-[44px] min-h-[44px]">
+                  <X className="w-4 h-4" />
+                </button>
+              </DialogClose>
+            </div>
+            <div ref={mobileFiltersRef} className="overflow-auto max-h-[80vh]">
               <FiltersContent />
             </div>
 
-            <DrawerFooter className="border-t border-border/60 px-4 pt-4">
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  className="flex-1 min-h-11"
-                  onClick={() => {
-                    clearFilters();
-                    mobileFiltersRef.current?.scrollTo({ top: 0 });
-                  }}
-                >
-                  {t("search.clearFilters")}
-                </Button>
-                <Button
-                  className="flex-1 min-h-11"
-                  onClick={() => setMobileFiltersOpen(false)}
-                >
-                  {t("common.apply", "Apply")}
-                </Button>
-              </div>
-            </DrawerFooter>
-          </DrawerContent>
-        </Drawer>
+            <div className="border-t border-border/50 mt-4 pt-3 flex items-center gap-2">
+              <Button variant="ghost" className="flex-1" onClick={() => { clearFilters(); mobileFiltersRef.current?.scrollTo({ top: 0 }); }}>
+                {t('search.clearFilters')}
+              </Button>
+              <Button className="flex-1" onClick={() => setMobileFiltersOpen(false)}>
+                {t('common.apply', 'Apply')}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Results Header */}
       <div className="mb-4">
         <p className="text-sm text-muted-foreground">
-          {isLoadingOrRefreshing && !loadingTimedOut ? (
-            <>{t("common.loading")}</>
-          ) : isError || loadingTimedOut ? (
-            <>{activeError?.message || t("common.error")}</>
+          {isLoading ? (
+            <>{t('common.loading')}</>
+          ) : isError ? (
+            <>{activeError?.message || t('common.error')}</>
           ) : normalizedQuery ? (
-            <>
-              {t("search.resultsFor", { query: normalizedQuery })} (
-              {results.length})
-            </>
+            <>{t('search.resultsFor', { query: normalizedQuery })} ({results.length})</>
           ) : hasFilters ? (
-            <>
-              {t("search.filterResults")} ({results.length})
-            </>
+            <>{t('search.filterResults')} ({results.length})</>
           ) : (
-            <>{t("search.trendingNow")}</>
+            <>{t('search.trendingNow')}</>
           )}
         </p>
       </div>
 
-      {activeFilterPills.length > 0 ? (
-        <div className="mb-5 flex flex-wrap items-center gap-2">
-          {activeFilterPills.map((pill) => (
-            <button
-              key={pill.key}
-              type="button"
-              onClick={pill.clear}
-              className="inline-flex min-h-[40px] items-center gap-2 rounded-full border border-border/60 bg-card/70 px-3 py-2 text-sm text-foreground transition-colors hover:border-primary/30 hover:bg-accent/50"
-            >
-              <span>{pill.label}</span>
-              <X className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
-          ))}
-          <Button variant="ghost" size="sm" onClick={clearFilters}>
-            {t("search.clearFilters")}
-          </Button>
-        </div>
-      ) : null}
-
-      {!normalizedQuery && activeFiltersCount === 0 && recentSearches.length > 0 ? (
-        <div className="mb-6 rounded-[1.5rem] border border-border/60 bg-card/55 px-4 py-4 shadow-[0_14px_35px_rgba(0,0,0,0.12)] backdrop-blur-md">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                {t("search.recentSearches", "Recent Searches")}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t(
-                  "search.recentSearchesHint",
-                  "Jump back into something you were already exploring.",
-                )}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {recentSearches.map((item) => (
-                <button
-                  key={`${item.query}-${item.timestamp}`}
-                  type="button"
-                  onClick={() => setQuery(item.query)}
-                  className="rounded-full border border-border/60 bg-background/60 px-3 py-2 text-sm text-foreground transition-colors hover:border-primary/30 hover:bg-accent/50"
-                >
-                  {item.query}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : null}
-
       {/* Results */}
-      {isLoadingOrRefreshing && !loadingTimedOut ? (
+      {isLoading ? (
         <div className="media-grid">
           {Array.from({ length: 18 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
         </div>
-      ) : isError || loadingTimedOut ? (
+      ) : isError ? (
         <div className="text-center py-20 max-w-md mx-auto">
           <h3 className="text-2xl font-bold mb-3 title-display">
-            {t("search.errorTitle", "Search unavailable")}
+            {t('common.error')}
           </h3>
           <p className="text-muted-foreground mb-6 leading-relaxed">
-            {searchErrorMessage}
+            {activeError?.message || t('search.noResultsDescription', 'Something went wrong while searching.')}
           </p>
-          {import.meta.env.DEV && activeError?.message && (
-            <p className="mb-6 rounded-2xl border border-border/60 bg-muted/40 px-4 py-3 text-left text-xs text-muted-foreground">
-              {activeError.message}
-            </p>
-          )}
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Button onClick={() => void activeQuery.refetch()}>
-              {t("common.tryAgain", "Try again")}
-            </Button>
-            <Button asChild variant="outline">
-              <Link to="/">{t("search.backHome", "Back to home")}</Link>
-            </Button>
-            <Button asChild variant="ghost">
-              <Link to="/trending">
-                {t("search.backTrending", "Browse trending")}
-              </Link>
-            </Button>
-          </div>
         </div>
       ) : results.length > 0 ? (
-        <LoadMoreMediaGrid
+        <InfiniteMediaGrid
           items={results}
           hasMore={hasMore}
           onLoadMore={handleLoadMore}
-          isLoadingMore={activeQuery.isFetchingNextPage}
           columns="normal"
           gap="md"
         />
@@ -1453,44 +824,34 @@ export default function Search() {
             <SearchIcon className="w-12 h-12 text-primary" />
           </div>
           <h3 className="text-2xl font-bold mb-3 title-display">
-            {normalizedQuery
-              ? t("search.noResultsTitle", "No results available")
-              : t("search.startJourney", "Your Journey Starts Here")}
+            {normalizedQuery 
+              ? t('search.noResultsTitle', 'No results available')
+              : t('search.startJourney', 'Your Journey Starts Here')
+            }
           </h3>
           <p className="text-muted-foreground mb-6 leading-relaxed">
-            {normalizedQuery
-              ? t(
-                  "search.noResultsDescription",
-                  `No results found for "${normalizedQuery}". Try adjusting your filters or search terms.`,
-                )
-              : t(
-                  "search.trySearching",
-                  "Search for movies, TV shows, or use the genre chips above to discover something new.",
-                )}
+            {normalizedQuery 
+              ? t('search.noResultsDescription', `We couldn't find anything matching "${normalizedQuery}". Try adjusting your filters or search terms.`)
+              : t('search.trySearching', 'Search for movies, TV shows, or use the genre chips above to discover something new.')
+            }
           </p>
           {(hasFilters || normalizedQuery) && (
-            <Button
-              variant="default"
-              onClick={() => {
-                clearFilters();
-                clearSearch();
-              }}
+            <Button 
+              variant="default" 
+              onClick={() => { clearFilters(); clearSearch(); }} 
               className="btn-primary-glow gap-2"
             >
               <TrendingUp className="w-4 h-4" />
-              {t("common.discoverTrending", "Discover Trending")}
+              {t('common.discoverTrending', 'Discover Trending')}
             </Button>
           )}
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Button asChild variant="outline">
-              <Link to="/trending">{t("search.backTrending", "Browse trending")}</Link>
-            </Button>
-            <Button asChild variant="ghost">
-              <Link to="/">{t("search.backHome", "Back to home")}</Link>
-            </Button>
-          </div>
         </div>
       )}
+
+      {/* Media preview removed */}
     </div>
   );
 }
+
+
+

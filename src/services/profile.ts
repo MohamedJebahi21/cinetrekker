@@ -1,26 +1,21 @@
-import { loadSupabaseModule } from "@/lib/loadSupabaseModule";
-import type { PersonDetails } from "@/services/tmdb";
+import { supabase } from '@/integrations/supabase/client';
 
-const isMissingContentPolicySchemaError = (error: unknown): boolean => {
-  if (!error || typeof error !== "object") return false;
+const ALLOWED_PROFILE_PHOTO_DATA_URL = /^data:image\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+const MAX_PROFILE_PHOTO_DATA_URL_LENGTH = 3_000_000;
 
-  const err = error as { code?: string; message?: string };
-  if (err.code !== "PGRST204") return false;
+function validateProfilePhotoDataUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
 
-  const message = (err.message || "").toLowerCase();
+  if (value.length > MAX_PROFILE_PHOTO_DATA_URL_LENGTH) {
+    throw new Error('Profile photo is too large');
+  }
 
-  const missingFields = [
-    "adult_content_enabled",
-    "age_verified",
-    "age_verified_at",
-    "strict_filtering_enabled",
-    "moderate_filtering_enabled",
-    "maturity_rating",
-    "content_policy_confirmed_at",
-  ];
+  if (!ALLOWED_PROFILE_PHOTO_DATA_URL.test(value)) {
+    throw new Error('Invalid profile photo format');
+  }
 
-  return missingFields.some((field) => message.includes(field));
-};
+  return value;
+}
 
 export interface UserProfile {
   id: string;
@@ -29,195 +24,135 @@ export interface UserProfile {
   bio: string | null;
   date_of_birth: string | null;
   profile_photo: string | null;
-  avatar_url: string | null;
   favorite_genres: number[];
-  favorite_titles: string[];
   is_public: boolean;
   show_watchlist: boolean;
   show_stats: boolean;
   allow_recommendations: boolean;
-  show_age: boolean;
-  age_verified: number | null; // probably boolean or timestamp, but kept as-is
-  age_verified_at: string | null;
-  maturity_rating: "strict" | "moderate" | "none";
-  content_policy_confirmed_at: string | null;
-  adult_content_enabled: boolean;
-  strict_filtering_enabled: boolean;
-  moderate_filtering_enabled: boolean;
-  actor_matches: PersonDetails[] | null;
-  actor_matches_updated_at: string | null;
-  actor_matches_context: {
-    age: number | null;
-    genres: number[];
-    language?: string | null;
-  } | null;
   created_at: string;
   updated_at: string;
 }
 
-const DEFAULT_PROFILE: Omit<UserProfile, "id" | "user_id"> = {
-  display_name: null,
-  bio: null,
-  date_of_birth: null,
-  profile_photo: null,
-  avatar_url: null,
-  favorite_genres: [],
-  favorite_titles: [],
-  is_public: false,
-  show_watchlist: true,
-  show_stats: true,
-  allow_recommendations: true,
-  show_age: false,
-  age_verified: null,
-  age_verified_at: null,
-  maturity_rating: "none",
-  content_policy_confirmed_at: null,
-  adult_content_enabled: false,
-  strict_filtering_enabled: true,
-  moderate_filtering_enabled: false,
-  actor_matches: null,
-  actor_matches_updated_at: null,
-  actor_matches_context: null,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-};
-
 export const profileService = {
+  // Get user profile from Supabase
   async getProfile(userId: string): Promise<UserProfile | null> {
     try {
-      const { supabase } = await loadSupabaseModule();
       const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", userId)
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
         .single();
 
       if (error) {
-        if (error.code === "PGRST116") {
-          return null; // Profile doesn't exist
+        // If profile doesn't exist, return null (not an error)
+        if (error.code === 'PGRST116') {
+          return null;
         }
-        console.error("Error fetching profile:", error);
         throw error;
       }
 
       return data as UserProfile;
     } catch (error) {
-      console.error("Unexpected error fetching profile:", error);
+      console.error('Error fetching profile:', error);
       return null;
     }
   },
 
-  async saveProfile(
-    userId: string,
-    profile: Partial<UserProfile>,
-  ): Promise<UserProfile> {
+  // Create or update user profile
+  async saveProfile(userId: string, profile: Partial<UserProfile>): Promise<UserProfile | null> {
     try {
-      const { supabase } = await loadSupabaseModule();
+      // First check for profile record
       const existing = await this.getProfile(userId);
 
-      const profileData: Partial<UserProfile> & { user_id: string; updated_at: string } = {
+      const validatedProfilePhoto = validateProfilePhotoDataUrl(profile.profile_photo);
+
+      const profileData = {
         user_id: userId,
         ...profile,
+        profile_photo: validatedProfilePhoto,
         updated_at: new Date().toISOString(),
       };
 
-      // Remove profile_photo validation (now using Supabase Storage URLs)
-      if ("profile_photo" in profile) {
-        profileData.profile_photo = profile.profile_photo ?? null;
-      }
-
       let result;
-
       if (existing) {
-        // Update
+        // Update existing profile
         result = await supabase
-          .from("profiles")
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .update(profileData as any)
-          .eq("user_id", userId)
+          .from('profiles')
+          .update(profileData)
+          .eq('user_id', userId)
           .select()
           .single();
       } else {
-        // Insert new profile
-        const insertData = {
-          ...DEFAULT_PROFILE,
-          ...profileData,
-          created_at: new Date().toISOString(),
-        };
-
+        // Create new profile
         result = await supabase
-          .from("profiles")
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .insert([insertData as any])
+          .from('profiles')
+          .insert([profileData])
           .select()
           .single();
       }
 
-      if (result.error) {
-        throw result.error;
-      }
+      if (result.error) throw result.error;
 
       return result.data as UserProfile;
     } catch (error) {
-      if (!isMissingContentPolicySchemaError(error)) {
-        console.error("Error saving profile:", error);
-      }
+      console.error('Error saving profile:', error);
       throw error;
     }
   },
 
-  async updateProfile(
-    userId: string,
-    updates: Partial<UserProfile>,
-  ): Promise<UserProfile> {
-    return this.saveProfile(userId, updates);
+  // Subscribe to real-time profile updates
+  subscribeToProfile(userId: string, callback: (profile: UserProfile) => void) {
+    const channel = supabase
+      .channel(`profiles_user_${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          const newRecord = payload.new as Record<string, unknown> | null;
+          if (newRecord && (newRecord.user_id as string) === userId) {
+            callback(newRecord as UserProfile);
+          }
+        }
+      )
+      .subscribe();
+
+    return channel;
   },
 
+  // Initialize profile for new user
   async initializeProfile(userId: string): Promise<UserProfile> {
     try {
-      const { supabase } = await loadSupabaseModule();
-      const insertData = {
+      const DEFAULT_PROFILE = {
         user_id: userId,
-        ...DEFAULT_PROFILE,
+        display_name: null,
+        bio: null,
+        date_of_birth: null,
+        profile_photo: null,
+        favorite_genres: [],
+        is_public: false,
+        show_watchlist: true,
+        show_stats: true,
+        allow_recommendations: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
 
       const { data, error } = await supabase
-        .from("profiles")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .insert([insertData as any])
+        .from('profiles')
+        .insert([DEFAULT_PROFILE])
         .select()
         .single();
 
       if (error) throw error;
       return data as UserProfile;
     } catch (error) {
-      console.error("Error initializing profile:", error);
+      console.error('Error initializing profile:', error);
       throw error;
     }
-  },
-
-  async subscribeToProfile(
-    userId: string,
-    callback: (profile: UserProfile) => void,
-  ) {
-    const { supabase } = await loadSupabaseModule();
-    return supabase
-      .channel(`profiles_user_${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "profiles",
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          const newRecord = payload.new as UserProfile | null;
-          if (newRecord?.user_id === userId) {
-            callback(newRecord);
-          }
-        },
-      )
-      .subscribe();
   },
 };

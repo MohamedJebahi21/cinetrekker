@@ -164,7 +164,7 @@ export function GlassStatCard({
 
   if (href) {
     return (
-      <a href={href} className="block" rel="noopener noreferrer" target="_blank">
+      <a href={href} className="block">
         {content}
       </a>
     );

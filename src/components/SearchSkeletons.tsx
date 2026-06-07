@@ -170,7 +170,7 @@ export function GridWithPaginationSkeleton({ columns = 3, rows = 3 }: { columns?
   const items = columns * rows;
   return (
     <div>
-      <div className={`grid gap-4 ${columns === 1 ? 'grid-cols-1' : columns === 2 ? 'grid-cols-2' : columns === 3 ? 'grid-cols-3' : columns === 4 ? 'grid-cols-4' : ''}`}>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: '1rem' }}>
         {Array.from({ length: items }).map((_, i) => (
           <MediaCardSkeleton key={i} />
         ))}

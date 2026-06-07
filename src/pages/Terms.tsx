@@ -1,73 +1,14 @@
-﻿import { useTranslation } from "react-i18next";
-import SEO from "@/components/SEO";
-import { Scale, UserCheck, ShieldAlert, RefreshCcw, AlertCircle } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React from 'react';
+import SEO from '@/components/SEO';
 
 export default function Terms() {
-  const { t, i18n } = useTranslation();
-  const currentDate = new Date().toLocaleDateString(i18n.language, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-
   return (
-    <div className="ct-page-shell min-h-screen">
-      <div className="page-container pt-20 pb-24 md:pb-10">
-      <SEO
-        title={t("terms.seoTitle", "Terms of Service - CineTrekker")}
-        description={t(
-          "terms.seoDescription",
-          "Terms governing use of CineTrekker, including acceptable use and account responsibilities.",
-        )}
-        canonical="https://cinetrekker.vercel.app/terms"
-      />
-      <div className="mx-auto max-w-4xl py-10 space-y-6">
-        <header className="ct-panel-strong p-6 md:p-7">
-          <div className="flex items-start gap-4">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15">
-              <Scale className="h-5 w-5 text-primary" />
-            </div>
-            <div className="space-y-2">
-              <h1 className="section-title mb-0">{t("terms.title", "Terms of Service")}</h1>
-              <p className="text-sm text-muted-foreground">{t("common.updated", "Updated")} {currentDate}</p>
-              <p className="max-w-2xl text-muted-foreground">
-                {t("terms.intro", "By using CineTrekker, you agree to these terms. If you do not agree, please do not use the service.")}
-              </p>
-            </div>
-          </div>
-        </header>
-
-        <Card className="ct-panel">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground"><ShieldAlert className="h-5 w-5 text-primary" />{t("terms.acceptableUse", "Acceptable Use")}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-muted-foreground leading-relaxed">{t("terms.acceptableUseDesc", "You agree not to misuse CineTrekker, attempt unauthorized access, interfere with platform operation, or use the service for unlawful activity.")}</CardContent>
-        </Card>
-
-        <Card className="ct-panel">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground"><UserCheck className="h-5 w-5 text-primary" />{t("terms.accounts", "Accounts and Security")}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-muted-foreground leading-relaxed">{t("terms.accountsDesc", "You are responsible for account credentials and activity under your account. Keep your sign-in details secure and notify support if you suspect unauthorized access.")}</CardContent>
-        </Card>
-
-        <Card className="ct-panel">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground"><AlertCircle className="h-5 w-5 text-primary" />{t("terms.thirdParty", "Third-Party Content and Services")}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-muted-foreground leading-relaxed">{t("terms.thirdPartyDesc", "CineTrekker uses third-party data providers, including TMDB, for title metadata and imagery. Availability, accuracy, and content are subject to those providers and their terms.")}</CardContent>
-        </Card>
-
-        <Card className="ct-panel">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground"><RefreshCcw className="h-5 w-5 text-primary" />{t("terms.changes", "Changes to These Terms")}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-muted-foreground leading-relaxed">{t("terms.changesDesc", "Terms may be updated from time to time. Continued use of CineTrekker after updates means you accept the revised terms.")}</CardContent>
-        </Card>
-      </div>
+    <div className="page-container pt-20 pb-24 md:pb-0">
+      <SEO title="Terms of Service — CineTrekker" description="Terms of Service" />
+      <div className="max-w-3xl mx-auto py-12">
+        <h1 className="section-title">Terms of Service</h1>
+        <p className="text-muted-foreground mt-4">These are the terms of service for CineTrekker.</p>
       </div>
     </div>
   );
 }
-

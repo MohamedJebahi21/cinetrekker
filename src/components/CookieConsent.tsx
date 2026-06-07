@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,33 @@ export function CookieConsent() {
   const { t } = useTranslation();
   const { choice, acceptAll, rejectNonEssential } = useCookieConsent();
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    let rafId: number | null = null;
+    let idleId: number | null = null;
+
+    const markReady = () => {
+      setIsReady(true);
+    };
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      idleId = window.requestIdleCallback(markReady, { timeout: 1800 });
+    } else {
+      rafId = window.requestAnimationFrame(() => {
+        rafId = window.requestAnimationFrame(markReady);
+      });
+    }
+
+    return () => {
+      if (idleId !== null && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleId);
+      }
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -33,7 +60,7 @@ export function CookieConsent() {
     };
   }, []);
 
-  if (choice) {
+  if (choice || !isReady) {
     return null;
   }
 
@@ -53,7 +80,7 @@ export function CookieConsent() {
             <p id="cookie-consent-description" className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
               {t(
                 "cookieConsent.description",
-                "CineTrekker uses cookies to improve your experience. You can accept all cookies or choose only essential ones.",
+                "We use cookies to save your watchlist and personalize your experience. Choose to accept all or only essential cookies.",
               )}
             </p>
           </div>

@@ -1,15 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import { supabase } from '@/integrations/supabase/client';
 import { UserMediaItem } from '@/types/media';
 import { validateNote, validateRating } from '@/lib/validation';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
-import { logSupabaseIssue } from '@/lib/supabaseRuntime';
 
 const WATCHED_QUERY_ID = 'watched';
 const WATCHED_STORAGE_ID = 'mywatch_watched';
-const WATCHED_OFFLINE_CACHE_PREFIX = 'mywatch_watched_cache_';
 
 /**
  * Hook to fetch watched items from Supabase or localStorage
@@ -21,46 +19,32 @@ export function useWatchedQuery() {
     queryKey: [WATCHED_QUERY_ID, user?.id],
     queryFn: async () => {
       if (user) {
-        try {
-          // Fetch from Supabase
-          const { data, error } = await supabase
-            .from('user_watched')
-            .select('*')
-            .eq('user_id', user.id);
+        // Fetch from Supabase
+        const { data, error } = await supabase
+          .from('user_watched')
+          .select('*')
+          .eq('user_id', user.id);
 
-          if (error) throw error;
-
-          const mapped = (data || []).map(item => ({
-            id: item.id,
-            mediaId: item.media_id,
-            mediaType: item.media_type as 'movie' | 'tv',
-            userId: item.user_id,
-            rating: item.rating ?? undefined,
-            note: item.note ?? undefined,
-            status: (item.status as UserMediaItem['status']) ?? undefined,
-            addedAt: item.watched_at,
-            watchedAt: item.watched_at,
-          })) as UserMediaItem[];
-
-          localStorage.setItem(
-            `${WATCHED_OFFLINE_CACHE_PREFIX}${user.id}`,
-            JSON.stringify(mapped),
-          );
-
-          return mapped;
-        } catch (error) {
-          logSupabaseIssue('watched query fallback', error);
-          const cached = localStorage.getItem(`${WATCHED_OFFLINE_CACHE_PREFIX}${user.id}`);
-          return cached ? (JSON.parse(cached) as UserMediaItem[]) : [];
-        }
+        if (error) throw error;
+        
+        return (data || []).map(item => ({
+          id: item.id,
+          mediaId: item.media_id,
+          mediaType: item.media_type as 'movie' | 'tv',
+          userId: item.user_id,
+          rating: item.rating ?? undefined,
+          note: item.note ?? undefined,
+          status: (item.status as UserMediaItem['status']) ?? undefined,
+          addedAt: item.watched_at,
+          watchedAt: item.watched_at,
+        })) as UserMediaItem[];
       } else {
         // Fetch from localStorage
         const stored = localStorage.getItem(WATCHED_STORAGE_ID);
-        return stored ? (JSON.parse(stored) as UserMediaItem[]) : [];
+        return stored ? JSON.parse(stored) : [];
       }
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: false,
   });
 }
 
@@ -129,7 +113,7 @@ export function useAddToWatched() {
       // Update localStorage if not authenticated
       if (!user) {
         const stored = localStorage.getItem(WATCHED_STORAGE_ID);
-        const list: UserMediaItem[] = stored ? JSON.parse(stored) as UserMediaItem[] : [];
+        const list = stored ? JSON.parse(stored) : [];
         const newList = list.filter((item: UserMediaItem) => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType));
         newList.push({
           id: `${params.mediaType}-${params.mediaId}`,
@@ -138,7 +122,7 @@ export function useAddToWatched() {
           userId: 'local',
           rating: validateRating(params.rating),
           note: validateNote(params.note),
-          status: (params.status as UserMediaItem['status']) || 'completed',
+          status: params.status || 'completed',
           addedAt: new Date().toISOString(),
           watchedAt: new Date().toISOString(),
         });
@@ -151,7 +135,7 @@ export function useAddToWatched() {
       if (context?.previousWatched) {
         queryClient.setQueryData([WATCHED_QUERY_ID, user?.id], context.previousWatched);
       }
-      logSupabaseIssue('failed to add to watched', error);
+      console.error('Failed to add to watched:', error);
       toast({
         title: t('actions.error', 'Error'),
         description: t('actions.watchedAddError', 'Failed to mark as watched'),
@@ -210,7 +194,7 @@ export function useRemoveFromWatched() {
       // Update localStorage if not authenticated
       if (!user) {
         const stored = localStorage.getItem(WATCHED_STORAGE_ID);
-        const list: UserMediaItem[] = stored ? JSON.parse(stored) as UserMediaItem[] : [];
+        const list = stored ? JSON.parse(stored) : [];
         const newList = list.filter((item: UserMediaItem) => !(item.mediaId === params.mediaId && item.mediaType === params.mediaType));
         localStorage.setItem(WATCHED_STORAGE_ID, JSON.stringify(newList));
       }
@@ -221,7 +205,7 @@ export function useRemoveFromWatched() {
       if (context?.previousWatched) {
         queryClient.setQueryData([WATCHED_QUERY_ID, user?.id], context.previousWatched);
       }
-      logSupabaseIssue('failed to remove from watched', error);
+      console.error('Failed to remove from watched:', error);
       toast({
         title: t('actions.error', 'Error'),
         description: t('actions.watchedRemoveError', 'Failed to remove from watched'),
@@ -263,7 +247,11 @@ export function useUpdateWatched() {
       }
 
       if (user) {
-        const dbUpdates: Record<string, unknown> = {};
+        const dbUpdates: {
+          rating?: UserMediaItem["rating"] | null;
+          note?: UserMediaItem["note"] | null;
+          status?: UserMediaItem["status"];
+        } = {};
         if (validatedUpdates.rating !== undefined) dbUpdates.rating = validatedUpdates.rating;
         if (validatedUpdates.note !== undefined) dbUpdates.note = validatedUpdates.note;
         if (validatedUpdates.status !== undefined) dbUpdates.status = validatedUpdates.status;
@@ -301,7 +289,7 @@ export function useUpdateWatched() {
       // Update localStorage if not authenticated
       if (!user) {
         const stored = localStorage.getItem(WATCHED_STORAGE_ID);
-        const list: UserMediaItem[] = stored ? JSON.parse(stored) as UserMediaItem[] : [];
+        const list = stored ? JSON.parse(stored) : [];
         const newList = list.map((item: UserMediaItem) =>
           item.mediaId === params.mediaId && item.mediaType === params.mediaType
             ? { ...item, ...params.updates }
@@ -316,7 +304,7 @@ export function useUpdateWatched() {
       if (context?.previousWatched) {
         queryClient.setQueryData([WATCHED_QUERY_ID, user?.id], context.previousWatched);
       }
-      logSupabaseIssue('failed to update watched item', error);
+      console.error('Failed to update watched item:', error);
       toast({
         title: t('actions.error', 'Error'),
         description: t('actions.watchedUpdateError', 'Failed to update watched item'),
@@ -339,7 +327,7 @@ export function useUpdateWatched() {
  */
 export function useIsWatched(mediaId: number, mediaType: 'movie' | 'tv') {
   const { data: watched = [] } = useWatchedQuery();
-  return watched.some((item: UserMediaItem) => item.mediaId === mediaId && item.mediaType === mediaType);
+  return watched.some(item => item.mediaId === mediaId && item.mediaType === mediaType);
 }
 
 /**
@@ -347,5 +335,5 @@ export function useIsWatched(mediaId: number, mediaType: 'movie' | 'tv') {
  */
 export function useGetWatchedItem(mediaId: number, mediaType: 'movie' | 'tv') {
   const { data: watched = [] } = useWatchedQuery();
-  return watched.find((item: UserMediaItem) => item.mediaId === mediaId && item.mediaType === mediaType);
+  return watched.find(item => item.mediaId === mediaId && item.mediaType === mediaType);
 }

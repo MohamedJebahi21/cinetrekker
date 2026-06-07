@@ -1,5 +1,6 @@
 # Temp / cache
 .tmp
+tsconfig.tsbuildinfo
 lighthouse-desktop-report
 lighthouse-accessibility-report.html
 playwright-report
@@ -24,10 +25,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
-.next
-test-results
 *.local
-i18n-coverage-report.md
 
 # Environment files
 .env
@@ -51,3 +49,4 @@ supabase/functions/.env
 *.njsproj*
 *.sln
 *.sw?
+tsconfig.tsbuildinfo
