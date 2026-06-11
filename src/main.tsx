@@ -53,8 +53,8 @@ try {
     };
 
     if (typeof window !== "undefined") {
-      if ("requestIdleCallback" in window) {
-        window.requestIdleCallback(injectInsights, { timeout: 2500 });
+      if (typeof (window as any).requestIdleCallback === "function") {
+        (window as any).requestIdleCallback(injectInsights, { timeout: 2500 });
       } else {
         window.requestAnimationFrame(() => {
           window.requestAnimationFrame(injectInsights);

@@ -118,178 +118,159 @@ export function HeroSection() {
       onTouchEnd={handleTouchEnd}
       onTouchCancel={() => setIsPaused(false)}
     >
-      {/* ── Desktop layout: backdrop left | sidebar right ── */}
-      <div className="hidden md:flex">
+      {/* ── Desktop layout: full-width backdrop with floating elements ── */}
+      <div className="relative hidden md:block min-h-[550px] lg:min-h-[600px] w-full overflow-hidden">
+        {/* Animated backdrop */}
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={`hero-bg-${activeItem.id}`}
+            src={heroImage}
+            alt=""
+            aria-hidden="true"
+            loading="eager"
+            fetchPriority="high"
+            className="absolute inset-0 h-full w-full object-cover"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: td }}
+          />
+        </AnimatePresence>
 
-        {/* LEFT: Full backdrop with overlay text */}
-        <div className="relative flex-1 min-h-[420px] lg:min-h-[480px] overflow-hidden">
-          {/* Animated backdrop */}
-          <AnimatePresence mode="wait">
-            <motion.img
-              key={`hero-bg-${activeItem.id}`}
-              src={heroImage}
-              alt=""
-              aria-hidden="true"
-              loading="eager"
-              fetchPriority="high"
-              className="absolute inset-0 h-full w-full object-cover"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: td }}
-            />
-          </AnimatePresence>
+        {/* Gradient overlays for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/40 to-transparent z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d0f] via-transparent to-[#0d0d0f]/20 z-10" />
 
-          {/* Gradient overlays for text readability */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+        {/* Content anchored to middle-left */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`hero-content-${activeItem.id}`}
+            className="absolute inset-y-0 left-0 flex flex-col justify-center p-8 lg:p-16 z-20 max-w-[700px] mt-8"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: td, ease: "easeOut" }}
+          >
+            {/* Kicker */}
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#e50914]">
+              {t("home.topWatchedThisWeekKicker", "Weekly Spotlight")}
+            </p>
 
-          {/* Content anchored to bottom-left */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`hero-content-${activeItem.id}`}
-              className="absolute inset-x-0 bottom-0 p-6 lg:p-10 max-w-[680px]"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: td, ease: "easeOut" }}
-            >
-              {/* Kicker */}
-              <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-primary/90">
-                {t("home.topWatchedThisWeekKicker", "Weekly Spotlight")}
-              </p>
+            {/* Title */}
+            <h1 className="text-4xl font-extrabold tracking-tight text-white drop-shadow-md lg:text-5xl xl:text-6xl">
+              {activeTitle}
+            </h1>
 
-              {/* Title */}
-              <h2 className="text-3xl font-black leading-tight tracking-tight text-white drop-shadow-lg lg:text-4xl xl:text-5xl">
-                {activeTitle}
-              </h2>
-
-              {/* Meta badges */}
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="rounded-sm bg-white/10 px-2.5 py-1 text-xs font-semibold text-white/80 ring-1 ring-white/10">
-                  {activeItem.media_type === "tv" ? t("common.tvShow", "TV Show") : t("common.movie", "Movie")}
+            {/* Meta badges */}
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {activeItem.vote_average > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3.5 py-1 text-xs font-bold text-[#e50914] ring-1 ring-white/10">
+                  ★ {activeItem.vote_average.toFixed(1)}
                 </span>
-                {activeYear && (
-                  <span className="rounded-sm bg-white/10 px-2.5 py-1 text-xs font-semibold text-white/80 ring-1 ring-white/10">
-                    {activeYear}
-                  </span>
-                )}
-                {activeItem.vote_average > 0 && (
-                  <span className="inline-flex items-center gap-1 rounded-sm bg-white/10 px-2.5 py-1 text-xs font-semibold text-white/80 ring-1 ring-white/10">
-                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                    {activeItem.vote_average.toFixed(1)}
-                  </span>
-                )}
-              </div>
-
-              {/* Description */}
-              {activeItem.overview && (
-                <p className="mt-3 line-clamp-3 max-w-lg text-sm leading-relaxed text-white/75 lg:text-base">
-                  {activeItem.overview}
-                </p>
               )}
+              {activeYear && (
+                <span className="rounded-full bg-white/10 px-3.5 py-1 text-xs font-semibold text-white/80 ring-1 ring-white/10">
+                  {activeYear}
+                </span>
+              )}
+              <span className="rounded-full bg-white/10 px-3.5 py-1 text-xs font-semibold text-white/80 ring-1 ring-white/10">
+                {activeItem.media_type === "tv" ? t("common.tvShow", "TV Show") : t("common.movie", "Movie")}
+              </span>
+            </div>
 
-              {/* Actions */}
-              <div className="mt-5 flex flex-wrap items-center gap-3">
-                <Button asChild className="h-10 rounded-sm bg-white text-black hover:bg-white/90 font-bold px-6 shadow-lg">
-                  <Link to={`/${activeMediaType}/${activeItem.id}`}>
-                    <Info className="mr-2 h-4 w-4" />
-                    {t("common.details", "Details")}
-                  </Link>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-10 rounded-sm border-white/25 bg-black/30 text-white hover:bg-white/10 font-semibold px-5 backdrop-blur-sm"
-                  onClick={() => { void (inWatchlist ? removeFromWatchlist(activeItem.id, activeMediaType) : addToWatchlist(activeItem.id, activeMediaType)); }}
-                >
-                  <Bookmark className={cn("mr-2 h-4 w-4", inWatchlist && "fill-white")} />
-                  {inWatchlist ? t("actions.inWatchlist", "In Watchlist") : t("actions.addToWatchlist", "Watchlist")}
-                </Button>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "h-10 rounded-sm border-white/25 bg-black/30 text-white hover:bg-white/10 font-semibold px-5 backdrop-blur-sm",
-                    inWatched && "border-green-400/40 bg-green-900/20 text-green-300"
-                  )}
-                  onClick={() => { void (inWatched ? removeFromWatched(activeItem.id, activeMediaType) : addToWatched(activeItem.id, activeMediaType, undefined, undefined, "completed")); }}
-                >
-                  <Check className="mr-2 h-4 w-4" />
-                  {inWatched ? t("actions.watched", "Watched") : t("actions.markAsWatched", "Watched")}
-                </Button>
-              </div>
-            </motion.div>
-          </AnimatePresence>
+            {/* Description */}
+            {activeItem.overview && (
+              <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-white/70 lg:text-base">
+                {activeItem.overview}
+              </p>
+            )}
 
-          {/* Progress bars overlay (bottom of image, subtle) */}
-          <div className="absolute bottom-0 left-0 right-0 flex gap-1 px-6 pb-0 lg:px-10">
-            {topWeekly.map((item, i) => {
-              const isActive = i === activeIndex;
-              const fill = isActive ? progress : i < activeIndex ? 100 : 0;
-              return (
-                <button
-                  key={`pb-${item.id}-${i}`}
-                  type="button"
-                  aria-label={`Go to slide ${i + 1}`}
-                  onClick={() => goToSlide(i)}
-                  className="h-1 flex-1 overflow-hidden rounded-t-full bg-white/20 transition-all hover:bg-white/30"
-                >
-                  <motion.div
-                    className="h-full bg-primary"
-                    animate={{ width: `${fill}%` }}
-                    transition={{ width: { duration: isActive ? 0.03 : 0.3, ease: "linear" } }}
-                  />
-                </button>
-              );
-            })}
-          </div>
-        </div>
+            {/* Actions */}
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <Button asChild className="h-11 rounded-full bg-white text-black hover:bg-white/90 font-bold px-6 shadow-lg">
+                <Link to={`/${activeMediaType}/${activeItem.id}`}>
+                  <Info className="mr-2 h-4.5 w-4.5" />
+                  {t("common.details", "Details")}
+                </Link>
+              </Button>
+              <Button
+                variant="outline"
+                className="h-11 rounded-full border-white/20 bg-black/40 text-white hover:bg-white/10 font-semibold px-6 backdrop-blur-sm"
+                onClick={() => { void (inWatchlist ? removeFromWatchlist(activeItem.id, activeMediaType) : addToWatchlist(activeItem.id, activeMediaType)); }}
+              >
+                <Bookmark className={cn("mr-2 h-4.5 w-4.5", inWatchlist && "fill-white")} />
+                {inWatchlist ? t("actions.inWatchlist", "In Watchlist") : t("actions.addToWatchlist", "Add to Watchlist")}
+              </Button>
+              <Button
+                variant="outline"
+                className={cn(
+                  "h-11 rounded-full border-white/20 bg-black/40 text-white hover:bg-white/10 font-semibold px-6 backdrop-blur-sm",
+                  inWatched && "border-green-400/40 bg-green-900/20 text-green-300"
+                )}
+                onClick={() => { void (inWatched ? removeFromWatched(activeItem.id, activeMediaType) : addToWatched(activeItem.id, activeMediaType, undefined, undefined, "completed")); }}
+              >
+                <Check className="mr-2 h-4.5 w-4.5" />
+                {inWatched ? t("actions.watched", "Watched") : t("actions.markAsWatched", "Mark as Watched")}
+              </Button>
+            </div>
+          </motion.div>
+        </AnimatePresence>
 
-        {/* RIGHT: Vertical thumbnail sidebar */}
-        <div className="w-[240px] flex-shrink-0 flex flex-col divide-y divide-white/5 bg-[#141418] xl:w-[280px]">
+        {/* Floating poster carousel in bottom right */}
+        <div className="absolute bottom-8 right-8 lg:bottom-12 lg:right-16 z-20 flex items-center gap-3">
           {topWeekly.map((item, index) => {
             const isActive = index === activeIndex;
-            const itemTitle = getMediaTitle(item);
             const thumb = item.poster_path
               ? getImageUrl(item.poster_path, "w185")
               : item.backdrop_path
                 ? getBackdropUrl(item.backdrop_path, "w300") || ""
                 : "";
+
             return (
               <button
-                key={`hero-sidebar-${item.id}-${index}`}
+                key={`hero-floating-${item.id}-${index}`}
                 type="button"
                 onClick={() => goToSlide(index)}
                 className={cn(
-                  "group flex items-center gap-3 px-4 py-3 text-left transition-colors duration-200",
+                  "relative h-20 w-14 lg:h-24 lg:w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all duration-300 hover:scale-105",
                   isActive
-                    ? "bg-white/8 border-l-2 border-primary"
-                    : "border-l-2 border-transparent hover:bg-white/5"
+                    ? "border-red-600 shadow-[0_0_12px_rgba(220,38,38,0.8)] opacity-100 scale-105 z-10"
+                    : "border-white/10 opacity-50 hover:opacity-80"
                 )}
               >
-                {/* Thumbnail */}
-                <div className="relative h-14 w-10 flex-shrink-0 overflow-hidden rounded-sm shadow-md">
-                  {thumb ? (
-                    <img
-                      src={thumb}
-                      alt=""
-                      loading="lazy"
-                      className={cn(
-                        "h-full w-full object-cover transition duration-300",
-                        !isActive && "opacity-60 group-hover:opacity-100"
-                      )}
-                    />
-                  ) : (
-                    <div className="h-full w-full bg-white/5" />
-                  )}
-                </div>
+                {thumb ? (
+                  <img
+                    src={thumb}
+                    alt=""
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full bg-white/5" />
+                )}
+              </button>
+            );
+          })}
+        </div>
 
-                {/* Title */}
-                <span className={cn(
-                  "line-clamp-2 text-sm font-semibold leading-snug transition-colors",
-                  isActive ? "text-white" : "text-white/55 group-hover:text-white/85"
-                )}>
-                  {itemTitle}
-                </span>
+        {/* Progress bars overlay (bottom of image, subtle) */}
+        <div className="absolute bottom-0 left-0 right-0 z-30 flex gap-1 px-8 lg:px-16 pb-0">
+          {topWeekly.map((item, i) => {
+            const isActive = i === activeIndex;
+            const fill = isActive ? progress : i < activeIndex ? 100 : 0;
+            return (
+              <button
+                key={`pb-${item.id}-${i}`}
+                type="button"
+                aria-label={`Go to slide ${i + 1}`}
+                onClick={() => goToSlide(i)}
+                className="h-1 flex-1 overflow-hidden rounded-t-full bg-white/20 transition-all hover:bg-white/30"
+              >
+                <motion.div
+                  className="h-full bg-primary"
+                  animate={{ width: `${fill}%` }}
+                  transition={{ width: { duration: isActive ? 0.03 : 0.3, ease: "linear" } }}
+                />
               </button>
             );
           })}

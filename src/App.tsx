@@ -544,16 +544,16 @@ const App = () => {
     const enable = () => setEnableEnhancements(true);
 
     if (typeof window !== "undefined") {
-      if ("requestIdleCallback" in window) {
-        idleId = window.requestIdleCallback(enable, { timeout: 1500 });
+      if (typeof (window as any).requestIdleCallback === "function") {
+        idleId = (window as any).requestIdleCallback(enable, { timeout: 1500 });
       } else {
         frameId = window.requestAnimationFrame(enable);
       }
     }
 
     return () => {
-      if (idleId !== null && "cancelIdleCallback" in window) {
-        window.cancelIdleCallback(idleId);
+      if (idleId !== null && typeof (window as any).cancelIdleCallback === "function") {
+        (window as any).cancelIdleCallback(idleId);
       }
       if (frameId !== null) {
         window.cancelAnimationFrame(frameId);

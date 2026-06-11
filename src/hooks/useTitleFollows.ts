@@ -242,8 +242,8 @@ export function useTitleFollows() {
       );
 
       if (statesToSync.length > 0) {
-        const { error } = await supabase
-          .from("followed_title_state")
+        const { error } = await (supabase
+          .from("followed_title_state") as any)
           .upsert(
             statesToSync.map((state) => ({
               user_id: user.id,
@@ -391,8 +391,8 @@ export function useTitleFollows() {
       }
 
       if (initialState) {
-        const { error } = await supabase
-          .from("followed_title_state")
+        const { error } = await (supabase
+          .from("followed_title_state") as any)
           .upsert(
             {
               user_id: user.id,

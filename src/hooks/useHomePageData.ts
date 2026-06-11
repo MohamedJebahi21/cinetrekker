@@ -79,15 +79,15 @@ export function useHomePageData({
 
     const enableDeferred = () => setDeferredEnabled(true);
 
-    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      idleId = window.requestIdleCallback(enableDeferred, { timeout: 1200 });
+    if (typeof window !== "undefined" && typeof (window as any).requestIdleCallback === "function") {
+      idleId = (window as any).requestIdleCallback(enableDeferred, { timeout: 1200 });
     } else {
       frameId = window.requestAnimationFrame(enableDeferred);
     }
 
     return () => {
-      if (idleId !== undefined && "cancelIdleCallback" in window) {
-        window.cancelIdleCallback(idleId);
+      if (idleId !== undefined && typeof (window as any).cancelIdleCallback === "function") {
+        (window as any).cancelIdleCallback(idleId);
       }
       if (frameId !== undefined) {
         window.cancelAnimationFrame(frameId);

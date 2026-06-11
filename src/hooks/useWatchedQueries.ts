@@ -268,8 +268,8 @@ export function useUpdateWatched() {
         if (validatedUpdates.note !== undefined) dbUpdates.note = validatedUpdates.note;
         if (validatedUpdates.status !== undefined) dbUpdates.status = validatedUpdates.status;
 
-        const { error } = await supabase
-          .from('user_watched')
+        const { error } = await (supabase
+          .from('user_watched') as any)
           .update(dbUpdates)
           .eq('user_id', user.id)
           .eq('media_id', params.mediaId)

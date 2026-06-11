@@ -286,8 +286,8 @@ export function FollowNotificationMonitor() {
         });
       }
 
-      const { error: stateError } = await supabase
-        .from("followed_title_state")
+      const { error: stateError } = await (supabase
+        .from("followed_title_state") as any)
         .upsert(
           currentStates.map(({ state }) => ({
             user_id: user.id,
