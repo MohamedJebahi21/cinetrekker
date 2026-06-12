@@ -31,6 +31,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { profileService } from "@/services/profile";
 import { UserProfileDropdown } from "@/components/UserProfileDropdown";
+import { NotificationBell } from "@/components/NotificationBell";
 import {
   Sheet,
   SheetContent,
@@ -217,10 +218,13 @@ export function UnifiedNav() {
 
         <div className="ml-auto hidden items-center gap-1 md:flex">
           {user ? (
-            <UserProfileDropdown
-              profilePhoto={profileImageUrl}
-              displayName={profile?.display_name ?? undefined}
-            />
+            <>
+              <NotificationBell />
+              <UserProfileDropdown
+                profilePhoto={profileImageUrl}
+                displayName={profile?.display_name ?? undefined}
+              />
+            </>
           ) : (
             <Button asChild variant="ghost" size="icon" className="rounded-full">
               <Link to="/login" aria-label={t("nav.signIn", "Sign In")}>
@@ -316,6 +320,7 @@ export function UnifiedNav() {
         </div>
 
         <div className="ml-auto flex items-center gap-1 md:hidden">
+          {user && <NotificationBell />}
           <Button asChild variant="ghost" size="icon" className="rounded-full">
             <Link to={user ? "/profile" : "/login"} aria-label={t("nav.profile", "Profile")}>
               {profileImageUrl ? (

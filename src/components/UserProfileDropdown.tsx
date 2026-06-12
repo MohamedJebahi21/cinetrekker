@@ -1,28 +1,15 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import {
-  Users,
-  LogOut,
-  User as UserIcon,
-  Compass,
-  Bookmark,
-  Settings,
-  Bell,
-  Palette,
-  Globe,
-} from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { LogOut, User as UserIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 import { Image } from '@/components/ui/Image';
-import { languages } from '@/i18n';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -78,9 +65,8 @@ export function UserProfileDropdown({
   displayName,
   className,
 }: UserProfileDropdownProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { user, signOut } = useAuth();
-  const { theme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = React.useState(false);
   const navigate = useNavigate();
 
@@ -92,35 +78,6 @@ export function UserProfileDropdown({
     await signOut();
     navigate("/", { replace: true });
   };
-
-  // Social section items
-  const menuItems = [
-    {
-      icon: Compass,
-      label: t('nav.discover', 'Discover'),
-      path: '/discover',
-    },
-    {
-      icon: Bookmark,
-      label: t('nav.watchlist', 'Watchlist'),
-      path: '/watchlist',
-    },
-    {
-      icon: Users,
-      label: t('profile.following', 'Following'),
-      path: '/following',
-    },
-    {
-      icon: Bell,
-      label: t('nav.notifications', 'Notifications'),
-      path: '/notifications',
-    },
-    {
-      icon: Settings,
-      label: t('nav.settings', 'Settings'),
-      path: '/settings',
-    },
-  ];
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -223,116 +180,10 @@ export function UserProfileDropdown({
                 </div>
               </motion.div>
 
-              {/* Navigation Section */}
-              <motion.div className="py-2">
-                <div className="px-4 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  {t('nav.account', 'Account')}
-                </div>
-                {menuItems.map((item, idx) => {
-                  const Icon = item.icon;
-                  return (
-                    <motion.div
-                      key={item.path}
-                      variants={itemVariants}
-                      custom={idx + 1}
-                      initial="hidden"
-                      animate="visible"
-                    >
-                      <DropdownMenuItem asChild>
-                        <Link
-                          to={item.path}
-                          className={cn(
-                            'flex items-center gap-3 px-4 py-2 text-sm cursor-pointer group',
-                            'transition-colors duration-150',
-                            'hover:bg-accent hover:text-accent-foreground'
-                          )}
-                          onClick={() => setIsOpen(false)}
-                        >
-                          <Icon className="w-4 h-4 flex-shrink-0 group-hover:scale-110 transition-transform" />
-                          <span>{item.label}</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
-
-              <DropdownMenuSeparator className="my-0 bg-border/30" />
-
-              <motion.div
-                variants={itemVariants}
-                custom={menuItems.length + 1}
-                initial="hidden"
-                animate="visible"
-                className="px-4 py-3"
-              >
-                <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  <Palette className="h-3.5 w-3.5" />
-                  {t('nav.theme', 'Theme')}
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {([
-                    ['dark', t('nav.themeDark', 'Dark')],
-                    ['light', t('nav.themeLight', 'Light')],
-                    ['oled', t('nav.themeOled', 'OLED')],
-                  ] as const).map(([value, label]) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setTheme(value)}
-                      className={cn(
-                        'rounded-lg border px-2 py-2 text-xs font-medium transition-colors',
-                        theme === value
-                          ? 'border-primary/40 bg-primary/10 text-primary'
-                          : 'border-border/60 bg-card/70 text-foreground hover:bg-accent',
-                      )}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-
-              <DropdownMenuSeparator className="my-0 bg-border/30" />
-
-              <motion.div
-                variants={itemVariants}
-                custom={menuItems.length + 2}
-                initial="hidden"
-                animate="visible"
-                className="px-4 py-3"
-              >
-                <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  <Globe className="h-3.5 w-3.5" />
-                  {t('nav.language', 'Language')}
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {languages.slice(0, 6).map((language) => (
-                    <button
-                      key={language.code}
-                      type="button"
-                      onClick={() => {
-                        void i18n.changeLanguage(language.code);
-                      }}
-                      className={cn(
-                        'rounded-lg border px-2 py-2 text-left text-xs font-medium transition-colors',
-                        i18n.language === language.code
-                          ? 'border-primary/40 bg-primary/10 text-primary'
-                          : 'border-border/60 bg-card/70 text-foreground hover:bg-accent',
-                      )}
-                    >
-                      {language.name}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-
-              <DropdownMenuSeparator className="my-0 bg-border/30" />
-
               {/* Logout Section */}
               <motion.div
                 variants={itemVariants}
-                custom={menuItems.length + 3}
+                custom={1}
                 initial="hidden"
                 animate="visible"
                 className="py-2"
