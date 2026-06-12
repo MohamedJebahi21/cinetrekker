@@ -115,32 +115,6 @@ function AuthHomeSkeleton() {
   );
 }
 
-function DiscoveryGridRail({
-  title,
-  items,
-  href,
-}: {
-  title: string;
-  items: unknown[];
-  href: string;
-}) {
-  return (
-    <section className="ct-panel space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight text-foreground md:text-2xl">
-            {title}
-          </h2>
-        </div>
-        <Button asChild variant="ghost" size="sm">
-          <Link to={href}>See All</Link>
-        </Button>
-      </div>
-      <MediaGrid items={items as never[]} columns="normal" gap="md" />
-    </section>
-  );
-}
-
 export default function Index() {
   const { t, i18n } = useTranslation();
   const { user, loading: authLoading } = useAuth();
@@ -325,10 +299,12 @@ export default function Index() {
         emptyMessage={t("home.topRatedMoviesEmpty", "Top rated movies will appear here soon.")}
       />
 
-      <DiscoveryGridRail
+      <MediaSection
         title={t("home.popularTVShows", "Popular TV Shows")}
-        items={(popularTVQuery.data?.results || []).slice(0, 8)}
-        href="/tv"
+        items={popularTVQuery.data?.results || []}
+        loading={popularTVQuery.isLoading}
+        showMoreLink="/tv"
+        emptyMessage={t("home.popularTVShowsEmpty", "Popular TV shows will appear here soon.")}
       />
 
       <MediaSection
@@ -339,10 +315,12 @@ export default function Index() {
         emptyMessage={t("home.popularMoviesEmpty", "Popular movies will appear here soon.")}
       />
 
-      <DiscoveryGridRail
+      <MediaSection
         title={t("home.criticallyAcclaimedTV", "Critically Acclaimed TV")}
-        items={(topRatedTVQuery.data?.results || []).slice(0, 8)}
-        href="/discover"
+        items={topRatedTVQuery.data?.results || []}
+        loading={topRatedTVQuery.isLoading}
+        showMoreLink="/tv"
+        emptyMessage={t("home.criticallyAcclaimedTVEmpty", "TV shows will appear here soon.")}
       />
     </>
   );
@@ -361,6 +339,93 @@ export default function Index() {
     }
     setOnboardingOpen(false);
   };
+
+  const freshDiscoverySection = (
+    <section className="border-t border-border pt-8 md:pt-10">
+      <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="section-title mb-1">{t("home.freshDiscovery", "Fresh Discovery")}</h2>
+          <p className="text-sm text-muted-foreground">
+            {t(
+              "home.globalDiscoveryHint",
+              "Trending titles and fresh releases live here so the rest of the homepage can stay focused on your queue.",
+            )}
+          </p>
+        </div>
+        <div className="hide-scrollbar -mx-1 overflow-x-auto px-1 pb-1 sm:mx-0 sm:overflow-visible sm:px-0 sm:pb-0">
+          <div className="ct-toggle-group w-max sm:w-auto">
+            {[
+              { key: "trending-day", label: t("home.trendingToday", "Trending Today") },
+              { key: "trending-week", label: t("home.trendingWeek", "Trending This Week") },
+              { key: "new-releases", label: t("home.newReleases", "New Releases") },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() =>
+                  setDiscoverTab(
+                    tab.key as "trending-day" | "trending-week" | "new-releases",
+                  )
+                }
+                className={`ct-toggle-button whitespace-nowrap min-h-[44px] ${
+                  discoverTab === tab.key
+                    ? "ct-toggle-button-active"
+                    : "hover:text-foreground"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <HomeSectionState
+        title={t("home.freshDiscovery", "Fresh Discovery")}
+        loading={!deferredEnabled || criticalDataQuery.isLoading || trendingDayQuery.isLoading}
+        timedOut={discoveryTimedOut}
+        error={
+          criticalDataQuery.error instanceof Error
+            ? criticalDataQuery.error
+            : trendingDayQuery.error instanceof Error
+              ? trendingDayQuery.error
+              : null
+        }
+        onRetry={() => {
+          void criticalDataQuery.refetch();
+          void trendingDayQuery.refetch();
+        }}
+        skeleton={<TrendingSectionSkeleton />}
+      >
+        <div key={discoverTab} className="animate-fade-in">
+          {discoverTab === "trending-day" ? (
+            <MediaCarouselEnhanced
+              title={t("home.trendingToday", "Trending Today")}
+              items={trendingDayQuery.data?.results || []}
+              showMoreLink="/discover"
+              showMoreLabel={t("home.seeAllTrending", "See All Trending")}
+            />
+          ) : null}
+          {discoverTab === "trending-week" ? (
+            <MediaCarouselEnhanced
+              title={t("home.trendingWeek", "Trending This Week")}
+              items={trendingWeek?.results || []}
+              showMoreLink="/discover"
+              showMoreLabel={t("home.seeAllTrending", "See All Trending")}
+            />
+          ) : null}
+          {discoverTab === "new-releases" ? (
+            <MediaCarouselEnhanced
+              title={t("home.newReleases", "New Releases")}
+              items={newReleases?.results || []}
+              showMoreLink="/discover"
+              showMoreLabel={t("home.seeAllNewMovieReleases", "See All New Movie Releases")}
+            />
+          ) : null}
+        </div>
+      </HomeSectionState>
+    </section>
+  );
 
   return (
     <div className="ct-page-shell min-h-screen">
@@ -397,9 +462,11 @@ export default function Index() {
                 {watchlistSection}
               </MotionRevealSection>
             ) : null}
-            <MotionRevealSection tone="bold" delayClassName="delay-200" accentOpacityClassName="opacity-28">
-              {personalizedSection}
-            </MotionRevealSection>
+            {!shouldGateRecommendations && (
+              <MotionRevealSection tone="bold" delayClassName="delay-200" accentOpacityClassName="opacity-28">
+                {personalizedSection}
+              </MotionRevealSection>
+            )}
             <MotionRevealSection tone="soft" delayClassName="delay-300" accentOpacityClassName="opacity-22">
               {sharedDiscoveryRails}
             </MotionRevealSection>
@@ -409,32 +476,40 @@ export default function Index() {
             <MotionRevealSection tone="soft" delayClassName="delay-300" accentOpacityClassName="opacity-18">
               <HomeStatsSnapshot watched={watched} watchlist={watchlist} />
             </MotionRevealSection>
+            <MotionRevealSection tone="soft" delayClassName="delay-300" accentOpacityClassName="opacity-16">
+              {freshDiscoverySection}
+            </MotionRevealSection>
           </>
         ) : (
           <>
             <MotionRevealSection tone="soft" delayClassName="delay-75" accentOpacityClassName="opacity-16">
               <GuestSyncBanner />
             </MotionRevealSection>
-            <MotionRevealSection tone="bold" delayClassName="delay-100" accentOpacityClassName="opacity-30">
+            <MotionRevealSection tone="soft" delayClassName="delay-100" accentOpacityClassName="opacity-22">
+              {freshDiscoverySection}
+            </MotionRevealSection>
+            <MotionRevealSection tone="soft" delayClassName="delay-150" accentOpacityClassName="opacity-20">
+              {sharedDiscoveryRails}
+            </MotionRevealSection>
+            <MotionRevealSection tone="bold" delayClassName="delay-200" accentOpacityClassName="opacity-30">
               <DailyPickSection
                 pick={dailyPick}
                 sourceLabel={t("home.dailyPickGuests", "Start with tonight's pick")}
               />
             </MotionRevealSection>
+            <MotionRevealSection tone="soft" delayClassName="delay-250" accentOpacityClassName="opacity-18">
+              <RecentlyViewed />
+            </MotionRevealSection>
             {watchlistSection ? (
-              <MotionRevealSection tone="soft" delayClassName="delay-150" accentOpacityClassName="opacity-22">
+              <MotionRevealSection tone="soft" delayClassName="delay-300" accentOpacityClassName="opacity-22">
                 {watchlistSection}
               </MotionRevealSection>
             ) : null}
-            <MotionRevealSection tone="bold" delayClassName="delay-200" accentOpacityClassName="opacity-26">
-              {personalizedSection}
-            </MotionRevealSection>
-            <MotionRevealSection tone="soft" delayClassName="delay-300" accentOpacityClassName="opacity-20">
-              {sharedDiscoveryRails}
-            </MotionRevealSection>
-            <MotionRevealSection tone="soft" delayClassName="delay-300" accentOpacityClassName="opacity-18">
-              <RecentlyViewed />
-            </MotionRevealSection>
+            {!shouldGateRecommendations && (
+              <MotionRevealSection tone="bold" delayClassName="delay-300" accentOpacityClassName="opacity-26">
+                {personalizedSection}
+              </MotionRevealSection>
+            )}
             {guestStartSection ? (
               <MotionRevealSection tone="soft" delayClassName="delay-300" accentOpacityClassName="opacity-14">
                 {guestStartSection}
@@ -452,91 +527,6 @@ export default function Index() {
             ) : null}
           </>
         )}
-
-        <section className="border-t border-border pt-8 md:pt-10">
-          <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="section-title mb-1">{t("home.freshDiscovery", "Fresh Discovery")}</h2>
-              <p className="text-sm text-muted-foreground">
-                {t(
-                  "home.globalDiscoveryHint",
-                  "Trending titles and fresh releases live here so the rest of the homepage can stay focused on your queue.",
-                )}
-              </p>
-            </div>
-            <div className="hide-scrollbar -mx-1 overflow-x-auto px-1 pb-1 sm:mx-0 sm:overflow-visible sm:px-0 sm:pb-0">
-              <div className="ct-toggle-group w-max sm:w-auto">
-                {[
-                  { key: "trending-day", label: t("home.trendingToday", "Trending Today") },
-                  { key: "trending-week", label: t("home.trendingWeek", "Trending This Week") },
-                  { key: "new-releases", label: t("home.newReleases", "New Releases") },
-                ].map((tab) => (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    onClick={() =>
-                      setDiscoverTab(
-                        tab.key as "trending-day" | "trending-week" | "new-releases",
-                      )
-                    }
-                    className={`ct-toggle-button whitespace-nowrap min-h-[44px] ${
-                      discoverTab === tab.key
-                        ? "ct-toggle-button-active"
-                        : "hover:text-foreground"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <HomeSectionState
-            title={t("home.freshDiscovery", "Fresh Discovery")}
-            loading={!deferredEnabled || criticalDataQuery.isLoading || trendingDayQuery.isLoading}
-            timedOut={discoveryTimedOut}
-            error={
-              criticalDataQuery.error instanceof Error
-                ? criticalDataQuery.error
-                : trendingDayQuery.error instanceof Error
-                  ? trendingDayQuery.error
-                  : null
-            }
-            onRetry={() => {
-              void criticalDataQuery.refetch();
-              void trendingDayQuery.refetch();
-            }}
-            skeleton={<TrendingSectionSkeleton />}
-          >
-            <div key={discoverTab} className="animate-fade-in">
-              {discoverTab === "trending-day" ? (
-                <MediaCarouselEnhanced
-                  title={t("home.trendingToday", "Trending Today")}
-                  items={trendingDayQuery.data?.results || []}
-                  showMoreLink="/discover"
-                  showMoreLabel={t("home.seeAllTrending", "See All Trending")}
-                />
-              ) : null}
-              {discoverTab === "trending-week" ? (
-                <MediaCarouselEnhanced
-                  title={t("home.trendingWeek", "Trending This Week")}
-                  items={trendingWeek?.results || []}
-                  showMoreLink="/discover"
-                  showMoreLabel={t("home.seeAllTrending", "See All Trending")}
-                />
-              ) : null}
-              {discoverTab === "new-releases" ? (
-                <MediaCarouselEnhanced
-                  title={t("home.newReleases", "New Releases")}
-                  items={newReleases?.results || []}
-                  showMoreLink="/discover"
-                  showMoreLabel={t("home.seeAllNewMovieReleases", "See All New Movie Releases")}
-                />
-              ) : null}
-            </div>
-          </HomeSectionState>
-        </section>
       </main>
 
       <Dialog open={onboardingOpen} onOpenChange={setOnboardingOpen}>
