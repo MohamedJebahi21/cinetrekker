@@ -6,12 +6,10 @@ import {
   Route,
   useNavigate,
   Navigate,
-  useLocation,
 } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { UserListsProvider } from "@/contexts/UserListsContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -35,6 +33,7 @@ import { websiteJsonLd } from "@/lib/schema";
 import { siteMetadata } from "@/lib/metadata";
 import { applyAccessibilityPreferencesToRoot } from "@/lib/accessibility-preferences";
 import { useCookieConsent } from "@/hooks/useCookieConsent";
+import { scheduleIdleTask } from "@/lib/idleCallback";
 import Index from "./pages/Index";
 const KeyboardShortcuts = lazy(() => import("@/components/KeyboardShortcuts"));
 const CommandPalette = lazy(() => import("@/components/CommandPalette"));
@@ -142,19 +141,9 @@ function RouteSpinner() {
   );
 }
 
-function AnimatedRoutes() {
-  const location = useLocation();
-
+function AppRoutes() {
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={location.pathname}
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <Routes location={location}>
+    <Routes>
           <Route
             path="/"
             element={<Index />}
@@ -461,8 +450,6 @@ function AnimatedRoutes() {
             }
           />
         </Routes>
-      </motion.div>
-    </AnimatePresence>
   );
 }
 
@@ -538,27 +525,11 @@ const App = () => {
   }, [queryClient]);
 
   useEffect(() => {
-    let idleId: number | null = null;
-    let frameId: number | null = null;
+    const { cancel } = scheduleIdleTask(() => setEnableEnhancements(true), {
+      timeout: 1500,
+    });
 
-    const enable = () => setEnableEnhancements(true);
-
-    if (typeof window !== "undefined") {
-      if (typeof (window as any).requestIdleCallback === "function") {
-        idleId = (window as any).requestIdleCallback(enable, { timeout: 1500 });
-      } else {
-        frameId = window.requestAnimationFrame(enable);
-      }
-    }
-
-    return () => {
-      if (idleId !== null && typeof (window as any).cancelIdleCallback === "function") {
-        (window as any).cancelIdleCallback(idleId);
-      }
-      if (frameId !== null) {
-        window.cancelAnimationFrame(frameId);
-      }
-    };
+    return cancel;
   }, []);
 
   const { handlers, containerRef } = usePullToRefresh({
@@ -634,6 +605,9 @@ const App = () => {
                   </Suspense>
                 )}
                 <div className="ct-page-shell flex min-h-[100dvh] flex-col">
+                  <a href="#main" className="skip-link rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+                    {t("common.skipToMainContent", "Skip to main content")}
+                  </a>
                   <UnifiedNav />
                   <ScrollToTop />
                   <main
@@ -648,7 +622,7 @@ const App = () => {
                     {...handlers}
                   >
                     <ErrorBoundary onRetry={handleBoundaryRetry}>
-                      <AnimatedRoutes />
+                      <AppRoutes />
                     </ErrorBoundary>
                   </main>
                   <Suspense fallback={null}>

@@ -51,6 +51,19 @@ type SharedListItem = {
   addedAt?: string;
 };
 
+type ImportedListItem = {
+  mediaId: number;
+  mediaType: "movie" | "tv";
+  rating?: number;
+  note?: string;
+  status?: "watching" | "plan_to_watch" | "completed" | "dropped";
+};
+
+type ImportedBackup = {
+  watchlist?: ImportedListItem[];
+  watched?: ImportedListItem[];
+};
+
 type WatchlistMedia = Media & {
   watchStatus?: string;
   userRating?: number;
@@ -334,16 +347,16 @@ export default function Watchlist() {
     reader.onload = async (e: ProgressEvent<FileReader>) => {
       try {
         const content = e.target?.result as string;
-        const parsed = JSON.parse(content);
+        const parsed = JSON.parse(content) as ImportedBackup;
         
         const importedWatchlist = parsed.watchlist || [];
         const importedWatched = parsed.watched || [];
 
         await Promise.all(
-          importedWatchlist.map((i: any) => addToWatchlist(i.mediaId, i.mediaType))
+          importedWatchlist.map((i) => addToWatchlist(i.mediaId, i.mediaType))
         );
         await Promise.all(
-          importedWatched.map((i: any) =>
+          importedWatched.map((i) =>
             addToWatched(i.mediaId, i.mediaType, i.rating, i.note, i.status)
           )
         );

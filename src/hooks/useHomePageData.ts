@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { scheduleIdleTask } from "@/lib/idleCallback";
 import { MOVIE_GENRES, TV_GENRES } from "@/data/genres";
 import {
   discoverMovies,
@@ -74,25 +75,11 @@ export function useHomePageData({
   useEffect(() => {
     setDeferredEnabled(false);
 
-    let frameId: number | undefined;
-    let idleId: number | undefined;
+    const { cancel } = scheduleIdleTask(() => setDeferredEnabled(true), {
+      timeout: 1200,
+    });
 
-    const enableDeferred = () => setDeferredEnabled(true);
-
-    if (typeof window !== "undefined" && typeof (window as any).requestIdleCallback === "function") {
-      idleId = (window as any).requestIdleCallback(enableDeferred, { timeout: 1200 });
-    } else {
-      frameId = window.requestAnimationFrame(enableDeferred);
-    }
-
-    return () => {
-      if (idleId !== undefined && typeof (window as any).cancelIdleCallback === "function") {
-        (window as any).cancelIdleCallback(idleId);
-      }
-      if (frameId !== undefined) {
-        window.cancelAnimationFrame(frameId);
-      }
-    };
+    return cancel;
   }, [language]);
 
   const moreInGenreQuery = useQuery({

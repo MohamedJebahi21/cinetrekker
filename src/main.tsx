@@ -5,7 +5,7 @@ import { queryClient } from "./lib/queryClient";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./index.css";
-import "./i18n";
+import { initI18n } from "./i18n";
 import {
   applyThemeToDocument,
   readStoredTheme,
@@ -16,6 +16,7 @@ import { installChunkErrorHandlers } from "@/lib/chunkErrorRecovery";
 // Initialise Trusted Types policies (cinetrekker + default) before any React
 // code runs so that all DOM sink assignments are covered from the start.
 import "@/lib/trustedTypes";
+import { scheduleIdleTask } from "@/lib/idleCallback";
 
 // Install chunk error handlers BEFORE React renders
 installChunkErrorHandlers();
@@ -27,61 +28,65 @@ if (!rootElement) {
   throw new Error("Missing root element in index.html");
 }
 
-try {
-  createRoot(rootElement).render(
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </QueryClientProvider>
-    </StrictMode>
-  );
-
-  const isVercelHost =
-    typeof window !== "undefined" && /(?:^|\.)vercel\.app$/i.test(window.location.hostname);
-  const shouldLoadSpeedInsights =
-    import.meta.env.VITE_ENABLE_VERCEL_SPEED_INSIGHTS === "true" ||
-    (import.meta.env.PROD && isVercelHost);
-
-  if (shouldLoadSpeedInsights) {
-    // Defer non-critical Speed Insights script to avoid competing with initial paint.
-    const injectInsights = () => {
-      import("@vercel/speed-insights")
-        .then((mod) => (mod as unknown as { default: () => void }).default())
-        .catch(() => undefined);
-    };
-
-    if (typeof window !== "undefined") {
-      if (typeof (window as any).requestIdleCallback === "function") {
-        (window as any).requestIdleCallback(injectInsights, { timeout: 2500 });
-      } else {
-        window.requestAnimationFrame(() => {
-          window.requestAnimationFrame(injectInsights);
-        });
-      }
-    }
+function renderFatalError(err: unknown) {
+  if (!rootElement) {
+    return;
   }
-} catch (err) {
+
   console.error("FATAL ERROR during React render:", err);
 
-  const container = document.createElement('div');
-  container.style.cssText = 'padding: 40px; font-family: system-ui; max-width: 600px; margin: 0 auto;';
+  const container = document.createElement("div");
+  container.style.cssText = "padding: 40px; font-family: system-ui; max-width: 600px; margin: 0 auto;";
 
-  const heading = document.createElement('h1');
-  heading.style.color = '#dc2626';
-  heading.textContent = 'Application Failed to Load';
+  const heading = document.createElement("h1");
+  heading.style.color = "#dc2626";
+  heading.textContent = "Application Failed to Load";
 
-  const errorText = document.createElement('p');
-  errorText.style.cssText = 'background: #fef2f2; padding: 16px; border-radius: 8px; border-left: 4px solid #dc2626;';
+  const errorText = document.createElement("p");
+  errorText.style.cssText = "background: #fef2f2; padding: 16px; border-radius: 8px; border-left: 4px solid #dc2626;";
   errorText.textContent = `Error: ${err instanceof Error ? err.message : String(err)}`;
 
-  const hint = document.createElement('p');
-  hint.textContent = 'Check the browser console (F12) for more details.';
+  const hint = document.createElement("p");
+  hint.textContent = "Check the browser console (F12) for more details.";
 
   container.append(heading, errorText, hint);
   rootElement.replaceChildren(container);
-  throw err;
 }
 
+void initI18n()
+  .then(() => {
+    if (!rootElement) {
+      throw new Error("Missing root element in index.html");
+    }
 
+    createRoot(rootElement).render(
+      <StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </QueryClientProvider>
+      </StrictMode>,
+    );
+
+    const isVercelHost =
+      typeof window !== "undefined" && /(?:^|\.)vercel\.app$/i.test(window.location.hostname);
+    const shouldLoadSpeedInsights =
+      import.meta.env.VITE_ENABLE_VERCEL_SPEED_INSIGHTS === "true" ||
+      (import.meta.env.PROD && isVercelHost);
+
+    if (shouldLoadSpeedInsights) {
+      // Defer non-critical Speed Insights script to avoid competing with initial paint.
+      const injectInsights = () => {
+        import("@vercel/speed-insights")
+          .then((mod) => (mod as unknown as { default: () => void }).default())
+          .catch(() => undefined);
+      };
+
+      scheduleIdleTask(injectInsights, { timeout: 2500 });
+    }
+  })
+  .catch((err) => {
+    renderFatalError(err);
+    throw err;
+  });

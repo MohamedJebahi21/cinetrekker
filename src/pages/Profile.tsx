@@ -1,3 +1,4 @@
+import type { CrewMember, Creator, CastMember } from "@/types/media";
 import { useTranslation } from "react-i18next";
 import {
   lazy,
@@ -1090,13 +1091,13 @@ export default function Profile() {
 
             const directors = item.mediaType === "movie"
               ? (details.credits?.crew || [])
-                  .filter((member: any) => member.job === "Director")
-                  .map((member: any) => member.name)
-              : (details.created_by || []).map((creator: any) => creator.name);
+                  .filter((member: CrewMember) => member.job === "Director")
+                  .map((member: CrewMember) => member.name)
+              : (details.created_by || []).map((creator: Creator) => creator.name);
 
             const cast = (details.credits?.cast || [])
               .slice(0, 5)
-              .map((member: any) => member.name);
+              .map((member: CastMember) => member.name);
 
             const releaseDate = details.release_date || details.first_air_date;
             const releaseYear = releaseDate ? new Date(releaseDate).getFullYear() : null;

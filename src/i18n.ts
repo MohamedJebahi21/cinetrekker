@@ -3,11 +3,6 @@ import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 
 import en from "./locales/en.json";
-import ar from "./locales/ar.json";
-import fr from "./locales/fr.json";
-import tr from "./locales/tr.json";
-import es from "./locales/es.json";
-import de from "./locales/de.json";
 
 type TranslationTree = Record<string, unknown>;
 const MOJIBAKE_PATTERN = /[ÃÂØÙÐ]/;
@@ -73,14 +68,49 @@ export const languages = [
 
 export type LanguageCode = (typeof languages)[number]["code"];
 
-const resources = {
-  en: { translation: en },
-  ar: { translation: deepMergeTranslations(en, sanitizeTranslations(ar)) },
-  fr: { translation: deepMergeTranslations(en, sanitizeTranslations(fr)) },
-  tr: { translation: deepMergeTranslations(en, sanitizeTranslations(tr)) },
-  es: { translation: deepMergeTranslations(en, sanitizeTranslations(es)) },
-  de: { translation: deepMergeTranslations(en, sanitizeTranslations(de)) },
+const localeLoaders: Record<
+  Exclude<LanguageCode, "en">,
+  () => Promise<{ default: TranslationTree }>
+> = {
+  ar: () => import("./locales/ar.json"),
+  fr: () => import("./locales/fr.json"),
+  tr: () => import("./locales/tr.json"),
+  es: () => import("./locales/es.json"),
+  de: () => import("./locales/de.json"),
 };
+
+const loadedLocales = new Set<LanguageCode>(["en"]);
+
+async function buildLocaleTranslation(
+  code: LanguageCode,
+): Promise<TranslationTree> {
+  if (code === "en") {
+    return en;
+  }
+
+  const module = await localeLoaders[code]();
+  return deepMergeTranslations(en, sanitizeTranslations(module.default));
+}
+
+function normalizeLanguageCode(value: string | undefined): LanguageCode {
+  const normalized = value?.split("-")[0]?.toLowerCase();
+  const match = languages.find((language) => language.code === normalized);
+  return match?.code ?? "en";
+}
+
+function readStoredLanguage(): LanguageCode {
+  if (typeof window === "undefined") {
+    return "en";
+  }
+
+  return normalizeLanguageCode(window.localStorage.getItem("i18nextLng") ?? undefined);
+}
+
+function applyDocumentLanguage(lng: string) {
+  const language = languages.find((entry) => entry.code === lng);
+  document.documentElement.dir = language?.dir || "ltr";
+  document.documentElement.lang = lng;
+}
 
 const isDev = Boolean(
   (typeof import.meta !== "undefined" && import.meta.env?.DEV) ||
@@ -103,46 +133,66 @@ function lastSegmentTitleCase(key: string) {
     .join(" ");
 }
 
-i18n.use(LanguageDetector).use(initReactI18next).init({
-  resources,
-  debug: i18nDebugEnabled,
-  showSupportNotice: false,
-  fallbackLng: "en",
-  supportedLngs: languages.map((l) => l.code),
-  load: "languageOnly",
-  nonExplicitSupportedLngs: true,
-  returnNull: false,
-  returnEmptyString: false,
-  returnObjects: true,
-  interpolation: {
-    escapeValue: false,
-  },
-  detection: {
-    order: ["localStorage", "navigator"],
-    caches: ["localStorage"],
-  },
-  parseMissingKeyHandler: i18nDebugEnabled
-    ? (key) => {
-        if (isDev && !warnedMissingKeys.has(key)) {
-          warnedMissingKeys.add(key);
-          console.warn(`[i18n] Missing translation key: ${key}`);
+async function ensureLanguageLoaded(code: LanguageCode) {
+  if (loadedLocales.has(code)) {
+    return;
+  }
+
+  const translation = await buildLocaleTranslation(code);
+  i18n.addResourceBundle(code, "translation", translation, true, true);
+  loadedLocales.add(code);
+}
+
+export async function initI18n() {
+  const initialLanguage = readStoredLanguage();
+  const resources: Record<string, { translation: TranslationTree }> = {
+    en: { translation: en },
+  };
+
+  if (initialLanguage !== "en") {
+    resources[initialLanguage] = {
+      translation: await buildLocaleTranslation(initialLanguage),
+    };
+    loadedLocales.add(initialLanguage);
+  }
+
+  await i18n.use(LanguageDetector).use(initReactI18next).init({
+    resources,
+    lng: initialLanguage,
+    debug: i18nDebugEnabled,
+    showSupportNotice: false,
+    fallbackLng: "en",
+    supportedLngs: languages.map((l) => l.code),
+    load: "languageOnly",
+    nonExplicitSupportedLngs: true,
+    returnNull: false,
+    returnEmptyString: false,
+    returnObjects: true,
+    interpolation: {
+      escapeValue: false,
+    },
+    detection: {
+      order: ["localStorage", "navigator"],
+      caches: ["localStorage"],
+    },
+    parseMissingKeyHandler: i18nDebugEnabled
+      ? (key) => {
+          if (isDev && !warnedMissingKeys.has(key)) {
+            warnedMissingKeys.add(key);
+            console.warn(`[i18n] Missing translation key: ${key}`);
+          }
+          return lastSegmentTitleCase(key);
         }
-        return lastSegmentTitleCase(key);
-      }
-    : undefined,
-});
+      : undefined,
+  });
 
-// Update document direction when language changes
-i18n.on("languageChanged", (lng) => {
-  const language = languages.find((l) => l.code === lng);
-  document.documentElement.dir = language?.dir || "ltr";
-  document.documentElement.lang = lng;
-});
+  i18n.on("languageChanged", (lng) => {
+    const code = normalizeLanguageCode(lng);
+    applyDocumentLanguage(code);
+    void ensureLanguageLoaded(code);
+  });
 
-// Set initial direction
-const currentLang = languages.find((l) => l.code === i18n.language);
-document.documentElement.dir = currentLang?.dir || "ltr";
-document.documentElement.lang = i18n.language;
+  applyDocumentLanguage(i18n.language);
+}
 
 export default i18n;
-

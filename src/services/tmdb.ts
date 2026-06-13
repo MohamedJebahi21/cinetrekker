@@ -435,23 +435,41 @@ export const getOnTheAirTV = async (
   });
 };
 
+export type DiscoverMovieParams = {
+  page?: number;
+  with_genres?: string;
+  primary_release_year?: string;
+  primary_release_date_gte?: string;
+  primary_release_date_lte?: string;
+  with_original_language?: string;
+  sort_by?: string;
+  vote_count_gte?: string;
+  with_runtime_gte?: string;
+  with_runtime_lte?: string;
+  with_watch_providers?: string;
+  watch_region?: string;
+  include_adult?: string;
+};
+
+export type DiscoverTVParams = {
+  page?: number;
+  with_genres?: string;
+  first_air_date_year?: string;
+  first_air_date_gte?: string;
+  first_air_date_lte?: string;
+  with_original_language?: string;
+  sort_by?: string;
+  vote_count_gte?: string;
+  with_runtime_gte?: string;
+  with_runtime_lte?: string;
+  with_watch_providers?: string;
+  watch_region?: string;
+  include_adult?: string;
+};
+
 // Discover endpoints for filter-based search
 export const discoverMovies = async (
-  params: {
-    page?: number;
-    with_genres?: string;
-    primary_release_year?: string;
-    primary_release_date_gte?: string;
-    primary_release_date_lte?: string;
-    with_original_language?: string;
-    sort_by?: string;
-    vote_count_gte?: string;
-    with_runtime_gte?: string;
-    with_runtime_lte?: string;
-    with_watch_providers?: string;
-    watch_region?: string;
-    include_adult?: string;
-  },
+  params: DiscoverMovieParams,
   language: string = "en",
 ): Promise<TMDBResponse<Media>> => {
   const queryParams: Record<string, string> = {
@@ -481,21 +499,7 @@ export const discoverMovies = async (
 };
 
 export const discoverTV = async (
-  params: {
-    page?: number;
-    with_genres?: string;
-    first_air_date_year?: string;
-    first_air_date_gte?: string;
-    first_air_date_lte?: string;
-    with_original_language?: string;
-    sort_by?: string;
-    vote_count_gte?: string;
-    with_runtime_gte?: string;
-    with_runtime_lte?: string;
-    with_watch_providers?: string;
-    watch_region?: string;
-    include_adult?: string;
-  },
+  params: DiscoverTVParams,
   language: string = "en",
 ): Promise<TMDBResponse<Media>> => {
   const queryParams: Record<string, string> = {

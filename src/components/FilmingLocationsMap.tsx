@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Media } from "@/types/media";
 import { getFilmingMapPoints } from "@/lib/filmingLocations";
 import { stripHTML } from "@/lib/sanitize";
+import { scheduleIdleTask } from "@/lib/idleCallback";
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 type MapboxModule = typeof import("mapbox-gl");
@@ -25,8 +26,7 @@ export function FilmingLocationsMap({ items = [], points: customPoints }: Filmin
   const mapboxRef = useRef<MapboxModule | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const markerRefs = useRef<import("mapbox-gl").Marker[]>([]);
-  const idleIdRef = useRef<number | null>(null);
-  const frameIdRef = useRef<number | null>(null);
+  const idleCancelRef = useRef<(() => void) | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
   const points = useMemo(
@@ -80,16 +80,10 @@ export function FilmingLocationsMap({ items = [], points: customPoints }: Filmin
     };
 
     const queueMapInit = () => {
-      if (typeof window !== "undefined" && typeof (window as any).requestIdleCallback === "function") {
-        idleIdRef.current = (window as any).requestIdleCallback(() => {
-          void initMap();
-        }, { timeout: 1800 });
-        return;
-      }
-
-      frameIdRef.current = window.requestAnimationFrame(() => {
+      const scheduled = scheduleIdleTask(() => {
         void initMap();
-      });
+      }, { timeout: 1800 });
+      idleCancelRef.current = scheduled.cancel;
     };
 
     observer = new IntersectionObserver(
@@ -107,14 +101,8 @@ export function FilmingLocationsMap({ items = [], points: customPoints }: Filmin
     return () => {
       cancelled = true;
       observer?.disconnect();
-      if (idleIdRef.current !== null && typeof (window as any).cancelIdleCallback === "function") {
-        (window as any).cancelIdleCallback(idleIdRef.current);
-      }
-      idleIdRef.current = null;
-      if (frameIdRef.current !== null) {
-        window.cancelAnimationFrame(frameIdRef.current);
-      }
-      frameIdRef.current = null;
+      idleCancelRef.current?.();
+      idleCancelRef.current = null;
       markerRefs.current.forEach((marker) => marker.remove());
       markerRefs.current = [];
       mapRef.current?.remove();

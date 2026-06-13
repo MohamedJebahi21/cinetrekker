@@ -115,6 +115,7 @@ export interface MediaDetails extends Media {
   number_of_episodes?: number;
   number_of_seasons?: number;
   status?: string;
+  tagline?: string;
   original_language?: string;
   networks?: TVNetwork[];
   next_episode_to_air?: TVEpisodeInfo | null;

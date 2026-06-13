@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -9,6 +9,8 @@ import {
   searchPeople,
   getMovieGenres,
   getTVGenres,
+  type DiscoverMovieParams,
+  type DiscoverTVParams,
 } from "@/services/tmdb";
 import { MediaCard } from "@/components/MediaCard";
 import type { Media } from "@/types/media";
@@ -160,7 +162,7 @@ export default function AwardWinners() {
       includeAdult,
     ],
     queryFn: async () => {
-      const oscarParams: any = {
+      const oscarParams: DiscoverMovieParams = {
         page: 1,
         primary_release_year: selectedYear.toString(),
         sort_by: "vote_average.desc",
@@ -203,7 +205,7 @@ export default function AwardWinners() {
       includeAdult,
     ],
     queryFn: async () => {
-      const emmyParams: any = {
+      const emmyParams: DiscoverTVParams = {
         page: 1,
         first_air_date_year: selectedYear.toString(),
         sort_by: "vote_average.desc",
@@ -245,7 +247,7 @@ export default function AwardWinners() {
       includeAdult,
     ],
     queryFn: async () => {
-      const criticalParams: any = {
+      const criticalParams: DiscoverMovieParams = {
         page: 1,
         primary_release_year: selectedYear.toString(),
         sort_by: "popularity.desc",
@@ -291,15 +293,27 @@ export default function AwardWinners() {
   }, [selectedActorDetails]);
 
   // Apply actor combined credits filter locally
-  const applyActorFilter = <T extends { id: number }>(items: T[] | undefined) => {
-    if (!items) return [] as T[];
-    if (!actorMediaIds) return items;
-    return items.filter((item) => actorMediaIds.has(item.id));
-  };
+  const applyActorFilter = useCallback(
+    <T extends { id: number }>(items: T[] | undefined) => {
+      if (!items) return [] as T[];
+      if (!actorMediaIds) return items;
+      return items.filter((item) => actorMediaIds.has(item.id));
+    },
+    [actorMediaIds],
+  );
 
-  const filteredOscarMovies = useMemo(() => applyActorFilter(oscarMovies), [oscarMovies, actorMediaIds]);
-  const filteredEmmyShows = useMemo(() => applyActorFilter(emmyShows), [emmyShows, actorMediaIds]);
-  const filteredCritical = useMemo(() => applyActorFilter(criticallyAcclaimed), [criticallyAcclaimed, actorMediaIds]);
+  const filteredOscarMovies = useMemo(
+    () => applyActorFilter(oscarMovies),
+    [oscarMovies, applyActorFilter],
+  );
+  const filteredEmmyShows = useMemo(
+    () => applyActorFilter(emmyShows),
+    [emmyShows, applyActorFilter],
+  );
+  const filteredCritical = useMemo(
+    () => applyActorFilter(criticallyAcclaimed),
+    [criticallyAcclaimed, applyActorFilter],
+  );
 
   const categoryImplemented = selectedCategory !== "bafta";
 

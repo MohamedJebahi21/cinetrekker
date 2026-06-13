@@ -17,6 +17,8 @@ import {
   discoverTV,
   getMovieGenres,
   getTVGenres,
+  type DiscoverMovieParams,
+  type DiscoverTVParams,
 } from "@/services/tmdb";
 import { MediaCard, MediaCardSkeleton } from "@/components/MediaCard";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -175,7 +177,7 @@ export default function DecadeExplorer() {
         currentSort = "first_air_date.desc";
       }
 
-      const discoverParams: any = {
+      const discoverParams: DiscoverMovieParams & DiscoverTVParams = {
         sort_by: currentSort,
         include_adult: includeAdult ? "true" : "false",
       };

@@ -42,6 +42,14 @@ import {
 import { cn } from "@/lib/utils";
 import SEO from "@/components/SEO";
 
+type AchievementCategory =
+  | "all"
+  | "watching"
+  | "ratings"
+  | "genres"
+  | "time"
+  | "special";
+
 type AchievementItem = {
   id: string;
   category: "watching" | "ratings" | "genres" | "time" | "special";
@@ -88,9 +96,7 @@ export default function Achievements() {
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<
-    "all" | "watching" | "ratings" | "genres" | "time" | "special"
-  >("all");
+  const [selectedCategory, setSelectedCategory] = useState<AchievementCategory>("all");
   const [selectedStatus, setSelectedStatus] = useState<"all" | "unlocked" | "locked">("all");
 
   // Sharing Dialog State
@@ -803,14 +809,16 @@ Track your cinematic journey on CineTrekker!`;
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             {/* Category selection horizontal list */}
             <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
-              {[
-                { value: "all", label: "All" },
-                { value: "watching", label: "Watching" },
-                { value: "ratings", label: "Ratings" },
-                { value: "genres", label: "Genres" },
-                { value: "time", label: "Time" },
-                { value: "special", label: "Special" },
-              ].map((cat) => {
+              {(
+                [
+                  { value: "all", label: "All" },
+                  { value: "watching", label: "Watching" },
+                  { value: "ratings", label: "Ratings" },
+                  { value: "genres", label: "Genres" },
+                  { value: "time", label: "Time" },
+                  { value: "special", label: "Special" },
+                ] as const
+              ).map((cat) => {
                 const count =
                   cat.value === "all"
                     ? allAchievements.length
@@ -820,7 +828,7 @@ Track your cinematic journey on CineTrekker!`;
                   <Button
                     key={cat.value}
                     variant="ghost"
-                    onClick={() => setSelectedCategory(cat.value as any)}
+                    onClick={() => setSelectedCategory(cat.value)}
                     className={cn(
                       "rounded-xl px-4 py-2 text-xs font-bold transition-all border border-transparent min-h-[36px]",
                       selectedCategory === cat.value
@@ -858,7 +866,7 @@ Track your cinematic journey on CineTrekker!`;
               </div>
 
               {/* Status Selector */}
-              <Select value={selectedStatus} onValueChange={(val) => setSelectedStatus(val as any)}>
+              <Select value={selectedStatus} onValueChange={(val) => setSelectedStatus(val as "all" | "unlocked" | "locked")}>
                 <SelectTrigger className="w-28 rounded-xl border-border/40 bg-card/40 text-xs min-h-[38px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>

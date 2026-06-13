@@ -20,6 +20,8 @@ import {
   getTVGenres,
   discoverMovies,
   discoverTV,
+  type DiscoverMovieParams,
+  type DiscoverTVParams,
 } from "@/services/tmdb";
 import { MediaCard, MediaCardSkeleton } from "@/components/MediaCard";
 import { Badge } from "@/components/ui/badge";
@@ -145,7 +147,7 @@ export default function GenreBrowser() {
         currentSort = "first_air_date.desc";
       }
 
-      const discoverParams: any = {
+      const discoverParams: DiscoverMovieParams & DiscoverTVParams = {
         with_genres: selectedGenre,
         include_adult: includeAdult ? "true" : "false",
         sort_by: currentSort,

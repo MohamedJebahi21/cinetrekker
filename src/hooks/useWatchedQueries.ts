@@ -263,13 +263,17 @@ export function useUpdateWatched() {
       }
 
       if (user) {
-        const dbUpdates: Record<string, unknown> = {};
+        const dbUpdates: {
+          rating?: number | null;
+          note?: string | null;
+          status?: string | null;
+        } = {};
         if (validatedUpdates.rating !== undefined) dbUpdates.rating = validatedUpdates.rating;
         if (validatedUpdates.note !== undefined) dbUpdates.note = validatedUpdates.note;
         if (validatedUpdates.status !== undefined) dbUpdates.status = validatedUpdates.status;
 
-        const { error } = await (supabase
-          .from('user_watched') as any)
+        const { error } = await supabase
+          .from('user_watched')
           .update(dbUpdates)
           .eq('user_id', user.id)
           .eq('media_id', params.mediaId)

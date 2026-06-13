@@ -34,6 +34,8 @@ import {
 import { cn } from "@/lib/utils";
 import { enrichMediaItems } from "@/lib/mediaEnrichment";
 
+type FollowedShowDetails = MediaDetails & { followedAt?: string };
+
 export default function Following() {
   const { t, i18n } = useTranslation();
   const { followedTitles, isLoading: followsLoading, unfollowTitle } = useTitleFollows();
@@ -104,7 +106,7 @@ export default function Following() {
         if (
           item.status === "Returning Series" ||
           item.status === "In Production" ||
-          (item as any).next_episode_to_air
+          item.next_episode_to_air
         ) {
           upcoming++;
         }
@@ -147,7 +149,7 @@ export default function Following() {
         const isUpcoming =
           item.media_type === "movie"
             ? (item.status && item.status !== "Released" && item.status !== "Canceled")
-            : (item.status === "Returning Series" || item.status === "In Production" || !!(item as any).next_episode_to_air);
+            : (item.status === "Returning Series" || item.status === "In Production" || !!item.next_episode_to_air);
         return selectedStatus === "upcoming" ? isUpcoming : !isUpcoming;
       });
     }
@@ -219,7 +221,7 @@ export default function Following() {
         </span>
       );
     } else {
-      const nextEp = (show as any).next_episode_to_air;
+      const nextEp = show.next_episode_to_air;
       if (nextEp) {
         return (
           <span className="flex items-center gap-1 rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-400 border border-emerald-500/40 backdrop-blur-md shadow-[0_0_10px_rgba(16,185,129,0.1)]">

@@ -486,16 +486,18 @@ export default function Calendar() {
 
             {/* View Mode Switcher */}
             <div className="flex rounded-2xl border border-border/50 bg-card/60 p-1.5 backdrop-blur-sm shadow-sm shrink-0 self-start md:self-auto">
-              {[
-                { mode: 'week', label: 'Week', icon: <CalendarDays className="h-4 w-4" /> },
-                { mode: 'month', label: 'Month', icon: <Grid className="h-4 w-4" /> },
-                { mode: 'agenda', label: 'Agenda', icon: <List className="h-4 w-4" /> },
-              ].map(({ mode, label, icon }) => (
+              {(
+                [
+                  { mode: "week" as const, label: "Week", icon: <CalendarDays className="h-4 w-4" /> },
+                  { mode: "month" as const, label: "Month", icon: <Grid className="h-4 w-4" /> },
+                  { mode: "agenda" as const, label: "Agenda", icon: <List className="h-4 w-4" /> },
+                ] as const
+              ).map(({ mode, label, icon }) => (
                 <button
                   key={mode}
                   type="button"
                   onClick={() => {
-                    setViewMode(mode as any);
+                    setViewMode(mode);
                     if (mode === 'week' || mode === 'month') {
                       setCalendarRange(mode);
                     }
@@ -626,7 +628,7 @@ export default function Calendar() {
                 </div>
 
                 {/* Media Type Filter */}
-                <Select value={mediaTypeFilter} onValueChange={(v) => setMediaTypeFilter(v as any)}>
+                <Select value={mediaTypeFilter} onValueChange={(v) => setMediaTypeFilter(v as 'all' | 'movie' | 'tv')}>
                   <SelectTrigger className="w-full sm:w-36 rounded-2xl bg-card/60 border-border/50">
                     <SelectValue placeholder="Format" />
                   </SelectTrigger>
@@ -1212,9 +1214,9 @@ export default function Calendar() {
                       {detailsData.title || detailsData.name}
                     </h2>
 
-                    {(detailsData as any).tagline && (
+                    {detailsData.tagline && (
                       <p className="text-xs italic text-muted-foreground truncate">
-                        "{(detailsData as any).tagline}"
+                        "{detailsData.tagline}"
                       </p>
                     )}
 
@@ -1246,7 +1248,7 @@ export default function Calendar() {
                       <div>
                         <span className="text-muted-foreground block">Genres</span>
                         <span className="font-bold truncate block">
-                          {detailsData.genres?.map((g: any) => g.name).join(', ') || 'N/A'}
+                          {detailsData.genres?.map((g) => g.name).join(', ') || 'N/A'}
                         </span>
                       </div>
                     </>

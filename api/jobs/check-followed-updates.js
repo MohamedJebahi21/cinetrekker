@@ -236,7 +236,7 @@ export default async function handler(req, res) {
     const movieIdList = parsedKeys.map((parsed) => parsed.movieKey).filter((id) => typeof id === "string" && id.length > 0);
     if (followerUserIds.length > 0 && movieIdList.length > 0) {
       const result = await supabase
-        .from("followed_title_state")
+        .from("followed_title_state_user")
         .select("*")
         .in("user_id", followerUserIds)
         .in("movie_id", movieIdList);
@@ -310,7 +310,7 @@ export default async function handler(req, res) {
             );
 
             const { error: upsertError } = await supabase
-              .from("followed_title_state")
+              .from("followed_title_state_user")
               .upsert(stateRowsToUpsert, { onConflict: "user_id,movie_id" });
 
             if (upsertError) {
