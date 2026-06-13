@@ -71,6 +71,18 @@ export function AuthenticatedUserListsProvider({
   );
   const loading = user ? Boolean(watchlistLoading || watchedLoading) : false;
 
+  const watchlistSet = useMemo(() => {
+    return new Set(watchlist.map((item) => `${item.mediaType}-${item.mediaId}`));
+  }, [watchlist]);
+
+  const watchedSet = useMemo(() => {
+    return new Set(watched.map((item) => `${item.mediaType}-${item.mediaId}`));
+  }, [watched]);
+
+  const hiddenSet = useMemo(() => {
+    return new Set(hiddenRecommendations.map((item) => `${item.mediaType}-${item.mediaId}`));
+  }, [hiddenRecommendations]);
+
   useEffect(() => {
     const storageKey = user
       ? `${STORAGE_KEYS.hidden}_${user.id}`
@@ -251,20 +263,14 @@ export function AuthenticatedUserListsProvider({
 
   const isInWatchlist = useCallback(
     (mediaId: number, mediaType: "movie" | "tv") =>
-      watchlist.some(
-        (item: UserMediaItem) =>
-          item.mediaId === mediaId && item.mediaType === mediaType,
-      ),
-    [watchlist],
+      watchlistSet.has(`${mediaType}-${mediaId}`),
+    [watchlistSet],
   );
 
   const isWatched = useCallback(
     (mediaId: number, mediaType: "movie" | "tv") =>
-      watched.some(
-        (item: UserMediaItem) =>
-          item.mediaId === mediaId && item.mediaType === mediaType,
-      ),
-    [watched],
+      watchedSet.has(`${mediaType}-${mediaId}`),
+    [watchedSet],
   );
 
   const getWatchedItem = useCallback(
@@ -301,10 +307,17 @@ export function AuthenticatedUserListsProvider({
 
   const isHiddenFromRecommendations = useCallback(
     (mediaId: number, mediaType: "movie" | "tv") =>
-      hiddenRecommendations.some(
-        (item) => item.mediaId === mediaId && item.mediaType === mediaType,
-      ),
-    [hiddenRecommendations],
+      hiddenSet.has(`${mediaType}-${mediaId}`),
+    [hiddenSet],
+  );
+
+  const unhideFromRecommendations = useCallback(
+    (mediaId: number, mediaType: "movie" | "tv") => {
+      setHiddenRecommendations((prev) =>
+        prev.filter((item) => !(item.mediaId === mediaId && item.mediaType === mediaType))
+      );
+    },
+    [setHiddenRecommendations],
   );
 
   const value = useMemo<UserListsContextType>(
@@ -322,6 +335,7 @@ export function AuthenticatedUserListsProvider({
       getWatchedItem,
       hideFromRecommendations,
       isHiddenFromRecommendations,
+      unhideFromRecommendations,
       loading,
     }),
     [
@@ -331,6 +345,7 @@ export function AuthenticatedUserListsProvider({
       hiddenRecommendations,
       hideFromRecommendations,
       isHiddenFromRecommendations,
+      unhideFromRecommendations,
       isInWatchlist,
       isWatched,
       loading,

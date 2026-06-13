@@ -79,7 +79,7 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
   const includeAdult = !(strictFiltering || moderateFiltering);
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
-  const debouncedQuery = useDebounce(query, 250); // Faster debounce for instant suggestions
+  const debouncedQuery = useDebounce(query, 350); // Faster debounce for instant suggestions
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [recentSearches, setRecentSearches] = useState<SearchHistoryItem[]>([]);
@@ -144,14 +144,14 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
     isFetching,
   } = useQuery({
     queryKey: ["search-dropdown", debouncedQuery, language, includeAdult],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const q = normalizeSearchQuery(debouncedQuery);
       if (!q) return [] as SearchResult[];
 
       const [movieResponse, tvResponse, peopleResponse] = await Promise.all([
-        searchMovies(q, 1, language, includeAdult),
-        searchTV(q, 1, language, includeAdult),
-        searchPeople(q, 1, language),
+        searchMovies(q, 1, language, includeAdult, signal),
+        searchTV(q, 1, language, includeAdult, signal),
+        searchPeople(q, 1, language, signal),
       ]);
 
       const movies = ((movieResponse?.results || []) as SearchResult[])

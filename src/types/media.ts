@@ -60,8 +60,25 @@ export interface Cast {
   order: number;
 }
 
+export interface CastMember {
+  id: number;
+  name: string;
+  character?: string;
+  profile_path?: string | null;
+  order?: number;
+}
+
+export interface CrewMember {
+  id: number;
+  name: string;
+  job: string;
+  department?: string;
+  profile_path?: string | null;
+}
+
 export interface Credits {
-  cast: Cast[];
+  cast: CastMember[];
+  crew?: CrewMember[];
 }
 
 export interface TVNetwork {
@@ -83,6 +100,12 @@ export interface TVEpisodeInfo {
   runtime?: number;
 }
 
+export interface Creator {
+  id: number;
+  name: string;
+  profile_path?: string | null;
+}
+
 export interface MediaDetails extends Media {
   credits?: Credits;
   similar?: { results: Media[] };
@@ -97,6 +120,7 @@ export interface MediaDetails extends Media {
   next_episode_to_air?: TVEpisodeInfo | null;
   last_episode_to_air?: TVEpisodeInfo | null;
   seasons?: Season[];
+  created_by?: Creator[];
 }
 
 export interface Season {

@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Bookmark, CheckSquare, LayoutGrid, List, Printer, Square, Trash2 } from "lucide-react";
+import { Bookmark, CheckSquare, LayoutGrid, List, Printer, Square, Trash2, MoreHorizontal, Share2, Download, Upload } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUserLists } from "@/contexts/UserListsContext";
 import {
@@ -18,8 +18,6 @@ import SEO from "@/components/SEO";
 import { EmptyState } from "@/components/EmptyStates";
 import { sortMedia, type SortOption } from "@/lib/sortFilter";
 import { RandomPicker } from "@/components/RandomPicker";
-import { ShareButton } from "@/components/ShareButton";
-import { ExportImportButton } from "@/components/ExportImportButton";
 import { MediaGrid } from "@/components/MediaGrid";
 import { WatchlistFilters } from "@/components/WatchlistFilters";
 import {
@@ -30,6 +28,15 @@ import { Image } from "@/components/ui/Image";
 import { enrichMediaItems } from "@/lib/mediaEnrichment";
 import { useAuth } from "@/contexts/AuthContext";
 import GuestSyncBanner from "@/components/GuestSyncBanner";
+import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { Progress } from "@/components/ui/progress";
 
 type WatchlistStatusFilter =
   | "all"
@@ -52,7 +59,7 @@ type WatchlistMedia = Media & {
 export default function Watchlist() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
-  const { watchlist, watched, addToWatched, removeFromWatchlist } = useUserLists();
+  const { watchlist, watched, addToWatchlist, addToWatched, removeFromWatchlist } = useUserLists();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const language = i18n.language;
@@ -232,6 +239,129 @@ export default function Watchlist() {
     clearSelection();
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleShare = async () => {
+    const url = isSharedView
+      ? window.location.href
+      : `${window.location.origin}/watchlist?share=${encodeURIComponent(
+          listItems
+            .slice(0, 100)
+            .map((item) => `${item.mediaType}:${item.mediaId}`)
+            .join(","),
+        )}`;
+    const title = isSharedView
+      ? t("watchlistPage.sharedShareTitle", "Shared CineTrekker Watchlist")
+      : t("watchlistPage.myShareTitle", "My CineTrekker Watchlist");
+    const text = t("watchlistPage.shareText", "Check out this watchlist with {{count}} titles!", {
+      count: listItems.length,
+    });
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text, url });
+      } catch (err) {
+        // ignore
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.success(t("share.copySuccess", "Link copied!"));
+      } catch (err) {
+        toast.error(t("share.copyError", "Failed to copy"));
+      }
+    }
+  };
+
+  const exportToJSON = () => {
+    const data = {
+      exportDate: new Date().toISOString(),
+      version: "1.0",
+      watchlist,
+      watched,
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `cinetrekker-export-${new Date().toISOString().split("T")[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast.success(t("export.success", "Export successful!"), {
+      description: t("export.successDesc", "Your data has been exported to a JSON file."),
+    });
+  };
+
+  const exportToCSV = (type: "watchlist" | "watched") => {
+    const data = type === "watchlist" ? watchlist : watched;
+    
+    const headers = ["Title ID", "Media Type", "Added Date", "Status", "Rating", "Note"];
+    const rows = data.map((item) => [
+      item.mediaId,
+      item.mediaType,
+      item.addedAt || "",
+      item.status || "",
+      item.rating || "",
+      item.note ? `"${item.note.replace(/"/g, '""')}"` : "",
+    ]);
+
+    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `cinetrekker-${type}-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast.success(t("export.success", "Export successful!"), {
+      description: t("export.successDescType", "Your {{type}} has been exported to a CSV file.", { type }),
+    });
+  };
+
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e: ProgressEvent<FileReader>) => {
+      try {
+        const content = e.target?.result as string;
+        const parsed = JSON.parse(content);
+        
+        const importedWatchlist = parsed.watchlist || [];
+        const importedWatched = parsed.watched || [];
+
+        await Promise.all(
+          importedWatchlist.map((i: any) => addToWatchlist(i.mediaId, i.mediaType))
+        );
+        await Promise.all(
+          importedWatched.map((i: any) =>
+            addToWatched(i.mediaId, i.mediaType, i.rating, i.note, i.status)
+          )
+        );
+
+        toast.success(t("import.success", "Import successful!"), {
+          description: t("import.successDesc", "Imported items from backup."),
+        });
+      } catch (err) {
+        toast.error(t("import.failed", "Import failed"), {
+          description: t("import.failedDesc", "Could not parse the file or file is invalid."),
+        });
+      }
+    };
+
+    reader.readAsText(file);
+    event.target.value = "";
+  };
+
   return (
     <>
       <SEO
@@ -272,7 +402,7 @@ export default function Watchlist() {
             </div>
 
             {listItems.length > 0 && (
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2 md:gap-3 w-full sm:w-auto z-10">
                 <RandomPicker
                   source="watchlist"
                   variant="outline"
@@ -280,62 +410,38 @@ export default function Watchlist() {
                   label="Random"
                 />
 
-                <ShareButton
-                  title={
-                    isSharedView
-                      ? t("watchlistPage.sharedShareTitle", "Shared CineTrekker Watchlist")
-                      : t("watchlistPage.myShareTitle", "My CineTrekker Watchlist")
-                  }
-                  url={
-                    isSharedView
-                      ? window.location.href
-                      : `${window.location.origin}/watchlist?share=${encodeURIComponent(
-                          listItems
-                            .slice(0, 100)
-                            .map((item) => `${item.mediaType}:${item.mediaId}`)
-                            .join(","),
-                        )}`
-                  }
-                  text={t("watchlistPage.shareText", "Check out this watchlist with {{count}} titles!", {
-                    count: listItems.length,
-                  })}
-                  variant="ghost"
-                  size="sm"
-                />
-
-                <div className="ct-toggle-group w-full sm:w-auto">
+                <div className="ct-toggle-group">
                   <button
                     type="button"
                     onClick={() => setViewMode("grid")}
-                      className={`ct-toggle-button flex flex-1 items-center justify-center gap-1.5 sm:flex-none ${
-                        viewMode === "grid"
-                          ? "ct-toggle-button-active"
-                          : "hover:text-foreground"
+                    className={`ct-toggle-button flex items-center gap-1.5 min-h-[38px] px-3.5 ${
+                      viewMode === "grid"
+                        ? "ct-toggle-button-active"
+                        : "hover:text-foreground"
                     }`}
                   >
                     <LayoutGrid className="h-4 w-4" />
-                    {t("watchlistPage.grid", "Grid")}
+                    <span className="hidden sm:inline">{t("watchlistPage.grid", "Grid")}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setViewMode("list")}
-                      className={`ct-toggle-button flex flex-1 items-center justify-center gap-1.5 sm:flex-none ${
-                        viewMode === "list"
-                          ? "ct-toggle-button-active"
-                          : "hover:text-foreground"
+                    className={`ct-toggle-button flex items-center gap-1.5 min-h-[38px] px-3.5 ${
+                      viewMode === "list"
+                        ? "ct-toggle-button-active"
+                        : "hover:text-foreground"
                     }`}
                   >
                     <List className="h-4 w-4" />
-                    {t("watchlistPage.list", "List")}
+                    <span className="hidden sm:inline">{t("watchlistPage.list", "List")}</span>
                   </button>
                 </div>
-
-                <ExportImportButton />
 
                 {!isSharedView && mediaDetails.length > 0 && (
                   <Button
                     variant={selectionMode ? "secondary" : "outline"}
                     size="sm"
+                    className="rounded-full min-h-[38px]"
                     onClick={() => {
                       if (selectionMode) {
                         clearSelection();
@@ -355,18 +461,61 @@ export default function Watchlist() {
                   </Button>
                 )}
 
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to="/print-watchlist">
-                    <Printer className="mr-2 h-4 w-4" />
-                    {t("watchlistPage.print", "Print")}
-                  </Link>
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="rounded-full min-h-[38px]">
+                      <MoreHorizontal className="h-4 w-4 mr-2" />
+                      {t("common.actions", "Actions")}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 bg-card border border-border">
+                    <DropdownMenuItem onClick={handleShare} className="cursor-pointer">
+                      <Share2 className="h-4 w-4 mr-2 text-muted-foreground" />
+                      {t("share.button", "Share List")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="cursor-pointer">
+                      <Link to="/print-watchlist" className="flex items-center w-full">
+                        <Printer className="h-4 w-4 mr-2 text-muted-foreground" />
+                        {t("watchlistPage.print", "Print List")}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-border/60" />
+                    <DropdownMenuItem onClick={exportToJSON} className="cursor-pointer">
+                      <Download className="h-4 w-4 mr-2 text-muted-foreground" />
+                      {t("export.json", "Export JSON Backup")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => exportToCSV("watchlist")} className="cursor-pointer">
+                      <Download className="h-4 w-4 mr-2 text-muted-foreground" />
+                      {t("export.csvWatchlist", "Export Watchlist CSV")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => exportToCSV("watched")} className="cursor-pointer">
+                      <Download className="h-4 w-4 mr-2 text-muted-foreground" />
+                      {t("export.csvWatched", "Export Watched CSV")}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-border/60" />
+                    <DropdownMenuItem onClick={() => fileInputRef.current?.click()} className="cursor-pointer">
+                      <Upload className="h-4 w-4 mr-2 text-muted-foreground" />
+                      {t("import.json", "Import JSON Backup")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json"
+                  onChange={handleImport}
+                  className="hidden"
+                  aria-label="Import JSON file"
+                  title="Import JSON file"
+                />
               </div>
             )}
           </motion.div>
 
           {isSharedView && (
-            <div className="mb-8 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-6 py-4 text-sm text-amber-300">
+            <div className="mb-8 rounded-2xl border border-amber-500/20 bg-amber-500/8 px-6 py-4 text-sm text-amber-200 backdrop-blur-sm shadow-md flex items-center gap-3">
+              <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
               {t(
                 "watchlistPage.sharedHint",
                 "You are viewing a shared watchlist. Sign in to add or manage your own list.",
@@ -375,12 +524,30 @@ export default function Watchlist() {
           )}
 
           {!isSharedView && staleQueueKeys.size > 0 && (
-            <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-3 text-sm text-amber-200">
-              {t(
-                "watchlistPage.staleQueueHint",
-                "{{count}} titles have been in your queue for 30+ days. Pick one tonight to keep momentum.",
-                { count: staleQueueKeys.size },
-              )}
+            <div className="mb-6 rounded-2xl border border-amber-500/20 bg-amber-500/8 px-5 py-3.5 text-sm text-amber-200 backdrop-blur-sm shadow-md flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                <span>
+                  {t(
+                    "watchlistPage.staleQueueHint",
+                    "{{count}} titles have been in your queue for 30+ days. Pick one tonight to keep momentum.",
+                    { count: staleQueueKeys.size },
+                  )}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-amber-300 hover:text-white hover:bg-amber-500/20 rounded-full px-3 text-xs shrink-0"
+                onClick={() => {
+                  const staleList = Array.from(staleQueueKeys);
+                  const randomStale = staleList[Math.floor(Math.random() * staleList.length)];
+                  const [mediaType, mediaId] = randomStale.split("-");
+                  navigate(`/${mediaType}/${mediaId}`);
+                }}
+              >
+                {t("watchlistPage.pickForMe", "Pick For Me")}
+              </Button>
             </div>
           )}
 
@@ -402,20 +569,32 @@ export default function Watchlist() {
           )}
 
           {!isSharedView && mediaDetails.length > 0 && (
-            <div className="mb-6 rounded-3xl border border-border/60 bg-card/70 px-5 py-4 text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">
-                {t("watchlistPage.progressHeadline", "Queue progress")}
-              </span>{" "}
-              {t(
-                "watchlistPage.progressCopy",
-                "You've watched {{completed}} of {{total}} saved titles ({{percent}}%). Estimated watch time still in queue: about {{hours}} hours.",
-                {
-                  completed: statusCounts.completed,
-                  total: statusCounts.all,
-                  percent: completionRate,
-                  hours: totalHoursEstimate,
-                },
-              )}
+            <div className="mb-6 rounded-[2rem] border border-border/50 bg-card/45 p-6 shadow-md">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                    <CheckSquare className="h-5 w-5 text-primary" />
+                    {t("watchlistPage.progressHeadline", "Queue progress")}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {t(
+                      "watchlistPage.progressCopy",
+                      "You've watched {{completed}} of {{total}} saved titles ({{percent}}%). Estimated watch time still in queue: about {{hours}} hours.",
+                      {
+                        completed: statusCounts.completed,
+                        total: statusCounts.all,
+                        percent: completionRate,
+                        hours: totalHoursEstimate,
+                      },
+                    )}
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="text-2xl font-black text-primary">{completionRate}%</span>
+                  <span className="text-xs text-muted-foreground block uppercase tracking-wider font-semibold">Completed</span>
+                </div>
+              </div>
+              <Progress value={completionRate} className="h-2.5 bg-secondary/80 border border-border/40" />
             </div>
           )}
 
@@ -512,15 +691,15 @@ export default function Watchlist() {
                     <Link
                       key={`${mediaType}-${media.id}`}
                       to={`/${mediaType}/${media.id}`}
-                      className="ct-list-row group items-start gap-4 p-4 sm:items-center sm:gap-5 sm:p-5"
+                      className="ct-list-row group items-start gap-4 p-4 sm:items-center sm:gap-5 sm:p-5 rounded-2xl border border-transparent hover:border-border/30 hover:bg-card/45 transition-all duration-300"
                     >
                       {selectionMode && (
                         <button
                           type="button"
-                          className={`mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${
+                          className={`mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${
                             selectedKeys.has(`${mediaType}-${media.id}`)
                               ? "border-primary bg-primary text-primary-foreground"
-                              : "border-border/60 bg-card text-muted-foreground"
+                              : "border-border/60 bg-card text-muted-foreground hover:border-primary/45"
                           }`}
                           onClick={(event) => {
                             event.preventDefault();
@@ -544,31 +723,31 @@ export default function Watchlist() {
                           )}
                         </button>
                       )}
-                      <div className="h-24 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-muted">
+                      <div className="h-24 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-muted border border-border/40 shadow-sm relative group-hover:shadow-md group-hover:border-primary/20 transition-all duration-300">
                         {poster ? (
                           <Image
                             src={poster}
                             alt={title}
                             width={154}
                             height={231}
-                            className="h-full w-full object-cover"
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                             loading="lazy"
                           />
                         ) : (
-                          <div className="h-full w-full bg-muted" />
+                          <div className="h-full w-full bg-muted flex items-center justify-center text-xs text-muted-foreground">N/A</div>
                         )}
                       </div>
 
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                          <h3 className="min-w-0 flex-1 text-base font-semibold transition-colors group-hover:text-primary sm:text-lg">
+                          <h3 className="min-w-0 flex-1 text-base font-bold transition-colors group-hover:text-primary sm:text-lg">
                             <bdi dir="auto">{title}</bdi>
                           </h3>
                           <Badge
                             variant="secondary"
-                            className="uppercase text-xs tracking-widest"
+                            className="uppercase text-xs tracking-wider px-2 py-0.5 bg-secondary/80 text-secondary-foreground border border-border/30 rounded-md font-semibold"
                           >
-                            {mediaType}
+                            {mediaType === "movie" ? t("common.movie", "Movie") : t("common.tvShow", "TV Show")}
                           </Badge>
                         </div>
 
@@ -577,13 +756,13 @@ export default function Watchlist() {
                           {media.vote_average > 0 && (
                             <Badge
                               variant="secondary"
-                              className="rounded-full border border-amber-500/25 bg-amber-500/10 text-amber-200"
+                              className="rounded-full border border-amber-500/25 bg-amber-500/10 text-amber-200 font-semibold"
                             >
                               ★ {media.vote_average.toFixed(1)}
                             </Badge>
                           )}
                           {media.watchStatus && (
-                            <Badge variant="secondary" className="capitalize">
+                            <Badge variant="secondary" className="capitalize px-2 py-0.5 rounded-md text-xs border border-border/35">
                               {media.watchStatus.replace(/_/g, " ")}
                             </Badge>
                           )}
@@ -592,11 +771,6 @@ export default function Watchlist() {
                               {t("watchlistPage.leavingSoon", "Leaving your queue soon")}
                             </Badge>
                           )}
-                          <span className="text-xs uppercase tracking-[0.14em]">
-                            {mediaType === "movie"
-                              ? t("common.movie", "Movie")
-                              : t("common.tvShow", "TV Show")}
-                          </span>
                         </div>
                       </div>
                     </Link>

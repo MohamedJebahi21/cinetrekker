@@ -56,6 +56,10 @@ export interface UserListsContextType {
     mediaId: number,
     mediaType: "movie" | "tv",
   ) => boolean;
+  unhideFromRecommendations: (
+    mediaId: number,
+    mediaType: "movie" | "tv",
+  ) => void;
   loading: boolean;
 }
 
@@ -166,20 +170,28 @@ function GuestUserListsProvider({ children }: { children: React.ReactNode }) {
     // Guest watched updates are not persisted beyond add/remove today.
   }, []);
 
+  const watchlistSet = useMemo(() => {
+    return new Set(guestWatchlist.items.map((item) => `${item.mediaType}-${item.mediaId}`));
+  }, [guestWatchlist.items]);
+
+  const watchedSet = useMemo(() => {
+    return new Set(guestWatched.items.map((item) => `${item.mediaType}-${item.mediaId}`));
+  }, [guestWatched.items]);
+
+  const hiddenSet = useMemo(() => {
+    return new Set(hiddenRecommendations.map((item) => `${item.mediaType}-${item.mediaId}`));
+  }, [hiddenRecommendations]);
+
   const isInWatchlist = useCallback(
     (mediaId: number, mediaType: "movie" | "tv") =>
-      guestWatchlist.items.some(
-        (item) => item.mediaId === mediaId && item.mediaType === mediaType,
-      ),
-    [guestWatchlist.items],
+      watchlistSet.has(`${mediaType}-${mediaId}`),
+    [watchlistSet],
   );
 
   const isWatched = useCallback(
     (mediaId: number, mediaType: "movie" | "tv") =>
-      guestWatched.items.some(
-        (item) => item.mediaId === mediaId && item.mediaType === mediaType,
-      ),
-    [guestWatched.items],
+      watchedSet.has(`${mediaType}-${mediaId}`),
+    [watchedSet],
   );
 
   const getWatchedItem = useCallback(
@@ -224,10 +236,17 @@ function GuestUserListsProvider({ children }: { children: React.ReactNode }) {
 
   const isHiddenFromRecommendations = useCallback(
     (mediaId: number, mediaType: "movie" | "tv") =>
-      hiddenRecommendations.some(
-        (item) => item.mediaId === mediaId && item.mediaType === mediaType,
-      ),
-    [hiddenRecommendations],
+      hiddenSet.has(`${mediaType}-${mediaId}`),
+    [hiddenSet],
+  );
+
+  const unhideFromRecommendations = useCallback(
+    (mediaId: number, mediaType: "movie" | "tv") => {
+      setHiddenRecommendations((prev) =>
+        prev.filter((item) => !(item.mediaId === mediaId && item.mediaType === mediaType))
+      );
+    },
+    [setHiddenRecommendations],
   );
 
   const value = useMemo<UserListsContextType>(
@@ -245,6 +264,7 @@ function GuestUserListsProvider({ children }: { children: React.ReactNode }) {
       getWatchedItem,
       hideFromRecommendations,
       isHiddenFromRecommendations,
+      unhideFromRecommendations,
       loading: false,
     }),
     [
@@ -256,6 +276,7 @@ function GuestUserListsProvider({ children }: { children: React.ReactNode }) {
       hiddenRecommendations,
       hideFromRecommendations,
       isHiddenFromRecommendations,
+      unhideFromRecommendations,
       isInWatchlist,
       isWatched,
       removeFromWatchlist,
@@ -291,6 +312,7 @@ function AuthenticatedUserListsFallback({
       getWatchedItem: () => undefined,
       hideFromRecommendations: () => undefined,
       isHiddenFromRecommendations: () => false,
+      unhideFromRecommendations: () => undefined,
       loading: true,
     }),
     [],

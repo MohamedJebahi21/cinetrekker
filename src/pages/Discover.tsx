@@ -18,6 +18,7 @@ import {
   getPopularTV,
   getTopRatedMovies,
   getTrending,
+  getBackdropUrl,
 } from "@/services/tmdb";
 import { useContentPolicy } from "@/contexts/content-policy-context";
 
@@ -88,95 +89,70 @@ export default function Discover() {
       />
 
       <div className="page-container space-y-8 pb-24 pt-20 md:pb-10">
-        <section className="ct-panel-strong overflow-hidden rounded-[2rem] p-6 md:p-8">
-          <div className="grid gap-6 md:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] md:items-end">
-            <div>
-              <p className="ct-kicker mb-3">{t("discover.kicker", "Editorial discovery, not a flat dump")}</p>
-              <h1 className="mb-4 flex items-center gap-3 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
-                <span className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-primary/35 bg-primary/10 text-primary">
-                  <Compass className="h-6 w-6" />
-                </span>
-                <span className="heading-cinematic text-[1.15em] leading-none">
-                  {t("nav.discover", "Discover")}
-                </span>
-              </h1>
-              <p className="max-w-2xl text-sm leading-7 text-muted-foreground md:text-base">
-                {t(
-                  "discover.heroCopy",
-                  "Start with a spotlight title, then move through rows built around momentum, mood, and streaming usefulness.",
-                )}
-              </p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Button asChild className="btn-primary-glow">
-                  <Link to="/search">{t("discover.searchAll", "Search Everything")}</Link>
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3 md:grid-cols-1">
-              {[
-                {
-                  icon: Flame,
-                  title: t("discover.signal.trending", "Trending today"),
-                  body: t("discover.signal.trendingBody", "Start with live momentum when you want the cultural pulse."),
-                },
-                {
-                  icon: Tv,
-                  title: t("discover.signal.streaming", "Streaming-ready"),
-                  body: t("discover.signal.streamingBody", "Use airing and now-playing rails for what feels current, not stale."),
-                },
-                {
-                  icon: Sparkles,
-                  title: t("discover.signal.curated", "Curated picks"),
-                  body: t("discover.signal.curatedBody", "Editorial rails help you move quickly from trend to next best watch."),
-                },
-              ].map((item) => {
-                const Icon = item.icon;
-                return (
-                  <div key={item.title} className="rounded-2xl border border-border/60 bg-card/70 p-4">
-                    <div className="flex items-start gap-3">
-                      <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/12 text-primary">
-                        <Icon className="h-5 w-5" />
-                      </span>
-                      <div>
-                        <h2 className="text-base font-semibold text-foreground">{item.title}</h2>
-                        <p className="mt-1 text-sm text-muted-foreground">{item.body}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 border-b border-border/40 pb-6">
+          <div>
+            <p className="ct-kicker text-primary font-semibold tracking-wider uppercase mb-1">
+              {t("discover.kicker", "Curated Selection")}
+            </p>
+            <h1 className="text-4xl font-extrabold tracking-tight text-foreground md:text-5xl heading-cinematic flex items-center gap-3">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-primary">
+                <Compass className="h-6 w-6 animate-pulse" />
+              </span>
+              {t("nav.discover", "Discover")}
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm md:text-base text-muted-foreground leading-relaxed">
+              {t(
+                "discover.heroCopy",
+                "Explore featured spotlight titles, filter by your mood, and browse recommendations tailored to your taste.",
+              )}
+            </p>
           </div>
-        </section>
+          <div className="shrink-0">
+            <Button asChild className="btn-primary-glow rounded-full px-6 py-5 text-sm font-semibold">
+              <Link to="/search">{t("discover.searchAll", "Search Everything")}</Link>
+            </Button>
+          </div>
+        </div>
 
         {spotlight ? (
-          <section className="ct-panel overflow-hidden">
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)] lg:items-end">
-              <div>
-                <p className="ct-kicker mb-3 text-primary/80">
+          <section className="relative overflow-hidden rounded-[2rem] border border-border/50 bg-card/20 p-6 md:p-10 z-10 shadow-xl">
+            {spotlight.backdrop_path && (
+              <div className="absolute inset-0 -z-10 select-none">
+                <img
+                  src={getBackdropUrl(spotlight.backdrop_path, "w1280") || ""}
+                  alt=""
+                  className="h-full w-full object-cover object-center opacity-30 md:opacity-45 transition-transform duration-1000 hover:scale-[1.02]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-[#0d0d0f]/30" />
+                <div className="absolute inset-0 bg-gradient-to-r from-background via-background/50 to-transparent hidden md:block" />
+              </div>
+            )}
+            
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)] lg:items-center relative z-10">
+              <div className="space-y-4">
+                <p className="ct-kicker text-primary font-semibold tracking-wider uppercase">
                   {t("discover.spotlight", "Hero spotlight")}
                 </p>
-                <h2 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+                <h2 className="heading-cinematic text-3xl font-extrabold tracking-tight text-white md:text-5xl drop-shadow-md leading-tight">
                   {spotlight.title || spotlight.name}
                 </h2>
-                <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground md:text-base">
+                <p className="max-w-2xl text-sm leading-relaxed text-zinc-300 md:text-base drop-shadow-sm">
                   {spotlight.overview ||
                     t(
                       "discover.spotlightFallback",
                       "This title is leading the global conversation right now and anchors the discover page with a clearer top-of-page hierarchy.",
                     )}
                 </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Badge variant="secondary" className="rounded-full px-3 py-1">
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Badge variant="secondary" className="rounded-full bg-white/10 text-white backdrop-blur-md border border-white/15 px-3.5 py-1 text-xs">
                     {spotlight.media_type === "tv" ? "TV" : "Movie"}
                   </Badge>
-                  <Badge variant="outline" className="rounded-full px-3 py-1">
-                    {spotlight.vote_average.toFixed(1)}
+                  <Badge variant="outline" className="rounded-full bg-amber-500/10 border-amber-500/35 text-amber-300 px-3.5 py-1 flex items-center gap-1 font-semibold text-xs">
+                    ★ {spotlight.vote_average.toFixed(1)}
                   </Badge>
                 </div>
-                <div className="mt-5 flex flex-wrap gap-3">
-                  <Button asChild className="btn-primary-glow">
+                <div className="pt-4">
+                  <Button asChild className="btn-primary-glow rounded-full px-6 py-5 h-auto text-base font-semibold">
                     <Link to={buildMediaPath(spotlight.media_type === "tv" ? "tv" : "movie", spotlight.id, spotlight.title || spotlight.name || "")}>
                       {t("discover.openSpotlight", "Open spotlight")}
                     </Link>
@@ -184,21 +160,21 @@ export default function Discover() {
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-border/60 bg-background/35 p-5">
-                <p className="ct-kicker mb-3">{t("discover.moodBoard", "By mood")}</p>
-                <div className="flex flex-wrap gap-3">
+              <div className="rounded-3xl border border-white/10 bg-black/45 p-6 backdrop-blur-md shadow-2xl space-y-5">
+                <p className="ct-kicker text-zinc-400 font-medium">{t("discover.moodBoard", "By mood")}</p>
+                <div className="flex flex-wrap gap-2">
                   {moodFilters.map((filter) => (
                     <Button
                       key={filter.label}
                       asChild
                       variant="outline"
-                      className="rounded-full bg-card/50"
+                      className="rounded-full bg-white/5 border-white/10 text-zinc-300 hover:text-white hover:bg-white/15 hover:border-white/20 transition-all hover:scale-[1.04]"
                     >
                       <Link to={filter.href}>{filter.label}</Link>
                     </Button>
                   ))}
                 </div>
-                <div className="mt-5 grid gap-3">
+                <div className="grid gap-2 pt-1">
                   {[
                     {
                       icon: Layers,
@@ -221,7 +197,7 @@ export default function Discover() {
                       <Link
                         key={pathway.to}
                         to={pathway.to}
-                        className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card/60 px-4 py-3 text-sm font-medium text-foreground transition-colors hover:border-primary/30 hover:bg-card/80"
+                        className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/5 px-4 py-3.5 text-sm font-medium text-zinc-300 transition-all hover:border-primary/40 hover:bg-white/10 hover:text-white hover:translate-x-1"
                       >
                         <Icon className="h-4 w-4 text-primary" />
                         {pathway.title}

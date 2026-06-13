@@ -42,27 +42,39 @@ export function MediaGrid({
   onToggleSelect,
 }: MediaGridProps) {
   const { t } = useTranslation();
+  const isFirstMount = React.useRef(true);
+  React.useEffect(() => {
+    isFirstMount.current = false;
+  }, []);
 
   const containerVariants = {
-    initial: { opacity: 0 },
+    initial: isFirstMount.current ? { opacity: 0 } : { opacity: 1 },
     animate: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.03,
-        delayChildren: 0.1,
-      },
+      transition: isFirstMount.current
+        ? {
+            staggerChildren: 0.03,
+            delayChildren: 0.1,
+          }
+        : {
+            duration: 0,
+          },
     },
   };
 
   const itemVariants: Variants = {
-    initial: { opacity: 0, y: 20 },
+    initial: isFirstMount.current ? { opacity: 0, y: 20 } : { opacity: 1, y: 0 },
     animate: {
       opacity: 1,
       y: 0,
-      transition: {
-        duration: 0.3,
-        ease: 'easeOut',
-      },
+      transition: isFirstMount.current
+        ? {
+            duration: 0.3,
+            ease: 'easeOut',
+          }
+        : {
+            duration: 0,
+          },
     },
   };
 

@@ -74,6 +74,7 @@ import { normalizePinnedFavoriteKeys } from "@/utils/pinnedFavorites";
 import { absoluteSiteUrl } from "@/lib/siteUrl";
 import {
   getImageUrl,
+  getBackdropUrl,
   getMovieDetails,
   getTVDetails,
   searchMovies,
@@ -113,6 +114,7 @@ type ProfileMediaPreview = {
   mediaType: "movie" | "tv";
   title: string;
   posterPath: string | null;
+  backdropPath: string | null;
   runtimeMinutes: number;
   genreIds: number[];
 };
@@ -1035,6 +1037,7 @@ export default function Profile() {
               mediaType: item.mediaType,
               title: details.title || details.name || t("common.untitled", "Untitled"),
               posterPath: details.poster_path || null,
+              backdropPath: details.backdrop_path || null,
               runtimeMinutes:
                 item.mediaType === "movie"
                   ? details.runtime || 0
@@ -1053,6 +1056,7 @@ export default function Profile() {
                   : t("profile.series", "Series")
               } #${item.mediaId}`,
               posterPath: null,
+              backdropPath: null,
               runtimeMinutes: 0,
               genreIds: [],
             };
@@ -1084,6 +1088,19 @@ export default function Profile() {
                 ? await getMovieDetails(item.mediaId, i18n.language)
                 : await getTVDetails(item.mediaId, i18n.language);
 
+            const directors = item.mediaType === "movie"
+              ? (details.credits?.crew || [])
+                  .filter((member: any) => member.job === "Director")
+                  .map((member: any) => member.name)
+              : (details.created_by || []).map((creator: any) => creator.name);
+
+            const cast = (details.credits?.cast || [])
+              .slice(0, 5)
+              .map((member: any) => member.name);
+
+            const releaseDate = details.release_date || details.first_air_date;
+            const releaseYear = releaseDate ? new Date(releaseDate).getFullYear() : null;
+
             return {
               key: `${item.mediaType}-${item.mediaId}`,
               title: details.title || details.name || t("common.untitled", "Untitled"),
@@ -1093,12 +1110,20 @@ export default function Profile() {
                   ? details.runtime || 0
                   : details.episode_run_time?.[0] || 0,
               genreIds: (details.genres || []).map((genre) => genre.id),
+              directors: directors || [],
+              cast: cast || [],
+              releaseYear: releaseYear || null,
             };
           } catch {
             return {
               key: `${item.mediaType}-${item.mediaId}`,
+              title: t("common.untitled", "Untitled"),
+              posterPath: null,
               runtimeMinutes: 0,
               genreIds: [] as number[],
+              directors: [] as string[],
+              cast: [] as string[],
+              releaseYear: null as number | null,
             };
           }
         }),
@@ -1159,6 +1184,192 @@ export default function Profile() {
         .filter((entry) => Boolean(entry.preview)),
     [pinnedFavoriteBase, previewMap],
   );
+
+  const profileCoverBackdrop = useMemo(() => {
+    const firstMovieFav = favoriteMovies[0]?.preview?.backdropPath;
+    if (firstMovieFav) return firstMovieFav;
+
+    const firstSeriesFav = favoriteSeries[0]?.preview?.backdropPath;
+    if (firstSeriesFav) return firstSeriesFav;
+
+    return null;
+  }, [favoriteMovies, favoriteSeries]);
+
+  const levelProgress = useMemo(() => {
+    if (moviesWatched <= 50) return (moviesWatched / 50) * 100;
+    if (moviesWatched <= 150) return ((moviesWatched - 50) / 100) * 100;
+    if (moviesWatched <= 300) return ((moviesWatched - 150) / 150) * 100;
+    return 100;
+  }, [moviesWatched]);
+
+  const nextLevelRequirement = useMemo(() => {
+    if (moviesWatched <= 50) return { name: text("profile.levelMovieBuff", "Movie Buff"), count: 50 };
+    if (moviesWatched <= 150) return { name: text("profile.levelCinephile", "Cinephile"), count: 150 };
+    if (moviesWatched <= 300) return { name: text("profile.levelFilmHistorian", "Film Historian"), count: 300 };
+    return null;
+  }, [moviesWatched, text]);
+
+  const totalWatchDaysHoursMinutes = useMemo(() => {
+    const runtimeMinutes = watchedInsights.reduce(
+      (total, item) => total + item.runtimeMinutes,
+      0,
+    );
+
+    const days = Math.floor(runtimeMinutes / (24 * 60));
+    const hours = Math.floor((runtimeMinutes % (24 * 60)) / 60);
+    const minutes = runtimeMinutes % 60;
+
+    const parts = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0 || days > 0) parts.push(`${hours}h`);
+    parts.push(`${minutes}m`);
+
+    return parts.length > 0 ? parts.join(" ") : "0m";
+  }, [watchedInsights]);
+
+  const cinephilePersona = useMemo(() => {
+    if (watchedInsights.length === 0) {
+      return {
+        title: text("profile.personaCurator", "Eclectic Curator"),
+        description: text(
+          "profile.personaCuratorDesc",
+          "You are beginning your cinematic trek. Start logging and rating films to discover your true taste archetype!"
+        ),
+        icon: <Sparkles className="h-8 w-8 text-amber-500" />,
+        badge: "Curator",
+      };
+    }
+
+    const sortedGenres = Array.from(genreWatchCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([id]) => id);
+
+    const primaryGenre = sortedGenres[0];
+    const secondaryGenre = sortedGenres[1];
+
+    if (primaryGenre === 28 || primaryGenre === 12 || primaryGenre === 53) {
+      if (secondaryGenre === 878 || secondaryGenre === 14) {
+        return {
+          title: "Cosmic Adventurer",
+          description: "You thrive on massive scales, interstellar voyages, and fantastical journeys that push the boundaries of space and time.",
+          icon: <Sparkles className="h-8 w-8 text-blue-400" />,
+          badge: "Sci-Fi & Action",
+        };
+      }
+      return {
+        title: "Adrenaline Junkie",
+        description: "You seek high-octane sequences, edge-of-your-seat suspense, and high-stakes narratives that get your heart racing.",
+        icon: <TrendingUp className="h-8 w-8 text-red-500" />,
+        badge: "Action & Thriller",
+      };
+    }
+
+    if (primaryGenre === 878 || primaryGenre === 14) {
+      return {
+        title: "Dream Weaver",
+        description: "You explore alternate realities, futuristic tech, and magical realms, valuing infinite imagination and cerebral concepts.",
+        icon: <Sparkles className="h-8 w-8 text-violet-400" />,
+        badge: "Sci-Fi & Fantasy",
+      };
+    }
+
+    if (primaryGenre === 18) {
+      if (secondaryGenre === 10749) {
+        return {
+          title: "Romantic Realist",
+          description: "You appreciate the tender nuances of human intimacy, heartfelt connections, and the emotional rollercoasters of love.",
+          icon: <Star className="h-8 w-8 text-rose-400 animate-pulse" />,
+          badge: "Romance & Drama",
+        };
+      }
+      return {
+        title: "Drama Connoisseur",
+        description: "You value deep character studies, complex moral dilemmas, and powerful performances that reflect the truths of life.",
+        icon: <Award className="h-8 w-8 text-indigo-400" />,
+        badge: "Drama Specialist",
+      };
+    }
+
+    if (primaryGenre === 35) {
+      return {
+        title: "Joyous Spectator",
+        description: "You believe cinema is a source of joy, appreciating clever banter, visual comedy, and stories that leave you with a smile.",
+        icon: <Sparkles className="h-8 w-8 text-yellow-400" />,
+        badge: "Comedy Enthusiast",
+      };
+    }
+
+    if (primaryGenre === 80 || primaryGenre === 9648) {
+      return {
+        title: "Noir Sleuth",
+        description: "You love unraveling dark criminal conspiracies, tracking down clues with detectives, and solving intricate mysteries.",
+        icon: <Eye className="h-8 w-8 text-zinc-400" />,
+        badge: "Crime & Mystery",
+      };
+    }
+
+    if (primaryGenre === 27) {
+      return {
+        title: "Terror Scholar",
+        description: "You appreciate the craft of fear, studying psychological dread, cinematic monsters, and the thrill of the macabre.",
+        icon: <EyeOff className="h-8 w-8 text-orange-500" />,
+        badge: "Horror Devotee",
+      };
+    }
+
+    return {
+      title: "Eclectic Cinephile",
+      description: "Your taste knows no bounds. You display a balanced, versatile appreciation for diverse genres and cinematic storytelling styles.",
+      icon: <Trophy className="h-8 w-8 text-amber-500" />,
+      badge: "Multifaceted",
+    };
+  }, [genreWatchCounts, watchedInsights.length, text]);
+
+  const decadeDistribution = useMemo(() => {
+    const counts = new Map<string, number>();
+    watchedInsights.forEach((item) => {
+      if (typeof item.releaseYear === "number") {
+        const decadeStart = Math.floor(item.releaseYear / 10) * 10;
+        const key = `${decadeStart}s`;
+        counts.set(key, (counts.get(key) || 0) + 1);
+      }
+    });
+
+    return Array.from(counts.entries())
+      .sort((a, b) => b[0].localeCompare(a[0])) // Sort newest to oldest
+      .map(([decade, count]) => ({
+        decade,
+        count,
+      }));
+  }, [watchedInsights]);
+
+  const topDirectors = useMemo(() => {
+    const counts = new Map<string, number>();
+    watchedInsights.forEach((item) => {
+      (item.directors || []).forEach((director: string) => {
+        counts.set(director, (counts.get(director) || 0) + 1);
+      });
+    });
+
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, count]) => ({ name, count }));
+  }, [watchedInsights]);
+
+  const topCast = useMemo(() => {
+    const counts = new Map<string, number>();
+    watchedInsights.forEach((item) => {
+      (item.cast || []).forEach((actor: string) => {
+        counts.set(actor, (counts.get(actor) || 0) + 1);
+      });
+    });
+
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, count]) => ({ name, count }));
+  }, [watchedInsights]);
 
   const syncFavoriteMoviesCarousel = useCallback(() => {
     setFavoriteMoviesCarouselState(
@@ -1407,6 +1618,18 @@ export default function Profile() {
     [uniqueWatchedEntries],
   );
 
+  const recentlyWatched = useMemo(
+    () =>
+      [...uniqueWatchedEntries]
+        .sort(
+          (a, b) =>
+            new Date(b.watchedAt || b.addedAt || 0).getTime() -
+            new Date(a.watchedAt || a.addedAt || 0).getTime(),
+        )
+        .slice(0, 10),
+    [uniqueWatchedEntries],
+  );
+
   const formatUnlockMonthYear = useCallback((date: Date | undefined) => {
     if (!date) return null;
     return date.toLocaleDateString(undefined, {
@@ -1596,35 +1819,47 @@ export default function Profile() {
         canonical="https://cinetrekker.vercel.app/profile"
       />
       <motion.div
-        className="profile-page page-container ct-page-shell max-w-full overflow-x-hidden pt-20 pb-24 md:pb-0"
+        className="profile-page page-container ct-page-shell max-w-full overflow-x-hidden pt-20 pb-24 md:pb-0 relative"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
+        {/* Cinematic Widescreen Cover Backdrop */}
+        <div className="absolute inset-x-0 top-0 z-0 h-[240px] md:h-[300px] w-full overflow-hidden">
+          {profileCoverBackdrop ? (
+            <img
+            src={getBackdropUrl(profileCoverBackdrop, "original") ?? ""}
+              alt="Profile cover backdrop"
+              className="h-full w-full object-cover blur-[6px] scale-105 opacity-30 transition-all duration-700"
+            />
+          ) : (
+            <div className="h-full w-full bg-gradient-to-r from-red-950/15 via-zinc-900/40 to-neutral-900/30 opacity-30" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/40 to-background" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(229,9,20,0.05),transparent_70%)]" />
+        </div>
+
         {isLoadingProfile && (
-          <div className="flex justify-center items-center py-12">
+          <div className="flex justify-center items-center py-12 relative z-10">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         )}
 
         {!isLoadingProfile && (
           <TooltipProvider>
-            <>
+            <div className="relative z-10 mt-12 md:mt-24">
               <motion.section variants={itemVariants} className="mb-8">
                 <Card
                   className={cn(
-                    "ct-panel-strong relative overflow-hidden shadow-2xl",
-                    isLightTheme
-                      ? "border-border/70 bg-card"
-                      : "border-border/60 bg-card/95",
+                    "ct-panel-strong relative overflow-hidden shadow-2xl border-border/50 bg-card/70 backdrop-blur-md",
                   )}
                 >
                   <div
                     className={cn(
                       "absolute inset-0",
                       isLightTheme
-                        ? "bg-[radial-gradient(circle_at_20%_20%,rgba(229,9,20,0.12),transparent_42%),radial-gradient(circle_at_80%_0%,rgba(229,9,20,0.06),transparent_30%),linear-gradient(135deg,#ffffff_8%,#f6f7f9_100%)]"
-                        : "bg-[radial-gradient(circle_at_20%_20%,rgba(229,9,20,0.2),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.08),transparent_35%),linear-gradient(135deg,#0b0b0d_20%,#111216_100%)]",
+                        ? "bg-[radial-gradient(circle_at_20%_20%,rgba(229,9,20,0.08),transparent_42%),linear-gradient(135deg,rgba(255,255,255,0.45)_8%,rgba(246,247,249,0.3)_100%)]"
+                        : "bg-[radial-gradient(circle_at_20%_20%,rgba(229,9,20,0.12),transparent_45%),linear-gradient(135deg,rgba(11,11,13,0.5)_20%,rgba(17,18,22,0.4)_100%)]",
                     )}
                   />
                   <div
@@ -1769,18 +2004,36 @@ export default function Profile() {
                       </div>
 
                       <div className="flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <h1 className="text-3xl font-black tracking-tight sm:text-4xl text-foreground">
                             {userName}
                           </h1>
-                          <Badge className="border-none bg-[#E50914]/20 text-[#ff6b73]">
-                            <Trophy className="mr-1 h-3.5 w-3.5" />
+                          <Badge className="border-none bg-[#E50914]/20 text-[#ff6b73] px-2.5 py-1">
+                            <Trophy className="mr-1.5 h-3.5 w-3.5" />
                             {cinephileLevel}
                           </Badge>
                         </div>
 
+                        {/* Cinephile Level Progression Bar */}
+                        <div className="mt-2.5 max-w-md">
+                          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                            <span className="font-semibold text-foreground">{cinephileLevel}</span>
+                            {nextLevelRequirement ? (
+                              <span>
+                                {moviesWatched} / {nextLevelRequirement.count} {text("profile.toNextLevel", "to")} {nextLevelRequirement.name}
+                              </span>
+                            ) : (
+                              <span className="text-primary font-bold">{text("profile.maxLevel", "Max Rank")}</span>
+                            )}
+                          </div>
+                          <Progress
+                            value={levelProgress}
+                            className="h-2 bg-neutral-800/80 [&>div]:bg-gradient-to-r [&>div]:from-[#E50914] [&>div]:to-[#ff6b73]"
+                          />
+                        </div>
+
                         {user && (
-                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <div className="mt-4 flex flex-wrap items-center gap-2">
                             <p className="text-muted-foreground">
                               {visibleEmail}
                             </p>
@@ -1838,7 +2091,7 @@ export default function Profile() {
                               {text("profile.watchTime", "Watch Time")}
                             </p>
                             <p className="text-xl font-bold">
-                              {totalWatchHours}h
+                              {totalWatchDaysHoursMinutes}
                             </p>
                           </div>
                         </div>
@@ -1949,45 +2202,76 @@ export default function Profile() {
                     <Card className="ct-panel transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl">
                       <CardContent className="space-y-6 pt-6">
                         {!isEditMode ? (
-                          <div className="space-y-4">
-                            <div>
-                              <p className="text-xs uppercase tracking-wide text-neutral-500">
-                                {text("profile.displayName", "Display Name")}
-                              </p>
-                              <p className="text-base text-foreground">
-                                {displayName || text("profile.notSet", "Not set")}
-                              </p>
+                          <div className="space-y-5">
+                            {/* Name + Age row */}
+                            <div className="flex flex-wrap gap-4">
+                              <div className="min-w-[120px] flex-1 rounded-xl border border-border/50 bg-background/50 px-4 py-3">
+                                <p className="mb-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                  {text("profile.displayName", "Display Name")}
+                                </p>
+                                <p className="text-base font-semibold text-foreground">
+                                  {displayName || <span className="italic text-muted-foreground">{text("profile.notSet", "Not set")}</span>}
+                                </p>
+                              </div>
+                              {userAge !== null && (
+                                <div className="min-w-[80px] rounded-xl border border-border/50 bg-background/50 px-4 py-3">
+                                  <p className="mb-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                    {text("profile.age", "Age")}
+                                  </p>
+                                  <p className="text-base font-semibold text-foreground">{userAge}</p>
+                                </div>
+                              )}
                             </div>
-                            <div>
-                              <p className="text-xs uppercase tracking-wide text-neutral-500">
-                                {text("profile.currentAge", "Current age")}
-                              </p>
-                              <p className="text-base text-foreground">
-                                {userAge ?? text("profile.notSet", "Not set")}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs uppercase tracking-wide text-neutral-500">
-                                {text("profile.bio", "Bio")}
-                              </p>
-                              <p className="text-sm leading-relaxed text-muted-foreground">
-                                {bio ||
-                                  text(
-                                    "profile.noBioYet",
-                                    "No bio yet. Tell people about your cinematic journey.",
-                                  )}
-                              </p>
-                            </div>
+                            {/* Bio */}
+                            {bio ? (
+                              <blockquote className="relative rounded-xl border-l-4 border-primary/60 bg-primary/5 px-5 py-4">
+                                <p className="text-sm leading-relaxed text-foreground/90">{bio}</p>
+                              </blockquote>
+                            ) : (
+                              <div className="rounded-xl border border-dashed border-border/60 px-5 py-4 text-center">
+                                <p className="text-sm text-muted-foreground italic">
+                                  {text("profile.noBioYet", "No bio yet. Tell people about your cinematic journey.")}
+                                </p>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  className="mt-3 rounded-full text-xs"
+                                  onClick={() => setIsEditMode(true)}
+                                >
+                                  {text("profile.addBio", "Add a bio")}
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <>
-                            <div className="grid gap-6 sm:grid-cols-2">
-                              <div className="space-y-2">
+                            {/* Profile Completion Indicator */}
+                            {profileCompletion < 100 && (
+                              <div className="rounded-xl border border-amber-500/20 bg-amber-500/8 px-4 py-3">
+                                <div className="flex items-center justify-between text-xs mb-2">
+                                  <span className="font-semibold text-amber-400">
+                                    {text("profile.profileCompletion", "Profile Completion")}
+                                  </span>
+                                  <span className="text-amber-400 font-bold">{Math.round(profileCompletion)}%</span>
+                                </div>
+                                <Progress
+                                  value={profileCompletion}
+                                  className="h-1.5 bg-amber-900/30 [&>div]:bg-gradient-to-r [&>div]:from-amber-500 [&>div]:to-yellow-400"
+                                />
+                                <p className="mt-1.5 text-[10px] text-amber-400/70">
+                                  {text("profile.addPhotoNameBio", "Add a photo, name, age, bio, and select genre preferences to complete your profile.")}
+                                </p>
+                              </div>
+                            )}
+
+                            <div className="grid gap-5 sm:grid-cols-2">
+                              <div className="space-y-1.5">
                                 <Label
                                   htmlFor="displayName"
-                                  className="flex items-center gap-2 text-foreground"
+                                  className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground"
                                 >
-                                  <User className="h-4 w-4" />
+                                  <User className="h-3.5 w-3.5" />
                                   {text("profile.displayName", "Display Name")}
                                 </Label>
                                 <Input
@@ -2002,15 +2286,16 @@ export default function Profile() {
                                     "How should we call you?",
                                   )}
                                   maxLength={50}
-                                  className="bg-background/70 border-border focus:border-red-500 focus:ring-red-500/20"
+                                  className="h-11 rounded-xl border-border/60 bg-background/60 px-4 text-sm backdrop-blur-sm transition-colors focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
                                 />
+                                <p className="text-[10px] text-muted-foreground">{displayName.length}/50</p>
                               </div>
-                              <div className="space-y-2">
+                              <div className="space-y-1.5">
                                 <Label
                                   htmlFor="ageInput"
-                                  className="flex items-center gap-2 text-foreground"
+                                  className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground"
                                 >
-                                  <CalendarDays className="h-4 w-4" />
+                                  <CalendarDays className="h-3.5 w-3.5" />
                                   {text("profile.currentAge", "Current age")}
                                 </Label>
                                 <Input
@@ -2024,9 +2309,9 @@ export default function Profile() {
                                   onChange={handleAgeInputChange}
                                   placeholder={t("profile.agePlaceholder", "22")}
                                   className={cn(
-                                    "bg-background/70 border-border focus:border-red-500 focus:ring-red-500/20",
+                                    "h-11 rounded-xl border-border/60 bg-background/60 px-4 text-sm backdrop-blur-sm transition-colors focus:border-primary/60 focus:ring-2 focus:ring-primary/20",
                                     dobError &&
-                                      "border-destructive focus:border-destructive",
+                                      "border-destructive focus:border-destructive focus:ring-destructive/20",
                                   )}
                                 />
                                 {dobError ? (
@@ -2037,8 +2322,8 @@ export default function Profile() {
                               </div>
                             </div>
 
-                            <div className="space-y-2">
-                              <Label htmlFor="bio" className="text-foreground">
+                            <div className="space-y-1.5">
+                              <Label htmlFor="bio" className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
                                 {text("profile.bio", "Bio")}
                               </Label>
                               <textarea
@@ -2049,28 +2334,37 @@ export default function Profile() {
                                   "profile.bioPlaceholder",
                                   "Tell us about your cinematic journey...",
                                 )}
-                                className="min-h-[100px] w-full resize-y rounded-md border border-border bg-background/70 p-3 transition-colors duration-200 focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+                                className="min-h-[110px] w-full resize-y rounded-xl border border-border/60 bg-background/60 p-4 text-sm backdrop-blur-sm transition-colors duration-200 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/20"
                                 maxLength={500}
                               />
-                              <p className="text-xs text-muted-foreground">
-                                {bio.length}/500{" "}
+                              <p className="text-[10px] text-muted-foreground">
+                                <span className={cn(bio.length > 450 && "text-amber-400 font-semibold")}>{bio.length}</span>/500{" "}
                                 {text("profile.characters", "characters")}
                               </p>
                             </div>
 
-                            <div className="flex gap-2">
+                            <div className="flex gap-3">
                               <Button
                                 type="button"
                                 onClick={handleSaveProfile}
                                 disabled={isSaving}
+                                className="flex-1 rounded-xl sm:flex-none"
                               >
-                                {t("settings.saveChanges", "Save Changes")}
+                                {isSaving ? (
+                                  <span className="flex items-center gap-2">
+                                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                    {text("profile.saving", "Saving…")}
+                                  </span>
+                                ) : (
+                                  t("settings.saveChanges", "Save Changes")
+                                )}
                               </Button>
                               <Button
                                 type="button"
                                 variant="outline"
                                 onClick={handleCancelChanges}
                                 disabled={isSaving}
+                                className="rounded-xl"
                               >
                                 {t("common.cancel", "Cancel")}
                               </Button>
@@ -2083,93 +2377,221 @@ export default function Profile() {
                   ) : null}
 
                   {shouldShowProfileSection("overview") ? (
-                  <motion.section variants={itemVariants} id="stats-overview">
-                    <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
-                      <TrendingUp className="h-5 w-5 text-red-500" />
-                      {t("profile.overview")}
-                    </h2>
+                  <motion.section variants={itemVariants} id="stats-overview" className="space-y-6">
+                    <div className="mb-2 space-y-1">
+                      <h2 className="flex items-center gap-2 text-xl font-bold">
+                        <TrendingUp className="h-5 w-5 text-red-500" />
+                        {t("profile.overview")}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        {text("profile.overviewSubtitle", "High-level summary of your cinematic accomplishments and style.")}
+                      </p>
+                    </div>
+
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                      {/* Movies Watched Card */}
                       <button
                         type="button"
-                        onClick={() =>
-                          document
-                            .getElementById("profile-details")
-                            ?.scrollIntoView({
-                              behavior: reduceMotion ? "auto" : "smooth",
-                            })
-                        }
-                        className="group relative overflow-hidden rounded-xl border border-border/70 bg-card/80 text-left transition-all duration-300 hover:-translate-y-1.5 hover:border-[#E50914]/40 hover:shadow-[0_0_30px_rgba(229,9,20,0.15)] focus:outline-none focus:ring-2 focus:ring-[#E50914]/50"
+                        onClick={() => setActiveProfileTab("taste")}
+                        className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm p-6 text-left transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-[0_0_30px_rgba(229,9,20,0.15)] focus:outline-none focus:ring-2 focus:ring-primary/50"
                       >
-                        <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                        <div className="relative p-5">
-                          <Film className="mb-3 h-6 w-6 text-red-500 transition-transform duration-300 group-hover:scale-110" />
-                          <p className="text-[3.5rem] font-black leading-none tracking-tight text-foreground dark:text-white transition-colors group-hover:text-red-50">
-                            {countMoviesWatched}
-                          </p>
-                          <p className="mt-1 text-sm font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground">
-                            {text("profile.moviesWatched", "Movies Watched")}
-                          </p>
-                          <p className="mt-2 text-xs text-muted-foreground">
-                            {t("profile.watchedThisMonth", "+{{count}} this month", {
-                              count: watchedThisMonth,
-                            })}
-                          </p>
-                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                        <Film className="mb-3 h-6 w-6 text-primary transition-transform duration-300 group-hover:scale-110" />
+                        <p className="text-5xl font-black leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
+                          {countMoviesWatched}
+                        </p>
+                        <p className="mt-2.5 text-xs font-bold uppercase tracking-wider text-muted-foreground group-hover:text-foreground">
+                          {text("profile.moviesWatched", "Movies Watched")}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground/85">
+                          {t("profile.watchedThisMonth", "+{{count}} this month", {
+                            count: watchedThisMonth,
+                          })}
+                        </p>
                       </button>
 
+                      {/* Ratings Card */}
                       <button
                         type="button"
-                        onClick={() =>
-                          document
-                            .getElementById("ratings-distribution")
-                            ?.scrollIntoView({
-                              behavior: reduceMotion ? "auto" : "smooth",
-                            })
-                        }
-                        className="group relative overflow-hidden rounded-xl border border-border/70 bg-card/80 text-left transition-all duration-300 hover:-translate-y-1.5 hover:border-[#E50914]/40 hover:shadow-[0_0_30px_rgba(229,9,20,0.15)] focus:outline-none focus:ring-2 focus:ring-[#E50914]/50"
+                        onClick={() => setActiveProfileTab("taste")}
+                        className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm p-6 text-left transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-[0_0_30px_rgba(229,9,20,0.15)] focus:outline-none focus:ring-2 focus:ring-primary/50"
                       >
-                        <div className="absolute inset-0 bg-gradient-to-br from-[#E50914]/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                        <div className="relative p-5">
-                          <Star className="mb-3 h-6 w-6 text-[#E50914] transition-transform duration-300 group-hover:scale-110" />
-                          <p className="text-[3.5rem] font-black leading-none tracking-tight text-foreground dark:text-white transition-colors group-hover:text-red-50">
-                            {countRatings}
-                          </p>
-                          <p className="mt-1 text-sm font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground">
-                            {text("profile.ratings", "Ratings")}
-                          </p>
-                          <p className="mt-2 text-xs text-muted-foreground">
-                            {latestRatedDateLabel}
-                          </p>
-                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                        <Star className="mb-3 h-6 w-6 text-[#ff6b73] transition-transform duration-300 group-hover:scale-110" />
+                        <p className="text-5xl font-black leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
+                          {countRatings}
+                        </p>
+                        <p className="mt-2.5 text-xs font-bold uppercase tracking-wider text-muted-foreground group-hover:text-foreground">
+                          {text("profile.ratings", "Ratings")}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground/85">
+                          {latestRatedDateLabel}
+                        </p>
                       </button>
 
+                      {/* Watch Time Card */}
                       <button
                         type="button"
-                        onClick={() =>
-                          document
-                            .getElementById("favorite-series")
-                            ?.scrollIntoView({
-                              behavior: reduceMotion ? "auto" : "smooth",
-                            })
-                        }
-                        className="group relative overflow-hidden rounded-xl border border-border/70 bg-card/80 text-left transition-all duration-300 hover:-translate-y-1.5 hover:border-emerald-500/40 hover:shadow-[0_0_30px_rgba(16,185,129,0.15)] focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                        onClick={() => setActiveProfileTab("taste")}
+                        className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm p-6 text-left transition-all duration-300 hover:-translate-y-1.5 hover:border-emerald-500/40 hover:shadow-[0_0_30px_rgba(16,185,129,0.15)] focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                       >
                         <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                        <div className="relative p-5">
-                          <Clock className="mb-3 h-6 w-6 text-emerald-400 transition-transform duration-300 group-hover:scale-110" />
-                          <p className="text-[3.5rem] font-black leading-none tracking-tight text-foreground dark:text-white transition-colors group-hover:text-emerald-50">
-                            {countWatchHours}h
-                          </p>
-                          <p className="mt-1 text-sm font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground">
-                            {text("profile.watchTime", "Watch Time")}
-                          </p>
-                          <p className="mt-2 text-xs text-muted-foreground">
-                            {t("profile.averageHoursPerMovie", "Avg {{hours}}h per movie", {
-                              hours: averageMovieHours,
-                            })}
-                          </p>
-                        </div>
+                        <Clock className="mb-3 h-6 w-6 text-emerald-400 transition-transform duration-300 group-hover:scale-110" />
+                        <p className="text-4xl font-black leading-none tracking-tight text-foreground transition-colors group-hover:text-emerald-400">
+                          {totalWatchDaysHoursMinutes}
+                        </p>
+                        <p className="mt-4 text-xs font-bold uppercase tracking-wider text-muted-foreground group-hover:text-foreground">
+                          {text("profile.watchTime", "Watch Time")}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground/85">
+                          {t("profile.averageHoursPerMovie", "Avg {{hours}}h per movie", {
+                            hours: averageMovieHours,
+                          })}
+                        </p>
                       </button>
+                    </div>
+
+                    {/* Persona & Level Details row */}
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                      {/* Persona Card */}
+                      {cinephilePersona && (
+                        <div className="h-full">
+                          <Card className="ct-panel border-border/50 bg-card/60 backdrop-blur-sm relative overflow-hidden h-full transition-all duration-300 hover:shadow-xl hover:border-primary/20">
+                            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
+                            <CardContent className="pt-6 relative z-10 space-y-4">
+                              <div className="flex items-center gap-3.5">
+                                <div className="rounded-2xl bg-[#E50914]/10 p-3.5 text-primary shadow-inner">
+                                  {cinephilePersona.icon}
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                    {text("profile.tasteArchetype", "Taste Archetype")}
+                                  </p>
+                                  <h4 className="text-2xl font-black tracking-tight text-foreground">
+                                    {cinephilePersona.title}
+                                  </h4>
+                                </div>
+                              </div>
+                              <p className="text-sm leading-relaxed text-muted-foreground">
+                                {cinephilePersona.description}
+                              </p>
+                              <div className="flex flex-wrap gap-1.5 pt-1">
+                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-primary/10 text-[#ff6b73] border border-primary/20">
+                                  {cinephilePersona.badge}
+                                </span>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      )}
+
+                      {/* Milestone Stats Card */}
+                      <Card className="ct-panel border-border/50 bg-card/60 backdrop-blur-sm relative overflow-hidden h-full transition-all duration-300 hover:shadow-xl hover:border-emerald-500/20">
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent" />
+                        <CardContent className="pt-6 relative z-10 space-y-4">
+                          <div className="flex items-center gap-3.5">
+                            <div className="rounded-2xl bg-emerald-500/10 p-3.5 text-emerald-400 shadow-inner">
+                              <Trophy className="h-6 w-6" />
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-500">
+                                {text("profile.cinephileMilestones", "Trek Progress")}
+                              </p>
+                              <h4 className="text-2xl font-black tracking-tight text-foreground">
+                                {text("profile.journeyTitle", "Cinephile Ranks")}
+                              </h4>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-3 pt-1">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">Casual Viewer (1-50)</span>
+                              <span className="font-semibold text-foreground">{moviesWatched >= 50 ? "✓ Completed" : `${moviesWatched}/50`}</span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">Movie Buff (51-150)</span>
+                              <span className="font-semibold text-foreground">{moviesWatched >= 150 ? "✓ Completed" : moviesWatched > 50 ? `${moviesWatched}/150` : "Locked"}</span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">Cinephile (151-300)</span>
+                              <span className="font-semibold text-foreground">{moviesWatched >= 300 ? "✓ Completed" : moviesWatched > 150 ? `${moviesWatched}/300` : "Locked"}</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </motion.section>
+                  ) : null}
+
+                  {shouldShowProfileSection("overview") && recentlyWatched.length > 0 ? (
+                  <motion.section variants={itemVariants} id="recently-watched" className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <h2 className="flex items-center gap-2 text-xl font-bold">
+                          <Clock className="h-5 w-5 text-emerald-400" />
+                          {text("profile.recentlyWatched", "Recently Watched")}
+                        </h2>
+                        <p className="text-xs text-muted-foreground">
+                          {text("profile.recentlyWatchedSubtitle", "Your latest additions to the watch log.")}
+                        </p>
+                      </div>
+                      <Button asChild size="sm" variant="outline" className="shrink-0 rounded-full text-xs">
+                        <Link to="/watched">{text("profile.viewAll", "View all")}</Link>
+                      </Button>
+                    </div>
+                    <div className="relative overflow-hidden">
+                      <div className="hide-scrollbar flex gap-3 overflow-x-auto pb-2 scroll-smooth">
+                        {recentlyWatched.map((item) => {
+                          const itemKey = `${item.mediaType}-${item.mediaId}`;
+                          const insight = watchedInsights.find((wi) => wi.key === itemKey);
+                          const daysAgo = Math.floor(
+                            (Date.now() - new Date(item.watchedAt || item.addedAt || 0).getTime()) /
+                              (24 * 60 * 60 * 1000),
+                          );
+                          const timeLabel =
+                            daysAgo === 0
+                              ? text("common.today", "Today")
+                              : daysAgo === 1
+                              ? text("common.yesterday", "Yesterday")
+                              : t("profile.daysAgo", "{{n}}d ago", { n: daysAgo });
+
+                          return (
+                            <Link
+                              key={itemKey}
+                              to={`/${item.mediaType === "movie" ? "movie" : "tv"}/${item.mediaId}`}
+                              className="group relative flex-shrink-0 w-[100px]"
+                            >
+                              <div className="relative aspect-[2/3] overflow-hidden rounded-xl border border-border/50 bg-card shadow-md transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl group-hover:border-primary/40">
+                                {insight?.posterPath ? (
+                                  <Image
+                                    src={getImageUrl(insight.posterPath, "w185")}
+                                    alt={insight.title}
+                                    width={185}
+                                    height={278}
+                                    className="h-full w-full object-cover"
+                                    loading="lazy"
+                                    showSkeleton
+                                  />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center bg-card/80">
+                                    <Film className="h-8 w-8 text-muted-foreground/40" />
+                                  </div>
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                                {typeof item.rating === "number" && (
+                                  <div className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[9px] font-black text-white shadow">
+                                    {item.rating}
+                                  </div>
+                                )}
+                              </div>
+                              <p className="mt-1.5 line-clamp-2 text-[10px] font-semibold leading-tight text-foreground/80">
+                                {insight?.title || `#${item.mediaId}`}
+                              </p>
+                              <p className="text-[9px] text-muted-foreground">{timeLabel}</p>
+                            </Link>
+                          );
+                        })}
+                      </div>
                     </div>
                   </motion.section>
                   ) : null}
@@ -2773,143 +3195,268 @@ export default function Profile() {
                   </Dialog>
 
                   {shouldShowProfileSection("taste") ? (
-                  <motion.section variants={itemVariants}>
-                    <h2 className="mb-2 text-xl font-bold">
-                      {text("profile.favoriteGenres", "Favorite Genres")}
-                    </h2>
-                    <p className="mb-4 text-sm text-neutral-400">
-                      {t("profile.genresSelected", "{{count}} genres selected", {
-                        count: favoriteGenres.length,
-                      })}
-                    </p>
-                    <Card className="ct-panel transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl">
-                      <CardContent className="pt-6">
-                        <div className="flex flex-wrap gap-2">
-                          {genres.map((genre) => {
-                            const selected = favoriteGenres.includes(genre.id);
-                            const watchCount =
-                              genreWatchCounts.get(genre.id) || 0;
-                            return (
-                              <Tooltip key={genre.id}>
-                                <TooltipTrigger asChild>
-                                  <Badge
-                                    variant={selected ? "default" : "outline"}
-                                    className={cn(
-                                      "cursor-pointer px-3 py-1.5 transition-all duration-200 hover:scale-105",
-                                      selected
-                                        ? "border-primary bg-primary text-primary-foreground"
-                                        : "border-border/70 text-foreground/85 hover:border-primary/60 hover:text-foreground",
-                                    )}
-                                    onClick={() => toggleGenre(genre.id)}
-                                  >
-                                    {selected ? (
-                                      <Check className="mr-1.5 h-3.5 w-3.5" />
-                                    ) : null}
-                                    {genre.name}
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {t("profile.genreFilmsCount", "{{genre}} ({{count}} films)", {
-                                    genre: genre.name,
-                                    count: watchCount,
-                                  })}
-                                </TooltipContent>
-                              </Tooltip>
-                            );
-                          })}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.section>
-                  ) : null}
-
-                  {shouldShowProfileSection("taste") ? (
-                  <motion.section
-                    variants={itemVariants}
-                    id="ratings-distribution"
-                    className="space-y-3"
-                  >
-                    <h3 className="flex items-center gap-2 text-lg font-semibold">
-                      <BarChart3 className="h-4 w-4 text-[#E50914]" />
-                      {text("profile.ratingDistribution", "Rating Distribution")}
-                    </h3>
-                    <Card className="ct-panel w-full">
-                      <CardContent className="space-y-4 pt-6">
-                        {ratingDistribution.map((entry) => {
-                          const max = Math.max(
-                            ...ratingDistribution.map((value) => value.count),
-                            1,
-                          );
-                          const progressValue = (entry.count / max) * 100;
-                          const isTopBar =
-                            maxRatingCount > 0 &&
-                            entry.count === maxRatingCount;
-
-                          return (
-                            <div
-                              key={entry.rating}
-                              className="flex items-center gap-3"
-                            >
-                              <span className="w-8 text-xs text-neutral-400">
-                                {entry.rating}
-                              </span>
-                              <Progress
-                                value={progressValue}
-                                className={cn(
-                                  "h-2.5 flex-1 bg-neutral-800",
-                                  isTopBar
-                                    ? "[&>div]:bg-gradient-to-r [&>div]:from-[#ff3b45] [&>div]:to-[#ff8f96]"
-                                    : "[&>div]:bg-gradient-to-r [&>div]:from-[#E50914] [&>div]:to-[#ff6b73]",
-                                )}
-                              />
-                              <span className="w-8 text-right text-xs text-neutral-400">
-                                {entry.count}
-                              </span>
-                            </div>
-                          );
-                        })}
-                        <p className="text-xs text-neutral-400">
-                          {mostUsedRating
-                            ? t("profile.mostFrequentRating", "Most frequent rating: {{rating}} stars", { rating: mostUsedRating.rating })
-                            : text("profile.noRatingsYet", "No ratings yet")}
-                        </p>
-                        {ratingsCount === 0 ? (
-                          <div className="rounded-xl border border-dashed border-border/70 bg-background/30 p-4">
-                            <p className="text-sm font-medium text-foreground">
-                              {text("profile.noRatingsTitle", "You have not rated anything yet")}
-                            </p>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                              {text(
-                                "profile.noRatingsDesc",
-                                "Rate a few titles to unlock recommendations, actor matches, and a full ratings breakdown.",
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Left Column: Genres & Decades */}
+                      <div className="space-y-6">
+                        <motion.section variants={itemVariants} className="space-y-3">
+                          <h2 className="flex items-center gap-2 text-xl font-bold">
+                            <Sparkles className="h-5 w-5 text-yellow-500" />
+                            {text("profile.favoriteGenres", "Favorite Genres")}
+                          </h2>
+                          <p className="text-xs text-muted-foreground">
+                            {t("profile.genresSelected", "{{count}} genres selected", {
+                              count: favoriteGenres.length,
+                            })}
+                          </p>
+                          <Card className="ct-panel transition-all duration-200 hover:shadow-xl">
+                            <CardContent className="pt-5 pb-5">
+                              {favoriteGenres.length === 0 && (
+                                <p className="mb-3 rounded-lg border border-dashed border-border/50 bg-background/40 px-3 py-2 text-center text-[11px] text-muted-foreground">
+                                  {text("profile.tapGenresToSelect", "Tap genres below to build your taste profile — this powers recommendations.")}
+                                </p>
                               )}
-                            </p>
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              <Button asChild size="sm">
-                                <Link to="/search">{text("profile.browseMoviesToRate", "Browse movies to rate")}</Link>
-                              </Button>
-                              <Button asChild size="sm" variant="outline">
-                                <Link to="/watched">{text("profile.openWatchedList", "Open watched list")}</Link>
-                              </Button>
-                            </div>
-                          </div>
-                        ) : null}
-                      </CardContent>
-                    </Card>
-                  </motion.section>
+                              <div className="flex flex-wrap gap-2">
+                                {genres.map((genre) => {
+                                  const selected = favoriteGenres.includes(genre.id);
+                                  const watchCount =
+                                    genreWatchCounts.get(genre.id) || 0;
+                                  return (
+                                    <Tooltip key={genre.id}>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          type="button"
+                                          onClick={() => toggleGenre(genre.id)}
+                                          className={cn(
+                                            "group relative flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-200 hover:scale-105",
+                                            selected
+                                              ? "border-primary bg-primary text-primary-foreground shadow-[0_0_12px_rgba(229,9,20,0.25)]"
+                                              : "border-border/60 bg-card/70 text-foreground/80 hover:border-primary/50 hover:bg-primary/10 hover:text-foreground",
+                                          )}
+                                        >
+                                          {selected && (
+                                            <Check className="h-3 w-3 shrink-0" />
+                                          )}
+                                          {genre.name}
+                                          {watchCount > 0 && (
+                                            <span className={cn(
+                                              "ml-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold",
+                                              selected
+                                                ? "bg-white/20 text-white"
+                                                : "bg-primary/10 text-primary",
+                                            )}>
+                                              {watchCount}
+                                            </span>
+                                          )}
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        {t("profile.genreFilmsCount", "{{genre}} ({{count}} films)", {
+                                          genre: genre.name,
+                                          count: watchCount,
+                                        })}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  );
+                                })}
+                              </div>
+                              {favoriteGenres.length > 0 && (
+                                <p className="mt-3 text-[10px] text-muted-foreground border-t border-border/20 pt-3">
+                                  {t("profile.genresSelected", "{{count}} genres selected", {
+                                    count: favoriteGenres.length,
+                                  })}{" — "}{text("profile.genresSavedAutomatically", "saved automatically.")}
+                                </p>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </motion.section>
+
+                        <motion.section variants={itemVariants} className="space-y-3">
+                          <h2 className="flex items-center gap-2 text-xl font-bold">
+                            <CalendarDays className="h-5 w-5 text-amber-500" />
+                            {text("profile.decadeDistribution", "Decade Distribution")}
+                          </h2>
+                          <p className="text-xs text-muted-foreground">
+                            {text("profile.decadeDistributionSubtitle", "Distribution of logged films across decades of release.")}
+                          </p>
+                          <Card className="ct-panel w-full transition-all duration-200 hover:shadow-xl">
+                            <CardContent className="space-y-4 pt-6">
+                              {decadeDistribution.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">{text("profile.noDecadeStats", "No decade statistics available yet.")}</p>
+                              ) : (
+                                decadeDistribution.map((entry) => {
+                                  const max = Math.max(
+                                    ...decadeDistribution.map((value) => value.count),
+                                    1,
+                                  );
+                                  const progressValue = (entry.count / max) * 100;
+                                  return (
+                                    <div key={entry.decade} className="flex items-center gap-3">
+                                      <span className="w-12 text-xs text-neutral-400 font-semibold">{entry.decade}</span>
+                                      <Progress
+                                        value={progressValue}
+                                        className="h-2.5 flex-1 bg-neutral-800/80 [&>div]:bg-gradient-to-r [&>div]:from-amber-500 [&>div]:to-orange-400"
+                                      />
+                                      <span className="w-8 text-right text-xs text-neutral-400">{entry.count}</span>
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </CardContent>
+                          </Card>
+                        </motion.section>
+                      </div>
+
+                      {/* Right Column: Ratings & Crew */}
+                      <div className="space-y-6">
+                        <motion.section
+                          variants={itemVariants}
+                          id="ratings-distribution"
+                          className="space-y-3"
+                        >
+                          <h3 className="flex items-center gap-2 text-xl font-bold">
+                            <BarChart3 className="h-5 w-5 text-[#E50914]" />
+                            {text("profile.ratingDistribution", "Rating Distribution")}
+                          </h3>
+                          <p className="text-xs text-muted-foreground">
+                            {text("profile.ratingDistributionSubtitle", "Spread of your rated titles.")}
+                          </p>
+                          <Card className="ct-panel w-full transition-all duration-200 hover:shadow-xl">
+                            <CardContent className="space-y-4 pt-6">
+                              {ratingDistribution.map((entry) => {
+                                const max = Math.max(
+                                  ...ratingDistribution.map((value) => value.count),
+                                  1,
+                                );
+                                const progressValue = (entry.count / max) * 100;
+                                const isTopBar =
+                                  maxRatingCount > 0 &&
+                                  entry.count === maxRatingCount;
+
+                                return (
+                                  <div
+                                    key={entry.rating}
+                                    className="flex items-center gap-3"
+                                  >
+                                    <span className="w-8 text-xs text-neutral-400">
+                                      {entry.rating}
+                                    </span>
+                                    <Progress
+                                      value={progressValue}
+                                      className={cn(
+                                        "h-2.5 flex-1 bg-neutral-800",
+                                        isTopBar
+                                          ? "[&>div]:bg-gradient-to-r [&>div]:from-[#ff3b45] [&>div]:to-[#ff8f96]"
+                                          : "[&>div]:bg-gradient-to-r [&>div]:from-[#E50914] [&>div]:to-[#ff6b73]",
+                                      )}
+                                    />
+                                    <span className="w-8 text-right text-xs text-neutral-400">
+                                      {entry.count}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                              <p className="text-xs text-neutral-400 pt-1 border-t border-border/20">
+                                {mostUsedRating
+                                  ? t("profile.mostFrequentRating", "Most frequent rating: {{rating}} stars", { rating: mostUsedRating.rating })
+                                  : text("profile.noRatingsYet", "No ratings yet")}
+                              </p>
+                              {ratingsCount === 0 ? (
+                                <div className="rounded-xl border border-dashed border-border/70 bg-background/30 p-4 mt-2">
+                                  <p className="text-sm font-medium text-foreground">
+                                    {text("profile.noRatingsTitle", "You have not rated anything yet")}
+                                  </p>
+                                  <p className="mt-1 text-sm text-muted-foreground">
+                                    {text(
+                                      "profile.noRatingsDesc",
+                                      "Rate a few titles to unlock recommendations, actor matches, and a full ratings breakdown.",
+                                    )}
+                                  </p>
+                                  <div className="mt-3 flex flex-wrap gap-2">
+                                    <Button asChild size="sm">
+                                      <Link to="/search">{text("profile.browseMoviesToRate", "Browse movies to rate")}</Link>
+                                    </Button>
+                                    <Button asChild size="sm" variant="outline">
+                                      <Link to="/watched">{text("profile.openWatchedList", "Open watched list")}</Link>
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : null}
+                            </CardContent>
+                          </Card>
+                        </motion.section>
+
+                        <motion.section variants={itemVariants} className="space-y-3">
+                          <h2 className="flex items-center gap-2 text-xl font-bold">
+                            <Award className="h-5 w-5 text-purple-400" />
+                            {text("profile.crewInsights", "Crew Insights")}
+                          </h2>
+                          <p className="text-xs text-muted-foreground">
+                            {text("profile.crewInsightsSubtitle", "Directors and actors you watch most frequently.")}
+                          </p>
+                          <Card className="ct-panel w-full transition-all duration-200 hover:shadow-xl">
+                            <CardContent className="space-y-6 pt-6">
+                              {/* Directors */}
+                              <div className="space-y-3">
+                                <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">{text("profile.topDirectors", "Most Watched Directors")}</p>
+                                {topDirectors.length === 0 ? (
+                                  <p className="text-xs text-muted-foreground">{text("profile.noDirectorsYet", "No director statistics yet.")}</p>
+                                ) : (
+                                  topDirectors.map((director) => {
+                                    const max = Math.max(...topDirectors.map((d) => d.count), 1);
+                                    const progressValue = (director.count / max) * 100;
+                                    return (
+                                      <div key={director.name} className="space-y-1">
+                                        <div className="flex justify-between text-xs">
+                                          <span className="font-medium text-foreground">{director.name}</span>
+                                          <span className="text-muted-foreground">{t("profile.watchedCount", "{{count}} films", { count: director.count })}</span>
+                                        </div>
+                                        <Progress value={progressValue} className="h-1.5 bg-neutral-800/70 [&>div]:bg-purple-500" />
+                                      </div>
+                                    );
+                                  })
+                                )}
+                              </div>
+
+                              {/* Cast */}
+                              <div className="space-y-3 pt-2">
+                                <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">{text("profile.topCast", "Most Watched Cast")}</p>
+                                {topCast.length === 0 ? (
+                                  <p className="text-xs text-muted-foreground">{text("profile.noCastYet", "No actor statistics yet.")}</p>
+                                ) : (
+                                  topCast.map((actor) => {
+                                    const max = Math.max(...topCast.map((c) => c.count), 1);
+                                    const progressValue = (actor.count / max) * 100;
+                                    return (
+                                      <div key={actor.name} className="space-y-1">
+                                        <div className="flex justify-between text-xs">
+                                          <span className="font-medium text-foreground">{actor.name}</span>
+                                          <span className="text-muted-foreground">{t("profile.watchedCount", "{{count}} films", { count: actor.count })}</span>
+                                        </div>
+                                        <Progress value={progressValue} className="h-1.5 bg-neutral-800/70 [&>div]:bg-sky-500" />
+                                      </div>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.section>
+                      </div>
+                    </div>
                   ) : null}
                 </div>
               </div>
 
-              <StickySaveBar
-                isVisible={hasUnsavedChanges && !isEditMode}
-                isSaving={isSaving}
-                onSave={handleSaveProfile}
-                onCancel={handleCancelChanges}
-                saveLabel={text("settings.saveChanges", "Save Changes")}
-                cancelLabel={text("common.cancel", "Cancel")}
-              />
-            </>
+            </div>
+
+            <StickySaveBar
+              isVisible={hasUnsavedChanges && !isEditMode}
+              isSaving={isSaving}
+              onSave={handleSaveProfile}
+              onCancel={handleCancelChanges}
+              saveLabel={text("settings.saveChanges", "Save Changes")}
+              cancelLabel={text("common.cancel", "Cancel")}
+            />
           </TooltipProvider>
         )}
       </motion.div>

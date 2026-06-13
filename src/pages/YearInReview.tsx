@@ -1,12 +1,35 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams, Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { useUserLists } from "@/contexts/UserListsContext";
-import { getMovieDetails, getTVDetails } from "@/services/tmdb";
+import { getMovieDetails, getTVDetails, getImageUrl } from "@/services/tmdb";
 import SEO from "@/components/SEO";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, TrendingUp, Award, Clock, Flame } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Image } from "@/components/ui/Image";
+import { Button } from "@/components/ui/button";
+import {
+  Calendar,
+  TrendingUp,
+  Award,
+  Clock,
+  Flame,
+  ArrowRight,
+  Sparkles,
+  BarChart2,
+  Film,
+  Star,
+  Tv,
+} from "lucide-react";
 import {
   PieChart,
   Pie,
@@ -20,8 +43,16 @@ import {
 } from "recharts";
 import { useTranslation } from "react-i18next";
 import { getMediaTitle } from "@/services/tmdb";
+import { cn } from "@/lib/utils";
 
-const COLORS = ["#E50914", "#ff6b73", "#f97316", "#f59e0b", "#fb7185"];
+const CINEMATIC_CHART_COLORS = [
+  "#E50914", // Netflix Red
+  "#F97316", // Amber Orange
+  "#F59E0B", // Gold
+  "#10B981", // Emerald
+  "#3B82F6", // Blue
+  "#8B5CF6", // Purple
+];
 
 type MovieDetails = Awaited<ReturnType<typeof getMovieDetails>>;
 type TVDetails = Awaited<ReturnType<typeof getTVDetails>>;
@@ -30,9 +61,45 @@ type SeasonSummary = { episode_count?: number };
 type GenreSummary = { name: string };
 
 export default function YearInReview() {
-  const currentYear = new Date().getFullYear();
   const { t, i18n } = useTranslation();
   const { watched } = useUserLists();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // 1. Calculate all years user has logged watch history
+  const availableYears = useMemo(() => {
+    const yearsSet = new Set<number>();
+    watched.forEach((item) => {
+      const dateStr = item.watchedAt || item.addedAt;
+      if (dateStr) {
+        const yr = new Date(dateStr).getFullYear();
+        if (!Number.isNaN(yr)) {
+          yearsSet.add(yr);
+        }
+      }
+    });
+
+    if (yearsSet.size === 0) {
+      yearsSet.add(new Date().getFullYear());
+    }
+
+    return Array.from(yearsSet).sort((a, b) => b - a);
+  }, [watched]);
+
+  // Sync active year with searchParams
+  const currentYear = useMemo(() => {
+    const yearParam = searchParams.get("year");
+    if (yearParam && !Number.isNaN(Number(yearParam))) {
+      return Number(yearParam);
+    }
+    return availableYears[0] || new Date().getFullYear();
+  }, [searchParams, availableYears]);
+
+  // Update selected year URL parameter
+  const handleYearChange = (year: string) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("year", year);
+    setSearchParams(nextParams);
+  };
 
   // Filter this year's watched content
   const thisYearWatched = useMemo(() => {
@@ -47,51 +114,51 @@ export default function YearInReview() {
   const thisYearTV = thisYearWatched.filter((item) => item.mediaType === "tv");
   const totalWatched = thisYearWatched.length;
 
-  // Fetch details (limited to avoid too many requests)
-  const { data: movieDetails = [] } = useQuery({
-    queryKey: ["year-review-movies", currentYear],
+  // Fetch details (limited to avoid too many concurrent requests)
+  const { data: movieDetails = [], isLoading: loadingMovies } = useQuery({
+    queryKey: ["year-review-movies-enhanced", currentYear, thisYearMovies.length],
     queryFn: async () => {
-      const promises = thisYearMovies.slice(0, 40).map((item) => 
-        getMovieDetails(item.mediaId)
+      const promises = thisYearMovies.slice(0, 40).map((item) =>
+        getMovieDetails(item.mediaId).catch(() => null),
       );
-      return Promise.all(promises);
+      const results = await Promise.all(promises);
+      return results.filter((item): item is MovieDetails => item !== null);
     },
     enabled: thisYearMovies.length > 0,
   });
 
-  const { data: tvDetails = [] } = useQuery({
-    queryKey: ["year-review-tv", currentYear],
+  const { data: tvDetails = [], isLoading: loadingTV } = useQuery({
+    queryKey: ["year-review-tv-enhanced", currentYear, thisYearTV.length],
     queryFn: async () => {
-      const promises = thisYearTV.slice(0, 40).map((item) => 
-        getTVDetails(item.mediaId)
+      const promises = thisYearTV.slice(0, 40).map((item) =>
+        getTVDetails(item.mediaId).catch(() => null),
       );
-      return Promise.all(promises);
+      const results = await Promise.all(promises);
+      return results.filter((item): item is TVDetails => item !== null);
     },
     enabled: thisYearTV.length > 0,
   });
 
-  const allDetails = useMemo(
-    () => [...movieDetails, ...tvDetails] as DetailItem[],
-    [movieDetails, tvDetails],
-  );
+  const allDetails = useMemo(() => {
+    return [...movieDetails, ...tvDetails] as DetailItem[];
+  }, [movieDetails, tvDetails]);
 
-  // Stats
+  // Calculation of total runtime metrics
   const totalRuntime = useMemo(() => {
     return allDetails.reduce((acc, item) => {
       if (!item) return acc;
       if ("runtime" in item && item.runtime) {
         return acc + item.runtime;
       }
-        if ("episode_run_time" in item && item.episode_run_time?.[0]) {
-          const avgRuntime = item.episode_run_time[0];
-          const totalEpisodes =
-            item.seasons?.reduce(
-              (sum: number, season: SeasonSummary) =>
-                sum + (season.episode_count || 0),
-              0,
-            ) || 0;
-          return acc + avgRuntime * totalEpisodes;
-        }
+      if ("episode_run_time" in item && item.episode_run_time?.[0]) {
+        const avgRuntime = item.episode_run_time[0];
+        const totalEpisodes =
+          item.seasons?.reduce(
+            (sum: number, season: SeasonSummary) => sum + (season.episode_count || 0),
+            0,
+          ) || 0;
+        return acc + avgRuntime * totalEpisodes;
+      }
       return acc;
     }, 0);
   }, [allDetails]);
@@ -99,7 +166,7 @@ export default function YearInReview() {
   const totalHours = Math.round(totalRuntime / 60);
   const totalDays = Math.round(totalHours / 24);
 
-  // Genre Breakdown
+  // Genre breakdown
   const genreData = useMemo(() => {
     const count: Record<string, number> = {};
     allDetails.forEach((item) => {
@@ -114,7 +181,7 @@ export default function YearInReview() {
       .slice(0, 6);
   }, [allDetails]);
 
-  // Monthly Activity
+  // Monthly activity trend
   const monthlyData = useMemo(() => {
     const data = Array.from({ length: 12 }, (_, i) => ({
       month: new Date(2000, i).toLocaleString(i18n.language || "en", { month: "short" }),
@@ -132,7 +199,7 @@ export default function YearInReview() {
     return data;
   }, [thisYearWatched, i18n.language]);
 
-  // Top Rated
+  // Top Rated Nominees
   const topRated = useMemo(() => {
     return [...allDetails]
       .sort((a, b) => (b?.vote_average || 0) - (a?.vote_average || 0))
@@ -140,22 +207,59 @@ export default function YearInReview() {
   }, [allDetails]);
 
   const busiestMonth = useMemo(() => {
-    return monthlyData.reduce((max, curr) => (curr.count > max.count ? curr : max));
+    return monthlyData.reduce(
+      (max, curr) => (curr.count > max.count ? curr : max),
+      { month: "—", count: 0 },
+    );
   }, [monthlyData]);
 
+  const isLoading = loadingMovies || loadingTV;
+
+  // Empty state rendering
   if (totalWatched === 0) {
     return (
       <>
         <SEO title={t("yearInReview.seoTitle", "{{year}} Year in Review", { year: currentYear })} />
         <div className="ct-page-shell flex min-h-screen items-center justify-center px-4">
-          <Card className="ct-panel max-w-md p-12 text-center">
-            <Calendar className="mx-auto mb-4 h-12 w-12 text-primary" />
-            <h2 className="mb-2 text-2xl font-semibold text-foreground">{t("yearInReview.emptyTitle", "No Activity Yet")}</h2>
-            <p className="text-muted-foreground">
-              {t("yearInReview.emptyDescription", "Start watching in {{year}} to see your Year in Review!", {
-                year: currentYear,
-              })}
-            </p>
+          <Card className="ct-panel max-w-md p-10 text-center space-y-6 backdrop-blur-md">
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+              <Calendar className="h-8 w-8 animate-pulse" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-2xl font-black text-foreground">
+                {t("yearInReview.emptyTitle", "No Activity Yet")}
+              </h2>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {t(
+                  "yearInReview.emptyDescription",
+                  "Start watching in {{year}} to see your Year in Review!",
+                  {
+                    year: currentYear,
+                  },
+                )}
+              </p>
+            </div>
+
+            {/* If they have other years, let them select it! */}
+            {availableYears.length > 1 && (
+              <div className="pt-2 flex flex-col gap-2">
+                <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">
+                  Browse previous years
+                </span>
+                <Select value={currentYear.toString()} onValueChange={handleYearChange}>
+                  <SelectTrigger className="w-full rounded-xl border-border/40 bg-card/40 text-xs">
+                    <SelectValue placeholder="Year" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-border/40 bg-popover/95 backdrop-blur-sm">
+                    {availableYears.map((yr) => (
+                      <SelectItem key={yr} value={yr.toString()}>
+                        {yr}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </Card>
         </div>
       </>
@@ -166,155 +270,352 @@ export default function YearInReview() {
     <>
       <SEO
         title={t("yearInReview.seoTitle", "{{year}} Year in Review", { year: currentYear })}
-        description={t("yearInReview.seoDescription", "Your {{year}} watching statistics and highlights", { year: currentYear })}
+        description={t(
+          "yearInReview.seoDescription",
+          "Your {{year}} watching statistics and highlights",
+          { year: currentYear },
+        )}
         canonical="https://cinetrekker.vercel.app/year-in-review"
       />
 
-      <div className="ct-page-shell min-h-screen px-4 pb-24 pt-8 sm:pb-10">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="mb-8 flex items-start gap-3 sm:mb-10 sm:items-center sm:gap-4">
-            <div className="rounded-2xl bg-primary/12 p-3">
-              <Calendar className="h-9 w-9 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                {t("yearInReview.title", "{{year}} Year in Review", { year: currentYear })}
-              </h1>
-              <p className="text-sm text-muted-foreground sm:text-lg">{t("yearInReview.subtitle", "Your cinematic journey this year")}</p>
+      <div className="ct-page-shell min-h-screen px-4 pb-24 pt-20 sm:pb-10">
+        <div className="max-w-5xl mx-auto space-y-8">
+          {/* Cinematic wrapped recap header */}
+          <div className="relative overflow-hidden rounded-3xl border border-border/40 bg-card/25 p-6 sm:p-8 backdrop-blur-md">
+            {/* Glowing background radial overlays */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_120%,rgba(229,9,20,0.12),transparent_70%)] pointer-events-none" />
+            <div className="absolute -right-20 -top-20 w-80 h-80 bg-primary/10 rounded-full blur-3xl opacity-30 pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col sm:flex-row gap-6 items-center justify-between">
+              <div className="space-y-3 text-center sm:text-left">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black uppercase tracking-widest text-primary">
+                  <Sparkles className="h-3.5 w-3.5 fill-current animate-pulse" />
+                  Annual Recap
+                </div>
+                <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl">
+                  {t("yearInReview.title", "{{year}} Year in Review", { year: currentYear })}
+                </h1>
+                <p className="text-muted-foreground text-xs sm:text-sm max-w-lg">
+                  {t("yearInReview.subtitle", "Your cinematic journey this year")}
+                </p>
+              </div>
+
+              {/* Ceremony recap year switcher */}
+              <div className="flex flex-col gap-1.5 w-36 shrink-0 text-center sm:text-left">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  Recap Year
+                </span>
+                <Select value={currentYear.toString()} onValueChange={handleYearChange}>
+                  <SelectTrigger className="rounded-xl border-border/40 bg-card/45 text-xs min-h-[38px]">
+                    <div className="flex items-center gap-1.5 font-bold">
+                      <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                      <SelectValue placeholder="Year" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-border/40 bg-popover/95 backdrop-blur-sm">
+                    {availableYears.map((yr) => (
+                      <SelectItem key={yr} value={yr.toString()}>
+                        {yr}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
-          {/* Overview Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            <Card className="ct-panel rounded-3xl p-5 sm:p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <TrendingUp className="h-6 w-6 text-primary" />
-                <h3 className="font-semibold text-lg">{t("yearInReview.totalWatched", "Total Watched")}</h3>
+          {/* Upgraded Glass Stat Cards overview row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* 1. Total titles watched */}
+            <Card className="ct-panel relative overflow-hidden rounded-3xl border border-border/40 bg-card/40 p-6 backdrop-blur-sm flex flex-col justify-between h-40">
+              <div className="flex items-center gap-3 text-primary mb-2">
+                <TrendingUp className="h-5 w-5" />
+                <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">
+                  {t("yearInReview.totalWatched", "Total Watched")}
+                </span>
               </div>
-              <p className="text-4xl font-bold text-foreground sm:text-5xl">{totalWatched}</p>
-              <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-                {t("yearInReview.moviesAndShows", "{{movies}} movies • {{shows}} TV shows", {
-                  movies: thisYearMovies.length,
-                  shows: thisYearTV.length,
-                })}
-              </p>
+              <div className="space-y-1">
+                <p className="text-4xl font-black text-foreground">{totalWatched}</p>
+                <p className="text-[10px] text-muted-foreground font-semibold">
+                  {t("yearInReview.moviesAndShows", "{{movies}} movies • {{shows}} TV shows", {
+                    movies: thisYearMovies.length,
+                    shows: thisYearTV.length,
+                  })}
+                </p>
+              </div>
             </Card>
 
-            <Card className="ct-panel rounded-3xl p-5 sm:p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Clock className="h-6 w-6 text-primary" />
-                <h3 className="font-semibold text-lg">{t("yearInReview.timeInvested", "Time Invested")}</h3>
+            {/* 2. Time Invested */}
+            <Card className="ct-panel relative overflow-hidden rounded-3xl border border-border/40 bg-card/40 p-6 backdrop-blur-sm flex flex-col justify-between h-40">
+              <div className="flex items-center gap-3 text-primary mb-2">
+                <Clock className="h-5 w-5" />
+                <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">
+                  {t("yearInReview.timeInvested", "Time Invested")}
+                </span>
               </div>
-              <p className="text-4xl font-bold text-foreground sm:text-5xl">{totalHours}h</p>
-              <p className="text-neutral-400 mt-1">{t("yearInReview.daysOfContent", "≈ {{days}} days of content", { days: totalDays })}</p>
+              <div className="space-y-1">
+                <p className="text-4xl font-black text-foreground">{totalHours}h</p>
+                <p className="text-[10px] text-muted-foreground font-semibold">
+                  {t("yearInReview.daysOfContent", "≈ {{days}} days of content", {
+                    days: totalDays,
+                  })}
+                </p>
+              </div>
             </Card>
 
-            <Card className="ct-panel rounded-3xl p-5 sm:p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Award className="h-6 w-6 text-primary" />
-                <h3 className="font-semibold text-lg">{t("yearInReview.favoriteGenre", "Favorite Genre")}</h3>
+            {/* 3. Favorite Genre */}
+            <Card className="ct-panel relative overflow-hidden rounded-3xl border border-border/40 bg-card/40 p-6 backdrop-blur-sm flex flex-col justify-between h-40">
+              <div className="flex items-center gap-3 text-primary mb-2">
+                <Award className="h-5 w-5" />
+                <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">
+                  {t("yearInReview.favoriteGenre", "Favorite Genre")}
+                </span>
               </div>
-              <p className="text-2xl font-bold text-foreground truncate sm:text-3xl">
-                {genreData[0]?.name || "—"}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-                {t("yearInReview.titlesCount", "{{count}} titles", { count: genreData[0]?.value || 0 })}
-              </p>
+              <div className="space-y-1">
+                <p className="text-2xl font-black text-foreground truncate">
+                  {genreData[0]?.name || "—"}
+                </p>
+                <p className="text-[10px] text-muted-foreground font-semibold">
+                  {t("yearInReview.titlesCount", "{{count}} titles", {
+                    count: genreData[0]?.value || 0,
+                  })}
+                </p>
+              </div>
             </Card>
 
-            <Card className="ct-panel rounded-3xl p-5 sm:p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Flame className="h-6 w-6 text-primary" />
-                <h3 className="font-semibold text-lg">{t("yearInReview.busiestMonth", "Busiest Month")}</h3>
+            {/* 4. Busiest Month */}
+            <Card className="ct-panel relative overflow-hidden rounded-3xl border border-border/40 bg-card/40 p-6 backdrop-blur-sm flex flex-col justify-between h-40">
+              <div className="flex items-center gap-3 text-primary mb-2">
+                <Flame className="h-5 w-5" />
+                <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">
+                  {t("yearInReview.busiestMonth", "Busiest Month")}
+                </span>
               </div>
-              <p className="text-2xl font-bold text-foreground sm:text-3xl">{busiestMonth.month}</p>
-              <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-                {t("yearInReview.titlesWatched", "{{count}} titles watched", { count: busiestMonth.count })}
-              </p>
+              <div className="space-y-1">
+                <p className="text-2xl font-black text-foreground">{busiestMonth.month}</p>
+                <p className="text-[10px] text-muted-foreground font-semibold">
+                  {t("yearInReview.titlesWatched", "{{count}} titles watched", {
+                    count: busiestMonth.count,
+                  })}
+                </p>
+              </div>
             </Card>
           </div>
 
-          {/* Tabs Section */}
-          <Tabs defaultValue="genres" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 rounded-2xl border border-border/50 bg-card/70 p-1">
-              <TabsTrigger value="genres" className="rounded-xl px-2 text-xs sm:text-sm">{t("yearInReview.tabs.genres", "Genres")}</TabsTrigger>
-              <TabsTrigger value="timeline" className="rounded-xl px-2 text-xs sm:text-sm">{t("yearInReview.tabs.activity", "Activity")}</TabsTrigger>
-              <TabsTrigger value="highlights" className="rounded-xl px-2 text-xs sm:text-sm">{t("yearInReview.tabs.topRated", "Top Rated")}</TabsTrigger>
+          {/* Upgraded tabs panel Recaps */}
+          <Tabs defaultValue="genres" className="w-full space-y-6">
+            <TabsList className="grid w-full grid-cols-3 rounded-2xl border border-border/40 bg-card/40 p-1 max-w-md">
+              <TabsTrigger value="genres" className="rounded-xl py-2 text-xs font-bold">
+                {t("yearInReview.tabs.genres", "Genres")}
+              </TabsTrigger>
+              <TabsTrigger value="timeline" className="rounded-xl py-2 text-xs font-bold">
+                {t("yearInReview.tabs.activity", "Activity")}
+              </TabsTrigger>
+              <TabsTrigger value="highlights" className="rounded-xl py-2 text-xs font-bold">
+                {t("yearInReview.tabs.topRated", "Top Rated")}
+              </TabsTrigger>
             </TabsList>
 
-            {/* Genre Breakdown */}
-            <TabsContent value="genres" className="mt-6">
-              <Card className="ct-panel rounded-3xl p-5 sm:p-8">
-                <CardHeader className="px-0 pb-6">
-                  <CardTitle>{t("yearInReview.favoriteGenresTitle", "Your Favorite Genres")}</CardTitle>
+            {/* 1. Genre share breakdown */}
+            <TabsContent value="genres" className="outline-none">
+              <Card className="ct-panel overflow-hidden border-border/40 bg-card/60 backdrop-blur-sm rounded-3xl">
+                <CardHeader>
+                  <CardTitle className="text-base font-black tracking-tight text-foreground flex items-center gap-2">
+                    <BarChart2 className="h-4.5 w-4.5 text-primary" />
+                    {t("yearInReview.favoriteGenresTitle", "Your Favorite Genres")}
+                  </CardTitle>
                 </CardHeader>
-                <div className="h-[360px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={genreData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={80}
-                        outerRadius={130}
-                        dataKey="value"
-                        nameKey="name"
-                      >
-                        {genreData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <CardContent className="pb-8">
+                  {isLoading ? (
+                    <div className="h-[280px] flex items-center justify-center">
+                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    </div>
+                  ) : genreData.length > 0 ? (
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+                      <ResponsiveContainer width="100%" height={260} className="md:max-w-[260px]">
+                        <PieChart>
+                          <Pie
+                            data={genreData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={70}
+                            outerRadius={105}
+                            dataKey="value"
+                            nameKey="name"
+                          >
+                            {genreData.map((entry, index) => (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={CINEMATIC_CHART_COLORS[index % CINEMATIC_CHART_COLORS.length]}
+                              />
+                            ))}
+                          </Pie>
+                          <RechartsTooltip
+                            contentStyle={{
+                              background: "rgba(22,22,22,0.95)",
+                              border: "1px solid rgba(255,255,255,0.08)",
+                              color: "#fff",
+                              borderRadius: "12px",
+                              fontSize: "12px",
+                            }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+
+                      {/* Custom legends list */}
+                      <div className="flex-1 grid grid-cols-2 gap-x-6 gap-y-3 text-xs sm:text-sm w-full">
+                        {genreData.map((genre, idx) => (
+                          <div key={genre.name} className="flex items-center gap-2.5">
+                            <div
+                              className="h-3 w-3 rounded-full shrink-0"
+                              style={{
+                                backgroundColor:
+                                  CINEMATIC_CHART_COLORS[idx % CINEMATIC_CHART_COLORS.length],
+                              }}
+                            />
+                            <span className="truncate font-semibold text-foreground/95">
+                              {genre.name}
+                            </span>
+                            <span className="text-muted-foreground/60 ml-auto font-bold">
+                              {genre.value} {genre.value === 1 ? "title" : "titles"}
+                            </span>
+                          </div>
                         ))}
-                      </Pie>
-                      <RechartsTooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </Card>
-            </TabsContent>
-
-            {/* Monthly Timeline */}
-            <TabsContent value="timeline" className="mt-6">
-              <Card className="ct-panel rounded-3xl p-5 sm:p-8">
-                <CardHeader className="px-0 pb-6">
-                  <CardTitle>{t("yearInReview.monthlyActivityTitle", "Monthly Watching Activity")}</CardTitle>
-                </CardHeader>
-                <div className="h-[360px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={monthlyData}>
-                      <XAxis dataKey="month" tick={{ fill: "#aaa" }} />
-                      <YAxis tick={{ fill: "#aaa" }} />
-                      <RechartsTooltip />
-                      <Bar dataKey="count" fill="#E50914" radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </Card>
-            </TabsContent>
-
-            {/* Top Rated Highlights */}
-            <TabsContent value="highlights" className="mt-6">
-              <Card className="ct-panel rounded-3xl p-5 sm:p-8">
-                <CardHeader className="px-0 pb-6">
-                  <CardTitle>{t("yearInReview.topRatedTitle", "Top Rated This Year")}</CardTitle>
-                </CardHeader>
-                <div className="space-y-4">
-                  {topRated.map((item, index) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 transition-colors hover:border-white/20 sm:gap-4 sm:p-4"
-                    >
-                      <Badge variant="secondary" className="w-9 h-9 rounded-full flex items-center justify-center text-lg font-bold">
-                        {index + 1}
-                      </Badge>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate"><bdi dir="auto">{getMediaTitle(item)}</bdi></p>
-                        <p className="text-sm text-neutral-400">
-                          ⭐ {item.vote_average?.toFixed(1)} • {item.release_date?.slice(0,4) || item.first_air_date?.slice(0,4)}
-                        </p>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  ) : (
+                    <div className="py-16 text-center text-muted-foreground">
+                      No genres logged this year.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* 2. Activity timeline */}
+            <TabsContent value="timeline" className="outline-none">
+              <Card className="ct-panel overflow-hidden border-border/40 bg-card/60 backdrop-blur-sm rounded-3xl">
+                <CardHeader>
+                  <CardTitle className="text-base font-black tracking-tight text-foreground flex items-center gap-2">
+                    <Calendar className="h-4.5 w-4.5 text-primary" />
+                    {t("yearInReview.monthlyActivityTitle", "Monthly Watching Activity")}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pb-8">
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <XAxis dataKey="month" tick={{ fill: "#a3a3a3", fontSize: 11 }} />
+                        <YAxis tick={{ fill: "#a3a3a3", fontSize: 11 }} />
+                        <RechartsTooltip
+                          contentStyle={{
+                            background: "rgba(22,22,22,0.95)",
+                            border: "1px solid rgba(255,255,255,0.08)",
+                            color: "#fff",
+                            borderRadius: "12px",
+                            fontSize: "12px",
+                          }}
+                        />
+                        <Bar dataKey="count" fill="#E50914" radius={[6, 6, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* 3. Top Rated highlights podium */}
+            <TabsContent value="highlights" className="outline-none">
+              <Card className="ct-panel overflow-hidden border-border/40 bg-card/60 backdrop-blur-sm rounded-3xl">
+                <CardHeader>
+                  <CardTitle className="text-base font-black tracking-tight text-foreground flex items-center gap-2">
+                    <Star className="h-4.5 w-4.5 text-primary" />
+                    {t("yearInReview.topRatedTitle", "Top Rated This Year")}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pb-8 space-y-4">
+                  {isLoading ? (
+                    <div className="space-y-4">
+                      {[...Array(3)].map((_, i) => (
+                        <div key={i} className="h-20 w-full animate-pulse bg-muted/20 rounded-2xl" />
+                      ))}
+                    </div>
+                  ) : topRated.length > 0 ? (
+                    <div className="space-y-4">
+                      {topRated.map((item, index) => {
+                        const isMovie = "title" in item;
+                        const dateStr =
+                          "release_date" in item
+                            ? item.release_date
+                            : "first_air_date" in item
+                              ? item.first_air_date
+                              : "";
+
+                        return (
+                          <div
+                            key={item.id}
+                            className="flex items-center gap-4 rounded-2xl border border-border/40 bg-background/55 p-3.5 hover:border-primary/30 transition-all duration-300 group"
+                          >
+                            {/* Podium ranking circle */}
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shrink-0 bg-primary/10 border border-primary/20 text-primary">
+                              #{index + 1}
+                            </div>
+
+                            {/* Poster image */}
+                            <div className="relative aspect-[2/3] w-10 shrink-0 overflow-hidden rounded-xl border border-border/40">
+                              <Image
+                                src={getImageUrl(item.poster_path, "w92")}
+                                alt=""
+                                width={92}
+                                height={138}
+                                className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
+                              />
+                            </div>
+
+                            {/* Details metadata */}
+                            <div className="flex-1 min-w-0 space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Badge
+                                  className={cn(
+                                    "px-1.5 py-0.5 text-[8px] font-black leading-none border-0",
+                                    isMovie ? "bg-primary" : "bg-amber-500 text-black",
+                                  )}
+                                >
+                                  {isMovie ? "Movie" : "TV"}
+                                </Badge>
+                                <span className="text-[10px] text-muted-foreground font-semibold">
+                                  {dateStr ? dateStr.slice(0, 4) : "—"}
+                                </span>
+                              </div>
+                              <h4 className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                                <bdi dir="auto">{getMediaTitle(item)}</bdi>
+                              </h4>
+                            </div>
+
+                            {/* Rating and Direct link details */}
+                            <div className="flex flex-col items-end gap-2.5 shrink-0">
+                              <div className="inline-flex items-center gap-0.5 text-[10px] font-black text-foreground">
+                                <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                                {item.vote_average ? item.vote_average.toFixed(1) : "—"}
+                              </div>
+                              <Link
+                                to={`/${isMovie ? "movie" : "tv"}/${item.id}`}
+                                className="text-[10px] font-bold text-primary hover:underline flex items-center gap-0.5"
+                              >
+                                View
+                                <ArrowRight className="h-3 w-3" />
+                              </Link>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="py-16 text-center text-muted-foreground">
+                      No titles found.
+                    </div>
+                  )}
+                </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
