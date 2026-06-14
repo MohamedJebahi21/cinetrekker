@@ -51,6 +51,17 @@ const STATUS_CONFIG: Record<string, { icon: string; labelKey: string; defaultLab
   plan_to_watch: { icon: "", labelKey: "status.planToWatch", defaultLabel: "Plan to Watch", color: "bg-yellow-500" },
 };
 
+// Lightweight genre lookup — covers the 19 TMDB genres used across movies & TV
+const GENRE_MAP: Record<number, string> = {
+  28: "Action", 12: "Adventure", 16: "Animation", 35: "Comedy", 80: "Crime",
+  99: "Documentary", 18: "Drama", 10751: "Family", 14: "Fantasy", 36: "History",
+  27: "Horror", 10402: "Music", 9648: "Mystery", 10749: "Romance", 878: "Sci-Fi",
+  10770: "TV Movie", 53: "Thriller", 10752: "War", 37: "Western",
+  10759: "Action & Adventure", 10762: "Kids", 10763: "News", 10764: "Reality",
+  10765: "Sci-Fi & Fantasy", 10766: "Soap", 10767: "Talk", 10768: "War & Politics",
+};
+
+
 const PosterImage = React.memo(function PosterImage({
   posterPath,
   alt,
@@ -495,8 +506,27 @@ export const MediaCard = React.memo(function MediaCard({
             <h3 className="min-h-[2.75rem] line-clamp-2 text-base font-semibold tracking-tight text-foreground transition-colors group-hover:text-primary md:text-lg">
               <bdi dir="auto">{title}</bdi>
             </h3>
-            <div className="mt-auto flex items-center justify-between gap-2 pt-1">
-              <p className="text-xs text-muted-foreground">{metaLine}</p>
+            <div className="mt-auto pt-1 space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-muted-foreground">{metaLine}</p>
+              </div>
+              {/* Genre chips — up to 2, shown when genre_ids are available */}
+              {Array.isArray(media.genre_ids) && media.genre_ids.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {media.genre_ids.slice(0, 2).map((gid) => {
+                    const name = GENRE_MAP[gid];
+                    if (!name) return null;
+                    return (
+                      <span
+                        key={gid}
+                        className="inline-block rounded-full bg-white/5 border border-white/8 px-2 py-0.5 text-[10px] font-medium text-muted-foreground leading-none"
+                      >
+                        {name}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </Link>

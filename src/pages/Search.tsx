@@ -114,14 +114,14 @@ const RUNTIMES = [
 
 // Streaming services (common provider IDs)
 const STREAMING_SERVICES = [
-  { id: "8", key: "search.streamingOptions.netflix", fallback: "Netflix" },
-  { id: "9", key: "search.streamingOptions.amazonPrime", fallback: "Amazon Prime" },
-  { id: "337", key: "search.streamingOptions.disneyPlus", fallback: "Disney+" },
-  { id: "1899", key: "search.streamingOptions.max", fallback: "Max" },
-  { id: "15", key: "search.streamingOptions.hulu", fallback: "Hulu" },
-  { id: "350", key: "search.streamingOptions.appleTv", fallback: "Apple TV+" },
-  { id: "531", key: "search.streamingOptions.paramount", fallback: "Paramount+" },
-  { id: "387", key: "search.streamingOptions.peacock", fallback: "Peacock" },
+  { id: "8",    key: "search.streamingOptions.netflix",      fallback: "Netflix",     logo: "t2yyOgLhmQRz6xQs8eoxSRCCGnj.jpg" },
+  { id: "9",    key: "search.streamingOptions.amazonPrime",  fallback: "Amazon Prime",logo: "ifhbNuuVnlwYy5oXA5VIb2YR8AZ.jpg" },
+  { id: "337",  key: "search.streamingOptions.disneyPlus",  fallback: "Disney+",     logo: "7rwgEs15tFwyR9NPzi8FMC6odC9e.jpg" },
+  { id: "1899", key: "search.streamingOptions.max",          fallback: "Max",         logo: "Ajqn9O2dF6MERf7Z4mTWuDFjEJR.jpg" },
+  { id: "15",   key: "search.streamingOptions.hulu",         fallback: "Hulu",        logo: "zxrVdFjIjLqkfnwyghnveA7fAfk.jpg" },
+  { id: "350",  key: "search.streamingOptions.appleTv",      fallback: "Apple TV+",  logo: "6uhKBfmtzFqOcLousHwZuzcrScK.jpg" },
+  { id: "531",  key: "search.streamingOptions.paramount",    fallback: "Paramount+", logo: "fi83B1oztoS47xxcemFdPHqDL9K.jpg" },
+  { id: "387",  key: "search.streamingOptions.peacock",      fallback: "Peacock",    logo: "8VCV78prwd9IPHfl8O6OlmKrmq7.jpg" },
 ];
 
 const currentYear = new Date().getFullYear();
@@ -229,6 +229,7 @@ type PagedMedia = {
 type MultiSelectOption = {
   id: string;
   label: string;
+  logo?: string;
 };
 
 function parseMultiValue(value: string | null): string[] {
@@ -300,7 +301,26 @@ function SearchMultiSelect({
             variant="outline"
             className="h-11 w-full justify-between bg-background/50 px-3 font-normal"
           >
-            <span className="truncate text-left">{summary}</span>
+            {selectedValues.length > 0 ? (
+              <span className="flex items-center gap-1.5 flex-wrap">
+                {options
+                  .filter(o => selectedValues.includes(o.id))
+                  .slice(0, 3)
+                  .map(o => o.logo ? (
+                    <img
+                      key={o.id}
+                      src={`https://image.tmdb.org/t/p/w45/${o.logo}`}
+                      alt={o.label}
+                      className="h-5 w-5 rounded-sm object-cover"
+                    />
+                  ) : (
+                    <span key={o.id} className="text-xs">{o.label}</span>
+                  ))}
+                {selectedValues.length > 3 && <span className="text-xs text-muted-foreground">+{selectedValues.length - 3}</span>}
+              </span>
+            ) : (
+              <span className="truncate text-left text-muted-foreground">{summary}</span>
+            )}
             <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
           </Button>
         </PopoverTrigger>
@@ -350,6 +370,13 @@ function SearchMultiSelect({
                           })
                     }
                   />
+                  {option.logo ? (
+                    <img
+                      src={`https://image.tmdb.org/t/p/w45/${option.logo}`}
+                      alt={option.label}
+                      className="h-6 w-6 rounded-md object-cover flex-shrink-0"
+                    />
+                  ) : null}
                   <span className="flex-1">{option.label}</span>
                 </label>
               );
@@ -930,6 +957,7 @@ export default function Search() {
   const streamingOptions = STREAMING_SERVICES.map((service) => ({
     id: service.id,
     label: t(service.key, service.fallback),
+    logo: service.logo,
   }));
 
   const activeFilterPills = [
