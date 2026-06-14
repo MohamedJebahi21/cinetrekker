@@ -14,6 +14,7 @@ import { Image } from "@/components/ui/Image";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getImageUrl, getMediaTitle } from "@/services/tmdb";
+import type { UserMediaItem } from "@/types/media";
 
 export default function UserProfile() {
   const { userId } = useParams<{ userId: string }>();
@@ -54,11 +55,15 @@ export default function UserProfile() {
     },
   });
 
+  type WatchedEntry = UserMediaItem & {
+    posterPath?: string | null;
+  };
+
   const uniqueWatchedEntries = useMemo(() => {
-    const map = new Map<string, (typeof watched)[number]>();
+    const map = new Map<string, WatchedEntry>();
     watched.forEach((item) => {
       const key = `${item.mediaType}-${item.mediaId}`;
-      if (!map.has(key)) map.set(key, item);
+      if (!map.has(key)) map.set(key, item as WatchedEntry);
     });
     return Array.from(map.values());
   }, [watched]);
@@ -193,16 +198,14 @@ export default function UserProfile() {
                 {uniqueWatchedEntries.length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {uniqueWatchedEntries.slice(0, 8).map((item) => {
+                      const watchedItem = item as WatchedEntry;
                       const title = getMediaTitle({
                         id: item.mediaId,
                         media_type: item.mediaType,
                         title: "",
                         name: "",
-                      } as any);
-                      const posterUrl = getImageUrl(
-                        (item as any).posterPath,
-                        "w342",
-                      );
+                      } as Parameters<typeof getMediaTitle>[0]);
+                      const posterUrl = getImageUrl(watchedItem.posterPath ?? null, "w342");
                       return (
                         <Link
                           key={`${item.mediaType}-${item.mediaId}`}

@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { UseMutationResult } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { User, Heart, Send, MessageSquare, Edit, Trash2, Reply, X, ChevronDown, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -44,8 +45,8 @@ function CommentCard({
   comment: CommentWithReplies;
   depth?: number;
   likedCommentIds: string[];
-  likeMutation: any;
-  deleteMutation: any;
+  likeMutation: Pick<UseMutationResult<unknown, Error, { commentId: string; isLiked: boolean }>, "mutate" | "isPending">;
+  deleteMutation: Pick<UseMutationResult<unknown, Error, string>, "mutate" | "isPending">;
   onReplyClick: (id: string) => void;
   replyingToId: string | null;
   containsSpoiler: boolean;
@@ -239,7 +240,7 @@ export function MediaComments({ mediaId, mediaType }: MediaCommentsProps) {
     return rootComments;
   };
 
-  const nestedComments = comments ? organizeComments(comments) : [];
+  const nestedComments = useMemo(() => (comments ? organizeComments(comments) : []), [comments]);
 
   // Sort comments based on selected option
   const sortedComments = useMemo(() => {

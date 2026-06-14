@@ -489,7 +489,7 @@ export default function Settings() {
         subscription.unsubscribe();
       }
     };
-  }, [profileKey, text, toast, user?.id, withTimeout]);
+  }, [profileKey, text, toast, user?.id]);
 
   useEffect(() => {
     if (!isLoadingSettings) {

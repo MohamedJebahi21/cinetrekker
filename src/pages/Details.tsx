@@ -369,7 +369,7 @@ export default function Details() {
       if (episode?.runtime) totalMinutes += episode.runtime;
     });
     return { episodesWatched: watchedCount, totalHours: (totalMinutes / 60).toFixed(1), percentageComplete, dateAdded: watchedItem ? new Date(watchedItem.addedAt || Date.now()).toLocaleDateString() : null };
-  }, [user, mediaType, watchedEpisodes, details?.number_of_episodes, seasonDetails?.episodes, watchedItem]);
+  }, [user, mediaType, watchedEpisodes, details, seasonDetails?.episodes, watchedItem]);
 
   // Cast scroll paging
   useEffect(() => {
