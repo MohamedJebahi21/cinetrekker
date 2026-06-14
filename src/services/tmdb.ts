@@ -573,7 +573,7 @@ export const getPersonDetails = async (
   language: string = "en",
 ): Promise<PersonDetails> => {
   return fetchTMDB(`/person/${id}`, language, {
-    append_to_response: "combined_credits",
+    append_to_response: "combined_credits,external_ids,images",
   });
 };
 
