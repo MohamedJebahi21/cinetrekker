@@ -536,33 +536,54 @@ export default function Watchlist() {
             </div>
           )}
 
-          {!isSharedView && staleQueueKeys.size > 0 && (
-            <div className="mb-6 rounded-2xl border border-amber-500/20 bg-amber-500/8 px-5 py-3.5 text-sm text-amber-200 backdrop-blur-sm shadow-md flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                <span>
-                  {t(
-                    "watchlistPage.staleQueueHint",
-                    "{{count}} titles have been in your queue for 30+ days. Pick one tonight to keep momentum.",
-                    { count: staleQueueKeys.size },
+          {!isSharedView && staleQueueKeys.size > 0 && (() => {
+            // Find the oldest stale item to show its poster
+            const staleEntries = mediaDetails.filter(m => staleQueueKeys.has(`${getMediaType(m)}-${m.id}`));
+            const oldestStale = staleEntries[0];
+            const stalePoster = oldestStale ? getImageUrl(oldestStale.poster_path, "w92") : null;
+            const staleTitle = oldestStale ? getMediaTitle(oldestStale) : null;
+            return (
+              <div className="mb-6 rounded-2xl border border-amber-500/25 bg-amber-500/8 overflow-hidden shadow-md">
+                <div className="flex items-center gap-4 px-5 py-4">
+                  {stalePoster && (
+                    <div className="h-16 w-11 flex-shrink-0 overflow-hidden rounded-lg border border-amber-500/20 shadow-sm">
+                      <img src={stalePoster} alt={staleTitle || ""} className="h-full w-full object-cover" loading="lazy" />
+                    </div>
                   )}
-                </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse flex-shrink-0" />
+                      <p className="text-sm font-semibold text-amber-300">
+                        {t("watchlistPage.staleQueueTitle", "Time to clear your queue!")}
+                      </p>
+                    </div>
+                    <p className="text-xs text-amber-200/70 line-clamp-1">
+                      {staleTitle ? `"${staleTitle}" and ` : ""}
+                      {t(
+                        "watchlistPage.staleQueueHint",
+                        "{{count}} titles have been in your queue for 30+ days. Pick one tonight.",
+                        { count: staleQueueKeys.size },
+                      )}
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 border-amber-500/30 text-amber-300 hover:text-white hover:bg-amber-500/25 rounded-full px-4 text-xs shrink-0"
+                    onClick={() => {
+                      const staleList = Array.from(staleQueueKeys);
+                      const randomStale = staleList[Math.floor(Math.random() * staleList.length)];
+                      const [mediaType, mediaId] = randomStale.split("-");
+                      navigate(`/${mediaType}/${mediaId}`);
+                    }}
+                  >
+                    {t("watchlistPage.pickForMe", "Pick For Me")}
+                  </Button>
+                </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 text-amber-300 hover:text-white hover:bg-amber-500/20 rounded-full px-3 text-xs shrink-0"
-                onClick={() => {
-                  const staleList = Array.from(staleQueueKeys);
-                  const randomStale = staleList[Math.floor(Math.random() * staleList.length)];
-                  const [mediaType, mediaId] = randomStale.split("-");
-                  navigate(`/${mediaType}/${mediaId}`);
-                }}
-              >
-                {t("watchlistPage.pickForMe", "Pick For Me")}
-              </Button>
-            </div>
-          )}
+            );
+          })()}
+
 
           {!isSharedView && mediaDetails.length > 0 && (
             <motion.div
@@ -607,7 +628,7 @@ export default function Watchlist() {
                   <span className="text-xs text-muted-foreground block uppercase tracking-wider font-semibold">Completed</span>
                 </div>
               </div>
-              <Progress value={completionRate} className="h-2.5 bg-secondary/80 border border-border/40" />
+              <Progress value={completionRate} className="h-2.5 bg-secondary/80 border border-border/40 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-rose-400" />
             </div>
           )}
 
@@ -781,10 +802,16 @@ export default function Watchlist() {
                           )}
                           {staleQueueKeys.has(`${mediaType}-${media.id}`) && (
                             <Badge className="rounded-full border border-amber-500/35 bg-amber-500/15 text-amber-200">
-                              {t("watchlistPage.leavingSoon", "Leaving your queue soon")}
+                              {t("watchlistPage.leavingSoon", "30+ days in queue")}
                             </Badge>
                           )}
                         </div>
+                        {/* Overview snippet — visible on hover (desktop) */}
+                        {media.overview && (
+                          <p className="mt-1.5 line-clamp-1 text-xs text-muted-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hidden sm:block">
+                            {media.overview}
+                          </p>
+                        )}
                       </div>
                     </Link>
                   );
