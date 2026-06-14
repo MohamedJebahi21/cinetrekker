@@ -1,7 +1,45 @@
-
 import { loadSupabaseModule } from "@/lib/loadSupabaseModule";
 import type { UserProfile } from "./profile";
-import { v4 as uuidv4 } from "uuid";
+
+type DbError = {
+  code?: string;
+  message?: string;
+  details?: string;
+  hint?: string;
+};
+
+type QueryResult<T = unknown> = {
+  data: T | null;
+  error: DbError | null;
+  count?: number;
+};
+
+interface QueryBuilder {
+  select(
+    columns?: string,
+    options?: { count?: "exact" | "planned" | "estimated"; head?: boolean },
+  ): QueryBuilder;
+  insert(values: unknown): QueryBuilder;
+  update(values: unknown): QueryBuilder;
+  delete(): QueryBuilder;
+  eq(column: string, value: unknown): QueryBuilder;
+  in(column: string, values: readonly unknown[]): QueryBuilder;
+  order(column: string, options?: { ascending?: boolean }): QueryBuilder;
+  single<T = unknown>(): Promise<QueryResult<T>>;
+  maybeSingle<T = unknown>(): Promise<QueryResult<T>>;
+  then<TResult1 = QueryResult, TResult2 = never>(
+    onfulfilled?:
+      | ((value: QueryResult) => TResult1 | PromiseLike<TResult1>)
+      | null,
+    onrejected?:
+      | ((reason: unknown) => TResult2 | PromiseLike<TResult2>)
+      | null,
+  ): PromiseLike<TResult1 | TResult2>;
+}
+
+interface LooseSupabaseClient {
+  from(table: string): QueryBuilder;
+}
 
 export interface Comment {
   id: string;
@@ -9,12 +47,12 @@ export interface Comment {
   media_id: number;
   media_type: "movie" | "tv";
   content: string;
-  parent_id?: string;
+  parent_id?: string | null;
   contains_spoiler?: boolean;
   likes_count: number;
   created_at: string;
   updated_at: string;
-  profile?: Partial<UserProfile>;
+  profile?: Partial<UserProfile> | null;
 }
 
 export interface Follow {
@@ -31,15 +69,24 @@ export interface CommentLike {
   created_at: string;
 }
 
+type CommentRow = Comment;
+type ProfileRow = Pick<
+  UserProfile,
+  "user_id" | "display_name" | "avatar_url" | "bio"
+>;
+
+const asDb = (supabase: unknown) => supabase as LooseSupabaseClient;
+
 export const socialService = {
   // --- Follow functions ---
   async followUser(followerId: string, followingId: string): Promise<Follow> {
     const { supabase } = await loadSupabaseModule();
-    const { data, error } = await supabase
+    const db = asDb(supabase);
+    const { data, error } = await db
       .from("follows")
       .insert({ follower_id: followerId, following_id: followingId })
       .select()
-      .single();
+      .single<Follow>();
 
     if (error) throw error;
     return data as Follow;
@@ -47,7 +94,8 @@ export const socialService = {
 
   async unfollowUser(followerId: string, followingId: string): Promise<void> {
     const { supabase } = await loadSupabaseModule();
-    await supabase
+    const db = asDb(supabase);
+    await db
       .from("follows")
       .delete()
       .eq("follower_id", followerId)
@@ -56,33 +104,39 @@ export const socialService = {
 
   async isFollowing(followerId: string, followingId: string): Promise<boolean> {
     const { supabase } = await loadSupabaseModule();
-    const { count, error } = await supabase
+    const db = asDb(supabase);
+    const { count, error } = await db
       .from("follows")
       .select("*", { count: "exact", head: true })
       .eq("follower_id", followerId)
       .eq("following_id", followingId);
+
     if (error) throw error;
     return (count || 0) > 0;
   },
 
   async getFollowers(userId: string): Promise<Follow[]> {
     const { supabase } = await loadSupabaseModule();
-    const { data, error } = await supabase
+    const db = asDb(supabase);
+    const { data, error } = await db
       .from("follows")
       .select("*, profiles!follows_follower_id_fkey(*)")
       .eq("following_id", userId);
+
     if (error) throw error;
-    return data as Follow[];
+    return (data || []) as Follow[];
   },
 
   async getFollowing(userId: string): Promise<Follow[]> {
     const { supabase } = await loadSupabaseModule();
-    const { data, error } = await supabase
+    const db = asDb(supabase);
+    const { data, error } = await db
       .from("follows")
       .select("*, profiles!follows_following_id_fkey(*)")
       .eq("follower_id", userId);
+
     if (error) throw error;
-    return data as Follow[];
+    return (data || []) as Follow[];
   },
 
   // --- Comment functions ---
@@ -91,8 +145,9 @@ export const socialService = {
     mediaType: "movie" | "tv",
   ): Promise<Comment[]> {
     const { supabase } = await loadSupabaseModule();
-    // First fetch comments without relation, then fetch profiles if needed
-    const { data: commentsData, error: commentsError } = await supabase
+    const db = asDb(supabase);
+
+    const { data: commentsData, error: commentsError } = await db
       .from("comments")
       .select("*")
       .eq("media_id", mediaId)
@@ -104,32 +159,37 @@ export const socialService = {
       throw commentsError;
     }
 
-    if (!commentsData || commentsData.length === 0) {
+    const comments = Array.isArray(commentsData)
+      ? (commentsData as CommentRow[])
+      : [];
+
+    if (comments.length === 0) {
       return [];
     }
 
-    // Now fetch profiles for the user_ids in comments
-    const userIds = commentsData.map((c) => c.user_id);
-    const { data: profilesData, error: profilesError } = await supabase
+    const userIds = comments.map((c) => c.user_id);
+    const { data: profilesData, error: profilesError } = await db
       .from("profiles")
-      .select("id, user_id, display_name, avatar_url, bio")
+      .select("user_id, display_name, avatar_url, bio")
       .in("user_id", userIds);
 
     if (profilesError) {
       console.error("Error fetching profiles:", profilesError);
     }
 
-    // Create a map of user_id to profile
-    const profileMap = new Map();
-    (profilesData || []).forEach((profile) => {
+    const profiles = Array.isArray(profilesData)
+      ? (profilesData as ProfileRow[])
+      : [];
+
+    const profileMap = new Map<string, Partial<UserProfile>>();
+    profiles.forEach((profile) => {
       profileMap.set(profile.user_id, profile);
     });
 
-    // Combine comments with their profiles
-    return commentsData.map((comment) => ({
+    return comments.map((comment) => ({
       ...comment,
       profile: profileMap.get(comment.user_id) || null,
-    })) as Comment[];
+    }));
   },
 
   async addComment(
@@ -141,7 +201,15 @@ export const socialService = {
     containsSpoiler?: boolean,
   ): Promise<Comment> {
     const { supabase } = await loadSupabaseModule();
-    const payload: Record<string, unknown> = {
+    const db = asDb(supabase);
+    const payload: {
+      user_id: string;
+      media_id: number;
+      media_type: "movie" | "tv";
+      content: string;
+      parent_id: string | null;
+      contains_spoiler?: boolean;
+    } = {
       user_id: userId,
       media_id: mediaId,
       media_type: mediaType,
@@ -153,11 +221,11 @@ export const socialService = {
       payload.contains_spoiler = containsSpoiler;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from("comments")
       .insert(payload)
       .select()
-      .single();
+      .single<Comment>();
 
     if (error) throw error;
     return data as Comment;
@@ -165,20 +233,21 @@ export const socialService = {
 
   async deleteComment(commentId: string, _userId?: string): Promise<void> {
     const { supabase } = await loadSupabaseModule();
-    await supabase.from("comments").delete().eq("id", commentId);
+    const db = asDb(supabase);
+    await db.from("comments").delete().eq("id", commentId);
   },
 
   async likeComment(userId: string, commentId: string): Promise<void> {
     console.log("likeComment called with userId:", userId, "commentId:", commentId);
     const { supabase } = await loadSupabaseModule();
-    
-    // First get the comment to find who wrote it
-    const { data: comment, error: commentError } = await supabase
+    const db = asDb(supabase);
+
+    const { data: comment, error: commentError } = await db
       .from("comments")
       .select("*")
       .eq("id", commentId)
-      .single();
-      
+      .single<Comment>();
+
     if (commentError) {
       console.error("Error fetching comment:", commentError);
       throw commentError;
@@ -187,13 +256,12 @@ export const socialService = {
       console.error("Comment not found");
       throw new Error("Comment not found");
     }
+
     console.log("Found comment:", comment);
-    
-    // Don't create a notification if the user likes their own comment
+
     if (comment.user_id === userId) {
       console.log("User is liking their own comment, skipping notification");
-      // Still insert the like, but no notification
-      const { error: likeError } = await supabase.from("comment_likes").insert({
+      const { error: likeError } = await db.from("comment_likes").insert({
         user_id: userId,
         comment_id: commentId,
       });
@@ -204,26 +272,24 @@ export const socialService = {
       console.log("Successfully inserted like (own comment)");
       return;
     }
-    
-    // Get the user who is liking (to get their display name)
-    const { data: likerProfile, error: likerError } = await supabase
+
+    const { data: likerProfile, error: likerError } = await db
       .from("profiles")
       .select("display_name, avatar_url")
       .eq("user_id", userId)
-      .single();
-      
+      .single<Pick<UserProfile, "display_name" | "avatar_url">>();
+
     if (likerError) {
       console.error("Error fetching liker profile:", likerError);
     }
     console.log("Liker profile:", likerProfile);
-    
+
     const likerName = likerProfile?.display_name || "Someone";
     const notificationMessage = `${likerName} liked your comment!`;
     const eventKey = `comment_like:${commentId}:${userId}`;
     console.log("Notification message:", notificationMessage);
-    
-    // Now insert the like and notification in a transaction-like way
-    const { error: likeError } = await supabase.from("comment_likes").insert({
+
+    const { error: likeError } = await db.from("comment_likes").insert({
       user_id: userId,
       comment_id: commentId,
     });
@@ -232,9 +298,8 @@ export const socialService = {
       throw likeError;
     }
     console.log("Successfully inserted like");
-    
-    // Create notification for the comment author
-    const { error: notificationError } = await supabase.from("notifications").insert({
+
+    const { error: notificationError } = await db.from("notifications").insert({
       user_id: comment.user_id,
       movie_id: `${comment.media_type}-${comment.media_id}`,
       event_key: eventKey,
@@ -244,8 +309,6 @@ export const socialService = {
     });
     if (notificationError) {
       if (notificationError.code === "23505") {
-        // This is a duplicate key error - which means the user already liked this comment before
-        // This is fine, just ignore it
         console.log("Notification already exists, skipping");
       } else {
         console.error("Error inserting notification:", notificationError);
@@ -257,7 +320,8 @@ export const socialService = {
 
   async unlikeComment(userId: string, commentId: string): Promise<void> {
     const { supabase } = await loadSupabaseModule();
-    await supabase
+    const db = asDb(supabase);
+    await db
       .from("comment_likes")
       .delete()
       .eq("user_id", userId)
@@ -266,24 +330,25 @@ export const socialService = {
 
   async getLikedComments(userId: string): Promise<string[]> {
     const { supabase } = await loadSupabaseModule();
-    const { data, error } = await supabase
+    const db = asDb(supabase);
+    const { data, error } = await db
       .from("comment_likes")
       .select("comment_id")
       .eq("user_id", userId);
 
     if (error) throw error;
-    return (data || []).map((like) => like.comment_id);
+    const rows = Array.isArray(data) ? (data as Array<{ comment_id: string }>) : [];
+    return rows.map((like) => like.comment_id);
   },
 
-  async getUserProfileByUserId(
-    userId: string,
-  ): Promise<UserProfile | null> {
+  async getUserProfileByUserId(userId: string): Promise<UserProfile | null> {
     const { supabase } = await loadSupabaseModule();
-    const { data, error } = await supabase
+    const db = asDb(supabase);
+    const { data, error } = await db
       .from("profiles")
       .select("*")
       .eq("user_id", userId)
-      .single();
+      .single<UserProfile>();
 
     if (error) {
       if (error.code === "PGRST116") {
@@ -296,12 +361,13 @@ export const socialService = {
 
   async getAllPublicProfiles(): Promise<UserProfile[]> {
     const { supabase } = await loadSupabaseModule();
-    const { data, error } = await supabase
+    const db = asDb(supabase);
+    const { data, error } = await db
       .from("profiles")
       .select("*")
       .eq("is_public", true);
 
     if (error) throw error;
-    return data as UserProfile[];
+    return (Array.isArray(data) ? data : []) as UserProfile[];
   },
 };
