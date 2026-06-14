@@ -36,6 +36,18 @@ import { enrichMediaItems } from "@/lib/mediaEnrichment";
 
 type FollowedShowDetails = MediaDetails & { followedAt?: string };
 
+function formatAirDate(isoDate: string, language: string): string {
+  const date = new Date(isoDate);
+  const now = new Date();
+  const diffDays = Math.round((date.getTime() - now.getTime()) / 86_400_000);
+  const formatted = date.toLocaleDateString(language, { month: "short", day: "numeric" });
+  if (diffDays < 0) return formatted;
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return `${formatted} · Tomorrow`;
+  if (diffDays <= 60) return `${formatted} · in ${diffDays}d`;
+  return formatted;
+}
+
 export default function Following() {
   const { t, i18n } = useTranslation();
   const { followedTitles, isLoading: followsLoading, unfollowTitle } = useTitleFollows();
@@ -222,11 +234,12 @@ export default function Following() {
       );
     } else {
       const nextEp = show.next_episode_to_air;
-      if (nextEp) {
+      if (nextEp?.air_date) {
+        const label = formatAirDate(nextEp.air_date, language);
         return (
           <span className="flex items-center gap-1 rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-400 border border-emerald-500/40 backdrop-blur-md shadow-[0_0_10px_rgba(16,185,129,0.1)]">
             <Calendar className="h-3 w-3 animate-pulse" />
-            Next Ep: {nextEp.air_date}
+            {`Next Ep: ${label}`}
           </span>
         );
       }

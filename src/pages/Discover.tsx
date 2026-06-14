@@ -1,4 +1,5 @@
-import { Compass, Flame, Layers, Sparkles, Trophy, Tv } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Compass, Flame, Layers, Sparkles, Trophy, Tv, Film, Star, ChevronRight, Play, TrendingUp, Clock, Popcorn } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -6,6 +7,7 @@ import SEO from "@/components/SEO";
 import { MediaSection } from "@/components/MediaSection";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import {
   buildCanonicalUrl,
   buildMediaPath,
@@ -17,247 +19,402 @@ import {
   getPopularMovies,
   getPopularTV,
   getTopRatedMovies,
+  getTopRatedTV,
   getTrending,
+  getUpcomingMovies,
+  getOnTheAirTV,
   getBackdropUrl,
+  getImageUrl,
 } from "@/services/tmdb";
 import { useContentPolicy } from "@/contexts/content-policy-context";
+import type { Media } from "@/types/media";
 
+// ── Mood filter definitions with correct genre IDs ──────────────────────────
+const MOODS = [
+  { label: "😂 Funny",        genre: 35,    sort: "popularity.desc",    color: "from-yellow-500/20 to-yellow-600/5",  border: "border-yellow-500/25",  text: "text-yellow-300" },
+  { label: "😨 Scary",        genre: 27,    sort: "vote_average.desc",  color: "from-red-900/30 to-red-800/5",        border: "border-red-700/30",      text: "text-red-300" },
+  { label: "🤯 Mind-bending", genre: 878,   sort: "vote_average.desc",  color: "from-violet-500/20 to-violet-600/5", border: "border-violet-500/25",   text: "text-violet-300" },
+  { label: "❤️ Romantic",     genre: 10749, sort: "popularity.desc",    color: "from-pink-500/20 to-pink-600/5",     border: "border-pink-500/25",     text: "text-pink-300" },
+  { label: "🏃 Action",       genre: 28,    sort: "popularity.desc",    color: "from-orange-500/20 to-orange-600/5", border: "border-orange-500/25",   text: "text-orange-300" },
+  { label: "😢 Emotional",    genre: 18,    sort: "vote_average.desc",  color: "from-blue-500/20 to-blue-600/5",     border: "border-blue-500/25",     text: "text-blue-300" },
+  { label: "👨‍👩‍👧 Family",  genre: 10751, sort: "popularity.desc",    color: "from-green-500/20 to-green-600/5",   border: "border-green-500/25",    text: "text-green-300" },
+  { label: "🔍 Mystery",      genre: 9648,  sort: "vote_average.desc",  color: "from-slate-500/20 to-slate-600/5",  border: "border-slate-500/25",    text: "text-slate-300" },
+  { label: "🎭 Drama",        genre: 18,    sort: "popularity.desc",    color: "from-amber-500/20 to-amber-600/5",  border: "border-amber-500/25",    text: "text-amber-300" },
+  { label: "🚀 Sci-Fi",       genre: 878,   sort: "popularity.desc",    color: "from-cyan-500/20 to-cyan-600/5",    border: "border-cyan-500/25",     text: "text-cyan-300" },
+];
+
+// ── Spotlight auto-cycle hero ────────────────────────────────────────────────
+function SpotlightHero({ items }: { items: Media[] }) {
+  const [active, setActive] = useState(0);
+  const [fading, setFading] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const { t } = useTranslation();
+
+  const cycle = (next: number) => {
+    setFading(true);
+    setTimeout(() => { setActive(next); setFading(false); }, 350);
+  };
+
+  useEffect(() => {
+    if (items.length < 2) return;
+    timerRef.current = setInterval(() => {
+      setActive(prev => { const next = (prev + 1) % Math.min(items.length, 5); cycle(next); return prev; });
+    }, 6000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [items.length]);
+
+  if (!items.length) return null;
+  const item = items[Math.min(active, items.length - 1)];
+  const href = buildMediaPath(item.media_type === "tv" ? "tv" : "movie", item.id, item.title || item.name || "");
+
+  return (
+    <div className="relative overflow-hidden rounded-3xl border border-white/8 shadow-2xl" style={{ minHeight: "clamp(340px, 52vh, 580px)" }}>
+      {/* Backdrop */}
+      <div className={cn("absolute inset-0 transition-opacity duration-500", fading ? "opacity-0" : "opacity-100")}>
+        {item.backdrop_path ? (
+          <img
+            src={getBackdropUrl(item.backdrop_path, "w1280") || ""}
+            alt=""
+            aria-hidden="true"
+            className="w-full h-full object-cover object-center scale-[1.02] transition-transform duration-[8s] hover:scale-[1.05]"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/10" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
+      </div>
+
+      {/* Content */}
+      <div className={cn("relative z-10 flex h-full flex-col justify-end p-6 md:p-10 transition-all duration-500", fading ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0")} style={{ minHeight: "clamp(340px, 52vh, 580px)" }}>
+        <div className="max-w-2xl space-y-4">
+          {/* Badges */}
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge className="bg-primary/90 text-white text-[10px] uppercase tracking-widest font-bold px-3 py-1">
+              🔥 Trending Now
+            </Badge>
+            <Badge variant="outline" className="border-white/20 bg-black/40 text-white/80 text-[10px] backdrop-blur-sm">
+              {item.media_type === "tv" ? "TV Show" : "Movie"}
+            </Badge>
+            {item.vote_average > 0 && (
+              <Badge variant="outline" className="border-yellow-500/30 bg-yellow-500/10 text-yellow-300 text-xs font-bold gap-1">
+                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                {item.vote_average.toFixed(1)}
+              </Badge>
+            )}
+          </div>
+
+          {/* Title */}
+          <h2 className="text-3xl font-black text-white leading-tight drop-shadow-lg md:text-5xl tracking-tight">
+            {item.title || item.name}
+          </h2>
+
+          {/* Overview */}
+          {item.overview && (
+            <p className="text-sm leading-relaxed text-white/70 line-clamp-2 md:text-base md:line-clamp-3 max-w-xl">
+              {item.overview}
+            </p>
+          )}
+
+          {/* CTAs */}
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <Button asChild size="lg" className="rounded-xl font-bold gap-2 bg-white text-black hover:bg-white/90 shadow-xl hover:scale-105 transition-transform">
+              <Link to={href}><Play className="w-4 h-4 fill-black" />View Details</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="rounded-xl font-semibold gap-2 border-white/20 bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm">
+              <Link to="/search">
+                <Compass className="w-4 h-4" />Explore All
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        {/* Pagination dots */}
+        {items.length > 1 && (
+          <div className="absolute bottom-5 right-6 flex gap-1.5">
+            {items.slice(0, 5).map((_, i) => (
+              <button
+                key={i}
+                onClick={() => { if (timerRef.current) clearInterval(timerRef.current); cycle(i); }}
+                className={cn("h-1.5 rounded-full transition-all duration-300", i === active ? "w-6 bg-white" : "w-1.5 bg-white/35 hover:bg-white/60")}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Poster strip — thumbnails of other items */}
+        <div className="absolute top-4 right-4 hidden xl:flex flex-col gap-2">
+          {items.slice(0, 5).map((it, i) => (
+            <button
+              key={it.id}
+              onClick={() => { if (timerRef.current) clearInterval(timerRef.current); cycle(i); }}
+              className={cn("w-12 h-16 rounded-lg overflow-hidden border-2 transition-all duration-200 flex-shrink-0", i === active ? "border-white scale-105 shadow-lg" : "border-white/20 opacity-60 hover:opacity-90 hover:border-white/50")}
+              aria-label={it.title || it.name}
+            >
+              {it.poster_path ? (
+                <img src={getImageUrl(it.poster_path, "w185") || ""} alt={it.title || it.name || ""} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-muted" />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Category quick-nav cards ─────────────────────────────────────────────────
+const CATEGORIES = [
+  { icon: Flame,     label: "Trending",     to: "/trending",              color: "text-orange-400", bg: "from-orange-500/15 to-orange-600/5",  border: "border-orange-500/20" },
+  { icon: Film,      label: "Movies",       to: "/search?type=movie",     color: "text-blue-400",   bg: "from-blue-500/15 to-blue-600/5",      border: "border-blue-500/20" },
+  { icon: Tv,        label: "TV Shows",     to: "/search?type=tv",        color: "text-violet-400", bg: "from-violet-500/15 to-violet-600/5",  border: "border-violet-500/20" },
+  { icon: Trophy,    label: "Top Rated",    to: "/search?sort=vote_average.desc", color: "text-yellow-400", bg: "from-yellow-500/15 to-yellow-600/5", border: "border-yellow-500/20" },
+  { icon: TrendingUp,label: "New Releases", to: "/search?sort=release_date.desc", color: "text-green-400",  bg: "from-green-500/15 to-green-600/5",  border: "border-green-500/20" },
+  { icon: Layers,    label: "Genres",       to: "/genres",                color: "text-pink-400",   bg: "from-pink-500/15 to-pink-600/5",      border: "border-pink-500/20" },
+  { icon: Sparkles,  label: "By Decade",    to: "/decades",               color: "text-cyan-400",   bg: "from-cyan-500/15 to-cyan-600/5",      border: "border-cyan-500/20" },
+  { icon: Popcorn,   label: "Award Winners",to: "/awards",                color: "text-amber-400",  bg: "from-amber-500/15 to-amber-600/5",    border: "border-amber-500/20" },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
 export default function Discover() {
   const { t, i18n } = useTranslation();
   const { strictFiltering, moderateFiltering } = useContentPolicy();
   const includeAdult = !(strictFiltering || moderateFiltering);
   const language = i18n.language;
+  const [activeMood, setActiveMood] = useState<number | null>(null);
 
   const { data: trendingNow } = useQuery({
-    queryKey: ["discover-page", "trending", language, includeAdult],
+    queryKey: ["discover", "trending-day", language, includeAdult],
     queryFn: () => getTrending("all", "day", language, 1, includeAdult),
   });
 
   const { data: trendingWeek } = useQuery({
-    queryKey: ["discover-page", "trending-week", language, includeAdult],
+    queryKey: ["discover", "trending-week", language, includeAdult],
     queryFn: () => getTrending("all", "week", language, 1, includeAdult),
   });
 
   const { data: popularMovies } = useQuery({
-    queryKey: ["discover-page", "popular-movies", language, includeAdult],
+    queryKey: ["discover", "popular-movies", language, includeAdult],
     queryFn: () => getPopularMovies(1, language, includeAdult),
   });
 
   const { data: popularTV } = useQuery({
-    queryKey: ["discover-page", "popular-tv", language, includeAdult],
+    queryKey: ["discover", "popular-tv", language, includeAdult],
     queryFn: () => getPopularTV(1, language, includeAdult),
   });
 
   const { data: topRatedMovies } = useQuery({
-    queryKey: ["discover-page", "top-rated-movies", language, includeAdult],
+    queryKey: ["discover", "top-rated-movies", language, includeAdult],
     queryFn: () => getTopRatedMovies(1, language, includeAdult),
   });
 
+  const { data: topRatedTV } = useQuery({
+    queryKey: ["discover", "top-rated-tv", language, includeAdult],
+    queryFn: () => getTopRatedTV(1, language, includeAdult),
+  });
+
   const { data: nowPlayingMovies } = useQuery({
-    queryKey: ["discover-page", "now-playing", language, includeAdult],
+    queryKey: ["discover", "now-playing", language, includeAdult],
     queryFn: () => getNowPlayingMovies(1, language, includeAdult),
   });
 
+  const { data: upcomingMovies } = useQuery({
+    queryKey: ["discover", "upcoming", language, includeAdult],
+    queryFn: () => getUpcomingMovies(1, language, includeAdult),
+  });
+
   const { data: airingTodayTV } = useQuery({
-    queryKey: ["discover-page", "airing-today", language, includeAdult],
+    queryKey: ["discover", "airing-today", language, includeAdult],
     queryFn: () => getAiringTodayTV(1, language, includeAdult),
   });
 
-  const spotlight = trendingNow?.results?.[0];
-  const moodFilters = [
-    { label: "Cozy", href: "/search?genre=35&sort=vote_average.desc" },
-    { label: "Intense", href: "/search?genre=28&sort=popularity.desc" },
-    { label: "Mind-bending", href: "/search?genre=878&sort=vote_average.desc" },
-    { label: "Funny", href: "/search?genre=35&sort=popularity.desc" },
-  ];
+  const { data: onTheAirTV } = useQuery({
+    queryKey: ["discover", "on-the-air", language, includeAdult],
+    queryFn: () => getOnTheAirTV(1, language, includeAdult),
+  });
+
+  const spotlightItems = trendingNow?.results?.slice(0, 5) ?? [];
 
   return (
-    <div className="ct-page-shell min-h-screen">
+    <div className="min-h-screen">
       <SEO
         title={t("discover.seoTitle", "Discover Movies and TV | CineTrekker")}
-        description={t(
-          "discover.seoDescription",
-          "Discover trending movies, streaming-ready picks, and acclaimed titles in CineTrekker.",
-        )}
+        description={t("discover.seoDescription", "Discover trending movies, streaming-ready picks, and acclaimed titles in CineTrekker.")}
         canonical={buildCanonicalUrl("/discover")}
-        jsonLd={[
-          toBreadcrumbJsonLd([
-            { name: t("nav.home", "Home"), path: "/" },
-            { name: t("nav.discover", "Discover"), path: "/discover" },
-          ]),
-        ]}
+        jsonLd={[toBreadcrumbJsonLd([{ name: t("nav.home", "Home"), path: "/" }, { name: t("nav.discover", "Discover"), path: "/discover" }])]}
       />
 
-      <div className="page-container space-y-8 pb-24 pt-20 md:pb-10">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 border-b border-border/40 pb-6">
+      <div className="page-container space-y-10 pb-24 pt-20 md:pb-12">
+
+        {/* ── Page header ── */}
+        <div className="flex items-end justify-between">
           <div>
-            <p className="ct-kicker text-primary font-semibold tracking-wider uppercase mb-1">
-              {t("discover.kicker", "Curated Selection")}
-            </p>
-            <h1 className="text-4xl font-extrabold tracking-tight text-foreground md:text-5xl heading-cinematic flex items-center gap-3">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-primary">
-                <Compass className="h-6 w-6 animate-pulse" />
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary mb-2">Curated Selection</p>
+            <h1 className="text-4xl font-black tracking-tight md:text-5xl flex items-center gap-3">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
+                <Compass className="h-5 w-5" />
               </span>
-              {t("nav.discover", "Discover")}
+              Discover
             </h1>
-            <p className="mt-2 max-w-2xl text-sm md:text-base text-muted-foreground leading-relaxed">
-              {t(
-                "discover.heroCopy",
-                "Explore featured spotlight titles, filter by your mood, and browse recommendations tailored to your taste.",
-              )}
-            </p>
           </div>
-          <div className="shrink-0">
-            <Button asChild className="btn-primary-glow rounded-full px-6 py-5 text-sm font-semibold">
-              <Link to="/search">{t("discover.searchAll", "Search Everything")}</Link>
-            </Button>
-          </div>
+          <Button asChild variant="outline" className="rounded-xl gap-2 hidden sm:flex">
+            <Link to="/search"><Sparkles className="w-4 h-4" />Search Everything</Link>
+          </Button>
         </div>
 
-        {spotlight ? (
-          <section className="relative overflow-hidden rounded-[2rem] border border-border/50 bg-card/20 p-6 md:p-10 z-10 shadow-xl">
-            {spotlight.backdrop_path && (
-              <div className="absolute inset-0 -z-10 select-none">
-                <img
-                  src={getBackdropUrl(spotlight.backdrop_path, "w1280") || ""}
-                  alt=""
-                  className="h-full w-full object-cover object-center opacity-30 md:opacity-45 transition-transform duration-1000 hover:scale-[1.02]"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-[#0d0d0f]/30" />
-                <div className="absolute inset-0 bg-gradient-to-r from-background via-background/50 to-transparent hidden md:block" />
-              </div>
-            )}
-            
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)] lg:items-center relative z-10">
-              <div className="space-y-4">
-                <p className="ct-kicker text-primary font-semibold tracking-wider uppercase">
-                  {t("discover.spotlight", "Hero spotlight")}
-                </p>
-                <h2 className="heading-cinematic text-3xl font-extrabold tracking-tight text-white md:text-5xl drop-shadow-md leading-tight">
-                  {spotlight.title || spotlight.name}
-                </h2>
-                <p className="max-w-2xl text-sm leading-relaxed text-zinc-300 md:text-base drop-shadow-sm">
-                  {spotlight.overview ||
-                    t(
-                      "discover.spotlightFallback",
-                      "This title is leading the global conversation right now and anchors the discover page with a clearer top-of-page hierarchy.",
-                    )}
-                </p>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  <Badge variant="secondary" className="rounded-full bg-white/10 text-white backdrop-blur-md border border-white/15 px-3.5 py-1 text-xs">
-                    {spotlight.media_type === "tv" ? "TV" : "Movie"}
-                  </Badge>
-                  <Badge variant="outline" className="rounded-full bg-amber-500/10 border-amber-500/35 text-amber-300 px-3.5 py-1 flex items-center gap-1 font-semibold text-xs">
-                    ★ {spotlight.vote_average.toFixed(1)}
-                  </Badge>
-                </div>
-                <div className="pt-4">
-                  <Button asChild className="btn-primary-glow rounded-full px-6 py-5 h-auto text-base font-semibold">
-                    <Link to={buildMediaPath(spotlight.media_type === "tv" ? "tv" : "movie", spotlight.id, spotlight.title || spotlight.name || "")}>
-                      {t("discover.openSpotlight", "Open spotlight")}
-                    </Link>
-                  </Button>
-                </div>
-              </div>
+        {/* ── Spotlight Hero ── */}
+        {spotlightItems.length > 0 && <SpotlightHero items={spotlightItems} />}
 
-              <div className="rounded-3xl border border-white/10 bg-black/45 p-6 backdrop-blur-md shadow-2xl space-y-5">
-                <p className="ct-kicker text-zinc-400 font-medium">{t("discover.moodBoard", "By mood")}</p>
-                <div className="flex flex-wrap gap-2">
-                  {moodFilters.map((filter) => (
-                    <Button
-                      key={filter.label}
-                      asChild
-                      variant="outline"
-                      className="rounded-full bg-white/5 border-white/10 text-zinc-300 hover:text-white hover:bg-white/15 hover:border-white/20 transition-all hover:scale-[1.04]"
-                    >
-                      <Link to={filter.href}>{filter.label}</Link>
-                    </Button>
-                  ))}
-                </div>
-                <div className="grid gap-2 pt-1">
-                  {[
-                    {
-                      icon: Layers,
-                      title: t("discover.pathways.genres", "Browse by genre"),
-                      to: "/genres",
-                    },
-                    {
-                      icon: Sparkles,
-                      title: t("discover.pathways.decades", "Browse by decade"),
-                      to: "/decades",
-                    },
-                    {
-                      icon: Trophy,
-                      title: t("discover.pathways.awards", "Award winners"),
-                      to: "/awards",
-                    },
-                  ].map((pathway) => {
-                    const Icon = pathway.icon;
-                    return (
-                      <Link
-                        key={pathway.to}
-                        to={pathway.to}
-                        className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/5 px-4 py-3.5 text-sm font-medium text-zinc-300 transition-all hover:border-primary/40 hover:bg-white/10 hover:text-white hover:translate-x-1"
-                      >
-                        <Icon className="h-4 w-4 text-primary" />
-                        {pathway.title}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
+        {/* ── Category quick-nav grid ── */}
+        <section>
+          <h2 className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground mb-4">Browse By</h2>
+          <div className="grid grid-cols-4 gap-2 sm:grid-cols-4 md:grid-cols-8">
+            {CATEGORIES.map(cat => {
+              const Icon = cat.icon;
+              return (
+                <Link
+                  key={cat.to}
+                  to={cat.to}
+                  className={cn(
+                    "flex flex-col items-center gap-2 rounded-2xl border p-4 bg-gradient-to-b transition-all duration-200 hover:scale-[1.04] active:scale-95 hover:shadow-lg text-center",
+                    cat.bg, cat.border
+                  )}
+                >
+                  <Icon className={cn("w-5 h-5", cat.color)} />
+                  <span className="text-[11px] font-semibold text-foreground/80 leading-tight">{cat.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ── Mood / Vibe filter ── */}
+        <section className="rounded-3xl border border-white/8 bg-card/40 backdrop-blur-sm p-6">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-base font-bold">What's your mood?</h2>
+              <p className="text-sm text-muted-foreground mt-0.5">Find something that fits how you feel right now</p>
             </div>
-          </section>
-        ) : null}
+            {activeMood !== null && (
+              <Button variant="ghost" size="sm" className="text-muted-foreground text-xs" onClick={() => setActiveMood(null)}>
+                Clear ×
+              </Button>
+            )}
+          </div>
 
+          <div className="flex flex-wrap gap-2">
+            {MOODS.map((mood, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveMood(activeMood === i ? null : i)}
+                className={cn(
+                  "px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-200 hover:scale-105 active:scale-95",
+                  activeMood === i
+                    ? cn("bg-gradient-to-r", mood.color, mood.border, mood.text, "border-opacity-60 shadow-lg scale-105")
+                    : "bg-white/5 border-white/10 text-foreground/70 hover:bg-white/10 hover:border-white/20 hover:text-foreground"
+                )}
+              >
+                {mood.label}
+              </button>
+            ))}
+          </div>
+
+          {activeMood !== null && (
+            <div className="mt-5 pt-5 border-t border-white/8 flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Showing <span className="text-foreground font-semibold">{MOODS[activeMood].label}</span> picks
+              </p>
+              <Button asChild size="sm" className="rounded-xl gap-1.5">
+                <Link to={`/search?genre=${MOODS[activeMood].genre}&sort=${MOODS[activeMood].sort}`}>
+                  See All Results <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </Button>
+            </div>
+          )}
+        </section>
+
+        {/* ── Trending Today ── */}
         <MediaSection
-          title={t("discover.trendingNow", "Trending Today")}
+          title="🔥 Trending Today"
           items={trendingNow?.results || []}
           showMoreLink="/trending"
-          emptyMessage={t("discover.emptyTrending", "Trending titles will show up here shortly.")}
+          emptyMessage="Trending titles will appear shortly."
         />
 
+        {/* ── Airing on TV Today ── */}
         <MediaSection
-          title={t("discover.hotOnStreaming", "Hot on Streaming")}
+          title="📺 Airing on TV Today"
           items={airingTodayTV?.results || []}
-          showMoreLink="/tv"
-          emptyMessage={t("discover.emptyStreaming", "Streaming-ready shows will show up here shortly.")}
+          showMoreLink="/search?type=tv"
+          emptyMessage="Today's airing shows will appear shortly."
         />
 
+        {/* ── Now Playing in Cinemas ── */}
         <MediaSection
-          title={t("discover.newOnStreaming", "New on Streaming")}
+          title="🎬 Now Playing in Cinemas"
           items={nowPlayingMovies?.results || []}
-          showMoreLink="/movies"
-          emptyMessage={t("discover.emptyNowPlaying", "New releases will show up here shortly.")}
+          showMoreLink="/search?type=movie&sort=release_date.desc"
+          emptyMessage="Now playing movies will appear shortly."
         />
 
+        {/* ── Upcoming Movies ── */}
         <MediaSection
-          title={t("discover.hiddenGems", "Hidden Gems")}
-          items={topRatedMovies?.results || []}
-          showMoreLink="/search?sort=vote_average.desc"
-          emptyMessage={t("discover.emptyTopRated", "Top rated titles will show up here shortly.")}
+          title="🗓️ Coming Soon"
+          items={upcomingMovies?.results || []}
+          showMoreLink="/search?type=movie&sort=release_date.asc"
+          emptyMessage="Upcoming movies will appear shortly."
         />
 
+        {/* ── Trending This Week ── */}
         <MediaSection
-          title={t("discover.trendingWeek", "Trending This Week")}
+          title="📈 Trending This Week"
           items={trendingWeek?.results || []}
           showMoreLink="/trending"
-          emptyMessage={t("discover.emptyTrendingWeek", "Weekly trending titles will show up here shortly.")}
+          emptyMessage="Weekly trending will appear shortly."
         />
 
+        {/* ── Currently Airing TV ── */}
         <MediaSection
-          title={t("discover.popularTV", "Popular TV Shows")}
-          items={popularTV?.results || []}
-          showMoreLink="/tv"
-          emptyMessage={t("discover.emptyPopularTV", "Popular TV shows will show up here shortly.")}
+          title="📡 Currently Airing Shows"
+          items={onTheAirTV?.results || []}
+          showMoreLink="/search?type=tv"
+          emptyMessage="On the air shows will appear shortly."
         />
 
+        {/* ── Top Rated Movies ── */}
         <MediaSection
-          title={t("discover.popularMovies", "Popular Movies")}
+          title="⭐ Top Rated Movies of All Time"
+          items={topRatedMovies?.results || []}
+          showMoreLink="/search?type=movie&sort=vote_average.desc"
+          emptyMessage="Top rated movies will appear shortly."
+        />
+
+        {/* ── Top Rated TV ── */}
+        <MediaSection
+          title="⭐ Top Rated TV Shows"
+          items={topRatedTV?.results || []}
+          showMoreLink="/search?type=tv&sort=vote_average.desc"
+          emptyMessage="Top rated TV shows will appear shortly."
+        />
+
+        {/* ── Popular Movies ── */}
+        <MediaSection
+          title="🎥 Popular Movies"
           items={popularMovies?.results || []}
-          showMoreLink="/movies"
-          emptyMessage={t("discover.emptyPopularMovies", "Popular movies will show up here shortly.")}
+          showMoreLink="/search?type=movie"
+          emptyMessage="Popular movies will appear shortly."
         />
+
+        {/* ── Popular TV ── */}
+        <MediaSection
+          title="📺 Popular TV Shows"
+          items={popularTV?.results || []}
+          showMoreLink="/search?type=tv"
+          emptyMessage="Popular TV shows will appear shortly."
+        />
+
       </div>
     </div>
   );

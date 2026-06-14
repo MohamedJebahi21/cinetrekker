@@ -231,6 +231,7 @@ function PodiumSection({
   items: Media[];
   onHide: (media: Media) => void;
 }) {
+  const { t } = useTranslation();
   const [first, second, third, ...rest] = items;
 
   return (
@@ -260,7 +261,7 @@ function PodiumSection({
                 <div className="flex min-w-0 flex-1 flex-col justify-between">
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-primary/80 mb-1">
-                      #1 Pick For You
+                      {t("recommendations.topPick", "#1 Pick For You")}
                     </p>
                     <h3 className="line-clamp-2 text-lg font-black tracking-tight text-foreground sm:text-xl">
                       {getMediaTitle(first)}
