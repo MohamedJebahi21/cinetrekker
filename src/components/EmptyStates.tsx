@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import {
   Search,
@@ -38,21 +39,61 @@ export function EmptyState({
   const { t } = useTranslation();
 
   return (
-    <div className={`flex flex-col items-center justify-center px-4 py-12 text-center ${className}`}>
-      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
+    <motion.div 
+      className={`flex flex-col items-center justify-center px-4 py-12 text-center ${className}`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+    >
+      <motion.div 
+        className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
         {t("emptyState.nothingHereYet", "Nothing Here Yet")}
-      </div>
-      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[1.35rem] border border-primary/15 bg-gradient-to-br from-primary/20 to-primary/5 shadow-[0_14px_36px_rgba(0,0,0,0.1)]">
+      </motion.div>
+      <motion.div 
+        className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[1.35rem] border border-primary/15 bg-gradient-to-br from-primary/20 to-primary/5 shadow-[0_14px_36px_rgba(0,0,0,0.1)]"
+        initial={{ opacity: 0, scale: 0.5, rotate: -10 }}
+        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+        transition={{ duration: 0.5, delay: 0.2, ease: 'easeOut' }}
+        whileHover={{ scale: 1.05, rotate: 2 }}
+      >
         <Icon className="h-8 w-8 text-primary" />
-      </div>
-      <h3 className="mb-2 text-2xl font-semibold text-foreground">{title}</h3>
-      {description && <p className="mb-6 max-w-md text-base leading-relaxed text-muted-foreground">{description}</p>}
-      {action && (
-        <Button onClick={action.onClick} className="btn-primary-glow gap-2">
-          {action.label}
-        </Button>
+      </motion.div>
+      <motion.h3 
+        className="mb-2 text-2xl font-semibold text-foreground"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.3 }}
+      >
+        {title}
+      </motion.h3>
+      {description && (
+        <motion.p 
+          className="mb-6 max-w-md text-base leading-relaxed text-muted-foreground"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.4 }}
+        >
+          {description}
+        </motion.p>
       )}
-    </div>
+      {action && (
+        <motion.div
+          initial={{ opacity: 0, y: 10, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.4, delay: 0.5 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <Button onClick={action.onClick} className="btn-primary-glow gap-2">
+            {action.label}
+          </Button>
+        </motion.div>
+      )}
+    </motion.div>
   );
 }
 

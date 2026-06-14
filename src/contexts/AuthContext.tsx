@@ -8,7 +8,7 @@ export interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, code: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, code: string, options?: { username?: string }) => Promise<{ error: Error | null }>;
   signIn: (email: string, code: string) => Promise<{ error: Error | null }>;
   signInWithProvider: (
     provider: "google" | "facebook" | "apple",
@@ -132,7 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const signUp = async (email: string, code: string) => {
+  const signUp = async (email: string, code: string, options?: { username?: string }) => {
     if (!isSupabaseConfigured()) {
       return { error: new Error(MISSING_ENV_AUTH_ERROR) };
     }
@@ -142,6 +142,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signUp({
         email,
         password: code,
+        options: {
+          data: {
+            username: options?.username,
+          },
+        },
       });
       return { error: (error as Error | null) ?? null };
     } catch (error) {

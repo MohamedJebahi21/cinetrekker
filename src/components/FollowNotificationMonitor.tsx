@@ -7,6 +7,7 @@ import {
 } from "@/hooks/useNotifications";
 import {
   buildFollowedTitleState,
+  isFollowStateSchemaMissing,
   type FollowedTitle,
   type FollowedTitleState,
   useTitleFollows,
@@ -162,32 +163,52 @@ export function FollowNotificationMonitor() {
       user?.id ?? "guest",
       followedTitles.map((item) => item.id).join("|"),
     ],
-    enabled: followedTitles.length > 0,
+    enabled: followedTitles.length > 0 && !isFollowStateSchemaMissing(),
     staleTime: 5 * 60_000,
     refetchInterval: 10 * 60_000,
     refetchOnWindowFocus: false,
+    retry: false,
     queryFn: async () => {
-      const currentStates = await Promise.all(
-        followedTitles.map(async (follow) => {
-          const details =
-            follow.mediaType === "movie"
-              ? await getMovieDetails(follow.mediaId)
-              : await getTVDetails(follow.mediaId);
+      let currentStates: Array<{
+        follow: FollowedTitle;
+        title: string;
+        state: FollowedTitleState;
+      }>;
 
-          const title =
-            details.title || details.name || follow.title || follow.id;
+      try {
+        currentStates = await Promise.all(
+          followedTitles.map(async (follow) => {
+            const details =
+              follow.mediaType === "movie"
+                ? await getMovieDetails(follow.mediaId)
+                : await getTVDetails(follow.mediaId);
 
-          return {
-            follow,
-            title,
-            state: buildFollowedTitleState(
-              follow.mediaType,
-              follow.mediaId,
-              details,
-            ),
-          };
-        }),
-      );
+            const title =
+              details.title || details.name || follow.title || follow.id;
+
+            return {
+              follow,
+              title,
+              state: buildFollowedTitleState(
+                follow.mediaType,
+                follow.mediaId,
+                details,
+              ),
+            };
+          }),
+        );
+      } catch (error) {
+        if (
+          error &&
+          typeof error === "object" &&
+          ("code" in error
+            ? (error as { code?: string }).code === "PGRST205"
+            : false)
+        ) {
+          return null;
+        }
+        throw error;
+      }
 
       const currentById = Object.fromEntries(
         currentStates.map((item) => [item.state.movie_id, item.state]),
@@ -247,6 +268,14 @@ export function FollowNotificationMonitor() {
           .eq("user_id", user.id)
           .in("movie_id", movieIds);
         if (previousError) {
+          if (
+            previousError.code === "PGRST205" ||
+            `${previousError.message || ""}`
+              .toLowerCase()
+              .includes("followed_title_state_user")
+          ) {
+            return null;
+          }
           throw previousError;
         }
         previousById = Object.fromEntries(
@@ -298,6 +327,14 @@ export function FollowNotificationMonitor() {
         );
 
       if (stateError) {
+        if (
+          stateError.code === "PGRST205" ||
+          `${stateError.message || ""}`
+            .toLowerCase()
+            .includes("followed_title_state_user")
+        ) {
+          return null;
+        }
         throw stateError;
       }
 

@@ -46,7 +46,8 @@
     "undo": "Undo",
     "episode": "Episode",
     "hidden": "Hidden",
-    "untitled": "Untitled"
+    "untitled": "Untitled",
+    "skipToMainContent": "Saltar al contenido principal"
   },
   "nav": {
     "home": "Inicio",
@@ -157,9 +158,9 @@
     "globalDiscoveryHint": "El descubrimiento global se queda aquí para que tu biblioteca personal vaya primero.",
     "newReleases": "Nuevos estrenos",
     "topWatchedThisWeekKicker": "Destacados de la semana",
-    "dailyPick": "La selección de esta noche",
-    "dailyPickBadge": "Elegido para mantener tu racha",
-    "openTodaysPick": "Ver selección de esta noche",
+    "dailyPick": "Selección destacada",
+    "dailyPickBadge": "Selección destacada",
+    "openTodaysPick": "Abrir selección",
     "dailyPickFallback": "Una opción sólida elegida según tus preferencias y las tendencias actuales.",
     "continueWatching": "Continuar viendo",
     "continueWatchingLoadError": "No pudimos cargar tu progreso de episodios en este momento.",

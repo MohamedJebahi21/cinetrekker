@@ -143,21 +143,6 @@ export default function Feedback() {
       return;
     }
 
-    if (!CAPTCHA_CONFIGURED) {
-      setError(
-        t(
-          'feedback.formErrorCaptchaUnavailable',
-          'Feedback bot protection is not configured yet. Please try again later.',
-        ),
-      );
-      return;
-    }
-
-    if (!captchaToken) {
-      setError(t('feedback.formErrorCaptcha', 'Please complete the bot protection check before sending feedback.'));
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -170,7 +155,7 @@ export default function Feedback() {
           name: name.trim(),
           email: email.trim(),
           message: message.trim(),
-          captchaToken,
+          captchaToken: captchaToken || undefined,
           website: honeypot,
         }),
       });
@@ -280,7 +265,7 @@ export default function Feedback() {
               <p className="text-sm text-muted-foreground">
                 {t(
                   'feedback.botProtectionUnavailable',
-                  'Bot protection is currently unavailable. Feedback submissions are temporarily disabled.',
+                  'Bot protection is currently unavailable. Feedback submissions are still open.',
                 )}
               </p>
             )}
@@ -300,7 +285,7 @@ export default function Feedback() {
           <Button
             type="submit"
             className="w-full sm:w-auto"
-            disabled={isSubmitting || !CAPTCHA_CONFIGURED}
+            disabled={isSubmitting}
           >
             {isSubmitting
               ? t('feedback.sending', 'Sending...')

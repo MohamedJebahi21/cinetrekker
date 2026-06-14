@@ -79,7 +79,7 @@ function isMissingLegacyPolicySchemaError(error: unknown): boolean {
 }
 
 function defaultState(): ContentPolicyState {
-  return { ageVerified: false, maturityRating: SafetyLevel.NONE };
+  return { ageVerified: true, maturityRating: SafetyLevel.NONE };
 }
 
 function normalizeMaturity(level: SafetyLevel): SafetyLevel {

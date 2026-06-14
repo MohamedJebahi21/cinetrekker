@@ -11,20 +11,21 @@ import { Image } from "@/components/ui/Image";
 import { useWatchedEpisodes } from "@/hooks/useFollowedShows";
 import { useAuth } from "@/contexts/AuthContext";
 import { safeT } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import { PaginationDotButton, PaginationDots, PaginationDotStatic } from "@/components/ui/pagination-dots";
 
 function ContinueWatchingSkeleton() {
   return (
-    <section className="ct-panel p-5 md:p-6">
+    <section className="ct-panel p-4 md:p-6">
       <div className="mb-4 space-y-2">
         <div className="h-7 w-48 rounded-md skeleton-shimmer" />
         <div className="h-4 w-72 rounded-md skeleton-shimmer" />
       </div>
-      <div className="hide-scrollbar -mx-1 flex gap-4 overflow-x-auto px-1 pb-2">
+      <div className="hide-scrollbar -mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
         {Array.from({ length: 3 }).map((_, index) => (
           <div
             key={index}
-            className="h-[430px] w-[min(86vw,320px)] shrink-0 rounded-3xl border border-border/60 bg-card/60 skeleton-shimmer sm:h-[420px] sm:w-[320px] md:w-[360px]"
+            className="h-[360px] w-[min(82vw,300px)] shrink-0 rounded-3xl border border-border/60 bg-card/60 skeleton-shimmer sm:h-[420px] sm:w-[320px] md:w-[360px]"
           />
         ))}
       </div>
@@ -167,7 +168,7 @@ export function ContinueWatching() {
 
   if (!data || data.length === 0) {
     return (
-      <section className="ct-panel min-h-[420px] p-5 md:min-h-[460px] md:p-6">
+      <section className="ct-panel min-h-[380px] p-4 md:min-h-[460px] md:p-6">
         <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -209,7 +210,7 @@ export function ContinueWatching() {
   }
 
   return (
-    <section className="ct-panel p-5 md:p-6">
+    <section className="ct-panel p-4 md:p-6">
       <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
@@ -231,7 +232,7 @@ export function ContinueWatching() {
 
       <div
         ref={scrollContainerRef}
-        className="hide-scrollbar -mx-1 flex snap-x snap-proximity gap-4 overflow-x-auto px-1 pb-2 overscroll-x-contain [scrollbar-width:none]"
+        className="hide-scrollbar -mx-1 flex snap-x snap-proximity gap-3 overflow-x-auto px-1 pb-2 overscroll-x-contain [scrollbar-width:none]"
       >
         {data.map((item) => {
           const title = getMediaTitle(item.details) || t("common.tvShow", "TV Show");
@@ -244,11 +245,11 @@ export function ContinueWatching() {
           return (
             <Card
               key={item.details.id}
-              className="min-h-[430px] w-[min(86vw,320px)] shrink-0 snap-start overflow-hidden rounded-3xl border-border/60 bg-card/80 [content-visibility:auto] [contain-intrinsic-size:320px_430px] sm:min-h-[420px] sm:w-[320px] md:w-[360px]"
+              className="w-[min(82vw,300px)] shrink-0 snap-start overflow-hidden rounded-3xl border-border/60 bg-card/80 sm:min-h-[420px] sm:w-[320px] md:w-[360px]"
             >
               <CardContent className="p-0">
-                <div className="flex h-full flex-col sm:flex-row">
-                  <div className="aspect-[2/3] w-full overflow-hidden bg-muted/40 sm:aspect-auto sm:h-auto sm:w-32 md:w-36">
+                <div className="flex flex-col sm:h-full sm:flex-row">
+                  <div className="aspect-[3/4] w-full overflow-hidden bg-muted/40 sm:aspect-auto sm:h-auto sm:w-32 md:w-36">
                     <Image
                       src={getImageUrl(item.details.poster_path, "w342")}
                       alt={title}
@@ -260,13 +261,13 @@ export function ContinueWatching() {
                     />
                   </div>
 
-                  <div className="flex flex-1 flex-col p-4">
+                  <div className="flex flex-col p-3 sm:flex-1 sm:p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h3 className="line-clamp-2 min-h-[3.5rem] text-base font-semibold text-foreground sm:text-lg">
+                        <h3 className="line-clamp-2 text-base font-semibold text-foreground sm:min-h-[3.5rem] sm:text-lg">
                           <bdi dir="auto">{title}</bdi>
                         </h3>
-                        <p className="mt-1 text-sm text-muted-foreground">
+                        <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
                           {t("home.episodesTracked", {
                             count: item.watchedEpisodeCount,
                             defaultValue: "{{count}} episodes tracked",
@@ -278,7 +279,7 @@ export function ContinueWatching() {
                       </span>
                     </div>
 
-                    <div className="mt-4 min-h-[112px] rounded-2xl border border-border/60 bg-background/40 p-3">
+                    <div className="mt-2 min-h-[68px] rounded-2xl border border-border/60 bg-background/40 p-2.5">
                       {nextEpisode ? (
                         <>
                           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
@@ -286,7 +287,7 @@ export function ContinueWatching() {
                               ? t("home.upNext", "Up next")
                               : t("home.nextEpisode", "Next episode")}
                           </p>
-                          <p className="mt-1 line-clamp-2 font-medium text-foreground">
+                          <p className="mt-1 line-clamp-2 text-sm font-medium text-foreground">
                             {nextEpisodeLabel} {nextEpisode.name}
                           </p>
                           {nextEpisode.air_date ? (
@@ -310,7 +311,7 @@ export function ContinueWatching() {
                       ) : null}
                     </div>
 
-                    <div className="mt-4">
+                    <div className="mt-2.5">
                       <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
                         <span>{t("home.seriesProgress", "Series progress")}</span>
                         <span>{item.progressPercent}%</span>
@@ -318,8 +319,15 @@ export function ContinueWatching() {
                       <Progress value={item.progressPercent} className="h-2" />
                     </div>
 
-                    <div className="mt-auto flex flex-col gap-2 pt-4">
-                      <Button asChild className="flex-1 gap-2">
+                    <div className="mt-2 grid grid-cols-2 gap-2 sm:mt-auto sm:flex sm:flex-col sm:pt-3">
+                      <Button
+                        asChild
+                        className={cn(
+                          "gap-2 text-sm h-9",
+                          nextEpisode && !nextEpisode.isUpcoming ? "col-span-1" : "col-span-2",
+                          "sm:flex-1 sm:h-10",
+                        )}
+                      >
                         <Link to={`/tv/${item.details.id}`}>
                           <Play className="h-4 w-4" />
                           {t("home.openShow", "Open Show")}
@@ -329,7 +337,7 @@ export function ContinueWatching() {
                         <Button
                           type="button"
                           variant="outline"
-                          className="flex-1 gap-2"
+                          className="col-span-1 gap-2 text-sm h-9 sm:flex-1 sm:h-10"
                           onClick={() =>
                             markEpisodeWatched({
                               showId: item.details.id,
@@ -345,9 +353,7 @@ export function ContinueWatching() {
                           <CheckCircle2 className="h-4 w-4" />
                           {t("home.markNextEpisode", "Mark Next Episode")}
                         </Button>
-                      ) : (
-                        <div className="h-10" aria-hidden="true" />
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -358,7 +364,7 @@ export function ContinueWatching() {
       </div>
 
       {hasOverflow && pageCount > 1 ? (
-        <PaginationDots className="justify-center">
+        <PaginationDots className="mt-2 justify-center gap-1">
           {Array.from({ length: pageCount }).map((_, index) => (
             <PaginationDotButton
               key={`continue-watching-page-${index}`}

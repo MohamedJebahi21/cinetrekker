@@ -18,19 +18,10 @@ export type SafetyMedia = Media & {
 };
 
 const STRICT_BLOCK_TAGS = new Set([
-  "R",
-  "15",
-  "15A",
-  "16",
-  "17",
-  "MA15+",
-  "TVMA",
   "NC17",
   "18+",
   "ADULT",
   "EXPLICIT",
-  "UNRATED",
-  "NR",
 ]);
 const MODERATE_BLOCK_TAGS = new Set(["NC17", "18+", "ADULT", "EXPLICIT"]);
 

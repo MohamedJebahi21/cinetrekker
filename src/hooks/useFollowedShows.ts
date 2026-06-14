@@ -237,6 +237,166 @@ export function useWatchedEpisodes(showId?: number) {
     },
   });
 
+  const markSeasonWatchedMutation = useMutation({
+    mutationFn: async ({ 
+      showId, 
+      seasonNumber, 
+      episodes,
+      showName,
+      posterPath,
+    }: { 
+      showId: number; 
+      seasonNumber: number; 
+      episodes: Array<{ episode_number: number; name?: string; air_date?: string }>;
+      showName?: string;
+      posterPath?: string | null;
+    }) => {
+      if (!user) throw new Error('Not authenticated');
+      
+      // Mark all episodes in the season as watched
+      const episodesToMark = episodes.map(ep => ({
+        user_id: user.id,
+        show_id: showId,
+        season_number: seasonNumber,
+        episode_number: ep.episode_number,
+        episode_name: validateEpisodeName(ep.name) || null,
+        air_date: ep.air_date || null,
+      }));
+      
+      const { error } = await supabase
+        .from('watched_episodes')
+        .upsert(episodesToMark, { onConflict: 'user_id,show_id,season_number,episode_number' });
+      
+      if (error) throw error;
+
+      const validatedShowName = showName ? validateShowName(showName) : undefined;
+      const lastEpisode = episodes[episodes.length - 1];
+
+      if (validatedShowName) {
+        await supabase
+          .from('followed_shows')
+          .upsert({
+            user_id: user.id,
+            show_id: showId,
+            show_name: validatedShowName,
+            poster_path: posterPath ?? null,
+            last_watched_season: seasonNumber,
+            last_watched_episode: lastEpisode.episode_number,
+          }, { onConflict: 'user_id,show_id' });
+      } else {
+        await supabase
+          .from('followed_shows')
+          .update({
+            last_watched_season: seasonNumber,
+            last_watched_episode: lastEpisode.episode_number,
+          })
+          .eq('user_id', user.id)
+          .eq('show_id', showId);
+      }
+
+      await supabase
+        .from('user_watched')
+        .upsert({
+          user_id: user.id,
+          media_id: showId,
+          media_type: 'tv',
+          status: 'watching',
+          watched_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,media_id,media_type' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['watched-episodes'] });
+      queryClient.invalidateQueries({ queryKey: ['followed-shows'] });
+      queryClient.invalidateQueries({ queryKey: ['watched', user?.id] });
+      toast({ title: 'Season marked as watched' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const markAllSeasonsWatchedMutation = useMutation({
+    mutationFn: async ({ 
+      showId, 
+      allEpisodes,
+      showName,
+      posterPath,
+    }: { 
+      showId: number; 
+      allEpisodes: Array<{ season_number: number; episode_number: number; name?: string; air_date?: string }>;
+      showName?: string;
+      posterPath?: string | null;
+    }) => {
+      if (!user) throw new Error('Not authenticated');
+      
+      // Mark all episodes across all seasons as watched
+      const episodesToMark = allEpisodes.map(ep => ({
+        user_id: user.id,
+        show_id: showId,
+        season_number: ep.season_number,
+        episode_number: ep.episode_number,
+        episode_name: validateEpisodeName(ep.name) || null,
+        air_date: ep.air_date || null,
+      }));
+      
+      const { error } = await supabase
+        .from('watched_episodes')
+        .upsert(episodesToMark, { onConflict: 'user_id,show_id,season_number,episode_number' });
+      
+      if (error) throw error;
+
+      const validatedShowName = showName ? validateShowName(showName) : undefined;
+      
+      // Find the latest episode
+      const lastEpisode = allEpisodes.reduce((latest, current) => {
+        if (current.season_number > latest.season_number) return current;
+        if (current.season_number === latest.season_number && current.episode_number > latest.episode_number) return current;
+        return latest;
+      });
+
+      if (validatedShowName) {
+        await supabase
+          .from('followed_shows')
+          .upsert({
+            user_id: user.id,
+            show_id: showId,
+            show_name: validatedShowName,
+            poster_path: posterPath ?? null,
+            last_watched_season: lastEpisode.season_number,
+            last_watched_episode: lastEpisode.episode_number,
+          }, { onConflict: 'user_id,show_id' });
+      } else {
+        await supabase
+          .from('followed_shows')
+          .update({
+            last_watched_season: lastEpisode.season_number,
+            last_watched_episode: lastEpisode.episode_number,
+          })
+          .eq('user_id', user.id)
+          .eq('show_id', showId);
+      }
+
+      await supabase
+        .from('user_watched')
+        .upsert({
+          user_id: user.id,
+          media_id: showId,
+          media_type: 'tv',
+          status: 'completed',
+          watched_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,media_id,media_type' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['watched-episodes'] });
+      queryClient.invalidateQueries({ queryKey: ['followed-shows'] });
+      queryClient.invalidateQueries({ queryKey: ['watched', user?.id] });
+      toast({ title: 'All seasons marked as watched' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
   const isEpisodeWatched = (showId: number, seasonNumber: number, episodeNumber: number) => {
     return watchedEpisodes.some(
       ep => ep.show_id === showId && ep.season_number === seasonNumber && ep.episode_number === episodeNumber
@@ -248,6 +408,8 @@ export function useWatchedEpisodes(showId?: number) {
     isLoading,
     markEpisodeWatched: markEpisodeWatchedMutation.mutate,
     removeEpisodeWatched: removeEpisodeWatchedMutation.mutate,
+    markSeasonWatched: markSeasonWatchedMutation.mutate,
+    markAllSeasonsWatched: markAllSeasonsWatchedMutation.mutate,
     isEpisodeWatched,
   };
 }

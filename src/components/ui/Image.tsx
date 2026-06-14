@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 
 interface ImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
@@ -8,6 +8,7 @@ interface ImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   priority?: boolean;
   showSkeleton?: boolean;
   modernFormats?: boolean;
+  fallback?: React.ReactNode;
 }
 
 function getModernFormatSource(src: string, targetExt: 'avif' | 'webp'): string | null {
@@ -29,11 +30,14 @@ export const Image: React.FC<ImageProps> = ({
   priority = false,
   showSkeleton = false,
   modernFormats = true,
+  fallback,
   className,
   onLoad,
+  onError,
   ...props
 }) => {
-  const [isLoaded, setIsLoaded] = React.useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const finalLoading = loading ?? (priority ? 'eager' : 'lazy');
   const finalFetchPriority = fetchPriority === 'auto' && priority ? 'high' : fetchPriority;
 
@@ -48,7 +52,38 @@ export const Image: React.FC<ImageProps> = ({
 
   React.useEffect(() => {
     setIsLoaded(false);
+    setHasError(false);
   }, [resolvedSrc]);
+
+  const handleError = useCallback((event: React.SyntheticEvent<HTMLImageElement>) => {
+    setHasError(true);
+    setIsLoaded(true);
+    onError?.(event);
+  }, [onError]);
+
+  const handleLoad = useCallback((event: React.SyntheticEvent<HTMLImageElement>) => {
+    setIsLoaded(true);
+    onLoad?.(event);
+  }, [onLoad]);
+
+  if (hasError) {
+    return (
+      <div className={cn("flex items-center justify-center bg-muted", className)} style={{ width: typeof width === 'number' ? `${width}px` : width, height: typeof height === 'number' ? `${height}px` : height }}>
+        {fallback || (
+          <div className="text-center p-2">
+            <img
+              src="/placeholder.svg"
+              alt={alt}
+              width={48}
+              height={48}
+              className="mx-auto h-12 w-12 object-contain opacity-80"
+            />
+            <p className="mt-2 text-xs text-muted-foreground">{alt || "Image not found"}</p>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <picture
@@ -74,13 +109,8 @@ export const Image: React.FC<ImageProps> = ({
           sizes={sizes}
           loading={finalLoading}
           decoding="async"
-          onLoad={(event) => {
-            setIsLoaded(true);
-            onLoad?.(event);
-          }}
-          onError={() => {
-            setIsLoaded(true);
-          }}
+          onLoad={handleLoad}
+          onError={handleError}
           className={cn("block h-auto max-w-full", className)}
           {...fetchPriorityAttr}
           {...props}

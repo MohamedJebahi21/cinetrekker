@@ -46,7 +46,8 @@
     "undo": "Undo",
     "episode": "Episode",
     "hidden": "Hidden",
-    "untitled": "Untitled"
+    "untitled": "Untitled",
+    "skipToMainContent": "Ana içeriğe atla"
   },
   "nav": {
     "home": "Ana Sayfa",
@@ -157,9 +158,9 @@
     "globalDiscoveryHint": "Kişisel kütüphanen öncelikli olsun diye genel keşif burada kalır.",
     "newReleases": "Yeni Çıkanlar",
     "topWatchedThisWeekKicker": "Haftanın Öne Çıkanları",
-    "dailyPick": "Günün Seçimi",
-    "dailyPickBadge": "Serini bozmamak için seçildi",
-    "openTodaysPick": "Günün Seçimini Aç",
+    "dailyPick": "Öne çıkan seçim",
+    "dailyPickBadge": "Öne çıkan seçim",
+    "openTodaysPick": "Seçimi aç",
     "dailyPickFallback": "Kitaplığınızdan ve trend olan içeriklerden seçilmiş güçlü bir öneri.",
     "continueWatching": "İzlemeye Devam Et",
     "continueWatchingLoadError": "Bölüm ilerlemeniz şu anda yüklenemedi.",

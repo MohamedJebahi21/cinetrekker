@@ -78,6 +78,7 @@ const Following = lazy(() => import("./pages/Following"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Recommendations = lazy(() => import("./pages/Recommendations"));
 const Profile = lazy(() => import("./pages/Profile"));
+const UserProfile = lazy(() => import("./pages/UserProfile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const About = lazy(() => import("./pages/About"));
@@ -277,6 +278,14 @@ function AppRoutes() {
                   <Profile />
                 </Suspense>
               </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user/:userId"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <UserProfile />
+              </Suspense>
             }
           />
           <Route

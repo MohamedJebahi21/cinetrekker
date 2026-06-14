@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { createLogger } from "@/lib/logger";
 import type { MediaDetails } from "@/types/media";
 
 export type FollowMediaType = "movie" | "tv";
@@ -41,11 +43,70 @@ interface FollowTitleInput {
 const GUEST_FOLLOWS_KEY = "cinetrekker_guest_follows";
 const GUEST_FOLLOWS_EVENT = "cinetrekker:guest-follows-updated";
 const GUEST_TITLE_STATE_KEY = "cinetrekker_guest_followed_title_state";
+const FOLLOW_STATE_SCHEMA_MISSING_KEY = "cinetrekker_follow_state_schema_missing";
+const logger = createLogger("title-follows");
+
+let followStateSchemaMissing = readPersistentSchemaMissingFlag();
 
 function canUseStorage() {
   return (
     typeof window !== "undefined" && typeof window.localStorage !== "undefined"
   );
+}
+
+function readPersistentSchemaMissingFlag(): boolean {
+  if (!canUseStorage()) return false;
+
+  try {
+    return window.localStorage.getItem(FOLLOW_STATE_SCHEMA_MISSING_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function persistSchemaMissingFlag(value: boolean) {
+  if (!canUseStorage()) return;
+
+  try {
+    if (value) {
+      window.localStorage.setItem(FOLLOW_STATE_SCHEMA_MISSING_KEY, "true");
+    } else {
+      window.localStorage.removeItem(FOLLOW_STATE_SCHEMA_MISSING_KEY);
+    }
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function isMissingFollowStateSchemaError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+
+  const typedError = error as PostgrestError & { message?: string };
+  if (typedError.code === "PGRST205") return true;
+
+  const message = `${typedError.message || ""} ${typedError.details || ""}`.toLowerCase();
+  return (
+    message.includes("could not find the table") ||
+    message.includes("followed_title_state_user")
+  );
+}
+
+function markFollowStateSchemaMissing(error: unknown): boolean {
+  if (!isMissingFollowStateSchemaError(error)) return false;
+
+  if (!followStateSchemaMissing) {
+    followStateSchemaMissing = true;
+    persistSchemaMissingFlag(true);
+    logger.warn(
+      "followed_title_state_user is unavailable; using local follow-state fallback.",
+    );
+  }
+
+  return true;
+}
+
+export function isFollowStateSchemaMissing() {
+  return followStateSchemaMissing;
 }
 
 export function createFollowKey(mediaType: FollowMediaType, mediaId: number) {
@@ -242,6 +303,10 @@ export function useTitleFollows() {
       );
 
       if (statesToSync.length > 0) {
+        if (followStateSchemaMissing) {
+          return;
+        }
+
         const { error } = await supabase
           .from("followed_title_state_user")
           .upsert(
@@ -250,9 +315,12 @@ export function useTitleFollows() {
               ...state,
             })),
             { onConflict: "user_id,movie_id" },
-          );
+        );
 
         if (error) {
+          if (markFollowStateSchemaMissing(error)) {
+            return;
+          }
           throw error;
         }
       }
@@ -292,47 +360,55 @@ export function useTitleFollows() {
 
   const { data: remoteFollows = [], isLoading } = useQuery({
     queryKey: ["title-follows", user?.id],
-    enabled: !!user,
+    enabled: !!user && !followStateSchemaMissing,
     queryFn: async () => {
       if (!user) {
         return [] as FollowedTitle[];
       }
 
-      const [showsResult, moviesResult] = await Promise.all([
-        supabase
-          .from("followed_shows")
-          .select("show_id,show_name,poster_path,followed_at,user_id")
-          .eq("user_id", user.id)
-          .order("followed_at", { ascending: false }),
-        supabase
-          .from("movie_followers")
-          .select("movie_id,created_at,user_id")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false }),
-      ]);
+      try {
+        const [showsResult, moviesResult] = await Promise.all([
+          supabase
+            .from("followed_shows")
+            .select("show_id,show_name,poster_path,followed_at,user_id")
+            .eq("user_id", user.id)
+            .order("followed_at", { ascending: false }),
+          supabase
+            .from("movie_followers")
+            .select("movie_id,created_at,user_id")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false }),
+        ]);
 
-      if (showsResult.error) {
-        throw showsResult.error;
+        if (showsResult.error) {
+          throw showsResult.error;
+        }
+
+        if (moviesResult.error) {
+          throw moviesResult.error;
+        }
+
+        return dedupeTitles([
+          ...showsResult.data.map((show): FollowedTitle => ({
+            id: createFollowKey("tv", show.show_id),
+            mediaId: show.show_id,
+            mediaType: "tv",
+            title: show.show_name,
+            posterPath: show.poster_path,
+            followedAt: show.followed_at,
+            userId: show.user_id,
+          })),
+          ...moviesResult.data
+            .map(normalizeMovieFollow)
+            .filter((item): item is FollowedTitle => item !== null),
+        ]);
+      } catch (error) {
+        if (markFollowStateSchemaMissing(error)) {
+          return [] as FollowedTitle[];
+        }
+
+        throw error;
       }
-
-      if (moviesResult.error) {
-        throw moviesResult.error;
-      }
-
-      return dedupeTitles([
-        ...showsResult.data.map((show): FollowedTitle => ({
-          id: createFollowKey("tv", show.show_id),
-          mediaId: show.show_id,
-          mediaType: "tv",
-          title: show.show_name,
-          posterPath: show.poster_path,
-          followedAt: show.followed_at,
-          userId: show.user_id,
-        })),
-        ...moviesResult.data
-          .map(normalizeMovieFollow)
-          .filter((item): item is FollowedTitle => item !== null),
-      ]);
     },
   });
 
@@ -391,6 +467,10 @@ export function useTitleFollows() {
       }
 
       if (initialState) {
+        if (followStateSchemaMissing) {
+          return { initialState, mediaType, followId, title, userId: user.id };
+        }
+
         const { error } = await supabase
           .from("followed_title_state_user")
           .upsert(
@@ -404,6 +484,9 @@ export function useTitleFollows() {
           );
 
         if (error) {
+          if (markFollowStateSchemaMissing(error)) {
+            return { initialState, mediaType, followId, title, userId: user.id };
+          }
           throw error;
         }
       }
@@ -464,11 +547,17 @@ export function useTitleFollows() {
         }
       }
 
-      await supabase
-        .from("followed_title_state_user")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("movie_id", followId);
+      if (!followStateSchemaMissing) {
+        const { error } = await supabase
+          .from("followed_title_state_user")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("movie_id", followId);
+
+        if (error && !markFollowStateSchemaMissing(error)) {
+          throw error;
+        }
+      }
 
       return { followId, mediaType };
     },

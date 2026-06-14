@@ -2,14 +2,13 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import type { Media } from "@/types/media";
+import { Bookmark, Flame, Search, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HeroSection } from "@/components/HeroSection";
 import { MediaCardSkeleton } from "@/components/MediaCard";
 import { MediaSection } from "@/components/MediaSection";
 import { MediaCarouselEnhanced } from "@/components/MediaCarouselEnhanced";
-import { MediaGrid } from "@/components/MediaGrid";
 import { ContinueWatching } from "@/components/ContinueWatching";
-import { RecentlyViewed } from "@/components/RecentlyViewed";
 import SEO from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserLists } from "@/contexts/UserListsContext";
@@ -18,7 +17,6 @@ import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { HomeSectionState } from "@/components/home/HomeSectionState";
 import { HomeStatsSnapshot } from "@/components/home/HomeStatsSnapshot";
 import { HomeWatchlistSkeleton } from "@/components/home/HomeWatchlistSkeleton";
-import { DailyPickSection } from "@/components/home/DailyPickSection";
 import { MotionRevealSection } from "@/components/motion/MotionRevealSection";
 import { PaginationDots, PaginationDotStatic } from "@/components/ui/pagination-dots";
 import GuestSyncBanner from "@/components/GuestSyncBanner";
@@ -133,10 +131,6 @@ export default function Index() {
     criticalDataQuery,
     trendingDayQuery,
     watchlistPreviewQuery,
-    topRatedMoviesQuery,
-    topRatedTVQuery,
-    popularMoviesQuery,
-    popularTVQuery,
   } = useHomePageData({
     language,
     watched,
@@ -152,6 +146,7 @@ export default function Index() {
   const personalizedTimedOut = useLoadingTimeout(
     moreInGenreQuery.isLoading,
   );
+  const hasLibraryActivity = watched.length > 0 || watchlist.length > 0;
 
   const faqItems = [
     {
@@ -184,11 +179,6 @@ export default function Index() {
     moreInGenreQuery.error,
   );
   const hasListActivity = watchlist.length > 0 || watched.length > 0;
-  const dailyPick: Media | null =
-    watchlistPreviewQuery.data?.[0] ||
-    criticalDataQuery.data?.trendingWeek?.results?.[0] ||
-    trendingDayQuery.data?.results?.[0] ||
-    null;
   const watchlistSection = hasListActivity ? (
     <HomeSectionState
       title={t("nav.watchlist", "Watchlist")}
@@ -289,40 +279,91 @@ export default function Index() {
     </HomeSectionState>
   );
 
-  const sharedDiscoveryRails = (
-    <>
-      <MediaSection
-        title={t("home.topRatedMovies", "Top Rated Movies")}
-        items={topRatedMoviesQuery.data?.results || []}
-        loading={topRatedMoviesQuery.isLoading}
-        showMoreLink="/movies"
-        emptyMessage={t("home.topRatedMoviesEmpty", "Top rated movies will appear here soon.")}
-      />
+  const discoveryHubSection = (
+    <section className="ct-panel overflow-hidden p-5 md:p-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="max-w-2xl">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
+            {t("home.discoveryHubLabel", "Discovery Hub")}
+          </p>
+          <h2 className="section-title mb-1">
+            {t("home.discoveryHubTitle", "Pick your next move")}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {t(
+              "home.discoveryHubDesc",
+              "Use CineTrekker as a quick launchpad: search directly, jump into trending titles, open your watchlist, or go deeper into recommendations.",
+            )}
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {[
+              t("home.discoveryHubTag1", "Fast search"),
+              t("home.discoveryHubTag2", "Trending now"),
+              t("home.discoveryHubTag3", "Personalized picks"),
+            ].map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex rounded-full border border-border/60 bg-background/35 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
 
-      <MediaSection
-        title={t("home.popularTVShows", "Popular TV Shows")}
-        items={popularTVQuery.data?.results || []}
-        loading={popularTVQuery.isLoading}
-        showMoreLink="/tv"
-        emptyMessage={t("home.popularTVShowsEmpty", "Popular TV shows will appear here soon.")}
-      />
-
-      <MediaSection
-        title={t("home.popularMovies", "Popular Movies")}
-        items={popularMoviesQuery.data?.results || []}
-        loading={popularMoviesQuery.isLoading}
-        showMoreLink="/discover"
-        emptyMessage={t("home.popularMoviesEmpty", "Popular movies will appear here soon.")}
-      />
-
-      <MediaSection
-        title={t("home.criticallyAcclaimedTV", "Critically Acclaimed TV")}
-        items={topRatedTVQuery.data?.results || []}
-        loading={topRatedTVQuery.isLoading}
-        showMoreLink="/tv"
-        emptyMessage={t("home.criticallyAcclaimedTVEmpty", "TV shows will appear here soon.")}
-      />
-    </>
+        <div className="grid gap-2 sm:grid-cols-2 lg:min-w-[320px] lg:grid-cols-1 xl:min-w-[360px] xl:grid-cols-2">
+          {[
+            {
+              href: "/search",
+              label: t("nav.search", "Search"),
+              desc: t("home.discoveryHubSearchDesc", "Find a movie, show, or person fast."),
+              icon: Search,
+            },
+            {
+              href: "/trending",
+              label: t("nav.trending", "Trending"),
+              desc: t("home.discoveryHubTrendingDesc", "See what is moving right now."),
+              icon: Flame,
+            },
+            {
+              href: "/watchlist",
+              label: t("nav.watchlist", "Watchlist"),
+              desc: t("home.discoveryHubWatchlistDesc", "Continue from the titles you saved."),
+              icon: Bookmark,
+            },
+            {
+              href: user ? "/recommendations" : "/signup",
+              label: user
+                ? t("nav.recommendations", "Recommendations")
+                : t("nav.signUp", "Get Started"),
+              desc: user
+                ? t("home.discoveryHubRecsDesc", "Open your taste-matched picks.")
+                : t("home.discoveryHubSignupDesc", "Create an account to sync your activity."),
+              icon: Sparkles,
+            },
+          ].map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                className="group rounded-2xl border border-border/60 bg-background/35 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:bg-background/50"
+              >
+                <div className="flex items-start gap-3">
+                  <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary transition-colors group-hover:bg-primary/18">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground">{item.label}</p>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.desc}</p>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </section>
   );
 
   useEffect(() => {
@@ -448,14 +489,11 @@ export default function Index() {
           <AuthHomeSkeleton />
         ) : user ? (
           <>
-            <MotionRevealSection tone="bold" delayClassName="delay-75" accentOpacityClassName="opacity-30">
-              <DailyPickSection
-                pick={dailyPick}
-                sourceLabel={t("home.dailyPick", "Tonight's Pick")}
-              />
-            </MotionRevealSection>
-            <MotionRevealSection tone="standard" delayClassName="delay-100" accentOpacityClassName="opacity-25">
+            <MotionRevealSection tone="standard" delayClassName="delay-75" accentOpacityClassName="opacity-25">
               <ContinueWatching />
+            </MotionRevealSection>
+            <MotionRevealSection tone="soft" delayClassName="delay-100" accentOpacityClassName="opacity-16">
+              {freshDiscoverySection}
             </MotionRevealSection>
             {watchlistSection ? (
               <MotionRevealSection tone="soft" delayClassName="delay-150" accentOpacityClassName="opacity-25">
@@ -467,18 +505,14 @@ export default function Index() {
                 {personalizedSection}
               </MotionRevealSection>
             )}
-            <MotionRevealSection tone="soft" delayClassName="delay-300" accentOpacityClassName="opacity-22">
-              {sharedDiscoveryRails}
+            <MotionRevealSection tone="soft" delayClassName="delay-250" accentOpacityClassName="opacity-22">
+              {discoveryHubSection}
             </MotionRevealSection>
-            <MotionRevealSection tone="soft" delayClassName="delay-300" accentOpacityClassName="opacity-20">
-              <RecentlyViewed />
-            </MotionRevealSection>
-            <MotionRevealSection tone="soft" delayClassName="delay-300" accentOpacityClassName="opacity-18">
-              <HomeStatsSnapshot watched={watched} watchlist={watchlist} />
-            </MotionRevealSection>
-            <MotionRevealSection tone="soft" delayClassName="delay-300" accentOpacityClassName="opacity-16">
-              {freshDiscoverySection}
-            </MotionRevealSection>
+            {hasLibraryActivity ? (
+              <MotionRevealSection tone="soft" delayClassName="delay-250" accentOpacityClassName="opacity-18">
+                <HomeStatsSnapshot watched={watched} watchlist={watchlist} />
+              </MotionRevealSection>
+            ) : null}
           </>
         ) : (
           <>
@@ -489,19 +523,10 @@ export default function Index() {
               {freshDiscoverySection}
             </MotionRevealSection>
             <MotionRevealSection tone="soft" delayClassName="delay-150" accentOpacityClassName="opacity-20">
-              {sharedDiscoveryRails}
-            </MotionRevealSection>
-            <MotionRevealSection tone="bold" delayClassName="delay-200" accentOpacityClassName="opacity-30">
-              <DailyPickSection
-                pick={dailyPick}
-                sourceLabel={t("home.dailyPickGuests", "Start with tonight's pick")}
-              />
-            </MotionRevealSection>
-            <MotionRevealSection tone="soft" delayClassName="delay-250" accentOpacityClassName="opacity-18">
-              <RecentlyViewed />
+              {discoveryHubSection}
             </MotionRevealSection>
             {watchlistSection ? (
-              <MotionRevealSection tone="soft" delayClassName="delay-300" accentOpacityClassName="opacity-22">
+              <MotionRevealSection tone="soft" delayClassName="delay-250" accentOpacityClassName="opacity-22">
                 {watchlistSection}
               </MotionRevealSection>
             ) : null}
@@ -546,7 +571,7 @@ export default function Index() {
             {[
               {
                 title: t("home.onboarding.step1", "1. What it does"),
-                body: t("home.onboarding.step1Body", "Track titles, build a watchlist, and discover new picks with a locations-first hook."),
+                body: t("home.onboarding.step1Body", "Track titles, build a watchlist, and discover new picks in one place."),
               },
               {
                 title: t("home.onboarding.step2", "2. How saving works"),

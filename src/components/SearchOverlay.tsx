@@ -132,6 +132,24 @@ export default function SearchOverlay() {
     }
   };
 
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(RECENTS_ID);
+    if (stored) {
+      try {
+        setRecentSearches(JSON.parse(stored));
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, [open]);
+
+  const clearRecentSearches = () => {
+    localStorage.removeItem(RECENTS_ID);
+    setRecentSearches([]);
+  };
+
   return (
     <>
       {open && (
@@ -194,6 +212,7 @@ export default function SearchOverlay() {
                       <li key={`${item.media_type}-${item.id}`}>
                         <button
                           onClick={() => {
+                            addToRecents(item.title || item.name || "");
                             navigate(getItemRoute(item));
                             setOpen(false);
                           }}
@@ -240,6 +259,36 @@ export default function SearchOverlay() {
                     );
                   })}
                 </ul>
+              ) : query.length < 2 && recentSearches.length > 0 ? (
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      {t("search.recentSearches", "Recent Searches")}
+                    </h3>
+                    <button
+                      onClick={clearRecentSearches}
+                      className="text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      {t("search.clear", "Clear")}
+                    </button>
+                  </div>
+                  <ul className="space-y-1">
+                    {recentSearches.map((recent, index) => (
+                      <li key={index}>
+                        <button
+                          onClick={() => {
+                            setQuery(recent);
+                            addToRecents(recent);
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-accent/30 transition-colors rounded"
+                        >
+                          <Search className="w-4 h-4 inline-block mr-2 text-muted-foreground" />
+                          {recent}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ) : (
                 <div className="p-4 text-sm text-muted-foreground">
                   {debounced.length >= 2

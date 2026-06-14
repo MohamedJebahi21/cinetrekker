@@ -59,13 +59,11 @@ export function DailyPickSection({
 
       <div className="relative grid gap-6 p-5 md:grid-cols-[minmax(0,1.15fr)_minmax(220px,0.55fr)] md:items-center md:p-7">
         <div className="max-w-3xl">
-          <p className="ct-kicker mb-3 text-primary/90">
-            {sourceLabel || t("home.dailyPick", "Tonight's Pick")}
-          </p>
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
-            <Sparkles className="h-3.5 w-3.5" />
-            {t("home.dailyPickBadge", "Chosen to keep your streak moving")}
-          </div>
+          {sourceLabel ? (
+            <p className="ct-kicker mb-3 text-primary/90">
+              {sourceLabel}
+            </p>
+          ) : null}
           <h2 className="text-3xl font-semibold tracking-tight text-white md:text-4xl">
             {title}
           </h2>
@@ -92,7 +90,7 @@ export function DailyPickSection({
             <Button asChild className="btn-primary-glow">
               <Link to={`/${mediaType}/${pick.id}`}>
                 <Play className="h-4 w-4" />
-                {t("home.openTodaysPick", "Open Tonight's Pick")}
+                {t("home.openTodaysPick", "Open Pick")}
               </Link>
             </Button>
             <Button

@@ -156,8 +156,15 @@ export function HeroSection() {
               {t("home.topWatchedThisWeekKicker", "Weekly Spotlight")}
             </p>
 
+            <p className="max-w-xl text-sm leading-6 text-white/72 lg:text-base">
+              {t(
+                "home.heroValueProp",
+                "Discover, track, and discuss what to watch next in one place.",
+              )}
+            </p>
+
             {/* Title */}
-            <h1 className="text-4xl font-extrabold tracking-tight text-white drop-shadow-md lg:text-5xl xl:text-6xl">
+            <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-white drop-shadow-md lg:text-5xl xl:text-6xl">
               {activeTitle}
             </h1>
 
@@ -231,6 +238,8 @@ export function HeroSection() {
                 key={`hero-floating-${item.id}-${index}`}
                 type="button"
                 onClick={() => goToSlide(index)}
+                aria-label={`Select featured title: ${getMediaTitle(item)}`}
+                title={getMediaTitle(item)}
                 className={cn(
                   "relative h-20 w-14 lg:h-24 lg:w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all duration-300 hover:scale-105",
                   isActive
@@ -262,7 +271,7 @@ export function HeroSection() {
               <button
                 key={`pb-${item.id}-${i}`}
                 type="button"
-                aria-label={`Go to slide ${i + 1}`}
+                aria-label={`Go to weekly spotlight slide ${i + 1} of ${topWeekly.length}`}
                 onClick={() => goToSlide(i)}
                 className="h-1 flex-1 overflow-hidden rounded-t-full bg-white/20 transition-all hover:bg-white/30"
               >
@@ -279,109 +288,61 @@ export function HeroSection() {
 
       {/* ── Mobile layout: full-width stacked ── */}
       <div className="md:hidden">
-        {/* Backdrop */}
-        <div className="relative aspect-video w-full overflow-hidden">
-          <AnimatePresence mode="wait">
-            <motion.img
-              key={`hero-mob-bg-${activeItem.id}`}
-              src={heroImage}
-              alt=""
-              aria-hidden="true"
-              loading="eager"
-              className="absolute inset-0 h-full w-full object-cover"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: td }}
-            />
-          </AnimatePresence>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        <div className="relative overflow-hidden bg-[#0b0b0d]">
+          {/* Backdrop */}
+          <div className="relative min-h-[54svh] sm:min-h-[60svh]">
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={`hero-mob-bg-${activeItem.id}`}
+                src={heroImage}
+                alt=""
+                aria-hidden="true"
+                loading="eager"
+                className="absolute inset-0 h-full w-full object-cover object-center"
+                initial={{ opacity: 0, scale: 1.04 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: td }}
+              />
+            </AnimatePresence>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(247,37,37,0.14),transparent_36%),linear-gradient(180deg,rgba(0,0,0,0.12)_0%,rgba(0,0,0,0.4)_45%,rgba(8,8,10,0.94)_100%)]" />
 
-          {/* Progress bars */}
-          <div className="absolute bottom-0 left-0 right-0 flex gap-1 px-3 pb-0">
-            {topWeekly.map((item, i) => {
-              const isActive = i === activeIndex;
-              const fill = isActive ? progress : i < activeIndex ? 100 : 0;
-              return (
-                <button
-                  key={`mob-pb-${item.id}-${i}`}
-                  type="button"
-                  onClick={() => goToSlide(i)}
-                  className="h-0.5 flex-1 overflow-hidden rounded-t-full bg-white/20"
-                >
-                  <motion.div
-                    className="h-full bg-primary"
-                    animate={{ width: `${fill}%` }}
-                    transition={{ width: { duration: isActive ? 0.03 : 0.3, ease: "linear" } }}
-                  />
-                </button>
-              );
-            })}
+            <div className="absolute inset-x-4 top-4 flex items-center justify-between">
+              <span className="inline-flex rounded-full border border-white/10 bg-black/30 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.3em] text-white/75 backdrop-blur-md">
+                {t("home.topWatchedThisWeekKicker", "Weekly Spotlight")}
+              </span>
+              <span className="inline-flex rounded-full border border-white/10 bg-black/30 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.24em] text-white/60 backdrop-blur-md">
+                {activeYear}
+              </span>
+            </div>
+
+            <div className="absolute inset-x-4 bottom-3 flex gap-1">
+              {topWeekly.map((item, i) => {
+                const isActive = i === activeIndex;
+                const fill = isActive ? progress : i < activeIndex ? 100 : 0;
+                return (
+                  <button
+                    key={`mob-pb-${item.id}-${i}`}
+                    type="button"
+                    aria-label={`Go to weekly spotlight slide ${i + 1} of ${topWeekly.length}`}
+                    onClick={() => goToSlide(i)}
+                    className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/20"
+                  >
+                    <motion.div
+                      className="h-full bg-primary"
+                      animate={{ width: `${fill}%` }}
+                      transition={{ width: { duration: isActive ? 0.03 : 0.3, ease: "linear" } }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
           </div>
+
         </div>
 
-        {/* Text content */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`hero-mob-content-${activeItem.id}`}
-            className="px-4 pt-4 pb-2"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: td }}
-          >
-            <h2 className="text-xl font-black leading-tight text-white">
-              {activeTitle}
-            </h2>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="rounded-sm bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-white/70">
-                {activeItem.media_type === "tv" ? t("common.tvShow", "TV Show") : t("common.movie", "Movie")}
-              </span>
-              {activeYear && (
-                <span className="rounded-sm bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-white/70">
-                  {activeYear}
-                </span>
-              )}
-              {activeItem.vote_average > 0 && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-white/70">
-                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                  {activeItem.vote_average.toFixed(1)}
-                </span>
-              )}
-            </div>
-            {activeItem.overview && (
-              <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-white/60">
-                {activeItem.overview}
-              </p>
-            )}
-            <div className="mt-4 flex gap-3">
-              <Button asChild className="h-9 flex-1 rounded-sm bg-white text-black font-bold hover:bg-white/90">
-                <Link to={`/${activeMediaType}/${activeItem.id}`}>
-                  <Info className="mr-2 h-4 w-4" />{t("common.details", "Details")}
-                </Link>
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-9 w-9 rounded-sm border-white/20 bg-black/20 text-white"
-                onClick={() => { void (inWatchlist ? removeFromWatchlist(activeItem.id, activeMediaType) : addToWatchlist(activeItem.id, activeMediaType)); }}
-              >
-                <Bookmark className={cn("h-4 w-4", inWatchlist && "fill-white")} />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className={cn("h-9 w-9 rounded-sm border-white/20 bg-black/20 text-white", inWatched && "border-green-400/40 text-green-300")}
-                onClick={() => { void (inWatched ? removeFromWatched(activeItem.id, activeMediaType) : addToWatched(activeItem.id, activeMediaType, undefined, undefined, "completed")); }}
-              >
-                <Check className="h-4 w-4" />
-              </Button>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-
         {/* Horizontal thumbnail strip */}
-        <div className="scrollbar-hide flex gap-2 overflow-x-auto px-4 pb-4 pt-3">
+        <div className="scrollbar-hide flex gap-2 overflow-x-auto px-4 pb-2.5 pt-1.5">
           {topWeekly.map((item, index) => {
             const isActive = index === activeIndex;
             const thumb = item.backdrop_path
@@ -400,14 +361,93 @@ export function HeroSection() {
                 )}
               >
                 {thumb ? (
-                  <img src={thumb} alt="" loading="lazy" className="h-14 w-24 object-cover" />
+                  <img src={thumb} alt="" loading="lazy" className="h-10 w-[72px] object-cover" />
                 ) : (
-                  <div className="h-14 w-24 bg-white/5" />
+                  <div className="h-10 w-[72px] bg-white/5" />
                 )}
               </button>
             );
           })}
         </div>
+
+        {/* Text content */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`hero-mob-content-${activeItem.id}`}
+            className="px-4 pb-2.5 pt-1"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: td }}
+          >
+            <div className="rounded-[1.75rem] border border-white/10 bg-[linear-gradient(180deg,rgba(17,17,19,0.98)_0%,rgba(12,12,14,0.94)_100%)] p-3 shadow-[0_-18px_60px_rgba(0,0,0,0.52)] backdrop-blur-xl">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                  <span className="rounded-sm bg-white/10 px-2 py-0.5 text-[9px] font-semibold text-white/70">
+                    {activeItem.media_type === "tv" ? t("common.tvShow", "TV Show") : t("common.movie", "Movie")}
+                  </span>
+                  {activeYear && (
+                    <span className="rounded-sm bg-white/10 px-2 py-0.5 text-[9px] font-semibold text-white/70">
+                      {activeYear}
+                    </span>
+                  )}
+                  {activeItem.vote_average > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-white/70">
+                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                      {activeItem.vote_average.toFixed(1)}
+                    </span>
+                  )}
+                </div>
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/80" aria-hidden="true">
+                  <Info className="h-4.5 w-4.5" />
+                </div>
+              </div>
+
+              <h2 className="mt-2 text-[20px] font-black leading-[0.98] tracking-[-0.04em] text-white">
+                {activeTitle}
+              </h2>
+
+              <p className="mt-1.5 text-[13px] leading-6 text-white/68">
+                {t(
+                  "home.heroValueProp",
+                  "Discover, track, and discuss what to watch next in one place.",
+                )}
+              </p>
+
+              <div className="mt-3 grid grid-cols-[1fr_auto_auto] gap-2">
+                <Button asChild className="h-10 rounded-2xl bg-white text-black font-bold hover:bg-white/90">
+                  <Link to={`/${activeMediaType}/${activeItem.id}`}>
+                    <Info className="mr-2 h-4 w-4" />{t("common.details", "Details")}
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 rounded-2xl border-white/20 bg-black/20 text-white"
+                  onClick={() => { void (inWatchlist ? removeFromWatchlist(activeItem.id, activeMediaType) : addToWatchlist(activeItem.id, activeMediaType)); }}
+                >
+                  <Bookmark className={cn("h-4 w-4", inWatchlist && "fill-white")} />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className={cn("h-10 w-10 rounded-2xl border-white/20 bg-black/20 text-white", inWatched && "border-green-400/40 text-green-300")}
+                  onClick={() => { void (inWatched ? removeFromWatched(activeItem.id, activeMediaType) : addToWatched(activeItem.id, activeMediaType, undefined, undefined, "completed")); }}
+                >
+                  <Check className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        {activeItem.overview && (
+            <div className="px-4 pb-2 pt-0.5">
+              <p className="line-clamp-2 text-[12.5px] leading-5 text-white/62">
+                {activeItem.overview}
+              </p>
+          </div>
+        )}
       </div>
     </section>
   );

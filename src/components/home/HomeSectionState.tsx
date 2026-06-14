@@ -82,7 +82,7 @@ export function HomeSectionState({
 
   if (loading) {
     return (
-      <section className="home-section-shell min-h-[900px]">
+      <section className="home-section-shell min-h-[640px] sm:min-h-[720px]">
         {skeleton ?? null}
       </section>
     );

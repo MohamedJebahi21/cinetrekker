@@ -896,10 +896,13 @@ export default function Recommendations() {
             <div className="space-y-14">
               {filteredSections.map((section, sectionIndex) => {
                 const isPrestige = section.title === t("recommendations.topRatedForYou", "Top Rated For You");
+                const sectionKey = section.sourceItem
+                  ? `${section.sourceItem.mediaType}-${section.sourceItem.mediaId}-${sectionIndex}`
+                  : `${section.tag}-${sectionIndex}`;
 
                 return (
                   <motion.section
-                    key={section.title}
+                    key={sectionKey}
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: sectionIndex * 0.08, duration: 0.45, ease: "easeOut" }}

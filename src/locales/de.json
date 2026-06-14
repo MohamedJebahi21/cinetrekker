@@ -46,7 +46,8 @@
     "undo": "Undo",
     "episode": "Episode",
     "hidden": "Hidden",
-    "untitled": "Untitled"
+    "untitled": "Untitled",
+    "skipToMainContent": "Zum Hauptinhalt springen"
   },
   "nav": {
     "home": "Startseite",
@@ -157,9 +158,9 @@
     "globalDiscoveryHint": "Globale Entdeckungen bleiben hier, damit deine persönliche Bibliothek Vorrang hat.",
     "newReleases": "Neuerscheinungen",
     "topWatchedThisWeekKicker": "Highlights der Woche",
-    "dailyPick": "Die Wahl von heute Abend",
-    "dailyPickBadge": "Gewählt, um deine Serie am Laufen zu halten",
-    "openTodaysPick": "Heutige Wahl öffnen",
+    "dailyPick": "Empfohlene Auswahl",
+    "dailyPickBadge": "Empfohlene Auswahl",
+    "openTodaysPick": "Auswahl öffnen",
     "dailyPickFallback": "Eine starke nächste Wahl, ausgewählt aus deinen Bibliotheks-Signalen und dem, was gerade im Trend liegt.",
     "continueWatching": "Weiter schauen",
     "continueWatchingLoadError": "Wir konnten deinen Episoden-Fortschritt gerade nicht laden.",

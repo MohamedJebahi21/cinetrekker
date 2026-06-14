@@ -388,22 +388,6 @@ export default function Settings() {
     [t],
   );
 
-  const withTimeout = useCallback(
-    async <T,>(
-      promise: Promise<T>,
-      ms: number,
-      message: string,
-    ): Promise<T> => {
-      return Promise.race<T>([
-        promise,
-        new Promise<T>((_, reject) => {
-          window.setTimeout(() => reject(new Error(message)), ms);
-        }),
-      ]);
-    },
-    [],
-  );
-
   const initialStateRef = useRef<SettingsState>(DEFAULT_SETTINGS);
 
   const hasSettingsChangedMemo = useCallback(() => {
@@ -440,52 +424,48 @@ export default function Settings() {
           setHasUnsavedChanges(false);
         };
 
-        if (user?.id) {
-          logger.debug("Loading settings from Supabase for user:", user.id);
+        const storedSettings = readStoredSettings(
+          localStorage.getItem(profileKey),
+          DEFAULT_SETTINGS,
+        );
+        applyLoadedSettings(storedSettings ?? DEFAULT_SETTINGS);
 
-          const profile = await withTimeout(
-            profileService.getProfile(user.id),
-            10000,
-            "Settings load timeout",
-          );
+        if (!user?.id) {
+          return;
+        }
 
-          if (!isMounted) return;
+        logger.debug("Loading settings from Supabase for user:", user.id);
 
-          if (profile) {
+        void profileService
+          .getProfile(user.id)
+          .then((profile) => {
+            if (!isMounted || !profile) return;
+
             applyLoadedSettings({
               showWatchlist: profile.show_watchlist,
               showStats: profile.show_stats,
               allowRecommendations: profile.allow_recommendations,
             });
-          } else {
-            const storedSettings = readStoredSettings(
-              localStorage.getItem(profileKey),
-              DEFAULT_SETTINGS,
-            );
-            applyLoadedSettings(storedSettings ?? DEFAULT_SETTINGS);
-          }
+          })
+          .catch((error) => {
+            if (!isMounted) return;
+            console.error("Error loading settings:", error);
+          });
 
-          if (isMounted) {
-            subscription = await profileService.subscribeToProfile(
-              user.id,
-              (updatedProfile) => {
-                if (!isMounted) return;
+        if (isMounted) {
+          subscription = await profileService.subscribeToProfile(
+            user.id,
+            (updatedProfile) => {
+              if (!isMounted) return;
 
-                logger.debug("Settings updated in real-time:", updatedProfile);
-                applyLoadedSettings({
-                  showWatchlist: updatedProfile.show_watchlist,
-                  showStats: updatedProfile.show_stats,
-                  allowRecommendations: updatedProfile.allow_recommendations,
-                });
-              },
-            );
-          }
-        } else {
-          const storedSettings = readStoredSettings(
-            localStorage.getItem(profileKey),
-            DEFAULT_SETTINGS,
+              logger.debug("Settings updated in real-time:", updatedProfile);
+              applyLoadedSettings({
+                showWatchlist: updatedProfile.show_watchlist,
+                showStats: updatedProfile.show_stats,
+                allowRecommendations: updatedProfile.allow_recommendations,
+              });
+            },
           );
-          applyLoadedSettings(storedSettings ?? DEFAULT_SETTINGS);
         }
       } catch (error) {
         console.error("Error loading settings:", error);

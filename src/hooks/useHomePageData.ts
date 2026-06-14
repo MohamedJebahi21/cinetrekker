@@ -6,10 +6,6 @@ import {
   discoverMovies,
   discoverTV,
   getNowPlayingMovies,
-  getPopularMovies,
-  getPopularTV,
-  getTopRatedMovies,
-  getTopRatedTV,
   getTrending,
 } from "@/services/tmdb";
 import { useContentPolicy } from "@/contexts/content-policy-context";
@@ -118,18 +114,6 @@ export function useHomePageData({
     },
   });
 
-  const popularMoviesQuery = useQuery({
-    queryKey: ["popular", "movie", language, includeAdult],
-    queryFn: () => getPopularMovies(1, language, includeAdult),
-    enabled: deferredEnabled,
-  });
-
-  const popularTVQuery = useQuery({
-    queryKey: ["popular", "tv", language, includeAdult],
-    queryFn: () => getPopularTV(1, language, includeAdult),
-    enabled: deferredEnabled,
-  });
-
   const watchlistPreviewQuery = useQuery({
     queryKey: [
       "home-watchlist-preview",
@@ -147,18 +131,6 @@ export function useHomePageData({
       }) as Promise<Media[]>;
     },
     enabled: watchlist.length > 0,
-  });
-
-  const topRatedMoviesQuery = useQuery({
-    queryKey: ["top-rated", "movie", language, includeAdult],
-    queryFn: () => getTopRatedMovies(1, language, includeAdult),
-    enabled: deferredEnabled,
-  });
-
-  const topRatedTVQuery = useQuery({
-    queryKey: ["top-rated", "tv", language, includeAdult],
-    queryFn: () => getTopRatedTV(1, language, includeAdult),
-    enabled: deferredEnabled,
   });
 
   const trendingDayQuery = useQuery({
@@ -181,9 +153,7 @@ export function useHomePageData({
   );
 
   const hasDeferredErrors = Boolean(
-    topRatedMoviesQuery.error ||
-      topRatedTVQuery.error ||
-      trendingDayQuery.error,
+    trendingDayQuery.error,
   );
 
   return {
@@ -198,11 +168,7 @@ export function useHomePageData({
     moreInGenreQuery,
     criticalDataQuery,
     watchlistPreviewQuery,
-    topRatedMoviesQuery,
-    topRatedTVQuery,
     trendingDayQuery,
-    popularMoviesQuery,
-    popularTVQuery,
     hasDeferredErrors,
   };
 }

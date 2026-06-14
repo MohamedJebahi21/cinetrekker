@@ -176,15 +176,24 @@
     --card-foreground: 0 0% 100%;
     --popover: 0 0% 4%;
     --popover-foreground: 0 0% 100%;
+    --primary: 358 94% 52%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 8%;
     --secondary-foreground: 0 0% 90%;
     --muted: 0 0% 8%;
     --muted-foreground: 0 0% 70%;
+    --accent: 358 94% 20%;
+    --accent-foreground: 0 0% 100%;
     --input: 0 0% 10%;
-    --border: 0 0% 16%;
+    --border: 0 0% 12%;
+    --ring: 358 94% 52%;
     --sidebar-background: 0 0% 0%;
-    --sidebar-border: 0 0% 16%;
-    --ct-shell-glow: hsl(var(--primary) / 0.18);
+    --sidebar-border: 0 0% 12%;
+    --ct-shell-glow: hsl(var(--primary)/0.25);
+    
+    /* Glass effect for OLED mode */
+    --glass-bg: 0 0% 2% / 0.9;
+    --glass-border: 0 0% 100% / 0.05;
   }
 }
 
@@ -1062,22 +1071,31 @@ img {
 
 /* Mobile-optimized typography for section titles */
 @media (max-width: 768px) {
-  .section-title-responsive {
-    @apply text-xl;
-    font-family: "Bebas Neue", Impact, sans-serif;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    .section-title-responsive {
+      @apply text-xl;
+      font-family: "Bebas Neue", Impact, sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    
+    /* Enhanced mobile typography for readability */
+    h1, .text-3xl, .text-4xl {
+      letter-spacing: -0.01em;
+    }
+    
+    .heading-cinematic {
+      letter-spacing: 0.08em;
+    }
   }
-}
 
-@media (min-width: 769px) {
-  .section-title-responsive {
-    @apply text-2xl;
-    font-family: "Bebas Neue", Impact, sans-serif;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+  @media (min-width: 769px) {
+    .section-title-responsive {
+      @apply text-2xl;
+      font-family: "Bebas Neue", Impact, sans-serif;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
   }
-}
 
 /* Skip link visible on focus */
 .skip-link {

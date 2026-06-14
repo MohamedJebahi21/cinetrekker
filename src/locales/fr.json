@@ -46,7 +46,8 @@
     "undo": "Undo",
     "episode": "Episode",
     "hidden": "Hidden",
-    "untitled": "Untitled"
+    "untitled": "Untitled",
+    "skipToMainContent": "Passer au contenu principal"
   },
   "nav": {
     "home": "Accueil",
@@ -157,9 +158,9 @@
     "globalDiscoveryHint": "La découverte globale reste ici pour laisser votre bibliothèque personnelle en priorité.",
     "newReleases": "Nouvelles sorties",
     "topWatchedThisWeekKicker": "En vedette cette semaine",
-    "dailyPick": "Le choix de ce soir",
-    "dailyPickBadge": "Choisi pour maintenir votre rythme",
-    "openTodaysPick": "Ouvrir le choix de ce soir",
+    "dailyPick": "Sélection mise en avant",
+    "dailyPickBadge": "Sélection mise en avant",
+    "openTodaysPick": "Ouvrir la sélection",
     "dailyPickFallback": "Une suggestion solide choisie parmi vos signaux de bibliothèque et ce qui est tendance en ce moment.",
     "continueWatching": "Continuer à regarder",
     "continueWatchingLoadError": "Nous n'avons pas pu charger votre progression pour le moment.",

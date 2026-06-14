@@ -46,7 +46,8 @@
     "undo": "Undo",
     "episode": "Episode",
     "hidden": "Hidden",
-    "untitled": "Untitled"
+    "untitled": "Untitled",
+    "skipToMainContent": "الانتقال إلى المحتوى الرئيسي"
   },
   "nav": {
     "home": "الرئيسية",
@@ -158,9 +159,9 @@
     "newReleases": "إصدارات جديدة",
     "trendingNow": "الرائج الآن",
     "topWatchedThisWeekKicker": "تسليط الضوء الأسبوعي",
-    "dailyPick": "اختيار الليلة",
-    "dailyPickBadge": "تم اختياره للحفاظ على استمرارية مشاهدتك",
-    "openTodaysPick": "افتح اختيار الليلة",
+    "dailyPick": "اختيار مميز",
+    "dailyPickBadge": "اختيار مميز",
+    "openTodaysPick": "افتح الاختيار",
     "dailyPickFallback": "خيار تالٍ قوي تم اختياره من إشارات مكتبتك وما هو رائج الآن.",
     "continueWatching": "متابعة المشاهدة",
     "continueWatchingSubtitle": "تابع الحلقة التالية المتاحة دون البحث في مكتبتك.",
