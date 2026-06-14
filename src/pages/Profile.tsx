@@ -2075,23 +2075,38 @@ export default function Profile() {
                         )}
 
                         <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                          <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2">
-                            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                              {text("profile.moviesWatched", "Movies Watched")}
-                            </p>
-                            <p className="text-xl font-bold">{moviesWatched}</p>
+                          {/* Movies Watched */}
+                          <div className="relative overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-blue-600/5 px-4 py-3 group hover:border-blue-500/35 transition-all duration-200">
+                            <div className="absolute top-0 right-0 h-16 w-16 rounded-full bg-blue-500/10 blur-xl -translate-y-4 translate-x-4" />
+                            <div className="flex items-center gap-2 mb-1">
+                              <Film className="h-3.5 w-3.5 text-blue-400" />
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400/80">
+                                {text("profile.moviesWatched", "Movies Watched")}
+                              </p>
+                            </div>
+                            <p className="text-2xl font-black text-foreground tabular-nums">{countMoviesWatched}</p>
                           </div>
-                          <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2">
-                            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                              {text("profile.ratings", "Ratings")}
-                            </p>
-                            <p className="text-xl font-bold">{ratingsCount}</p>
+                          {/* Ratings */}
+                          <div className="relative overflow-hidden rounded-xl border border-yellow-500/20 bg-gradient-to-br from-yellow-500/10 to-amber-600/5 px-4 py-3 group hover:border-yellow-500/35 transition-all duration-200">
+                            <div className="absolute top-0 right-0 h-16 w-16 rounded-full bg-yellow-500/10 blur-xl -translate-y-4 translate-x-4" />
+                            <div className="flex items-center gap-2 mb-1">
+                              <Star className="h-3.5 w-3.5 text-yellow-400" />
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-yellow-400/80">
+                                {text("profile.ratings", "Ratings")}
+                              </p>
+                            </div>
+                            <p className="text-2xl font-black text-foreground tabular-nums">{countRatings}</p>
                           </div>
-                          <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2">
-                            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                              {text("profile.watchTime", "Watch Time")}
-                            </p>
-                            <p className="text-xl font-bold">
+                          {/* Watch Time */}
+                          <div className="relative overflow-hidden rounded-xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-green-600/5 px-4 py-3 group hover:border-emerald-500/35 transition-all duration-200">
+                            <div className="absolute top-0 right-0 h-16 w-16 rounded-full bg-emerald-500/10 blur-xl -translate-y-4 translate-x-4" />
+                            <div className="flex items-center gap-2 mb-1">
+                              <Clock className="h-3.5 w-3.5 text-emerald-400" />
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/80">
+                                {text("profile.watchTime", "Watch Time")}
+                              </p>
+                            </div>
+                            <p className="text-2xl font-black text-foreground">
                               {totalWatchDaysHoursMinutes}
                             </p>
                           </div>
@@ -2159,17 +2174,21 @@ export default function Profile() {
                     )
                   }
                 >
-                  <TabsList className="ct-toolbar h-auto w-full justify-start gap-2 rounded-2xl bg-card/60 p-2">
-                    <TabsTrigger value="overview" className="rounded-xl px-4 py-2">
+                  <TabsList className="ct-toolbar h-auto w-full justify-start gap-1.5 rounded-2xl bg-card/60 p-1.5">
+                    <TabsTrigger value="overview" className="rounded-xl px-4 py-2 gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary/20 border border-transparent transition-all">
+                      <BarChart3 className="h-3.5 w-3.5" />
                       {text("profile.overview", "Overview")}
                     </TabsTrigger>
-                    <TabsTrigger value="favorites" className="rounded-xl px-4 py-2">
+                    <TabsTrigger value="favorites" className="rounded-xl px-4 py-2 gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary/20 border border-transparent transition-all">
+                      <Star className="h-3.5 w-3.5" />
                       {text("profile.favorites", "Favorites")}
                     </TabsTrigger>
-                    <TabsTrigger value="taste" className="rounded-xl px-4 py-2">
+                    <TabsTrigger value="taste" className="rounded-xl px-4 py-2 gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary/20 border border-transparent transition-all">
+                      <Sparkles className="h-3.5 w-3.5" />
                       {text("profile.tasteAndStats", "Taste & Stats")}
                     </TabsTrigger>
-                    <TabsTrigger value="edit" className="rounded-xl px-4 py-2">
+                    <TabsTrigger value="edit" className="rounded-xl px-4 py-2 gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary/20 border border-transparent transition-all">
+                      <User className="h-3.5 w-3.5" />
                       {text("profile.editProfile", "Edit Profile")}
                     </TabsTrigger>
                   </TabsList>
