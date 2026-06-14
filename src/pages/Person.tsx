@@ -99,39 +99,39 @@ export default function Person() {
   }
 
   // ── Derived data ──
-  const movies =
-    person.combined_credits?.cast
-      ?.filter((c: { media_type: string }) => c.media_type === "movie")
-      .sort((a: { release_date?: string; vote_count?: number }, b: { release_date?: string; vote_count?: number }) => {
-        const dateA = a.release_date ? new Date(a.release_date).getTime() : 0;
-        const dateB = b.release_date ? new Date(b.release_date).getTime() : 0;
-        return dateB - dateA;
-      })
-      .slice(0, 24) || [];
+  const castCredits = person.combined_credits?.cast ?? [];
+  const crewCredits = person.combined_credits?.crew ?? [];
 
-  const tvShows =
-    person.combined_credits?.cast
-      ?.filter((c: { media_type: string }) => c.media_type === "tv")
-      .sort((a: { first_air_date?: string }, b: { first_air_date?: string }) => {
-        const dateA = a.first_air_date ? new Date(a.first_air_date).getTime() : 0;
-        const dateB = b.first_air_date ? new Date(b.first_air_date).getTime() : 0;
-        return dateB - dateA;
-      })
-      .slice(0, 24) || [];
+  const movies = castCredits
+    .filter((c) => c.media_type === "movie")
+    .sort((a, b) => {
+      const dateA = a.release_date ? new Date(a.release_date).getTime() : 0;
+      const dateB = b.release_date ? new Date(b.release_date).getTime() : 0;
+      return dateB - dateA;
+    })
+    .slice(0, 24);
+
+  const tvShows = castCredits
+    .filter((c) => c.media_type === "tv")
+    .sort((a, b) => {
+      const dateA = a.first_air_date ? new Date(a.first_air_date).getTime() : 0;
+      const dateB = b.first_air_date ? new Date(b.first_air_date).getTime() : 0;
+      return dateB - dateA;
+    })
+    .slice(0, 24);
 
   // Crew credits (directing / writing)
-  const directedMovies =
-    person.combined_credits?.crew
-      ?.filter((c: { job: string; media_type: string }) => c.job === "Director" && c.media_type === "movie")
-      .sort((a: { release_date?: string }, b: { release_date?: string }) => {
-        return (b.release_date ? new Date(b.release_date).getTime() : 0) - (a.release_date ? new Date(a.release_date).getTime() : 0);
-      })
-      .slice(0, 12) || [];
+  const directedMovies = crewCredits
+    .filter((c) => c.job === "Director" && c.media_type === "movie")
+    .sort((a, b) => {
+      return (b.release_date ? new Date(b.release_date).getTime() : 0) - (a.release_date ? new Date(a.release_date).getTime() : 0);
+    })
+    .slice(0, 12);
 
   // Notable works — top 6 by vote_count
-  const notableWorks = [...(person.combined_credits?.cast || [])]
-    .filter((c: { poster_path?: string | null; vote_count?: number }) => c.poster_path)
-    .sort((a: { vote_count?: number }, b: { vote_count?: number }) => (b.vote_count || 0) - (a.vote_count || 0))
+  const notableWorks = [...castCredits]
+    .filter((c) => c.poster_path)
+    .sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0))
     .slice(0, 6);
 
   const profileUrl = getImageUrl(person.profile_path, "w500");
@@ -328,17 +328,7 @@ export default function Person() {
           <section className="mt-10">
             <h2 className="section-title mb-4">Notable Works</h2>
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-              {notableWorks.map((credit: {
-                id: number;
-                credit_id?: string;
-                media_type: string;
-                poster_path?: string | null;
-                title?: string;
-                name?: string;
-                release_date?: string;
-                first_air_date?: string;
-                vote_average?: number;
-              }) => (
+              {notableWorks.map((credit) => (
                 <Link
                   key={`notable-${credit.id}-${credit.credit_id}`}
                   to={credit.media_type === "movie" ? `/movie/${credit.id}` : `/tv/${credit.id}`}
@@ -439,7 +429,7 @@ export default function Person() {
               <TabsContent value="movies">
                 {movies.length > 0 ? (
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                    {movies.map((movie: { id: number; credit_id?: string; media_type: string }) => (
+                    {movies.map((movie) => (
                       <MediaCard
                         key={`movie-${movie.id}-${movie.credit_id}`}
                         media={{ ...movie, media_type: "movie" }}
@@ -454,7 +444,7 @@ export default function Person() {
               <TabsContent value="tv">
                 {tvShows.length > 0 ? (
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                    {tvShows.map((show: { id: number; credit_id?: string; media_type: string }) => (
+                    {tvShows.map((show) => (
                       <MediaCard
                         key={`tv-${show.id}-${show.credit_id}`}
                         media={{ ...show, media_type: "tv" }}
@@ -469,7 +459,7 @@ export default function Person() {
               {directedMovies.length > 0 && (
                 <TabsContent value="directed">
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                    {directedMovies.map((movie: { id: number; credit_id?: string; media_type: string }) => (
+                    {directedMovies.map((movie) => (
                       <MediaCard
                         key={`directed-${movie.id}-${movie.credit_id}`}
                         media={{ ...movie, media_type: "movie" }}

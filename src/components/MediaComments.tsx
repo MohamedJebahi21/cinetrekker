@@ -45,7 +45,10 @@ function CommentCard({
   comment: CommentWithReplies;
   depth?: number;
   likedCommentIds: string[];
-  likeMutation: Pick<UseMutationResult<unknown, Error, { commentId: string; isLiked: boolean }>, "mutate" | "isPending">;
+  likeMutation: Pick<
+    UseMutationResult<unknown, Error, { commentId: string; isLiked: boolean }>,
+    "mutate" | "isPending"
+  >;
   deleteMutation: Pick<UseMutationResult<unknown, Error, string>, "mutate" | "isPending">;
   onReplyClick: (id: string) => void;
   replyingToId: string | null;
@@ -279,7 +282,7 @@ export function MediaComments({ mediaId, mediaType }: MediaCommentsProps) {
     mutationFn: async ({ text, parentId }: { text: string; parentId: string }) => {
       if (!user?.id) throw new Error("Not logged in");
       setIsSubmittingReply(true);
-      return await socialService.addComment(user.id, mediaId, mediaType, text, parentId, false);
+      return await socialService.addComment(user.id, mediaId, mediaType, text, parentId);
     },
     onSuccess: () => {
       setReplyContent("");
@@ -330,7 +333,7 @@ export function MediaComments({ mediaId, mediaType }: MediaCommentsProps) {
   const deleteMutation = useMutation({
     mutationFn: async (commentId: string) => {
       if (!user?.id) throw new Error("Not logged in");
-      await socialService.deleteComment(user.id, commentId);
+      await socialService.deleteComment(commentId, user.id);
     },
     onMutate: async (commentId) => {
       await queryClient.cancelQueries({ queryKey: ["comments", mediaType, mediaId] });
@@ -493,7 +496,7 @@ export function MediaComments({ mediaId, mediaType }: MediaCommentsProps) {
                 <label className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground">
                   <Checkbox
                     checked={containsSpoiler}
-                    onCheckedChange={(checked) => setContainsSpoiler(checked)}
+                    onCheckedChange={(checked) => setContainsSpoiler(checked === true)}
                   />
                   {t("comments.containsSpoiler", "Contains spoilers")}
                 </label>

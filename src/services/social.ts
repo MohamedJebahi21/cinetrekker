@@ -10,6 +10,7 @@ export interface Comment {
   media_type: "movie" | "tv";
   content: string;
   parent_id?: string;
+  contains_spoiler?: boolean;
   likes_count: number;
   created_at: string;
   updated_at: string;
@@ -137,17 +138,24 @@ export const socialService = {
     mediaType: "movie" | "tv",
     content: string,
     parentId?: string,
+    containsSpoiler?: boolean,
   ): Promise<Comment> {
     const { supabase } = await loadSupabaseModule();
+    const payload: Record<string, unknown> = {
+      user_id: userId,
+      media_id: mediaId,
+      media_type: mediaType,
+      content,
+      parent_id: parentId || null,
+    };
+
+    if (typeof containsSpoiler === "boolean") {
+      payload.contains_spoiler = containsSpoiler;
+    }
+
     const { data, error } = await supabase
       .from("comments")
-      .insert({
-        user_id: userId,
-        media_id: mediaId,
-        media_type: mediaType,
-        content,
-        parent_id: parentId || null,
-      })
+      .insert(payload)
       .select()
       .single();
 
@@ -155,7 +163,7 @@ export const socialService = {
     return data as Comment;
   },
 
-  async deleteComment(commentId: string): Promise<void> {
+  async deleteComment(commentId: string, _userId?: string): Promise<void> {
     const { supabase } = await loadSupabaseModule();
     await supabase.from("comments").delete().eq("id", commentId);
   },
