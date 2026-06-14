@@ -106,6 +106,47 @@ export interface Creator {
   profile_path?: string | null;
 }
 
+export interface Keyword {
+  id: number;
+  name: string;
+}
+
+export interface ProductionCompany {
+  id: number;
+  name: string;
+  logo_path: string | null;
+  origin_country: string;
+}
+
+export interface ExternalIds {
+  imdb_id?: string | null;
+  facebook_id?: string | null;
+  instagram_id?: string | null;
+  twitter_id?: string | null;
+}
+
+export interface MediaImage {
+  file_path: string;
+  width: number;
+  height: number;
+  vote_average?: number;
+}
+
+export interface MediaImages {
+  backdrops?: MediaImage[];
+  posters?: MediaImage[];
+}
+
+export interface MediaVideoResult {
+  id: string;
+  key: string;
+  name: string;
+  site: string;
+  type: string;
+  official: boolean;
+  published_at?: string;
+}
+
 export interface MediaDetails extends Media {
   credits?: Credits;
   similar?: { results: Media[] };
@@ -122,6 +163,17 @@ export interface MediaDetails extends Media {
   last_episode_to_air?: TVEpisodeInfo | null;
   seasons?: Season[];
   created_by?: Creator[];
+  // Extended fields (from append_to_response)
+  budget?: number;
+  revenue?: number;
+  homepage?: string | null;
+  imdb_id?: string | null;
+  in_production?: boolean;
+  production_companies?: ProductionCompany[];
+  keywords?: { keywords?: Keyword[]; results?: Keyword[] };
+  external_ids?: ExternalIds;
+  videos?: { results: MediaVideoResult[] };
+  images?: MediaImages;
 }
 
 export interface Season {
@@ -132,6 +184,7 @@ export interface Season {
   season_number: number;
   air_date?: string;
   poster_path?: string | null;
+  vote_average?: number;
 }
 
 export interface TMDBResponse<T> {

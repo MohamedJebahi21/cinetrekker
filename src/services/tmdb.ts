@@ -60,12 +60,12 @@ function parseMaturityFromStorage(): {
   ageVerified: boolean;
 } {
   if (typeof window === "undefined") {
-    return { maturityLevel: SafetyLevel.STRICT, ageVerified: false };
+    return { maturityLevel: SafetyLevel.NONE, ageVerified: true };
   }
 
   try {
     const raw = window.localStorage.getItem(CONTENT_POLICY_STORAGE_KEY);
-    if (!raw) return { maturityLevel: SafetyLevel.STRICT, ageVerified: false };
+    if (!raw) return { maturityLevel: SafetyLevel.NONE, ageVerified: true };
 
     const parsed = JSON.parse(raw) as {
       safetyLevel?: string;
@@ -94,9 +94,9 @@ function parseMaturityFromStorage(): {
       return { maturityLevel: SafetyLevel.MODERATE, ageVerified };
     if (parsed.adultContentEnabled === true)
       return { maturityLevel: SafetyLevel.NONE, ageVerified };
-    return { maturityLevel: SafetyLevel.STRICT, ageVerified };
+    return { maturityLevel: SafetyLevel.NONE, ageVerified: true };
   } catch {
-    return { maturityLevel: SafetyLevel.STRICT, ageVerified: false };
+    return { maturityLevel: SafetyLevel.NONE, ageVerified: true };
   }
 }
 
@@ -326,7 +326,7 @@ export const getMovieDetails = async (
   language: string = "en",
 ): Promise<MediaDetails> => {
   return fetchTMDB(`/movie/${id}`, language, {
-    append_to_response: "credits,similar,recommendations,release_dates",
+    append_to_response: "credits,similar,recommendations,release_dates,videos,keywords,external_ids,images",
   });
 };
 
@@ -335,7 +335,7 @@ export const getTVDetails = async (
   language: string = "en",
 ): Promise<MediaDetails> => {
   return fetchTMDB(`/tv/${id}`, language, {
-    append_to_response: "credits,similar,recommendations,content_ratings",
+    append_to_response: "credits,similar,recommendations,content_ratings,videos,keywords,external_ids,images",
   });
 };
 
