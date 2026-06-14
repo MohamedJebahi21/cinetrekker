@@ -1250,12 +1250,20 @@ export default function Details() {
                 </div>
                 <div className="flex flex-wrap gap-2 items-center">
                   {user && (
-                    <Button variant="outline" size="sm" className="rounded-xl gap-1 shrink-0" onClick={() => {
-                      if (!selectedSeason || !seasonDetails) return;
-                      markAllSeasonsWatched({ showId: mediaId, allEpisodes: seasonDetails.episodes?.map(ep => ({ season_number: selectedSeason, episode_number: ep.episode_number, name: ep.name, air_date: ep.air_date ?? undefined })) || [], showName: details?.name, posterPath: details?.poster_path });
-                    }} disabled={!selectedSeason || !seasonDetails}>
-                      <Check className="w-3.5 h-3.5" />Mark Season
-                    </Button>
+                    <>
+                      <Button variant="outline" size="sm" className="rounded-xl gap-1 shrink-0" onClick={() => {
+                        if (!selectedSeason || !seasonDetails) return;
+                        markSeasonWatched({ showId: mediaId, seasonNumber: selectedSeason!, episodes: publishedEpisodes.map(ep => ({ episode_number: ep.episode_number, name: ep.name, air_date: ep.air_date ?? undefined })), showName: details?.name, posterPath: details?.poster_path });
+                      }} disabled={!selectedSeason || !seasonDetails || publishedEpisodes.length === 0}>
+                        <Check className="w-3.5 h-3.5" />Mark Season
+                      </Button>
+                      <Button variant="outline" size="sm" className="rounded-xl gap-1 shrink-0" onClick={() => {
+                        if (!selectedSeason || !seasonDetails) return;
+                        markAllSeasonsWatched({ showId: mediaId, allEpisodes: seasonDetails.episodes?.map(ep => ({ season_number: selectedSeason, episode_number: ep.episode_number, name: ep.name, air_date: ep.air_date ?? undefined })) || [], showName: details?.name, posterPath: details?.poster_path });
+                      }} disabled={!selectedSeason || !seasonDetails}>
+                        <Check className="w-3.5 h-3.5" />Mark All Seasons Watched
+                      </Button>
+                    </>
                   )}
                   {/* Season chips with poster thumbnails */}
                   <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
@@ -1303,16 +1311,6 @@ export default function Details() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {user && (
-                    <div className="flex justify-end mb-2">
-                      <Button variant="outline" size="sm" className="rounded-xl gap-1" onClick={() => {
-                        markSeasonWatched({ showId: mediaId, seasonNumber: selectedSeason!, episodes: publishedEpisodes.map(ep => ({ episode_number: ep.episode_number, name: ep.name, air_date: ep.air_date ?? undefined })), showName: details?.name, posterPath: details?.poster_path });
-                      }}>
-                        <Check className="w-3.5 h-3.5" />
-                        {t("details.markSeasonWatched", "Mark All Watched (S{{season}})", { season: selectedSeason })}
-                      </Button>
-                    </div>
-                  )}
                   <Accordion type="single" collapsible className="w-full">
                     {publishedEpisodes.map((episode, index) => {
                       const ew = isEpisodeWatched(mediaId, episode.season_number, episode.episode_number);
