@@ -6,6 +6,9 @@ on:
   push:
     branches: [main]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   verify-i18n-keys:
     name: Verify i18n Keys
