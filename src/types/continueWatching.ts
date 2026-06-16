@@ -78,6 +78,10 @@ export interface ContinueWatchingVM {
   watchedEpisodeCount: number;
   progressPercent: number; // 0-100
   status: ShowStatus;
+  /** Whether the user has explicitly followed this show. */
+  isFollowed: boolean;
+  /** Most recent activity timestamp, ISO-8601. Used for filtering. */
+  lastActivityAt: string | null;
 }
 
 /** Stable hash type for cache keys. */

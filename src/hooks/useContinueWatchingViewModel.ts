@@ -1,15 +1,42 @@
 /**
- * Orchestrator Hook — the single source of truth for Continue Watching.
+ * Orchestrator Hook — pipeline coordinator for Continue Watching.
  *
  * Pipeline:
- * 1. Fetch raw Supabase data (followed_shows, watched_episodes, user_watched)
- * 2. Build UserShowProgress[] (pure)
- * 3. Rank shows by score (pure)
+ * 1. Fetch raw Supabase data (followed_shows, watched_episodes)
+ * 2. Build UserShowProgress[] via progress.ts (pure, status derived ONCE)
+ * 3. Rank shows via ranking.ts (pure, uses isShowDefinitelyCompleted)
  * 4. Batch-resolve TMDB details + seasons (parallel, cached)
- * 5. Build ContinueWatchingVM[] (pure)
+ * 5. Merge TMDB metadata via progress.ts (pure, NO status re-derivation)
+ * 6. Build ContinueWatchingVM[] via viewModel.ts (pure mapping, NO logic)
  *
- * No business logic in the component. No N+1 TMDB calls.
- * Stable query keys via FNV-1a hash.
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ HOOK SAFETY RULES (anti-drift)                                          │
+ * │                                                                        │
+ * │ This file orchestrates the pipeline. It does NOT own any business logic.│
+ * │                                                                        │
+ * │ FORBIDDEN in this file:                                                 │
+ * │   - isDefinitelyCompleted() calls (belongs in progress.ts)              │
+ * │   - watchedEpisodesCount >= totalEpisodes logic                         │
+ * │   - status string comparisons for logic decisions                       │
+ * │   - completion detection or re-derivation                               │
+ * │   - TMDB-based completion inference                                     │
+ * │                                                                        │
+ * │ ALLOWED in this file:                                                   │
+ * │   - mergeTMDBMetadata() call (delegates to progress.ts)                 │
+ * │   - rankShows() call (delegates to ranking.ts)                          │
+ * │   - buildContinueWatchingVM() call (delegates to viewModel.ts)          │
+ * │   - Intent-based inclusion filter (isFollowed || lastActivityAt)        │
+ * │                                                                        │
+ * │ Inclusion filter inputs (the ONLY allowed inputs):                      │
+ * │   - isFollowed: user intent (follow action)                             │
+ * │   - lastActivityAt: activity presence (not watchedEpisodeCount)         │
+ * │   - TMDB metadata is NOT used for inclusion/exclusion decisions         │
+ * │                                                                        │
+ * │ If a future developer adds:                                             │
+ * │   - status string comparisons → BUG: status is display-only             │
+ * │   - completion re-derivation → BUG: progress.ts owns this              │
+ * │   - TMDB-based filtering → BUG: TMDB is metadata-only                   │
+ * └──────────────────────────────────────────────────────────────────────────┘
  */
 
 import { useMemo } from "react";
@@ -20,8 +47,7 @@ import {
   useFollowedShows,
   useWatchedEpisodes,
 } from "@/hooks/useFollowedShows";
-import { useWatchedQuery } from "@/hooks/useWatchedQueries";
-import { buildUserShowProgress } from "@/lib/continueWatching/progress";
+import { buildUserShowProgress, mergeTMDBMetadata } from "@/lib/continueWatching/progress";
 import { rankShows } from "@/lib/continueWatching/ranking";
 import { buildContinueWatchingVM } from "@/lib/continueWatching/viewModel";
 import {
@@ -51,7 +77,6 @@ function hashWatched(
   eps: Array<{ show_id: number; season_number: number; episode_number: number; watched_at: string }>,
 ): string {
   let h = 2166136261 >>> 0;
-  // Sort for stability
   const sorted = [...eps].sort((a, b) => {
     if (a.show_id !== b.show_id) return a.show_id - b.show_id;
     if (a.season_number !== b.season_number) return a.season_number - b.season_number;
@@ -73,29 +98,25 @@ export function useContinueWatchingViewModel(): {
   error: Error | null;
   refetch: () => void;
 } {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const language = i18n.language;
   const { user } = useAuth();
   const { followedShows } = useFollowedShows();
   const { watchedEpisodes } = useWatchedEpisodes();
-  const { data: watchedItems = [] } = useWatchedQuery();
 
   // 1. Build unified progress model (pure, no TMDB)
+  //    Status is derived ONCE here via deriveStatus() in progress.ts.
+  //    It is a display label only — never used for logic decisions.
   const progress = useMemo(
     () =>
       buildUserShowProgress({
         followedShows,
         watchedEpisodes,
-        explicitStatuses: new Map(
-          watchedItems
-            .filter((i) => i.mediaType === "tv")
-            .map((i) => [i.mediaId, i.status ?? ""]),
-        ),
       }),
-    [followedShows, watchedEpisodes, watchedItems],
+    [followedShows, watchedEpisodes],
   );
 
-  // 2. Rank (pure, no TMDB, excludes completed shows)
+  // 2. Rank (pure, no TMDB, excludes completed via isShowDefinitelyCompleted)
   const ranked = useMemo(() => rankShows(progress, { limit: 50 }), [progress]);
 
   // 3. Stable hashes for query key — prevents re-fetching on every render
@@ -126,13 +147,11 @@ export function useContinueWatchingViewModel(): {
         .map((s) => {
           const d = details.get(s.showId);
           const seasonNumber = s.lastWatchedEpisode?.season ?? 1;
-          // Only fetch if we have TMDB data for the show
           if (!d) return null;
           return { showId: s.showId, seasonNumber };
         })
         .filter(Boolean) as Array<{ showId: number; seasonNumber: number }>;
 
-      // Deduplicate season requests (multiple shows may request same season)
       const seen = new Set<string>();
       const uniqueSeasonReqs = seasonRequests.filter((r) => {
         const key = `${r.showId}-${r.seasonNumber}`;
@@ -143,8 +162,11 @@ export function useContinueWatchingViewModel(): {
 
       const seasons = await batchResolveSeasons(uniqueSeasonReqs, language);
 
-      // 4c. Build view model
-      return ranked
+      // 4c. Merge TMDB metadata into progress (totals only, NO status re-derivation)
+      const mergedProgress = mergeTMDBMetadata(ranked, details);
+
+      // 4d. Build view model (pure mapping, NO logic)
+      const vms = mergedProgress
         .map((p) => {
           const d = details.get(p.showId);
           const seasonKey = `season:${p.showId}:${p.lastWatchedEpisode?.season ?? 1}:${language}`;
@@ -195,11 +217,18 @@ export function useContinueWatchingViewModel(): {
             episodesBySeason,
           });
         })
-        .filter((vm) => vm.watchedEpisodeCount > 0);
+        // 4e. Intent-based inclusion:
+        //     - Shows with activity history (partial sync-safe, not tied to watched count)
+        //     - Followed shows even if activity is zero (user intent > sync state)
+        //     This handles partial sync states where watchedEpisodes might be
+        //     temporarily empty but the user has explicitly expressed intent.
+        .filter((vm) => vm.isFollowed || vm.lastActivityAt != null);
+
+      return vms;
     },
     enabled: ranked.length > 0 && !!user,
-    staleTime: 60_000, // 1 minute — fast enough for "just marked" to show
-    gcTime: 5 * 60_000, // 5 minutes
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
   });
 
   return {

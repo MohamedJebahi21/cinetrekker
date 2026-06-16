@@ -1,22 +1,43 @@
 /**
- * View Model Builder — pure function.
+ * View Model Builder — pure function, NO business logic.
  *
  * Combines UserShowProgress + TMDB data → ContinueWatchingVM.
  *
- * This is the final transformation step before the React UI.
- * Everything in here is pure — no side effects, no hooks, no fetch.
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ VIEW MODEL RULES (anti-drift)                                           │
+ * │                                                                        │
+ * │ This file is a PURE MAPPING LAYER only.                                │
+ * │                                                                        │
+ * │ FORBIDDEN in this file:                                                 │
+ * │   - isDefinitelyCompleted() calls (that belongs in progress.ts)         │
+ * │   - watchedEpisodesCount >= totalEpisodes logic                         │
+ * │   - status string comparisons for logic decisions                       │
+ * │   - completion detection or re-derivation of any kind                   │
+ * │   - inclusion / exclusion filtering logic                               │
+ * │   - TMDB metadata interpretation beyond display                         │
+ * │                                                                        │
+ * │ ALLOWED in this file:                                                   │
+ * │   - progress.status pass-through (display label, not logic)             │
+ * │   - totalEpisodes for progress % display only                           │
+ * │   - isFollowed and lastActivityAt pass-through                          │
+ * │   - episode/season data for next-episode display                        │
+ * │                                                                        │
+ * │ Completion is determined by progress.ts.                                │
+ * │ This file transforms data shapes only.                                 │
+ * └──────────────────────────────────────────────────────────────────────────┘
  */
 
 import type {
   UserShowProgress,
   ContinueWatchingVM,
-  ShowStatus,
 } from "@/types/continueWatching";
 import type { MediaDetails } from "@/types/media";
 import { getNextEpisode } from "./nextEpisode";
 
 /**
  * Build a ContinueWatchingVM from progress + TMDB data.
+ *
+ * Pure mapping — no logic decisions. Just transforms data shapes.
  */
 export function buildContinueWatchingVM(params: {
   progress: UserShowProgress;
@@ -34,14 +55,16 @@ export function buildContinueWatchingVM(params: {
 }): ContinueWatchingVM {
   const { progress, details, episodesBySeason } = params;
 
-  // --- Progress percentage ---
+  // Use TMDB total if available, fallback to progress
   const totalEpisodes = details?.number_of_episodes ?? progress.totalEpisodes;
+
+  // Progress percentage (display only, no status inference)
   const progressPercent =
     totalEpisodes && totalEpisodes > 0
       ? Math.min(99, Math.round((progress.watchedEpisodeCount / totalEpisodes) * 100))
       : Math.min(95, Math.max(5, progress.watchedEpisodeCount * 10));
 
-  // --- Next episode resolution ---
+  // Next episode resolution (display only)
   const nextResult = details
     ? getNextEpisode({
         lastWatched: progress.lastWatchedEpisode,
@@ -64,7 +87,7 @@ export function buildContinueWatchingVM(params: {
     ? `S${nextEpisode.season_number}E${nextEpisode.episode_number}`
     : null;
 
-  // --- Slug-based href ---
+  // Slug-based href
   const showName = details?.name ?? progress.showName;
   const href = `/tv/${slugify(showName)}-${progress.showId}`;
 
@@ -81,7 +104,11 @@ export function buildContinueWatchingVM(params: {
     nextEpisodeIsUpcoming: nextResult?.isUpcoming ?? false,
     watchedEpisodeCount: progress.watchedEpisodeCount,
     progressPercent,
-    status: deriveDisplayStatus(progress.status, progress.watchedEpisodeCount, totalEpisodes),
+    // Status is a display label from progress.ts — never used for logic.
+    status: progress.status,
+    // Passed through for downstream filtering in the hook.
+    isFollowed: progress.isFollowed,
+    lastActivityAt: progress.lastActivityAt,
   };
 }
 
@@ -96,19 +123,4 @@ function slugify(value: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
-}
-
-/**
- * Determine the display status, ensuring "completed" is only shown
- * when we have actual data to confirm it.
- */
-function deriveDisplayStatus(
-  status: ShowStatus,
-  watchedCount: number,
-  totalEpisodes: number | null,
-): ShowStatus {
-  if (totalEpisodes && totalEpisodes > 0 && watchedCount >= totalEpisodes) {
-    return "completed";
-  }
-  return status;
 }

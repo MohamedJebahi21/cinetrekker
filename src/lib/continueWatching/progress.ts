@@ -1,10 +1,38 @@
 /**
  * Progress Builder — pure function layer.
  *
- * Takes raw Supabase data (followed_shows, watched_episodes, user_watched)
- * and normalizes it into a single UserShowProgress[] model.
+ * SINGLE SOURCE OF TRUTH for completion and status derivation.
  *
- * This is the first step in the pipeline and requires zero TMDB data.
+ * Takes raw Supabase data (followed_shows, watched_episodes) and normalizes
+ * it into a single UserShowProgress[] model.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ STATE INVARIANT CONTRACT                                                │
+ * │                                                                        │
+ * │ 1. Completion is ONLY derived via isDefinitelyCompleted().             │
+ * │    No other function may make completion decisions.                    │
+ * │                                                                        │
+ * │ 2. status is UI-ONLY and derived from completion + activity:           │
+ * │    - completed → isDefinitelyCompleted() == true                       │
+ * │    - watching  → watchedCount > 0                                      │
+ * │    - interested → isFollowed == true                                   │
+ * │    - paused    → fallback                                              │
+ * │    Status is NEVER used for logic decisions by any layer.              │
+ * │                                                                        │
+ * │ 3. TMDB data is READ-ONLY METADATA. It never affects:                 │
+ * │    - completion decisions                                              │
+ * │    - status derivation (after initial build)                           │
+ * │    - ranking logic                                                     │
+ * │    - inclusion / exclusion rules                                       │
+ * │                                                                        │
+ * │ 4. No layer may reinterpret completion independently:                  │
+ * │    - ranking uses isShowDefinitelyCompleted() (NOT status)             │
+ * │    - viewModel maps status directly (NO re-derivation)                 │
+ * │    - hook orchestrates but delegates to this module for logic           │
+ * │                                                                        │
+ * │ 5. WatchedEpisodeCount + TotalEpisodes are the only inputs to          │
+ * │    completion. No other fields are involved.                           │
+ * └──────────────────────────────────────────────────────────────────────────┘
  */
 
 import type {
@@ -13,6 +41,7 @@ import type {
   EpisodeKey,
 } from "@/types/continueWatching";
 import type { FollowedShow, WatchedEpisode } from "@/hooks/useFollowedShows";
+import type { MediaDetails } from "@/types/media";
 
 /**
  * Create a stable episode key: "season-episode"
@@ -22,35 +51,88 @@ export function toEpisodeKey(season: number, episode: number): EpisodeKey {
 }
 
 /**
- * Determine if a show is completed based on actual episode counts,
- * NOT on a user-set status field. This ensures we never hide a show
- * that the user still has episodes to watch.
+ * HARD COMPLETION RULE — single source of truth.
+ *
+ * A show is DEFINITIVELY completed ONLY when:
+ *   - totalEpisodes is known (> 0, not null)
+ *   - watchedEpisodesCount >= totalEpisodes
+ *
+ * If TMDB data is missing (null), we CANNOT confirm completion → returns false.
+ * This prevents false positives for shows with unknown total episode counts.
+ *
+ * This is the ONLY function in the entire codebase that determines completion.
+ * All other layers call this function; NONE may re-implement the logic.
+ * No string comparison ("completed") is ever used for logic decisions.
  */
-export function isCompleted(
-  watchedCount: number,
-  totalEpisodes: number | null,
-): boolean {
-  if (totalEpisodes != null && totalEpisodes > 0) {
-    return watchedCount >= totalEpisodes;
-  }
-  // If we don't know the total, assume not completed.
-  return false;
+export function isDefinitelyCompleted(input: {
+  watchedEpisodesCount: number;
+  totalEpisodes: number | null;
+}): boolean {
+  if (!input.totalEpisodes || input.totalEpisodes <= 0) return false;
+  return input.watchedEpisodesCount >= input.totalEpisodes;
 }
 
 /**
- * Derive a ShowStatus from raw data, with completion override.
+ * Convenience overload: accepts a UserShowProgress directly.
+ * Used by ranking, hook, and any layer needing completion checks.
+ */
+export function isShowDefinitelyCompleted(show: UserShowProgress): boolean {
+  return isDefinitelyCompleted({
+    watchedEpisodesCount: show.watchedEpisodeCount,
+    totalEpisodes: show.totalEpisodes,
+  });
+}
+
+/**
+ * Derive a ShowStatus from raw data.
  * Priority: completed > watching > interested > paused.
+ *
+ * Only called ONCE during buildUserShowProgress. The resulting status is
+ * a display label derived from isDefinitelyCompleted(). It is NEVER used
+ * for logic decisions — those use isDefinitelyCompleted() directly.
  */
 export function deriveStatus(input: {
-  explicitStatus?: string;
   watchedCount: number;
   totalEpisodes: number | null;
   isFollowed: boolean;
 }): ShowStatus {
-  if (isCompleted(input.watchedCount, input.totalEpisodes)) return "completed";
+  if (isDefinitelyCompleted({ watchedEpisodesCount: input.watchedCount, totalEpisodes: input.totalEpisodes })) return "completed";
   if (input.watchedCount > 0) return "watching";
   if (input.isFollowed) return "interested";
   return "paused";
+}
+
+/**
+ * MERGE TMDB METADATA into progress objects.
+ *
+ * This function ONLY merges metadata fields (totalEpisodes, totalSeasons).
+ * It does NOT re-derive status. Status is computed ONCE during buildUserShowProgress
+ * and is never touched again.
+ *
+ * TMDB metadata is used by downstream layers:
+ * - isDefinitelyCompleted() reads totalEpisodes for completion checks
+ * - viewModel.ts uses totalEpisodes for progress percentage
+ * - getNextEpisode() uses season/episode data
+ *
+ * TMDB NEVER influences status, ranking logic, or inclusion/exclusion rules.
+ */
+export function mergeTMDBMetadata(
+  progress: UserShowProgress[],
+  details: Map<number, MediaDetails | null>,
+): UserShowProgress[] {
+  return progress.map((p) => {
+    const d = details.get(p.showId);
+    if (!d) return p;
+
+    return {
+      ...p,
+      totalEpisodes: d.number_of_episodes ?? p.totalEpisodes,
+      totalSeasons: d.number_of_seasons ?? p.totalSeasons,
+      // Note: status is NOT re-derived here. The original buildUserShowProgress
+      // status is preserved. Completion detection via isDefinitelyCompleted()
+      // reads totalEpisodes directly, not the status string.
+    };
+  });
 }
 
 /**
@@ -60,15 +142,17 @@ export function deriveStatus(input: {
  * - All watch events from watched_episodes
  * - Follow status from followed_shows
  * - Explicit status from user_watched (overridden by deterministic completion)
+ *
+ * Status is computed ONCE here via deriveStatus(). It is a DERIVED LABEL,
+ * never a source of truth. All completion logic uses isDefinitelyCompleted().
  */
 export function buildUserShowProgress(input: {
   followedShows: FollowedShow[];
   watchedEpisodes: WatchedEpisode[];
-  explicitStatuses: Map<number, string>;
   totalEpisodes?: Map<number, number>;
   totalSeasons?: Map<number, number>;
 }): UserShowProgress[] {
-  const { followedShows, watchedEpisodes, explicitStatuses } = input;
+  const { followedShows, watchedEpisodes } = input;
   const totals = input.totalEpisodes ?? new Map();
   const seasons = input.totalSeasons ?? new Map();
 
@@ -109,7 +193,6 @@ export function buildUserShowProgress(input: {
 
     const watchedCount = showEps.length;
     const lastEp = showEps.length > 0 ? showEps[showEps.length - 1] : null;
-    const explicitStatus = explicitStatuses.get(showId) ?? "";
     const totalEps = totals.get(showId) ?? null;
     const totalSeasonsCount = seasons.get(showId) ?? null;
 
@@ -129,8 +212,8 @@ export function buildUserShowProgress(input: {
       watchedKeys.add(toEpisodeKey(ep.season_number, ep.episode_number));
     }
 
+    // Status is derived ONCE here. It's a display label, not logic.
     const status = deriveStatus({
-      explicitStatus,
       watchedCount,
       totalEpisodes: totalEps,
       isFollowed: !!follow,

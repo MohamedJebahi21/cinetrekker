@@ -5,9 +5,29 @@
  * producing a Netflix-like "Continue Watching" order.
  *
  * No TMDB data required. Works entirely on UserShowProgress.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ RANKING SAFETY RULES (anti-drift)                                       │
+ * │                                                                        │
+ * │ Completion filtering uses ONLY !isShowDefinitelyCompleted(s).           │
+ * │                                                                        │
+ * │ FORBIDDEN in this file:                                                 │
+ * │   - status string comparisons (status === "completed")                  │
+ * │   - watchedEpisodesCount >= totalEpisodes logic                         │
+ * │   - TMDB-derived metadata for scoring or filtering                      │
+ * │   - viewModel fields for any logic decision                             │
+ * │                                                                        │
+ * │ ALLOWED in this file:                                                   │
+ * │   - isShowDefinitelyCompleted() from progress.ts (the ONLY authority)   │
+ * │   - watchedEpisodeCount, lastActivityAt, isFollowed (raw progress)      │
+ * │                                                                        │
+ * │ If someone adds a status comparison here in the future,                │
+ * │ it is a BUG — reject in code review.                                   │
+ * └──────────────────────────────────────────────────────────────────────────┘
  */
 
 import type { UserShowProgress } from "@/types/continueWatching";
+import { isShowDefinitelyCompleted } from "./progress";
 
 export interface RankingOptions {
   /** Bonus points for followed (vs just watched) shows. */
@@ -68,7 +88,9 @@ export function scoreShow(
 /**
  * Rank all shows by descending score, filtered and limited.
  *
- * Also excluded: completed shows.
+ * SAFETY: The filter MUST use isShowDefinitelyCompleted(s).
+ * DO NOT change to: s.status !== "completed" — that is a bug.
+ * Status is a display label, not a logic decision.
  */
 export function rankShows(
   shows: UserShowProgress[],
@@ -78,7 +100,7 @@ export function rankShows(
   const nowMs = Date.now();
 
   return [...shows]
-    .filter((s) => s.status !== "completed")
+    .filter((s) => !isShowDefinitelyCompleted(s))
     .map((s) => ({
       show: s,
       score: scoreShow(s, opts, nowMs),
