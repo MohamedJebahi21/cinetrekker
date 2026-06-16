@@ -157,7 +157,7 @@ export default async function handler(_req, res) {
   }
 
   if (totalChunks > 1) {
-    // Serve a sitemap index — use & for XML validity
+    // Serve a sitemap index — xmlEscape will encode & to & for XML validity
     const sitemaps = [];
 
     for (let i = 0; i < staticChunks.length; i++) {
