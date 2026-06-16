@@ -13,8 +13,62 @@
       "destination": "/api/sitemap"
     },
     {
+      "source": "/movie/:path*",
+      "destination": "/api/edge-meta"
+    },
+    {
+      "source": "/tv/:path*",
+      "destination": "/api/edge-meta"
+    },
+    {
+      "source": "/person/:path*",
+      "destination": "/api/edge-meta"
+    },
+    {
       "source": "/((?!api/|assets/|static/|.*\\..*).*)",
       "destination": "/index.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/movie/:id/:slug",
+      "destination": "/movie/:slug-:id",
+      "statusCode": 301
+    },
+    {
+      "source": "/tv/:id/:slug",
+      "destination": "/tv/:slug-:id",
+      "statusCode": 301
+    },
+    {
+      "source": "/person/:id/:slug",
+      "destination": "/person/:slug-:id",
+      "statusCode": 301
+    },
+    {
+      "source": "/movies",
+      "destination": "/search?type=movie&sort=popularity.desc",
+      "statusCode": 301
+    },
+    {
+      "source": "/tv",
+      "destination": "/search?type=tv&sort=popularity.desc",
+      "statusCode": 301
+    },
+    {
+      "source": "/upcoming",
+      "destination": "/calendar",
+      "statusCode": 301
+    },
+    {
+      "source": "/watch-history",
+      "destination": "/watched",
+      "statusCode": 301
+    },
+    {
+      "source": "/enhanced-stats",
+      "destination": "/stats",
+      "statusCode": 301
     }
   ],
   "headers": [

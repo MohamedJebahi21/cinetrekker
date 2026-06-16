@@ -1,3 +1,51 @@
 User-agent: *
 Allow: /
+Allow: /movie/
+Allow: /tv/
+Allow: /person/
+Allow: /search
+Allow: /trending
+Allow: /genres
+Allow: /decades
+Allow: /awards
+Allow: /about
+Allow: /privacy
+Allow: /terms
+Allow: /cookies
+Allow: /accessibility
+Allow: /discover
+
+# Auth-only pages - noindex
+Disallow: /login
+Disallow: /signup
+Disallow: /auth/
+Disallow: /auth
+Disallow: /profile
+Disallow: /profile/
+Disallow: /settings
+Disallow: /settings/
+Disallow: /user/
+Disallow: /notifications
+Disallow: /notifications/
+Disallow: /following
+Disallow: /following/
+Disallow: /recommendations
+Disallow: /recommendations/
+Disallow: /calendar
+Disallow: /calendar/
+Disallow: /stats
+Disallow: /stats/
+Disallow: /achievements
+Disallow: /achievements/
+Disallow: /print-watchlist
+Disallow: /print-watchlist/
+Disallow: /year-in-review
+Disallow: /year-in-review/
+Disallow: /watch-history
+Disallow: /feedback
+
+# API endpoints
+Disallow: /api/
+Disallow: /api/*
+
 Sitemap: https://cinetrekker.vercel.app/sitemap.xml

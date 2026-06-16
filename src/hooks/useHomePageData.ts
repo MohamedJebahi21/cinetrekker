@@ -121,7 +121,7 @@ export function useHomePageData({
       language,
     ],
     queryFn: async () => {
-      return enrichMediaItems(watchlist.slice(0, 10), {
+      return enrichMediaItems(watchlist.slice(0, 6), {
         language,
         getReference: (item) => ({
           mediaId: item.mediaId,

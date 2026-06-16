@@ -73,9 +73,9 @@ export function HomeSectionState({
     return (
       <HomeSectionFallback
         title={title}
-        description="This section is taking longer than expected. Retry to refresh it."
+        description="This section is still loading. Try again in a moment."
         onRetry={onRetry}
-        retryLabel="Retry section"
+        retryLabel="Try again"
       />
     );
   }

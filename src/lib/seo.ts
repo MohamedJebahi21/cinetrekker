@@ -21,23 +21,69 @@ export function slugifySegment(value: string): string {
     .slice(0, 80);
 }
 
+/**
+ * Parse a URL segment like /movie/interstellar-157336 or /movie/157336/interstellar
+ * Returns { id, slug } or null if no valid id is found.
+ */
+export function parseMediaPath(
+  mediaType: "movie" | "tv" | "person",
+  pathSegment: string,
+): { id: number; slug?: string } | null {
+  // format: /movie/{slug}-{id}  (new SEO-friendly format)
+  const newFormat = pathSegment.match(/^(.+)-(\d{1,10})$/);
+  if (newFormat) {
+    const id = parseInt(newFormat[2], 10);
+    if (Number.isFinite(id) && id > 0) {
+      return { id, slug: newFormat[1] };
+    }
+  }
+
+  // format: /movie/{id}/{slug?}  (legacy format)
+  const parts = pathSegment.split("/").filter(Boolean);
+  const firstPart = parts[0];
+  if (firstPart) {
+    const id = parseInt(firstPart, 10);
+    if (Number.isFinite(id) && id > 0) {
+      return { id, slug: parts[1] || undefined };
+    }
+  }
+
+  return null;
+}
+
 export function buildCanonicalUrl(path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
   return absoluteSiteUrl(normalized === "/" ? "/" : normalized.replace(/\/+$/, ""));
 }
 
+/**
+ * Build a media path with SEO-friendly slug-first format.
+ * Before: /movie/{id}/{slug}
+ * After:  /movie/{slug}-{id}
+ */
 export function buildMediaPath(
   mediaType: "movie" | "tv",
   id: number | string,
   title?: string,
 ): string {
   const slug = title ? slugifySegment(title) : "";
-  return slug ? `/${mediaType}/${id}/${slug}` : `/${mediaType}/${id}`;
+  if (slug) {
+    return `/${mediaType}/${slug}-${id}`;
+  }
+  return `/${mediaType}/${id}`;
 }
 
+/**
+ * Build a person path with SEO-friendly slug-first format.
+ * Before: /person/{id}/{slug}
+ * After:  /person/{slug}-{id}
+ */
 export function buildPersonPath(id: number | string, name?: string): string {
   const slug = name ? slugifySegment(name) : "";
-  return slug ? `/person/${id}/${slug}` : `/person/${id}`;
+  if (slug) {
+    return `/person/${slug}-${id}`;
+  }
+  return `/person/${id}`;
 }
 
 export function getMediaAltText(
@@ -107,7 +153,7 @@ export function toWebsiteSearchJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "@id": `${absoluteSiteUrl("/") }#website`,
+    "@id": `${absoluteSiteUrl("/")}#website`,
     url: absoluteSiteUrl("/"),
     name: "CineTrekker",
     potentialAction: {

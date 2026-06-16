@@ -139,7 +139,7 @@ export default function Index() {
 
   const newReleases = criticalDataQuery.data?.newReleases;
   const trendingWeek = criticalDataQuery.data?.trendingWeek;
-  const watchlistTimedOut = useLoadingTimeout(watchlistPreviewQuery.isLoading);
+  const watchlistTimedOut = useLoadingTimeout(watchlistPreviewQuery.isLoading, 20_000);
   const discoveryTimedOut = useLoadingTimeout(
     criticalDataQuery.isLoading || trendingDayQuery.isLoading,
   );
