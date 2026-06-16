@@ -166,7 +166,7 @@ function AppRoutes() {
             }
           />
           <Route
-            path="/movie/:id/:slug?"
+            path="/movie/:slug"
             element={
               <Suspense fallback={<RouteSpinner />}>
                 <Details />
@@ -174,7 +174,7 @@ function AppRoutes() {
             }
           />
           <Route
-            path="/tv/:id/:slug?"
+            path="/tv/:slug"
             element={
               <Suspense fallback={<RouteSpinner />}>
                 <Details />
@@ -182,7 +182,7 @@ function AppRoutes() {
             }
           />
           <Route
-            path="/person/:id/:slug?"
+            path="/person/:slug"
             element={
               <Suspense fallback={<RouteSpinner />}>
                 <Person />

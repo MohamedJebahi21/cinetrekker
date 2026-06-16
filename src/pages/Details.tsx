@@ -81,6 +81,7 @@ import {
   buildMediaPath,
   buildPersonPath,
   getMediaAltText,
+  parseMediaPath,
   toBreadcrumbJsonLd,
 } from "@/lib/seo";
 
@@ -231,19 +232,22 @@ function Reveal({ children, className }: { children: React.ReactNode; className?
 // MAIN
 // ══════════════════════════════════════════════════════════════════════════
 export default function Details() {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const language = i18n.language;
-  const mediaId = Number(id);
-  const isValidId = Number.isFinite(mediaId) && mediaId > 0;
   const castScrollRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<Record<string, HTMLElement>>({});
   const backdropRef = useRef<HTMLDivElement>(null);
 
+  // Parse the slug to extract the numeric ID
+  // Supports both /movie/interstellar-157336 and legacy /movie/157336
   const mediaType: "movie" | "tv" = location.pathname.startsWith("/tv") ? "tv" : "movie";
+  const parsed = slug ? parseMediaPath(mediaType, slug) : null;
+  const mediaId = parsed?.id ?? NaN;
+  const isValidId = Number.isFinite(mediaId) && mediaId > 0;
 
   const { user } = useAuth();
   const { strictFiltering, moderateFiltering } = useContentPolicy();

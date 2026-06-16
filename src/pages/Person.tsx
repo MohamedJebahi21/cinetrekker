@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import SEO from "@/components/SEO";
 import { Image } from "@/components/ui/Image";
-import { buildCanonicalUrl, buildPersonPath, toBreadcrumbJsonLd } from "@/lib/seo";
+import { buildCanonicalUrl, buildPersonPath, parseMediaPath, toBreadcrumbJsonLd } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
 // ── age or lifespan helper ──
@@ -37,10 +37,11 @@ function calcAge(birthday: string | null, deathday: string | null): number | nul
 }
 
 export default function Person() {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const { t, i18n } = useTranslation();
   const language = i18n.language;
-  const personId = parseInt(id || "0", 10);
+  const parsed = slug ? parseMediaPath("person", slug) : null;
+  const personId = parsed?.id ?? 0;
   const backdropRef = useRef<HTMLDivElement>(null);
   const [bioExpanded, setBioExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState("movies");
