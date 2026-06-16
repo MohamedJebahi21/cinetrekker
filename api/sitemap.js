@@ -22,7 +22,7 @@ const STATIC_ROUTES = [
   { path: "/discover", changefreq: "weekly", priority: "0.8" },
 ];
 
-// Last modified dates for static routes (set manually or use a stable date)
+// Last modified dates for static routes
 const STATIC_LASTMOD = {
   "/": "2026-06-01",
   "/search": "2026-06-01",
@@ -39,13 +39,27 @@ const STATIC_LASTMOD = {
 };
 
 /**
+ * Escape a string for safe use in XML content.
+ * Escapes: & < > " '
+ */
+function xmlEscape(str) {
+  if (str == null) return "";
+  return String(str)
+    .replace(/&/g, "\u0026amp;")
+    .replace(/</g, "\u0026lt;")
+    .replace(/>/g, "\u0026gt;")
+    .replace(/"/g, "\u0026quot;")
+    .replace(/'/g, "\u0026apos;");
+}
+
+/**
  * Generate a single sitemap XML string for a set of URLs.
  */
-function toSitemapXml(urls, baseUrl = BASE_URL) {
+function toSitemapXml(urls) {
   const urlElements = urls
     .map(
       ({ loc, lastmod, changefreq, priority }) =>
-        `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`,
+        `  <url>\n    <loc>${xmlEscape(loc)}</loc>\n    <lastmod>${xmlEscape(lastmod)}</lastmod>\n    <changefreq>${xmlEscape(changefreq)}</changefreq>\n    <priority>${xmlEscape(priority)}</priority>\n  </url>`,
     )
     .join("\n");
 
@@ -55,11 +69,11 @@ function toSitemapXml(urls, baseUrl = BASE_URL) {
 /**
  * Generate a sitemap index XML string.
  */
-function toSitemapIndexXml(sitemaps, baseUrl = BASE_URL) {
+function toSitemapIndexXml(sitemaps) {
   const sitemapElements = sitemaps
     .map(
       ({ loc, lastmod }) =>
-        `  <sitemap>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n  </sitemap>`,
+        `  <sitemap>\n    <loc>${xmlEscape(loc)}</loc>\n    <lastmod>${xmlEscape(lastmod)}</lastmod>\n  </sitemap>`,
     )
     .join("\n");
 
@@ -143,7 +157,7 @@ export default async function handler(_req, res) {
   }
 
   if (totalChunks > 1) {
-    // Serve a sitemap index
+    // Serve a sitemap index — use & for XML validity
     const sitemaps = [];
 
     for (let i = 0; i < staticChunks.length; i++) {
