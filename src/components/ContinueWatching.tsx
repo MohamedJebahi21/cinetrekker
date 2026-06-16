@@ -1,3 +1,10 @@
+/**
+ * ContinueWatching — pure presentational component.
+ *
+ * No business logic, no TMDB calls, no episode resolution logic.
+ * Receives precomputed ContinueWatchingVM[] from the orchestrator hook.
+ */
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Calendar, CheckCircle2, Play, RefreshCw, Tv } from "lucide-react";
@@ -5,14 +12,13 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { useContinueWatching } from "@/hooks/useContinueWatching";
-import { getImageUrl, getMediaTitle } from "@/services/tmdb";
-import { Image } from "@/components/ui/Image";
+import { useContinueWatchingViewModel } from "@/hooks/useContinueWatchingViewModel";
 import { useWatchedEpisodes } from "@/hooks/useFollowedShows";
 import { useAuth } from "@/contexts/AuthContext";
+import { Image } from "@/components/ui/Image";
 import { safeT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { PaginationDotButton, PaginationDots, PaginationDotStatic } from "@/components/ui/pagination-dots";
+import { PaginationDotButton, PaginationDots } from "@/components/ui/pagination-dots";
 
 function ContinueWatchingSkeleton() {
   return (
@@ -31,7 +37,12 @@ function ContinueWatchingSkeleton() {
       </div>
       <PaginationDots className="justify-center">
         {Array.from({ length: 3 }).map((_, index) => (
-          <PaginationDotStatic key={index} active={index === 0} aria-hidden="true" />
+          <PaginationDotButton
+            key={`skeleton-dot-${index}`}
+            onClick={() => {}}
+            active={index === 0}
+            aria-hidden="true"
+          />
         ))}
       </PaginationDots>
     </section>
@@ -39,10 +50,9 @@ function ContinueWatchingSkeleton() {
 }
 
 export function ContinueWatching() {
-  const { i18n, t } = useTranslation();
+  const { t } = useTranslation();
   const { user } = useAuth();
-  const language = i18n.language;
-  const { data, isLoading, error, refetch } = useContinueWatching(language);
+  const { data, isLoading, error, refetch } = useContinueWatchingViewModel();
   const { markEpisodeWatched } = useWatchedEpisodes();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollFrameRef = useRef<number | null>(null);
@@ -72,16 +82,16 @@ export function ContinueWatching() {
       }
     });
 
-    const nextActivePage = nextHasOverflow && cards.length > 1
-      ? Math.min(
-          nextPageCount - 1,
-          Math.round((nearestCardIndex / (cards.length - 1)) * (nextPageCount - 1)),
-        )
-      : 0;
-
     setHasOverflow(nextHasOverflow);
     setPageCount(nextPageCount);
-    setActivePage(nextActivePage);
+    setActivePage(
+      nextHasOverflow && cards.length > 1
+        ? Math.min(
+            nextPageCount - 1,
+            Math.round((nearestCardIndex / (cards.length - 1)) * (nextPageCount - 1)),
+          )
+        : 0,
+    );
   }, []);
 
   const scheduleActiveIndexUpdate = useCallback(() => {
@@ -155,9 +165,7 @@ export function ContinueWatching() {
           type="button"
           variant="outline"
           className="mt-4 gap-2"
-          onClick={() => {
-            void refetch();
-          }}
+          onClick={() => refetch()}
         >
           <RefreshCw className="h-4 w-4" />
           {t("common.retry", "Retry")}
@@ -235,24 +243,19 @@ export function ContinueWatching() {
         className="hide-scrollbar -mx-1 flex snap-x snap-proximity gap-3 overflow-x-auto px-1 pb-2 overscroll-x-contain [scrollbar-width:none]"
       >
         {data.map((item) => {
-          const title = getMediaTitle(item.details) || t("common.tvShow", "TV Show");
-          const nextEpisode = item.nextEpisode;
-          const lastEpisode = item.lastWatchedEpisode;
-          const nextEpisodeLabel = nextEpisode
-            ? `S${nextEpisode.season_number}E${nextEpisode.episode_number}`
-            : null;
+          const nextEpisodeLabel = item.nextEpisodeLabel ?? null;
 
           return (
             <Card
-              key={item.details.id}
+              key={item.showId}
               className="w-[min(82vw,300px)] shrink-0 snap-start overflow-hidden rounded-3xl border-border/60 bg-card/80 sm:min-h-[420px] sm:w-[320px] md:w-[360px]"
             >
               <CardContent className="p-0">
                 <div className="flex flex-col sm:h-full sm:flex-row">
                   <div className="aspect-[3/4] w-full overflow-hidden bg-muted/40 sm:aspect-auto sm:h-auto sm:w-32 md:w-36">
                     <Image
-                      src={getImageUrl(item.details.poster_path, "w342")}
-                      alt={title}
+                      src={item.posterPath ? `https://image.tmdb.org/t/p/w342${item.posterPath}` : ""}
+                      alt={item.title}
                       width={342}
                       height={513}
                       className="h-full w-full object-contain sm:object-cover"
@@ -265,7 +268,7 @@ export function ContinueWatching() {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <h3 className="line-clamp-2 text-base font-semibold text-foreground sm:min-h-[3.5rem] sm:text-lg">
-                          <bdi dir="auto">{title}</bdi>
+                          <bdi dir="auto">{item.title}</bdi>
                         </h3>
                         <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
                           {t("home.episodesTracked", {
@@ -280,32 +283,30 @@ export function ContinueWatching() {
                     </div>
 
                     <div className="mt-2 min-h-[68px] rounded-2xl border border-border/60 bg-background/40 p-2.5">
-                      {nextEpisode ? (
+                      {nextEpisodeLabel ? (
                         <>
                           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                            {nextEpisode.isUpcoming
+                            {item.nextEpisodeIsUpcoming
                               ? t("home.upNext", "Up next")
                               : t("home.nextEpisode", "Next episode")}
                           </p>
                           <p className="mt-1 line-clamp-2 text-sm font-medium text-foreground">
-                            {nextEpisodeLabel} {nextEpisode.name}
+                            {nextEpisodeLabel} {item.nextEpisodeName}
                           </p>
-                          {nextEpisode.air_date ? (
+                          {item.nextEpisodeAirDate ? (
                             <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                               <Calendar className="h-3.5 w-3.5" />
-                              {new Date(nextEpisode.air_date).toLocaleDateString(
-                                language,
-                              )}
+                              {new Date(item.nextEpisodeAirDate).toLocaleDateString()}
                             </p>
                           ) : null}
                         </>
-                      ) : lastEpisode ? (
+                      ) : item.lastWatchedEpisode ? (
                         <>
                           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
                             {t("home.lastWatched", "Last watched")}
                           </p>
                           <p className="mt-1 font-medium text-foreground">
-                            S{lastEpisode.season_number}E{lastEpisode.episode_number}
+                            S{item.lastWatchedEpisode.season}E{item.lastWatchedEpisode.episode}
                           </p>
                         </>
                       ) : null}
@@ -324,31 +325,35 @@ export function ContinueWatching() {
                         asChild
                         className={cn(
                           "gap-2 text-sm h-9",
-                          nextEpisode && !nextEpisode.isUpcoming ? "col-span-1" : "col-span-2",
+                          item.nextEpisodeLabel && !item.nextEpisodeIsUpcoming ? "col-span-1" : "col-span-2",
                           "sm:flex-1 sm:h-10",
                         )}
                       >
-                        <Link to={`/tv/${item.details.id}`}>
+                        {/* Slug-based routing: href is precomputed in the view model */}
+                        <Link to={item.href}>
                           <Play className="h-4 w-4" />
                           {t("home.openShow", "Open Show")}
                         </Link>
                       </Button>
-                      {nextEpisode && !nextEpisode.isUpcoming ? (
+                      {item.nextEpisodeLabel && !item.nextEpisodeIsUpcoming ? (
                         <Button
                           type="button"
                           variant="outline"
                           className="col-span-1 gap-2 text-sm h-9 sm:flex-1 sm:h-10"
-                          onClick={() =>
-                            markEpisodeWatched({
-                              showId: item.details.id,
-                              seasonNumber: nextEpisode.season_number,
-                              episodeNumber: nextEpisode.episode_number,
-                              episodeName: nextEpisode.name,
-                              airDate: nextEpisode.air_date || undefined,
-                              showName: title,
-                              posterPath: item.details.poster_path,
-                            })
-                          }
+                          onClick={() => {
+                            const parts = item.nextEpisodeLabel!.replace("S", "").split("E");
+                            if (parts.length === 2) {
+                              markEpisodeWatched({
+                                showId: item.showId,
+                                seasonNumber: parseInt(parts[0], 10),
+                                episodeNumber: parseInt(parts[1], 10),
+                                episodeName: item.nextEpisodeName ?? undefined,
+                                airDate: item.nextEpisodeAirDate ?? undefined,
+                                showName: item.title,
+                                posterPath: item.posterPath,
+                              });
+                            }
+                          }}
                         >
                           <CheckCircle2 className="h-4 w-4" />
                           {t("home.markNextEpisode", "Mark Next Episode")}
@@ -374,7 +379,6 @@ export function ContinueWatching() {
                 index: index + 1,
                 defaultValue: "Go to continue watching item {{index}}",
               })}
-              aria-pressed={index === activePage}
             />
           ))}
         </PaginationDots>
