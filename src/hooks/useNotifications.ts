@@ -88,6 +88,7 @@ export function useNotifications() {
   const [guestNotifications, setGuestNotifications] = useState<
     AppNotification[]
   >(() => readGuestNotifications());
+  const userNotificationsKey = ["notifications", user?.id] as const;
 
   useEffect(() => {
     if (!canUseStorage()) {
@@ -170,7 +171,7 @@ export function useNotifications() {
 
       clearGuestNotifications();
       setGuestNotifications([]);
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: userNotificationsKey });
       toast({
         title: "Notifications synced",
         description: `${pending.length} guest notification${pending.length === 1 ? "" : "s"} moved to your account.`,
@@ -195,7 +196,7 @@ export function useNotifications() {
   }, [queryClient, user]);
 
   const { data: notifications = [], isLoading } = useQuery({
-    queryKey: ["notifications", user?.id],
+    queryKey: userNotificationsKey,
     queryFn: async () => {
       if (!user) return [];
       const { data, error } = await supabase
@@ -237,8 +238,35 @@ export function useNotifications() {
         .eq("user_id", user.id);
       if (error) throw error;
     },
+    onMutate: async (id: string) => {
+      if (!user) return { previous: null as AppNotification[] | null };
+
+      await queryClient.cancelQueries({ queryKey: userNotificationsKey });
+      const previous =
+        queryClient.getQueryData<AppNotification[]>(userNotificationsKey) ?? [];
+
+      queryClient.setQueryData<AppNotification[]>(userNotificationsKey, (current) =>
+        (current ?? previous).map((notification) =>
+          notification.id === id
+            ? { ...notification, is_read: true }
+            : notification,
+        ),
+      );
+
+      return { previous };
+    },
+    onError: (error: Error, _id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(userNotificationsKey, context.previous);
+      }
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: userNotificationsKey });
     },
   });
 
@@ -262,15 +290,34 @@ export function useNotifications() {
         .eq("is_read", false);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    onMutate: async () => {
+      if (!user) return { previous: null as AppNotification[] | null };
+
+      await queryClient.cancelQueries({ queryKey: userNotificationsKey });
+      const previous =
+        queryClient.getQueryData<AppNotification[]>(userNotificationsKey) ?? [];
+
+      queryClient.setQueryData<AppNotification[]>(userNotificationsKey, (current) =>
+        (current ?? previous).map((notification) => ({
+          ...notification,
+          is_read: true,
+        })),
+      );
+
+      return { previous };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(userNotificationsKey, context.previous);
+      }
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: userNotificationsKey });
     },
   });
 
@@ -293,8 +340,31 @@ export function useNotifications() {
         .eq("user_id", user.id);
       if (error) throw error;
     },
+    onMutate: async (id: string) => {
+      if (!user) return { previous: null as AppNotification[] | null };
+
+      await queryClient.cancelQueries({ queryKey: userNotificationsKey });
+      const previous =
+        queryClient.getQueryData<AppNotification[]>(userNotificationsKey) ?? [];
+
+      queryClient.setQueryData<AppNotification[]>(userNotificationsKey, (current) =>
+        (current ?? previous).filter((notification) => notification.id !== id),
+      );
+
+      return { previous };
+    },
+    onError: (error: Error, _id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(userNotificationsKey, context.previous);
+      }
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: userNotificationsKey });
     },
   });
 

@@ -72,6 +72,8 @@ export interface ContinueWatchingVM {
   hrefLabel: string;
   lastWatchedEpisode: { season: number; episode: number } | null;
   nextEpisodeLabel: string | null; // "S3E5"
+  nextEpisodeSeasonNumber: number | null;
+  nextEpisodeNumber: number | null;
   nextEpisodeName: string | null;
   nextEpisodeAirDate: string | null; // formatted date
   nextEpisodeIsUpcoming: boolean;

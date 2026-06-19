@@ -327,11 +327,9 @@ function AppRoutes() {
           <Route
             path="/notifications"
             element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteSpinner />}>
-                  <Notifications />
-                </Suspense>
-              </ProtectedRoute>
+              <Suspense fallback={<RouteSpinner />}>
+                <Notifications />
+              </Suspense>
             }
           />
           <Route
@@ -347,11 +345,9 @@ function AppRoutes() {
           <Route
             path="/calendar"
             element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteSpinner />}>
-                  <Calendar />
-                </Suspense>
-              </ProtectedRoute>
+              <Suspense fallback={<RouteSpinner />}>
+                <Calendar />
+              </Suspense>
             }
           />
           <Route

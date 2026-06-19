@@ -286,29 +286,30 @@ export function UnifiedNav() {
     <header
       role="banner"
       className={cn(
-        "sticky top-0 left-0 right-0 z-[90] border-b border-border/50 bg-background/88 pt-[env(safe-area-inset-top,0px)] backdrop-blur-[18px] transition-[background-color,box-shadow] duration-300",
-        isScrolled && "bg-[hsl(var(--background)/0.96)] shadow-[0_10px_28px_hsl(var(--foreground)/0.08)]",
+        "sticky top-0 left-0 right-0 z-[90] border-b border-border/35 bg-background/68 pt-[env(safe-area-inset-top,0px)] backdrop-blur-2xl transition-[background-color,box-shadow,border-color] duration-300",
+        isScrolled &&
+          "border-border/45 bg-[hsl(var(--background)/0.92)] shadow-[0_10px_28px_hsl(var(--foreground)/0.08)]",
       )}
     >
-      <div className="container mx-auto flex h-16 items-center gap-3 px-3 sm:px-4">
-        <Link to="/" className="group flex shrink-0 items-center gap-3">
+      <div className="container mx-auto flex h-14 items-center gap-2 px-3 sm:h-15 sm:px-4">
+        <Link to="/" className="group flex shrink-0 items-center gap-2.5">
           <img
             src="/apple-touch-icon.png"
             alt="CineTrekker logo"
-            className="h-11 w-11 rounded-2xl object-cover shadow-[0_8px_20px_hsl(var(--primary)/0.2)]"
+            className="h-9 w-9 rounded-2xl object-cover shadow-[0_8px_20px_hsl(var(--primary)/0.16)] ring-1 ring-white/10 sm:h-10 sm:w-10"
           />
-          <span className="hidden text-base font-semibold text-foreground sm:block lg:text-lg">
+          <span className="hidden text-base font-semibold tracking-[-0.02em] text-foreground sm:block lg:text-[1.05rem]">
             {t("common.appName", "CineTrekker")}
           </span>
         </Link>
 
         <div className="hidden items-center md:flex">
-          <span className="rounded-lg px-4 py-2 text-sm font-semibold text-primary">
+          <span className="max-w-[9rem] truncate rounded-full border border-primary/15 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary sm:max-w-none sm:text-sm">
             {currentPageLabel}
           </span>
         </div>
 
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 max-w-4xl">
           <Suspense fallback={searchFallback}>
             <SearchDropdown />
           </Suspense>
@@ -324,14 +325,14 @@ export function UnifiedNav() {
               />
             </>
           ) : (
-            <Button asChild variant="ghost" size="icon" className="rounded-full">
+            <Button asChild variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-white/6">
               <Link to="/login" aria-label={t("nav.signIn", "Sign In")}>
                 <User className="h-5 w-5" />
               </Link>
             </Button>
           )}
 
-          <Button asChild variant="ghost" size="icon" className="rounded-full">
+          <Button asChild variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-white/6">
             <Link to="/settings" aria-label={t("nav.settings", "Settings")}>
               <Settings className="h-5 w-5" />
             </Link>
@@ -340,13 +341,13 @@ export function UnifiedNav() {
           {/* Language Switcher */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full"
-                aria-label={t("nav.changeLanguage", "Change language")}
-              >
-                <Globe className="h-5 w-5" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full hover:bg-white/6"
+              aria-label={t("nav.changeLanguage", "Change language")}
+            >
+              <Globe className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[160px] bg-popover border-border/50">
@@ -365,13 +366,13 @@ export function UnifiedNav() {
           {/* Theme Switcher */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full"
-                aria-label={t("nav.changeTheme", "Change theme")}
-              >
-                <Palette className="h-5 w-5" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full hover:bg-white/6"
+              aria-label={t("nav.changeTheme", "Change theme")}
+            >
+              <Palette className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[140px] bg-popover border-border/50">
@@ -394,7 +395,7 @@ export function UnifiedNav() {
           <Button
             variant="ghost"
             size="icon"
-            className="relative rounded-full text-foreground/90 h-10 w-10 flex items-center justify-center hover:bg-white/5 active:scale-95 transition-all duration-200"
+            className="relative h-9 w-9 flex items-center justify-center rounded-full text-foreground/90 transition-all duration-200 hover:bg-white/6 active:scale-95"
             onClick={() => setIsDesktopMenuOpen((current) => !current)}
             aria-label={isDesktopMenuOpen ? t("common.close", "Close") : t("nav.menu", "Menu")}
             aria-expanded={isDesktopMenuOpen}
@@ -406,7 +407,7 @@ export function UnifiedNav() {
 
         <div className="ml-auto flex items-center gap-1 md:hidden">
           {user && <NotificationBell />}
-          <Button asChild variant="ghost" size="icon" className="rounded-full">
+          <Button asChild variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-white/6">
             <Link to={user ? "/profile" : "/login"} aria-label={t("nav.profile", "Profile")}>
               {profileImageUrl ? (
                 <img
@@ -422,7 +423,7 @@ export function UnifiedNav() {
           <Button
             variant="ghost"
             size="icon"
-            className="rounded-full h-10 w-10 flex items-center justify-center hover:bg-white/5 active:scale-95 transition-all duration-200"
+            className="h-9 w-9 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-white/6 active:scale-95"
             onClick={() => setIsMobileSheetOpen((current) => !current)}
             aria-label={isMobileSheetOpen ? t("common.close", "Close") : t("nav.menu", "Menu")}
             aria-expanded={isMobileSheetOpen}

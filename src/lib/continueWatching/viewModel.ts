@@ -99,6 +99,8 @@ export function buildContinueWatchingVM(params: {
     hrefLabel: showName,
     lastWatchedEpisode: progress.lastWatchedEpisode,
     nextEpisodeLabel,
+    nextEpisodeSeasonNumber: nextEpisode?.season_number ?? null,
+    nextEpisodeNumber: nextEpisode?.episode_number ?? null,
     nextEpisodeName: nextEpisode?.name ?? null,
     nextEpisodeAirDate: nextEpisode?.air_date ?? null,
     nextEpisodeIsUpcoming: nextResult?.isUpcoming ?? false,

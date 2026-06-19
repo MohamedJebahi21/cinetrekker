@@ -25,11 +25,10 @@
  * │   - mergeTMDBMetadata() call (delegates to progress.ts)                 │
  * │   - rankShows() call (delegates to ranking.ts)                          │
  * │   - buildContinueWatchingVM() call (delegates to viewModel.ts)          │
- * │   - Intent-based inclusion filter (isFollowed || lastActivityAt)        │
+ * │   - Episode-activity inclusion filter (watchedEpisodeCount > 0)         │
  * │                                                                        │
  * │ Inclusion filter inputs (the ONLY allowed inputs):                      │
- * │   - isFollowed: user intent (follow action)                             │
- * │   - lastActivityAt: activity presence (not watchedEpisodeCount)         │
+ * │   - watchedEpisodeCount: user actually watched at least one episode     │
  * │   - TMDB metadata is NOT used for inclusion/exclusion decisions         │
  * │                                                                        │
  * │ If a future developer adds:                                             │
@@ -47,7 +46,12 @@ import {
   useFollowedShows,
   useWatchedEpisodes,
 } from "@/hooks/useFollowedShows";
-import { buildUserShowProgress, mergeTMDBMetadata } from "@/lib/continueWatching/progress";
+import { useWatchedQuery } from "@/hooks/useWatchedQueries";
+import {
+  buildUserShowProgress,
+  isShowDefinitelyCompleted,
+  mergeTMDBMetadata,
+} from "@/lib/continueWatching/progress";
 import { rankShows } from "@/lib/continueWatching/ranking";
 import { buildContinueWatchingVM } from "@/lib/continueWatching/viewModel";
 import {
@@ -103,6 +107,17 @@ export function useContinueWatchingViewModel(): {
   const { user } = useAuth();
   const { followedShows } = useFollowedShows();
   const { watchedEpisodes } = useWatchedEpisodes();
+  const { data: watchedItems = [], isLoading: watchedItemsLoading } = useWatchedQuery();
+
+  const completedShowIds = useMemo(
+    () =>
+      new Set(
+        watchedItems
+          .filter((item) => item.mediaType === "tv" && item.status === "completed")
+          .map((item) => item.mediaId),
+      ),
+    [watchedItems],
+  );
 
   // 1. Build unified progress model (pure, no TMDB)
   //    Status is derived ONCE here via deriveStatus() in progress.ts.
@@ -112,7 +127,7 @@ export function useContinueWatchingViewModel(): {
       buildUserShowProgress({
         followedShows,
         watchedEpisodes,
-      }),
+      }).filter((show) => show.watchedEpisodeCount > 0),
     [followedShows, watchedEpisodes],
   );
 
@@ -132,6 +147,7 @@ export function useContinueWatchingViewModel(): {
       idsHash,
       watchedHash,
       followedHash,
+      [...completedShowIds].sort((a, b) => a - b).join(","),
     ],
     queryFn: async (): Promise<ContinueWatchingVM[]> => {
       if (ranked.length === 0) return [];
@@ -163,7 +179,12 @@ export function useContinueWatchingViewModel(): {
       const seasons = await batchResolveSeasons(uniqueSeasonReqs, language);
 
       // 4c. Merge TMDB metadata into progress (totals only, NO status re-derivation)
-      const mergedProgress = mergeTMDBMetadata(ranked, details);
+      const mergedProgress = mergeTMDBMetadata(ranked, details).filter(
+        (show) =>
+          show.watchedEpisodeCount > 0 &&
+          !isShowDefinitelyCompleted(show) &&
+          !completedShowIds.has(show.showId),
+      );
 
       // 4d. Build view model (pure mapping, NO logic)
       const vms = mergedProgress
@@ -217,23 +238,25 @@ export function useContinueWatchingViewModel(): {
             episodesBySeason,
           });
         })
-        // 4e. Intent-based inclusion:
-        //     - Shows with activity history (partial sync-safe, not tied to watched count)
-        //     - Followed shows even if activity is zero (user intent > sync state)
-        //     This handles partial sync states where watchedEpisodes might be
-        //     temporarily empty but the user has explicitly expressed intent.
-        .filter((vm) => vm.isFollowed || vm.lastActivityAt != null);
+        // 4e. Episode-driven inclusion:
+        //     - Require at least one watched episode
+        //     - Exclude anything already completed by episode totals or explicit status
+        .filter(
+          (vm) =>
+            vm.watchedEpisodeCount > 0 &&
+            !completedShowIds.has(vm.showId),
+        );
 
       return vms;
     },
-    enabled: ranked.length > 0 && !!user,
+    enabled: ranked.length > 0 && !!user && !watchedItemsLoading,
     staleTime: 60_000,
     gcTime: 5 * 60_000,
   });
 
   return {
     data: query.data,
-    isLoading: query.isLoading,
+    isLoading: query.isLoading || watchedItemsLoading,
     error: query.error ?? null,
     refetch: () => query.refetch(),
   };

@@ -1,4 +1,4 @@
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -10,7 +10,6 @@ import {
   Check,
   Plus,
   Pin,
-  MessageSquare,
   ChevronLeft,
   PlayCircle,
   Loader2,
@@ -19,7 +18,6 @@ import {
   Globe,
   Film,
   Tv,
-  ChevronRight,
   TrendingUp,
   DollarSign,
 } from "lucide-react";
@@ -189,27 +187,6 @@ function VideoCard({ video, onPlay, featured }: { video: MediaVideoResult; onPla
   );
 }
 
-// ─── Star rating ───────────────────────────────────────────────────────────
-function StarRating({ value, onChange, disabled }: { value: number; onChange: (v: number) => void; disabled?: boolean }) {
-  const [hovered, setHovered] = useState(0);
-  const display = hovered || value;
-  return (
-    <div className="flex items-center gap-0.5" role="group" aria-label="Star rating">
-      {[1, 2, 3, 4, 5].map(star => (
-        <button
-          key={star} type="button" disabled={disabled}
-          onMouseEnter={() => setHovered(star)} onMouseLeave={() => setHovered(0)}
-          onClick={() => onChange(star)}
-          className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-transform hover:scale-110 active:scale-95 disabled:cursor-not-allowed p-0.5"
-          aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`} aria-pressed={value >= star}
-        >
-          <Star className={cn("w-7 h-7 transition-all duration-150", display >= star ? "fill-yellow-400 text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.7)]" : "text-white/20 hover:text-yellow-400/50")} />
-        </button>
-      ))}
-    </div>
-  );
-}
-
 // ─── Section reveal wrapper ────────────────────────────────────────────────
 function Reveal({ children, className }: { children: React.ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -228,12 +205,64 @@ function Reveal({ children, className }: { children: React.ReactNode; className?
   );
 }
 
+// ─── Deferred rendering wrapper ───────────────────────────────────────────
+function DeferredBlock({
+  children,
+  className,
+  placeholderClassName,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  placeholderClassName?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || ready) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setReady(true);
+          observer.disconnect();
+        }
+      },
+      {
+        rootMargin: "280px 0px",
+        threshold: 0.01,
+      }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [ready]);
+
+  return (
+    <div ref={ref} className={className}>
+      {ready ? (
+        children
+      ) : (
+        <div
+          aria-hidden="true"
+          className={cn(
+            "rounded-2xl border border-white/8 bg-white/3 animate-pulse",
+            placeholderClassName
+          )}
+        />
+      )}
+    </div>
+  );
+}
+
 // ══════════════════════════════════════════════════════════════════════════
 // MAIN
 // ══════════════════════════════════════════════════════════════════════════
 export default function Details() {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const language = i18n.language;
@@ -268,10 +297,6 @@ export default function Details() {
   const [tempRating, setTempRating] = useState<number>(watchedItem?.rating || 5);
   const [tempNote, setTempNote] = useState<string>(watchedItem?.note || "");
   const [tempStatus, setTempStatus] = useState<string>(watchedItem?.status || "completed");
-  const [inlineStarRating, setInlineStarRating] = useState<number>(watchedItem?.rating ? Math.round(watchedItem.rating / 2) : 0);
-  const [inlineReviewText, setInlineReviewText] = useState<string>(watchedItem?.note || "");
-  const [hasInteractedWithStars, setHasInteractedWithStars] = useState<boolean>(false);
-  const [showReviewTextarea, setShowReviewTextarea] = useState<boolean>(!!watchedItem?.note);
   const [episodesDialogOpen, setEpisodesDialogOpen] = useState(false);
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
   const [expandedSeason, setExpandedSeason] = useState<string | null>(null);
@@ -350,6 +375,9 @@ export default function Details() {
     retry: 3,
   });
 
+  const title = toDisplayTitle(details?.title || details?.name || "");
+  const todayDateKey = new Date().toISOString().slice(0, 10);
+
   const isBlockedByPolicy =
     !!details && ((details as { blocked_by_policy?: boolean }).blocked_by_policy === true ||
       !isMediaAllowedBySafety({ ...details, rating: getPolicyRatingTag(mediaType, details) }, strictFiltering, moderateFiltering));
@@ -364,16 +392,34 @@ export default function Details() {
 
   const personalStats = useMemo(() => {
     if (!user || mediaType === "movie" || !details) return null;
-    const watchedCount = watchedEpisodes.length;
-    const totalEpisodes = details.number_of_episodes || 0;
-    const percentageComplete = totalEpisodes > 0 ? Math.round((watchedCount / totalEpisodes) * 100) : 0;
+    const watchedKeys = new Set(
+      watchedEpisodes.map((ep) => `${ep.season_number}-${ep.episode_number}`),
+    );
+    const publishedEpisodesCount =
+      details.seasons?.reduce((total, season) => {
+        if (season.season_number <= 0) return total;
+        if (season.air_date && season.air_date > todayDateKey) return total;
+        return total + (season.episode_count || 0);
+      }, 0) ?? (details.number_of_episodes || 0);
+    const watchedCount = watchedEpisodes.filter((ep) =>
+      watchedKeys.has(`${ep.season_number}-${ep.episode_number}`),
+    ).length;
+    const percentageComplete =
+      publishedEpisodesCount > 0
+        ? Math.min(100, Math.round((watchedCount / publishedEpisodesCount) * 100))
+        : 0;
     let totalMinutes = 0;
     watchedEpisodes.forEach(ep => {
       const episode = seasonDetails?.episodes?.find(e => e.season_number === ep.season_number && e.episode_number === ep.episode_number);
       if (episode?.runtime) totalMinutes += episode.runtime;
     });
-    return { episodesWatched: watchedCount, totalHours: (totalMinutes / 60).toFixed(1), percentageComplete, dateAdded: watchedItem ? new Date(watchedItem.addedAt || Date.now()).toLocaleDateString() : null };
-  }, [user, mediaType, watchedEpisodes, details, seasonDetails?.episodes, watchedItem]);
+    return {
+      episodesWatched: watchedCount,
+      totalHours: (totalMinutes / 60).toFixed(1),
+      percentageComplete,
+      dateAdded: watchedItem ? new Date(watchedItem.addedAt || Date.now()).toLocaleDateString() : null,
+    };
+  }, [user, mediaType, watchedEpisodes, details, seasonDetails?.episodes, watchedItem, todayDateKey]);
 
   // Cast scroll paging
   useEffect(() => {
@@ -400,7 +446,6 @@ export default function Details() {
   useDocumentTitle(_title ? `${_title} | CineTrekker` : undefined);
 
   const seasons = useMemo(() => details?.number_of_seasons ? Array.from({ length: details.number_of_seasons }, (_, i) => i + 1) : [], [details?.number_of_seasons]);
-  const todayDateKey = new Date().toISOString().slice(0, 10);
 
   const availableSeasonNumbers = useMemo(() => {
     if (mediaType !== "tv") return [];
@@ -433,6 +478,31 @@ export default function Details() {
   }, [availableSeasonNumbers, mediaType, seasons, selectedSeason]);
 
   // ── Loading ──
+  useEffect(() => {
+    if (!details || !title || !isValidId) {
+      return;
+    }
+
+    const canonicalPath = buildMediaPath(mediaType, mediaId, title);
+    if (location.pathname === canonicalPath) {
+      return;
+    }
+
+    navigate(`${canonicalPath}${location.search}${location.hash}`, {
+      replace: true,
+    });
+  }, [
+    details,
+    isValidId,
+    location.hash,
+    location.pathname,
+    location.search,
+    mediaId,
+    mediaType,
+    navigate,
+    title,
+  ]);
+
   if (isLoading && !detailsLoadingTimedOut) {
     return (
       <div className="min-h-screen">
@@ -470,7 +540,6 @@ export default function Details() {
   }
 
   // ── Data derivation ──
-  const title = toDisplayTitle(details.title || details.name || "");
   const overview = details.overview || t("details.noOverview");
   const posterUrl = getImageUrl(details.poster_path, "w500");
   const posterSrcSet = details.poster_path ? `${getImageUrl(details.poster_path, "w185")} 185w, ${getImageUrl(details.poster_path, "w342")} 342w, ${getImageUrl(details.poster_path, "w500")} 500w` : null;
@@ -535,6 +604,63 @@ export default function Details() {
   const seoCanonical = buildCanonicalUrl(detailPath);
   const seoKeywords = [title, ...(details.genres?.map((g: { name: string }) => g.name) || []), mediaType === "movie" ? "movie" : "TV show", year?.toString(), "streaming", "watch online"].filter(Boolean).join(", ");
 
+  const heroFacts = (() => {
+    const facts: Array<{ label: string; value: string; icon: typeof Clock; tone?: string }> = [];
+
+    if (mediaType === "movie") {
+      if (runtime) {
+        facts.push({ label: t("details.runtime", "Runtime"), value: `${runtime} ${t("details.minutes", "min")}`, icon: Clock });
+      }
+      if (releaseDate) {
+        facts.push({
+          label: t("details.releaseDate", "Release"),
+          value: new Date(releaseDate).toLocaleDateString(language, { year: "numeric", month: "short", day: "numeric" }),
+          icon: Calendar,
+        });
+      }
+    } else {
+      if (details.number_of_seasons) {
+        facts.push({
+          label: t("details.seasons", "Seasons"),
+          value: `${details.number_of_seasons}`,
+          icon: Tv,
+        });
+      }
+      if (details.number_of_episodes) {
+        facts.push({
+          label: t("details.episodes", "Episodes"),
+          value: `${details.number_of_episodes}`,
+          icon: Film,
+        });
+      }
+      if (personalStats) {
+        facts.push({
+          label: t("details.progress", "Progress"),
+          value: `${personalStats.percentageComplete}%`,
+          icon: TrendingUp,
+        });
+      }
+    }
+
+    if (details.original_language) {
+      facts.push({
+        label: t("details.language", "Language"),
+        value: details.original_language.toUpperCase(),
+        icon: Globe,
+      });
+    }
+
+    if (details.vote_average) {
+      facts.push({
+        label: t("details.score", "Score"),
+        value: `${details.vote_average.toFixed(1)}/10`,
+        icon: Star,
+      });
+    }
+
+    return facts.slice(0, 4);
+  })();
+
   // ── Handlers ──
   const handleAddToWatchlist = async () => {
     const next = !optimisticInWatchlist;
@@ -561,16 +687,6 @@ export default function Details() {
     if (watched) updateWatchedItem(mediaId, mediaType, { rating: r, note: n, status: s });
     else addToWatched(mediaId, mediaType, r, n, s);
     setStatusDialogOpen(false);
-  };
-
-  const handleInlineRatingSubmit = async () => {
-    if (!user) return;
-    const r10 = inlineStarRating * 2;
-    const st = watchedItem?.status || "completed";
-    if (watched) updateWatchedItem(mediaId, mediaType, { rating: r10, note: inlineReviewText, status: st });
-    else await addToWatched(mediaId, mediaType, r10, inlineReviewText, st);
-    setOptimisticWatched(true);
-    toast({ title: t("details.ratingSaved", "Rating saved") });
   };
 
   const handleEpisodeToggle = (seasonNumber: number, episodeNumber: number, episodeName: string, airDate: string | null) => {
@@ -642,7 +758,7 @@ export default function Details() {
       {/* ══════════════════════════════════════════════
           CINEMATIC HERO — full bleed with parallax
       ══════════════════════════════════════════════ */}
-      <div ref={heroRef} className="relative -mt-16 overflow-hidden" style={{ minHeight: "clamp(420px, 68vh, 740px)" }}>
+      <div ref={heroRef} className="relative overflow-hidden" style={{ minHeight: "clamp(420px, 68vh, 740px)" }}>
         {/* Parallax backdrop */}
         <div ref={backdropRef} className="absolute will-change-transform" style={{ inset: "-15% 0 0 0", height: "130%" }}>
           {backdropUrl ? (
@@ -653,8 +769,8 @@ export default function Details() {
         </div>
 
         {/* Layered overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/75 to-black/20 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/78 to-black/15 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-transparent pointer-events-none" />
 
         {/* Subtle grain texture */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E\")" }} />
@@ -666,8 +782,8 @@ export default function Details() {
 
         {/* Hero content */}
         <div className="absolute bottom-0 left-0 right-0 z-10">
-          <div className="page-container pb-10 pt-20 md:pb-12">
-            <div className="flex flex-col md:flex-row md:items-end gap-8">
+          <div className="page-container pb-8 pt-16 md:pb-10">
+            <div className="flex flex-col md:flex-row md:items-end gap-6 lg:gap-8">
 
               {/* Poster — large and prominent in the hero */}
               <div className="flex-shrink-0 mx-auto md:mx-0 relative group">
@@ -678,24 +794,24 @@ export default function Details() {
                       sizes="(max-width: 768px) 140px, 200px"
                       alt={getMediaAltText(title, mediaType, "poster")}
                       width={500} height={750} loading="lazy" showSkeleton
-                      className="w-36 md:w-48 rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.7)] border border-white/10 group-hover:border-primary/40 transition-all duration-300"
+                      className="w-36 md:w-44 rounded-2xl shadow-[0_22px_56px_rgba(0,0,0,0.65)] border border-white/10 group-hover:border-primary/40 transition-all duration-300"
                     />
                   ) : (
-                    <div className="w-36 md:w-48 aspect-[2/3] bg-muted/30 rounded-2xl border border-white/10 flex items-center justify-center backdrop-blur-sm">
+                    <div className="w-36 md:w-44 aspect-[2/3] bg-muted/30 rounded-2xl border border-white/10 flex items-center justify-center backdrop-blur-sm">
                       <Film className="w-12 h-12 text-white/30" />
                     </div>
                   )}
                   {/* Score ring on poster */}
                   {rating > 0 && (
-                    <div className="absolute -bottom-4 -right-4 bg-background/90 backdrop-blur-md rounded-full p-1 border border-white/10 shadow-xl">
-                      <ScoreRing score={rating} size={62} />
+                    <div className="absolute -bottom-3 -right-3 bg-background/85 backdrop-blur-md rounded-full p-1 border border-white/10 shadow-xl">
+                      <ScoreRing score={rating} size={54} />
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Title and metadata */}
-              <div className="flex-1 space-y-3 md:pb-2">
+              <div className="flex-1 space-y-3 md:pb-1">
                 {/* Badges */}
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline" className="border-white/20 bg-black/40 text-white/90 text-[10px] uppercase tracking-[0.18em] backdrop-blur-sm">
@@ -714,7 +830,7 @@ export default function Details() {
                 </div>
 
                 {/* Title */}
-                <h1 className="text-3xl font-black leading-tight text-white drop-shadow-lg md:text-5xl lg:text-6xl tracking-tight">
+                <h1 className="max-w-4xl text-3xl font-black leading-[0.95] text-white drop-shadow-lg md:text-5xl lg:text-6xl tracking-tight">
                   {title}
                 </h1>
 
@@ -724,18 +840,30 @@ export default function Details() {
                 )}
 
                 {/* Meta row */}
-                <div className="flex flex-wrap items-center gap-3 text-sm text-white/60">
-                  {runtime && <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{runtime} {t("details.minutes")}</span>}
-                  {details.number_of_seasons && <span>{details.number_of_seasons} {t("details.seasons")}</span>}
-                  {details.number_of_episodes && <span>{details.number_of_episodes} {t("details.episodes")}</span>}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-white/62">
+                  {runtime && (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5" />
+                      {runtime} {t("details.minutes")}
+                    </span>
+                  )}
+                  {details.number_of_seasons && (
+                    <span>{details.number_of_seasons} {t("details.seasons")}</span>
+                  )}
+                  {details.number_of_episodes && (
+                    <span>{details.number_of_episodes} {t("details.episodes")}</span>
+                  )}
                   {(directors.length > 0 || creators.length > 0) && (
-                    <span className="flex items-center gap-1">
+                    <span className="inline-flex items-center gap-1.5">
                       <Film className="w-3.5 h-3.5" />
                       {(directors.length > 0 ? directors : creators).slice(0, 2).map((d: { name: string }) => d.name).join(", ")}
                     </span>
                   )}
                   {details.networks && details.networks.length > 0 && (
-                    <span className="flex items-center gap-1"><Tv className="w-3.5 h-3.5" />{details.networks.slice(0, 2).map((n: { name: string }) => n.name).join(", ")}</span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <Tv className="w-3.5 h-3.5" />
+                      {details.networks.slice(0, 2).map((n: { name: string }) => n.name).join(", ")}
+                    </span>
                   )}
                 </div>
 
@@ -748,11 +876,49 @@ export default function Details() {
                   </div>
                 )}
 
+                {watchedItem || heroFacts.length > 0 ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {watchedItem && (
+                      <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs text-white/80 backdrop-blur-sm">
+                        <span className="font-semibold uppercase tracking-[0.16em] text-white/55">
+                          {t("details.yourLibrary", "Your library")}
+                        </span>
+                        <span className="rounded-full border border-white/10 bg-black/30 px-2 py-0.5 font-medium">
+                          {watchedItem.status?.replace(/_/g, " ") || t("details.watched", "Watched")}
+                        </span>
+                        {typeof watchedItem.rating === "number" ? (
+                          <span className="rounded-full border border-white/10 bg-black/30 px-2 py-0.5 font-medium">
+                            {watchedItem.rating}/10
+                          </span>
+                        ) : null}
+                        {mediaType === "tv" && personalStats ? (
+                          <span className="rounded-full border border-white/10 bg-black/30 px-2 py-0.5 font-medium">
+                            {personalStats.percentageComplete}%
+                          </span>
+                        ) : null}
+                      </span>
+                    )}
+
+                    {heroFacts.map((fact) => {
+                      const Icon = fact.icon;
+                      return (
+                        <span
+                          key={fact.label}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-medium text-white/78 backdrop-blur-sm"
+                        >
+                          <Icon className="h-3.5 w-3.5 text-white/55" />
+                          <span>{fact.value}</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                ) : null}
+
                 {/* Hero CTA */}
                 {featuredTrailerKey && (
                   <Button
                     size="lg"
-                    className="gap-2 bg-white text-black hover:bg-white/90 font-bold shadow-2xl hover:shadow-white/20 transition-all hover:scale-105 active:scale-95 rounded-xl"
+                    className="w-full justify-center gap-2 bg-white text-black hover:bg-white/90 font-bold shadow-xl hover:shadow-white/20 transition-all hover:scale-[1.02] active:scale-95 rounded-xl sm:w-auto"
                     onClick={() => handlePlayVideo(featuredTrailerKey)}
                   >
                     <PlayCircle className="w-5 h-5 fill-black" />
@@ -1083,11 +1249,13 @@ export default function Details() {
           <Reveal>
             <section ref={el => { if (el) sectionRefs.current.videos = el; }} id="section-videos" className="mt-12">
               <h2 className="section-title mb-5">Videos & Trailers</h2>
-              <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar scroll-smooth snap-x snap-mandatory">
-                {orderedVideos.map((video, i) => (
-                  <VideoCard key={video.id} video={video} onPlay={handlePlayVideo} featured={i === 0} />
-                ))}
-              </div>
+              <DeferredBlock className="mt-4" placeholderClassName="h-56 sm:h-64">
+                <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar scroll-smooth snap-x snap-mandatory">
+                  {orderedVideos.map((video, i) => (
+                    <VideoCard key={video.id} video={video} onPlay={handlePlayVideo} featured={i === 0} />
+                  ))}
+                </div>
+              </DeferredBlock>
             </section>
           </Reveal>
         )}
@@ -1099,51 +1267,55 @@ export default function Details() {
               <h2 className="section-title">{t("details.cast")}</h2>
 
               {/* Cast scroll */}
-              <div ref={castScrollRef} className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar scroll-smooth snap-x snap-mandatory mt-4">
-                {details.credits.cast.slice(0, 12).map((person: { id: number; name: string; character?: string; profile_path?: string | null }) => (
-                  <Link key={person.id} to={buildPersonPath(person.id, person.name)} className="flex-shrink-0 w-28 md:w-32 group snap-start">
-                    <div className="relative rounded-2xl overflow-hidden aspect-[2/3] mb-2 border border-white/8 group-hover:border-primary/40 transition-all duration-200 group-hover:shadow-lg group-hover:shadow-primary/10">
-                      {person.profile_path ? (
-                        <Image
-                          src={getImageUrl(person.profile_path, "w185") || ""}
-                          alt={person.name} width={185} height={278}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          showSkeleton
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-muted flex items-center justify-center">
-                          <span className="text-3xl font-bold text-muted-foreground">{person.name.charAt(0)}</span>
+              <DeferredBlock className="mt-4" placeholderClassName="h-64">
+                <>
+                  <div ref={castScrollRef} className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar scroll-smooth snap-x snap-mandatory">
+                    {details.credits.cast.slice(0, 12).map((person: { id: number; name: string; character?: string; profile_path?: string | null }) => (
+                      <Link key={person.id} to={buildPersonPath(person.id, person.name)} className="flex-shrink-0 w-28 md:w-32 group snap-start">
+                        <div className="relative rounded-2xl overflow-hidden aspect-[2/3] mb-2 border border-white/8 group-hover:border-primary/40 transition-all duration-200 group-hover:shadow-lg group-hover:shadow-primary/10">
+                          {person.profile_path ? (
+                            <Image
+                              src={getImageUrl(person.profile_path, "w185") || ""}
+                              alt={person.name} width={185} height={278}
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              showSkeleton
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-muted flex items-center justify-center">
+                              <span className="text-3xl font-bold text-muted-foreground">{person.name.charAt(0)}</span>
+                            </div>
+                          )}
+                          {/* Character name overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
+                            {person.character && <p className="text-[10px] text-white/80 line-clamp-2 leading-tight">{person.character}</p>}
+                          </div>
                         </div>
-                      )}
-                      {/* Character name overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
-                        {person.character && <p className="text-[10px] text-white/80 line-clamp-2 leading-tight">{person.character}</p>}
-                      </div>
-                    </div>
-                    <p className="text-xs font-semibold text-foreground line-clamp-2 leading-tight">{person.name}</p>
-                    {person.character && <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">{person.character}</p>}
-                  </Link>
-                ))}
-              </div>
+                        <p className="text-xs font-semibold text-foreground line-clamp-2 leading-tight">{person.name}</p>
+                        {person.character && <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">{person.character}</p>}
+                      </Link>
+                    ))}
+                  </div>
 
-              {castPageCount > 1 && (
-                <PaginationDots className="mt-1">
-                  {Array.from({ length: castPageCount }).map((_, i) => (
-                    <PaginationDotButton
-                      key={`cast-p-${i}`}
-                      onClick={() => {
-                        const c = castScrollRef.current;
-                        if (!c) return;
-                        const cards = Array.from(c.children) as HTMLElement[];
-                        const ti = castPageCount <= 1 || cards.length <= 1 ? 0 : Math.round((i * (cards.length - 1)) / (castPageCount - 1));
-                        cards[ti]?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
-                      }}
-                      active={i === activeCastPage}
-                      aria-label={`Cast page ${i + 1}`}
-                    />
-                  ))}
-                </PaginationDots>
-              )}
+                  {castPageCount > 1 && (
+                    <PaginationDots className="mt-1">
+                      {Array.from({ length: castPageCount }).map((_, i) => (
+                        <PaginationDotButton
+                          key={`cast-p-${i}`}
+                          onClick={() => {
+                            const c = castScrollRef.current;
+                            if (!c) return;
+                            const cards = Array.from(c.children) as HTMLElement[];
+                            const ti = castPageCount <= 1 || cards.length <= 1 ? 0 : Math.round((i * (cards.length - 1)) / (castPageCount - 1));
+                            cards[ti]?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+                          }}
+                          active={i === activeCastPage}
+                          aria-label={`Cast page ${i + 1}`}
+                        />
+                      ))}
+                    </PaginationDots>
+                  )}
+                </>
+              </DeferredBlock>
 
               {/* Crew grid */}
               {(directors.length > 0 || writers.length > 0 || cinematographers.length > 0 || composers.length > 0 || creators.length > 0) && (
@@ -1165,76 +1337,6 @@ export default function Details() {
             </section>
           </Reveal>
         )}
-
-        {/* ─── RATING & REVIEW ─────────────────────────────────── */}
-        <Reveal>
-          <div className="rounded-2xl border border-white/8 bg-card/40 backdrop-blur-sm p-6 mt-12">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
-              <div>
-                <h2 className="text-base font-bold text-foreground">{t("details.yourRatingReview", "Your Rating & Review")}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {user ? t("details.ratingReviewSignedInPrompt", "Keep a personal score and short note for this title.") : t("details.ratingReviewGuestPrompt", "Sign in to rate this title.")}
-                </p>
-              </div>
-              {/* TMDB score comparison */}
-              {rating > 0 && (
-                <div className="flex items-center gap-4 shrink-0">
-                  <div className="text-center">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">TMDB</p>
-                    <ScoreRing score={rating} size={64} />
-                    <p className="text-[9px] text-muted-foreground mt-1">{details.vote_count?.toLocaleString()} votes</p>
-                  </div>
-                  {user && watchedItem?.rating && (
-                    <>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground opacity-40" />
-                      <div className="text-center">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">You</p>
-                        <ScoreRing score={watchedItem.rating} size={64} />
-                        <p className={cn("text-[9px] mt-1 font-bold", watchedItem.rating > rating ? "text-emerald-400" : watchedItem.rating < rating ? "text-red-400" : "text-muted-foreground")}>
-                          {watchedItem.rating > rating ? `▲ +${(watchedItem.rating - rating).toFixed(1)}` : watchedItem.rating < rating ? `▼ ${(watchedItem.rating - rating).toFixed(1)}` : "= Avg"}
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-              {!user && <Button asChild variant="outline" className="rounded-xl shrink-0"><Link to="/login">{t("details.signInToReview", "Sign In")}</Link></Button>}
-            </div>
-
-            {user && (
-              <div className="space-y-4">
-                <StarRating value={inlineStarRating} onChange={v => { setInlineStarRating(v); setHasInteractedWithStars(true); setShowReviewTextarea(true); }} />
-                {showReviewTextarea && (
-                  <div className="space-y-3">
-                    <textarea
-                      value={inlineReviewText} onChange={e => setInlineReviewText(e.target.value)}
-                      placeholder={t("details.reviewPlaceholder", "Write your review here...")}
-                      className="w-full min-h-[90px] rounded-xl border border-white/10 bg-background/50 p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-y"
-                      rows={3}
-                    />
-                    {hasInteractedWithStars && (
-                      <Button type="button" onClick={handleInlineRatingSubmit} className="gap-2 rounded-xl" disabled={inlineStarRating === 0}>
-                        <MessageSquare className="w-4 h-4" />
-                        {watchedItem?.rating ? t("details.updateRating", "Update Rating & Review") : t("details.addRating", "Add Rating & Review")}
-                      </Button>
-                    )}
-                  </div>
-                )}
-                {watchedItem && !hasInteractedWithStars && (
-                  <div className="rounded-xl border border-white/8 bg-white/3 p-4">
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <Badge variant="secondary">{watchedItem.status || "completed"}</Badge>
-                      {typeof watchedItem.rating === "number" && <Badge variant="outline">{watchedItem.rating}/10</Badge>}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {watchedItem.note?.trim() || t("details.noNoteYet", "No note yet.")}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </Reveal>
 
         {/* ─── TV: NOT LOGGED IN HINT ─────────────────────────── */}
         {mediaType === "tv" && !user && (
@@ -1314,7 +1416,7 @@ export default function Details() {
                   {t("details.noPublishedEpisodes", "No published episodes available for this season yet.")}
                 </div>
               ) : (
-                <div className="space-y-2">
+                <DeferredBlock className="space-y-2" placeholderClassName="h-[420px]">
                   <Accordion type="single" collapsible className="w-full">
                     {publishedEpisodes.map((episode, index) => {
                       const ew = isEpisodeWatched(mediaId, episode.season_number, episode.episode_number);
@@ -1372,7 +1474,7 @@ export default function Details() {
                       );
                     })}
                   </Accordion>
-                </div>
+                </DeferredBlock>
               )}
             </section>
           </Reveal>
@@ -1383,30 +1485,32 @@ export default function Details() {
           <Reveal>
             <section ref={el => { if (el) sectionRefs.current.similar = el; }} id="section-similar" className="mt-12">
               <h2 className="section-title mb-5">More Like This</h2>
-              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-                {recItems.map(item => {
-                  const iy = item.release_date ? new Date(item.release_date).getFullYear() : item.first_air_date ? new Date(item.first_air_date).getFullYear() : null;
-                  const ir = item.vote_average ? item.vote_average.toFixed(1) : null;
-                  return (
-                    <Link key={item.id} to={buildMediaPath(mediaType, item.id, item.title || item.name)} className="group relative">
-                      <div className="relative rounded-2xl overflow-hidden aspect-[2/3] border border-white/8 group-hover:border-primary/40 transition-all duration-200 group-hover:shadow-xl group-hover:shadow-primary/10">
-                        {item.poster_path ? (
-                          <Image src={getImageUrl(item.poster_path, "w342") || ""} alt={item.title || item.name || "Poster"} width={170} height={255} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" showSkeleton />
-                        ) : (
-                          <div className="w-full h-full bg-muted flex items-center justify-center">
-                            <Film className="w-8 h-8 text-muted-foreground" />
+              <DeferredBlock className="mt-4" placeholderClassName="h-[320px]">
+                <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+                  {recItems.map(item => {
+                    const iy = item.release_date ? new Date(item.release_date).getFullYear() : item.first_air_date ? new Date(item.first_air_date).getFullYear() : null;
+                    const ir = item.vote_average ? item.vote_average.toFixed(1) : null;
+                    return (
+                      <Link key={item.id} to={buildMediaPath(mediaType, item.id, item.title || item.name)} className="group relative">
+                        <div className="relative rounded-2xl overflow-hidden aspect-[2/3] border border-white/8 group-hover:border-primary/40 transition-all duration-200 group-hover:shadow-xl group-hover:shadow-primary/10">
+                          {item.poster_path ? (
+                            <Image src={getImageUrl(item.poster_path, "w342") || ""} alt={item.title || item.name || "Poster"} width={170} height={255} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" showSkeleton />
+                          ) : (
+                            <div className="w-full h-full bg-muted flex items-center justify-center">
+                              <Film className="w-8 h-8 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-2.5">
+                            {ir && <span className="flex items-center gap-1 text-xs text-white font-bold"><Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />{ir}</span>}
+                            {iy && <span className="text-[10px] text-white/60 mt-0.5">{iy}</span>}
                           </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-2.5">
-                          {ir && <span className="flex items-center gap-1 text-xs text-white font-bold"><Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />{ir}</span>}
-                          {iy && <span className="text-[10px] text-white/60 mt-0.5">{iy}</span>}
                         </div>
-                      </div>
-                      <p className="mt-2 text-xs font-medium line-clamp-2 text-foreground/70 group-hover:text-foreground transition-colors leading-snug">{item.title || item.name}</p>
-                    </Link>
-                  );
-                })}
-              </div>
+                        <p className="mt-2 text-xs font-medium line-clamp-2 text-foreground/70 group-hover:text-foreground transition-colors leading-snug">{item.title || item.name}</p>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </DeferredBlock>
             </section>
           </Reveal>
         )}
@@ -1414,7 +1518,9 @@ export default function Details() {
         {/* ─── REVIEWS ────────────────────────────────────────── */}
         <Reveal>
           <div ref={el => { if (el) sectionRefs.current.reviews = el; }} id="section-reviews" className="mt-12">
-            <MediaComments mediaId={mediaId} mediaType={mediaType} />
+            <DeferredBlock placeholderClassName="h-[560px]">
+              <MediaComments mediaId={mediaId} mediaType={mediaType} />
+            </DeferredBlock>
           </div>
         </Reveal>
 

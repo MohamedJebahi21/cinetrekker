@@ -427,6 +427,22 @@ export default function Calendar() {
     })[0];
   }, [itemsByDate, weekDays, monthDays, calendarRange]);
 
+  const calendarSummary = useMemo(() => {
+    const movieCount = filteredCalendarItems.filter((item) => item.type === 'movie').length;
+    const tvCount = filteredCalendarItems.filter((item) => item.type === 'tv').length;
+    const savedCount = filteredCalendarItems.filter((item) => item.isFollowed).length;
+    const nextRelease = [...filteredCalendarItems]
+      .sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime())[0];
+
+    return {
+      totalCount: filteredCalendarItems.length,
+      movieCount,
+      tvCount,
+      savedCount,
+      nextRelease,
+    };
+  }, [filteredCalendarItems]);
+
   // Watchlist & Follow direct togglers
   const handleWatchlistToggle = useCallback(
     (e: React.MouseEvent, item: CalendarItem) => {
@@ -481,6 +497,11 @@ export default function Calendar() {
                 <p className="ct-kicker mb-1">{t('calendar.releaseTimeline', 'Release Timeline')}</p>
                 <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl">{t('calendar.title')}</h1>
                 <p className="mt-1 text-sm text-muted-foreground">{t('calendar.subtitle')}</p>
+                {!user && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Sign in to track followed shows and sync your list. Browsing the calendar stays public.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -514,6 +535,49 @@ export default function Calendar() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+              <CardContent className="p-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Visible releases</p>
+                <div className="mt-2 flex items-end justify-between gap-3">
+                  <span className="text-3xl font-black tracking-tight text-foreground tabular-nums">{calendarSummary.totalCount}</span>
+                  <span className="text-xs text-muted-foreground">{calendarRange === 'month' ? 'This month' : 'This week'}</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+              <CardContent className="p-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Movies</p>
+                <div className="mt-2 flex items-end justify-between gap-3">
+                  <span className="text-3xl font-black tracking-tight text-primary tabular-nums">{calendarSummary.movieCount}</span>
+                  <span className="text-xs text-muted-foreground">Theatrical releases</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+              <CardContent className="p-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">TV episodes</p>
+                <div className="mt-2 flex items-end justify-between gap-3">
+                  <span className="text-3xl font-black tracking-tight text-amber-400 tabular-nums">{calendarSummary.tvCount}</span>
+                  <span className="text-xs text-muted-foreground">On-air and followed</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+              <CardContent className="p-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Next release</p>
+                <div className="mt-2 flex items-end justify-between gap-3">
+                  <span className="text-3xl font-black tracking-tight text-emerald-400 tabular-nums">
+                    {calendarSummary.nextRelease ? format(parseISO(calendarSummary.nextRelease.date), 'MMM d') : '—'}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {calendarSummary.savedCount} saved in this view
+                </p>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Cinematic Spotlight Hero */}
@@ -716,6 +780,11 @@ export default function Calendar() {
                   <p className="mt-1.5 text-sm text-muted-foreground">
                     {t('calendar.noReleasesWeekDesc', 'Check other dates or clear filters to view releases.')}
                   </p>
+                  {calendarSummary.nextRelease && (
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Next visible release: {format(parseISO(calendarSummary.nextRelease.date), 'PPP')}
+                    </p>
+                  )}
                   {(searchQuery || networkFilter !== 'all' || minRatingFilter !== 'all' || showOnlyFollowed) && (
                     <div className="mt-5">
                       <Button

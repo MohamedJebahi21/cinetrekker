@@ -84,6 +84,30 @@ export function isShowDefinitelyCompleted(show: UserShowProgress): boolean {
 }
 
 /**
+ * Count episodes that should count toward completion right now.
+ *
+ * This excludes specials and future seasons so completion matches the
+ * details page, which only counts published episodes.
+ */
+export function getPublishedEpisodeTotal(
+  details: MediaDetails,
+  now: number = Date.now(),
+): number | null {
+  const seasons = details.seasons;
+  if (!seasons || seasons.length === 0) {
+    return details.number_of_episodes ?? null;
+  }
+
+  const publishedTotal = seasons.reduce((total, season) => {
+    if (season.season_number <= 0) return total;
+    if (season.air_date && new Date(season.air_date).getTime() > now) return total;
+    return total + (season.episode_count || 0);
+  }, 0);
+
+  return publishedTotal > 0 ? publishedTotal : details.number_of_episodes ?? null;
+}
+
+/**
  * Derive a ShowStatus from raw data.
  * Priority: completed > watching > interested > paused.
  *
@@ -120,13 +144,14 @@ export function mergeTMDBMetadata(
   progress: UserShowProgress[],
   details: Map<number, MediaDetails | null>,
 ): UserShowProgress[] {
+  const now = Date.now();
   return progress.map((p) => {
     const d = details.get(p.showId);
     if (!d) return p;
 
     return {
       ...p,
-      totalEpisodes: d.number_of_episodes ?? p.totalEpisodes,
+      totalEpisodes: getPublishedEpisodeTotal(d, now) ?? p.totalEpisodes,
       totalSeasons: d.number_of_seasons ?? p.totalSeasons,
       // Note: status is NOT re-derived here. The original buildUserShowProgress
       // status is preserved. Completion detection via isDefinitelyCompleted()

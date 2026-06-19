@@ -25,20 +25,20 @@ export function Footer() {
         </div>
       ) : null}
 
-      <div className="container relative z-10 mx-auto px-4 py-6 pb-[max(calc(3.5rem+env(safe-area-inset-bottom,0px)),1.5rem)] md:py-10 md:pb-10">
-        <div className="grid grid-cols-1 gap-6 min-[400px]:grid-cols-2 md:grid-cols-5 md:gap-10">
-          <div className="col-span-1 min-[400px]:col-span-2 md:col-span-2 min-w-0">
+      <div className="container relative z-10 mx-auto max-w-7xl px-4 py-7 pb-[max(calc(3.5rem+env(safe-area-inset-bottom,0px)),1.5rem)] md:py-12 md:pb-12">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-4 md:gap-12">
+          <div className="min-w-0 md:col-span-2">
             <div className="mb-4 flex items-center gap-3">
               <img
                 src="/apple-touch-icon.png"
                 alt="CineTrekker logo"
-                className="h-11 w-11 rounded-2xl object-cover shadow-[0_8px_20px_hsl(var(--primary)/0.2)]"
+                className="h-10 w-10 rounded-2xl object-cover shadow-[0_8px_20px_hsl(var(--primary)/0.18)] ring-1 ring-white/10"
               />
-              <span className="text-[1.45rem] font-semibold leading-none text-foreground sm:text-[1.85rem]">
+              <span className="text-[1.35rem] font-semibold leading-none tracking-[-0.02em] text-foreground sm:text-[1.65rem]">
                 {t("common.appName")}
               </span>
             </div>
-            <p className="max-w-sm text-[0.95rem] leading-relaxed text-muted-foreground">
+            <p className="max-w-md text-[0.95rem] leading-relaxed text-muted-foreground">
               {t(
                 "footer.tagline",
                 "Your personal movie and TV tracker. Discover, track, and share your cinematic journey.",
@@ -47,10 +47,10 @@ export function Footer() {
           </div>
 
           <div className="min-w-0">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-foreground/90">
+            <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground/90">
               {t("footer.explore", "Explore")}
             </h3>
-            <nav className="flex flex-col gap-3" aria-label={t("footer.exploreLinks", "Explore links")}>
+            <nav className="flex flex-col gap-3.5" aria-label={t("footer.exploreLinks", "Explore links")}>
               <Link to="/" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
                 {t("nav.home", "Home")}
               </Link>
@@ -67,10 +67,10 @@ export function Footer() {
           </div>
 
           <div className="min-w-0">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-foreground/90">
+            <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground/90">
               {t("footer.support", "Support")}
             </h3>
-            <nav className="flex flex-col gap-3" aria-label={t("footer.supportLinks", "Support links")}>
+            <nav className="flex flex-col gap-3.5" aria-label={t("footer.supportLinks", "Support links")}>
               <a
                 href="https://buymeacoffee.com/mohamed_jebahi"
                 target="_blank"
@@ -89,10 +89,10 @@ export function Footer() {
           </div>
 
           <div className="min-w-0">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-foreground/90">
+            <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground/90">
               {t("footer.legal", "Legal")}
             </h3>
-            <nav className="flex flex-col gap-3" aria-label={t("footer.legalLinks", "Legal links")}>
+            <nav className="flex flex-col gap-3.5" aria-label={t("footer.legalLinks", "Legal links")}>
               <Link to="/privacy" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
                 {t("nav.privacy", "Privacy Policy")}
               </Link>
