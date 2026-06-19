@@ -232,9 +232,27 @@ export function UnifiedNav() {
   }, [moviesWatchedCount, t]);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    let frame = 0;
+
+    const update = () => {
+      frame = 0;
+      const next = window.scrollY > 20;
+      setIsScrolled((current) => (current === next ? current : next));
+    };
+
+    const handleScroll = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(update);
+    };
+
+    handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      if (frame) {
+        window.cancelAnimationFrame(frame);
+      }
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, []);
 
   useEffect(() => {

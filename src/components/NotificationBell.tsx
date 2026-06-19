@@ -1,5 +1,5 @@
 import { Bell, CheckCheck, ChevronRight, Check, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -22,7 +22,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-export function NotificationBell() {
+function NotificationBellComponent() {
   const navigate = useNavigate();
   const { notifications, unreadCount, markRead, markAllRead } =
     useNotifications();
@@ -259,3 +259,5 @@ export function NotificationBell() {
     </Popover>
   );
 }
+
+export const NotificationBell = memo(NotificationBellComponent);

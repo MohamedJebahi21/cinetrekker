@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useId } from "react";
+import { memo, useState, useEffect, useRef, useCallback, useId } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
@@ -73,7 +73,7 @@ function normalizeSearchQuery(value: string): string {
   return value.normalize("NFKC").trim().toLowerCase();
 }
 
-export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
+function SearchDropdownComponent({ className, onNavigate }: SearchDropdownProps) {
   const { t, i18n } = useTranslation();
   const { strictFiltering, moderateFiltering } = useContentPolicy();
   const includeAdult = !(strictFiltering || moderateFiltering);
@@ -584,3 +584,5 @@ export function SearchDropdown({ className, onNavigate }: SearchDropdownProps) {
     </div>
   );
 }
+
+export const SearchDropdown = memo(SearchDropdownComponent);
