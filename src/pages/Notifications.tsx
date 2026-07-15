@@ -67,20 +67,20 @@ export default function Notifications() {
         description="Your CineTrekker notifications"
         canonical="https://cinetrekker.vercel.app/notifications"
       />
-      <div className="page-container mx-auto max-w-4xl pt-20 pb-28 md:pb-0">
-        <div className="mb-8 rounded-[28px] border border-border/60 bg-card/80 p-5 shadow-lg shadow-black/5 backdrop-blur md:p-6">
+      <div className="page-container mx-auto max-w-5xl pt-20 pb-28 md:pb-0">
+        <div className="mb-8 overflow-hidden rounded-[1.75rem] border border-border/60 bg-card/78 p-5 shadow-[0_18px_70px_hsl(var(--background)/0.24)] ring-1 ring-white/5 backdrop-blur-2xl md:p-6">
           <div className="flex flex-col gap-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-border/60 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                   <Bell className="h-3.5 w-3.5 text-primary" />
                   Notification center
                 </div>
-                <h1 className="section-title text-3xl sm:text-[2.75rem]">
+                <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-[2.75rem]">
                   Notifications
                 </h1>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                  Keep track of new releases, episodes, and updates from titles you follow.
+                  A focused inbox for releases, new episodes, and updates from titles you follow.
                 </p>
               </div>
 
@@ -90,7 +90,7 @@ export default function Notifications() {
                     variant="outline"
                     size="sm"
                     onClick={() => markAllRead()}
-                    className="min-h-11 w-full gap-2 sm:w-auto"
+                    className="min-h-11 w-full gap-2 rounded-2xl border-primary/25 bg-primary/10 font-semibold text-primary hover:bg-primary/15 sm:w-auto"
                   >
                     <CheckCheck className="h-4 w-4" />
                     Mark all read
@@ -100,7 +100,7 @@ export default function Notifications() {
                   variant="secondary"
                   size="sm"
                   onClick={() => setFilter("all")}
-                  className="min-h-11 w-full gap-2 sm:w-auto"
+                  className="min-h-11 w-full gap-2 rounded-2xl border border-border/60 bg-background/60 font-semibold sm:w-auto"
                 >
                   <Filter className="h-4 w-4" />
                   Reset filters
@@ -109,7 +109,7 @@ export default function Notifications() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-border/60 bg-background px-4 py-3">
+              <div className="rounded-2xl border border-border/60 bg-background/60 px-4 py-3.5 shadow-inner">
                 <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
                   Total
                 </div>
@@ -117,7 +117,7 @@ export default function Notifications() {
                   {notifications.length}
                 </div>
               </div>
-              <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
+              <div className="rounded-2xl border border-primary/25 bg-primary/10 px-4 py-3.5 shadow-[0_14px_36px_hsl(var(--primary)/0.07)]">
                 <div className="text-xs uppercase tracking-[0.18em] text-primary/80">
                   Unread
                 </div>
@@ -125,7 +125,7 @@ export default function Notifications() {
                   {unreadCount}
                 </div>
               </div>
-              <div className="rounded-2xl border border-border/60 bg-background px-4 py-3">
+              <div className="rounded-2xl border border-border/60 bg-background/60 px-4 py-3.5 shadow-inner">
                 <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
                   Read
                 </div>
@@ -159,8 +159,8 @@ export default function Notifications() {
                     className={cn(
                       "inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                       active
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border/60 bg-background text-muted-foreground hover:border-border hover:text-foreground",
+                        ? "border-primary bg-primary text-primary-foreground shadow-[0_12px_28px_hsl(var(--primary)/0.2)]"
+                        : "border-border/60 bg-background/60 text-muted-foreground hover:border-border hover:bg-background hover:text-foreground",
                     )}
                     aria-pressed={active}
                   >
@@ -185,7 +185,7 @@ export default function Notifications() {
             {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="flex items-center gap-4 rounded-3xl border border-border/60 bg-card px-4 py-4"
+                className="flex items-center gap-4 rounded-3xl border border-border/60 bg-card/70 px-4 py-4"
               >
                 <div className="h-16 w-11 animate-pulse rounded-xl bg-muted" />
                 <div className="min-w-0 flex-1 space-y-3">
@@ -232,27 +232,28 @@ export default function Notifications() {
               <li
                 key={n.id}
                 className={cn(
-                  "group flex items-start gap-4 rounded-3xl border p-4 transition-all hover:-translate-y-0.5 hover:border-border/80 hover:shadow-lg hover:shadow-black/5 sm:p-5",
+                  "group flex items-start gap-4 rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:border-border/80 hover:shadow-lg hover:shadow-black/5 sm:p-4",
                   !n.is_read
-                    ? "border-primary/25 bg-primary/5"
-                    : "border-border/60 bg-card",
+                    ? "border-primary/25 bg-primary/[0.07] shadow-[0_14px_36px_hsl(var(--primary)/0.06)]"
+                    : "border-border/60 bg-card/72",
                 )}
               >
                 <button
                   type="button"
-                  className="flex min-w-0 flex-1 items-start gap-4 text-left"
+                  className="flex min-w-0 flex-1 items-start gap-4 rounded-2xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   onClick={() => handleNotificationClick(n.id, n.movie_id, n.is_read)}
+                  aria-label={`Open notification: ${n.message}`}
                 >
                   <NotificationMediaThumb
                     movieId={n.movie_id}
                     alt={n.message}
-                    className="h-16 w-11 shrink-0 rounded-xl border border-border/60 object-cover shadow-sm"
+                    className="h-14 w-10 shrink-0 rounded-xl border border-border/60 object-cover shadow-sm"
                   />
                   <div className="min-w-0 flex-1 pt-0.5">
                     <div className="flex flex-wrap items-center gap-2">
                       <p
                         className={cn(
-                          "text-sm leading-6 text-foreground",
+                          "text-sm leading-6 text-foreground sm:text-[0.95rem]",
                           !n.is_read && "font-semibold",
                         )}
                       >
@@ -279,8 +280,8 @@ export default function Notifications() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="min-h-11 min-w-11 shrink-0 text-muted-foreground hover:text-destructive"
-                  aria-label="Delete notification"
+                  className="min-h-11 min-w-11 shrink-0 rounded-2xl border border-transparent text-muted-foreground opacity-70 transition-all hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100"
+                  aria-label={`Delete notification: ${n.message}`}
                   onClick={() => deleteNotification(n.id)}
                 >
                   <Trash2 className="h-4 w-4" />

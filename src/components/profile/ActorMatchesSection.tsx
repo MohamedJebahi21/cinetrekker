@@ -387,28 +387,28 @@ export default function ActorMatchesSection({
     const progress = (cappedRatings / 20) * 100;
 
     return (
-        <Card className="border-neutral-800/60 bg-gradient-to-br from-neutral-900/70 to-neutral-800/50 backdrop-blur-sm">
-          <CardContent className="space-y-3 pt-6 text-center">
-            <Sparkles className="mx-auto mb-2 h-6 w-6 text-yellow-500" />
-            <p className="text-sm font-medium text-neutral-200">
-              {t("profile.actorMatchesWaiting", "Actor Matches are waiting")}
-            </p>
-            <p className="text-xs text-neutral-300">
-              Actor Matches compare your favorite genres and rated titles with
-              performers who share a similar cinematic lane.
-            </p>
-            <p className="text-xs text-neutral-400">
-              {t(
-                "profile.actorMatchesUnlockHint",
-                "Rate 20+ movies to unlock Actor Matches",
-              )}
-            </p>
+      <Card>
+        <CardContent className="space-y-3 pt-6 text-center">
+          <Sparkles className="mx-auto mb-2 h-6 w-6 text-yellow-500" />
+          <p className="text-sm font-semibold text-foreground">
+            {t("profile.actorMatchesWaiting", "Actor Matches are waiting")}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Actor Matches compare your favorite genres and rated titles with
+            performers who share a similar cinematic lane.
+          </p>
+          <p className="text-xs text-muted-foreground/85">
+            {t(
+              "profile.actorMatchesUnlockHint",
+              "Rate 20+ movies to unlock Actor Matches",
+            )}
+          </p>
           <div className="mx-auto w-full max-w-xs space-y-1">
             <Progress
               value={progress}
-              className="h-2.5 bg-neutral-800 [&>div]:bg-gradient-to-r [&>div]:from-[#E50914] [&>div]:to-[#ff6b73]"
+              className="h-2.5"
             />
-            <p className="text-[11px] text-neutral-500">
+            <p className="text-[11px] text-muted-foreground">
               {cappedRatings}/20 ratings
             </p>
           </div>
@@ -419,22 +419,22 @@ export default function ActorMatchesSection({
 
   if (!dateOfBirth || userAge === null || !hasPreferences) {
     return (
-        <Card className="border-neutral-800/60 bg-gradient-to-br from-neutral-900/70 to-neutral-800/50 backdrop-blur-sm">
-          <CardContent className="pt-6 text-center">
-            <Sparkles className="mx-auto mb-2 h-6 w-6 text-yellow-500" />
-            <p className="text-sm font-medium text-neutral-200">
-              {t("profile.actorMatchesWaiting", "Actor Matches are waiting")}
-            </p>
-            <p className="mt-1 text-xs text-neutral-300">
-              This feature uses your age range plus favorite genres to surface
-              performers with a similar taste profile.
-            </p>
-            <p className="mt-1 text-xs text-neutral-400">
-              {t(
-                "profile.actorMatchesSetupHint",
-                "Add your age and at least one favorite genre to discover matching actors.",
-              )}
-            </p>
+      <Card>
+        <CardContent className="pt-6 text-center">
+          <Sparkles className="mx-auto mb-2 h-6 w-6 text-yellow-500" />
+          <p className="text-sm font-semibold text-foreground">
+            {t("profile.actorMatchesWaiting", "Actor Matches are waiting")}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            This feature uses your age range plus favorite genres to surface
+            performers with a similar taste profile.
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground/80">
+            {t(
+              "profile.actorMatchesSetupHint",
+              "Add your age and at least one favorite genre to discover matching actors.",
+            )}
+          </p>
         </CardContent>
       </Card>
     );
@@ -444,14 +444,14 @@ export default function ActorMatchesSection({
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between px-1">
-          <div className="h-4 w-32 rounded bg-neutral-800/50 animate-pulse" />
-          <div className="h-4 w-20 rounded bg-neutral-800/50 animate-pulse" />
+          <div className="h-4 w-32 rounded bg-muted animate-pulse" />
+          <div className="h-4 w-20 rounded bg-muted animate-pulse" />
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, index) => (
             <div
               key={index}
-              className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-3"
+              className="rounded-lg border border-border bg-card p-3"
             >
               <div className="flex gap-3">
                 <div className="h-24 w-20 rounded-md skeleton-shimmer" />
@@ -470,12 +470,12 @@ export default function ActorMatchesSection({
 
   if (sameAgeMatches.length === 0) {
     return (
-      <Card className="border-neutral-800/60 bg-gradient-to-br from-neutral-900/70 to-neutral-800/50 backdrop-blur-sm">
+      <Card>
         <CardContent className="pt-6 text-center">
-          <p className="text-sm font-medium text-neutral-200">
+          <p className="text-sm font-semibold text-foreground">
             {t("profile.actorMatchesEmpty", "No Matches Found")}
           </p>
-          <p className="mt-1 text-xs text-neutral-400">
+          <p className="mt-1 text-xs text-muted-foreground">
             {t(
               "profile.actorMatchesEmptyDesc",
               "Try adjusting your age or adding different genres to improve match quality.",
@@ -490,17 +490,17 @@ export default function ActorMatchesSection({
     <div className="space-y-4">
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
-          <h4 className="text-sm font-bold text-neutral-300 uppercase tracking-wider">
+          <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
             {t("profile.actorMatchesTopGlobal", "Top Global Matches")}
           </h4>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="cursor-help rounded-full p-1 hover:bg-neutral-800/50">
-                  <Info className="h-3.5 w-3.5 text-neutral-500" />
+                <div className="cursor-help rounded-full p-1 hover:bg-accent">
+                  <Info className="h-3.5 w-3.5 text-muted-foreground/80" />
                 </div>
               </TooltipTrigger>
-              <TooltipContent className="max-w-[240px] border-neutral-800 bg-neutral-900/95 text-[11px] leading-relaxed text-neutral-300 backdrop-blur-md">
+              <TooltipContent className="max-w-[240px] text-[11px] leading-relaxed">
                 {t(
                   "profile.actorMatchesHowItWorks",
                   "Matches blend age similarity, genre overlap, and actor popularity from TMDB.",
@@ -537,9 +537,9 @@ export default function ActorMatchesSection({
               to={`/person/${person.id}`}
               className="group block min-w-0"
             >
-              <div className="actor-match-card min-h-[188px] rounded-lg border border-neutral-700 bg-neutral-800/40 p-3 transition-all duration-200 hover:-translate-y-1 hover:border-[#E50914]/50 hover:shadow-xl">
+              <div className="actor-match-card min-h-[188px] rounded-lg border border-border bg-card p-3 transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl">
                 <div className="flex items-start gap-2.5">
-                  <div className="h-28 w-20 shrink-0 overflow-hidden rounded-md border border-neutral-700 bg-neutral-800 sm:h-32 sm:w-24">
+                  <div className="h-28 w-20 shrink-0 overflow-hidden rounded-md border border-border bg-muted sm:h-32 sm:w-24">
                     {person.profile_path ? (
                       <Image
                         src={getImageUrl(person.profile_path, "w342") || ""}
@@ -553,8 +553,8 @@ export default function ActorMatchesSection({
                         className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-neutral-800">
-                        <User className="h-5 w-5 text-neutral-600" />
+                      <div className="flex h-full w-full items-center justify-center bg-muted">
+                        <User className="h-5 w-5 text-muted-foreground" />
                       </div>
                     )}
                   </div>
@@ -562,25 +562,25 @@ export default function ActorMatchesSection({
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex items-start justify-between gap-2">
                       <p
-                        className="line-clamp-2 min-h-[2.5rem] text-sm font-bold leading-tight text-white break-words"
+                        className="line-clamp-2 min-h-[2.5rem] text-sm font-bold leading-tight text-foreground break-words"
                         title={person.name}
                       >
                         {person.name}
                       </p>
-                      <span className="shrink-0 whitespace-nowrap rounded-full border border-[#E50914]/60 bg-[#E50914]/15 px-2 py-0.5 text-[11px] font-semibold text-[#ff7a82]">
+                      <span className="shrink-0 whitespace-nowrap rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
                         {t("profile.matchScore", "Match {{score}}%", {
                           score: matchScore,
                         })}
                       </span>
                     </div>
-                    <p className="text-xs text-neutral-400">
+                    <p className="text-xs text-muted-foreground">
                       {actorAge !== null
                         ? t("profile.actorAge", "Age {{age}}", {
                             age: actorAge,
                           })
                         : t("profile.actorAgeUnavailable", "Age unavailable")}
                     </p>
-                    <p className="mt-1 text-xs text-neutral-500">
+                    <p className="mt-1 text-xs text-muted-foreground/70">
                       {t(
                         "profile.actorMatchesBasedOnRatings",
                         "Based on your top-rated films",
@@ -588,7 +588,7 @@ export default function ActorMatchesSection({
                     </p>
 
                     <div className="mt-2">
-                      <p className="mb-1 text-[11px] uppercase tracking-wide text-neutral-500">
+                      <p className="mb-1 text-[11px] uppercase tracking-wide text-muted-foreground/60">
                         {t("profile.topWorks", "Top Works")}
                       </p>
                       {topWorks.length > 0 ? (
@@ -596,14 +596,14 @@ export default function ActorMatchesSection({
                           {topWorks.map((work) => (
                             <li
                               key={`${person.id}-${work}`}
-                              className="line-clamp-1 text-xs text-neutral-300"
+                              className="line-clamp-1 text-xs text-foreground/80"
                             >
                               - {work}
                             </li>
                           ))}
                         </ul>
                       ) : (
-                        <p className="text-xs text-neutral-500">
+                        <p className="text-xs text-muted-foreground/60">
                           {t(
                             "profile.noTopWorksAvailable",
                             "No top works available",
@@ -613,7 +613,7 @@ export default function ActorMatchesSection({
                     </div>
 
                     <div className="mt-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                      <span className="inline-block rounded-md border border-neutral-600 px-2.5 py-1 text-xs text-neutral-200">
+                      <span className="inline-block rounded-md border border-border px-2.5 py-1 text-xs text-foreground/80">
                         {t("profile.viewFilmography", "View Filmography")}
                       </span>
                     </div>

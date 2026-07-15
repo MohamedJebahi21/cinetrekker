@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { LogOut, User as UserIcon } from 'lucide-react';
+import { ChevronDown, LogOut, User as UserIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -80,7 +80,7 @@ export function UserProfileDropdown({
   };
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen} modal={false}>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -89,24 +89,26 @@ export function UserProfileDropdown({
                 variant="ghost"
                 size="icon"
                 className={cn(
-                  'rounded-full overflow-hidden hover:bg-white/5 min-w-[44px] min-h-[44px] w-[44px] h-[44px] p-0 transition-transform duration-200',
-                  isOpen && 'ring-2 ring-primary/50',
+                  'relative !h-9 !min-h-9 !w-9 !min-w-9 flex items-center justify-center rounded-full text-foreground/90 transition-colors duration-200 hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-red-500/50',
+                  isOpen && 'bg-white/5',
                   className
                 )}
                 aria-label={t('nav.userMenu', 'User menu')}
               >
-                {profilePhoto ? (
-                  <Image
-                    src={profilePhoto}
-                    alt={userName}
-                    width={44}
-                    height={44}
-                    className="w-full h-full rounded-full object-cover object-center"
-                    loading="lazy"
-                  />
-                ) : (
-                  <UserIcon className="h-5 w-5" />
-                )}
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-background/70 ring-2 ring-white/20">
+                  {profilePhoto ? (
+                    <Image
+                      src={profilePhoto}
+                      alt={userName}
+                      width={32}
+                      height={32}
+                      className="h-full w-full rounded-full object-cover object-center"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <UserIcon className="h-4.5 w-4.5 text-muted-foreground" />
+                  )}
+                </span>
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
@@ -127,7 +129,7 @@ export function UserProfileDropdown({
             <DropdownMenuContent
               align="end"
               className={cn(
-                'w-56 bg-background border-border/50 shadow-xl',
+                'w-56 bg-popover border-border/50 shadow-xl',
                 'p-0 overflow-hidden'
               )}
               style={{
@@ -140,7 +142,7 @@ export function UserProfileDropdown({
                 custom={0}
                 initial="hidden"
                 animate="visible"
-                className="px-4 py-4 border-b border-border/50 bg-gradient-to-br from-primary/5 to-background/50"
+                className="px-4 py-4 border-b border-border/50 bg-card/80"
               >
                 <div
                   className="flex items-center gap-3 group cursor-pointer"
@@ -153,18 +155,18 @@ export function UserProfileDropdown({
                     }
                   }}
                 >
-                  <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full">
+                  <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-primary/35">
                     {profilePhoto ? (
                       <Image
                         src={profilePhoto}
                         alt={userName}
                         width={40}
                         height={40}
-                        className="h-full w-full object-cover object-center ring-2 ring-primary/30 group-hover:ring-primary/60 transition-all"
+                        className="h-full w-full object-cover object-center transition-all group-hover:ring-primary/60"
                         loading="lazy"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center rounded-full bg-primary/20 ring-2 ring-primary/30 group-hover:ring-primary/60 transition-all">
+                      <div className="flex h-full w-full items-center justify-center rounded-full bg-primary/20 transition-all group-hover:ring-primary/60">
                         <UserIcon className="w-5 h-5 text-primary" />
                       </div>
                     )}

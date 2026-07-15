@@ -7,7 +7,7 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { motion, type Variants } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import {
   Settings as SettingsIcon,
@@ -20,7 +20,6 @@ import {
   Info,
   Languages,
   Accessibility,
-  ChevronRight,
   Download,
   Trash2,
   Database,
@@ -29,6 +28,13 @@ import {
   Eye,
   RotateCcw,
   Check,
+  Sun,
+  Moon,
+  Zap,
+  Baby,
+  ShieldCheck,
+  Globe,
+  ChevronRight,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -47,13 +53,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -90,22 +89,22 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const containerVariants: Variants = {
+// ─── Animation Variants ────────────────────────────────────────────────────────
+
+const pageVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.1 },
+    transition: { staggerChildren: 0.06, delayChildren: 0.04 },
   },
 };
 
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: "easeOut" as const },
-  },
+const rowVariants: Variants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
 };
+
+// ─── Constants ─────────────────────────────────────────────────────────────────
 
 const DEFAULT_SETTINGS: SettingsState = {
   showWatchlist: true,
@@ -113,7 +112,23 @@ const DEFAULT_SETTINGS: SettingsState = {
   allowRecommendations: true,
 };
 
-type SettingsSwitchRowProps = {
+const MIN_FONT_SIZE = 80;
+const MAX_FONT_SIZE = 150;
+const FONT_SIZE_STEP = 10;
+
+// ─── Sidebar nav items ─────────────────────────────────────────────────────────
+
+const NAV_ITEMS = [
+  { id: "section-account",        label: "Account",        icon: UserRound    },
+  { id: "section-accessibility",  label: "Accessibility",  icon: Accessibility },
+  { id: "section-privacy",        label: "Privacy",        icon: Lock         },
+  { id: "section-content-safety", label: "Content Safety", icon: Shield       },
+  { id: "section-data",           label: "Data",           icon: Database     },
+] as const;
+
+// ─── SettingsSwitchRow ─────────────────────────────────────────────────────────
+
+type SwitchRowProps = {
   id: string;
   icon: LucideIcon;
   title: string;
@@ -121,53 +136,11 @@ type SettingsSwitchRowProps = {
   checked: boolean;
   disabled?: boolean;
   disabledHint?: string;
-  onCheckedChange: (checked: boolean) => void;
+  onCheckedChange: (v: boolean) => void;
   isPulsing?: boolean;
   tooltipText?: string;
   tooltipAriaLabel?: string;
 };
-
-type SettingsSectionProps = {
-  id?: string;
-  sectionLabel: string;
-  sectionIcon: LucideIcon;
-  sectionIconClass: string;
-  title: string;
-  description: string;
-  headerIcon: LucideIcon;
-  headerIconClass: string;
-  children: ReactNode;
-  className?: string;
-  isOpen?: boolean;
-  onToggle?: () => void;
-};
-
-function PremiumSwitch({
-  id,
-  checked,
-  disabled,
-  onCheckedChange,
-  ariaLabelledby,
-  ariaDescribedby,
-}: {
-  id: string;
-  checked: boolean;
-  disabled?: boolean;
-  onCheckedChange: (checked: boolean) => void;
-  ariaLabelledby?: string;
-  ariaDescribedby?: string;
-}) {
-  return (
-    <Switch
-      id={id}
-      checked={checked}
-      disabled={disabled}
-      onCheckedChange={onCheckedChange}
-      aria-labelledby={ariaLabelledby}
-      aria-describedby={ariaDescribedby}
-    />
-  );
-}
 
 function SettingsSwitchRow({
   id,
@@ -181,168 +154,127 @@ function SettingsSwitchRow({
   isPulsing = false,
   tooltipText,
   tooltipAriaLabel,
-}: SettingsSwitchRowProps) {
-  const labelId = `${id}-label`;
-  const descriptionId = `${id}-description`;
-  const disabledHintId = disabledHint ? `${id}-disabled-hint` : undefined;
-  const tooltipId = tooltipText ? `${id}-tooltip` : undefined;
-  const describedBy = [descriptionId, disabledHintId, tooltipId]
-    .filter(Boolean)
-    .join(" ");
+}: SwitchRowProps) {
+  const labelId      = `${id}-label`;
+  const descId       = `${id}-desc`;
+  const hintId       = disabledHint ? `${id}-hint` : undefined;
+  const tipId        = tooltipText  ? `${id}-tip`  : undefined;
+  const describedBy  = [descId, hintId, tipId].filter(Boolean).join(" ");
 
   return (
     <motion.div
       animate={
         isPulsing
-          ? {
-              boxShadow: [
-                "0 0 0 rgba(239,68,68,0)",
-                "0 0 0 6px rgba(239,68,68,0.16)",
-                "0 0 0 rgba(239,68,68,0)",
-              ],
-              scale: [1, 1.01, 1],
-            }
+          ? { boxShadow: ["0 0 0 rgba(220,38,38,0)", "0 0 0 3px rgba(220,38,38,0.12)", "0 0 0 rgba(220,38,38,0)"] }
           : undefined
       }
-      transition={{ duration: 0.45, ease: "easeOut" }}
+      transition={{ duration: 0.5 }}
       className={cn(
-        "flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-card/70 px-4 py-4 transition-all duration-300",
-        !checked && "hover:border-white/20",
-        disabled && "opacity-60",
+        "flex items-start justify-between gap-6 py-4",
+        disabled && "opacity-50 pointer-events-none",
       )}
     >
-      <div className="min-w-0 flex-1">
-        <Label
-          htmlFor={id}
-          id={labelId}
-          className={cn(
-            "flex items-center gap-2 text-sm font-semibold text-foreground",
-            disabled ? "cursor-not-allowed" : "cursor-pointer",
-          )}
-        >
-          <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span className="inline-flex items-center gap-1.5">
+      <div className="flex items-start gap-3 min-w-0 flex-1">
+        <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        <div className="min-w-0">
+          <Label
+            htmlFor={id}
+            id={labelId}
+            className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-foreground"
+          >
             {title}
             {tooltipText && (
-              <span className="relative inline-flex group/tooltip">
+              <span className="relative inline-flex group/tip">
                 <button
                   type="button"
                   tabIndex={0}
-                  aria-label={
-                    tooltipAriaLabel ?? `More information about ${title}`
-                  }
-                  className="inline-flex items-center rounded-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60 focus-visible:ring-offset-1 focus-visible:ring-offset-card"
+                  aria-label={tooltipAriaLabel ?? `More info about ${title}`}
+                  className="text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded"
                 >
                   <Info className="h-3.5 w-3.5" />
                 </button>
                 <span
-                  id={tooltipId}
+                  id={tipId}
                   role="tooltip"
-                  className="pointer-events-none absolute left-0 top-full z-30 mt-2 w-64 rounded-md border border-border/60 bg-card px-3 py-2 text-xs font-normal normal-case tracking-normal text-foreground opacity-0 shadow-lg transition-opacity duration-150 group-hover/tooltip:opacity-100 group-focus-within/tooltip:opacity-100"
+                  className="pointer-events-none absolute left-0 top-full z-30 mt-2 w-60 rounded-md border border-border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md opacity-0 transition-opacity group-hover/tip:opacity-100 group-focus-within/tip:opacity-100"
                 >
                   {tooltipText}
                 </span>
               </span>
             )}
-          </span>
-        </Label>
-        <p id={descriptionId} className="mt-1 text-sm text-muted-foreground">
-          {description}
-        </p>
-        {disabledHint && (
-          <p id={disabledHintId} className="mt-1 text-xs text-muted-foreground">
-            {disabledHint}
+          </Label>
+          <p id={descId} className="mt-0.5 text-sm text-muted-foreground leading-snug">
+            {description}
           </p>
-        )}
+          {disabledHint && (
+            <p id={hintId} className="mt-1 text-xs text-muted-foreground/70 italic">
+              {disabledHint}
+            </p>
+          )}
+        </div>
       </div>
-      <PremiumSwitch
+      <Switch
         id={id}
         checked={checked}
         disabled={disabled}
         onCheckedChange={onCheckedChange}
-        ariaLabelledby={labelId}
-        ariaDescribedby={describedBy}
+        aria-labelledby={labelId}
+        aria-describedby={describedBy}
+        className="mt-0.5 shrink-0"
       />
     </motion.div>
   );
 }
 
-function SettingsSection({
-  id,
-  sectionLabel,
-  sectionIcon: SectionIcon,
-  sectionIconClass,
-  title,
-  description,
-  headerIcon: HeaderIcon,
-  headerIconClass,
-  children,
-  className,
-  isOpen = true,
-  onToggle,
-}: SettingsSectionProps) {
-  const isMobileCollapsible = typeof onToggle === "function";
+// ─── SettingsSection ───────────────────────────────────────────────────────────
 
+type SectionProps = {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  children: ReactNode;
+  className?: string;
+};
+
+function SettingsSection({ id, label, icon: Icon, title, description, children, className }: SectionProps) {
   return (
-    <div id={id} className={cn(className)}>
-      <p className="ct-kicker mb-3 inline-flex items-center gap-2">
-        <SectionIcon className={cn("h-3.5 w-3.5", sectionIconClass)} />
-        {sectionLabel}
-      </p>
-      <Card className="ct-panel">
-        <CardHeader
-          className={cn(
-            isMobileCollapsible &&
-              "cursor-pointer sm:cursor-default select-none",
-          )}
-          onClick={isMobileCollapsible ? onToggle : undefined}
-          onKeyDown={
-            isMobileCollapsible
-              ? (e) => {
-                  if (e.key !== "Enter" && e.key !== " ") return;
-                  e.preventDefault();
-                  onToggle();
-                }
-              : undefined
-          }
-          role={isMobileCollapsible ? "button" : undefined}
-          tabIndex={isMobileCollapsible ? 0 : undefined}
-          aria-expanded={isMobileCollapsible ? isOpen : undefined}
-        >
-          <div className="flex items-center justify-between gap-3">
-            <CardTitle className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-white/10 to-white/5">
-                <HeaderIcon className={cn("h-5 w-5", headerIconClass)} />
-              </div>
-              <span>{title}</span>
-            </CardTitle>
-            {isMobileCollapsible && (
-              <ChevronRight
-                className={cn(
-                  "h-4 w-4 text-neutral-500 transition-transform sm:hidden",
-                  isOpen && "rotate-90",
-                )}
-              />
-            )}
-          </div>
-          <CardDescription className={cn(isMobileCollapsible && !isOpen && "hidden sm:block")}>
-            {description}
-          </CardDescription>
-        </CardHeader>
-        <CardContent
-          className={cn("space-y-4", isMobileCollapsible && !isOpen && "hidden sm:block")}
-        >
-          {children}
-        </CardContent>
-      </Card>
-    </div>
+    <section id={id} aria-labelledby={`${id}-title`} className={cn("scroll-mt-24", className)}>
+      {/* Section label */}
+      <div className="mb-3 flex items-center gap-2">
+        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
+          {label}
+        </span>
+      </div>
+
+      {/* Card */}
+      <div className="rounded-xl border border-border bg-card">
+        {/* Header */}
+        <div className="border-b border-border px-6 py-5">
+          <h2 id={`${id}-title`} className="text-sm font-semibold text-foreground">
+            {title}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground leading-snug">{description}</p>
+        </div>
+
+        {/* Content */}
+        <div className="px-6">{children}</div>
+      </div>
+    </section>
   );
 }
 
+// ─── Divider ───────────────────────────────────────────────────────────────────
+
+function Divider() {
+  return <div className="border-t border-border" />;
+}
+
+// ─── Main Component ────────────────────────────────────────────────────────────
+
 export default function Settings() {
-  const MIN_FONT_SIZE = 80;
-  const MAX_FONT_SIZE = 150;
-  const FONT_SIZE_STEP = 10;
   const { t, i18n } = useTranslation();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -357,31 +289,24 @@ export default function Settings() {
     [user?.id],
   );
 
-  const [settings, setSettings] = useState<SettingsState>(DEFAULT_SETTINGS);
-  const [isSaving, setIsSaving] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
-  const [pulseRowId, setPulseRowId] = useState<string | null>(null);
-  const [isMobileSectionCollapse, setIsMobileSectionCollapse] = useState(false);
-  const [isExportingData, setIsExportingData] = useState(false);
-  const [isDeletingData, setIsDeletingData] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [confirmResetAccessibilityOpen, setConfirmResetAccessibilityOpen] =
-    useState(false);
-  const resetAccessibilityButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [settings, setSettings]               = useState<SettingsState>(DEFAULT_SETTINGS);
+  const [isSaving, setIsSaving]               = useState(false);
+  const [hasUnsavedChanges, setHasUnsaved]    = useState(false);
+  const [isLoadingSettings, setIsLoading]     = useState(true);
+  const [pulseRowId, setPulseRowId]           = useState<string | null>(null);
+  const [isExportingData, setIsExporting]     = useState(false);
+  const [isDeletingData, setIsDeleting]       = useState(false);
+  const [isDeleteDialogOpen, setDeleteDialog] = useState(false);
+  const [confirmResetOpen, setConfirmReset]   = useState(false);
+  const [activeSection, setActiveSection]     = useState("section-account");
+  const resetBtnRef = useRef<HTMLButtonElement | null>(null);
+
   const [fontSize, setFontSize] = useState<number>(
     () => readAccessibilityPreferences().fontSize,
   );
   const [reduceMotion, setReduceMotion] = useState<boolean>(
     () => readAccessibilityPreferences().reduceMotion,
   );
-  const [mobileExpandedSections, setMobileExpandedSections] = useState({
-    account: true,
-    accessibility: true,
-    privacy: true,
-    contentSafety: true,
-    dataManagement: true,
-  });
 
   const text = useCallback(
     (key: string, fallback: string) => humanizeUiText(String(t(key, fallback))),
@@ -390,193 +315,120 @@ export default function Settings() {
 
   const initialStateRef = useRef<SettingsState>(DEFAULT_SETTINGS);
 
-  const hasSettingsChangedMemo = useCallback(() => {
-    return hasSettingsChanged(initialStateRef.current, settings);
-  }, [settings]);
+  const hasSettingsChangedMemo = useCallback(
+    () => hasSettingsChanged(initialStateRef.current, settings),
+    [settings],
+  );
 
+  // Scroll-spy
   useEffect(() => {
-    const mql = window.matchMedia("(max-width: 639px)");
-    const onChange = () => setIsMobileSectionCollapse(mql.matches);
-    onChange();
-    mql.addEventListener("change", onChange);
-    return () => mql.removeEventListener("change", onChange);
-  }, []);
+    if (isLoadingSettings) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) setActiveSection(entry.target.id);
+        }
+      },
+      { rootMargin: "-20% 0px -70% 0px" },
+    );
+    NAV_ITEMS.forEach(({ id }) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [isLoadingSettings]);
 
+  // Load settings
   useEffect(() => {
     let subscription: RealtimeChannel | null = null;
     let isMounted = true;
 
     const loadSettings = async () => {
       if (!isMounted) return;
+      if (!user?.id) { setIsLoading(false); return; }
 
-      if (!user?.id) {
-        setIsLoadingSettings(false);
-        return;
-      }
-
-      setIsLoadingSettings(true);
-
+      setIsLoading(true);
       try {
-        const applyLoadedSettings = (loaded: SettingsState) => {
+        const apply = (loaded: SettingsState) => {
           const normalized = normalizeSettingsState(loaded, DEFAULT_SETTINGS);
           setSettings(normalized);
           initialStateRef.current = normalized;
-          setHasUnsavedChanges(false);
+          setHasUnsaved(false);
         };
 
-        const storedSettings = readStoredSettings(
-          localStorage.getItem(profileKey),
-          DEFAULT_SETTINGS,
-        );
-        applyLoadedSettings(storedSettings ?? DEFAULT_SETTINGS);
+        apply(readStoredSettings(localStorage.getItem(profileKey), DEFAULT_SETTINGS) ?? DEFAULT_SETTINGS);
 
-        if (!user?.id) {
-          return;
-        }
-
-        logger.debug("Loading settings from Supabase for user:", user.id);
-
-        void profileService
-          .getProfile(user.id)
+        void profileService.getProfile(user.id)
           .then((profile) => {
             if (!isMounted || !profile) return;
-
-            applyLoadedSettings({
-              showWatchlist: profile.show_watchlist,
-              showStats: profile.show_stats,
-              allowRecommendations: profile.allow_recommendations,
-            });
+            apply({ showWatchlist: profile.show_watchlist, showStats: profile.show_stats, allowRecommendations: profile.allow_recommendations });
           })
-          .catch((error) => {
+          .catch((e) => { if (isMounted) logger.error("Error loading settings", e); });
+
+        if (isMounted) {
+          subscription = await profileService.subscribeToProfile(user.id, (p) => {
             if (!isMounted) return;
-            console.error("Error loading settings:", error);
+            apply({ showWatchlist: p.show_watchlist, showStats: p.show_stats, allowRecommendations: p.allow_recommendations });
           });
-
-        if (isMounted) {
-          subscription = await profileService.subscribeToProfile(
-            user.id,
-            (updatedProfile) => {
-              if (!isMounted) return;
-
-              logger.debug("Settings updated in real-time:", updatedProfile);
-              applyLoadedSettings({
-                showWatchlist: updatedProfile.show_watchlist,
-                showStats: updatedProfile.show_stats,
-                allowRecommendations: updatedProfile.allow_recommendations,
-              });
-            },
-          );
         }
-      } catch (error) {
-        console.error("Error loading settings:", error);
-        toast({
-          title: text("settings.loadErrorTitle", "Error loading settings"),
-          description: text("settings.loadErrorDesc", "Using default settings."),
-          variant: "destructive",
-        });
+      } catch (e) {
+        logger.error("Error loading settings", e);
+        toast({ title: text("settings.loadErrorTitle", "Error loading settings"), description: text("settings.loadErrorDesc", "Using default settings."), variant: "destructive" });
       } finally {
-        if (isMounted) {
-          setIsLoadingSettings(false);
-        }
+        if (isMounted) setIsLoading(false);
       }
     };
 
     void loadSettings();
-
-    return () => {
-      isMounted = false;
-      if (subscription) {
-        subscription.unsubscribe();
-      }
-    };
+    return () => { isMounted = false; subscription?.unsubscribe(); };
   }, [profileKey, text, toast, user?.id]);
 
   useEffect(() => {
-    if (!isLoadingSettings) {
-      setHasUnsavedChanges(hasSettingsChangedMemo());
-    }
+    if (!isLoadingSettings) setHasUnsaved(hasSettingsChangedMemo());
   }, [isLoadingSettings, hasSettingsChangedMemo]);
 
+  // Hash scroll
   useEffect(() => {
     if (!location.hash) return;
     const id = location.hash.replace("#", "");
-    const target = document.getElementById(id);
-    if (!target) return;
-    window.setTimeout(() => {
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 40);
+    const el = document.getElementById(id);
+    if (el) window.setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 40);
   }, [location.hash]);
 
+  // Font size
   useEffect(() => {
     const clamped = saveFontSizePreference(fontSize);
-    if (clamped !== fontSize) {
-      setFontSize(clamped);
-      return;
-    }
+    if (clamped !== fontSize) { setFontSize(clamped); return; }
     applyAccessibilityPreferencesToRoot();
   }, [fontSize]);
 
+  // Reduce motion
   useEffect(() => {
     saveReduceMotionPreference(reduceMotion);
     applyAccessibilityPreferencesToRoot();
   }, [reduceMotion]);
 
-  const triggerRowPulse = (rowId: string) => {
+  // ── Handlers ────────────────────────────────────────────────────────────────
+
+  const triggerPulse = (rowId: string) => {
     setPulseRowId(rowId);
-    window.setTimeout(
-      () => setPulseRowId((active) => (active === rowId ? null : active)),
-      520,
-    );
+    window.setTimeout(() => setPulseRowId((a) => (a === rowId ? null : a)), 520);
   };
 
-  const decreaseFontSize = () => {
-    setFontSize((current) => Math.max(MIN_FONT_SIZE, current - FONT_SIZE_STEP));
-  };
-
-  const increaseFontSize = () => {
-    setFontSize((current) => Math.min(MAX_FONT_SIZE, current + FONT_SIZE_STEP));
-  };
-
-  const resetAccessibilitySettings = () => {
-    setFontSize(100);
-    setReduceMotion(false);
-    setTheme("dark");
-    toast({
-      title: text("settings.accessibilityResetTitle", "Accessibility reset"),
-      description: text(
-        "settings.accessibilityResetDesc",
-        "Theme, text size, and motion preferences are back to defaults.",
-      ),
-    });
-  };
-
-  const updateProfileSetting = (
-    key: keyof typeof DEFAULT_SETTINGS,
-    checked: boolean,
-  ) => {
+  const updateProfileSetting = (key: keyof typeof DEFAULT_SETTINGS, checked: boolean) => {
     setSettings((prev) => ({ ...prev, [key]: checked }));
-    triggerRowPulse(key);
+    triggerPulse(key);
     toast({
       title: text("settings.changeSaved", "Preference updated"),
-      description: text(
-        "settings.changeSavedDesc",
-        "Your change will be included when you tap Save Changes.",
-      ),
+      description: text("settings.changeSavedDesc", "Your change will be included when you tap Save Changes."),
     });
   };
 
   const handleSaveSettings = async () => {
     setIsSaving(true);
-
     try {
       const parsed = readStoredProfileData(localStorage.getItem(profileKey));
-      const updatedData = {
-        ...parsed,
-        settings,
-      };
-      localStorage.setItem(profileKey, JSON.stringify(updatedData));
-      logger.debug("Settings saved to localStorage");
-
+      localStorage.setItem(profileKey, JSON.stringify({ ...parsed, settings }));
       if (user?.id) {
         await profileService.updateProfile(user.id, {
           is_public: false,
@@ -585,45 +437,20 @@ export default function Settings() {
           allow_recommendations: settings.allowRecommendations,
         });
       }
-
-      // Update the reference snapshot so hasUnsavedChanges correctly returns false
-      initialStateRef.current = {
-        showWatchlist: settings.showWatchlist,
-        showStats: settings.showStats,
-        allowRecommendations: settings.allowRecommendations,
-      };
-      setHasUnsavedChanges(false);
-
-      toast({
-        title: text("settings.settingsSaved", "Settings saved"),
-        description: text(
-          "settings.settingsSavedDesc",
-          "Your preferences have been updated.",
-        ),
-      });
-    } catch (error) {
-      console.error("Error saving settings:", error);
-      toast({
-        title: text("settings.saveErrorTitle", "Error saving settings"),
-        description: text(
-          "settings.saveErrorDesc",
-          "Settings saved locally, but syncing to server failed.",
-        ),
-        variant: "destructive",
-      });
+      initialStateRef.current = { ...settings };
+      setHasUnsaved(false);
+      toast({ title: text("settings.settingsSaved", "Settings saved"), description: text("settings.settingsSavedDesc", "Your preferences have been updated.") });
+    } catch (e) {
+      logger.error("Error saving settings", e);
+      toast({ title: text("settings.saveErrorTitle", "Error saving settings"), description: text("settings.saveErrorDesc", "Settings saved locally, but syncing to server failed."), variant: "destructive" });
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleCancelChanges = () => {
-    // Reset to the last saved snapshot without reloading the page
-    setSettings({
-      showWatchlist: initialStateRef.current.showWatchlist,
-      showStats: initialStateRef.current.showStats,
-      allowRecommendations: initialStateRef.current.allowRecommendations,
-    });
-    setHasUnsavedChanges(false);
+    setSettings({ ...initialStateRef.current });
+    setHasUnsaved(false);
   };
 
   const handleLanguageChange = (langCode: string) => {
@@ -634,38 +461,21 @@ export default function Settings() {
     });
   };
 
-  const currentLanguage =
-    languages.find((lang) => lang.code === i18n.language) || languages[0];
-  const ageLabel = isAgeKnown
-    ? text("contentPolicy.verified", "Verified")
-    : text("contentPolicy.notSet", "Not set");
-  const familyFriendlyEnabled = maturityRating === SafetyLevel.STRICT;
-  const teenSafeEnabled =
-    maturityRating === SafetyLevel.STRICT ||
-    maturityRating === SafetyLevel.MODERATE;
-
   const updateSafetyMode = async (nextLevel: SafetyLevel) => {
     if (maturityRating === nextLevel) return;
-    triggerRowPulse("content-safety");
+    triggerPulse("content-safety");
     const { syncedRemotely } = await setMaturityRating(nextLevel);
     toast({
-      title: syncedRemotely
-        ? text("contentPolicy.savedTitle", "Safety settings updated")
-        : text("contentPolicy.savedLocallyTitle", "Saved on this device"),
+      title: syncedRemotely ? text("contentPolicy.savedTitle", "Safety settings updated") : text("contentPolicy.savedLocallyTitle", "Saved on this device"),
       description: text(
-        syncedRemotely
-          ? "contentPolicy.savedDescription"
-          : "contentPolicy.savedLocallyDescription",
-        syncedRemotely
-          ? "Your content visibility preferences were saved right away."
-          : "Your safety preference is active now and will sync when the server is available.",
+        syncedRemotely ? "contentPolicy.savedDescription" : "contentPolicy.savedLocallyDescription",
+        syncedRemotely ? "Your content visibility preferences were saved right away." : "Your safety preference is active now.",
       ),
     });
   };
 
   const exportData = async () => {
-    setIsExportingData(true);
-
+    setIsExporting(true);
     try {
       const storedProfile = readStoredProfileData(localStorage.getItem(profileKey));
       const remoteProfile = user?.id ? await profileService.getProfile(user.id) : null;
@@ -673,126 +483,87 @@ export default function Settings() {
         exportedAt: new Date().toISOString(),
         app: "CineTrekker",
         version: "settings-export-v1",
-        account: user
-          ? {
-              userId: user.id,
-              email: user.email ?? null,
-            }
-          : {
-              userId: "guest",
-              email: null,
-            },
+        account: user ? { userId: user.id, email: user.email ?? null } : { userId: "guest", email: null },
         profile: remoteProfile ?? storedProfile,
         settings,
-        contentSafety: {
-          maturityRating,
-          isAgeKnown,
-        },
-        watchlist,
-        watched,
-        hiddenRecommendations,
+        contentSafety: { maturityRating, isAgeKnown },
+        watchlist, watched, hiddenRecommendations,
       };
-
-      const blob = new Blob([JSON.stringify(payload, null, 2)], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
+      const blob   = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url    = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = `cinetrekker-account-export-${new Date().toISOString().split("T")[0]}.json`;
+      anchor.href  = url;
+      anchor.download = `cinetrekker-export-${new Date().toISOString().split("T")[0]}.json`;
       document.body.appendChild(anchor);
       anchor.click();
       document.body.removeChild(anchor);
       URL.revokeObjectURL(url);
-
-      toast({
-        title: text("settings.exportReadyTitle", "Export ready"),
-        description: text(
-          "settings.exportReadyDesc",
-          "Your profile, settings, and list data were downloaded as JSON.",
-        ),
-      });
-    } catch (error) {
-      console.error("Error exporting data:", error);
-      toast({
-        title: text("settings.exportFailedTitle", "Export failed"),
-        description: text(
-          "settings.exportFailedDesc",
-          "Could not generate your data export. Please try again.",
-        ),
-        variant: "destructive",
-      });
+      toast({ title: text("settings.exportReadyTitle", "Export ready"), description: text("settings.exportReadyDesc", "Your profile, settings, and list data were downloaded as JSON.") });
+    } catch (e) {
+      logger.error("Error exporting data", e);
+      toast({ title: text("settings.exportFailedTitle", "Export failed"), description: text("settings.exportFailedDesc", "Could not generate your data export. Please try again."), variant: "destructive" });
     } finally {
-      setIsExportingData(false);
+      setIsExporting(false);
     }
   };
 
   const clearLocalAccountData = useCallback(() => {
     localStorage.removeItem(profileKey);
     localStorage.removeItem(`cinetrekker_profile_favorites_${user?.id || "guest"}`);
-    localStorage.removeItem(
-      user?.id ? `${STORAGE_KEYS.hidden}_${user.id}` : STORAGE_KEYS.hidden,
-    );
-
+    localStorage.removeItem(user?.id ? `${STORAGE_KEYS.hidden}_${user.id}` : STORAGE_KEYS.hidden);
     clearGuestWatchlist();
     clearGuestWatched();
-    localStorage.setItem(
-      user?.id ? `${STORAGE_KEYS.hidden}_${user.id}` : STORAGE_KEYS.hidden,
-      JSON.stringify([]),
-    );
+    localStorage.setItem(user?.id ? `${STORAGE_KEYS.hidden}_${user.id}` : STORAGE_KEYS.hidden, JSON.stringify([]));
   }, [profileKey, user?.id]);
 
   const deleteAccountData = async () => {
-    setIsDeletingData(true);
-
+    setIsDeleting(true);
     try {
       clearLocalAccountData();
-
       if (user?.id) {
-        const deleteRequests = await Promise.all([
+        const results = await Promise.all([
           supabase.from("user_watchlist").delete().eq("user_id", user.id),
           supabase.from("user_watched").delete().eq("user_id", user.id),
           supabase.from("profiles").delete().eq("user_id", user.id),
         ]);
-
-        const deletionError = deleteRequests.find((result) => result.error)?.error;
-        if (deletionError) {
-          throw deletionError;
-        }
-
+        const err = results.find((r) => r.error)?.error;
+        if (err) throw err;
         await supabase.storage.from("avatars").remove([`${user.id}/avatar.jpg`]);
         await signOut();
       }
-
       toast({
         title: text("settings.accountDeletedTitle", "Account data deleted"),
         description: user?.id
-          ? text(
-              "settings.accountDeletedSignedInDesc",
-              "Your CineTrekker profile data was removed and you were signed out.",
-            )
-          : text(
-              "settings.accountDeletedGuestDesc",
-              "This device's CineTrekker data was cleared.",
-            ),
+          ? text("settings.accountDeletedSignedInDesc", "Your CineTrekker profile data was removed and you were signed out.")
+          : text("settings.accountDeletedGuestDesc", "This device's CineTrekker data was cleared."),
       });
-
       navigate(user?.id ? "/auth" : "/");
-    } catch (error) {
-      console.error("Error deleting account data:", error);
-      toast({
-        title: text("settings.deletionFailedTitle", "Deletion failed"),
-        description: text(
-          "settings.deletionFailedDesc",
-          "We could not remove all account data. Please try again.",
-        ),
-        variant: "destructive",
-      });
+    } catch (e) {
+      logger.error("Error deleting account data", e);
+      toast({ title: text("settings.deletionFailedTitle", "Deletion failed"), description: text("settings.deletionFailedDesc", "We could not remove all account data. Please try again."), variant: "destructive" });
     } finally {
-      setIsDeletingData(false);
-      setIsDeleteDialogOpen(false);
+      setIsDeleting(false);
+      setDeleteDialog(false);
     }
   };
+
+  const resetAccessibility = () => {
+    setFontSize(100);
+    setReduceMotion(false);
+    setTheme("dark");
+    toast({ title: text("settings.accessibilityResetTitle", "Accessibility reset"), description: text("settings.accessibilityResetDesc", "Theme, text size, and motion preferences are back to defaults.") });
+  };
+
+  // ── Computed ─────────────────────────────────────────────────────────────────
+
+  const currentLanguage       = languages.find((l) => l.code === i18n.language) || languages[0];
+  const ageLabel              = isAgeKnown ? text("contentPolicy.verified", "Verified") : text("contentPolicy.notSet", "Not set");
+  const familyFriendlyEnabled = maturityRating === SafetyLevel.STRICT;
+  const teenSafeEnabled       = maturityRating === SafetyLevel.STRICT || maturityRating === SafetyLevel.MODERATE;
+
+  const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
     <>
@@ -801,651 +572,547 @@ export default function Settings() {
         description={text("settings.seoDescription", "Manage your account settings and preferences")}
         canonical="https://cinetrekker.vercel.app/settings"
       />
-      <motion.div
-        className="page-container ct-page-shell max-w-4xl pt-20 pb-24 md:pb-10"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        <motion.section variants={itemVariants} className="mb-8">
-          <Card className="ct-panel-strong relative overflow-hidden shadow-2xl">
-            <div className="absolute inset-0 bg-gradient-to-br from-red-900/10 via-transparent to-red-500/5 pointer-events-none" />
 
-            <CardContent className="pt-8 pb-6 relative z-10">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-red-500/20 to-orange-500/20 flex items-center justify-center backdrop-blur-sm">
-                  <SettingsIcon className="w-7 h-7 text-red-400" />
-                </div>
-                <div>
-                  <h1 className="section-title mb-0 text-2xl md:text-3xl">
-                    {text("nav.settings", "Settings")}
-                  </h1>
-                  <p className="text-muted-foreground">
-                    {text(
-                      "settings.heroDescription",
-                      "Adjust your account, privacy, and content safety controls.",
-                    )}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.section>
+      <div className="page-container ct-page-shell max-w-5xl pt-20 pb-28 md:pb-12">
 
-        {isLoadingSettings && (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        {/* ── Page heading ──────────────────────────────────────────────── */}
+        <motion.div
+          variants={rowVariants}
+          initial="hidden"
+          animate="visible"
+          className="mb-8 flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <SettingsIcon className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <h1 className="text-xl font-semibold text-foreground">
+                {text("nav.settings", "Settings")}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {text("settings.heroDescription", "Manage your account, privacy, and content preferences.")}
+              </p>
+            </div>
           </div>
-        )}
 
-        {!isLoadingSettings && (
-          <>
-            <div className="space-y-7">
-            <motion.div variants={itemVariants}>
-              <SettingsSection
-                id="settings-account"
-                sectionLabel={text("settings.accountSection", "Account")}
-                sectionIcon={UserRound}
-                sectionIconClass="text-red-400"
-                title={text(
-                  "settings.accountPanelTitle",
-                  "Account preferences",
-                )}
-                description={text(
-                  "settings.accountPanelDesc",
-                  "Manage language and personalized features.",
-                )}
-                headerIcon={UserRound}
-                headerIconClass="text-red-400"
-                isOpen={
-                  isMobileSectionCollapse ? mobileExpandedSections.account : true
-                }
-                onToggle={
-                  isMobileSectionCollapse
-                    ? () =>
-                        setMobileExpandedSections((prev) => ({
-                          ...prev,
-                          account: !prev.account,
-                        }))
-                    : undefined
-                }
+          <AnimatePresence>
+            {!hasUnsavedChanges && !isLoadingSettings && (
+              <motion.div
+                key="saved"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="hidden items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground sm:flex"
               >
-                <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/70 p-4 sm:flex-row sm:items-center sm:gap-4">
-                  <div className="min-w-0 flex-1">
-                    <Label
-                      htmlFor="language"
-                      className="flex items-center gap-2 text-foreground"
-                    >
-                      <Languages className="h-4 w-4 text-muted-foreground" />
-                      {text("settings.language", "Language")}
-                    </Label>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {text(
-                        "settings.languageOptionDesc",
-                        "Pick the language used for buttons, labels, and menus. Six languages are available today.",
-                      )}
-                    </p>
-                  </div>
-                  <Select
-                    value={currentLanguage.code}
-                    onValueChange={handleLanguageChange}
+                <Check className="h-3 w-3 text-emerald-500" />
+                All changes saved
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* ── Layout ─────────────────────────────────────────────────────── */}
+        <div className="flex gap-10 lg:items-start">
+
+          {/* Sidebar navigation */}
+          <motion.aside
+            variants={rowVariants}
+            initial="hidden"
+            animate="visible"
+            className="hidden w-44 shrink-0 lg:block"
+          >
+            <nav className="sticky top-24 space-y-0.5" aria-label="Settings sections">
+              {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
+                const active = activeSection === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => scrollTo(id)}
+                    className={cn(
+                      "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150",
+                      active
+                        ? "bg-accent text-foreground"
+                        : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+                    )}
                   >
-                    <SelectTrigger
-                      id="language"
-                      className="w-full border-border/60 bg-card/80 focus:border-red-500 focus:ring-red-500/20 sm:max-w-xs"
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border-border">
-                      {languages.map((lang) => (
-                        <SelectItem
-                          key={lang.code}
-                          value={lang.code}
-                          className="focus:bg-accent focus:text-accent-foreground"
-                        >
-                          {lang.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <Icon className="h-4 w-4 shrink-0" />
+                    {label}
+                  </button>
+                );
+              })}
+            </nav>
+          </motion.aside>
 
-                <SettingsSwitchRow
-                  id="allowRecommendations"
-                  icon={Sparkles}
-                  title={text(
-                    "settings.allowRecommendations",
-                    "Smart Recommendations",
-                  )}
-                  description={text(
-                    "settings.allowRecommendationsDesc",
-                    "Show personalized picks based on what you watch and rate.",
-                  )}
-                  checked={settings.allowRecommendations}
-                  onCheckedChange={(checked) =>
-                    updateProfileSetting("allowRecommendations", checked)
-                  }
-                  isPulsing={pulseRowId === "allowRecommendations"}
-                />
-              </SettingsSection>
-            </motion.div>
+          {/* Main content */}
+          {isLoadingSettings ? (
+            <div className="flex flex-1 items-center justify-center py-24">
+              <div className="flex flex-col items-center gap-3">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary" />
+                <p className="text-sm text-muted-foreground">Loading settings…</p>
+              </div>
+            </div>
+          ) : (
+            <motion.div
+              className="min-w-0 flex-1 space-y-8"
+              variants={pageVariants}
+              initial="hidden"
+              animate="visible"
+            >
 
-            <motion.div id="settings-accessibility" variants={itemVariants}>
-              <SettingsSection
-                id="settings-accessibility-panel"
-                sectionLabel={text("settings.accessibilitySection", "Accessibility")}
-                sectionIcon={Accessibility}
-                sectionIconClass="text-red-400"
-                title={text("settings.accessibilityDisplay", "Accessibility & display")}
-                description={text("settings.accessibilityDisplayDesc", "Adjust readability, theme, and motion in the same place you manage the rest of your preferences.")}
-                headerIcon={Accessibility}
-                headerIconClass="text-red-400"
-                isOpen={
-                  isMobileSectionCollapse
-                    ? mobileExpandedSections.accessibility
-                    : true
-                }
-                onToggle={
-                  isMobileSectionCollapse
-                    ? () =>
-                        setMobileExpandedSections((prev) => ({
-                          ...prev,
-                          accessibility: !prev.accessibility,
-                        }))
-                    : undefined
-                }
-              >
-                <div className="rounded-xl border border-border/60 bg-card/70 p-4">
-                  <div className="flex flex-col gap-5">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                        <Type className="h-4 w-4 text-muted-foreground" />
-                        {text("settings.textSize", "Text size")}
+              {/* ══ 1. ACCOUNT ══════════════════════════════════════════════ */}
+              <motion.div variants={rowVariants}>
+                <SettingsSection
+                  id="section-account"
+                  label={text("settings.accountSection", "Account")}
+                  icon={UserRound}
+                  title={text("settings.accountPanelTitle", "Account preferences")}
+                  description={text("settings.accountPanelDesc", "Manage language and personalized features.")}
+                >
+                  {/* Language */}
+                  <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <Label htmlFor="language" className="flex items-center gap-2 text-sm font-medium text-foreground">
+                        <Globe className="h-4 w-4 text-muted-foreground" />
+                        {text("settings.language", "Language")}
+                      </Label>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {text("settings.languageOptionDesc", "Pick the language used for buttons, labels, and menus.")}
+                      </p>
+                    </div>
+                    <Select value={currentLanguage.code} onValueChange={handleLanguageChange}>
+                      <SelectTrigger id="language" className="w-full sm:w-48">
+                        <Languages className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {languages.map((lang) => (
+                          <SelectItem key={lang.code} value={lang.code}>
+                            {lang.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Divider />
+
+                  <SettingsSwitchRow
+                    id="allowRecommendations"
+                    icon={Sparkles}
+                    title={text("settings.allowRecommendations", "Smart recommendations")}
+                    description={text("settings.allowRecommendationsDesc", "Show personalized picks based on what you watch and rate.")}
+                    checked={settings.allowRecommendations}
+                    onCheckedChange={(v) => updateProfileSetting("allowRecommendations", v)}
+                    isPulsing={pulseRowId === "allowRecommendations"}
+                  />
+                </SettingsSection>
+              </motion.div>
+
+              {/* ══ 2. ACCESSIBILITY ════════════════════════════════════════ */}
+              <motion.div id="section-accessibility" variants={rowVariants}>
+                <SettingsSection
+                  id="section-accessibility-panel"
+                  label={text("settings.accessibilitySection", "Accessibility")}
+                  icon={Accessibility}
+                  title={text("settings.accessibilityDisplay", "Accessibility & display")}
+                  description={text("settings.accessibilityDisplayDesc", "Adjust readability, theme, and motion preferences.")}
+                >
+                  {/* Text size */}
+                  <div className="py-4">
+                    <div className="flex items-start gap-3">
+                      <Type className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">
+                          {text("settings.textSize", "Text size")}
+                        </p>
+                        <p className="mt-0.5 text-sm text-muted-foreground">
+                          {text("settings.textSizeDesc", "Adjust the base font size across the app.")}
+                        </p>
+
+                        {/* Slider */}
+                        <div className="mt-4 flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setFontSize((c) => Math.max(MIN_FONT_SIZE, c - FONT_SIZE_STEP))}
+                            disabled={fontSize <= MIN_FONT_SIZE}
+                            aria-label={text("settings.decreaseFontSize", "Decrease font size")}
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-sm font-semibold text-foreground hover:bg-accent disabled:opacity-40 transition-colors"
+                          >
+                            −
+                          </button>
+                          <Slider
+                            value={[fontSize]}
+                            onValueChange={([v]) => setFontSize(v)}
+                            min={MIN_FONT_SIZE}
+                            max={MAX_FONT_SIZE}
+                            step={FONT_SIZE_STEP}
+                            className="flex-1"
+                            aria-label={text("settings.textSize", "Font size")}
+                            aria-valuemin={MIN_FONT_SIZE}
+                            aria-valuemax={MAX_FONT_SIZE}
+                            aria-valuenow={fontSize}
+                            aria-valuetext={`${fontSize}%`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFontSize((c) => Math.min(MAX_FONT_SIZE, c + FONT_SIZE_STEP))}
+                            disabled={fontSize >= MAX_FONT_SIZE}
+                            aria-label={text("settings.increaseFontSize", "Increase font size")}
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-sm font-semibold text-foreground hover:bg-accent disabled:opacity-40 transition-colors"
+                          >
+                            +
+                          </button>
+                          <span className="w-12 shrink-0 text-right text-sm font-semibold tabular-nums text-foreground">
+                            {fontSize}%
+                          </span>
+                        </div>
+
+                        {/* Preview */}
+                        <div className="mt-3 rounded-md border border-border bg-muted/40 px-3 py-2.5">
+                          <p
+                            className="text-muted-foreground transition-[font-size] duration-200"
+                            style={{ fontSize: `${fontSize / 100}em` }}
+                          >
+                            The quick brown fox jumps over the lazy dog.
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {text("settings.textSizeDesc", "Increase or decrease text size throughout the app.")}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        className="h-9 w-9 shrink-0 border-border/60 bg-card/80 text-foreground hover:bg-card"
-                        onClick={decreaseFontSize}
-                        aria-label={text("settings.decreaseFontSize", "Decrease font size")}
-                        disabled={fontSize <= MIN_FONT_SIZE}
-                      >
-                        -
-                      </Button>
-                      <Slider
-                        value={[fontSize]}
-                        onValueChange={(value) => setFontSize(value[0])}
-                        min={MIN_FONT_SIZE}
-                        max={MAX_FONT_SIZE}
-                        step={FONT_SIZE_STEP}
-                        className="flex-1"
-                        aria-label={text("settings.textSize", "Font size")}
-                        aria-valuemin={MIN_FONT_SIZE}
-                        aria-valuemax={MAX_FONT_SIZE}
-                        aria-valuenow={fontSize}
-                        aria-valuetext={`${fontSize}%`}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        className="h-9 w-9 shrink-0 border-border/60 bg-card/80 text-foreground hover:bg-card"
-                        onClick={increaseFontSize}
-                        aria-label={text("settings.increaseFontSize", "Increase font size")}
-                        disabled={fontSize >= MAX_FONT_SIZE}
-                      >
-                        +
-                      </Button>
-                    </div>
-                    <div className="flex items-center justify-between rounded-lg bg-background/40 px-4 py-3">
-                      <p className="text-sm text-muted-foreground">
-                        {text("settings.currentSize", "Current size")}
-                      </p>
-                      <p className="text-lg font-bold text-foreground">
-                        {fontSize}%
-                      </p>
                     </div>
                   </div>
-                </div>
 
-                <div className="rounded-xl border border-border/60 bg-card/70 p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-foreground">
-                        {text("settings.appTheme", "App theme")}
-                      </p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {text("settings.appThemeDesc", "Choose Dark, Light, or OLED mode for the full interface.")}
-                      </p>
+                  <Divider />
+
+                  {/* Theme */}
+                  <div className="py-4">
+                    <div className="flex items-start gap-3">
+                      <Sun className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">
+                          {text("settings.appTheme", "App theme")}
+                        </p>
+                        <p className="mt-0.5 text-sm text-muted-foreground">
+                          {text("settings.appThemeDesc", "Choose Dark, Light, or OLED mode.")}
+                        </p>
+
+                        {/* Theme options */}
+                        <div className="mt-3 grid grid-cols-3 gap-2">
+                          {(
+                            [
+                              { value: "dark"  as const, label: "Dark",  icon: Moon, swatch: "bg-neutral-900 border-neutral-700" },
+                              { value: "light" as const, label: "Light", icon: Sun,  swatch: "bg-neutral-100 border-neutral-300" },
+                              { value: "oled"  as const, label: "OLED",  icon: Zap,  swatch: "bg-black border-neutral-800"       },
+                            ]
+                          ).map(({ value, label, icon: ThemeIcon, swatch }) => {
+                            const active = theme === value;
+                            return (
+                              <button
+                                key={value}
+                                type="button"
+                                onClick={() => setTheme(value)}
+                                className={cn(
+                                  "group relative flex flex-col items-center gap-1.5 rounded-lg border p-3 text-center transition-colors",
+                                  active
+                                    ? "border-primary bg-primary/5 text-foreground"
+                                    : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
+                                )}
+                              >
+                                <div className={cn("flex h-8 w-full items-center justify-center rounded border", swatch)}>
+                                  <ThemeIcon className={cn("h-3.5 w-3.5", value === "light" ? "text-neutral-700" : "text-neutral-300")} />
+                                </div>
+                                <span className="text-xs font-medium">{label}</span>
+                                {active && (
+                                  <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary">
+                                    <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
-                    <div className="ct-toggle-group">
-                      {(["dark", "light", "oled"] as const).map((option) => {
-                        const active = theme === option;
-                        const label =
-                          option === "oled"
-                            ? "OLED"
-                            : option[0].toUpperCase() + option.slice(1);
+                  </div>
+
+                  <Divider />
+
+                  {/* Reduce motion */}
+                  <SettingsSwitchRow
+                    id="reduceMotion"
+                    icon={Eye}
+                    title={text("settings.reduceMotion", "Reduce motion")}
+                    description={text("settings.reduceMotionDesc", "Minimize animations and transitions across the app.")}
+                    checked={reduceMotion}
+                    onCheckedChange={setReduceMotion}
+                  />
+
+                  <Divider />
+
+                  {/* Reset */}
+                  <div className="py-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Reset to defaults</p>
+                        <p className="text-sm text-muted-foreground">Restore theme, text size, and motion preferences.</p>
+                      </div>
+                      <Button
+                        ref={resetBtnRef}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setConfirmReset(true)}
+                        className="shrink-0 gap-2"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        {text("settings.resetAccessibilityDefaults", "Reset defaults")}
+                      </Button>
+                    </div>
+                  </div>
+                </SettingsSection>
+              </motion.div>
+
+              {/* ══ 3. PRIVACY ══════════════════════════════════════════════ */}
+              <motion.div variants={rowVariants}>
+                <SettingsSection
+                  id="section-privacy"
+                  label={text("settings.privacySection", "Privacy")}
+                  icon={Lock}
+                  title={text("profile.privacySettings", "Privacy settings")}
+                  description={text("settings.privacyDesc", "Control what others can see on your profile.")}
+                >
+                  <SettingsSwitchRow
+                    id="showWatchlist"
+                    icon={Bookmark}
+                    title={text("profile.showWatchlist", "Show watchlist")}
+                    description={text("profile.showWatchlistDesc", "Allow others to see the titles in your watchlist.")}
+                    checked={settings.showWatchlist}
+                    onCheckedChange={(v) => updateProfileSetting("showWatchlist", v)}
+                    isPulsing={pulseRowId === "showWatchlist"}
+                  />
+                  <Divider />
+                  <SettingsSwitchRow
+                    id="showStats"
+                    icon={TrendingUp}
+                    title={text("profile.showStats", "Show statistics")}
+                    description={text("profile.showStatsDesc", "Show your viewing activity and progress stats on your profile.")}
+                    checked={settings.showStats}
+                    onCheckedChange={(v) => updateProfileSetting("showStats", v)}
+                    isPulsing={pulseRowId === "showStats"}
+                  />
+                </SettingsSection>
+              </motion.div>
+
+              {/* ══ 4. CONTENT SAFETY ═══════════════════════════════════════ */}
+              <motion.div variants={rowVariants}>
+                <SettingsSection
+                  id="section-content-safety"
+                  label={text("settings.contentSafetySection", "Content Safety")}
+                  icon={Shield}
+                  title={text("contentPolicy.safetySettingsTitle", "Content safety")}
+                  description={text("contentPolicy.safetySettingsDesc", "Choose what maturity levels are visible across the app.")}
+                >
+                  {/* Safety level selector */}
+                  <div className="py-4">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                      {(
+                        [
+                          { level: SafetyLevel.NONE,     label: "All ages",      sublabel: "No filtering applied",      icon: Globe       },
+                          { level: SafetyLevel.MODERATE, label: "Teen safe",     sublabel: "Hides explicit 18+ titles",  icon: ShieldCheck },
+                          { level: SafetyLevel.STRICT,   label: "Family",        sublabel: "Hides all mature content",   icon: Baby        },
+                        ] as const
+                      ).map(({ level, label, sublabel, icon: LevelIcon }) => {
+                        const active = maturityRating === level;
                         return (
                           <button
-                            key={option}
+                            key={level}
                             type="button"
+                            onClick={() => void updateSafetyMode(level)}
                             className={cn(
-                              "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
+                              "group relative flex items-start gap-3 rounded-lg border p-3.5 text-left transition-colors",
                               active
-                                ? "ct-toggle-button-active"
-                                : "ct-toggle-button hover:text-foreground",
+                                ? "border-primary bg-primary/5"
+                                : "border-border bg-card hover:bg-accent",
                             )}
-                            onClick={() => setTheme(option)}
                           >
-                            {label}
+                            <LevelIcon className={cn("mt-0.5 h-4 w-4 shrink-0", active ? "text-primary" : "text-muted-foreground")} />
+                            <div>
+                              <p className={cn("text-sm font-medium", active ? "text-foreground" : "text-foreground/80")}>
+                                {label}
+                              </p>
+                              <p className="mt-0.5 text-xs text-muted-foreground">{sublabel}</p>
+                            </div>
+                            {active && (
+                              <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary">
+                                <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                              </span>
+                            )}
                           </button>
                         );
                       })}
                     </div>
                   </div>
-                </div>
 
-                <div
-                  className={cn(
-                    "flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-card/70 px-4 py-4 transition-all duration-300",
-                  )}
-                >
-                  <div className="min-w-0 flex-1">
-                    <Label
-                      htmlFor="reduceMotion"
-                      id="reduceMotion-label"
-                      className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-foreground"
-                    >
-                      <Eye className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      {text("settings.reduceMotion", "Reduce motion")}
-                    </Label>
-                    <p
-                      id="reduceMotion-description"
-                      className="mt-1 text-sm text-muted-foreground"
-                    >
-                      {text("settings.reduceMotionDesc", "Minimize animations and transitions across the app.")}
+                  <Divider />
+
+                  {/* Info strip */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 py-3">
+                    <p className="text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">Filtering hierarchy:</span>{" "}
+                      {text("contentPolicy.hierarchyHintDesc", "Family Friendly includes Teen Safe filtering.")}
                     </p>
+                    <span className={cn(
+                      "rounded-md border px-2.5 py-1 text-xs font-medium",
+                      isAgeKnown
+                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                        : "border-border bg-muted text-muted-foreground",
+                    )}>
+                      {text("contentPolicy.ageStatus", "Age")}: {ageLabel}
+                    </span>
                   </div>
-                  <Switch
-                    id="reduceMotion"
-                    checked={reduceMotion}
-                    onCheckedChange={setReduceMotion}
-                    aria-labelledby="reduceMotion-label"
-                    aria-describedby="reduceMotion-description"
-                  />
-                </div>
+                </SettingsSection>
+              </motion.div>
 
-                <Button
-                  ref={resetAccessibilityButtonRef}
-                  type="button"
-                  onClick={() => setConfirmResetAccessibilityOpen(true)}
-                  variant="outline"
-                  className="w-full gap-2 border border-red-500/70 bg-transparent text-red-400 hover:bg-red-500/10 hover:text-red-300"
+              {/* ══ 5. DATA MANAGEMENT ══════════════════════════════════════ */}
+              <motion.div variants={rowVariants}>
+                <SettingsSection
+                  id="section-data"
+                  label={text("settings.dataManagementSection", "Data")}
+                  icon={Database}
+                  title={text("settings.dataManagementTitle", "Data management")}
+                  description={text("settings.dataManagementDesc", "Export a copy of your data or permanently remove your account.")}
                 >
-                  <RotateCcw className="h-4 w-4" />
-                  {text("settings.resetAccessibilityDefaults", "Reset accessibility defaults")}
-                </Button>
-              </SettingsSection>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <SettingsSection
-                id="settings-privacy"
-                sectionLabel={text("settings.privacySection", "Privacy")}
-                sectionIcon={Lock}
-                sectionIconClass="text-red-400"
-                title={text("profile.privacySettings", "Privacy Settings")}
-                description={text(
-                  "settings.privacyDesc",
-                  "Control what others can see on your profile",
-                )}
-                headerIcon={Lock}
-                headerIconClass="text-red-400"
-                isOpen={
-                  isMobileSectionCollapse ? mobileExpandedSections.privacy : true
-                }
-                onToggle={
-                  isMobileSectionCollapse
-                    ? () =>
-                        setMobileExpandedSections((prev) => ({
-                          ...prev,
-                          privacy: !prev.privacy,
-                        }))
-                    : undefined
-                }
-              >
-                <SettingsSwitchRow
-                  id="showWatchlist"
-                  icon={Bookmark}
-                  title={text("profile.showWatchlist", "Show Watchlist")}
-                  description={text(
-                    "profile.showWatchlistDesc",
-                    "Show your watchlist to people who can view your profile.",
-                  )}
-                  checked={settings.showWatchlist}
-                  onCheckedChange={(checked) =>
-                    updateProfileSetting("showWatchlist", checked)
-                  }
-                  isPulsing={pulseRowId === "showWatchlist"}
-                />
-
-                <SettingsSwitchRow
-                  id="showStats"
-                  icon={TrendingUp}
-                  title={text("profile.showStats", "Show Statistics")}
-                  description={text(
-                    "profile.showStatsDesc",
-                    "Show your viewing activity and progress stats on your profile.",
-                  )}
-                  checked={settings.showStats}
-                  onCheckedChange={(checked) =>
-                    updateProfileSetting("showStats", checked)
-                  }
-                  isPulsing={pulseRowId === "showStats"}
-                />
-              </SettingsSection>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <SettingsSection
-                id="settings-content-safety"
-                sectionLabel={text(
-                  "settings.contentSafetySection",
-                  "Content Safety",
-                )}
-                sectionIcon={Shield}
-                sectionIconClass="text-red-400"
-                title={text(
-                  "contentPolicy.safetySettingsTitle",
-                  "Content safety",
-                )}
-                description={text(
-                  "contentPolicy.safetySettingsDesc",
-                  "Choose what maturity levels appear across your app.",
-                )}
-                headerIcon={Shield}
-                headerIconClass="text-red-400"
-                className="mb-0"
-                isOpen={
-                  isMobileSectionCollapse
-                    ? mobileExpandedSections.contentSafety
-                    : true
-                }
-                onToggle={
-                  isMobileSectionCollapse
-                    ? () =>
-                        setMobileExpandedSections((prev) => ({
-                          ...prev,
-                          contentSafety: !prev.contentSafety,
-                        }))
-                    : undefined
-                }
-              >
-                <SettingsSwitchRow
-                  id="familyFriendlyMode"
-                  icon={Shield}
-                  title={text(
-                    "contentPolicy.familyFriendlyLabel",
-                    "Family Friendly Mode",
-                  )}
-                  description={text(
-                    "contentPolicy.familyFriendlyDesc",
-                    "Hide mature and adult titles across the app.",
-                  )}
-                  checked={familyFriendlyEnabled}
-                  onCheckedChange={(checked) => {
-                    void updateSafetyMode(
-                      checked ? SafetyLevel.STRICT : SafetyLevel.MODERATE,
-                    );
-                  }}
-                  isPulsing={pulseRowId === "content-safety"}
-                />
-
-                <SettingsSwitchRow
-                  id="teenSafeMode"
-                  icon={Shield}
-                  title={text(
-                    "contentPolicy.teenSafeLabel",
-                    "Teen Safe Filtering",
-                  )}
-                  description={text(
-                    "contentPolicy.teenSafeDesc",
-                    "Hide only explicit 18+ and adult titles.",
-                  )}
-                  checked={teenSafeEnabled}
-                  disabled={familyFriendlyEnabled}
-                  disabledHint={
-                    familyFriendlyEnabled
-                      ? text(
-                          "contentPolicy.teenSafeDisabled",
-                          "Unavailable while Family Friendly Mode is on.",
-                        )
-                      : undefined
-                  }
-                  onCheckedChange={(checked) => {
-                    void updateSafetyMode(
-                      checked ? SafetyLevel.MODERATE : SafetyLevel.NONE,
-                    );
-                  }}
-                  isPulsing={pulseRowId === "content-safety"}
-                  tooltipAriaLabel={text(
-                    "contentPolicy.teenSafeInfoAriaLabel",
-                    "More info about Teen Safe Filtering",
-                  )}
-                  tooltipText={text(
-                    "contentPolicy.teenSafeTooltip",
-                    "Teen Safe hides explicit 18+ and adult titles. Family Friendly mode includes Teen Safe filtering.",
-                  )}
-                />
-
-                <div className="rounded-lg border border-border/60 bg-card/70 px-4 py-3">
-                  <p className="text-xs text-muted-foreground">
-                    {text("contentPolicy.hierarchyHint", "Filtering hierarchy")}
-                    :{" "}
-                    {text(
-                      "contentPolicy.hierarchyHintDesc",
-                      "Family Friendly includes Teen Safe filtering.",
-                    )}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {text("contentPolicy.ageStatus", "Age verified")}:{" "}
-                    {ageLabel}
-                  </p>
-                </div>
-              </SettingsSection>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <SettingsSection
-                id="settings-data-management"
-                sectionLabel={text("settings.dataManagementSection", "Data management")}
-                sectionIcon={Database}
-                sectionIconClass="text-red-400"
-                title={text("settings.dataManagementTitle", "Data management")}
-                description={text(
-                  "settings.dataManagementDesc",
-                  "Export a copy of your data or remove your CineTrekker profile data from this app.",
-                )}
-                headerIcon={Database}
-                headerIconClass="text-red-400"
-                isOpen={
-                  isMobileSectionCollapse
-                    ? mobileExpandedSections.dataManagement
-                    : true
-                }
-                onToggle={
-                  isMobileSectionCollapse
-                    ? () =>
-                        setMobileExpandedSections((prev) => ({
-                          ...prev,
-                          dataManagement: !prev.dataManagement,
-                        }))
-                    : undefined
-                }
-              >
-                <div className="rounded-xl border border-border/60 bg-card/70 p-4">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-foreground">
-                        {text(
-                          "settings.downloadDataTitle",
-                          "Download your CineTrekker data",
-                        )}
-                      </p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {text(
-                          "settings.downloadDataDesc",
-                          "Export your profile, settings, content-safety state, watchlist, watched history, and hidden recommendations in one JSON file.",
-                        )}
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="md:self-start"
-                      onClick={() => void exportData()}
-                      disabled={isExportingData}
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      {isExportingData
-                        ? text("settings.preparingExport", "Preparing export...")
-                        : text("settings.exportData", "Export data")}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-red-500/25 bg-red-500/5 p-4">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                    <div className="min-w-0 flex-1">
-                      <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                        <ShieldAlert className="h-4 w-4 text-red-400" />
-                        {text("settings.dangerZone", "Danger zone")}
-                      </p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {text(
-                          "settings.dangerZoneDesc",
-                          "Delete your CineTrekker profile data, saved preferences, watchlist, watched history, favorites, and local backups from this app.",
-                        )}
-                      </p>
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        {text(
-                          "settings.dangerZoneHelp",
-                          "Full identity-provider account removal may still require a separate privacy request. You can review the policy or contact the team from the links below.",
-                        )}
-                      </p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <Button asChild size="sm" variant="ghost">
-                          <Link to="/privacy">
-                            {text("settings.privacyPolicyLink", "Privacy policy")}
-                          </Link>
-                        </Button>
-                        <Button asChild size="sm" variant="ghost">
-                          <Link to="/feedback">
-                            {text("settings.feedbackPageLink", "Feedback page")}
-                          </Link>
-                        </Button>
+                  {/* Export */}
+                  <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-start gap-3">
+                      <Download className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">
+                          {text("settings.downloadDataTitle", "Export your data")}
+                        </p>
+                        <p className="mt-0.5 text-sm text-muted-foreground">
+                          {text("settings.downloadDataDesc", "Download your profile, settings, watchlist, and history as a JSON file.")}
+                        </p>
                       </div>
                     </div>
                     <Button
                       type="button"
-                      variant="destructive"
-                      className="md:self-start"
-                      onClick={() => setIsDeleteDialogOpen(true)}
-                      disabled={isDeletingData}
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0 gap-2"
+                      onClick={() => void exportData()}
+                      disabled={isExportingData}
                     >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      {user
-                        ? text("settings.deleteAccount", "Delete account")
-                        : text("settings.clearThisDevice", "Clear this device")}
+                      <Download className="h-3.5 w-3.5" />
+                      {isExportingData
+                        ? text("settings.preparingExport", "Preparing…")
+                        : text("settings.exportData", "Export data")}
                     </Button>
                   </div>
-                </div>
-              </SettingsSection>
-            </motion.div>
-            </div>
 
-            <StickySaveBar
-              isVisible={hasUnsavedChanges}
-              isSaving={isSaving}
-              onSave={handleSaveSettings}
-              onCancel={handleCancelChanges}
-              saveLabel={text("settings.saveChanges", "Save Changes")}
-              cancelLabel={text("common.cancel", "Cancel")}
-              className="border-t-red-500/10"
-            >
-              {text(
-                "settings.savePendingHint",
-                "Save your pending settings changes from anywhere on the page.",
-              )}
-            </StickySaveBar>
-          </>
-        )}
-      </motion.div>
-      <AlertDialog
-        open={confirmResetAccessibilityOpen}
-        onOpenChange={setConfirmResetAccessibilityOpen}
+                  <Divider />
+
+                  {/* Danger zone */}
+                  <div className="py-4">
+                    <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+                      <div className="flex items-start gap-3">
+                        <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-foreground">
+                            {text("settings.dangerZone", "Delete account data")}
+                          </p>
+                          <p className="mt-1 text-sm text-muted-foreground leading-snug">
+                            {text("settings.dangerZoneDesc", "Permanently removes your profile, preferences, watchlist, and history. This cannot be undone.")}
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {text("settings.dangerZoneHelp", "Full identity-provider account removal may require a separate privacy request.")}
+                          </p>
+                          <div className="mt-3 flex flex-wrap items-center gap-3">
+                            <div className="flex gap-2">
+                              <Button asChild size="sm" variant="link" className="h-auto p-0 text-xs text-muted-foreground">
+                                <Link to="/privacy">{text("settings.privacyPolicyLink", "Privacy policy")}</Link>
+                              </Button>
+                              <span className="text-muted-foreground/40">·</span>
+                              <Button asChild size="sm" variant="link" className="h-auto p-0 text-xs text-muted-foreground">
+                                <Link to="/feedback">{text("settings.feedbackPageLink", "Feedback")}</Link>
+                              </Button>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              className="ml-auto gap-2"
+                              onClick={() => setDeleteDialog(true)}
+                              disabled={isDeletingData}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              {user
+                                ? text("settings.deleteAccount", "Delete account")
+                                : text("settings.clearThisDevice", "Clear this device")}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </SettingsSection>
+              </motion.div>
+
+            </motion.div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Sticky Save Bar ──────────────────────────────────────────────── */}
+      <StickySaveBar
+        isVisible={hasUnsavedChanges}
+        isSaving={isSaving}
+        onSave={handleSaveSettings}
+        onCancel={handleCancelChanges}
+        saveLabel={text("settings.saveChanges", "Save changes")}
+        cancelLabel={text("common.cancel", "Cancel")}
+        className="border-t-red-500/10"
       >
+        {text("settings.savePendingHint", "You have unsaved changes.")}
+      </StickySaveBar>
+
+      {/* ── Confirm Reset Accessibility ──────────────────────────────────── */}
+      <AlertDialog open={confirmResetOpen} onOpenChange={setConfirmReset}>
         <AlertDialogContent
           className="border-border bg-background"
-          onCloseAutoFocus={(event) => {
-            event.preventDefault();
-            resetAccessibilityButtonRef.current?.focus();
-          }}
+          onCloseAutoFocus={(e) => { e.preventDefault(); resetBtnRef.current?.focus(); }}
         >
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Reset accessibility settings?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Reset accessibility settings?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will restore theme, text size, and motion preferences to
-              their default values.
+              This will restore theme, text size, and motion preferences to their defaults.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-600 text-white hover:bg-red-700"
-              onClick={resetAccessibilitySettings}
-            >
-              Confirm reset
+            <AlertDialogAction className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={resetAccessibility}>
+              Reset defaults
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <AlertDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-      >
+
+      {/* ── Confirm Delete Account ───────────────────────────────────────── */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialog}>
         <AlertDialogContent className="border-border bg-background">
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Delete CineTrekker account?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Delete account data?</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes your profile data from CineTrekker, including saved
-              settings, watch history, watchlist, pinned favorites, and local
-              backups. This action cannot be undone.
+              This removes your CineTrekker profile, saved settings, watch history, watchlist, and local backups.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeletingData}>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeletingData}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={(event) => {
-                event.preventDefault();
-                void deleteAccountData();
-              }}
+              onClick={(e) => { e.preventDefault(); void deleteAccountData(); }}
               disabled={isDeletingData}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeletingData ? "Deleting..." : "Delete account"}
+              {isDeletingData ? "Deleting…" : "Delete account"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1453,5 +1120,3 @@ export default function Settings() {
     </>
   );
 }
-
-

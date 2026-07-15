@@ -325,6 +325,18 @@
     transform: translateX(-2.25rem);
   }
 
+  /* OLED pure black resets */
+  [data-theme="oled"] body {
+    background: #000000 !important;
+  }
+  [data-theme="oled"] body::before,
+  [data-theme="oled"] body::after {
+    display: none !important;
+  }
+  [data-theme="oled"] [class*="radial-gradient"] {
+    background-image: none !important;
+    background-color: transparent !important;
+  }
 }
 
 @layer components {

@@ -65,6 +65,18 @@ const cspPlugin = (): Plugin => {
   };
 };
 
+// Ces fragments restent chargés à la demande afin de protéger le premier rendu.
+const deferredModulePreloadPatterns = [
+  /vendor-charts/i,
+  /EnhancedStats/i,
+  /YearInReview/i,
+  /Profile/i,
+  /Calendar/i,
+  /Recommendations/i,
+  /Search-/i,
+  /Details-/i,
+];
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
@@ -119,22 +131,26 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       chunkSizeWarningLimit: 600,
+      modulePreload: {
+        resolveDependencies(_url, deps) {
+          return deps.filter(
+            (dep) =>
+              !deferredModulePreloadPatterns.some((pattern) =>
+                pattern.test(dep),
+              ),
+          );
+        },
+      },
       rollupOptions: {
         output: {
           manualChunks(id) {
             if (
-              id.includes("node_modules/recharts") ||
-              id.includes("node_modules/chart.js") ||
-              id.includes("node_modules/d3") ||
-              id.includes("node_modules/@nivo")
-            ) {
-              return "vendor-charts";
-            }
-
-            if (
-              id.includes("node_modules/react/") ||
-              id.includes("node_modules/react-dom/") ||
-              id.includes("node_modules/react-router-dom/")
+              /node_modules[\\/]react(?:[\\/]|$)/.test(id) ||
+              /node_modules[\\/]react-dom(?:[\\/]|$)/.test(id) ||
+              /node_modules[\\/]react-router-dom(?:[\\/]|$)/.test(id) ||
+              /node_modules[\\/]\.vite[\\/]deps[\\/]react(?:[-.]|$)/.test(id) ||
+              /node_modules[\\/]\.vite[\\/]deps[\\/]react-dom(?:[-.]|$)/.test(id) ||
+              /node_modules[\\/]\.vite[\\/]deps[\\/]react-router-dom(?:[-.]|$)/.test(id)
             ) {
               return "vendor-react";
             }

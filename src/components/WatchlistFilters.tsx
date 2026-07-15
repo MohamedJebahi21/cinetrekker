@@ -32,6 +32,7 @@ export function WatchlistFilters({
   onToggleExpand,
 }: WatchlistFiltersProps) {
   const { t } = useTranslation();
+  const contentId = 'watchlist-filters-content';
 
   const filterOptions = [
     { value: 'all', label: t('filters.all') || 'All' },
@@ -78,6 +79,13 @@ export function WatchlistFilters({
             size="sm"
             onClick={() => onToggleExpand?.(!isExpanded)}
             className="h-8 w-8 p-0"
+            aria-label={
+              isExpanded
+                ? safeT(t, 'watchlistPage.collapseFilters', 'Collapse filters')
+                : safeT(t, 'watchlistPage.expandFilters', 'Expand filters')
+            }
+            aria-expanded={isExpanded}
+            aria-controls={contentId}
           >
             <ChevronDown
               className={`w-4 h-4 transition-transform duration-300 ${
@@ -89,9 +97,11 @@ export function WatchlistFilters({
 
         {/* Filters content */}
         <motion.div
+          id={contentId}
           variants={containerVariants}
           initial="initial"
           animate={isExpanded ? 'animate' : 'exit'}
+          aria-hidden={!isExpanded}
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Status Filter */}
@@ -157,8 +167,8 @@ export function FilterBadge({ label, onRemove }: FilterBadgeProps) {
       <button
         type="button"
         onClick={onRemove}
-        aria-label={t('watchlistPage.removeFilter', 'Remove filter')}
-        className="ml-1 text-primary/60 hover:text-primary transition-colors"
+        aria-label={t('watchlistPage.removeNamedFilter', 'Remove {{label}} filter', { label })}
+        className="ml-1 inline-flex min-h-8 min-w-8 items-center justify-center rounded-full text-primary/60 transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         ×
       </button>

@@ -1,4 +1,5 @@
 import { loadSupabaseModule } from "@/lib/loadSupabaseModule";
+import { createLogger } from "@/lib/logger";
 import type { UserProfile } from "./profile";
 
 type DbError = {
@@ -76,6 +77,7 @@ type ProfileRow = Pick<
 >;
 
 const asDb = (supabase: unknown) => supabase as LooseSupabaseClient;
+const logger = createLogger("social");
 
 export const socialService = {
   // --- Follow functions ---
@@ -155,7 +157,7 @@ export const socialService = {
       .order("created_at", { ascending: false });
 
     if (commentsError) {
-      console.error("Error fetching comments:", commentsError);
+      logger.error("Error fetching comments:", commentsError);
       throw commentsError;
     }
 
@@ -174,7 +176,7 @@ export const socialService = {
       .in("user_id", userIds);
 
     if (profilesError) {
-      console.error("Error fetching profiles:", profilesError);
+      logger.error("Error fetching profiles:", profilesError);
     }
 
     const profiles = Array.isArray(profilesData)
@@ -238,7 +240,7 @@ export const socialService = {
   },
 
   async likeComment(userId: string, commentId: string): Promise<void> {
-    console.log("likeComment called with userId:", userId, "commentId:", commentId);
+    logger.debug("likeComment called", { userId, commentId });
     const { supabase } = await loadSupabaseModule();
     const db = asDb(supabase);
 
@@ -249,27 +251,27 @@ export const socialService = {
       .single<Comment>();
 
     if (commentError) {
-      console.error("Error fetching comment:", commentError);
+      logger.error("Error fetching comment:", commentError);
       throw commentError;
     }
     if (!comment) {
-      console.error("Comment not found");
+      logger.error("Comment not found");
       throw new Error("Comment not found");
     }
 
-    console.log("Found comment:", comment);
+    logger.debug("Found comment", comment);
 
     if (comment.user_id === userId) {
-      console.log("User is liking their own comment, skipping notification");
+      logger.debug("User liked their own comment; skipping notification");
       const { error: likeError } = await db.from("comment_likes").insert({
         user_id: userId,
         comment_id: commentId,
       });
       if (likeError) {
-        console.error("Error inserting like:", likeError);
+        logger.error("Error inserting like:", likeError);
         throw likeError;
       }
-      console.log("Successfully inserted like (own comment)");
+      logger.debug("Successfully inserted like for own comment");
       return;
     }
 
@@ -280,24 +282,24 @@ export const socialService = {
       .single<Pick<UserProfile, "display_name" | "avatar_url">>();
 
     if (likerError) {
-      console.error("Error fetching liker profile:", likerError);
+      logger.error("Error fetching liker profile:", likerError);
     }
-    console.log("Liker profile:", likerProfile);
+    logger.debug("Liker profile", likerProfile);
 
     const likerName = likerProfile?.display_name || "Someone";
-    const notificationMessage = `${likerName} liked your comment!`;
+    const notificationMessage = `${likerName} liked your comment.`;
     const eventKey = `comment_like:${commentId}:${userId}`;
-    console.log("Notification message:", notificationMessage);
+    logger.debug("Notification message", notificationMessage);
 
     const { error: likeError } = await db.from("comment_likes").insert({
       user_id: userId,
       comment_id: commentId,
     });
     if (likeError) {
-      console.error("Error inserting like:", likeError);
+      logger.error("Error inserting like:", likeError);
       throw likeError;
     }
-    console.log("Successfully inserted like");
+    logger.debug("Successfully inserted like");
 
     const { error: notificationError } = await db.from("notifications").insert({
       user_id: comment.user_id,
@@ -309,12 +311,12 @@ export const socialService = {
     });
     if (notificationError) {
       if (notificationError.code === "23505") {
-        console.log("Notification already exists, skipping");
+        logger.debug("Notification already exists, skipping");
       } else {
-        console.error("Error inserting notification:", notificationError);
+        logger.error("Error inserting notification:", notificationError);
       }
     } else {
-      console.log("Successfully inserted notification");
+      logger.debug("Successfully inserted notification");
     }
   },
 

@@ -1,4 +1,7 @@
+import { createLogger } from "@/lib/logger";
+
 export const WATCHLIST_ID = 'cine-watchlist';
+const logger = createLogger("local-watchlist");
 
 /**
  * Get all watchlist IDs from localStorage
@@ -17,7 +20,7 @@ export function getWatchlistIds(): number[] {
       .map((v) => Number(v))
       .filter((id) => Number.isInteger(id) && id > 0);
   } catch (e) {
-    console.error('Failed to read watchlist from localStorage:', e);
+    logger.error('Failed to read watchlist from localStorage', e);
     return [];
   }
 }
@@ -33,7 +36,7 @@ export function saveWatchlistIds(ids: number[]): void {
 
     localStorage.setItem(WATCHLIST_ID, JSON.stringify(uniqueIds));
   } catch (e) {
-    console.error('Failed to save watchlist to localStorage:', e);
+    logger.error('Failed to save watchlist to localStorage', e);
   }
 }
 
@@ -102,7 +105,7 @@ export function clearLocalWatchlist(): void {
   try {
     localStorage.removeItem(WATCHLIST_ID);
   } catch (e) {
-    console.error('Failed to clear watchlist from localStorage:', e);
+    logger.error('Failed to clear watchlist from localStorage', e);
   }
 }
 

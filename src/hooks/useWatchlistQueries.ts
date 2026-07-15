@@ -24,7 +24,7 @@ export function useWatchlistQuery() {
           // Verify table schema is accessible
           const { data, error } = await supabase
             .from('user_watchlist')
-            .select('*')
+            .select('id,user_id,media_id,media_type,added_at')
             .eq('user_id', user.id);
 
           if (error) {

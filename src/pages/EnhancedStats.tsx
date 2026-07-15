@@ -59,14 +59,14 @@ import {
 import { cn } from "@/lib/utils";
 
 const CINEMATIC_CHART_COLORS = [
-  "#E50914", // Netflix Red
-  "#F97316", // Amber Orange
-  "#F59E0B", // Gold
-  "#10B981", // Emerald
-  "#3B82F6", // Blue
-  "#8B5CF6", // Purple
-  "#EC4899", // Pink
-  "#06B6D4", // Cyan
+  "hsl(var(--primary))",
+  "hsl(var(--rating-medium))",
+  "hsl(var(--success))",
+  "hsl(var(--destructive))",
+  "hsl(var(--muted-foreground))",
+  "hsl(var(--primary) / 0.72)",
+  "hsl(var(--rating-medium) / 0.72)",
+  "hsl(var(--success) / 0.72)",
 ];
 
 export default function EnhancedStats() {
@@ -425,32 +425,32 @@ export default function EnhancedStats() {
                       <AreaChart data={monthlyStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                         <defs>
                           <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#E50914" stopOpacity={0.4} />
-                            <stop offset="95%" stopColor="#E50914" stopOpacity={0} />
+                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                           </linearGradient>
                         </defs>
                         <XAxis
                           dataKey="name"
-                          stroke="#737373"
-                          tick={{ fill: "#a3a3a3", fontSize: 11 }}
+                          stroke="hsl(var(--border))"
+                          tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
                         />
                         <YAxis
-                          stroke="#737373"
-                          tick={{ fill: "#a3a3a3", fontSize: 11 }}
+                          stroke="hsl(var(--border))"
+                          tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
                         />
                         <Tooltip
                           contentStyle={{
-                            background: "rgba(22,22,22,0.95)",
-                            border: "1px solid rgba(255,255,255,0.08)",
-                            color: "#fff",
-                            borderRadius: "12px",
+                            background: "hsl(var(--popover))",
+                            border: "1px solid hsl(var(--border))",
+                            color: "hsl(var(--popover-foreground))",
+                            borderRadius: "var(--radius)",
                             fontSize: "12px",
                           }}
                         />
                         <Area
                           type="monotone"
                           dataKey="hours"
-                          stroke="#E50914"
+                          stroke="hsl(var(--primary))"
                           strokeWidth={3}
                           fillOpacity={1}
                           fill="url(#colorHours)"
@@ -490,10 +490,10 @@ export default function EnhancedStats() {
                             </Pie>
                             <Tooltip
                               contentStyle={{
-                                background: "rgba(22,22,22,0.95)",
-                                border: "1px solid rgba(255,255,255,0.08)",
-                                color: "#fff",
-                                borderRadius: "12px",
+                                background: "hsl(var(--popover))",
+                                border: "1px solid hsl(var(--border))",
+                                color: "hsl(var(--popover-foreground))",
+                                borderRadius: "var(--radius)",
                                 fontSize: "12px",
                               }}
                             />
@@ -541,23 +541,23 @@ export default function EnhancedStats() {
                     <BarChart data={genreStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                       <XAxis
                         dataKey="name"
-                        stroke="#737373"
-                        tick={{ fill: "#a3a3a3", fontSize: 11 }}
+                        stroke="hsl(var(--border))"
+                        tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
                       />
                       <YAxis
-                        stroke="#737373"
-                        tick={{ fill: "#a3a3a3", fontSize: 11 }}
+                        stroke="hsl(var(--border))"
+                        tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
                       />
                       <Tooltip
                         contentStyle={{
-                          background: "rgba(22,22,22,0.95)",
-                          border: "1px solid rgba(255,255,255,0.08)",
-                          color: "#fff",
-                          borderRadius: "12px",
+                          background: "hsl(var(--popover))",
+                          border: "1px solid hsl(var(--border))",
+                          color: "hsl(var(--popover-foreground))",
+                          borderRadius: "var(--radius)",
                           fontSize: "12px",
                         }}
                       />
-                      <Bar dataKey="hours" fill="#E50914" radius={[6, 6, 0, 0]} />
+                      <Bar dataKey="hours" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -643,23 +643,23 @@ export default function EnhancedStats() {
                       <BarChart data={decadesStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                         <XAxis
                           dataKey="name"
-                          stroke="#737373"
-                          tick={{ fill: "#a3a3a3", fontSize: 11 }}
+                          stroke="hsl(var(--border))"
+                          tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
                         />
                         <YAxis
-                          stroke="#737373"
-                          tick={{ fill: "#a3a3a3", fontSize: 11 }}
+                          stroke="hsl(var(--border))"
+                          tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
                         />
                         <Tooltip
                           contentStyle={{
-                            background: "rgba(22,22,22,0.95)",
-                            border: "1px solid rgba(255,255,255,0.08)",
-                            color: "#fff",
-                            borderRadius: "12px",
+                            background: "hsl(var(--popover))",
+                            border: "1px solid hsl(var(--border))",
+                            color: "hsl(var(--popover-foreground))",
+                            borderRadius: "var(--radius)",
                             fontSize: "12px",
                           }}
                         />
-                        <Bar dataKey="count" fill="#F59E0B" radius={[6, 6, 0, 0]} />
+                        <Bar dataKey="count" fill="hsl(var(--rating-medium))" radius={[6, 6, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -684,23 +684,23 @@ export default function EnhancedStats() {
                       <BarChart data={ratingsStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                         <XAxis
                           dataKey="name"
-                          stroke="#737373"
-                          tick={{ fill: "#a3a3a3", fontSize: 11 }}
+                          stroke="hsl(var(--border))"
+                          tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
                         />
                         <YAxis
-                          stroke="#737373"
-                          tick={{ fill: "#a3a3a3", fontSize: 11 }}
+                          stroke="hsl(var(--border))"
+                          tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
                         />
                         <Tooltip
                           contentStyle={{
-                            background: "rgba(22,22,22,0.95)",
-                            border: "1px solid rgba(255,255,255,0.08)",
-                            color: "#fff",
-                            borderRadius: "12px",
+                            background: "hsl(var(--popover))",
+                            border: "1px solid hsl(var(--border))",
+                            color: "hsl(var(--popover-foreground))",
+                            borderRadius: "var(--radius)",
                             fontSize: "12px",
                           }}
                         />
-                        <Bar dataKey="count" fill="#E50914" radius={[6, 6, 0, 0]} />
+                        <Bar dataKey="count" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>

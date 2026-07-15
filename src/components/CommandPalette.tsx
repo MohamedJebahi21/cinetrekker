@@ -92,6 +92,8 @@ export default function CommandPalette() {
     enabled: query.length >= 2,
     staleTime: 1000 * 60 * 5,
   });
+  const trimmedQuery = query.trim();
+  const hasSearchQuery = trimmedQuery.length >= 2;
 
   const onSelectMedia = (item: Media) => {
     setOpen(false);
@@ -117,7 +119,11 @@ export default function CommandPalette() {
           onValueChange={(val: string) => setQuery(val)}
         />
         <CommandList>
-          <CommandEmpty>{t("commandPalette.empty", "No results")}</CommandEmpty>
+          <CommandEmpty>
+            {hasSearchQuery
+              ? t("commandPalette.empty", "No results")
+              : t("commandPalette.startTyping", "Type at least 2 characters to search.")}
+          </CommandEmpty>
 
           <CommandGroup heading={t("commandPalette.actions", "Actions")}>
             <CommandItem
@@ -127,7 +133,7 @@ export default function CommandPalette() {
               }}
             >
               {t("commandPalette.cycleTheme", "Cycle Theme")}
-              <CommandShortcut>⌘/Ctrl K</CommandShortcut>
+              <CommandShortcut>{t("commandPalette.themeShortcut", "theme")}</CommandShortcut>
             </CommandItem>
             <CommandItem
               onSelect={() => {
@@ -172,7 +178,12 @@ export default function CommandPalette() {
           <CommandSeparator />
 
           <CommandGroup heading={t("commandPalette.searchResults", "Search Results")}>
-            {isFetching && (
+            {!hasSearchQuery && (
+              <CommandItem disabled>
+                {t("commandPalette.searchHint", "Search titles, people, and collections from here.")}
+              </CommandItem>
+            )}
+            {hasSearchQuery && isFetching && (
               <CommandItem disabled>
                 {t("commandPalette.searching", "Searching...")}
               </CommandItem>

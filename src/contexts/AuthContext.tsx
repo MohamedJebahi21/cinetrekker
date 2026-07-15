@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import type { User, Session } from "@supabase/supabase-js";
 import { isSupabaseConfigured } from "@/lib/envValidation";
 import { createLogger } from "@/lib/logger";
@@ -132,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const signUp = async (email: string, code: string, options?: { username?: string }) => {
+  const signUp = useCallback(async (email: string, code: string, options?: { username?: string }) => {
     if (!isSupabaseConfigured()) {
       return { error: new Error(MISSING_ENV_AUTH_ERROR) };
     }
@@ -152,9 +159,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       return { error: toAuthError(error) };
     }
-  };
+  }, []);
 
-  const signIn = async (email: string, code: string) => {
+  const signIn = useCallback(async (email: string, code: string) => {
     if (!isSupabaseConfigured()) {
       return { error: new Error(MISSING_ENV_AUTH_ERROR) };
     }
@@ -169,9 +176,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       return { error: toAuthError(error) };
     }
-  };
+  }, []);
 
-  const signInWithProvider = async (
+  const signInWithProvider = useCallback(async (
     provider: "google" | "facebook" | "apple",
   ) => {
     if (!isSupabaseConfigured()) {
@@ -190,9 +197,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       return { error: toAuthError(error) };
     }
-  };
+  }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     if (!isSupabaseConfigured()) {
       return;
     }
@@ -215,9 +222,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       logger.warn("Sign out failed.", toAuthError(error));
     }
-  };
+  }, [session?.user?.id]);
 
-  const resetPassword = async (email: string) => {
+  const resetPassword = useCallback(async (email: string) => {
     if (!isSupabaseConfigured()) {
       return { error: new Error(MISSING_ENV_AUTH_ERROR) };
     }
@@ -231,21 +238,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       return { error: toAuthError(error) };
     }
-  };
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      user,
+      session,
+      loading,
+      signUp,
+      signIn,
+      signInWithProvider,
+      resetPassword,
+      signOut,
+    }),
+    [
+      user,
+      session,
+      loading,
+      signUp,
+      signIn,
+      signInWithProvider,
+      resetPassword,
+      signOut,
+    ],
+  );
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        loading,
-        signUp,
-        signIn,
-        signInWithProvider,
-        resetPassword,
-        signOut,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { HiddenRecommendation } from '@/types/media';
+import { createLogger } from '@/lib/logger';
 
 const HIDDEN_RECOMMENDATIONS_QUERY_ID = 'hidden-recommendations';
 const HIDDEN_RECOMMENDATIONS_STORAGE_ID = 'mywatch_hidden_recommendations';
+const logger = createLogger('hidden-recommendations');
 
 /**
  * Hook to fetch hidden recommendations from Supabase or localStorage
@@ -102,7 +104,7 @@ export function useHideFromRecommendations() {
       if (context?.previousHidden) {
         queryClient.setQueryData([HIDDEN_RECOMMENDATIONS_QUERY_ID, user?.id], context.previousHidden);
       }
-      console.error('Failed to hide from recommendations:', error);
+      logger.error('Failed to hide from recommendations', error);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: [HIDDEN_RECOMMENDATIONS_QUERY_ID] });
@@ -158,7 +160,7 @@ export function useUnhideFromRecommendations() {
       if (context?.previousHidden) {
         queryClient.setQueryData([HIDDEN_RECOMMENDATIONS_QUERY_ID, user?.id], context.previousHidden);
       }
-      console.error('Failed to unhide from recommendations:', error);
+      logger.error('Failed to unhide from recommendations', error);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: [HIDDEN_RECOMMENDATIONS_QUERY_ID] });

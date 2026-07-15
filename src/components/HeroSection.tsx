@@ -29,7 +29,6 @@ export function HeroSection() {
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [touchStart, setTouchStart] = useState<TouchPoint | null>(null);
 
   const { data: weeklyResponse } = useQuery({
@@ -44,23 +43,14 @@ export function HeroSection() {
 
   useEffect(() => { setActiveIndex(0); }, [topWeekly.length]);
 
-  // Auto-play timer
+  // Le minuteur évite les mises à jour React continues pendant l'animation.
   useEffect(() => {
     if (prefersReducedMotion || topWeekly.length <= 1 || isPaused) return;
-    const tickMs = 30;
-    const step = 100 / (AUTO_PLAY_MS / tickMs);
-    const timer = window.setInterval(() => {
-      setProgress((c) => Math.min(100, c + step));
-    }, tickMs);
-    return () => window.clearInterval(timer);
+    const timer = window.setTimeout(() => {
+      setActiveIndex((current) => (current + 1) % topWeekly.length);
+    }, AUTO_PLAY_MS);
+    return () => window.clearTimeout(timer);
   }, [prefersReducedMotion, topWeekly.length, isPaused, activeIndex]);
-
-  // Advance slide when progress hits 100
-  useEffect(() => {
-    if (prefersReducedMotion || progress < 100 || topWeekly.length <= 1) return;
-    setActiveIndex((c) => (c + 1) % topWeekly.length);
-    setProgress(0);
-  }, [prefersReducedMotion, progress, topWeekly.length]);
 
   // Preload next image
   useEffect(() => {
@@ -88,7 +78,6 @@ export function HeroSection() {
   const goToSlide = (index: number) => {
     const total = topWeekly.length;
     setActiveIndex(((index % total) + total) % total);
-    setProgress(0);
   };
 
   const handleTouchStart = (e: TouchEvent<HTMLElement>) => {
@@ -111,7 +100,7 @@ export function HeroSection() {
 
   return (
     <section
-      className="w-full border-b border-border/30 bg-[#0d0d0f]"
+      className="w-full border-b border-border/30 bg-background"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onTouchStart={handleTouchStart}
@@ -139,7 +128,7 @@ export function HeroSection() {
 
         {/* Gradient overlays for text readability */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/40 to-transparent z-10" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d0f] via-transparent to-[#0d0d0f]/20 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/20 z-10" />
 
         {/* Content anchored to middle-left */}
         <AnimatePresence mode="wait">
@@ -152,7 +141,7 @@ export function HeroSection() {
             transition={{ duration: td, ease: "easeOut" }}
           >
             {/* Kicker */}
-            <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#e50914]">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-primary">
               {t("home.topWatchedThisWeekKicker", "Weekly Spotlight")}
             </p>
 
@@ -171,7 +160,7 @@ export function HeroSection() {
             {/* Meta badges */}
             <div className="mt-4 flex flex-wrap items-center gap-2">
               {activeItem.vote_average > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3.5 py-1 text-xs font-bold text-[#e50914] ring-1 ring-white/10">
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3.5 py-1 text-xs font-bold text-primary ring-1 ring-white/10">
                   ★ {activeItem.vote_average.toFixed(1)}
                 </span>
               )}
@@ -243,7 +232,7 @@ export function HeroSection() {
                 className={cn(
                   "relative h-20 w-14 lg:h-24 lg:w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all duration-300 hover:scale-105",
                   isActive
-                    ? "border-red-600 shadow-[0_0_12px_rgba(220,38,38,0.8)] opacity-100 scale-105 z-10"
+                    ? "border-primary shadow-[0_0_12px_hsl(var(--primary)/0.58)] opacity-100 scale-105 z-10"
                     : "border-white/10 opacity-50 hover:opacity-80"
                 )}
               >
@@ -266,7 +255,6 @@ export function HeroSection() {
         <div className="absolute bottom-0 left-0 right-0 z-30 flex gap-1 px-8 lg:px-16 pb-0">
           {topWeekly.map((item, i) => {
             const isActive = i === activeIndex;
-            const fill = isActive ? progress : i < activeIndex ? 100 : 0;
             return (
               <button
                 key={`pb-${item.id}-${i}`}
@@ -275,10 +263,19 @@ export function HeroSection() {
                 onClick={() => goToSlide(i)}
                 className="h-1 flex-1 overflow-hidden rounded-t-full bg-white/20 transition-all hover:bg-white/30"
               >
-                <motion.div
-                  className="h-full bg-primary"
-                  animate={{ width: `${fill}%` }}
-                  transition={{ width: { duration: isActive ? 0.03 : 0.3, ease: "linear" } }}
+                <div
+                  key={isActive ? `desktop-progress-${activeItem.id}` : `desktop-progress-${item.id}`}
+                  className={cn(
+                    "h-full bg-primary",
+                    isActive && !prefersReducedMotion
+                      ? "origin-left animate-hero-progress"
+                      : i < activeIndex
+                        ? "w-full"
+                        : "w-0",
+                  )}
+                  style={{
+                    animationPlayState: isPaused ? "paused" : "running",
+                  }}
                 />
               </button>
             );
@@ -288,7 +285,7 @@ export function HeroSection() {
 
       {/* ── Mobile layout: full-width stacked ── */}
       <div className="md:hidden">
-        <div className="relative overflow-hidden bg-[#0b0b0d]">
+        <div className="relative overflow-hidden bg-background">
           {/* Backdrop */}
           <div className="relative min-h-[54svh] sm:min-h-[60svh]">
             <AnimatePresence mode="wait">
@@ -319,7 +316,6 @@ export function HeroSection() {
             <div className="absolute inset-x-4 bottom-3 flex gap-1">
               {topWeekly.map((item, i) => {
                 const isActive = i === activeIndex;
-                const fill = isActive ? progress : i < activeIndex ? 100 : 0;
                 return (
                   <button
                     key={`mob-pb-${item.id}-${i}`}
@@ -328,10 +324,19 @@ export function HeroSection() {
                     onClick={() => goToSlide(i)}
                     className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/20"
                   >
-                    <motion.div
-                      className="h-full bg-primary"
-                      animate={{ width: `${fill}%` }}
-                      transition={{ width: { duration: isActive ? 0.03 : 0.3, ease: "linear" } }}
+                    <div
+                      key={isActive ? `mobile-progress-${activeItem.id}` : `mobile-progress-${item.id}`}
+                      className={cn(
+                        "h-full bg-primary",
+                        isActive && !prefersReducedMotion
+                          ? "origin-left animate-hero-progress"
+                          : i < activeIndex
+                            ? "w-full"
+                            : "w-0",
+                      )}
+                      style={{
+                        animationPlayState: isPaused ? "paused" : "running",
+                      }}
                     />
                   </button>
                 );
@@ -356,7 +361,7 @@ export function HeroSection() {
                 className={cn(
                   "flex-shrink-0 overflow-hidden rounded-md border transition",
                   isActive
-                    ? "border-primary shadow-[0_0_0_2px_rgba(220,38,38,0.4)]"
+                    ? "border-primary shadow-[0_0_0_2px_hsl(var(--primary)/0.36)]"
                     : "border-white/10 opacity-60"
                 )}
               >
@@ -425,6 +430,11 @@ export function HeroSection() {
                   size="icon"
                   className="h-10 w-10 rounded-2xl border-white/20 bg-black/20 text-white"
                   onClick={() => { void (inWatchlist ? removeFromWatchlist(activeItem.id, activeMediaType) : addToWatchlist(activeItem.id, activeMediaType)); }}
+                  aria-label={
+                    inWatchlist
+                      ? t("actions.removeFromWatchlistTitle", "Remove {{title}} from watchlist", { title: activeTitle })
+                      : t("actions.addToWatchlistTitle", "Add {{title}} to watchlist", { title: activeTitle })
+                  }
                 >
                   <Bookmark className={cn("h-4 w-4", inWatchlist && "fill-white")} />
                 </Button>
@@ -433,6 +443,11 @@ export function HeroSection() {
                   size="icon"
                   className={cn("h-10 w-10 rounded-2xl border-white/20 bg-black/20 text-white", inWatched && "border-green-400/40 text-green-300")}
                   onClick={() => { void (inWatched ? removeFromWatched(activeItem.id, activeMediaType) : addToWatched(activeItem.id, activeMediaType, undefined, undefined, "completed")); }}
+                  aria-label={
+                    inWatched
+                      ? t("actions.markUnwatchedTitle", "Mark {{title}} as not watched", { title: activeTitle })
+                      : t("actions.markWatchedTitle", "Mark {{title}} as watched", { title: activeTitle })
+                  }
                 >
                   <Check className="h-4 w-4" />
                 </Button>

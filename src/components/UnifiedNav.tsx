@@ -309,7 +309,7 @@ export function UnifiedNav() {
           "border-border/45 bg-[hsl(var(--background)/0.92)] shadow-[0_10px_28px_hsl(var(--foreground)/0.08)]",
       )}
     >
-      <div className="container mx-auto flex h-14 items-center gap-2 px-3 sm:h-15 sm:px-4">
+      <div className="container mx-auto max-w-screen-2xl flex h-14 items-center gap-2 px-4 sm:h-15 sm:px-6">
         <Link to="/" className="group flex shrink-0 items-center gap-2.5">
           <img
             src="/apple-touch-icon.png"
@@ -327,7 +327,7 @@ export function UnifiedNav() {
           </span>
         </div>
 
-        <div className="min-w-0 flex-1 max-w-4xl">
+        <div className="min-w-0 flex-1 max-w-5xl">
           <Suspense fallback={searchFallback}>
             <SearchDropdown />
           </Suspense>
@@ -411,9 +411,9 @@ export function UnifiedNav() {
           </DropdownMenu>
 
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
-            className="relative h-9 w-9 flex items-center justify-center rounded-full text-foreground/90 transition-all duration-200 hover:bg-white/6 active:scale-95"
+            className="relative h-9 w-9"
             onClick={() => setIsDesktopMenuOpen((current) => !current)}
             aria-label={isDesktopMenuOpen ? t("common.close", "Close") : t("nav.menu", "Menu")}
             aria-expanded={isDesktopMenuOpen}
@@ -425,7 +425,7 @@ export function UnifiedNav() {
 
         <div className="ml-auto flex items-center gap-1 md:hidden">
           {user && <NotificationBell />}
-          <Button asChild variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-white/6">
+          <Button asChild variant="outline" size="icon" className="h-9 w-9">
             <Link to={user ? "/profile" : "/login"} aria-label={t("nav.profile", "Profile")}>
               {profileImageUrl ? (
                 <img
@@ -439,9 +439,9 @@ export function UnifiedNav() {
             </Link>
           </Button>
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
-            className="h-9 w-9 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-white/6 active:scale-95"
+            className="h-9 w-9"
             onClick={() => setIsMobileSheetOpen((current) => !current)}
             aria-label={isMobileSheetOpen ? t("common.close", "Close") : t("nav.menu", "Menu")}
             aria-expanded={isMobileSheetOpen}
@@ -461,23 +461,15 @@ export function UnifiedNav() {
               aria-label={t("nav.menu", "Menu")}
               aria-modal="true"
             >
-              {motionIntensity !== "low" ? (
-                <div className={cn("pointer-events-none absolute inset-0", motionIntensity === "high" ? "opacity-72" : "opacity-48")}>
-                  <Suspense fallback={null}>
-                    <RemotionAurora className={motionIntensity === "high" ? "opacity-85" : "opacity-60"} />
-                  </Suspense>
-                </div>
-              ) : null}
-
               <button
                 type="button"
-                className="absolute inset-0 z-10 bg-black/55 backdrop-blur-sm"
+                className="absolute inset-0 z-10 bg-black/40"
                 aria-label={t("common.close", "Close")}
                 onClick={() => setIsDesktopMenuOpen(false)}
               />
 
               <motion.div
-                className="relative z-20 mx-auto h-full w-full overflow-y-auto border-t border-border/60 bg-background px-6 py-6 shadow-[0_25px_60px_rgba(0,0,0,0.3)]"
+                className="relative z-20 mx-auto h-full w-full overflow-y-auto border-t border-border bg-background px-6 py-6 shadow-sm"
                 initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.994 }}
                 animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: reduceMotion ? 0.16 : 0.32, ease: [0.22, 1, 0.36, 1] }}
@@ -485,7 +477,7 @@ export function UnifiedNav() {
                 <div className="mx-auto max-w-6xl space-y-8">
                   <div className="flex items-start gap-4">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/85">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                         {t("nav.more", "More")}
                       </p>
                       <h2 className="mt-1 text-2xl font-bold text-foreground">
@@ -500,7 +492,7 @@ export function UnifiedNav() {
                   <div className="grid gap-8 md:grid-cols-3">
                     {navigationGroups.map((group) => (
                       <div key={group.title} className="space-y-4">
-                        <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-primary/80 border-b border-primary/20 pb-2">
+                        <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground border-b border-border pb-2">
                           {group.title}
                         </h3>
                         <motion.div
@@ -522,19 +514,19 @@ export function UnifiedNav() {
                                   to={item.path}
                                   onClick={() => setIsDesktopMenuOpen(false)}
                                   className={cn(
-                                    "flex items-start gap-3.5 rounded-2xl border border-white/5 bg-gradient-to-b from-white/5 to-transparent px-4 py-3.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-primary/5 group relative overflow-hidden",
-                                    isActive && "border-primary/50 bg-primary/10 text-primary shadow-[0_0_15px_-3px_rgba(239,68,68,0.2)]"
+                                    "flex items-start gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm font-medium transition-colors hover:bg-accent",
+                                    isActive && "border-primary bg-primary/10 text-primary"
                                   )}
                                 >
                                   <div className={cn(
-                                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/5 border border-white/5 text-muted-foreground transition-all duration-200 group-hover:bg-primary/10 group-hover:border-primary/20 group-hover:text-primary",
-                                    isActive && "bg-primary/25 border-primary/30 text-primary"
+                                    "flex h-8 w-8 shrink-0 items-center justify-center rounded border border-border bg-background text-muted-foreground transition-all duration-200 group-hover:text-primary",
+                                    isActive && "border-primary/30 text-primary bg-primary/10"
                                   )}>
                                     <Icon className="h-4.5 w-4.5" />
                                   </div>
                                   <div className="space-y-0.5 min-w-0">
                                     <p className={cn(
-                                      "text-sm font-bold text-foreground transition-colors duration-200 group-hover:text-primary",
+                                      "text-sm font-semibold text-foreground transition-colors duration-200 group-hover:text-primary",
                                       isActive && "text-primary"
                                     )}>
                                       {t(item.labelKey, item.defaultLabel)}
@@ -566,21 +558,13 @@ export function UnifiedNav() {
           overlayClassName="top-[calc(4rem+env(safe-area-inset-top,0px))]"
           className="safe-area-insets top-[calc(4rem+env(safe-area-inset-top,0px))] h-[calc(100dvh-4rem-env(safe-area-inset-top,0px))] w-full max-w-none overflow-y-auto border-l-0 bg-background px-0 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-4 sm:w-[24rem] sm:border-l sm:pt-[max(1rem,env(safe-area-inset-top,0px))]"
         >
-          {motionIntensity !== "low" ? (
-            <div className={cn("pointer-events-none absolute inset-0", motionIntensity === "high" ? "opacity-56" : "opacity-34")}>
-              <Suspense fallback={null}>
-                <RemotionAurora className={motionIntensity === "high" ? "opacity-70" : "opacity-50"} />
-              </Suspense>
-            </div>
-          ) : null}
-
           <motion.div
             className="relative z-10 px-4 sm:px-5 pb-8"
             initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
             animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
             transition={{ duration: reduceMotion ? 0.14 : 0.24, ease: [0.22, 1, 0.36, 1] }}
           >
-            <SheetHeader className="rounded-2xl border border-border/60 bg-card/65 backdrop-blur-sm px-4 py-4 text-left">
+            <SheetHeader className="rounded-lg border border-border bg-card px-4 py-4 text-left">
               <SheetTitle className="text-xl">{t("nav.menu", "Menu")}</SheetTitle>
               <p className="text-sm text-muted-foreground">
                 {t("nav.mobileSubtitle", "Browse tools and extra pages live here.")}
@@ -598,18 +582,17 @@ export function UnifiedNav() {
               {user && (
                 <motion.div
                   variants={menuItemVariants}
-                  className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/5 to-transparent p-4 backdrop-blur-md relative overflow-hidden"
+                  className="rounded-lg border border-border bg-card p-4 relative overflow-hidden"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
                   <div className="flex items-center gap-3 relative z-10">
                     {profileImageUrl ? (
                       <img
                         src={profileImageUrl}
                         alt="Avatar"
-                        className="h-10 w-10 rounded-full object-cover border border-primary/30"
+                        className="h-10 w-10 rounded-full object-cover border border-border"
                       />
                     ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 border border-primary/20 text-primary">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted border border-border text-muted-foreground">
                         <User className="h-5 w-5" />
                       </div>
                     )}
@@ -617,7 +600,7 @@ export function UnifiedNav() {
                       <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">{t("profile.cinephileMilestones", "Trek Progress")}</p>
                       <h4 className="text-sm font-bold text-foreground truncate">{profile?.display_name || user.email}</h4>
                     </div>
-                    <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[9px] font-black uppercase text-primary tracking-widest shrink-0">
+                    <span className="rounded border border-border bg-muted px-2 py-0.5 text-[9px] font-semibold uppercase text-muted-foreground tracking-wider shrink-0">
                       {levelInfo.name}
                     </span>
                   </div>
@@ -626,9 +609,9 @@ export function UnifiedNav() {
                       <span>{moviesWatchedCount} {moviesWatchedCount === 1 ? "movie" : "movies"}</span>
                       <span>Next milestone: {levelInfo.nextMilestone}</span>
                     </div>
-                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                    <div className="h-1.5 w-full bg-muted rounded overflow-hidden border border-border">
                       <div
-                        className="h-full bg-primary rounded-full shadow-[0_0_8px_rgba(239,68,68,0.5)] transition-all duration-300"
+                        className="h-full bg-primary transition-all duration-300"
                         style={{ width: `${levelInfo.progress}%` }}
                       />
                     </div>
@@ -640,15 +623,15 @@ export function UnifiedNav() {
               {!user && (
                 <motion.div
                   variants={menuItemVariants}
-                  className="rounded-2xl border border-primary/20 bg-primary/5 p-4 relative overflow-hidden text-center"
+                  className="rounded-lg border border-border bg-muted/30 p-4 relative overflow-hidden text-center"
                 >
                   <h4 className="text-sm font-bold text-foreground">{t("home.makeEveryVisitPersonal", "Make every visit personal")}</h4>
                   <p className="text-xs text-muted-foreground mt-1">{t("home.createAccountSyncDesc", "Create a free account to sync watchlist & ratings.")}</p>
                   <div className="mt-3 flex gap-2 justify-center">
-                    <Button asChild size="sm" className="rounded-full btn-primary-glow text-[10px] h-8 px-4">
+                    <Button asChild size="sm" className="text-[10px] h-8 px-4">
                       <Link to="/signup" onClick={() => setIsMobileSheetOpen(false)}>{t("home.createFreeAccount", "Register")}</Link>
                     </Button>
-                    <Button asChild size="sm" variant="outline" className="rounded-full text-[10px] h-8 px-4 bg-transparent border-white/10 hover:bg-white/5">
+                    <Button asChild size="sm" variant="outline" className="text-[10px] h-8 px-4 bg-transparent border-border hover:bg-accent">
                       <Link to="/login" onClick={() => setIsMobileSheetOpen(false)}>{t("nav.signIn", "Sign In")}</Link>
                     </Button>
                   </div>
@@ -657,8 +640,8 @@ export function UnifiedNav() {
 
               {/* Categorized Menu Links on Mobile */}
               {navigationGroups.map((group) => (
-                <div key={group.title} className="space-y-2 border-t border-white/5 pt-4">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-primary/80 px-1">
+                <div key={group.title} className="space-y-2 border-t border-border pt-4">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground px-1">
                     {group.title}
                   </p>
                   <div className="space-y-2">
@@ -675,13 +658,13 @@ export function UnifiedNav() {
                             to={item.path}
                             onClick={() => setIsMobileSheetOpen(false)}
                             className={cn(
-                              "flex items-center gap-3 rounded-2xl border border-white/5 bg-gradient-to-b from-white/5 to-transparent px-4 py-3 text-sm font-medium text-foreground transition-all duration-200 hover:bg-primary/5 hover:border-primary/20",
-                              isActive && "border-primary/30 bg-primary/10 text-primary"
+                              "flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-accent",
+                              isActive && "border-primary bg-primary/10 text-primary"
                             )}
                           >
                             <Icon className={cn("h-4 w-4 shrink-0 text-muted-foreground", isActive && "text-primary")} />
                             <div className="flex-1 min-w-0">
-                              <p className={cn("text-sm font-bold text-foreground", isActive && "text-primary")}>
+                              <p className={cn("text-sm font-semibold text-foreground", isActive && "text-primary")}>
                                 {t(item.labelKey, item.defaultLabel)}
                               </p>
                             </div>
@@ -694,7 +677,7 @@ export function UnifiedNav() {
               ))}
 
               {/* Settings & Auth Section */}
-              <div className="space-y-2 border-t border-white/5 pt-4">
+              <div className="space-y-2 border-t border-border pt-4">
                 <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground px-1 mb-2">
                   System
                 </p>
@@ -702,7 +685,7 @@ export function UnifiedNav() {
                   <Link
                     to="/settings"
                     onClick={() => setIsMobileSheetOpen(false)}
-                    className="flex min-h-[48px] items-center gap-3 rounded-2xl border border-white/5 bg-gradient-to-b from-white/5 to-transparent px-4 py-2 text-sm font-medium text-foreground transition-all duration-200 hover:bg-white/5"
+                    className="flex min-h-[44px] items-center gap-3 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
                   >
                     <Settings className="h-4 w-4 shrink-0 text-muted-foreground" />
                     {t("nav.settings", "Settings")}
@@ -716,7 +699,7 @@ export function UnifiedNav() {
                         setIsMobileSheetOpen(false);
                         window.dispatchEvent(new Event("cinetrekker:sign-out"));
                       }}
-                      className="flex min-h-[48px] w-full items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-2 text-sm font-medium text-destructive transition-all duration-200 hover:bg-destructive/10"
+                      className="flex min-h-[44px] w-full items-center gap-3 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-2 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
                     >
                       <User className="h-4 w-4 shrink-0" />
                       {t("nav.signOut", "Sign Out")}
@@ -727,7 +710,7 @@ export function UnifiedNav() {
                     <Link
                       to="/login"
                       onClick={() => setIsMobileSheetOpen(false)}
-                      className="flex min-h-[48px] items-center gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-medium text-primary transition-all duration-200 hover:bg-primary/10"
+                      className="flex min-h-[44px] items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
                     >
                       <User className="h-4 w-4 shrink-0" />
                       {t("nav.signIn", "Sign In")}

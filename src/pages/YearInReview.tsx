@@ -452,10 +452,10 @@ export default function YearInReview() {
                           </Pie>
                           <RechartsTooltip
                             contentStyle={{
-                              background: "rgba(22,22,22,0.95)",
-                              border: "1px solid rgba(255,255,255,0.08)",
-                              color: "#fff",
-                              borderRadius: "12px",
+                              background: "hsl(var(--popover))",
+                              border: "1px solid hsl(var(--border))",
+                              color: "hsl(var(--popover-foreground))",
+                              borderRadius: "var(--radius)",
                               fontSize: "12px",
                             }}
                           />
@@ -505,18 +505,18 @@ export default function YearInReview() {
                   <div className="h-[280px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <XAxis dataKey="month" tick={{ fill: "#a3a3a3", fontSize: 11 }} />
-                        <YAxis tick={{ fill: "#a3a3a3", fontSize: 11 }} />
+                        <XAxis dataKey="month" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                        <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
                         <RechartsTooltip
                           contentStyle={{
-                            background: "rgba(22,22,22,0.95)",
-                            border: "1px solid rgba(255,255,255,0.08)",
-                            color: "#fff",
-                            borderRadius: "12px",
+                            background: "hsl(var(--popover))",
+                            border: "1px solid hsl(var(--border))",
+                            color: "hsl(var(--popover-foreground))",
+                            borderRadius: "var(--radius)",
                             fontSize: "12px",
                           }}
                         />
-                        <Bar dataKey="count" fill="#E50914" radius={[6, 6, 0, 0]} />
+                        <Bar dataKey="count" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>

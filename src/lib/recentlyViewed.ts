@@ -1,6 +1,9 @@
 // Recently viewed tracking
+import { createLogger } from "@/lib/logger";
+
 const STORAGE_ID = 'cinetrekker_recently_viewed';
 const MAX_ITEMS = 20;
+const logger = createLogger("recently-viewed");
 
 export interface RecentlyViewedItem {
   id: number;
@@ -31,7 +34,7 @@ export function addToRecentlyViewed(item: Omit<RecentlyViewedItem, 'timestamp'>)
     
     localStorage.setItem(STORAGE_ID, JSON.stringify(trimmed));
   } catch (error) {
-    console.error('Failed to save recently viewed:', error);
+    logger.error('Failed to save recently viewed', error);
   }
 }
 
@@ -40,7 +43,7 @@ export function getRecentlyViewed(): RecentlyViewedItem[] {
     const stored = localStorage.getItem(STORAGE_ID);
     return stored ? JSON.parse(stored) : [];
   } catch (error) {
-    console.error('Failed to load recently viewed:', error);
+    logger.error('Failed to load recently viewed', error);
     return [];
   }
 }

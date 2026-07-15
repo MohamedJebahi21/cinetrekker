@@ -9,7 +9,6 @@ import {
   Search,
   Trash2,
   Share2,
-  Compass,
   Film,
   Tv,
   Calendar,
@@ -21,6 +20,7 @@ import { useTitleFollows } from "@/hooks/useTitleFollows";
 import { getImageUrl, getMediaTitle, getBackdropUrl } from "@/services/tmdb";
 import { Media, MediaDetails } from "@/types/media";
 import SEO from "@/components/SEO";
+import { EmptyState } from "@/components/EmptyStates";
 import { Image } from "@/components/ui/Image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,8 +33,10 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { enrichMediaItems } from "@/lib/mediaEnrichment";
+import { createLogger } from "@/lib/logger";
 
 type FollowedShowDetails = MediaDetails & { followedAt?: string };
+const logger = createLogger("following");
 
 function formatAirDate(isoDate: string, language: string): string {
   const date = new Date(isoDate);
@@ -132,7 +134,7 @@ export default function Following() {
   const backdropUrl = useMemo(() => {
     if (!showDetails || showDetails.length === 0) return null;
     const firstWithBackdrop = showDetails.find((show) => show.backdrop_path);
-    return firstWithBackdrop ? getBackdropUrl(firstWithBackdrop.backdrop_path, "original") : null;
+    return firstWithBackdrop ? getBackdropUrl(firstWithBackdrop.backdrop_path, "w1280") : null;
   }, [showDetails]);
 
   // Filter and sort items
@@ -194,7 +196,7 @@ export default function Following() {
     try {
       await unfollowTitle({ mediaId: showId, mediaType });
     } catch (err) {
-      console.error("Failed to unfollow", err);
+      logger.error("Failed to unfollow", err);
     }
   };
 
@@ -547,13 +549,13 @@ export default function Following() {
                       )}
 
                       {/* Top Right Quick Unfollow Action */}
-                      <div className="absolute right-2 top-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute right-2 top-2 z-10 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">
                         <Button
                           variant="secondary"
                           size="icon"
                           onClick={(e) => handleUnfollow(e, show.id, show.media_type as "movie" | "tv")}
-                          className="h-8 w-8 rounded-full border border-white/10 bg-black/60 text-red-400 backdrop-blur-md transition-all duration-200 hover:scale-110 hover:bg-red-500 hover:text-white"
-                          aria-label={t("following.unfollow", "Unfollow")}
+                          className="h-8 w-8 rounded-full border border-white/10 bg-black/60 text-destructive backdrop-blur-md transition-all duration-200 hover:scale-110 hover:bg-destructive hover:text-destructive-foreground"
+                          aria-label={t("following.unfollowTitle", "Unfollow {{title}}", { title })}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -609,6 +611,7 @@ export default function Following() {
                           onClick={(e) => handleShare(e, show)}
                           className="h-7 w-7 rounded-full text-muted-foreground hover:text-primary transition-all duration-200"
                           title={t("common.share", "Share")}
+                          aria-label={t("following.shareTitle", "Share {{title}}", { title })}
                         >
                           <Share2 className="h-3.5 w-3.5" />
                         </Button>
@@ -620,67 +623,34 @@ export default function Following() {
             </motion.div>
           ) : followedTitles.length > 0 ? (
             /* No results empty state */
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col items-center justify-center text-center p-12 rounded-3xl border border-white/5 bg-gradient-to-b from-white/5 to-transparent backdrop-blur-md max-w-md mx-auto mt-12 shadow-xl"
-            >
-              <div className="relative mb-6">
-                <div className="absolute inset-0 bg-white/5 blur-lg rounded-full" />
-                <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white/5 border border-white/10 text-muted-foreground">
-                  <Search className="h-6 w-6" />
-                </div>
-              </div>
-              <h3 className="text-lg font-semibold text-foreground">
-                {t("following.noMatch", "No matching titles found")}
-              </h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {t(
-                  "following.noMatchDesc",
-                  "Try adjusting your search query or filters to find what you're looking for."
-                )}
-              </p>
-              <Button
-                variant="outline"
-                onClick={clearAllFilters}
-                className="mt-5 rounded-full"
-              >
-                {t("following.clearFilters", "Clear Filters")}
-              </Button>
-            </motion.div>
+            <EmptyState
+              icon={Search}
+              title={t("following.noMatch", "No matching titles found")}
+              description={t(
+                "following.noMatchDesc",
+                "Try a broader search, switch the format, or clear filters to see your full tracking list.",
+              )}
+              action={{
+                label: t("following.clearFilters", "Clear Filters"),
+                onClick: clearAllFilters,
+              }}
+              className="mt-12 min-h-[360px]"
+            />
           ) : (
             /* Followed count is 0 empty state */
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4 }}
-              className="flex flex-col items-center justify-center text-center p-12 rounded-3xl border border-white/5 bg-gradient-to-b from-white/5 to-transparent backdrop-blur-md max-w-lg mx-auto mt-12 shadow-xl"
-            >
-              <div className="relative mb-6">
-                <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full" />
-                <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 border border-primary/20 text-primary animate-pulse">
-                  <Heart className="h-8 w-8 fill-primary/30" />
-                </div>
-              </div>
-              <h2 className="text-xl font-bold text-foreground">
-                {t("following.empty", "No titles being followed")}
-              </h2>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-sm">
-                {t(
-                  "following.emptyDesc",
-                  "Start following movies or series to track their releases, new episodes, and cast announcements."
-                )}
-              </p>
-              <Button
-                asChild
-                className="mt-6 bg-primary text-primary-foreground hover:bg-primary/90 btn-primary-glow px-6 py-2 rounded-full"
-              >
-                <Link to="/discover">
-                  <Compass className="mr-2 h-4 w-4" />
-                  {t("following.discoverShows", "Discover Titles")}
-                </Link>
-              </Button>
-            </motion.div>
+            <EmptyState
+              icon={Heart}
+              title={t("following.empty", "No titles being followed")}
+              description={t(
+                "following.emptyDesc",
+                "Follow movies and series to track releases, new episodes, cast updates, and seasonal changes from one calm dashboard.",
+              )}
+              action={{
+                label: t("following.discoverShows", "Discover Titles"),
+                onClick: () => navigate("/discover"),
+              }}
+              className="mt-12 min-h-[380px]"
+            />
           )}
         </div>
       </div>

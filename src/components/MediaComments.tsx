@@ -20,6 +20,9 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("media-comments");
 
 interface MediaCommentsProps {
   mediaId: number;
@@ -194,16 +197,12 @@ export function MediaComments({ mediaId, mediaType }: MediaCommentsProps) {
 
   const { data: comments, isLoading, error } = useQuery({
     queryKey: ["comments", mediaType, mediaId],
-    queryFn: async () => {
-      const commentsData = await socialService.getComments(mediaId, mediaType);
-      console.log("Fetched comments:", commentsData);
-      return commentsData;
-    },
+    queryFn: () => socialService.getComments(mediaId, mediaType),
     enabled: !!mediaId && !!mediaType,
   });
 
   if (error) {
-    console.error("Error fetching comments:", error);
+    logger.error("Error fetching comments", error);
   }
 
   const { data: likedCommentIds = [] } = useQuery({
@@ -423,7 +422,7 @@ export function MediaComments({ mediaId, mediaType }: MediaCommentsProps) {
       </div>
 
       {user && (
-        <div className="border-l-2 border-border/40 pl-6">
+        <div className="rounded-2xl border border-border/60 bg-card/55 p-4">
           <div className="text-sm text-muted-foreground mb-4">
             {replyingToComment
               ? (

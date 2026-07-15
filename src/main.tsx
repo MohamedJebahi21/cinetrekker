@@ -17,14 +17,17 @@ import { installChunkErrorHandlers } from "@/lib/chunkErrorRecovery";
 // code runs so that all DOM sink assignments are covered from the start.
 import "@/lib/trustedTypes";
 import { scheduleIdleTask } from "@/lib/idleCallback";
+import { createLogger } from "@/lib/logger";
 
 // Install chunk error handlers BEFORE React renders
 installChunkErrorHandlers();
 applyThemeToDocument(readStoredTheme());
 
+const logger = createLogger("bootstrap");
+
 const rootElement = document.getElementById("root");
 if (!rootElement) {
-  console.error("CRITICAL: Missing root element! Make sure index.html has <div id=\"root\"></div>");
+  logger.error("Missing root element. Make sure index.html has <div id=\"root\"></div>");
   throw new Error("Missing root element in index.html");
 }
 
@@ -33,23 +36,69 @@ function renderFatalError(err: unknown) {
     return;
   }
 
-  console.error("FATAL ERROR during React render:", err);
+  logger.error("Fatal error during React render:", err);
 
   const container = document.createElement("div");
-  container.style.cssText = "padding: 40px; font-family: system-ui; max-width: 600px; margin: 0 auto;";
+  container.setAttribute("role", "alert");
+  container.setAttribute("aria-live", "assertive");
+  container.style.cssText = [
+    "min-height: 100dvh",
+    "display: grid",
+    "place-items: center",
+    "padding: 24px",
+    "font-family: var(--font-body, system-ui, sans-serif)",
+    "background: hsl(var(--background, 240 9% 5%))",
+    "color: hsl(var(--foreground, 48 18% 96%))",
+  ].join(";");
+
+  const panel = document.createElement("div");
+  panel.style.cssText = [
+    "width: min(100%, 620px)",
+    "padding: 28px",
+    "border: 1px solid hsl(var(--border, 240 5% 18%))",
+    "border-radius: 20px",
+    "background: hsl(var(--card, 240 6% 12%) / 0.92)",
+    "box-shadow: var(--shadow-card, 0 18px 48px rgb(0 0 0 / 0.35))",
+  ].join(";");
 
   const heading = document.createElement("h1");
-  heading.style.color = "#dc2626";
-  heading.textContent = "Application Failed to Load";
+  heading.style.cssText = "margin: 0; font-size: 1.5rem; line-height: 1.2; color: hsl(var(--foreground, 48 18% 96%));";
+  heading.textContent = "CineTrekker could not start";
 
   const errorText = document.createElement("p");
-  errorText.style.cssText = "background: #fef2f2; padding: 16px; border-radius: 8px; border-left: 4px solid #dc2626;";
+  errorText.style.cssText = [
+    "margin: 16px 0 0",
+    "padding: 14px 16px",
+    "border: 1px solid hsl(var(--destructive, 8 78% 48%) / 0.35)",
+    "border-radius: 14px",
+    "background: hsl(var(--destructive, 8 78% 48%) / 0.1)",
+    "color: hsl(var(--foreground, 48 18% 96%))",
+    "overflow-wrap: anywhere",
+  ].join(";");
   errorText.textContent = `Error: ${err instanceof Error ? err.message : String(err)}`;
 
   const hint = document.createElement("p");
-  hint.textContent = "Check the browser console (F12) for more details.";
+  hint.style.cssText = "margin: 14px 0 0; color: hsl(var(--muted-foreground, 240 4% 66%)); line-height: 1.55;";
+  hint.textContent = "Refresh the page to try again. If the issue continues, check the browser console for details.";
 
-  container.append(heading, errorText, hint);
+  const retry = document.createElement("button");
+  retry.type = "button";
+  retry.textContent = "Refresh page";
+  retry.style.cssText = [
+    "margin-top: 20px",
+    "min-height: 44px",
+    "border: 0",
+    "border-radius: 12px",
+    "padding: 0 16px",
+    "font-weight: 700",
+    "background: hsl(var(--primary, 356 84% 50%))",
+    "color: hsl(var(--primary-foreground, 0 0% 100%))",
+    "cursor: pointer",
+  ].join(";");
+  retry.addEventListener("click", () => window.location.reload());
+
+  panel.append(heading, errorText, hint, retry);
+  container.append(panel);
   rootElement.replaceChildren(container);
 }
 

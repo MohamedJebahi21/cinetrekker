@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Film } from "lucide-react";
 import { Media } from "@/types/media";
 import { MediaCard, MediaCardSkeleton } from "@/components/MediaCard";
 import { Button } from "@/components/ui/button";
@@ -75,6 +75,17 @@ function getScrollState(container: HTMLDivElement, itemCount: number): ScrollSta
   };
 }
 
+function getPreferredScrollBehavior(): ScrollBehavior {
+  if (
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  ) {
+    return "auto";
+  }
+
+  return "smooth";
+}
+
 export function MediaCarouselEnhanced({
   title,
   items,
@@ -141,7 +152,7 @@ export function MediaCarouselEnhanced({
     const scrollDistance = Math.floor(container.clientWidth * 0.85);
     container.scrollBy({
       left: direction === "left" ? -scrollDistance : scrollDistance,
-      behavior: "smooth",
+      behavior: getPreferredScrollBehavior(),
     });
   }, []);
 
@@ -159,21 +170,21 @@ export function MediaCarouselEnhanced({
 
     container.scrollTo({
       left: targetLeft,
-      behavior: "smooth",
+      behavior: getPreferredScrollBehavior(),
     });
   }, []);
 
   const headingText =
     typeof title === "string" ? toTitleCaseLabel(title) : title;
   const seeAllText = toTitleCaseLabel(showMoreLabel || t("common.seeAll"));
-  const emptyText = toTitleCaseLabel(emptyMessage || t("common.noResults"));
+  const emptyText = emptyMessage || t("common.noResults", "No titles found right now.");
   const previousText = t("common.previous")
     ? toTitleCaseLabel(t("common.previous"))
     : "Previous";
   const nextText = t("common.next") ? toTitleCaseLabel(t("common.next")) : "Next";
 
   return (
-    <section className="animate-fade-in group/carousel">
+    <section className="animate-fade-in group/carousel" aria-label={headingText}>
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl font-bold md:text-2xl">{headingText}</h2>
 
@@ -269,8 +280,21 @@ export function MediaCarouselEnhanced({
           ) : null}
         </div>
       ) : (
-        <div className="flex min-h-[420px] items-center justify-center text-center text-muted-foreground sm:min-h-[520px]">
-          <p className="max-w-md px-4">{emptyText}</p>
+        <div className="flex min-h-[320px] items-center justify-center sm:min-h-[420px]">
+          <div className="mx-4 flex max-w-md flex-col items-center rounded-[2rem] border border-border/60 bg-card/45 px-6 py-10 text-center shadow-[0_18px_60px_hsl(var(--background)/0.22)] backdrop-blur-sm">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/15 bg-primary/10 text-primary">
+              <Film className="h-7 w-7" aria-hidden="true" />
+            </div>
+            <h3 className="text-lg font-semibold tracking-tight text-foreground">
+              {t("common.noTitlesAvailable", "No titles available")}
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{emptyText}</p>
+            {showMoreLink ? (
+              <Button asChild variant="outline" size="sm" className="mt-5 rounded-xl">
+                <Link to={showMoreLink}>{seeAllText}</Link>
+              </Button>
+            ) : null}
+          </div>
         </div>
       )}
     </section>

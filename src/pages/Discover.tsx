@@ -76,7 +76,8 @@ function SpotlightHero({ items }: { items: Media[] }) {
             src={getBackdropUrl(item.backdrop_path, "w1280") || ""}
             alt=""
             aria-hidden="true"
-            className="w-full h-full object-cover object-center scale-[1.02] transition-transform duration-[8s] hover:scale-[1.05]"
+            className="w-full h-full object-cover object-center scale-[1.02] transition-transform hover:scale-[1.05]"
+            style={{ transitionDuration: "8000ms" }}
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700" />

@@ -720,7 +720,7 @@ export default function Recommendations() {
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
                     transition={{ duration: 1, ease: "easeOut" }}
-                    className="h-full rounded-full bg-gradient-to-r from-primary to-[#ff6b73]"
+                    className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70"
                   />
                 </div>
                 <p className="mt-1.5 text-[10px] text-muted-foreground">
@@ -796,7 +796,7 @@ export default function Recommendations() {
 
                     {/* Title */}
                     <h1 className="mb-2 text-4xl font-black tracking-tight text-foreground md:text-5xl">
-                      <span className="bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text">
+                      <span className="text-foreground">
                         {t("recommendations.title", "For You")}
                       </span>
                     </h1>

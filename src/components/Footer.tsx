@@ -26,7 +26,7 @@ export function Footer() {
       ) : null}
 
       <div className="container relative z-10 mx-auto max-w-7xl px-4 py-7 pb-[max(calc(3.5rem+env(safe-area-inset-bottom,0px)),1.5rem)] md:py-12 md:pb-12">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-4 md:gap-12">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-5 md:gap-12">
           <div className="min-w-0 md:col-span-2">
             <div className="mb-4 flex items-center gap-3">
               <img
@@ -107,39 +107,37 @@ export function Footer() {
         </div>
 
         <div className="mt-8 border-t border-border/40 pt-5">
-          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <p className="text-center text-[0.84rem] text-muted-foreground md:text-left">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <p className="shrink-0 text-[0.84rem] text-muted-foreground">
               © {currentYear} {t("common.appName")}. {t("footer.allRightsReserved", "All rights reserved.")}
             </p>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {t("footer.poweredBy", "Powered by")}
-                </span>
-                <a
-                  href="https://www.themoviedb.org/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="transition-opacity hover:opacity-80"
-                >
-                  <img
-                    src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg"
-                    alt="TMDB logo for CineTrekker movie tracker data provider"
-                    className="h-4 logo-image"
-                    loading="lazy"
-                    width="81"
-                    height="12"
-                  />
-                </a>
-              </div>
+            <p className="flex-1 text-center text-xs leading-relaxed text-muted-foreground/70 min-w-0">
+              {t(
+                "footer.attribution",
+                "This product uses the TMDB API but is not endorsed or certified by TMDB. All movie and TV show data, including images and metadata, is provided by The Movie Database (TMDB).",
+              )}
+            </p>
+            <div className="shrink-0 flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {t("footer.poweredBy", "Powered by")}
+              </span>
+              <a
+                href="https://www.themoviedb.org/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition-opacity hover:opacity-80"
+              >
+                <img
+                  src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg"
+                  alt="TMDB logo for CineTrekker movie tracker data provider"
+                  className="h-4 logo-image"
+                  loading="lazy"
+                  width="81"
+                  height="12"
+                />
+              </a>
             </div>
           </div>
-          <p className="mx-auto mt-3 max-w-3xl text-center text-sm leading-relaxed text-muted-foreground">
-            {t(
-              "footer.attribution",
-              "This product uses the TMDB API but is not endorsed or certified by TMDB. All movie and TV show data, including images and metadata, is provided by The Movie Database (TMDB).",
-            )}
-          </p>
         </div>
       </div>
     </footer>

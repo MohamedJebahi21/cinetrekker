@@ -69,11 +69,11 @@ export default {
           low: "hsl(var(--rating-low))",
         },
         surface: {
-          "dark-1": "#0f0f0f",
-          "dark-2": "#1a1a1a",
-          "dark-3": "#2d2d2d",
-          "light-1": "#e5e5e5",
-          "light-2": "#b3b3b3",
+          "dark-1": "hsl(var(--background))",
+          "dark-2": "hsl(var(--card))",
+          "dark-3": "hsl(var(--muted))",
+          "light-1": "hsl(var(--foreground))",
+          "light-2": "hsl(var(--muted-foreground))",
         },
       },
       borderRadius: {
@@ -82,16 +82,16 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        "glow": "0 0 20px rgba(229, 9, 20, 0.3)",
-        "glow-lg": "0 0 40px rgba(229, 9, 20, 0.2)",
-        "card": "0 4px 16px rgba(0, 0, 0, 0.4)",
-        "card-hover": "0 12px 32px rgba(229, 9, 20, 0.15)",
-        "hover": "0 12px 24px rgba(0, 0, 0, 0.2)",
+        "glow": "0 0 20px hsl(var(--primary) / 0.3)",
+        "glow-lg": "0 0 40px hsl(var(--primary) / 0.2)",
+        "card": "0 4px 16px hsl(var(--background) / 0.4)",
+        "card-hover": "0 12px 32px hsl(var(--primary) / 0.15)",
+        "hover": "0 12px 24px hsl(var(--background) / 0.2)",
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Bebas Neue', 'Inter', 'system-ui', 'sans-serif'],
-        arabic: ['Noto Sans Arabic', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ["var(--font-body)", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "system-ui", "sans-serif"],
+        arabic: ["Noto Sans Arabic", "var(--font-body)", "system-ui", "sans-serif"],
       },
       screens: {
         'xs': '480px',
@@ -134,8 +134,8 @@ export default {
           "100%": { transform: "scale(1.02)" },
         },
         "glow": {
-          "0%, 100%": { boxShadow: "0 0 10px rgba(229, 9, 20, 0.1)" },
-          "50%": { boxShadow: "0 0 20px rgba(229, 9, 20, 0.3)" },
+          "0%, 100%": { boxShadow: "0 0 10px hsl(var(--primary) / 0.1)" },
+          "50%": { boxShadow: "0 0 20px hsl(var(--primary) / 0.3)" },
         },
       },
       animation: {
@@ -152,7 +152,7 @@ export default {
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-        "gradient-primary": "linear-gradient(135deg, hsl(var(--primary)), hsl(358, 81%, 40%))",
+        "gradient-primary": "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.72))",
       },
     },
   },

@@ -1,5 +1,8 @@
 import { QueryClient, QueryCache } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('query-client');
 
 /**
  * Configured QueryClient instance for the application
@@ -29,7 +32,7 @@ export const queryClient = new QueryClient({
         
         if (authErrorCount >= MAX_AUTH_ERRORS && !circuitBreakerActive) {
           circuitBreakerActive = true;
-          console.error('Circuit breaker activated: Too many authentication failures');
+          logger.error('Circuit breaker activated: Too many authentication failures');
           toast({
             title: 'Configuration Error',
             description: 'API authentication failed. Please check your configuration or contact support.',

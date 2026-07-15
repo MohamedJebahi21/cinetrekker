@@ -1236,7 +1236,7 @@ export default function Profile() {
           "profile.personaCuratorDesc",
           "You are beginning your cinematic trek. Start logging and rating films to discover your true taste archetype!"
         ),
-        icon: <Sparkles className="h-8 w-8 text-amber-500" />,
+        icon: <Sparkles className="h-7 w-7 text-muted-foreground" />,
         badge: "Curator",
       };
     }
@@ -1253,14 +1253,14 @@ export default function Profile() {
         return {
           title: "Cosmic Adventurer",
           description: "You thrive on massive scales, interstellar voyages, and fantastical journeys that push the boundaries of space and time.",
-          icon: <Sparkles className="h-8 w-8 text-blue-400" />,
+          icon: <Sparkles className="h-7 w-7 text-muted-foreground" />,
           badge: "Sci-Fi & Action",
         };
       }
       return {
         title: "Adrenaline Junkie",
         description: "You seek high-octane sequences, edge-of-your-seat suspense, and high-stakes narratives that get your heart racing.",
-        icon: <TrendingUp className="h-8 w-8 text-red-500" />,
+        icon: <TrendingUp className="h-7 w-7 text-muted-foreground" />,
         badge: "Action & Thriller",
       };
     }
@@ -1269,7 +1269,7 @@ export default function Profile() {
       return {
         title: "Dream Weaver",
         description: "You explore alternate realities, futuristic tech, and magical realms, valuing infinite imagination and cerebral concepts.",
-        icon: <Sparkles className="h-8 w-8 text-violet-400" />,
+        icon: <Sparkles className="h-7 w-7 text-muted-foreground" />,
         badge: "Sci-Fi & Fantasy",
       };
     }
@@ -1279,14 +1279,14 @@ export default function Profile() {
         return {
           title: "Romantic Realist",
           description: "You appreciate the tender nuances of human intimacy, heartfelt connections, and the emotional rollercoasters of love.",
-          icon: <Star className="h-8 w-8 text-rose-400 animate-pulse" />,
+          icon: <Star className="h-7 w-7 text-muted-foreground" />,
           badge: "Romance & Drama",
         };
       }
       return {
         title: "Drama Connoisseur",
         description: "You value deep character studies, complex moral dilemmas, and powerful performances that reflect the truths of life.",
-        icon: <Award className="h-8 w-8 text-indigo-400" />,
+        icon: <Award className="h-7 w-7 text-muted-foreground" />,
         badge: "Drama Specialist",
       };
     }
@@ -1295,7 +1295,7 @@ export default function Profile() {
       return {
         title: "Joyous Spectator",
         description: "You believe cinema is a source of joy, appreciating clever banter, visual comedy, and stories that leave you with a smile.",
-        icon: <Sparkles className="h-8 w-8 text-yellow-400" />,
+        icon: <Sparkles className="h-7 w-7 text-muted-foreground" />,
         badge: "Comedy Enthusiast",
       };
     }
@@ -1321,7 +1321,7 @@ export default function Profile() {
     return {
       title: "Eclectic Cinephile",
       description: "Your taste knows no bounds. You display a balanced, versatile appreciation for diverse genres and cinematic storytelling styles.",
-      icon: <Trophy className="h-8 w-8 text-amber-500" />,
+      icon: <Trophy className="h-7 w-7 text-muted-foreground" />,
       badge: "Multifaceted",
     };
   }, [genreWatchCounts, watchedInsights.length, text]);
@@ -1661,9 +1661,8 @@ export default function Profile() {
     () => [
       {
         id: "first-log",
-        icon: <Trophy className="h-5 w-5 text-amber-500" />,
-        colorClass:
-          "border-amber-500/30 bg-amber-500/10 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.15)]",
+        icon: <Trophy className="h-5 w-5 text-muted-foreground" />,
+        colorClass: "",
         shortLabel: text("profile.achievementFirstLogShort", "First Log"),
         fullLabel: text("achievements.watchFirst", "First Movie Logged"),
         condition: text("profile.achievementFirstLogCondition", "Log at least 1 movie"),
@@ -1675,9 +1674,8 @@ export default function Profile() {
       },
       {
         id: "50-movies",
-        icon: <Award className="h-5 w-5 text-neutral-300" />,
-        colorClass:
-          "border-primary/30 bg-primary/10 text-primary shadow-[0_0_15px_rgba(229,9,20,0.12)]",
+        icon: <Award className="h-5 w-5 text-muted-foreground" />,
+        colorClass: "",
         shortLabel: text("profile.achievement50MoviesShort", "50 Movies"),
         fullLabel: text("achievements.watch50", "50 Movies Watched"),
         condition: text("profile.achievement50MoviesCondition", "Watch 50 movies"),
@@ -1689,9 +1687,8 @@ export default function Profile() {
       },
       {
         id: "100-movies",
-        icon: <Star className="h-5 w-5 text-yellow-400" />,
-        colorClass:
-          "border-yellow-400/30 bg-yellow-400/10 text-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.1)]",
+        icon: <Star className="h-5 w-5 text-muted-foreground" />,
+        colorClass: "",
         shortLabel: text("profile.achievement100MoviesShort", "100 Movies"),
         fullLabel: text("achievements.watch100", "100 Movies Watched"),
         condition: text("profile.achievement100MoviesCondition", "Watch 100 movies"),
@@ -1703,9 +1700,8 @@ export default function Profile() {
       },
       {
         id: "200-ratings",
-        icon: <Sparkles className="h-5 w-5 text-purple-400" />,
-        colorClass:
-          "border-purple-400/30 bg-purple-400/10 text-purple-400 shadow-[0_0_15px_rgba(192,132,252,0.1)]",
+        icon: <Sparkles className="h-5 w-5 text-muted-foreground" />,
+        colorClass: "",
         shortLabel: text("profile.achievement200RatingsShort", "200 Ratings"),
         fullLabel: text("achievements.rate200", "200 Ratings"),
         condition: text("profile.achievement200RatingsCondition", "Rate 200 titles"),
@@ -1749,8 +1745,7 @@ export default function Profile() {
       toast({
         title: t("profile.linkCopiedToClipboard", "Link copied to clipboard!"),
         description: t("profile.profileLinkReady", "Your profile link is ready to share."),
-        className:
-          "border-l-4 border-l-[#E50914] bg-neutral-900/95 text-neutral-100 rounded-full",
+
       });
     } catch {
       toast({
@@ -1825,19 +1820,18 @@ export default function Profile() {
         initial="hidden"
         animate="visible"
       >
-        {/* Cinematic Widescreen Cover Backdrop */}
-        <div className="absolute inset-x-0 top-0 z-0 h-[240px] md:h-[300px] w-full overflow-hidden">
+        {/* Widescreen Cover Backdrop */}
+        <div className="absolute inset-x-0 top-0 z-0 h-[200px] md:h-[260px] w-full overflow-hidden border-b border-border">
           {profileCoverBackdrop ? (
             <img
-            src={getBackdropUrl(profileCoverBackdrop, "original") ?? ""}
+              src={getBackdropUrl(profileCoverBackdrop, "original") ?? ""}
               alt="Profile cover backdrop"
-              className="h-full w-full object-cover blur-[6px] scale-105 opacity-30 transition-all duration-700"
+              className="h-full w-full object-cover opacity-15"
             />
           ) : (
-            <div className="h-full w-full bg-gradient-to-r from-red-950/15 via-zinc-900/40 to-neutral-900/30 opacity-30" />
+            <div className="h-full w-full bg-muted/40" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/40 to-background" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(229,9,20,0.05),transparent_70%)]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background" />
         </div>
 
         {isLoadingProfile && (
@@ -1850,76 +1844,40 @@ export default function Profile() {
           <TooltipProvider>
             <div className="relative z-10 mt-12 md:mt-24">
               <motion.section variants={itemVariants} className="mb-8">
-                <Card
-                  className={cn(
-                    "ct-panel-strong relative overflow-hidden shadow-2xl border-border/50 bg-card/70 backdrop-blur-md",
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "absolute inset-0",
-                      isLightTheme
-                        ? "bg-[radial-gradient(circle_at_20%_20%,rgba(229,9,20,0.08),transparent_42%),linear-gradient(135deg,rgba(255,255,255,0.45)_8%,rgba(246,247,249,0.3)_100%)]"
-                        : "bg-[radial-gradient(circle_at_20%_20%,rgba(229,9,20,0.12),transparent_45%),linear-gradient(135deg,rgba(11,11,13,0.5)_20%,rgba(17,18,22,0.4)_100%)]",
-                    )}
-                  />
-                  <div
-                    className={cn(
-                      "pointer-events-none absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22220%22 height=%22220%22 viewBox=%220 0 220 220%22%3E%3Cfilter id=%22n%22 x=%220%22 y=%220%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.9%22 numOctaves=%222%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22220%22 height=%22220%22 filter=%22url(%23n)%22 opacity=%220.42%22/%3E%3C/svg%3E')]",
-                      isLightTheme ? "opacity-[0.02]" : "opacity-[0.045]",
-                    )}
-                  />
-
-                  <CardContent className="relative z-10 pt-8 pb-7">
+                <Card className="relative overflow-hidden border border-border bg-card shadow-sm">
+                  <CardContent className="pt-8 pb-7">
                     <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
                       <div
                         className="flex w-full flex-col items-center sm:w-[21rem] sm:min-w-[21rem]"
                       >
                         <div
-                        className="relative group"
-                        onDragOver={(event) => {
-                          event.preventDefault();
-                          setIsAvatarDragActive(true);
-                        }}
-                        onDragLeave={(event) => {
-                          if (
-                            event.currentTarget.contains(
-                              event.relatedTarget as Node | null,
-                            )
-                          ) {
-                            return;
-                          }
-                          setIsAvatarDragActive(false);
-                        }}
-                        onDrop={(event) => {
-                          event.preventDefault();
-                          setIsAvatarDragActive(false);
-                          const file = event.dataTransfer.files?.[0];
-                          if (!file) return;
-                          void handlePhotoFile(file);
-                        }}
+                          className="relative group"
+                          onDragOver={(event) => {
+                            event.preventDefault();
+                            setIsAvatarDragActive(true);
+                          }}
+                          onDragLeave={(event) => {
+                            if (
+                              event.currentTarget.contains(
+                                event.relatedTarget as Node | null,
+                              )
+                            ) {
+                              return;
+                            }
+                            setIsAvatarDragActive(false);
+                          }}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            setIsAvatarDragActive(false);
+                            const file = event.dataTransfer.files?.[0];
+                            if (!file) return;
+                            void handlePhotoFile(file);
+                          }}
                         >
                           <div
                             className={cn(
-                              "pointer-events-none absolute -inset-3 rounded-full",
-                              isLightTheme
-                                ? "bg-[radial-gradient(circle,rgba(229,9,20,0.16)_0%,rgba(229,9,20,0.06)_48%,rgba(255,255,255,0)_76%)]"
-                                : "bg-[radial-gradient(circle,rgba(229,9,20,0.18)_0%,rgba(229,9,20,0.08)_46%,rgba(0,0,0,0)_72%)]",
-                            )}
-                          />
-                          <div
-                            className={cn(
-                              "pointer-events-none absolute -inset-1 rounded-full blur-xl",
-                              isLightTheme
-                                ? "bg-[#ff4d57]/25 opacity-80"
-                                : "bg-[#E50914]/30 opacity-75",
-                            )}
-                          />
-                          <div
-                            className={cn(
-                              "relative h-36 w-36 overflow-hidden rounded-full border-[5px] border-[#E50914] bg-card shadow-[0_0_0_2px_rgba(255,255,255,0.08),0_0_40px_rgba(229,9,20,0.45)] sm:h-40 sm:w-40",
-                              isAvatarDragActive &&
-                                "scale-[1.02] border-[#ff6b73] shadow-[0_0_0_2px_rgba(255,255,255,0.16),0_0_50px_rgba(229,9,20,0.6)]",
+                              "relative h-36 w-36 overflow-hidden rounded-full border-2 border-border bg-muted sm:h-40 sm:w-40",
+                              isAvatarDragActive && "border-primary scale-[1.02]",
                             )}
                           >
                             {profilePhoto ? (
@@ -1970,7 +1928,7 @@ export default function Profile() {
                                 variant="secondary"
                                 size="sm"
                                 className={cn(
-                                  "h-14 w-full justify-center rounded-full px-4 text-base font-semibold",
+                                  "h-10 w-full justify-center",
                                   !profilePhoto && "col-span-2",
                                 )}
                                 onClick={() => profilePhotoInputRef.current?.click()}
@@ -1991,7 +1949,7 @@ export default function Profile() {
                               type="button"
                               variant="outline"
                               size="sm"
-                              className="h-14 w-full justify-center rounded-full px-4 text-base font-semibold"
+                              className="h-10 w-full justify-center"
                               onClick={handlePhotoRemove}
                             >
                               <X className="mr-2 h-4 w-4" />
@@ -2009,7 +1967,7 @@ export default function Profile() {
                           <h1 className="text-3xl font-black tracking-tight sm:text-4xl text-foreground">
                             {userName}
                           </h1>
-                          <Badge className="border-none bg-[#E50914]/20 text-[#ff6b73] px-2.5 py-1">
+                          <Badge variant="secondary" className="px-2.5 py-1">
                             <Trophy className="mr-1.5 h-3.5 w-3.5" />
                             {cinephileLevel}
                           </Badge>
@@ -2029,7 +1987,7 @@ export default function Profile() {
                           </div>
                           <Progress
                             value={levelProgress}
-                            className="h-2 bg-neutral-800/80 [&>div]:bg-gradient-to-r [&>div]:from-[#E50914] [&>div]:to-[#ff6b73]"
+                            className="h-1.5"
                           />
                         </div>
 
@@ -2074,39 +2032,36 @@ export default function Profile() {
                           </div>
                         )}
 
-                        <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                        <div className="mt-4 grid gap-3 sm:grid-cols-3">
                           {/* Movies Watched */}
-                          <div className="relative overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-blue-600/5 px-4 py-3 group hover:border-blue-500/35 transition-all duration-200">
-                            <div className="absolute top-0 right-0 h-16 w-16 rounded-full bg-blue-500/10 blur-xl -translate-y-4 translate-x-4" />
-                            <div className="flex items-center gap-2 mb-1">
-                              <Film className="h-3.5 w-3.5 text-blue-400" />
-                              <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400/80">
+                          <div className="rounded-xl border border-border bg-muted/30 px-4 py-3">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <Film className="h-3.5 w-3.5 text-muted-foreground" />
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                                 {text("profile.moviesWatched", "Movies Watched")}
                               </p>
                             </div>
-                            <p className="text-2xl font-black text-foreground tabular-nums">{countMoviesWatched}</p>
+                            <p className="text-xl font-bold text-foreground tabular-nums">{countMoviesWatched}</p>
                           </div>
                           {/* Ratings */}
-                          <div className="relative overflow-hidden rounded-xl border border-yellow-500/20 bg-gradient-to-br from-yellow-500/10 to-amber-600/5 px-4 py-3 group hover:border-yellow-500/35 transition-all duration-200">
-                            <div className="absolute top-0 right-0 h-16 w-16 rounded-full bg-yellow-500/10 blur-xl -translate-y-4 translate-x-4" />
-                            <div className="flex items-center gap-2 mb-1">
-                              <Star className="h-3.5 w-3.5 text-yellow-400" />
-                              <p className="text-[10px] font-bold uppercase tracking-widest text-yellow-400/80">
+                          <div className="rounded-xl border border-border bg-muted/30 px-4 py-3">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <Star className="h-3.5 w-3.5 text-muted-foreground" />
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                                 {text("profile.ratings", "Ratings")}
                               </p>
                             </div>
-                            <p className="text-2xl font-black text-foreground tabular-nums">{countRatings}</p>
+                            <p className="text-xl font-bold text-foreground tabular-nums">{countRatings}</p>
                           </div>
                           {/* Watch Time */}
-                          <div className="relative overflow-hidden rounded-xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-green-600/5 px-4 py-3 group hover:border-emerald-500/35 transition-all duration-200">
-                            <div className="absolute top-0 right-0 h-16 w-16 rounded-full bg-emerald-500/10 blur-xl -translate-y-4 translate-x-4" />
-                            <div className="flex items-center gap-2 mb-1">
-                              <Clock className="h-3.5 w-3.5 text-emerald-400" />
-                              <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/80">
+                          <div className="rounded-xl border border-border bg-muted/30 px-4 py-3">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                                 {text("profile.watchTime", "Watch Time")}
                               </p>
                             </div>
-                            <p className="text-2xl font-black text-foreground">
+                            <p className="text-xl font-bold text-foreground tabular-nums">
                               {totalWatchDaysHoursMinutes}
                             </p>
                           </div>
@@ -2118,10 +2073,10 @@ export default function Profile() {
                               <TooltipTrigger asChild>
                                 <div
                                   className={cn(
-                                    "relative flex items-center justify-center rounded-lg border p-2.5 transition-all duration-300 hover:scale-110 hover:shadow-lg",
+                                    "relative flex items-center justify-center rounded-lg border p-2.5 transition-colors duration-150",
                                     achievement.unlocked
-                                      ? achievement.colorClass
-                                      : "border-border bg-background/70 opacity-45 grayscale hover:grayscale-0 hover:border-border/80",
+                                      ? "border-border bg-muted text-foreground"
+                                      : "border-border bg-muted/40 opacity-40 grayscale",
                                   )}
                                 >
                                   {achievement.icon}
@@ -2137,7 +2092,7 @@ export default function Profile() {
                                   {achievement.fullLabel}
                                 </p>
                                 {achievement.unlocked ? (
-                                  <p className="text-xs text-amber-300">
+                                  <p className="text-xs text-muted-foreground">
                                     {text("achievements.unlockedPrefix", "Unlocked")}{" "}
                                     {achievement.unlockedLabel ?? text("achievements.recently", "Recently")}
                                   </p>
@@ -2174,20 +2129,20 @@ export default function Profile() {
                     )
                   }
                 >
-                  <TabsList className="ct-toolbar h-auto w-full justify-start gap-1.5 rounded-2xl bg-card/60 p-1.5">
-                    <TabsTrigger value="overview" className="rounded-xl px-4 py-2 gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary/20 border border-transparent transition-all">
+                  <TabsList className="ct-toolbar h-auto w-full justify-start gap-1 rounded-lg bg-card p-1 border border-border">
+                    <TabsTrigger value="overview" className="rounded-md px-4 py-2 gap-2 text-sm font-medium transition-colors">
                       <BarChart3 className="h-3.5 w-3.5" />
                       {text("profile.overview", "Overview")}
                     </TabsTrigger>
-                    <TabsTrigger value="favorites" className="rounded-xl px-4 py-2 gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary/20 border border-transparent transition-all">
+                    <TabsTrigger value="favorites" className="rounded-md px-4 py-2 gap-2 text-sm font-medium transition-colors">
                       <Star className="h-3.5 w-3.5" />
                       {text("profile.favorites", "Favorites")}
                     </TabsTrigger>
-                    <TabsTrigger value="taste" className="rounded-xl px-4 py-2 gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary/20 border border-transparent transition-all">
+                    <TabsTrigger value="taste" className="rounded-md px-4 py-2 gap-2 text-sm font-medium transition-colors">
                       <Sparkles className="h-3.5 w-3.5" />
                       {text("profile.tasteAndStats", "Taste & Stats")}
                     </TabsTrigger>
-                    <TabsTrigger value="edit" className="rounded-xl px-4 py-2 gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary/20 border border-transparent transition-all">
+                    <TabsTrigger value="edit" className="rounded-md px-4 py-2 gap-2 text-sm font-medium transition-colors">
                       <User className="h-3.5 w-3.5" />
                       {text("profile.editProfile", "Edit Profile")}
                     </TabsTrigger>
@@ -2205,7 +2160,7 @@ export default function Profile() {
                   >
                     <div className="mb-4 flex items-center justify-between">
                       <h2 className="flex items-center gap-2 text-xl font-bold">
-                        <User className="h-5 w-5 text-primary" />
+                        <User className="h-5 w-5 text-muted-foreground" />
                         {text("profile.profileDetails", "Profile Details")}
                       </h2>
                       {!isEditMode ? (
@@ -2219,7 +2174,7 @@ export default function Profile() {
                       ) : null}
                     </div>
 
-                    <Card className="ct-panel transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl">
+                    <Card className="ct-panel">
                       <CardContent className="space-y-6 pt-6">
                         {!isEditMode ? (
                           <div className="space-y-5">
@@ -2244,11 +2199,11 @@ export default function Profile() {
                             </div>
                             {/* Bio */}
                             {bio ? (
-                              <blockquote className="relative rounded-xl border-l-4 border-primary/60 bg-primary/5 px-5 py-4">
+                              <blockquote className="relative rounded-xl border border-border bg-muted/30 px-5 py-4">
                                 <p className="text-sm leading-relaxed text-foreground/90">{bio}</p>
                               </blockquote>
                             ) : (
-                              <div className="rounded-xl border border-dashed border-border/60 px-5 py-4 text-center">
+                              <div className="rounded-lg border border-dashed border-border px-5 py-4 text-center">
                                 <p className="text-sm text-muted-foreground italic">
                                   {text("profile.noBioYet", "No bio yet. Tell people about your cinematic journey.")}
                                 </p>
@@ -2256,7 +2211,7 @@ export default function Profile() {
                                   type="button"
                                   size="sm"
                                   variant="outline"
-                                  className="mt-3 rounded-full text-xs"
+                                  className="mt-3 text-xs"
                                   onClick={() => setIsEditMode(true)}
                                 >
                                   {text("profile.addBio", "Add a bio")}
@@ -2268,18 +2223,18 @@ export default function Profile() {
                           <>
                             {/* Profile Completion Indicator */}
                             {profileCompletion < 100 && (
-                              <div className="rounded-xl border border-amber-500/20 bg-amber-500/8 px-4 py-3">
+                              <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
                                 <div className="flex items-center justify-between text-xs mb-2">
-                                  <span className="font-semibold text-amber-400">
+                                  <span className="font-semibold text-foreground">
                                     {text("profile.profileCompletion", "Profile Completion")}
                                   </span>
-                                  <span className="text-amber-400 font-bold">{Math.round(profileCompletion)}%</span>
+                                  <span className="text-muted-foreground font-medium">{Math.round(profileCompletion)}%</span>
                                 </div>
                                 <Progress
                                   value={profileCompletion}
-                                  className="h-1.5 bg-amber-900/30 [&>div]:bg-gradient-to-r [&>div]:from-amber-500 [&>div]:to-yellow-400"
+                                  className="h-1.5"
                                 />
-                                <p className="mt-1.5 text-[10px] text-amber-400/70">
+                                <p className="mt-1.5 text-[10px] text-muted-foreground">
                                   {text("profile.addPhotoNameBio", "Add a photo, name, age, bio, and select genre preferences to complete your profile.")}
                                 </p>
                               </div>
@@ -2306,7 +2261,7 @@ export default function Profile() {
                                     "How should we call you?",
                                   )}
                                   maxLength={50}
-                                  className="h-11 rounded-xl border-border/60 bg-background/60 px-4 text-sm backdrop-blur-sm transition-colors focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
+                                  className="h-11 border-border bg-background px-4 text-sm"
                                 />
                                 <p className="text-[10px] text-muted-foreground">{displayName.length}/50</p>
                               </div>
@@ -2329,9 +2284,8 @@ export default function Profile() {
                                   onChange={handleAgeInputChange}
                                   placeholder={t("profile.agePlaceholder", "22")}
                                   className={cn(
-                                    "h-11 rounded-xl border-border/60 bg-background/60 px-4 text-sm backdrop-blur-sm transition-colors focus:border-primary/60 focus:ring-2 focus:ring-primary/20",
-                                    dobError &&
-                                      "border-destructive focus:border-destructive focus:ring-destructive/20",
+                                    "h-11 border-border bg-background px-4 text-sm",
+                                    dobError && "border-destructive",
                                   )}
                                 />
                                 {dobError ? (
@@ -2354,11 +2308,11 @@ export default function Profile() {
                                   "profile.bioPlaceholder",
                                   "Tell us about your cinematic journey...",
                                 )}
-                                className="min-h-[110px] w-full resize-y rounded-xl border border-border/60 bg-background/60 p-4 text-sm backdrop-blur-sm transition-colors duration-200 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                className="min-h-[110px] w-full resize-y rounded-lg border border-border bg-background p-4 text-sm"
                                 maxLength={500}
                               />
                               <p className="text-[10px] text-muted-foreground">
-                                <span className={cn(bio.length > 450 && "text-amber-400 font-semibold")}>{bio.length}</span>/500{" "}
+                                <span className={cn(bio.length > 450 && "text-destructive font-semibold")}>{bio.length}</span>/500{" "}
                                 {text("profile.characters", "characters")}
                               </p>
                             </div>
@@ -2413,17 +2367,16 @@ export default function Profile() {
                       <button
                         type="button"
                         onClick={() => setActiveProfileTab("taste")}
-                        className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm p-6 text-left transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-[0_0_30px_rgba(229,9,20,0.15)] focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 text-left transition-colors duration-150 hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-ring"
                       >
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                        <Film className="mb-3 h-6 w-6 text-primary transition-transform duration-300 group-hover:scale-110" />
-                        <p className="text-5xl font-black leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
+                        <Film className="mb-3 h-5 w-5 text-muted-foreground" />
+                        <p className="text-4xl font-bold leading-none tracking-tight text-foreground">
                           {countMoviesWatched}
                         </p>
-                        <p className="mt-2.5 text-xs font-bold uppercase tracking-wider text-muted-foreground group-hover:text-foreground">
+                        <p className="mt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           {text("profile.moviesWatched", "Movies Watched")}
                         </p>
-                        <p className="mt-1 text-xs text-muted-foreground/85">
+                        <p className="mt-1 text-xs text-muted-foreground/80">
                           {t("profile.watchedThisMonth", "+{{count}} this month", {
                             count: watchedThisMonth,
                           })}
@@ -2434,17 +2387,16 @@ export default function Profile() {
                       <button
                         type="button"
                         onClick={() => setActiveProfileTab("taste")}
-                        className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm p-6 text-left transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-[0_0_30px_rgba(229,9,20,0.15)] focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 text-left transition-colors duration-150 hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-ring"
                       >
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                        <Star className="mb-3 h-6 w-6 text-[#ff6b73] transition-transform duration-300 group-hover:scale-110" />
-                        <p className="text-5xl font-black leading-none tracking-tight text-foreground transition-colors group-hover:text-primary">
+                        <Star className="mb-3 h-5 w-5 text-muted-foreground" />
+                        <p className="text-4xl font-bold leading-none tracking-tight text-foreground">
                           {countRatings}
                         </p>
-                        <p className="mt-2.5 text-xs font-bold uppercase tracking-wider text-muted-foreground group-hover:text-foreground">
+                        <p className="mt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           {text("profile.ratings", "Ratings")}
                         </p>
-                        <p className="mt-1 text-xs text-muted-foreground/85">
+                        <p className="mt-1 text-xs text-muted-foreground/80">
                           {latestRatedDateLabel}
                         </p>
                       </button>
@@ -2453,17 +2405,16 @@ export default function Profile() {
                       <button
                         type="button"
                         onClick={() => setActiveProfileTab("taste")}
-                        className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm p-6 text-left transition-all duration-300 hover:-translate-y-1.5 hover:border-emerald-500/40 hover:shadow-[0_0_30px_rgba(16,185,129,0.15)] focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                        className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 text-left transition-colors duration-150 hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-ring"
                       >
-                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                        <Clock className="mb-3 h-6 w-6 text-emerald-400 transition-transform duration-300 group-hover:scale-110" />
-                        <p className="text-4xl font-black leading-none tracking-tight text-foreground transition-colors group-hover:text-emerald-400">
+                        <Clock className="mb-3 h-5 w-5 text-muted-foreground" />
+                        <p className="text-3xl font-bold leading-none tracking-tight text-foreground">
                           {totalWatchDaysHoursMinutes}
                         </p>
-                        <p className="mt-4 text-xs font-bold uppercase tracking-wider text-muted-foreground group-hover:text-foreground">
+                        <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           {text("profile.watchTime", "Watch Time")}
                         </p>
-                        <p className="mt-1 text-xs text-muted-foreground/85">
+                        <p className="mt-1 text-xs text-muted-foreground/80">
                           {t("profile.averageHoursPerMovie", "Avg {{hours}}h per movie", {
                             hours: averageMovieHours,
                           })}
@@ -2476,18 +2427,17 @@ export default function Profile() {
                       {/* Persona Card */}
                       {cinephilePersona && (
                         <div className="h-full">
-                          <Card className="ct-panel border-border/50 bg-card/60 backdrop-blur-sm relative overflow-hidden h-full transition-all duration-300 hover:shadow-xl hover:border-primary/20">
-                            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
-                            <CardContent className="pt-6 relative z-10 space-y-4">
-                              <div className="flex items-center gap-3.5">
-                                <div className="rounded-2xl bg-[#E50914]/10 p-3.5 text-primary shadow-inner">
+                          <Card className="border border-border bg-card h-full transition-colors duration-150 hover:bg-accent/20">
+                            <CardContent className="pt-6 space-y-4">
+                              <div className="flex items-center gap-3">
+                                <div className="rounded-lg bg-muted p-3 text-foreground">
                                   {cinephilePersona.icon}
                                 </div>
                                 <div>
-                                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                                     {text("profile.tasteArchetype", "Taste Archetype")}
                                   </p>
-                                  <h4 className="text-2xl font-black tracking-tight text-foreground">
+                                  <h4 className="text-xl font-bold tracking-tight text-foreground">
                                     {cinephilePersona.title}
                                   </h4>
                                 </div>
@@ -2496,7 +2446,7 @@ export default function Profile() {
                                 {cinephilePersona.description}
                               </p>
                               <div className="flex flex-wrap gap-1.5 pt-1">
-                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-primary/10 text-[#ff6b73] border border-primary/20">
+                                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-muted border border-border text-foreground">
                                   {cinephilePersona.badge}
                                 </span>
                               </div>
@@ -2506,18 +2456,17 @@ export default function Profile() {
                       )}
 
                       {/* Milestone Stats Card */}
-                      <Card className="ct-panel border-border/50 bg-card/60 backdrop-blur-sm relative overflow-hidden h-full transition-all duration-300 hover:shadow-xl hover:border-emerald-500/20">
-                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent" />
-                        <CardContent className="pt-6 relative z-10 space-y-4">
-                          <div className="flex items-center gap-3.5">
-                            <div className="rounded-2xl bg-emerald-500/10 p-3.5 text-emerald-400 shadow-inner">
-                              <Trophy className="h-6 w-6" />
+                      <Card className="border border-border bg-card h-full transition-colors duration-150 hover:bg-accent/20">
+                        <CardContent className="pt-6 space-y-4">
+                          <div className="flex items-center gap-3">
+                            <div className="rounded-lg bg-muted p-3 text-foreground">
+                              <Trophy className="h-5 w-5" />
                             </div>
                             <div>
-                              <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-500">
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                                 {text("profile.cinephileMilestones", "Trek Progress")}
                               </p>
-                              <h4 className="text-2xl font-black tracking-tight text-foreground">
+                              <h4 className="text-xl font-bold tracking-tight text-foreground">
                                 {text("profile.journeyTitle", "Cinephile Ranks")}
                               </h4>
                             </div>
@@ -2544,18 +2493,18 @@ export default function Profile() {
                   ) : null}
 
                   {shouldShowProfileSection("overview") && recentlyWatched.length > 0 ? (
-                  <motion.section variants={itemVariants} id="recently-watched" className="space-y-4">
+                  <motion.section variants={itemVariants} id="recently-watched" className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <h2 className="flex items-center gap-2 text-xl font-bold">
-                          <Clock className="h-5 w-5 text-emerald-400" />
+                      <div>
+                        <h2 className="flex items-center gap-2 text-base font-semibold">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
                           {text("profile.recentlyWatched", "Recently Watched")}
                         </h2>
                         <p className="text-xs text-muted-foreground">
                           {text("profile.recentlyWatchedSubtitle", "Your latest additions to the watch log.")}
                         </p>
                       </div>
-                      <Button asChild size="sm" variant="outline" className="shrink-0 rounded-full text-xs">
+                      <Button asChild size="sm" variant="outline" className="shrink-0 text-xs">
                         <Link to="/watched">{text("profile.viewAll", "View all")}</Link>
                       </Button>
                     </div>
@@ -2581,7 +2530,7 @@ export default function Profile() {
                               to={`/${item.mediaType === "movie" ? "movie" : "tv"}/${item.mediaId}`}
                               className="group relative flex-shrink-0 w-[100px]"
                             >
-                              <div className="relative aspect-[2/3] overflow-hidden rounded-xl border border-border/50 bg-card shadow-md transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl group-hover:border-primary/40">
+                              <div className="relative aspect-[2/3] overflow-hidden rounded-lg border border-border bg-card transition-colors duration-150 group-hover:border-border-hover">
                                 {insight?.posterPath ? (
                                   <Image
                                     src={getImageUrl(insight.posterPath, "w185")}
@@ -2593,21 +2542,20 @@ export default function Profile() {
                                     showSkeleton
                                   />
                                 ) : (
-                                  <div className="flex h-full w-full items-center justify-center bg-card/80">
-                                    <Film className="h-8 w-8 text-muted-foreground/40" />
+                                  <div className="flex h-full w-full items-center justify-center bg-card">
+                                    <Film className="h-6 w-6 text-muted-foreground" />
                                   </div>
                                 )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                                 {typeof item.rating === "number" && (
-                                  <div className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[9px] font-black text-white shadow">
+                                  <div className="absolute right-1 top-1 flex h-4.5 w-4.5 items-center justify-center rounded bg-primary text-[10px] font-bold text-primary-foreground shadow-sm">
                                     {item.rating}
                                   </div>
                                 )}
                               </div>
-                              <p className="mt-1.5 line-clamp-2 text-[10px] font-semibold leading-tight text-foreground/80">
+                              <p className="mt-1.5 line-clamp-2 text-xs font-medium leading-tight text-foreground/95">
                                 {insight?.title || `#${item.mediaId}`}
                               </p>
-                              <p className="text-[9px] text-muted-foreground">{timeLabel}</p>
+                              <p className="text-[10px] text-muted-foreground">{timeLabel}</p>
                             </Link>
                           );
                         })}
@@ -2669,7 +2617,7 @@ export default function Profile() {
                   <motion.section variants={itemVariants} className="space-y-3">
                     <div className="flex items-center justify-between gap-3">
                       <h3 className="flex items-center gap-2 text-lg font-semibold">
-                        <Film className="h-4 w-4 text-primary" />
+                        <Film className="h-4 w-4 text-muted-foreground" />
                         {text("profile.favoriteMovies", "Favorite Movies")}
                       </h3>
                     </div>
@@ -2681,7 +2629,7 @@ export default function Profile() {
                       })}
                     </p>
                     {favoriteMovies.length === 0 ? (
-                      <Card className="border-border/60 bg-card/55">
+                      <Card className="border-border bg-card">
                         <CardContent className="flex flex-col gap-3 pt-5 sm:flex-row sm:items-center sm:justify-between">
                           <div>
                             <p className="text-sm font-semibold text-foreground">
@@ -2753,15 +2701,12 @@ export default function Profile() {
                             >
                               <motion.div
                                 layout
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                whileHover={{ y: -4 }}
-                                className="group relative w-full overflow-hidden rounded-[1.4rem] border border-border/60 bg-card/70 shadow-xl backdrop-blur-md transition-all duration-300"
+                                className="group relative w-full overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-colors duration-150"
                               >
-                                <div className="absolute right-2 top-2 z-20 opacity-100 transition-all duration-300 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
+                                <div className="absolute right-2 top-2 z-20 opacity-100 transition-all duration-150 md:opacity-0 md:group-hover:opacity-100">
                                   <button
                                     type="button"
-                                    className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-border bg-background/90 text-foreground/75 shadow-sm backdrop-blur-md transition-all hover:scale-105 hover:bg-red-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background/95 text-foreground/75 shadow-sm transition-all hover:bg-destructive hover:text-destructive-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                     onClick={() =>
                                       unpinFavorite(
                                         item.mediaId,
@@ -2771,7 +2716,7 @@ export default function Profile() {
                                     }
                                     aria-label={t("profile.removeFromFavorites", "Remove {{title}} from favorites", { title: preview.title })}
                                   >
-                                    <X className="h-4 w-4" />
+                                    <X className="h-3.5 w-3.5" />
                                   </button>
                                 </div>
 
@@ -2784,14 +2729,14 @@ export default function Profile() {
                                     width={342}
                                     height={513}
                                     loading="lazy"
-                                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                    className="h-full w-full object-cover"
                                     showSkeleton
                                   />
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent opacity-80 transition-opacity group-hover:opacity-90" />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
                                 </div>
 
                                 <div className="absolute inset-x-0 bottom-0 p-3">
-                                  <p className="line-clamp-2 text-xs font-bold tracking-tight text-white drop-shadow-md">
+                                  <p className="line-clamp-2 text-xs font-semibold tracking-tight text-white">
                                     {preview.title}
                                   </p>
                                 </div>
@@ -2802,13 +2747,13 @@ export default function Profile() {
                           <div className="w-[calc(50vw-1rem)] min-w-[calc(50vw-1rem)] flex-shrink-0 snap-start sm:w-[180px] sm:min-w-[180px] md:w-[200px] md:min-w-[200px] lg:w-[220px] lg:min-w-[220px] xl:w-[240px] xl:min-w-[240px]">
                             <button
                               type="button"
-                              className="group flex aspect-[2/3] w-full flex-col items-center justify-center gap-3 rounded-[1.4rem] border-2 border-dashed border-border/60 bg-card/50 text-muted-foreground transition-all duration-300 hover:border-primary/45 hover:bg-primary/6 hover:text-primary"
+                              className="group flex aspect-[2/3] w-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-card/40 text-muted-foreground transition-colors hover:border-border-hover hover:bg-accent"
                               onClick={() => openFavoritesPicker("movie")}
                             >
-                              <div className="rounded-full border border-border/60 bg-card/90 p-3 shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:border-primary/25 group-hover:bg-primary/10">
-                                <Plus className="h-6 w-6 transition-transform group-hover:rotate-90" />
+                              <div className="rounded-full border border-border bg-background p-3 shadow-sm group-hover:bg-accent">
+                                <Plus className="h-5 w-5" />
                               </div>
-                              <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 group-hover:opacity-100">
+                              <span className="text-[10px] font-semibold uppercase tracking-wider opacity-60 group-hover:opacity-100">
                                 {text("profile.addMovieShort", "Add Movie")}
                               </span>
                             </button>
@@ -2863,7 +2808,7 @@ export default function Profile() {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <h3 className="flex items-center gap-2 text-lg font-semibold">
-                        <Sparkles className="h-4 w-4 text-primary" />
+                        <Sparkles className="h-4 w-4 text-muted-foreground" />
                         {text("profile.favoriteSeries", "Favorite Series")}
                       </h3>
                     </div>
@@ -2874,7 +2819,7 @@ export default function Profile() {
                       })}
                     </p>
                     {favoriteSeries.length === 0 ? (
-                      <Card className="border-border/60 bg-card/55">
+                      <Card className="border-border bg-card">
                         <CardContent className="flex flex-col gap-3 pt-5 sm:flex-row sm:items-center sm:justify-between">
                           <div>
                             <p className="text-sm font-semibold text-foreground">
@@ -2945,15 +2890,12 @@ export default function Profile() {
                             >
                               <motion.div
                                 layout
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                whileHover={{ y: -4 }}
-                                className="group relative w-full overflow-hidden rounded-[1.4rem] border border-border/60 bg-card/70 shadow-xl backdrop-blur-md transition-all duration-300"
+                                className="group relative w-full overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-colors duration-150"
                               >
-                                <div className="absolute right-2 top-2 z-20 opacity-100 transition-all duration-300 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
+                                <div className="absolute right-2 top-2 z-20 opacity-100 transition-all duration-150 md:opacity-0 md:group-hover:opacity-100">
                                   <button
                                     type="button"
-                                    className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-border bg-background/90 text-foreground/75 shadow-sm backdrop-blur-md transition-all hover:scale-105 hover:bg-red-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background/95 text-foreground/75 shadow-sm transition-all hover:bg-destructive hover:text-destructive-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                     onClick={() =>
                                       unpinFavorite(
                                         item.mediaId,
@@ -2963,7 +2905,7 @@ export default function Profile() {
                                     }
                                     aria-label={t("profile.removeFromFavorites", "Remove {{title}} from favorites", { title: preview.title })}
                                   >
-                                    <X className="h-4 w-4" />
+                                    <X className="h-3.5 w-3.5" />
                                   </button>
                                 </div>
 
@@ -2976,14 +2918,14 @@ export default function Profile() {
                                     width={342}
                                     height={513}
                                     loading="lazy"
-                                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                    className="h-full w-full object-cover"
                                     showSkeleton
                                   />
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent opacity-80 transition-opacity group-hover:opacity-90" />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
                                 </div>
 
                                 <div className="absolute inset-x-0 bottom-0 p-3">
-                                  <p className="line-clamp-2 text-xs font-bold tracking-tight text-white drop-shadow-md">
+                                  <p className="line-clamp-2 text-xs font-semibold tracking-tight text-white">
                                     {preview.title}
                                   </p>
                                 </div>
@@ -2994,13 +2936,13 @@ export default function Profile() {
                           <div className="w-[132px] flex-shrink-0 snap-start sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]">
                             <button
                               type="button"
-                              className="group flex aspect-[2/3] w-full flex-col items-center justify-center gap-3 rounded-[1.4rem] border-2 border-dashed border-border/60 bg-card/50 text-muted-foreground transition-all duration-300 hover:border-primary/45 hover:bg-primary/6 hover:text-primary"
+                              className="group flex aspect-[2/3] w-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-card/40 text-muted-foreground transition-colors hover:border-border-hover hover:bg-accent"
                               onClick={() => openFavoritesPicker("tv")}
                             >
-                              <div className="rounded-full border border-border/60 bg-card/90 p-3 shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:border-primary/25 group-hover:bg-primary/10">
-                                <Plus className="h-6 w-6 transition-transform group-hover:rotate-90" />
+                              <div className="rounded-full border border-border bg-background p-3 shadow-sm group-hover:bg-accent">
+                                <Plus className="h-5 w-5" />
                               </div>
-                              <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 group-hover:opacity-100">
+                              <span className="text-[10px] font-semibold uppercase tracking-wider opacity-60 group-hover:opacity-100">
                                 {text("profile.addSeriesShort", "Add Series")}
                               </span>
                             </button>
@@ -3057,16 +2999,16 @@ export default function Profile() {
                     }}
                   >
                     <DialogContent
-                      className="max-w-3xl border-border/70 bg-[#09090b]/95 p-0 text-foreground shadow-2xl backdrop-blur-xl sm:rounded-3xl"
+                      className="max-w-3xl border-border bg-card p-0 text-foreground shadow-md sm:rounded-xl"
                       aria-describedby="favorites-picker-description"
                     >
-                      <DialogHeader className="border-b border-border/50 bg-[radial-gradient(circle_at_top,rgba(229,9,20,0.16),transparent_46%),linear-gradient(180deg,rgba(255,255,255,0.03),transparent)] px-6 py-6 text-left">
-                        <DialogTitle className="flex items-center gap-3 text-2xl font-black tracking-tight">
-                          <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[#E50914]/30 bg-[#E50914]/12 text-[#ff6b73] shadow-[0_0_30px_rgba(229,9,20,0.18)]">
+                      <DialogHeader className="border-b border-border px-6 py-5 text-left">
+                        <DialogTitle className="flex items-center gap-3 text-lg font-semibold">
+                          <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground">
                             {favoriteSearchType === "movie" ? (
-                              <Film className="h-5 w-5" />
+                              <Film className="h-4.5 w-4.5" />
                             ) : (
-                              <Sparkles className="h-5 w-5" />
+                              <Sparkles className="h-4.5 w-4.5" />
                             )}
                           </span>
                           {favoriteSearchType === "movie"
@@ -3075,7 +3017,7 @@ export default function Profile() {
                         </DialogTitle>
                         <DialogDescription
                           id="favorites-picker-description"
-                          className="max-w-2xl text-sm text-muted-foreground"
+                          className="max-w-2xl text-xs text-muted-foreground leading-relaxed"
                         >
                           {text(
                             "profile.favoritesPickerDesc",
@@ -3084,7 +3026,7 @@ export default function Profile() {
                         </DialogDescription>
                       </DialogHeader>
 
-                      <div className="space-y-4 px-6 pb-6 pt-2">
+                      <div className="space-y-4 px-6 pb-6 pt-3">
                         <div className="relative">
                           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
                           <Input
@@ -3097,17 +3039,17 @@ export default function Profile() {
                                 ? text("profile.searchMovies", "Search movies")
                                 : text("profile.searchSeries", "Search TV series")
                             }
-                            className="h-14 rounded-2xl border-border/60 bg-background/60 pl-11 pr-4 text-base shadow-inner"
+                            className="h-12 rounded-lg border-border/80 bg-background/50 pl-11 pr-4 text-sm"
                             autoFocus
                           />
                         </div>
 
                         {favoriteSearchTerm.length < 2 ? (
-                          <div className="rounded-2xl border border-dashed border-border/60 bg-card/35 px-5 py-8 text-center">
-                            <p className="text-base font-semibold text-foreground">
+                          <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 px-5 py-8 text-center">
+                            <p className="text-sm font-semibold text-foreground">
                               {text("profile.startTypingToSearch", "Start typing to search")}
                             </p>
-                            <p className="mt-2 text-sm text-muted-foreground">
+                            <p className="mt-1 text-xs text-muted-foreground">
                               {text("profile.enterTwoChars", "Enter at least 2 characters to find")}{" "}
                               {favoriteSearchType === "movie"
                                 ? text("common.movies", "movies")
@@ -3120,23 +3062,23 @@ export default function Profile() {
                             {Array.from({ length: 4 }).map((_, index) => (
                               <div
                                 key={`favorite-picker-skeleton-${index}`}
-                                className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card/50 p-3"
+                                className="flex items-center gap-3 rounded-xl border border-border bg-muted/20 p-3"
                               >
                                 <div className="h-16 w-12 rounded-md skeleton-shimmer" />
                                 <div className="min-w-0 flex-1 space-y-2">
                                   <div className="h-4 w-3/4 rounded skeleton-shimmer" />
                                   <div className="h-3 w-1/2 rounded skeleton-shimmer" />
                                 </div>
-                                <div className="h-9 w-20 rounded-full skeleton-shimmer" />
+                                <div className="h-9 w-20 rounded skeleton-shimmer" />
                               </div>
                             ))}
                           </div>
                         ) : favoriteSearchResults.length === 0 ? (
-                          <div className="rounded-2xl border border-dashed border-border/60 bg-card/35 px-5 py-8 text-center">
-                            <p className="text-base font-semibold text-foreground">
+                          <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 px-5 py-8 text-center">
+                            <p className="text-sm font-semibold text-foreground">
                               {text("profile.noMatchesFound", "No matches found")}
                             </p>
-                            <p className="mt-2 text-sm text-muted-foreground">
+                            <p className="mt-1 text-xs text-muted-foreground">
                               {text("profile.tryDifferentSearch", "Try a different title, year, or spelling.")}
                             </p>
                           </div>
@@ -3150,7 +3092,7 @@ export default function Profile() {
                               return (
                                 <div
                                   key={key}
-                                  className="group flex items-center gap-3 rounded-2xl border border-border/60 bg-card/70 p-3 transition-all duration-200 hover:border-primary/40 hover:bg-card"
+                                  className="group flex items-center gap-3 rounded-xl border border-border bg-card p-3 transition-colors duration-150 hover:bg-accent/40"
                                 >
                                   <Image
                                     src={getImageUrl(result.posterPath, "w154")}
@@ -3159,7 +3101,7 @@ export default function Profile() {
                                     alt={result.title}
                                     width={154}
                                     height={231}
-                                    className="h-16 w-12 shrink-0 rounded-md object-cover shadow-md"
+                                    className="h-16 w-12 shrink-0 rounded object-cover shadow-sm"
                                     loading="lazy"
                                     showSkeleton
                                   />
@@ -3167,7 +3109,7 @@ export default function Profile() {
                                     <p className="line-clamp-1 text-sm font-semibold text-foreground">
                                       {result.title}
                                     </p>
-                                    <p className="mt-1 text-xs text-muted-foreground">
+                                    <p className="mt-0.5 text-xs text-muted-foreground">
                                       {result.mediaType === "movie"
                                         ? text("watchHistory.mediaTypeMovie", "Movie")
                                         : text("profile.series", "Series")}
@@ -3178,7 +3120,7 @@ export default function Profile() {
                                     type="button"
                                     size="sm"
                                     variant={isPinned ? "secondary" : "outline"}
-                                    className="min-w-[88px] rounded-full"
+                                    className="min-w-[80px]"
                                     onClick={() =>
                                       isPinned
                                         ? unpinFavorite(
@@ -3228,7 +3170,7 @@ export default function Profile() {
                               count: favoriteGenres.length,
                             })}
                           </p>
-                          <Card className="ct-panel transition-all duration-200 hover:shadow-xl">
+                          <Card className="ct-panel">
                             <CardContent className="pt-5 pb-5">
                               {favoriteGenres.length === 0 && (
                                 <p className="mb-3 rounded-lg border border-dashed border-border/50 bg-background/40 px-3 py-2 text-center text-[11px] text-muted-foreground">
@@ -3247,10 +3189,10 @@ export default function Profile() {
                                           type="button"
                                           onClick={() => toggleGenre(genre.id)}
                                           className={cn(
-                                            "group relative flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-200 hover:scale-105",
+                                            "group flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors duration-150",
                                             selected
-                                              ? "border-primary bg-primary text-primary-foreground shadow-[0_0_12px_rgba(229,9,20,0.25)]"
-                                              : "border-border/60 bg-card/70 text-foreground/80 hover:border-primary/50 hover:bg-primary/10 hover:text-foreground",
+                                              ? "border-primary bg-primary text-primary-foreground"
+                                              : "border-border bg-card text-foreground hover:bg-accent",
                                           )}
                                         >
                                           {selected && (
@@ -3292,13 +3234,13 @@ export default function Profile() {
 
                         <motion.section variants={itemVariants} className="space-y-3">
                           <h2 className="flex items-center gap-2 text-xl font-bold">
-                            <CalendarDays className="h-5 w-5 text-amber-500" />
+                            <CalendarDays className="h-5 w-5 text-muted-foreground" />
                             {text("profile.decadeDistribution", "Decade Distribution")}
                           </h2>
                           <p className="text-xs text-muted-foreground">
                             {text("profile.decadeDistributionSubtitle", "Distribution of logged films across decades of release.")}
                           </p>
-                          <Card className="ct-panel w-full transition-all duration-200 hover:shadow-xl">
+                          <Card className="ct-panel w-full">
                             <CardContent className="space-y-4 pt-6">
                               {decadeDistribution.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">{text("profile.noDecadeStats", "No decade statistics available yet.")}</p>
@@ -3314,7 +3256,7 @@ export default function Profile() {
                                       <span className="w-12 text-xs text-neutral-400 font-semibold">{entry.decade}</span>
                                       <Progress
                                         value={progressValue}
-                                        className="h-2.5 flex-1 bg-neutral-800/80 [&>div]:bg-gradient-to-r [&>div]:from-amber-500 [&>div]:to-orange-400"
+                                        className="h-2 flex-1"
                                       />
                                       <span className="w-8 text-right text-xs text-neutral-400">{entry.count}</span>
                                     </div>
@@ -3340,7 +3282,7 @@ export default function Profile() {
                           <p className="text-xs text-muted-foreground">
                             {text("profile.ratingDistributionSubtitle", "Spread of your rated titles.")}
                           </p>
-                          <Card className="ct-panel w-full transition-all duration-200 hover:shadow-xl">
+                          <Card className="ct-panel w-full">
                             <CardContent className="space-y-4 pt-6">
                               {ratingDistribution.map((entry) => {
                                 const max = Math.max(
@@ -3362,12 +3304,7 @@ export default function Profile() {
                                     </span>
                                     <Progress
                                       value={progressValue}
-                                      className={cn(
-                                        "h-2.5 flex-1 bg-neutral-800",
-                                        isTopBar
-                                          ? "[&>div]:bg-gradient-to-r [&>div]:from-[#ff3b45] [&>div]:to-[#ff8f96]"
-                                          : "[&>div]:bg-gradient-to-r [&>div]:from-[#E50914] [&>div]:to-[#ff6b73]",
-                                      )}
+                                      className="h-2 flex-1"
                                     />
                                     <span className="w-8 text-right text-xs text-neutral-400">
                                       {entry.count}
@@ -3407,13 +3344,13 @@ export default function Profile() {
 
                         <motion.section variants={itemVariants} className="space-y-3">
                           <h2 className="flex items-center gap-2 text-xl font-bold">
-                            <Award className="h-5 w-5 text-purple-400" />
+                            <Award className="h-5 w-5 text-muted-foreground" />
                             {text("profile.crewInsights", "Crew Insights")}
                           </h2>
                           <p className="text-xs text-muted-foreground">
                             {text("profile.crewInsightsSubtitle", "Directors and actors you watch most frequently.")}
                           </p>
-                          <Card className="ct-panel w-full transition-all duration-200 hover:shadow-xl">
+                          <Card className="w-full transition-all duration-200">
                             <CardContent className="space-y-6 pt-6">
                               {/* Directors */}
                               <div className="space-y-3">
@@ -3430,7 +3367,7 @@ export default function Profile() {
                                           <span className="font-medium text-foreground">{director.name}</span>
                                           <span className="text-muted-foreground">{t("profile.watchedCount", "{{count}} films", { count: director.count })}</span>
                                         </div>
-                                        <Progress value={progressValue} className="h-1.5 bg-neutral-800/70 [&>div]:bg-purple-500" />
+                                        <Progress value={progressValue} className="h-1.5" />
                                       </div>
                                     );
                                   })
@@ -3452,7 +3389,7 @@ export default function Profile() {
                                           <span className="font-medium text-foreground">{actor.name}</span>
                                           <span className="text-muted-foreground">{t("profile.watchedCount", "{{count}} films", { count: actor.count })}</span>
                                         </div>
-                                        <Progress value={progressValue} className="h-1.5 bg-neutral-800/70 [&>div]:bg-sky-500" />
+                                        <Progress value={progressValue} className="h-1.5" />
                                       </div>
                                     );
                                   })

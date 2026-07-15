@@ -1,7 +1,8 @@
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import {
   Search,
   Bookmark,
@@ -37,56 +38,74 @@ export function EmptyState({
   className = '',
 }: EmptyStateProps) {
   const { t } = useTranslation();
+  const prefersReducedMotion = useReducedMotion();
+  const motionProps = prefersReducedMotion
+    ? {}
+    : {
+        initial: { opacity: 0, y: 16 },
+        animate: { opacity: 1, y: 0 },
+        transition: { duration: 0.35, ease: 'easeOut' },
+      };
 
   return (
     <motion.div 
-      className={`flex flex-col items-center justify-center px-4 py-12 text-center ${className}`}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className={cn(
+        'mx-auto flex max-w-xl flex-col items-center justify-center rounded-[2rem] border border-border/60 bg-card/45 px-5 py-12 text-center shadow-[0_20px_70px_hsl(var(--background)/0.22)] backdrop-blur-sm sm:px-8',
+        className,
+      )}
+      {...motionProps}
     >
       <motion.div 
         className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
+        {...(prefersReducedMotion ? {} : {
+          initial: { opacity: 0 },
+          animate: { opacity: 1 },
+          transition: { duration: 0.25, delay: 0.08 },
+        })}
       >
         {t("emptyState.nothingHereYet", "Nothing Here Yet")}
       </motion.div>
       <motion.div 
-        className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[1.35rem] border border-primary/15 bg-gradient-to-br from-primary/20 to-primary/5 shadow-[0_14px_36px_rgba(0,0,0,0.1)]"
-        initial={{ opacity: 0, scale: 0.5, rotate: -10 }}
-        animate={{ opacity: 1, scale: 1, rotate: 0 }}
-        transition={{ duration: 0.5, delay: 0.2, ease: 'easeOut' }}
-        whileHover={{ scale: 1.05, rotate: 2 }}
+        className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[1.35rem] border border-primary/15 bg-primary/10 shadow-[0_14px_36px_hsl(var(--primary)/0.12)]"
+        {...(prefersReducedMotion ? {} : {
+          initial: { opacity: 0, scale: 0.86 },
+          animate: { opacity: 1, scale: 1 },
+          transition: { duration: 0.3, delay: 0.12, ease: 'easeOut' },
+          whileHover: { scale: 1.04 },
+        })}
       >
         <Icon className="h-8 w-8 text-primary" />
       </motion.div>
       <motion.h3 
-        className="mb-2 text-2xl font-semibold text-foreground"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.3 }}
+        className="mb-2 text-balance text-2xl font-semibold tracking-tight text-foreground"
+        {...(prefersReducedMotion ? {} : {
+          initial: { opacity: 0, y: 8 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.3, delay: 0.16 },
+        })}
       >
         {title}
       </motion.h3>
       {description && (
         <motion.p 
-          className="mb-6 max-w-md text-base leading-relaxed text-muted-foreground"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.4 }}
+          className="mb-6 max-w-md text-pretty text-base leading-relaxed text-muted-foreground"
+          {...(prefersReducedMotion ? {} : {
+            initial: { opacity: 0, y: 8 },
+            animate: { opacity: 1, y: 0 },
+            transition: { duration: 0.3, delay: 0.2 },
+          })}
         >
           {description}
         </motion.p>
       )}
       {action && (
         <motion.div
-          initial={{ opacity: 0, y: 10, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.4, delay: 0.5 }}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          {...(prefersReducedMotion ? {} : {
+            initial: { opacity: 0, y: 8 },
+            animate: { opacity: 1, y: 0 },
+            transition: { duration: 0.3, delay: 0.24 },
+            whileTap: { scale: 0.98 },
+          })}
         >
           <Button onClick={action.onClick} className="btn-primary-glow gap-2">
             {action.label}
@@ -107,7 +126,7 @@ export function EmptySearchResults({ query, onNewSearch }: { query: string; onNe
     <EmptyState
       icon={Search}
       title="No results available"
-      description={query ? `No results available. Try different keywords or filters.` : 'Try searching for movies, TV shows, or actors.'}
+      description={query ? `No matches for "${query}". Try a different title, actor, genre, or release year.` : 'Search across movies, TV shows, actors, and creators.'}
       action={{ label: 'Browse Trending', onClick: onNewSearch }}
       className="min-h-96"
     />
@@ -122,7 +141,7 @@ export function EmptyWatchlist({ onDiscover }: { onDiscover: () => void }) {
     <EmptyState
       icon={Bookmark}
       title="Your watchlist is empty"
-      description="Your watchlist is empty. Start adding movies and TV shows."
+      description="Save movies and shows you want to watch later. Your future queue will live here."
       action={{ label: 'Browse Popular', onClick: onDiscover }}
       className="min-h-96"
     />
@@ -152,7 +171,7 @@ export function EmptyRecommendations({ onExploreTrending }: { onExploreTrending:
     <EmptyState
       icon={TrendingUp}
       title="No recommendations yet"
-      description="Explore trending content, add items to your watchlist, and we'll personalize recommendations for you."
+      description="Rate, watch, or save a few titles and CineTrekker will start shaping a feed around your taste."
       action={{ label: 'Explore Trending', onClick: onExploreTrending }}
       className="min-h-96"
     />
@@ -167,7 +186,7 @@ export function EmptyFavorites({ onExplore }: { onExplore: () => void }) {
     <EmptyState
       icon={Heart}
       title="No favorites yet"
-      description="Like movies and TV shows to build your collection of favorites."
+      description="Mark the movies and shows you love most to build a profile that feels personal."
       action={{ label: 'Explore Now', onClick: onExplore }}
       className="min-h-96"
     />
@@ -265,7 +284,7 @@ export function EmptySectionMessage({
   message: string;
 }) {
   return (
-    <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50 border border-border">
+    <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card/55 p-4">
       <Icon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
       <div className="text-left">
         <h4 className="font-semibold text-sm">{title}</h4>
@@ -299,8 +318,8 @@ export function SmallEmptyState({
   message?: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center py-6 text-center">
-      <Icon className="w-6 h-6 text-muted-foreground mb-2" />
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/45 px-4 py-6 text-center">
+      <Icon className="w-6 h-6 text-primary mb-2" />
       <p className="text-sm font-medium">{title}</p>
       {message && <p className="text-xs text-muted-foreground mt-1">{message}</p>}
     </div>

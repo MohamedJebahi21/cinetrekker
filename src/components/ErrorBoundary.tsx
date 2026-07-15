@@ -2,6 +2,9 @@ import { Component, ErrorInfo, ReactNode } from "react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ErrorBanner } from "@/components/ErrorBanner";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("error-boundary");
 
 interface Props {
   children: ReactNode;
@@ -27,7 +30,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    logger.error("ErrorBoundary caught an error", error, errorInfo);
   }
 
   private handleRetry = async () => {
@@ -36,7 +39,7 @@ export class ErrorBoundary extends Component<Props, State> {
     try {
       await this.props.onRetry?.();
     } catch (retryError) {
-      console.error("ErrorBoundary retry failed:", retryError);
+      logger.error("ErrorBoundary retry failed", retryError);
     } finally {
       this.setState({ hasError: false, error: null, isRetrying: false });
     }

@@ -392,7 +392,7 @@ function SearchDropdownComponent({ className, onNavigate }: SearchDropdownProps)
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          className="main-search-input h-11 rounded-lg border-white/10 bg-card/50 pl-9 pr-16 transition-all focus:border-primary focus:ring-primary/20 sm:h-10"
+          className="main-search-input h-11 rounded-xl border border-border/60 bg-background/45 pl-9 pr-16 transition-all duration-200 focus:border-border/60 focus-visible:ring-0 focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)/0.16)] sm:h-10"
           aria-label={t("search.placeholder")}
           role="combobox"
           aria-autocomplete="list"
@@ -403,7 +403,7 @@ function SearchDropdownComponent({ className, onNavigate }: SearchDropdownProps)
 
         {/* Keyboard hint */}
         {!query && (
-          <kbd className="absolute right-10 top-1/2 -translate-y-1/2 hidden h-5 select-none items-center gap-1 rounded border border-border/50 bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
+          <kbd className="absolute right-10 top-1/2 -translate-y-1/2 hidden select-none items-center rounded-md border border-border/60 bg-background/60 px-1.5 py-0.5 font-mono text-[10px] font-medium leading-none text-muted-foreground sm:inline-flex">
             /
           </kbd>
         )}
@@ -413,7 +413,7 @@ function SearchDropdownComponent({ className, onNavigate }: SearchDropdownProps)
           <button
             type="button"
             onClick={clearSearch}
-            className="absolute right-3 top-1/2 -translate-y-1/2 flex h-6 w-6 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-muted transition-colors hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            className="absolute right-3 top-1/2 -translate-y-1/2 flex h-6 w-6 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-muted/70 transition-colors hover:bg-muted/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             aria-label="Clear search"
           >
             <X className="h-3 w-3" />

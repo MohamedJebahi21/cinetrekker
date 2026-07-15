@@ -70,6 +70,7 @@ import { cn } from "@/lib/utils";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { safeT } from "@/lib/i18n";
 import { getSearchHistory, type SearchHistoryItem } from "@/lib/searchHistory";
+import { createLogger } from "@/lib/logger";
 
 const LANGUAGES = [
   { code: "en", key: "search.langOptions.english", fallback: "English" },
@@ -130,6 +131,7 @@ const YEARS = Array.from({ length: 50 }, (_, i) =>
 );
 
 const PENDING_SEARCH_QUERY_KEY = "cinetrekker_pending_search_query";
+const logger = createLogger("search");
 
 type SearchSortOption =
   | "popularity.desc"
@@ -300,6 +302,7 @@ function SearchMultiSelect({
             type="button"
             variant="outline"
             className="h-11 w-full justify-between bg-background/50 px-3 font-normal"
+            aria-label={t("search.openMultiSelect", "Choose {{label}} filters", { label })}
           >
             {selectedValues.length > 0 ? (
               <span className="flex items-center gap-1.5 flex-wrap">
@@ -335,6 +338,7 @@ function SearchMultiSelect({
             <button
               type="button"
               onClick={() => onChange([])}
+              aria-pressed={selectedValues.length === 0}
               className={cn(
                 "flex min-h-[44px] w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors",
                 selectedValues.length === 0 ? "bg-accent text-accent-foreground" : "hover:bg-accent/60",
@@ -766,10 +770,7 @@ export default function Search() {
       return;
     }
 
-    // Debug /search failures in development by checking the console for the original TMDB or query error.
-    if (import.meta.env.DEV) {
-      console.error("/search query failed:", activeError);
-    }
+    logger.debug("Query failed", activeError);
   }, [activeError]);
   const faqItems = [
     {
@@ -908,10 +909,20 @@ export default function Search() {
   // Keyboard shortcut: 'f' to open filters on mobile when not focused on input
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isEditableTarget =
+        target?.isContentEditable ||
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.tagName === "SELECT";
+
       if (
         e.key.toLowerCase() === "f" &&
-        document.activeElement?.tagName !== "INPUT" &&
-        document.activeElement?.tagName !== "TEXTAREA"
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        window.innerWidth < 768 &&
+        !isEditableTarget
       ) {
         e.preventDefault();
         setMobileFiltersOpen(true);
@@ -967,24 +978,28 @@ export default function Search() {
           label: `${t("filters.type")}: ${t(
             mediaTypeFilter === "movie" ? "common.movies" : "common.tvShows",
           )}`,
+          ariaLabel: t("search.removeTypeFilter", "Remove type filter"),
           clear: () => setMediaTypeFilter("all"),
         }
       : null,
     ...genreFilters.map((genreId) => ({
       key: `genre-${genreId}`,
       label: genreOptions.find((option) => option.id === genreId)?.label ?? genreId,
+      ariaLabel: t("search.removeGenreFilter", "Remove genre filter"),
       clear: () => setGenreFilters((current) => current.filter((item) => item !== genreId)),
     })),
     yearFilter
       ? {
           key: "year",
           label: `${t("filters.year")}: ${yearFilter}`,
+          ariaLabel: t("search.removeYearFilter", "Remove year filter"),
           clear: () => setYearFilter(""),
         }
       : null,
     ...languageFilters.map((lang) => ({
       key: `lang-${lang}`,
       label: languageOptions.find((option) => option.id === lang)?.label ?? lang.toUpperCase(),
+      ariaLabel: t("search.removeLanguageFilter", "Remove language filter"),
       clear: () => setLanguageFilters((current) => current.filter((item) => item !== lang)),
     })),
     runtimeFilter
@@ -993,6 +1008,7 @@ export default function Search() {
           label:
             RUNTIMES.find((runtime) => runtime.id === runtimeFilter)?.fallback ??
             runtimeFilter,
+          ariaLabel: t("search.removeRuntimeFilter", "Remove runtime filter"),
           clear: () => setRuntimeFilter(""),
         }
       : null,
@@ -1001,12 +1017,13 @@ export default function Search() {
       label:
         streamingOptions.find((option) => option.id === serviceId)?.label ??
         serviceId,
+      ariaLabel: t("search.removeStreamingFilter", "Remove streaming filter"),
       clear: () =>
         setStreamingFilters((current) =>
           current.filter((item) => item !== serviceId),
         ),
     })),
-  ].filter(Boolean) as Array<{ key: string; label: string; clear: () => void }>;
+  ].filter(Boolean) as Array<{ key: string; label: string; ariaLabel: string; clear: () => void }>;
 
   // Card click navigates via the card's Link; quick preview removed
 
@@ -1390,6 +1407,7 @@ export default function Search() {
               key={pill.key}
               type="button"
               onClick={pill.clear}
+              aria-label={pill.ariaLabel}
               className="inline-flex min-h-[40px] items-center gap-2 rounded-full border border-border/60 bg-card/70 px-3 py-2 text-sm text-foreground transition-colors hover:border-primary/30 hover:bg-accent/50"
             >
               <span>{pill.label}</span>
@@ -1422,6 +1440,7 @@ export default function Search() {
                   key={`${item.query}-${item.timestamp}`}
                   type="button"
                   onClick={() => setQuery(item.query)}
+                  aria-label={t("search.searchRecentQuery", "Search for {{query}}", { query: item.query })}
                   className="rounded-full border border-border/60 bg-background/60 px-3 py-2 text-sm text-foreground transition-colors hover:border-primary/30 hover:bg-accent/50"
                 >
                   {item.query}

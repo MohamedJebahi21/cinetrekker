@@ -126,22 +126,30 @@ function ScoreRing({ score, size = 72 }: { score: number; size?: number }) {
   const r = (size - 8) / 2;
   const circ = 2 * Math.PI * r;
   const dash = (pct / 100) * circ;
-  const color = score >= 7 ? "#22c55e" : score >= 5 ? "#eab308" : "#ef4444";
+  const scoreTone = score >= 7 ? "hsl(var(--success))" : score >= 5 ? "hsl(var(--rating-medium))" : "hsl(var(--destructive))";
   return (
-    <div className="relative flex-shrink-0" style={{ width: size, height: size }} aria-label={`Score ${score.toFixed(1)} out of 10`}>
-      <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={6} />
+    <div
+      className="relative flex-shrink-0"
+      style={{ width: size, height: size }}
+      role="meter"
+      aria-label={`Score ${score.toFixed(1)} out of 10`}
+      aria-valuemin={0}
+      aria-valuemax={10}
+      aria-valuenow={Number(score.toFixed(1))}
+    >
+      <svg width={size} height={size} className="-rotate-90" aria-hidden="true">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="hsl(var(--foreground) / 0.1)" strokeWidth={6} />
         <circle
           cx={size / 2} cy={size / 2} r={r}
-          fill="none" stroke={color} strokeWidth={6}
+          fill="none" stroke={scoreTone} strokeWidth={6}
           strokeDasharray={`${dash} ${circ - dash}`}
           strokeLinecap="round"
           style={{ transition: "stroke-dasharray 1.2s cubic-bezier(0.4,0,0.2,1)" }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-sm font-black leading-none" style={{ color }}>{score.toFixed(1)}</span>
-        <span className="text-[8px] text-white/40 font-medium mt-0.5">/10</span>
+        <span className="text-sm font-black leading-none" style={{ color: scoreTone }}>{score.toFixed(1)}</span>
+        <span className="text-[8px] text-foreground/45 font-medium mt-0.5">/10</span>
       </div>
     </div>
   );
@@ -314,9 +322,28 @@ export default function Details() {
 
   // ── Parallax backdrop ──
   useEffect(() => {
-    const fn = () => { if (backdropRef.current) backdropRef.current.style.transform = `translateY(${window.scrollY * 0.3}px)`; };
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (mediaQuery.matches) {
+      if (backdropRef.current) backdropRef.current.style.transform = "";
+      return;
+    }
+
+    let frameId = 0;
+    const update = () => {
+      frameId = 0;
+      if (backdropRef.current) {
+        backdropRef.current.style.transform = `translate3d(0, ${window.scrollY * 0.3}px, 0)`;
+      }
+    };
+    const fn = () => {
+      if (frameId) return;
+      frameId = window.requestAnimationFrame(update);
+    };
     window.addEventListener("scroll", fn, { passive: true });
-    return () => window.removeEventListener("scroll", fn);
+    return () => {
+      if (frameId) window.cancelAnimationFrame(frameId);
+      window.removeEventListener("scroll", fn);
+    };
   }, []);
 
   // ── Escape ──
@@ -1361,13 +1388,13 @@ export default function Details() {
                         if (!selectedSeason || !seasonDetails) return;
                         markSeasonWatched({ showId: mediaId, seasonNumber: selectedSeason!, episodes: publishedEpisodes.map(ep => ({ episode_number: ep.episode_number, name: ep.name, air_date: ep.air_date ?? undefined })), showName: details?.name, posterPath: details?.poster_path });
                       }} disabled={!selectedSeason || !seasonDetails || publishedEpisodes.length === 0}>
-                        <Check className="w-3.5 h-3.5" />Mark Season
+                        <Check className="w-3.5 h-3.5" />{t("details.markSeason", "Mark Season")}
                       </Button>
                       <Button variant="outline" size="sm" className="rounded-xl gap-1 shrink-0" onClick={() => {
                         if (!selectedSeason || !seasonDetails) return;
                         markAllSeasonsWatched({ showId: mediaId, allEpisodes: seasonDetails.episodes?.map(ep => ({ season_number: selectedSeason, episode_number: ep.episode_number, name: ep.name, air_date: ep.air_date ?? undefined })) || [], showName: details?.name, posterPath: details?.poster_path });
                       }} disabled={!selectedSeason || !seasonDetails}>
-                        <Check className="w-3.5 h-3.5" />Mark All Seasons Watched
+                        <Check className="w-3.5 h-3.5" />{t("details.markAllSeasonsWatched", "Mark All Seasons Watched")}
                       </Button>
                     </>
                   )}
@@ -1425,7 +1452,7 @@ export default function Details() {
                         <AccordionItem
                           key={`ep-${episode.id}`}
                           value={`ep-${episode.id}`}
-                          className={cn("border-b border-white/6 last:border-0", isNext && "border-l-2 border-l-primary/40")}
+                          className={cn("border-b border-white/6 last:border-0", isNext && "bg-primary/5 ring-1 ring-inset ring-primary/20")}
                         >
                           <AccordionTrigger className="gap-3 text-left md:hover:no-underline py-3">
                             <div className="flex items-center gap-3 flex-1">
@@ -1436,15 +1463,19 @@ export default function Details() {
                                 </div>
                               )}
                               {/* Watch toggle */}
-                              <div
-                                role="button" tabIndex={0}
+                              <button
+                                type="button"
                                 onClick={e => { e.stopPropagation(); handleEpisodeToggle(episode.season_number, episode.episode_number, episode.name, episode.air_date); }}
-                                onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); handleEpisodeToggle(episode.season_number, episode.episode_number, episode.name, episode.air_date); } }}
-                                className={cn("flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-all cursor-pointer", ew ? "bg-emerald-500 text-white shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-white/8 text-muted-foreground hover:bg-white/15")}
-                                aria-label={ew ? "Mark unwatched" : "Mark watched"}
+                                className={cn("flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background", ew ? "bg-emerald-500 text-white shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-white/8 text-muted-foreground hover:bg-white/15")}
+                                aria-pressed={ew}
+                                aria-label={
+                                  ew
+                                    ? t("details.markEpisodeUnwatched", "Mark {{episode}} as unwatched", { episode: episode.name })
+                                    : t("details.markEpisodeWatched", "Mark {{episode}} as watched", { episode: episode.name })
+                                }
                               >
                                 {ew && <Check className="w-3.5 h-3.5" />}
-                              </div>
+                              </button>
                               <div className="min-w-0 flex-1">
                                 <div className="flex flex-wrap items-center gap-2">
                                   <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">S{episode.season_number}E{episode.episode_number}</span>
@@ -1530,19 +1561,35 @@ export default function Details() {
             <Button
               className={cn("flex-1 gap-1.5 rounded-xl text-sm font-semibold", optimisticInWatchlist ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground")}
               onClick={handleAddToWatchlist} disabled={isWatchlistPending} size="sm"
+              aria-label={
+                optimisticInWatchlist
+                  ? t("details.removeFromWatchlist", "Remove from watchlist")
+                  : t("details.addToWatchlist", "Add to watchlist")
+              }
             >
               {isWatchlistPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : optimisticInWatchlist ? <Bookmark className="w-3.5 h-3.5 fill-current" /> : <Plus className="w-3.5 h-3.5" />}
-              {optimisticInWatchlist ? "Listed" : "Watchlist"}
+              {optimisticInWatchlist ? t("details.listed", "Listed") : t("details.watchlist", "Watchlist")}
             </Button>
             <Button
               className={cn("flex-1 gap-1.5 rounded-xl text-sm font-semibold", optimisticWatched ? "bg-emerald-600 text-white" : "border border-white/15 bg-white/5 text-foreground")}
               onClick={handleMarkAsWatched} disabled={isWatchedPending} size="sm" variant="outline"
+              aria-label={
+                optimisticWatched
+                  ? t("details.editWatchedStatus", "Edit watched status")
+                  : t("details.markAsWatched", "Mark as watched")
+              }
             >
               {isWatchedPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-              {optimisticWatched ? "Watched ✓" : "Mark Watched"}
+              {optimisticWatched ? t("details.watched", "Watched") : t("details.markWatched", "Mark Watched")}
             </Button>
             {featuredTrailerKey && (
-              <Button onClick={() => handlePlayVideo(featuredTrailerKey)} size="sm" variant="outline" className="rounded-xl border-white/15 bg-white/5">
+              <Button
+                onClick={() => handlePlayVideo(featuredTrailerKey)}
+                size="sm"
+                variant="outline"
+                className="rounded-xl border-white/15 bg-white/5"
+                aria-label={t("details.playTrailer", "Play trailer")}
+              >
                 <PlayCircle className="w-4 h-4" />
               </Button>
             )}

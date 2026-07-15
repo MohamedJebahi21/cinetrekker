@@ -8,7 +8,7 @@ import {
   Bookmark,
   Share2,
 } from "lucide-react";
-import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
+import { motion, useMotionValue, useTransform, useSpring, useReducedMotion } from "framer-motion";
 import { Media } from "@/types/media";
 import {
   getImageUrl,
@@ -154,14 +154,17 @@ export const MediaCard = React.memo(function MediaCard({
   const [isWatchlistPending, setIsWatchlistPending] = useState(false);
   const [isWatchedPending, setIsWatchedPending] = useState(false);
   const [watchStatusModalOpen, setWatchStatusModalOpen] = useState(false);
+  const reduceMotion = useReducedMotion();
   
   // 3D Tilt Logic
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [10, -10]), { stiffness: 300, damping: 30 });
   const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-10, 10]), { stiffness: 300, damping: 30 });
+  const shouldUseTilt = interactionMode === "full" && !reduceMotion;
 
   function handleMouseMove(event: React.MouseEvent<HTMLAnchorElement>) {
+    if (!shouldUseTilt) return;
     const rect = event.currentTarget.getBoundingClientRect();
     const width = rect.width;
     const height = rect.height;
@@ -174,6 +177,7 @@ export const MediaCard = React.memo(function MediaCard({
   }
 
   function handleMouseLeave() {
+    if (!shouldUseTilt) return;
     x.set(0);
     y.set(0);
   }
@@ -308,9 +312,9 @@ export const MediaCard = React.memo(function MediaCard({
     <>
       <motion.div
         style={{
-          rotateX,
-          rotateY,
-          transformStyle: "preserve-3d",
+          rotateX: shouldUseTilt ? rotateX : 0,
+          rotateY: shouldUseTilt ? rotateY : 0,
+          transformStyle: shouldUseTilt ? "preserve-3d" : "flat",
         }}
         className="h-full"
       >
@@ -364,7 +368,11 @@ export const MediaCard = React.memo(function MediaCard({
                       : "border-white/20 bg-background/80 text-foreground",
                   )}
                   onClick={(event) => void handleWatchlistClick(event)}
-                  aria-label={`Add ${title} to watchlist`}
+                  aria-label={
+                    optimisticInWatchlist
+                      ? t("mediaCard.removeFromWatchlist", "Remove {{title}} from watchlist", { title })
+                      : t("mediaCard.addToWatchlist", "Add {{title}} to watchlist", { title })
+                  }
                 >
                   {isWatchlistPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -384,7 +392,11 @@ export const MediaCard = React.memo(function MediaCard({
                       : "border-white/20 bg-background/70 text-foreground",
                   )}
                   onClick={(event) => void handleWatchedClick(event)}
-                  aria-label={`Mark ${title} as watched`}
+                  aria-label={
+                    optimisticWatched
+                      ? t("mediaCard.markUnwatched", "Mark {{title}} as not watched", { title })
+                      : t("mediaCard.markWatched", "Mark {{title}} as watched", { title })
+                  }
                 >
                   {isWatchedPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -410,7 +422,11 @@ export const MediaCard = React.memo(function MediaCard({
                           "border-red-500/70 bg-red-600 text-white hover:bg-red-700",
                       )}
                       onClick={(event) => void handleWatchlistClick(event)}
-                      aria-label={`Add ${title} to watchlist`}
+                      aria-label={
+                        optimisticInWatchlist
+                          ? t("mediaCard.removeFromWatchlist", "Remove {{title}} from watchlist", { title })
+                          : t("mediaCard.addToWatchlist", "Add {{title}} to watchlist", { title })
+                      }
                     >
                       {isWatchlistPending ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -436,7 +452,11 @@ export const MediaCard = React.memo(function MediaCard({
                           "border-emerald-500/70 bg-emerald-600 text-white hover:bg-emerald-700",
                       )}
                       onClick={(event) => void handleWatchedClick(event)}
-                      aria-label={`Mark ${title} as watched`}
+                      aria-label={
+                        optimisticWatched
+                          ? t("mediaCard.markUnwatched", "Mark {{title}} as not watched", { title })
+                          : t("mediaCard.markWatched", "Mark {{title}} as watched", { title })
+                      }
                     >
                       {isWatchedPending ? (
                         <Loader2 className="h-4 w-4 animate-spin" />

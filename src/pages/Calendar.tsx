@@ -587,7 +587,7 @@ export default function Calendar() {
               {spotlightItem.backdropPath && (
                 <div className="absolute inset-0 overflow-hidden opacity-20">
                   <img
-                    src={getBackdropUrl(spotlightItem.backdropPath, 'original') ?? undefined}
+                    src={getBackdropUrl(spotlightItem.backdropPath, 'w1280') ?? undefined}
                     alt=""
                     className="h-full w-full object-cover blur-[2px] transition-transform duration-700 group-hover:scale-105"
                   />
@@ -662,13 +662,33 @@ export default function Calendar() {
               {/* Date Pager */}
               <div className="flex items-center justify-between md:justify-start gap-4">
                 <div className="flex items-center rounded-2xl border border-border/50 bg-card/60 p-1 backdrop-blur-sm">
-                  <Button variant="ghost" size="icon" onClick={goToPrevious} className="h-9 w-9 rounded-xl">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={goToPrevious}
+                    className="h-9 w-9 rounded-xl"
+                    aria-label={
+                      calendarRange === 'month'
+                        ? t('calendar.previousMonth', 'Previous month')
+                        : t('calendar.previousWeek', 'Previous week')
+                    }
+                  >
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
                   <span className="min-w-[150px] text-center text-sm font-black px-2">
                     {calendarRange === 'month' ? monthRange : weekRange}
                   </span>
-                  <Button variant="ghost" size="icon" onClick={goToNext} className="h-9 w-9 rounded-xl">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={goToNext}
+                    className="h-9 w-9 rounded-xl"
+                    aria-label={
+                      calendarRange === 'month'
+                        ? t('calendar.nextMonth', 'Next month')
+                        : t('calendar.nextWeek', 'Next week')
+                    }
+                  >
                     <ChevronRight className="h-5 w-5" />
                   </Button>
                 </div>

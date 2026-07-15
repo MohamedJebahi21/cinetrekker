@@ -1,5 +1,8 @@
+import { createLogger } from "@/lib/logger";
+
 const SEARCH_HISTORY_ID = 'cinetrekker_search_history';
 const MAX_HISTORY_ITEMS = 20;
+const logger = createLogger("search-history");
 
 export interface SearchHistoryItem {
   query: string;
@@ -23,7 +26,7 @@ export function addToSearchHistory(query: string): void {
     
     localStorage.setItem(SEARCH_HISTORY_ID, JSON.stringify(newHistory));
   } catch (error) {
-    console.error('Failed to save search history:', error);
+    logger.error('Failed to save search history', error);
   }
 }
 
@@ -35,7 +38,7 @@ export function getSearchHistory(): SearchHistoryItem[] {
     const history: SearchHistoryItem[] = JSON.parse(stored);
     return history.sort((a, b) => b.timestamp - a.timestamp);
   } catch (error) {
-    console.error('Failed to load search history:', error);
+    logger.error('Failed to load search history', error);
     return [];
   }
 }
@@ -44,7 +47,7 @@ export function clearSearchHistory(): void {
   try {
     localStorage.removeItem(SEARCH_HISTORY_ID);
   } catch (error) {
-    console.error('Failed to clear search history:', error);
+    logger.error('Failed to clear search history', error);
   }
 }
 
@@ -54,7 +57,7 @@ export function removeFromSearchHistory(query: string): void {
     const filtered = history.filter(item => item.query !== query);
     localStorage.setItem(SEARCH_HISTORY_ID, JSON.stringify(filtered));
   } catch (error) {
-    console.error('Failed to remove from search history:', error);
+    logger.error('Failed to remove from search history', error);
   }
 }
 
@@ -83,7 +86,7 @@ export function trackTrendingSearch(query: string): void {
     const sorted = trending.sort((a, b) => b.count - a.count).slice(0, 50);
     localStorage.setItem(TRENDING_ID, JSON.stringify(sorted));
   } catch (error) {
-    console.error('Failed to track trending search:', error);
+    logger.error('Failed to track trending search', error);
   }
 }
 
@@ -95,7 +98,7 @@ export function getTrendingSearches(): TrendingSearch[] {
     const trending: TrendingSearch[] = JSON.parse(stored);
     return trending.sort((a, b) => b.count - a.count);
   } catch (error) {
-    console.error('Failed to load trending searches:', error);
+    logger.error('Failed to load trending searches', error);
     return [];
   }
 }

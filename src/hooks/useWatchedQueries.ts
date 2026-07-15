@@ -25,7 +25,7 @@ export function useWatchedQuery() {
           // Fetch from Supabase
           const { data, error } = await supabase
             .from('user_watched')
-            .select('*')
+            .select('id,user_id,media_id,media_type,rating,note,status,watched_at')
             .eq('user_id', user.id);
 
           if (error) throw error;

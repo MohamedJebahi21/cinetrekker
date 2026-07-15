@@ -17,6 +17,9 @@ import {
   SafetyLevel,
   maturityToFlags,
 } from "@/lib/contentFilter";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("content-policy");
 
 type ContentPolicyState = {
   ageVerified: boolean;
@@ -352,8 +355,8 @@ export function ContentPolicyProvider({
             await queryClient.invalidateQueries({ queryKey: ["search"] });
             await queryClient.invalidateQueries({ queryKey: ["details"] });
           } catch (syncError) {
-            console.error(
-              "Error syncing persisted age verification:",
+            logger.error(
+              "Error syncing persisted age verification",
               syncError,
             );
           }
@@ -366,7 +369,7 @@ export function ContentPolicyProvider({
           persistLocalMirrors(next);
         }
       } catch (error) {
-        console.error("Error loading content policy:", error);
+        logger.error("Error loading content policy", error);
         if (!isMounted || bootstrapTokenRef.current !== bootstrapToken) return;
         setState(persistedPolicy ?? guestPolicy ?? defaultState());
         toast({
@@ -409,7 +412,7 @@ export function ContentPolicyProvider({
         await queryClient.invalidateQueries({ queryKey: ["details"] });
         return { syncedRemotely: true };
       } catch (error) {
-        console.error("Error saving maturity preference:", error);
+        logger.error("Error saving maturity preference", error);
         toast({
           title: "Saved locally",
           description:
@@ -439,7 +442,7 @@ export function ContentPolicyProvider({
         await queryClient.invalidateQueries({ queryKey: ["search"] });
         await queryClient.invalidateQueries({ queryKey: ["details"] });
       } catch (error) {
-        console.error("Error saving age verification:", error);
+        logger.error("Error saving age verification", error);
         toast({
           title: "Could not sync age preference",
           description:

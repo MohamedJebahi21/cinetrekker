@@ -1,5 +1,8 @@
 import { loadSupabaseModule } from "@/lib/loadSupabaseModule";
+import { createLogger } from "@/lib/logger";
 import type { PersonDetails } from "@/services/tmdb";
+
+const logger = createLogger("profile-service");
 
 const isMissingContentPolicySchemaError = (error: unknown): boolean => {
   if (!error || typeof error !== "object") return false;
@@ -96,13 +99,13 @@ export const profileService = {
         if (error.code === "PGRST116") {
           return null; // Profile doesn't exist
         }
-        console.error("Error fetching profile:", error);
+        logger.error("Error fetching profile", error);
         throw error;
       }
 
       return data as UserProfile;
     } catch (error) {
-      console.error("Unexpected error fetching profile:", error);
+      logger.error("Unexpected error fetching profile", error);
       return null;
     }
   },
@@ -160,7 +163,7 @@ export const profileService = {
       return result.data as UserProfile;
     } catch (error) {
       if (!isMissingContentPolicySchemaError(error)) {
-        console.error("Error saving profile:", error);
+        logger.error("Error saving profile", error);
       }
       throw error;
     }
@@ -191,7 +194,7 @@ export const profileService = {
       if (error) throw error;
       return data as UserProfile;
     } catch (error) {
-      console.error("Error initializing profile:", error);
+      logger.error("Error initializing profile", error);
       throw error;
     }
   },

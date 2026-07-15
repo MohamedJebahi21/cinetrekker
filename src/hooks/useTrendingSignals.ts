@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from '@/lib/logger';
 
 type HourBucket = { ts: string; count: number };
+const logger = createLogger('trending-signals');
 
 export const useTrendingForMedia = (mediaType: 'movie' | 'tv', mediaId: number) => {
   return useQuery({
@@ -18,7 +20,7 @@ export const useTrendingForMedia = (mediaType: 'movie' | 'tv', mediaId: number) 
       .gte('added_at', cutoff);
 
     if (error) {
-      console.error('Trending fetch error', error);
+      logger.error('Trending fetch error', error);
       return { series: [], buckets: [], total: 0 };
     }
 
