@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Tv, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, ListChecks, Tv } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -22,8 +22,11 @@ interface TVWatchStatusModalProps {
   onOpenChange: (open: boolean) => void;
   showId: number;
   showName: string;
-  onWatchAll: () => void;
-  onSelectEpisodes: (episodes: Array<{ season: number; episode: number }>) => void;
+  onWatchAll: () => void | Promise<void>;
+  onSelectEpisodes: (
+    episodes: Array<{ season: number; episode: number }>,
+    options: { completed: boolean },
+  ) => void | Promise<void>;
   language: string;
 }
 
@@ -69,6 +72,10 @@ export function TVWatchStatusModal({
   });
 
   const totalEpisodes = seasonsData?.reduce((acc, season) => acc + (season.episodes?.length || 0), 0) || 0;
+  const allEpisodeKeys = (seasonsData ?? []).flatMap((season) =>
+    (season.episodes ?? []).map((episode) => `${season.season_number}-${episode.episode_number}`),
+  );
+  const allEpisodesSelected = allEpisodeKeys.length > 0 && allEpisodeKeys.every((key) => selectedEpisodes.has(key));
 
   const handleSelectEpisode = (seasonNum: number, episodeNum: number) => {
     const key = `${seasonNum}-${episodeNum}`;
@@ -105,20 +112,24 @@ export function TVWatchStatusModal({
     setSelectedEpisodes(newSet);
   };
 
-  const handleWatchAll = () => {
-    onWatchAll();
+  const handleWatchAll = async () => {
+    await onWatchAll();
     onOpenChange(false);
   };
 
-  const handleSelectEpisodesConfirm = () => {
+  const handleSelectEpisodesConfirm = async () => {
     const episodes = Array.from(selectedEpisodes).map((key) => {
       const [season, episode] = key.split('-').map(Number);
       return { season, episode };
     });
-    onSelectEpisodes(episodes);
+    await onSelectEpisodes(episodes, { completed: allEpisodesSelected });
     onOpenChange(false);
     setMode('choice');
     setSelectedEpisodes(new Set());
+  };
+
+  const handleToggleAllEpisodes = () => {
+    setSelectedEpisodes(allEpisodesSelected ? new Set() : new Set(allEpisodeKeys));
   };
 
   const handleClose = () => {
@@ -129,7 +140,7 @@ export function TVWatchStatusModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
+      <DialogContent className="max-h-[82vh] max-w-2xl overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Tv className="w-5 h-5" />
@@ -137,8 +148,8 @@ export function TVWatchStatusModal({
           </DialogTitle>
           <DialogDescription>
             {mode === 'choice'
-              ? t('tv.watchStatusChoice', 'How would you like to mark this show?')
-              : t('tv.selectEpisodes', 'Select the episodes you have watched')}
+              ? t('tv.watchStatusChoice', 'Choose whether you finished the series or want to record specific episodes.')
+              : t('tv.selectEpisodes', 'Choose the episodes you have watched. You can select the full series or only the episodes you have seen.')}
           </DialogDescription>
         </DialogHeader>
 
@@ -146,38 +157,55 @@ export function TVWatchStatusModal({
           <div className="grid grid-cols-1 gap-3">
             <Button
               variant="outline"
-              className="h-20 justify-start text-left"
+              className="h-auto min-h-24 justify-start gap-4 border-primary/30 bg-primary/[0.06] px-5 py-4 text-left hover:border-primary/55 hover:bg-primary/[0.1]"
               onClick={handleWatchAll}
             >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary">
+                <CheckCircle2 className="h-5 w-5" />
+              </span>
               <div className="flex flex-col gap-1">
-                <span className="font-semibold">{t('tv.watchAll', 'Mark Entire Series as Watched')}</span>
+                <span className="font-semibold">{t('tv.watchAll', 'I completed this series')}</span>
                 <span className="text-xs text-muted-foreground">
-                  {t('tv.watchAllDesc', 'Mark all episodes as watched')}
+                  {t('tv.watchAllDesc', 'Mark the show as completed and add it to your watched history.')}
                 </span>
               </div>
             </Button>
 
             <Button
               variant="outline"
-              className="h-20 justify-start text-left"
+              className="h-auto min-h-24 justify-start gap-4 px-5 py-4 text-left"
               onClick={() => setMode('select')}
             >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/45 text-muted-foreground">
+                <ListChecks className="h-5 w-5" />
+              </span>
               <div className="flex flex-col gap-1">
-                <span className="font-semibold">{t('tv.selectEpisodes', 'Select Episodes')}</span>
+                <span className="font-semibold">{t('tv.selectEpisodes', 'I watched some episodes')}</span>
                 <span className="text-xs text-muted-foreground">
-                  {t('tv.selectEpisodesDesc', 'Choose specific episodes to mark as watched')}
+                  {t('tv.selectEpisodesDesc', 'Select individual episodes, a season, or every available episode.')}
                 </span>
               </div>
             </Button>
           </div>
         ) : (
           <>
-            <div className="mb-4 text-sm text-muted-foreground">
-              {selectedEpisodes.size > 0 && (
-                <Badge variant="secondary">
-                  {selectedEpisodes.size} {t('common.episode', { count: selectedEpisodes.size })}
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 bg-muted/25 px-3 py-2.5">
+              <div className="text-sm text-muted-foreground">
+                <Badge variant="secondary" className="font-medium">
+                  {selectedEpisodes.size} {t('common.episode', { count: selectedEpisodes.size })} selected
                 </Badge>
-              )}
+                {totalEpisodes > 0 && <span className="ml-2 text-xs">of {totalEpisodes} available</span>}
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="h-8 px-2.5 text-xs"
+                disabled={allEpisodeKeys.length === 0}
+                onClick={handleToggleAllEpisodes}
+              >
+                {allEpisodesSelected ? 'Clear all' : 'Select all episodes'}
+              </Button>
             </div>
 
             {detailsLoading || seasonsLoading ? (

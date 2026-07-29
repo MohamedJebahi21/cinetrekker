@@ -20,6 +20,7 @@ import {
   Tv,
   TrendingUp,
   DollarSign,
+  ChevronDown,
 } from "lucide-react";
 import {
   getMovieDetails,
@@ -59,6 +60,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { WatchedStatusDialog } from "@/components/WatchedStatusDialog";
@@ -1447,53 +1449,56 @@ export default function Details() {
                   <Accordion type="single" collapsible className="w-full">
                     {publishedEpisodes.map((episode, index) => {
                       const ew = isEpisodeWatched(mediaId, episode.season_number, episode.episode_number);
-                      const isNext = index > 0 && !isEpisodeWatched(mediaId, publishedEpisodes[index - 1].season_number, publishedEpisodes[index - 1].episode_number);
+                      const isNext = !ew && publishedEpisodes.slice(0, index).every(prev => isEpisodeWatched(mediaId, prev.season_number, prev.episode_number));
                       return (
                         <AccordionItem
                           key={`ep-${episode.id}`}
                           value={`ep-${episode.id}`}
                           className={cn("border-b border-white/6 last:border-0", isNext && "bg-primary/5 ring-1 ring-inset ring-primary/20")}
                         >
-                          <AccordionTrigger className="gap-3 text-left md:hover:no-underline py-3">
-                            <div className="flex items-center gap-3 flex-1">
-                              {/* Episode still */}
-                              {episode.still_path && (
-                                <div className="flex-shrink-0 w-20 aspect-video rounded-lg overflow-hidden hidden sm:block border border-white/8">
-                                  <Image src={getImageUrl(episode.still_path, "w185") || ""} alt={episode.name} width={185} height={104} className="w-full h-full object-cover" loading="lazy" />
-                                </div>
-                              )}
-                              {/* Watch toggle */}
-                              <button
-                                type="button"
-                                onClick={e => { e.stopPropagation(); handleEpisodeToggle(episode.season_number, episode.episode_number, episode.name, episode.air_date); }}
-                                className={cn("flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background", ew ? "bg-emerald-500 text-white shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-white/8 text-muted-foreground hover:bg-white/15")}
-                                aria-pressed={ew}
-                                aria-label={
-                                  ew
-                                    ? t("details.markEpisodeUnwatched", "Mark {{episode}} as unwatched", { episode: episode.name })
-                                    : t("details.markEpisodeWatched", "Mark {{episode}} as watched", { episode: episode.name })
-                                }
-                              >
-                                {ew && <Check className="w-3.5 h-3.5" />}
-                              </button>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">S{episode.season_number}E{episode.episode_number}</span>
-                                  {isNext && <Badge variant="outline" className="text-[10px] px-1.5 py-0">Next Up</Badge>}
-                                  {episode.vote_average && episode.vote_average > 0 && (
-                                    <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                                      <Star className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400" />{episode.vote_average.toFixed(1)}
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-sm font-semibold text-foreground mt-0.5 line-clamp-1">{episode.name}</p>
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                  {episode.air_date ? new Date(episode.air_date).toLocaleDateString(language) : "TBA"}
-                                  {episode.runtime ? ` · ${episode.runtime} ${t("details.minutes")}` : ""}
-                                </p>
+                          <div className="flex items-center gap-3 py-3 w-full">
+                            {/* Episode still */}
+                            {episode.still_path && (
+                              <div className="flex-shrink-0 w-20 aspect-video rounded-lg overflow-hidden hidden sm:block border border-white/8">
+                                <Image src={getImageUrl(episode.still_path, "w185") || ""} alt={episode.name} width={185} height={104} className="w-full h-full object-cover" loading="lazy" />
                               </div>
-                            </div>
-                          </AccordionTrigger>
+                            )}
+                            {/* Watch toggle */}
+                            <button
+                              type="button"
+                              onClick={() => handleEpisodeToggle(episode.season_number, episode.episode_number, episode.name, episode.air_date)}
+                              className={cn("flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background", ew ? "bg-emerald-500 text-white shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-white/8 text-muted-foreground hover:bg-white/15")}
+                              aria-pressed={ew}
+                              aria-label={
+                                ew
+                                  ? t("details.markEpisodeUnwatched", "Mark {{episode}} as unwatched", { episode: episode.name })
+                                  : t("details.markEpisodeWatched", "Mark {{episode}} as watched", { episode: episode.name })
+                              }
+                            >
+                              {ew && <Check className="w-3.5 h-3.5" />}
+                            </button>
+                            <AccordionPrimitive.Header className="flex flex-1 min-w-0">
+                              <AccordionPrimitive.Trigger className="flex flex-1 items-center justify-between gap-2 min-w-0 text-left font-normal py-0 md:hover:no-underline [&[data-state=open]>svg]:rotate-180">
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">S{episode.season_number}E{episode.episode_number}</span>
+                                    {isNext && <Badge variant="outline" className="text-[10px] px-1.5 py-0">Next Up</Badge>}
+                                    {episode.vote_average && episode.vote_average > 0 && (
+                                      <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                                        <Star className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400" />{episode.vote_average.toFixed(1)}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-sm font-semibold text-foreground mt-0.5 line-clamp-1">{episode.name}</p>
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    {episode.air_date ? new Date(episode.air_date).toLocaleDateString(language) : "TBA"}
+                                    {episode.runtime ? ` · ${episode.runtime} ${t("details.minutes")}` : ""}
+                                  </p>
+                                </div>
+                                <ChevronDown className="w-4 h-4 shrink-0 transition-transform duration-200 text-muted-foreground" />
+                              </AccordionPrimitive.Trigger>
+                            </AccordionPrimitive.Header>
+                          </div>
                           <AccordionContent>
                             <div className="rounded-xl border border-white/8 bg-white/3 p-4 mb-2">
                               <p className="text-sm leading-relaxed text-muted-foreground">

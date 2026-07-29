@@ -55,13 +55,14 @@ export function buildContinueWatchingVM(params: {
 }): ContinueWatchingVM {
   const { progress, details, episodesBySeason } = params;
 
-  // Use TMDB total if available, fallback to progress
-  const totalEpisodes = details?.number_of_episodes ?? progress.totalEpisodes;
+  // Prefer the release-aware total calculated by progress.ts. The raw TMDB
+  // total can include future episodes in a currently airing season.
+  const totalEpisodes = progress.totalEpisodes ?? details?.number_of_episodes ?? null;
 
   // Progress percentage (display only, no status inference)
   const progressPercent =
     totalEpisodes && totalEpisodes > 0
-      ? Math.min(99, Math.round((progress.watchedEpisodeCount / totalEpisodes) * 100))
+      ? Math.min(100, Math.round((progress.watchedEpisodeCount / totalEpisodes) * 100))
       : Math.min(95, Math.max(5, progress.watchedEpisodeCount * 10));
 
   // Next episode resolution (display only)
@@ -86,6 +87,12 @@ export function buildContinueWatchingVM(params: {
   const nextEpisodeLabel = nextEpisode
     ? `S${nextEpisode.season_number}E${nextEpisode.episode_number}`
     : null;
+  const isFinished = Boolean(
+    details &&
+      !nextResult &&
+      !details.in_production &&
+      ["ended", "canceled"].includes(details.status?.toLowerCase() ?? ""),
+  );
 
   // Slug-based href
   const showName = details?.name ?? progress.showName;
@@ -108,6 +115,7 @@ export function buildContinueWatchingVM(params: {
     progressPercent,
     // Status is a display label from progress.ts — never used for logic.
     status: progress.status,
+    isFinished,
     // Passed through for downstream filtering in the hook.
     isFollowed: progress.isFollowed,
     lastActivityAt: progress.lastActivityAt,

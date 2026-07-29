@@ -66,9 +66,14 @@ function SpotlightHero({ items }: { items: Media[] }) {
   if (!items.length) return null;
   const item = items[Math.min(active, items.length - 1)];
   const href = buildMediaPath(item.media_type === "tv" ? "tv" : "movie", item.id, item.title || item.name || "");
+  const releaseYear = (item.release_date || item.first_air_date)?.slice(0, 4);
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-white/8 shadow-2xl" style={{ minHeight: "clamp(340px, 52vh, 580px)" }}>
+    <section
+      aria-label="Featured title"
+      className="discover-spotlight relative isolate overflow-hidden rounded-2xl border border-white/10 shadow-2xl"
+      style={{ minHeight: "clamp(370px, 52vh, 560px)" }}
+    >
       {/* Backdrop */}
       <div className={cn("absolute inset-0 transition-opacity duration-500", fading ? "opacity-0" : "opacity-100")}>
         {item.backdrop_path ? (
@@ -76,53 +81,58 @@ function SpotlightHero({ items }: { items: Media[] }) {
             src={getBackdropUrl(item.backdrop_path, "w1280") || ""}
             alt=""
             aria-hidden="true"
-            className="w-full h-full object-cover object-center scale-[1.02] transition-transform hover:scale-[1.05]"
+            className="h-full w-full object-cover object-center scale-[1.015]"
             style={{ transitionDuration: "8000ms" }}
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700" />
+          <div className="h-full w-full bg-[linear-gradient(135deg,hsl(var(--card)),hsl(var(--background)))]" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/10" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,9,13,0.94)_0%,rgba(8,9,13,0.72)_44%,rgba(8,9,13,0.16)_78%,rgba(8,9,13,0.08)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(0deg,rgba(8,9,13,0.94)_0%,rgba(8,9,13,0.12)_58%,rgba(8,9,13,0.2)_100%)]" />
       </div>
 
       {/* Content */}
-      <div className={cn("relative z-10 flex h-full flex-col justify-end p-6 md:p-10 transition-all duration-500", fading ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0")} style={{ minHeight: "clamp(340px, 52vh, 580px)" }}>
+      <div className={cn("relative z-10 flex h-full flex-col justify-end p-6 sm:p-8 lg:p-10 transition-all duration-500", fading ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100")} style={{ minHeight: "clamp(370px, 52vh, 560px)" }}>
         <div className="max-w-2xl space-y-4">
           {/* Badges */}
           <div className="flex flex-wrap items-center gap-2">
-            <Badge className="bg-primary/90 text-white text-[10px] uppercase tracking-widest font-bold px-3 py-1">
-              🔥 Trending Now
+            <Badge className="border border-primary/25 bg-primary/90 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-primary-foreground shadow-sm">
+              Today’s spotlight
             </Badge>
-            <Badge variant="outline" className="border-white/20 bg-black/40 text-white/80 text-[10px] backdrop-blur-sm">
+            <Badge variant="outline" className="border-white/20 bg-black/35 text-[0.65rem] font-medium uppercase tracking-[0.12em] text-white/80 backdrop-blur-sm">
               {item.media_type === "tv" ? "TV Show" : "Movie"}
             </Badge>
-            {item.vote_average > 0 && (
-              <Badge variant="outline" className="border-yellow-500/30 bg-yellow-500/10 text-yellow-300 text-xs font-bold gap-1">
-                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                {item.vote_average.toFixed(1)}
-              </Badge>
-            )}
           </div>
 
           {/* Title */}
-          <h2 className="text-3xl font-black text-white leading-tight drop-shadow-lg md:text-5xl tracking-tight">
+          <h2 className="max-w-xl text-3xl font-semibold leading-[1.04] tracking-[-0.04em] text-white drop-shadow-lg sm:text-4xl lg:text-5xl">
             {item.title || item.name}
           </h2>
 
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-medium text-white/75">
+            {releaseYear && <span>{releaseYear}</span>}
+            {releaseYear && item.vote_average > 0 && <span className="h-1 w-1 rounded-full bg-white/35" aria-hidden="true" />}
+            {item.vote_average > 0 && (
+              <span className="inline-flex items-center gap-1.5">
+                <Star className="h-3.5 w-3.5 fill-amber-300 text-amber-300" />
+                {item.vote_average.toFixed(1)}
+              </span>
+            )}
+          </div>
+
           {/* Overview */}
           {item.overview && (
-            <p className="text-sm leading-relaxed text-white/70 line-clamp-2 md:text-base md:line-clamp-3 max-w-xl">
+            <p className="max-w-xl text-sm leading-6 text-white/70 line-clamp-2 md:text-base md:leading-7 md:line-clamp-3">
               {item.overview}
             </p>
           )}
 
           {/* CTAs */}
           <div className="flex flex-wrap items-center gap-3 pt-2">
-            <Button asChild size="lg" className="rounded-xl font-bold gap-2 bg-white text-black hover:bg-white/90 shadow-xl hover:scale-105 transition-transform">
+            <Button asChild size="lg" className="gap-2 bg-white font-semibold text-black shadow-lg hover:bg-white/90">
               <Link to={href}><Play className="w-4 h-4 fill-black" />View Details</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="rounded-xl font-semibold gap-2 border-white/20 bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm">
+            <Button asChild size="lg" variant="outline" className="gap-2 border-white/20 bg-black/20 font-medium text-white hover:bg-white/15 backdrop-blur-sm">
               <Link to="/search">
                 <Compass className="w-4 h-4" />Explore All
               </Link>
@@ -132,12 +142,12 @@ function SpotlightHero({ items }: { items: Media[] }) {
 
         {/* Pagination dots */}
         {items.length > 1 && (
-          <div className="absolute bottom-5 right-6 flex gap-1.5">
+          <div className="absolute bottom-5 right-6 flex items-center gap-1.5 sm:bottom-6 sm:right-8">
             {items.slice(0, 5).map((_, i) => (
               <button
                 key={i}
                 onClick={() => { if (timerRef.current) clearInterval(timerRef.current); cycle(i); }}
-                className={cn("h-1.5 rounded-full transition-all duration-300", i === active ? "w-6 bg-white" : "w-1.5 bg-white/35 hover:bg-white/60")}
+                className={cn("h-1.5 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white", i === active ? "w-6 bg-white" : "w-1.5 bg-white/35 hover:bg-white/60")}
                 aria-label={`Go to slide ${i + 1}`}
               />
             ))}
@@ -145,12 +155,12 @@ function SpotlightHero({ items }: { items: Media[] }) {
         )}
 
         {/* Poster strip — thumbnails of other items */}
-        <div className="absolute top-4 right-4 hidden xl:flex flex-col gap-2">
+        <div className="absolute right-5 top-5 hidden flex-col gap-2 xl:flex">
           {items.slice(0, 5).map((it, i) => (
             <button
               key={it.id}
               onClick={() => { if (timerRef.current) clearInterval(timerRef.current); cycle(i); }}
-              className={cn("w-12 h-16 rounded-lg overflow-hidden border-2 transition-all duration-200 flex-shrink-0", i === active ? "border-white scale-105 shadow-lg" : "border-white/20 opacity-60 hover:opacity-90 hover:border-white/50")}
+              className={cn("h-16 w-11 shrink-0 overflow-hidden rounded-lg border transition-[border-color,opacity,transform] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white", i === active ? "border-white opacity-100 shadow-lg" : "border-white/20 opacity-55 hover:border-white/50 hover:opacity-90")}
               aria-label={it.title || it.name}
             >
               {it.poster_path ? (
@@ -162,7 +172,7 @@ function SpotlightHero({ items }: { items: Media[] }) {
           ))}
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -239,7 +249,7 @@ export default function Discover() {
   const spotlightItems = trendingNow?.results?.slice(0, 5) ?? [];
 
   return (
-    <div className="min-h-screen">
+    <div className="ct-page-shell min-h-screen">
       <SEO
         title={t("discover.seoTitle", "Discover Movies and TV | CineTrekker")}
         description={t("discover.seoDescription", "Discover trending movies, streaming-ready picks, and acclaimed titles in CineTrekker.")}
@@ -247,20 +257,20 @@ export default function Discover() {
         jsonLd={[toBreadcrumbJsonLd([{ name: t("nav.home", "Home"), path: "/" }, { name: t("nav.discover", "Discover"), path: "/discover" }])]}
       />
 
-      <div className="page-container space-y-10 pb-24 pt-20 md:pb-12">
+      <div className="page-container space-y-9 pb-24 pt-20 md:pb-12">
 
         {/* ── Page header ── */}
-        <div className="flex items-end justify-between">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary mb-2">Curated Selection</p>
-            <h1 className="text-4xl font-black tracking-tight md:text-5xl flex items-center gap-3">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
+            <p className="ct-kicker mb-2">Curated selection</p>
+            <h1 className="flex items-center gap-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
                 <Compass className="h-5 w-5" />
               </span>
               Discover
             </h1>
           </div>
-          <Button asChild variant="outline" className="rounded-xl gap-2 hidden sm:flex">
+          <Button asChild variant="outline" className="hidden gap-2 sm:flex">
             <Link to="/search"><Sparkles className="w-4 h-4" />Search Everything</Link>
           </Button>
         </div>
@@ -279,7 +289,7 @@ export default function Discover() {
                   key={cat.to}
                   to={cat.to}
                   className={cn(
-                    "flex flex-col items-center gap-2 rounded-2xl border p-4 bg-gradient-to-b transition-all duration-200 hover:scale-[1.04] active:scale-95 hover:shadow-lg text-center",
+                    "flex flex-col items-center gap-2 rounded-xl border bg-card/55 p-4 text-center shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-card hover:shadow-md active:translate-y-0",
                     cat.bg, cat.border
                   )}
                 >
@@ -292,7 +302,7 @@ export default function Discover() {
         </section>
 
         {/* ── Mood / Vibe filter ── */}
-        <section className="rounded-3xl border border-white/8 bg-card/40 backdrop-blur-sm p-6">
+        <section className="ct-panel p-5 sm:p-6">
           <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="text-base font-bold">What's your mood?</h2>
@@ -311,10 +321,10 @@ export default function Discover() {
                 key={i}
                 onClick={() => setActiveMood(activeMood === i ? null : i)}
                 className={cn(
-                  "px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-200 hover:scale-105 active:scale-95",
+                  "rounded-lg border px-3.5 py-2 text-sm font-medium transition-colors duration-200",
                   activeMood === i
-                    ? cn("bg-gradient-to-r", mood.color, mood.border, mood.text, "border-opacity-60 shadow-lg scale-105")
-                    : "bg-white/5 border-white/10 text-foreground/70 hover:bg-white/10 hover:border-white/20 hover:text-foreground"
+                    ? cn(mood.color, mood.border, mood.text, "border-opacity-60 shadow-sm")
+                    : "bg-card/40 text-foreground/70 hover:bg-card hover:text-foreground"
                 )}
               >
                 {mood.label}

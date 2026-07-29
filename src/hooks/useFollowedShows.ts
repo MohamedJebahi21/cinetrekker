@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
@@ -110,27 +111,42 @@ export function useWatchedEpisodes(showId?: number) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: watchedEpisodes = [], isLoading } = useQuery({
-    queryKey: ['watched-episodes', user?.id, showId],
+  const {
+    data: allWatchedEpisodes = [],
+    isLoading,
+    refetch,
+  } = useQuery({
+    // Keep one canonical cache for a user's episode history. A show-scoped
+    // cache and an all-shows cache can resolve at different times and leave
+    // the details page and Continue Watching with contradictory progress.
+    queryKey: ['watched-episodes', user?.id],
     queryFn: async () => {
       if (!user) return [];
       
-      let query = supabase
+      const { data, error } = await supabase
         .from('watched_episodes')
         .select('*')
-        .eq('user_id', user.id);
-      
-      if (showId) {
-        query = query.eq('show_id', showId);
-      }
-      
-      const { data, error } = await query.order('watched_at', { ascending: false });
+        .eq('user_id', user.id)
+        .order('watched_at', { ascending: false });
       
       if (error) throw error;
       return data as WatchedEpisode[];
     },
     enabled: !!user,
+    // The home screen reads the unscoped query while a details page reads a
+    // show-scoped query. Always refresh on mount so those two views cannot
+    // keep separate, stale progress snapshots after episode updates.
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
   });
+
+  const watchedEpisodes = useMemo(
+    () =>
+      showId == null
+        ? allWatchedEpisodes
+        : allWatchedEpisodes.filter((episode) => episode.show_id === showId),
+    [allWatchedEpisodes, showId],
+  );
 
   const markEpisodeWatchedMutation = useMutation({
     mutationFn: async ({ 
@@ -230,6 +246,10 @@ export function useWatchedEpisodes(showId?: number) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['watched-episodes'] });
       queryClient.invalidateQueries({ queryKey: ['followed-shows'] });
+      // Also refresh user_watched so that a stale "completed" status does not
+      // survive un-marking an episode (previously this was missing, causing
+      // the toggle to appear non-functional for already-watched episodes).
+      queryClient.invalidateQueries({ queryKey: ['watched', user?.id] });
       toast({ title: 'Episode removed from progress' });
     },
     onError: (error: Error) => {
@@ -406,10 +426,12 @@ export function useWatchedEpisodes(showId?: number) {
   return {
     watchedEpisodes,
     isLoading,
+    refetch,
     markEpisodeWatched: markEpisodeWatchedMutation.mutate,
     removeEpisodeWatched: removeEpisodeWatchedMutation.mutate,
     markSeasonWatched: markSeasonWatchedMutation.mutate,
     markAllSeasonsWatched: markAllSeasonsWatchedMutation.mutate,
+    markAllSeasonsWatchedAsync: markAllSeasonsWatchedMutation.mutateAsync,
     isEpisodeWatched,
   };
 }

@@ -1815,7 +1815,7 @@ export default function Profile() {
         canonical="https://cinetrekker.vercel.app/profile"
       />
       <motion.div
-        className="profile-page page-container ct-page-shell max-w-full overflow-x-hidden pt-20 pb-24 md:pb-0 relative"
+        className="profile-page page-container ct-page-shell relative mx-auto max-w-[82rem] overflow-x-hidden pb-24 pt-20 md:pb-12"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -1842,13 +1842,13 @@ export default function Profile() {
 
         {!isLoadingProfile && (
           <TooltipProvider>
-            <div className="relative z-10 mt-12 md:mt-24">
+            <div className="relative z-10 mt-10 md:mt-20">
               <motion.section variants={itemVariants} className="mb-8">
-                <Card className="relative overflow-hidden border border-border bg-card shadow-sm">
-                  <CardContent className="pt-8 pb-7">
+                <Card className="profile-identity-card relative overflow-hidden">
+                  <CardContent className="p-5 sm:p-7">
                     <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
                       <div
-                        className="flex w-full flex-col items-center sm:w-[21rem] sm:min-w-[21rem]"
+                        className="flex w-full flex-col items-center sm:w-[11rem] sm:min-w-[11rem]"
                       >
                         <div
                           className="relative group"
@@ -1876,7 +1876,7 @@ export default function Profile() {
                         >
                           <div
                             className={cn(
-                              "relative h-36 w-36 overflow-hidden rounded-full border-2 border-border bg-muted sm:h-40 sm:w-40",
+                              "relative h-28 w-28 overflow-hidden rounded-2xl border-2 border-border bg-muted shadow-lg sm:h-32 sm:w-32",
                               isAvatarDragActive && "border-primary scale-[1.02]",
                             )}
                           >
@@ -1921,15 +1921,14 @@ export default function Profile() {
                           ref={profilePhotoInputRef}
                           onChange={handlePhotoChange}
                         />
-                        <div className="mt-4 grid w-full max-w-[21rem] grid-cols-2 gap-3">
+                        <div className="mt-4 flex w-full max-w-[11rem] flex-col gap-2">
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
                                 variant="secondary"
                                 size="sm"
                                 className={cn(
-                                  "h-10 w-full justify-center",
-                                  !profilePhoto && "col-span-2",
+                                  "h-9 w-full justify-center text-xs",
                                 )}
                                 onClick={() => profilePhotoInputRef.current?.click()}
                                 type="button"
@@ -1949,7 +1948,7 @@ export default function Profile() {
                               type="button"
                               variant="outline"
                               size="sm"
-                              className="h-10 w-full justify-center"
+                              className="h-9 w-full justify-center text-xs"
                               onClick={handlePhotoRemove}
                             >
                               <X className="mr-2 h-4 w-4" />
@@ -1957,24 +1956,24 @@ export default function Profile() {
                             </Button>
                           ) : null}
                         </div>
-                        <p className="mt-3 max-w-[21rem] text-center text-[11px] text-muted-foreground">
+                        <p className="mt-2 max-w-[11rem] text-center text-[11px] leading-4 text-muted-foreground">
                           {text("profile.photoUploadHint", "Drag and drop a profile picture or choose a file.")}
                         </p>
                       </div>
 
-                      <div className="flex-1">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <h1 className="text-3xl font-black tracking-tight sm:text-4xl text-foreground">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2.5">
+                          <h1 className="text-balance text-3xl font-semibold tracking-[-0.04em] text-foreground sm:text-4xl">
                             {userName}
                           </h1>
-                          <Badge variant="secondary" className="px-2.5 py-1">
+                          <Badge variant="secondary" className="rounded-md px-2.5 py-1">
                             <Trophy className="mr-1.5 h-3.5 w-3.5" />
                             {cinephileLevel}
                           </Badge>
                         </div>
 
                         {/* Cinephile Level Progression Bar */}
-                        <div className="mt-2.5 max-w-md">
+                        <div className="mt-3 max-w-xl">
                           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                             <span className="font-semibold text-foreground">{cinephileLevel}</span>
                             {nextLevelRequirement ? (
@@ -1991,50 +1990,9 @@ export default function Profile() {
                           />
                         </div>
 
-                        {user && (
-                          <div className="mt-4 flex flex-wrap items-center gap-2">
-                            <p className="text-muted-foreground">
-                              {visibleEmail}
-                            </p>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-7 px-2 text-xs"
-                              onClick={() =>
-                                setIsEmailRevealed((prev) => !prev)
-                              }
-                            >
-                              {isEmailRevealed ? (
-                                <EyeOff className="mr-1 h-3.5 w-3.5" />
-                              ) : (
-                                <Eye className="mr-1 h-3.5 w-3.5" />
-                              )}
-                              {isEmailRevealed
-                                ? text("auth.hide", "Hide")
-                                : text("auth.show", "Show")}
-                            </Button>
-                            <Tooltip open={shareCopied ? true : undefined}>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-7 px-2 text-xs"
-                                  onClick={handleCopyProfileLink}
-                                >
-                                  <Share2 className="mr-1 h-3.5 w-3.5" />
-                                  {text("profile.shareProfile", "Share Profile")}
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>{text("profile.linkCopied", "Link copied!")}</TooltipContent>
-                            </Tooltip>
-                          </div>
-                        )}
-
-                        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                        <div className="profile-stat-grid mt-5 grid gap-2 sm:grid-cols-3">
                           {/* Movies Watched */}
-                          <div className="rounded-xl border border-border bg-muted/30 px-4 py-3">
+                          <div className="profile-stat px-4 py-3">
                             <div className="flex items-center gap-2 mb-0.5">
                               <Film className="h-3.5 w-3.5 text-muted-foreground" />
                               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -2044,7 +2002,7 @@ export default function Profile() {
                             <p className="text-xl font-bold text-foreground tabular-nums">{countMoviesWatched}</p>
                           </div>
                           {/* Ratings */}
-                          <div className="rounded-xl border border-border bg-muted/30 px-4 py-3">
+                          <div className="profile-stat px-4 py-3">
                             <div className="flex items-center gap-2 mb-0.5">
                               <Star className="h-3.5 w-3.5 text-muted-foreground" />
                               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -2054,7 +2012,7 @@ export default function Profile() {
                             <p className="text-xl font-bold text-foreground tabular-nums">{countRatings}</p>
                           </div>
                           {/* Watch Time */}
-                          <div className="rounded-xl border border-border bg-muted/30 px-4 py-3">
+                          <div className="profile-stat px-4 py-3">
                             <div className="flex items-center gap-2 mb-0.5">
                               <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -2067,46 +2025,7 @@ export default function Profile() {
                           </div>
                         </div>
 
-                        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                          {achievements.slice(0, 4).map((achievement) => (
-                            <Tooltip key={achievement.id}>
-                              <TooltipTrigger asChild>
-                                <div
-                                  className={cn(
-                                    "relative flex items-center justify-center rounded-lg border p-2.5 transition-colors duration-150",
-                                    achievement.unlocked
-                                      ? "border-border bg-muted text-foreground"
-                                      : "border-border bg-muted/40 opacity-40 grayscale",
-                                  )}
-                                >
-                                  {achievement.icon}
-                                  {!achievement.unlocked ? (
-                                    <span className="absolute right-1 top-1 rounded-full bg-background/80 p-0.5 text-muted-foreground">
-                                      <Lock className="h-2.5 w-2.5" />
-                                    </span>
-                                  ) : null}
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="text-xs font-semibold">
-                                  {achievement.fullLabel}
-                                </p>
-                                {achievement.unlocked ? (
-                                  <p className="text-xs text-muted-foreground">
-                                    {text("achievements.unlockedPrefix", "Unlocked")}{" "}
-                                    {achievement.unlockedLabel ?? text("achievements.recently", "Recently")}
-                                  </p>
-                                ) : (
-                                  <p className="text-xs text-muted-foreground">
-                                    {achievement.progressLabel}
-                                  </p>
-                                )}
-                              </TooltipContent>
-                            </Tooltip>
-                          ))}
-                        </div>
-
-                        <div className="mt-3">
+                      <div className="mt-3 flex items-center gap-3">
                           <Link
                             to="/achievements"
                             className="text-xs font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
@@ -2120,29 +2039,29 @@ export default function Profile() {
                 </Card>
               </motion.section>
 
-              <motion.section variants={itemVariants} className="mb-6">
+              <motion.section variants={itemVariants} className="mb-8">
                 <Tabs
                   value={activeProfileTab}
-                  onValueChange={(value) =>
-                    setActiveProfileTab(
-                      value as "overview" | "favorites" | "taste" | "edit",
-                    )
-                  }
+                  onValueChange={(value) => {
+                    const nextTab = value as "overview" | "favorites" | "taste" | "edit";
+                    setActiveProfileTab(nextTab);
+                    setIsEditMode(nextTab === "edit");
+                  }}
                 >
-                  <TabsList className="ct-toolbar h-auto w-full justify-start gap-1 rounded-lg bg-card p-1 border border-border">
-                    <TabsTrigger value="overview" className="rounded-md px-4 py-2 gap-2 text-sm font-medium transition-colors">
+                  <TabsList className="profile-tabs h-auto w-full justify-start gap-1 overflow-x-auto p-1">
+                    <TabsTrigger value="overview" className="shrink-0 rounded-md px-4 py-2 gap-2 text-sm font-medium transition-colors">
                       <BarChart3 className="h-3.5 w-3.5" />
                       {text("profile.overview", "Overview")}
                     </TabsTrigger>
-                    <TabsTrigger value="favorites" className="rounded-md px-4 py-2 gap-2 text-sm font-medium transition-colors">
+                    <TabsTrigger value="favorites" className="shrink-0 rounded-md px-4 py-2 gap-2 text-sm font-medium transition-colors">
                       <Star className="h-3.5 w-3.5" />
                       {text("profile.favorites", "Favorites")}
                     </TabsTrigger>
-                    <TabsTrigger value="taste" className="rounded-md px-4 py-2 gap-2 text-sm font-medium transition-colors">
+                    <TabsTrigger value="taste" className="shrink-0 rounded-md px-4 py-2 gap-2 text-sm font-medium transition-colors">
                       <Sparkles className="h-3.5 w-3.5" />
                       {text("profile.tasteAndStats", "Taste & Stats")}
                     </TabsTrigger>
-                    <TabsTrigger value="edit" className="rounded-md px-4 py-2 gap-2 text-sm font-medium transition-colors">
+                    <TabsTrigger value="edit" className="shrink-0 rounded-md px-4 py-2 gap-2 text-sm font-medium transition-colors">
                       <User className="h-3.5 w-3.5" />
                       {text("profile.editProfile", "Edit Profile")}
                     </TabsTrigger>
@@ -2152,26 +2071,17 @@ export default function Profile() {
 
               <div className="space-y-8">
                 <div className="space-y-8">
-                  {activeProfileTab === "edit" || shouldShowProfileSection("overview") ? (
+                  {activeProfileTab === "edit" ? (
                   <motion.section
                     variants={itemVariants}
                     id="profile-details"
                     className="mb-2"
                   >
                     <div className="mb-4 flex items-center justify-between">
-                      <h2 className="flex items-center gap-2 text-xl font-bold">
+                      <h2 className="flex items-center gap-2 text-xl font-semibold">
                         <User className="h-5 w-5 text-muted-foreground" />
                         {text("profile.profileDetails", "Profile Details")}
                       </h2>
-                      {!isEditMode ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setIsEditMode(true)}
-                        >
-                          {text("profile.editProfile", "Edit Profile")}
-                        </Button>
-                      ) : null}
                     </div>
 
                     <Card className="ct-panel">
@@ -2353,21 +2263,21 @@ export default function Profile() {
                   {shouldShowProfileSection("overview") ? (
                   <motion.section variants={itemVariants} id="stats-overview" className="space-y-6">
                     <div className="mb-2 space-y-1">
-                      <h2 className="flex items-center gap-2 text-xl font-bold">
-                        <TrendingUp className="h-5 w-5 text-red-500" />
-                        {t("profile.overview")}
+                      <h2 className="flex items-center gap-2 text-xl font-semibold">
+                        <TrendingUp className="h-5 w-5 text-primary" />
+                        {text("profile.viewingProfile", "Viewing profile")}
                       </h2>
                       <p className="text-sm text-muted-foreground">
-                        {text("profile.overviewSubtitle", "High-level summary of your cinematic accomplishments and style.")}
+                        {text("profile.overviewSubtitle", "A quick read on your taste and progress.")}
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div className="hidden grid-cols-1 gap-4 md:grid-cols-3">
                       {/* Movies Watched Card */}
                       <button
                         type="button"
                         onClick={() => setActiveProfileTab("taste")}
-                        className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 text-left transition-colors duration-150 hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-ring"
+                        className="profile-insight group relative overflow-hidden p-5 text-left focus:outline-none focus:ring-2 focus:ring-ring"
                       >
                         <Film className="mb-3 h-5 w-5 text-muted-foreground" />
                         <p className="text-4xl font-bold leading-none tracking-tight text-foreground">
@@ -2387,7 +2297,7 @@ export default function Profile() {
                       <button
                         type="button"
                         onClick={() => setActiveProfileTab("taste")}
-                        className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 text-left transition-colors duration-150 hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-ring"
+                        className="profile-insight group relative overflow-hidden p-5 text-left focus:outline-none focus:ring-2 focus:ring-ring"
                       >
                         <Star className="mb-3 h-5 w-5 text-muted-foreground" />
                         <p className="text-4xl font-bold leading-none tracking-tight text-foreground">
@@ -2405,7 +2315,7 @@ export default function Profile() {
                       <button
                         type="button"
                         onClick={() => setActiveProfileTab("taste")}
-                        className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 text-left transition-colors duration-150 hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-ring"
+                        className="profile-insight group relative overflow-hidden p-5 text-left focus:outline-none focus:ring-2 focus:ring-ring"
                       >
                         <Clock className="mb-3 h-5 w-5 text-muted-foreground" />
                         <p className="text-3xl font-bold leading-none tracking-tight text-foreground">

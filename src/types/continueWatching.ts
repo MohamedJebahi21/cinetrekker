@@ -80,6 +80,8 @@ export interface ContinueWatchingVM {
   watchedEpisodeCount: number;
   progressPercent: number; // 0-100
   status: ShowStatus;
+  /** True when TMDB confirms the series has ended and no episode remains to resume. */
+  isFinished: boolean;
   /** Whether the user has explicitly followed this show. */
   isFollowed: boolean;
   /** Most recent activity timestamp, ISO-8601. Used for filtering. */

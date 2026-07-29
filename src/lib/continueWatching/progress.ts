@@ -98,9 +98,31 @@ export function getPublishedEpisodeTotal(
     return details.number_of_episodes ?? null;
   }
 
+  const lastReleasedEpisode = details.last_episode_to_air;
+  const lastEpisodeHasAired = Boolean(
+    lastReleasedEpisode?.air_date &&
+      lastReleasedEpisode.season_number > 0 &&
+      new Date(lastReleasedEpisode.air_date).getTime() <= now,
+  );
+
   const publishedTotal = seasons.reduce((total, season) => {
     if (season.season_number <= 0) return total;
     if (season.air_date && new Date(season.air_date).getTime() > now) return total;
+
+    // A season summary contains its eventual episode count, including episodes
+    // that may not have aired yet. TMDB's last_episode_to_air gives us the
+    // exact released boundary, so a user who has watched every available
+    // episode reaches 100% immediately instead of being kept at 99%.
+    if (lastEpisodeHasAired && lastReleasedEpisode) {
+      if (season.season_number > lastReleasedEpisode.season_number) return total;
+      if (season.season_number === lastReleasedEpisode.season_number) {
+        return total + Math.min(
+          season.episode_count || 0,
+          Math.max(0, lastReleasedEpisode.episode_number),
+        );
+      }
+    }
+
     return total + (season.episode_count || 0);
   }, 0);
 

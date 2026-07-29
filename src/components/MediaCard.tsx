@@ -279,24 +279,48 @@ export const MediaCard = React.memo(function MediaCard({
     }
   };
 
-  const handleWatchAllSeries = () => {
-    addToWatched(media.id, mediaType);
+  const handleWatchAllSeries = async () => {
+    setOptimisticWatched(true);
+    setIsWatchedPending(true);
+    try {
+      await addToWatched(media.id, mediaType, undefined, undefined, "completed");
+    } catch {
+      setOptimisticWatched(false);
+    } finally {
+      setIsWatchedPending(false);
+    }
   };
 
-  const handleSelectEpisodes = (
+  const handleSelectEpisodes = async (
     episodes: Array<{ season: number; episode: number }>,
-  ): void => {
+    options: { completed: boolean },
+  ): Promise<void> => {
+    setOptimisticWatched(true);
+    setIsWatchedPending(true);
+    try {
+      await addToWatched(
+        media.id,
+        mediaType,
+        undefined,
+        undefined,
+        options.completed ? "completed" : "watching",
+      );
     // Mark selected episodes as watched
-    for (const ep of episodes) {
-      markEpisodeWatched({
-        showId: media.id,
-        seasonNumber: ep.season,
-        episodeNumber: ep.episode,
-        episodeName: undefined,
-        airDate: undefined,
-        showName: title,
-        posterPath: media.poster_path,
-      });
+      for (const ep of episodes) {
+        markEpisodeWatched({
+          showId: media.id,
+          seasonNumber: ep.season,
+          episodeNumber: ep.episode,
+          episodeName: undefined,
+          airDate: undefined,
+          showName: title,
+          posterPath: media.poster_path,
+        });
+      }
+    } catch {
+      setOptimisticWatched(false);
+    } finally {
+      setIsWatchedPending(false);
     }
   };
 

@@ -38,7 +38,7 @@
  * └──────────────────────────────────────────────────────────────────────────┘
  */
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
@@ -106,8 +106,18 @@ export function useContinueWatchingViewModel(): {
   const language = i18n.language;
   const { user } = useAuth();
   const { followedShows } = useFollowedShows();
-  const { watchedEpisodes } = useWatchedEpisodes();
+  const {
+    watchedEpisodes,
+    refetch: refetchWatchedEpisodes,
+  } = useWatchedEpisodes();
   const { data: watchedItems = [], isLoading: watchedItemsLoading } = useWatchedQuery();
+
+  // Details pages use a show-scoped episode query, while this section uses
+  // the unscoped one. Refresh on mount so existing progress cannot be read
+  // from an older cache entry when the user returns home.
+  useEffect(() => {
+    void refetchWatchedEpisodes();
+  }, [refetchWatchedEpisodes]);
 
   const completedShowIds = useMemo(
     () =>
@@ -127,8 +137,12 @@ export function useContinueWatchingViewModel(): {
       buildUserShowProgress({
         followedShows,
         watchedEpisodes,
-      }).filter((show) => show.watchedEpisodeCount > 0),
-    [followedShows, watchedEpisodes],
+      }).filter(
+        (show) =>
+          show.watchedEpisodeCount > 0 &&
+          !completedShowIds.has(show.showId),
+      ),
+    [completedShowIds, followedShows, watchedEpisodes],
   );
 
   // 2. Rank (pure, no TMDB, excludes completed via isShowDefinitelyCompleted)
@@ -244,7 +258,8 @@ export function useContinueWatchingViewModel(): {
         .filter(
           (vm) =>
             vm.watchedEpisodeCount > 0 &&
-            !completedShowIds.has(vm.showId),
+            !completedShowIds.has(vm.showId) &&
+            !vm.isFinished,
         );
 
       return vms;
@@ -254,8 +269,20 @@ export function useContinueWatchingViewModel(): {
     gcTime: 5 * 60_000,
   });
 
+  // Guard against briefly rendering a stale query result while React Query
+  // refreshes after a user marks a title complete. Completion is authoritative:
+  // a completed series never belongs in Continue Watching, regardless of the
+  // number of individually tracked episode rows.
+  const data = useMemo(
+    () =>
+      query.data?.filter(
+        (show) => !completedShowIds.has(show.showId) && !show.isFinished,
+      ),
+    [completedShowIds, query.data],
+  );
+
   return {
-    data: query.data,
+    data,
     isLoading: query.isLoading || watchedItemsLoading,
     error: query.error ?? null,
     refetch: () => query.refetch(),

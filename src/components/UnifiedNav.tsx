@@ -304,116 +304,101 @@ export function UnifiedNav() {
     <header
       role="banner"
       className={cn(
-        "sticky top-0 left-0 right-0 z-[90] border-b border-border/35 bg-background/68 pt-[env(safe-area-inset-top,0px)] backdrop-blur-2xl transition-[background-color,box-shadow,border-color] duration-300",
+        "sticky top-0 left-0 right-0 z-[90] border-b border-border/70 bg-background/88 pt-[env(safe-area-inset-top,0px)] backdrop-blur-xl transition-[background-color,box-shadow,border-color] duration-300",
         isScrolled &&
-          "border-border/45 bg-[hsl(var(--background)/0.92)] shadow-[0_10px_28px_hsl(var(--foreground)/0.08)]",
+          "border-border bg-[hsl(var(--background)/0.96)] shadow-[0_10px_28px_hsl(var(--foreground)/0.08)]",
       )}
     >
-      <div className="container mx-auto max-w-screen-2xl flex h-14 items-center gap-2 px-4 sm:h-15 sm:px-6">
-        <Link to="/" className="group flex shrink-0 items-center gap-2.5">
+      <div className="topbar-inner container mx-auto flex h-16 max-w-[84rem] items-center gap-3 px-4 sm:px-6">
+        <Link to="/" className="topbar-brand group flex shrink-0 items-center gap-2.5">
           <img
             src="/apple-touch-icon.png"
             alt="CineTrekker logo"
-            className="h-9 w-9 rounded-2xl object-cover shadow-[0_8px_20px_hsl(var(--primary)/0.16)] ring-1 ring-white/10 sm:h-10 sm:w-10"
+            className="h-9 w-9 rounded-xl object-cover shadow-sm ring-1 ring-white/10 sm:h-10 sm:w-10"
           />
-          <span className="hidden text-base font-semibold tracking-[-0.02em] text-foreground sm:block lg:text-[1.05rem]">
+          <span className="hidden text-[0.95rem] font-semibold tracking-[-0.02em] text-foreground sm:block lg:text-base">
             {t("common.appName", "CineTrekker")}
           </span>
         </Link>
 
-        <div className="hidden items-center md:flex">
-          <span className="max-w-[9rem] truncate rounded-full border border-primary/15 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary sm:max-w-none sm:text-sm">
+        <div className="topbar-context hidden items-center md:flex">
+          <span className="max-w-[9rem] truncate border-l border-primary/35 pl-3 text-xs font-medium text-muted-foreground sm:max-w-none sm:text-sm">
             {currentPageLabel}
           </span>
         </div>
 
-        <div className="min-w-0 flex-1 max-w-5xl">
+        <div className="topbar-search min-w-0 flex-1">
           <Suspense fallback={searchFallback}>
             <SearchDropdown />
           </Suspense>
         </div>
 
-        <div className="ml-auto hidden items-center gap-1 md:flex">
+        <div className="topbar-actions ml-auto hidden items-center md:flex">
           {user ? (
-            <>
-              <NotificationBell />
+            <div className="topbar-action-group">
+              <div className="topbar-notification-slot">
+                <NotificationBell />
+              </div>
               <UserProfileDropdown
                 profilePhoto={profileImageUrl}
                 displayName={profile?.display_name ?? undefined}
               />
-            </>
+            </div>
           ) : (
-            <Button asChild variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-white/6">
+            <div className="topbar-action-group">
+            <Button asChild variant="ghost" size="icon" className="topbar-icon-button">
               <Link to="/login" aria-label={t("nav.signIn", "Sign In")}>
                 <User className="h-5 w-5" />
               </Link>
             </Button>
+            </div>
           )}
 
-          <Button asChild variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-white/6">
-            <Link to="/settings" aria-label={t("nav.settings", "Settings")}>
-              <Settings className="h-5 w-5" />
-            </Link>
-          </Button>
+          <div className="topbar-divider" aria-hidden="true" />
+          <div className="topbar-action-group">
+            <Button asChild variant="ghost" size="icon" className="topbar-icon-button">
+              <Link to="/settings" aria-label={t("nav.settings", "Settings")}>
+                <Settings className="h-5 w-5" />
+              </Link>
+            </Button>
 
-          {/* Language Switcher */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 rounded-full hover:bg-white/6"
-              aria-label={t("nav.changeLanguage", "Change language")}
-            >
-              <Globe className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[160px] bg-popover border-border/50">
-              {languages.map((lang) => (
-                <DropdownMenuItem
-                  key={lang.code}
-                  onClick={() => i18n.changeLanguage(lang.code)}
-                  className={i18n.language === lang.code ? "bg-accent" : ""}
-                >
-                  {lang.name}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            {/* Language Switcher */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="topbar-icon-button" aria-label={t("nav.changeLanguage", "Change language")}>
+                  <Globe className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[160px] bg-popover border-border/50">
+                {languages.map((lang) => (
+                  <DropdownMenuItem key={lang.code} onClick={() => i18n.changeLanguage(lang.code)} className={i18n.language === lang.code ? "bg-accent" : ""}>
+                    {lang.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-          {/* Theme Switcher */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 rounded-full hover:bg-white/6"
-              aria-label={t("nav.changeTheme", "Change theme")}
-            >
-              <Palette className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[140px] bg-popover border-border/50">
-              {(["dark", "light", "oled"] as const).map((option) => (
-                <DropdownMenuItem
-                  key={option}
-                  onClick={() => setTheme(option)}
-                  className={theme === option ? "bg-accent" : ""}
-                >
-                  {option === "dark"
-                    ? t("nav.themeDark", "Dark")
-                    : option === "light"
-                      ? t("nav.themeLight", "Light")
-                      : t("nav.themeOled", "OLED")}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            {/* Theme Switcher */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="topbar-icon-button" aria-label={t("nav.changeTheme", "Change theme")}>
+                  <Palette className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[140px] bg-popover border-border/50">
+                {(["dark", "light", "oled"] as const).map((option) => (
+                  <DropdownMenuItem key={option} onClick={() => setTheme(option)} className={theme === option ? "bg-accent" : ""}>
+                    {option === "dark" ? t("nav.themeDark", "Dark") : option === "light" ? t("nav.themeLight", "Light") : t("nav.themeOled", "OLED")}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
           <Button
             variant="outline"
             size="icon"
-            className="relative h-9 w-9"
+            className="topbar-menu-button relative"
             onClick={() => setIsDesktopMenuOpen((current) => !current)}
             aria-label={isDesktopMenuOpen ? t("common.close", "Close") : t("nav.menu", "Menu")}
             aria-expanded={isDesktopMenuOpen}
@@ -474,29 +459,32 @@ export function UnifiedNav() {
                 animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: reduceMotion ? 0.16 : 0.32, ease: [0.22, 1, 0.36, 1] }}
               >
-                <div className="mx-auto max-w-6xl space-y-8">
-                  <div className="flex items-start gap-4">
+                <div className="desktop-menu-shell mx-auto max-w-[82rem] space-y-8">
+                  <div className="desktop-menu-intro flex items-end justify-between gap-6 border-b border-border/70 pb-6">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                      <p className="ct-kicker mb-2">
                         {t("nav.more", "More")}
                       </p>
-                      <h2 className="mt-1 text-2xl font-bold text-foreground">
+                      <h2 className="text-3xl font-semibold tracking-tight text-foreground">
                         {t("nav.menu", "Menu")}
                       </h2>
-                      <p className="mt-1 text-sm text-muted-foreground">
+                      <p className="mt-2 text-sm text-muted-foreground">
                         {t("nav.mobileSubtitle", "Browse tools and extra pages live here.")}
                       </p>
                     </div>
+                    <p className="hidden text-sm text-muted-foreground lg:block">
+                      Jump directly to the part of CineTrekker you need.
+                    </p>
                   </div>
 
-                  <div className="grid gap-8 md:grid-cols-3">
+                  <div className="desktop-menu-grid grid gap-8 md:grid-cols-3">
                     {navigationGroups.map((group) => (
-                      <div key={group.title} className="space-y-4">
-                        <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground border-b border-border pb-2">
+                      <div key={group.title} className="desktop-menu-group space-y-3">
+                        <h3 className="border-b border-border/70 pb-3 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                           {group.title}
                         </h3>
                         <motion.div
-                          className="flex flex-col gap-3"
+                          className="flex flex-col gap-2"
                           variants={desktopMenuGridVariants}
                           initial="hidden"
                           animate="visible"
@@ -514,24 +502,24 @@ export function UnifiedNav() {
                                   to={item.path}
                                   onClick={() => setIsDesktopMenuOpen(false)}
                                   className={cn(
-                                    "flex items-start gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm font-medium transition-colors hover:bg-accent",
-                                    isActive && "border-primary bg-primary/10 text-primary"
+                                    "group relative flex min-h-[4.75rem] items-start gap-3 overflow-hidden rounded-xl border border-border/80 bg-card/70 px-3.5 py-3 text-sm transition-[background-color,border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-card hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                                    isActive && "border-primary/55 bg-primary/[0.09] shadow-[inset_3px_0_0_hsl(var(--primary))]"
                                   )}
                                 >
                                   <div className={cn(
-                                    "flex h-8 w-8 shrink-0 items-center justify-center rounded border border-border bg-background text-muted-foreground transition-all duration-200 group-hover:text-primary",
-                                    isActive && "border-primary/30 text-primary bg-primary/10"
+                                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-background/70 text-muted-foreground transition-colors duration-200 group-hover:border-primary/25 group-hover:text-primary",
+                                    isActive && "border-primary/35 bg-primary/10 text-primary"
                                   )}>
-                                    <Icon className="h-4.5 w-4.5" />
+                                    <Icon className="h-4 w-4" />
                                   </div>
-                                  <div className="space-y-0.5 min-w-0">
+                                  <div className="min-w-0 space-y-1 pt-0.5">
                                     <p className={cn(
                                       "text-sm font-semibold text-foreground transition-colors duration-200 group-hover:text-primary",
                                       isActive && "text-primary"
                                     )}>
                                       {t(item.labelKey, item.defaultLabel)}
                                     </p>
-                                    <p className="text-xs text-muted-foreground line-clamp-1 group-hover:text-muted-foreground/80 font-normal">
+                                    <p className="line-clamp-1 text-xs font-normal leading-5 text-muted-foreground">
                                       {item.desc}
                                     </p>
                                   </div>

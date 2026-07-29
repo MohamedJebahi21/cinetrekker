@@ -454,7 +454,7 @@ export default function Watchlist() {
                   <Button
                     variant={selectionMode ? "secondary" : "outline"}
                     size="sm"
-                    className="rounded-full min-h-[38px]"
+                    className="min-h-[38px]"
                     onClick={() => {
                       if (selectionMode) {
                         clearSelection();
@@ -476,7 +476,7 @@ export default function Watchlist() {
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="rounded-full min-h-[38px]">
+                    <Button variant="outline" size="sm" className="min-h-[38px]">
                       <MoreHorizontal className="h-4 w-4 mr-2" />
                       {t("common.actions", "Actions")}
                     </Button>

@@ -252,7 +252,7 @@ export default function EnhancedStats() {
         {/* Cinematic Header Block */}
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="flex items-start gap-4">
-            <div className="ct-panel flex shrink-0 items-center justify-center rounded-2xl p-3 bg-primary/10 border-primary/20">
+            <div className="ct-panel flex shrink-0 items-center justify-center rounded-xl border-primary/20 bg-primary/10 p-3">
               <Award className="w-8 h-8 text-primary" />
             </div>
             <div className="min-w-0">
@@ -273,10 +273,10 @@ export default function EnhancedStats() {
               value={selectedYear.toString()}
               onValueChange={(value) => setSelectedYear(value === "all" ? "all" : Number(value))}
             >
-              <SelectTrigger className="w-28 rounded-2xl border-border/50 bg-card/60 text-foreground">
+              <SelectTrigger className="w-28 border-border/50 bg-card/60 text-foreground">
                 <SelectValue placeholder="Year" />
               </SelectTrigger>
-              <SelectContent className="rounded-2xl border-border/50 bg-popover/95 backdrop-blur-sm">
+              <SelectContent className="border-border/50 bg-popover/95 backdrop-blur-sm">
                 <SelectItem value="all">All Years</SelectItem>
                 {years.map((year) => (
                   <SelectItem key={year} value={year.toString()}>
@@ -291,10 +291,10 @@ export default function EnhancedStats() {
               value={selectedType}
               onValueChange={(value) => setSelectedType(value as MediaTypeFilter)}
             >
-              <SelectTrigger className="w-28 rounded-2xl border-border/50 bg-card/60 text-foreground">
+              <SelectTrigger className="w-28 border-border/50 bg-card/60 text-foreground">
                 <SelectValue placeholder="Format" />
               </SelectTrigger>
-              <SelectContent className="rounded-2xl border-border/50 bg-popover/95 backdrop-blur-sm">
+              <SelectContent className="border-border/50 bg-popover/95 backdrop-blur-sm">
                 <SelectItem value="all">All Formats</SelectItem>
                 <SelectItem value="movie">Movies</SelectItem>
                 <SelectItem value="tv">TV Shows</SelectItem>
@@ -303,10 +303,10 @@ export default function EnhancedStats() {
 
             {/* Language selector */}
             <Select value={selectedLang} onValueChange={setSelectedLang}>
-              <SelectTrigger className="w-32 rounded-2xl border-border/50 bg-card/60 text-foreground">
+              <SelectTrigger className="w-32 border-border/50 bg-card/60 text-foreground">
                 <SelectValue placeholder="Language" />
               </SelectTrigger>
-              <SelectContent className="rounded-2xl border-border/50 bg-popover/95 backdrop-blur-sm">
+              <SelectContent className="border-border/50 bg-popover/95 backdrop-blur-sm">
                 <SelectItem value="all">Languages</SelectItem>
                 {languages.map((lang) => (
                   <SelectItem key={lang} value={lang}>
@@ -320,20 +320,20 @@ export default function EnhancedStats() {
 
         {/* Dashboard Tabs switcher */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 rounded-2xl border border-border/40 bg-card/40 p-1 backdrop-blur-sm max-w-2xl">
-            <TabsTrigger value="overview" className="rounded-xl flex items-center gap-1.5 py-2 text-xs font-bold">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4 border border-border/50 bg-card/55 p-1 shadow-sm">
+            <TabsTrigger value="overview" className="flex items-center gap-1.5 py-2 text-xs font-semibold">
               <BarChart2 className="h-3.5 w-3.5" />
               Overview
             </TabsTrigger>
-            <TabsTrigger value="taste" className="rounded-xl flex items-center gap-1.5 py-2 text-xs font-bold">
+            <TabsTrigger value="taste" className="flex items-center gap-1.5 py-2 text-xs font-semibold">
               <Sparkles className="h-3.5 w-3.5" />
               Taste & Era
             </TabsTrigger>
-            <TabsTrigger value="rankings" className="rounded-xl flex items-center gap-1.5 py-2 text-xs font-bold">
+            <TabsTrigger value="rankings" className="flex items-center gap-1.5 py-2 text-xs font-semibold">
               <Star className="h-3.5 w-3.5" />
               Leaderboard
             </TabsTrigger>
-            <TabsTrigger value="history" className="rounded-xl flex items-center gap-1.5 py-2 text-xs font-bold">
+            <TabsTrigger value="history" className="flex items-center gap-1.5 py-2 text-xs font-semibold">
               <History className="h-3.5 w-3.5" />
               History List
             </TabsTrigger>
@@ -342,8 +342,7 @@ export default function EnhancedStats() {
           {/* ────────────────── Overview Tab ────────────────── */}
           <TabsContent value="overview" className="space-y-6 outline-none">
             {/* Top Watchtime Snapshot Panel */}
-            <div className="ct-panel relative overflow-hidden rounded-3xl border border-border/40 bg-card/40 p-6 md:p-8 backdrop-blur-md shadow-lg flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(229,9,20,0.08),transparent_60%)]" />
+            <div className="ct-panel relative flex flex-col items-center justify-between gap-6 overflow-hidden p-6 md:flex-row md:p-8">
               <div className="relative z-10 space-y-2 text-center md:text-left">
                 <p className="text-xs font-black uppercase tracking-widest text-primary flex items-center justify-center md:justify-start gap-1">
                   <Flame className="h-4.5 w-4.5 fill-current animate-pulse" />
