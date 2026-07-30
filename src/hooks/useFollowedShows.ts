@@ -17,14 +17,35 @@ function watchedEpisodesQueryKey(userId: string | undefined) {
   return ['watched-episodes', userId] as const;
 }
 
+const CW_CARD_ENRICH_QUERY_KEY = ['cw-card-enrich'] as const;
+
+/** Invalidate derived progress views without touching the episode cache. */
+function invalidateDerivedWatchedProgress(
+  queryClient: QueryClient,
+  userId: string | undefined,
+) {
+  queryClient.invalidateQueries({ queryKey: ['followed-shows'] });
+  queryClient.invalidateQueries({ queryKey: ['watched', userId] });
+  queryClient.invalidateQueries({ queryKey: CONTINUE_WATCHING_VM_QUERY_KEY });
+  queryClient.invalidateQueries({ queryKey: CW_CARD_ENRICH_QUERY_KEY });
+}
+
+/** Full resync after a failed mutation or when the episode cache may be stale. */
 function invalidateWatchedProgress(
   queryClient: QueryClient,
   userId: string | undefined,
 ) {
   queryClient.invalidateQueries({ queryKey: watchedEpisodesQueryKey(userId) });
-  queryClient.invalidateQueries({ queryKey: ['followed-shows'] });
-  queryClient.invalidateQueries({ queryKey: ['watched', userId] });
-  queryClient.invalidateQueries({ queryKey: CONTINUE_WATCHING_VM_QUERY_KEY });
+  invalidateDerivedWatchedProgress(queryClient, userId);
+}
+
+async function cancelWatchedProgressQueries(
+  queryClient: QueryClient,
+  userId: string | undefined,
+) {
+  await queryClient.cancelQueries({ queryKey: watchedEpisodesQueryKey(userId) });
+  await queryClient.cancelQueries({ queryKey: CONTINUE_WATCHING_VM_QUERY_KEY });
+  await queryClient.cancelQueries({ queryKey: CW_CARD_ENRICH_QUERY_KEY });
 }
 
 function buildOptimisticEpisode(
@@ -178,11 +199,7 @@ export function useWatchedEpisodes(showId?: number) {
       return data as WatchedEpisode[];
     },
     enabled: !!user,
-    // The home screen reads the unscoped query while a details page reads a
-    // show-scoped query. Always refresh on mount so those two views cannot
-    // keep separate, stale progress snapshots after episode updates.
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: 'always',
+    staleTime: 30_000,
   });
 
   const watchedEpisodes = useMemo(
@@ -229,8 +246,7 @@ export function useWatchedEpisodes(showId?: number) {
     onMutate: async (variables) => {
       if (!user) return;
       const queryKey = watchedEpisodesQueryKey(user.id);
-      await queryClient.cancelQueries({ queryKey });
-      await queryClient.cancelQueries({ queryKey: CONTINUE_WATCHING_VM_QUERY_KEY });
+      await cancelWatchedProgressQueries(queryClient, user.id);
 
       const previous = queryClient.getQueryData<WatchedEpisode[]>(queryKey);
       const optimistic = buildOptimisticEpisode(user.id, variables);
@@ -249,8 +265,15 @@ export function useWatchedEpisodes(showId?: number) {
 
       return { previous };
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({ title: t('progress.episodeMarkedWatched', 'Episode marked as watched') });
+      if (!user) return;
+      const queryKey = watchedEpisodesQueryKey(user.id);
+      // Reconcile optimistic rows with the server without letting a stale
+      // in-flight fetch overwrite the mutation result.
+      await queryClient.cancelQueries({ queryKey });
+      await queryClient.refetchQueries({ queryKey, type: 'active' });
+      invalidateDerivedWatchedProgress(queryClient, user.id);
     },
     onError: (error: Error, _variables, context) => {
       if (context?.previous) {
@@ -261,8 +284,6 @@ export function useWatchedEpisodes(showId?: number) {
         description: error.message,
         variant: 'destructive',
       });
-    },
-    onSettled: () => {
       invalidateWatchedProgress(queryClient, user?.id);
     },
   });
@@ -276,8 +297,7 @@ export function useWatchedEpisodes(showId?: number) {
     onMutate: async (variables) => {
       if (!user) return;
       const queryKey = watchedEpisodesQueryKey(user.id);
-      await queryClient.cancelQueries({ queryKey });
-      await queryClient.cancelQueries({ queryKey: CONTINUE_WATCHING_VM_QUERY_KEY });
+      await cancelWatchedProgressQueries(queryClient, user.id);
 
       const previous = queryClient.getQueryData<WatchedEpisode[]>(queryKey);
       queryClient.setQueryData<WatchedEpisode[]>(queryKey, (old = []) =>
@@ -293,8 +313,13 @@ export function useWatchedEpisodes(showId?: number) {
 
       return { previous };
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({ title: t('progress.episodeRemoved', 'Episode removed from progress') });
+      if (!user) return;
+      const queryKey = watchedEpisodesQueryKey(user.id);
+      await queryClient.cancelQueries({ queryKey });
+      await queryClient.refetchQueries({ queryKey, type: 'active' });
+      invalidateDerivedWatchedProgress(queryClient, user.id);
     },
     onError: (error: Error, _variables, context) => {
       if (context?.previous) {
@@ -305,8 +330,6 @@ export function useWatchedEpisodes(showId?: number) {
         description: error.message,
         variant: 'destructive',
       });
-    },
-    onSettled: () => {
       invalidateWatchedProgress(queryClient, user?.id);
     },
   });
@@ -348,8 +371,7 @@ export function useWatchedEpisodes(showId?: number) {
     onMutate: async (variables) => {
       if (!user) return;
       const queryKey = watchedEpisodesQueryKey(user.id);
-      await queryClient.cancelQueries({ queryKey });
-      await queryClient.cancelQueries({ queryKey: CONTINUE_WATCHING_VM_QUERY_KEY });
+      await cancelWatchedProgressQueries(queryClient, user.id);
 
       const previous = queryClient.getQueryData<WatchedEpisode[]>(queryKey);
       const optimistic = variables.episodes.map((episode) =>
@@ -375,8 +397,13 @@ export function useWatchedEpisodes(showId?: number) {
 
       return { previous };
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({ title: t('progress.seasonMarkedWatched', 'Season marked as watched') });
+      if (!user) return;
+      const queryKey = watchedEpisodesQueryKey(user.id);
+      await queryClient.cancelQueries({ queryKey });
+      await queryClient.refetchQueries({ queryKey, type: 'active' });
+      invalidateDerivedWatchedProgress(queryClient, user.id);
     },
     onError: (error: Error, _variables, context) => {
       if (context?.previous) {
@@ -387,8 +414,6 @@ export function useWatchedEpisodes(showId?: number) {
         description: error.message,
         variant: 'destructive',
       });
-    },
-    onSettled: () => {
       invalidateWatchedProgress(queryClient, user?.id);
     },
   });
@@ -432,8 +457,7 @@ export function useWatchedEpisodes(showId?: number) {
     onMutate: async (variables) => {
       if (!user) return;
       const queryKey = watchedEpisodesQueryKey(user.id);
-      await queryClient.cancelQueries({ queryKey });
-      await queryClient.cancelQueries({ queryKey: CONTINUE_WATCHING_VM_QUERY_KEY });
+      await cancelWatchedProgressQueries(queryClient, user.id);
 
       const previous = queryClient.getQueryData<WatchedEpisode[]>(queryKey);
       const optimistic = variables.allEpisodes.map((episode) =>
@@ -453,8 +477,13 @@ export function useWatchedEpisodes(showId?: number) {
 
       return { previous };
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({ title: t('progress.allSeasonsMarkedWatched', 'All seasons marked as watched') });
+      if (!user) return;
+      const queryKey = watchedEpisodesQueryKey(user.id);
+      await queryClient.cancelQueries({ queryKey });
+      await queryClient.refetchQueries({ queryKey, type: 'active' });
+      invalidateDerivedWatchedProgress(queryClient, user.id);
     },
     onError: (error: Error, _variables, context) => {
       if (context?.previous) {
@@ -465,8 +494,6 @@ export function useWatchedEpisodes(showId?: number) {
         description: error.message,
         variant: 'destructive',
       });
-    },
-    onSettled: () => {
       invalidateWatchedProgress(queryClient, user?.id);
     },
   });

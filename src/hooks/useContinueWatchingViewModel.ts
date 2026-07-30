@@ -120,18 +120,8 @@ export function useContinueWatchingViewModel(): {
   const queryClient = useQueryClient();
   const syncedCompletionKeyRef = useRef<string | null>(null);
   const { followedShows } = useFollowedShows();
-  const {
-    watchedEpisodes,
-    refetch: refetchWatchedEpisodes,
-  } = useWatchedEpisodes();
+  const { watchedEpisodes } = useWatchedEpisodes();
   const { data: watchedItems = [], isLoading: watchedItemsLoading } = useWatchedQuery();
-
-  // Details pages use a show-scoped episode query, while this section uses
-  // the unscoped one. Refresh on mount so existing progress cannot be read
-  // from an older cache entry when the user returns home.
-  useEffect(() => {
-    void refetchWatchedEpisodes();
-  }, [refetchWatchedEpisodes]);
 
   const completedShowIds = useMemo(
     () =>
