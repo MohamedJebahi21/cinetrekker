@@ -212,7 +212,9 @@
     "lastWatched": "Last watched",
     "seriesProgress": "Series progress",
     "openShow": "Open Show",
+    "resumeShow": "Resume Show",
     "markNextEpisode": "Mark Next Episode",
+    "loadingNextEpisode": "Loading next episode...",
     "goToContinueWatchingItem": "Go to continue watching item {{index}}",
     "comebackTitle": "Welcome back",
     "comebackBody": "You were away for {{days}} days. Pick one title and rebuild momentum tonight.",
@@ -472,6 +474,12 @@
     "title": "Watched",
     "empty": "You haven't watched anything yet",
     "emptyDesc": "Mark movies and TV shows as watched to track your viewing history"
+  },
+  "progress": {
+    "episodeMarkedWatched": "Episode marked as watched",
+    "episodeRemoved": "Episode removed from progress",
+    "seasonMarkedWatched": "Season marked as watched",
+    "allSeasonsMarkedWatched": "All seasons marked as watched"
   },
   "watchedPage": {
     "seoTitle": "Watched History - CineTrekker",

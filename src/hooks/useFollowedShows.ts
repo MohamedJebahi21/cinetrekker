@@ -1,9 +1,53 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { validateShowName, validateEpisodeName } from '@/lib/validation';
+import {
+  markTvEpisodeWatched,
+  markTvEpisodesBatch,
+  removeTvEpisodeWatched,
+} from '@/lib/tvEpisodeProgress';
+
+const CONTINUE_WATCHING_VM_QUERY_KEY = ['continue-watching-vm'] as const;
+
+function watchedEpisodesQueryKey(userId: string | undefined) {
+  return ['watched-episodes', userId] as const;
+}
+
+function invalidateWatchedProgress(
+  queryClient: QueryClient,
+  userId: string | undefined,
+) {
+  queryClient.invalidateQueries({ queryKey: watchedEpisodesQueryKey(userId) });
+  queryClient.invalidateQueries({ queryKey: ['followed-shows'] });
+  queryClient.invalidateQueries({ queryKey: ['watched', userId] });
+  queryClient.invalidateQueries({ queryKey: CONTINUE_WATCHING_VM_QUERY_KEY });
+}
+
+function buildOptimisticEpisode(
+  userId: string,
+  input: {
+    showId: number;
+    seasonNumber: number;
+    episodeNumber: number;
+    episodeName?: string;
+    airDate?: string;
+  },
+): WatchedEpisode {
+  return {
+    id: `optimistic-${input.showId}-${input.seasonNumber}-${input.episodeNumber}`,
+    user_id: userId,
+    show_id: input.showId,
+    season_number: input.seasonNumber,
+    episode_number: input.episodeNumber,
+    episode_name: input.episodeName ?? null,
+    air_date: input.airDate ?? null,
+    watched_at: new Date().toISOString(),
+  };
+}
 export interface FollowedShow {
   id: string;
   user_id: string;
@@ -110,6 +154,7 @@ export function useFollowedShows() {
 export function useWatchedEpisodes(showId?: number) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const {
     data: allWatchedEpisodes = [],
@@ -168,92 +213,101 @@ export function useWatchedEpisodes(showId?: number) {
     }) => {
       if (!user) throw new Error('Not authenticated');
       
-      // Validate episode name
       const validatedEpisodeName = validateEpisodeName(episodeName);
-      
-      const { error } = await supabase
-        .from('watched_episodes')
-        .upsert({
-          user_id: user.id,
-          show_id: showId,
-          season_number: seasonNumber,
-          episode_number: episodeNumber,
-          episode_name: validatedEpisodeName || null,
-          air_date: airDate || null,
-        }, { onConflict: 'user_id,show_id,season_number,episode_number' });
-      
-      if (error) throw error;
-
       const validatedShowName = showName ? validateShowName(showName) : undefined;
 
-      if (validatedShowName) {
-        await supabase
-          .from('followed_shows')
-          .upsert({
-            user_id: user.id,
-            show_id: showId,
-            show_name: validatedShowName,
-            poster_path: posterPath ?? null,
-            last_watched_season: seasonNumber,
-            last_watched_episode: episodeNumber,
-          }, { onConflict: 'user_id,show_id' });
-      } else {
-        await supabase
-          .from('followed_shows')
-          .update({
-            last_watched_season: seasonNumber,
-            last_watched_episode: episodeNumber,
-          })
-          .eq('user_id', user.id)
-          .eq('show_id', showId);
-      }
+      await markTvEpisodeWatched({
+        showId,
+        seasonNumber,
+        episodeNumber,
+        episodeName: validatedEpisodeName || null,
+        airDate: airDate || null,
+        showName: validatedShowName ?? null,
+        posterPath: posterPath ?? null,
+      });
+    },
+    onMutate: async (variables) => {
+      if (!user) return;
+      const queryKey = watchedEpisodesQueryKey(user.id);
+      await queryClient.cancelQueries({ queryKey });
+      await queryClient.cancelQueries({ queryKey: CONTINUE_WATCHING_VM_QUERY_KEY });
 
-      await supabase
-        .from('user_watched')
-        .upsert({
-          user_id: user.id,
-          media_id: showId,
-          media_type: 'tv',
-          status: 'watching',
-          watched_at: new Date().toISOString(),
-        }, { onConflict: 'user_id,media_id,media_type' });
+      const previous = queryClient.getQueryData<WatchedEpisode[]>(queryKey);
+      const optimistic = buildOptimisticEpisode(user.id, variables);
+
+      queryClient.setQueryData<WatchedEpisode[]>(queryKey, (old = []) => [
+        optimistic,
+        ...old.filter(
+          (episode) =>
+            !(
+              episode.show_id === variables.showId &&
+              episode.season_number === variables.seasonNumber &&
+              episode.episode_number === variables.episodeNumber
+            ),
+        ),
+      ]);
+
+      return { previous };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['watched-episodes'] });
-      queryClient.invalidateQueries({ queryKey: ['followed-shows'] });
-      queryClient.invalidateQueries({ queryKey: ['watched', user?.id] });
-      toast({ title: 'Episode marked as watched' });
+      toast({ title: t('progress.episodeMarkedWatched', 'Episode marked as watched') });
     },
-    onError: (error: Error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    onError: (error: Error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(watchedEpisodesQueryKey(user?.id), context.previous);
+      }
+      toast({
+        title: t('common.error', 'An error occurred'),
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+    onSettled: () => {
+      invalidateWatchedProgress(queryClient, user?.id);
     },
   });
 
   const removeEpisodeWatchedMutation = useMutation({
     mutationFn: async ({ showId, seasonNumber, episodeNumber }: { showId: number; seasonNumber: number; episodeNumber: number }) => {
       if (!user) throw new Error('Not authenticated');
-      
-      const { error } = await supabase
-        .from('watched_episodes')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('show_id', showId)
-        .eq('season_number', seasonNumber)
-        .eq('episode_number', episodeNumber);
-      
-      if (error) throw error;
+
+      await removeTvEpisodeWatched(showId, seasonNumber, episodeNumber);
+    },
+    onMutate: async (variables) => {
+      if (!user) return;
+      const queryKey = watchedEpisodesQueryKey(user.id);
+      await queryClient.cancelQueries({ queryKey });
+      await queryClient.cancelQueries({ queryKey: CONTINUE_WATCHING_VM_QUERY_KEY });
+
+      const previous = queryClient.getQueryData<WatchedEpisode[]>(queryKey);
+      queryClient.setQueryData<WatchedEpisode[]>(queryKey, (old = []) =>
+        old.filter(
+          (episode) =>
+            !(
+              episode.show_id === variables.showId &&
+              episode.season_number === variables.seasonNumber &&
+              episode.episode_number === variables.episodeNumber
+            ),
+        ),
+      );
+
+      return { previous };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['watched-episodes'] });
-      queryClient.invalidateQueries({ queryKey: ['followed-shows'] });
-      // Also refresh user_watched so that a stale "completed" status does not
-      // survive un-marking an episode (previously this was missing, causing
-      // the toggle to appear non-functional for already-watched episodes).
-      queryClient.invalidateQueries({ queryKey: ['watched', user?.id] });
-      toast({ title: 'Episode removed from progress' });
+      toast({ title: t('progress.episodeRemoved', 'Episode removed from progress') });
     },
-    onError: (error: Error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    onError: (error: Error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(watchedEpisodesQueryKey(user?.id), context.previous);
+      }
+      toast({
+        title: t('common.error', 'An error occurred'),
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+    onSettled: () => {
+      invalidateWatchedProgress(queryClient, user?.id);
     },
   });
 
@@ -272,66 +326,70 @@ export function useWatchedEpisodes(showId?: number) {
       posterPath?: string | null;
     }) => {
       if (!user) throw new Error('Not authenticated');
-      
-      // Mark all episodes in the season as watched
-      const episodesToMark = episodes.map(ep => ({
-        user_id: user.id,
-        show_id: showId,
-        season_number: seasonNumber,
-        episode_number: ep.episode_number,
-        episode_name: validateEpisodeName(ep.name) || null,
-        air_date: ep.air_date || null,
-      }));
-      
-      const { error } = await supabase
-        .from('watched_episodes')
-        .upsert(episodesToMark, { onConflict: 'user_id,show_id,season_number,episode_number' });
-      
-      if (error) throw error;
 
       const validatedShowName = showName ? validateShowName(showName) : undefined;
       const lastEpisode = episodes[episodes.length - 1];
 
-      if (validatedShowName) {
-        await supabase
-          .from('followed_shows')
-          .upsert({
-            user_id: user.id,
-            show_id: showId,
-            show_name: validatedShowName,
-            poster_path: posterPath ?? null,
-            last_watched_season: seasonNumber,
-            last_watched_episode: lastEpisode.episode_number,
-          }, { onConflict: 'user_id,show_id' });
-      } else {
-        await supabase
-          .from('followed_shows')
-          .update({
-            last_watched_season: seasonNumber,
-            last_watched_episode: lastEpisode.episode_number,
-          })
-          .eq('user_id', user.id)
-          .eq('show_id', showId);
-      }
+      await markTvEpisodesBatch({
+        showId,
+        episodes: episodes.map((ep) => ({
+          season_number: seasonNumber,
+          episode_number: ep.episode_number,
+          episode_name: validateEpisodeName(ep.name) || null,
+          air_date: ep.air_date || null,
+        })),
+        showName: validatedShowName ?? null,
+        posterPath: posterPath ?? null,
+        lastWatchedSeason: seasonNumber,
+        lastWatchedEpisode: lastEpisode.episode_number,
+        watchedStatus: 'watching',
+      });
+    },
+    onMutate: async (variables) => {
+      if (!user) return;
+      const queryKey = watchedEpisodesQueryKey(user.id);
+      await queryClient.cancelQueries({ queryKey });
+      await queryClient.cancelQueries({ queryKey: CONTINUE_WATCHING_VM_QUERY_KEY });
 
-      await supabase
-        .from('user_watched')
-        .upsert({
-          user_id: user.id,
-          media_id: showId,
-          media_type: 'tv',
-          status: 'watching',
-          watched_at: new Date().toISOString(),
-        }, { onConflict: 'user_id,media_id,media_type' });
+      const previous = queryClient.getQueryData<WatchedEpisode[]>(queryKey);
+      const optimistic = variables.episodes.map((episode) =>
+        buildOptimisticEpisode(user.id, {
+          showId: variables.showId,
+          seasonNumber: variables.seasonNumber,
+          episodeNumber: episode.episode_number,
+          episodeName: episode.name,
+          airDate: episode.air_date,
+        }),
+      );
+
+      queryClient.setQueryData<WatchedEpisode[]>(queryKey, (old = []) => {
+        const remaining = old.filter(
+          (episode) =>
+            !(
+              episode.show_id === variables.showId &&
+              episode.season_number === variables.seasonNumber
+            ),
+        );
+        return [...optimistic, ...remaining];
+      });
+
+      return { previous };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['watched-episodes'] });
-      queryClient.invalidateQueries({ queryKey: ['followed-shows'] });
-      queryClient.invalidateQueries({ queryKey: ['watched', user?.id] });
-      toast({ title: 'Season marked as watched' });
+      toast({ title: t('progress.seasonMarkedWatched', 'Season marked as watched') });
     },
-    onError: (error: Error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    onError: (error: Error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(watchedEpisodesQueryKey(user?.id), context.previous);
+      }
+      toast({
+        title: t('common.error', 'An error occurred'),
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+    onSettled: () => {
+      invalidateWatchedProgress(queryClient, user?.id);
     },
   });
 
@@ -348,72 +406,68 @@ export function useWatchedEpisodes(showId?: number) {
       posterPath?: string | null;
     }) => {
       if (!user) throw new Error('Not authenticated');
-      
-      // Mark all episodes across all seasons as watched
-      const episodesToMark = allEpisodes.map(ep => ({
-        user_id: user.id,
-        show_id: showId,
-        season_number: ep.season_number,
-        episode_number: ep.episode_number,
-        episode_name: validateEpisodeName(ep.name) || null,
-        air_date: ep.air_date || null,
-      }));
-      
-      const { error } = await supabase
-        .from('watched_episodes')
-        .upsert(episodesToMark, { onConflict: 'user_id,show_id,season_number,episode_number' });
-      
-      if (error) throw error;
 
       const validatedShowName = showName ? validateShowName(showName) : undefined;
-      
-      // Find the latest episode
       const lastEpisode = allEpisodes.reduce((latest, current) => {
         if (current.season_number > latest.season_number) return current;
         if (current.season_number === latest.season_number && current.episode_number > latest.episode_number) return current;
         return latest;
       });
 
-      if (validatedShowName) {
-        await supabase
-          .from('followed_shows')
-          .upsert({
-            user_id: user.id,
-            show_id: showId,
-            show_name: validatedShowName,
-            poster_path: posterPath ?? null,
-            last_watched_season: lastEpisode.season_number,
-            last_watched_episode: lastEpisode.episode_number,
-          }, { onConflict: 'user_id,show_id' });
-      } else {
-        await supabase
-          .from('followed_shows')
-          .update({
-            last_watched_season: lastEpisode.season_number,
-            last_watched_episode: lastEpisode.episode_number,
-          })
-          .eq('user_id', user.id)
-          .eq('show_id', showId);
-      }
+      await markTvEpisodesBatch({
+        showId,
+        episodes: allEpisodes.map((ep) => ({
+          season_number: ep.season_number,
+          episode_number: ep.episode_number,
+          episode_name: validateEpisodeName(ep.name) || null,
+          air_date: ep.air_date || null,
+        })),
+        showName: validatedShowName ?? null,
+        posterPath: posterPath ?? null,
+        lastWatchedSeason: lastEpisode.season_number,
+        lastWatchedEpisode: lastEpisode.episode_number,
+        watchedStatus: 'completed',
+      });
+    },
+    onMutate: async (variables) => {
+      if (!user) return;
+      const queryKey = watchedEpisodesQueryKey(user.id);
+      await queryClient.cancelQueries({ queryKey });
+      await queryClient.cancelQueries({ queryKey: CONTINUE_WATCHING_VM_QUERY_KEY });
 
-      await supabase
-        .from('user_watched')
-        .upsert({
-          user_id: user.id,
-          media_id: showId,
-          media_type: 'tv',
-          status: 'completed',
-          watched_at: new Date().toISOString(),
-        }, { onConflict: 'user_id,media_id,media_type' });
+      const previous = queryClient.getQueryData<WatchedEpisode[]>(queryKey);
+      const optimistic = variables.allEpisodes.map((episode) =>
+        buildOptimisticEpisode(user.id, {
+          showId: variables.showId,
+          seasonNumber: episode.season_number,
+          episodeNumber: episode.episode_number,
+          episodeName: episode.name,
+          airDate: episode.air_date,
+        }),
+      );
+
+      queryClient.setQueryData<WatchedEpisode[]>(queryKey, (old = []) => {
+        const remaining = old.filter((episode) => episode.show_id !== variables.showId);
+        return [...optimistic, ...remaining];
+      });
+
+      return { previous };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['watched-episodes'] });
-      queryClient.invalidateQueries({ queryKey: ['followed-shows'] });
-      queryClient.invalidateQueries({ queryKey: ['watched', user?.id] });
-      toast({ title: 'All seasons marked as watched' });
+      toast({ title: t('progress.allSeasonsMarkedWatched', 'All seasons marked as watched') });
     },
-    onError: (error: Error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    onError: (error: Error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(watchedEpisodesQueryKey(user?.id), context.previous);
+      }
+      toast({
+        title: t('common.error', 'An error occurred'),
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+    onSettled: () => {
+      invalidateWatchedProgress(queryClient, user?.id);
     },
   });
 
@@ -428,6 +482,10 @@ export function useWatchedEpisodes(showId?: number) {
     isLoading,
     refetch,
     markEpisodeWatched: markEpisodeWatchedMutation.mutate,
+    isMarkingEpisodeWatched: markEpisodeWatchedMutation.isPending,
+    markingEpisodeTarget: markEpisodeWatchedMutation.isPending
+      ? markEpisodeWatchedMutation.variables ?? null
+      : null,
     removeEpisodeWatched: removeEpisodeWatchedMutation.mutate,
     markSeasonWatched: markSeasonWatchedMutation.mutate,
     markAllSeasonsWatched: markAllSeasonsWatchedMutation.mutate,

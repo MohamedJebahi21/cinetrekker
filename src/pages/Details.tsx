@@ -1,4 +1,4 @@
-import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
+import { useParams, Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -73,6 +73,7 @@ import { FollowUpdatesButton } from "@/components/FollowUpdatesButton";
 import { MediaComments } from "@/components/MediaComments";
 import { usePinnedFavorites } from "@/hooks/usePinnedFavorites";
 import { logger } from "@/lib/logger";
+import { getPublishedEpisodeTotal } from "@/lib/continueWatching/progress";
 import { toDisplayTitle } from "@/lib/displayTitle";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { PaginationDotButton, PaginationDots } from "@/components/ui/pagination-dots";
@@ -273,6 +274,7 @@ export default function Details() {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const language = i18n.language;
@@ -425,11 +427,7 @@ export default function Details() {
       watchedEpisodes.map((ep) => `${ep.season_number}-${ep.episode_number}`),
     );
     const publishedEpisodesCount =
-      details.seasons?.reduce((total, season) => {
-        if (season.season_number <= 0) return total;
-        if (season.air_date && season.air_date > todayDateKey) return total;
-        return total + (season.episode_count || 0);
-      }, 0) ?? (details.number_of_episodes || 0);
+      getPublishedEpisodeTotal(details) ?? details.number_of_episodes ?? 0;
     const watchedCount = watchedEpisodes.filter((ep) =>
       watchedKeys.has(`${ep.season_number}-${ep.episode_number}`),
     ).length;
@@ -448,7 +446,7 @@ export default function Details() {
       percentageComplete,
       dateAdded: watchedItem ? new Date(watchedItem.addedAt || Date.now()).toLocaleDateString() : null,
     };
-  }, [user, mediaType, watchedEpisodes, details, seasonDetails?.episodes, watchedItem, todayDateKey]);
+  }, [user, mediaType, watchedEpisodes, details, seasonDetails?.episodes, watchedItem]);
 
   // Cast scroll paging
   useEffect(() => {
@@ -481,6 +479,13 @@ export default function Details() {
     return (details?.seasons?.map(s => s.season_number).filter((n, i) => n > 0 && (details.seasons?.[i]?.air_date ? details.seasons![i].air_date! <= todayDateKey : true)) ?? seasons).sort((a, b) => b - a);
   }, [details?.seasons, mediaType, seasons, todayDateKey]);
 
+  const seasonFromUrl = useMemo(() => {
+    const raw = searchParams.get("season");
+    if (!raw) return null;
+    const parsedSeason = Number.parseInt(raw, 10);
+    return Number.isFinite(parsedSeason) && parsedSeason > 0 ? parsedSeason : null;
+  }, [searchParams]);
+
   const seasonProgress = useMemo(() => {
     if (!seasonDetails?.episodes || mediaType !== "tv") return {} as Record<number, { watched: number; total: number; percentage: number }>;
     const p: Record<number, { watched: number; total: number; percentage: number }> = {};
@@ -501,10 +506,14 @@ export default function Details() {
 
   useEffect(() => {
     if (mediaType !== "tv") return;
+    if (seasonFromUrl && availableSeasonNumbers.includes(seasonFromUrl)) {
+      setSelectedSeason(seasonFromUrl);
+      return;
+    }
     if (selectedSeason && availableSeasonNumbers.includes(selectedSeason)) return;
     if (availableSeasonNumbers.length > 0) { setSelectedSeason(availableSeasonNumbers[0]); return; }
     if (!selectedSeason && seasons.length > 0) setSelectedSeason(seasons[seasons.length - 1]);
-  }, [availableSeasonNumbers, mediaType, seasons, selectedSeason]);
+  }, [availableSeasonNumbers, mediaType, seasons, selectedSeason, seasonFromUrl]);
 
   // ── Loading ──
   useEffect(() => {

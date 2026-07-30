@@ -86,6 +86,8 @@ export interface ContinueWatchingVM {
   isFollowed: boolean;
   /** Most recent activity timestamp, ISO-8601. Used for filtering. */
   lastActivityAt: string | null;
+  /** True when season episode lists still need lazy TMDB enrichment. */
+  needsSeasonEnrichment?: boolean;
 }
 
 /** Stable hash type for cache keys. */

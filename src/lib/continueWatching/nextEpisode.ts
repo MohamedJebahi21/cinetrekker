@@ -1,7 +1,7 @@
 /**
  * Next-Episode Resolver — pure function.
  *
- * Computes the next unwatchable+released episode for a show
+ * Computes the next unwatched + released episode for a show
  * given the user's progress and TMDB season data.
  *
  * Handles:

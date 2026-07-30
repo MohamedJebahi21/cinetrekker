@@ -176,7 +176,9 @@
     "lastWatched": "Dernier visionnage",
     "seriesProgress": "Progression de la série",
     "openShow": "Ouvrir la série",
+    "resumeShow": "Reprendre la série",
     "markNextEpisode": "Marquer l'épisode suivant",
+    "loadingNextEpisode": "Chargement du prochain épisode...",
     "goToContinueWatchingItem": "Aller à l'élément à continuer {{index}}",
     "comebackTitle": "Bon retour",
     "comebackBody": "Vous étiez absent pendant {{days}} jours. Choisissez un titre et retrouvez votre élan ce soir.",
@@ -442,6 +444,12 @@
     "title": "Vus",
     "empty": "Vous n'avez encore rien vu",
     "emptyDesc": "Marquez les films et séries comme vus pour suivre votre historique"
+  },
+  "progress": {
+    "episodeMarkedWatched": "Épisode marqué comme vu",
+    "episodeRemoved": "Épisode retiré du progrès",
+    "seasonMarkedWatched": "Saison marquée comme vue",
+    "allSeasonsMarkedWatched": "Toutes les saisons marquées comme vues"
   },
   "recommendations": {
     "title": "Recommandations",

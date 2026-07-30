@@ -38,8 +38,8 @@
  * └──────────────────────────────────────────────────────────────────────────┘
  */
 
-import { useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -49,9 +49,12 @@ import {
 import { useWatchedQuery } from "@/hooks/useWatchedQueries";
 import {
   buildUserShowProgress,
+  getShowsToMarkCompleted,
+  getShowsToReopen,
   isShowDefinitelyCompleted,
   mergeTMDBMetadata,
 } from "@/lib/continueWatching/progress";
+import { syncTvCompletionStatuses } from "@/lib/continueWatching/syncTvCompletionStatus";
 import { rankShows } from "@/lib/continueWatching/ranking";
 import { buildContinueWatchingVM } from "@/lib/continueWatching/viewModel";
 import {
@@ -59,6 +62,15 @@ import {
   batchResolveSeasons,
 } from "@/lib/continueWatching/tmdbResolver";
 import type { ContinueWatchingVM } from "@/types/continueWatching";
+
+/** Only fetch season episode lists for the top-ranked cards. */
+const SEASON_FETCH_LIMIT = 12;
+
+interface ContinueWatchingQueryResult {
+  vms: ContinueWatchingVM[];
+  toComplete: number[];
+  toReopen: number[];
+}
 
 /**
  * Stable FNV-1a hash of an array of numbers.
@@ -105,6 +117,8 @@ export function useContinueWatchingViewModel(): {
   const { i18n } = useTranslation();
   const language = i18n.language;
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const syncedCompletionKeyRef = useRef<string | null>(null);
   const { followedShows } = useFollowedShows();
   const {
     watchedEpisodes,
@@ -129,20 +143,26 @@ export function useContinueWatchingViewModel(): {
     [watchedItems],
   );
 
+  const allProgress = useMemo(
+    () =>
+      buildUserShowProgress({
+        followedShows,
+        watchedEpisodes,
+      }),
+    [followedShows, watchedEpisodes],
+  );
+
   // 1. Build unified progress model (pure, no TMDB)
   //    Status is derived ONCE here via deriveStatus() in progress.ts.
   //    It is a display label only — never used for logic decisions.
   const progress = useMemo(
     () =>
-      buildUserShowProgress({
-        followedShows,
-        watchedEpisodes,
-      }).filter(
+      allProgress.filter(
         (show) =>
           show.watchedEpisodeCount > 0 &&
           !completedShowIds.has(show.showId),
       ),
-    [completedShowIds, followedShows, watchedEpisodes],
+    [allProgress, completedShowIds],
   );
 
   // 2. Rank (pure, no TMDB, excludes completed via isShowDefinitelyCompleted)
@@ -163,24 +183,44 @@ export function useContinueWatchingViewModel(): {
       followedHash,
       [...completedShowIds].sort((a, b) => a - b).join(","),
     ],
-    queryFn: async (): Promise<ContinueWatchingVM[]> => {
-      if (ranked.length === 0) return [];
+    queryFn: async (): Promise<ContinueWatchingQueryResult> => {
+      if (ranked.length === 0) {
+        return { vms: [], toComplete: [], toReopen: [] };
+      }
 
-      // 4a. Batch-resolve all TV details in a single parallel wave
-      const details = await batchResolveTVDetails(
-        ranked.map((s) => s.showId),
-        language,
+      const reopenCandidates = allProgress.filter(
+        (show) =>
+          show.watchedEpisodeCount > 0 && completedShowIds.has(show.showId),
+      );
+      const detailShowIds = Array.from(
+        new Set([
+          ...ranked.map((show) => show.showId),
+          ...reopenCandidates.map((show) => show.showId),
+        ]),
       );
 
-      // 4b. Fetch the season we need for each show (only the relevant season)
-      const seasonRequests = ranked
-        .map((s) => {
-          const d = details.get(s.showId);
-          const seasonNumber = s.lastWatchedEpisode?.season ?? 1;
-          if (!d) return null;
-          return { showId: s.showId, seasonNumber };
-        })
-        .filter(Boolean) as Array<{ showId: number; seasonNumber: number }>;
+      // 4a. Batch-resolve all TV details in a single parallel wave
+      const details = await batchResolveTVDetails(detailShowIds, language);
+
+      const rankedMerged = mergeTMDBMetadata(ranked, details);
+      const reopenMerged = mergeTMDBMetadata(reopenCandidates, details);
+      const toComplete = getShowsToMarkCompleted(rankedMerged, completedShowIds);
+      const toReopen = getShowsToReopen(reopenMerged, completedShowIds);
+
+      // 4b. Fetch seasons only for top-ranked cards to limit TMDB fan-out
+      const seasonFetchTargets = ranked.slice(0, SEASON_FETCH_LIMIT);
+      const seasonRequests: Array<{ showId: number; seasonNumber: number }> = [];
+      for (const s of seasonFetchTargets) {
+        const d = details.get(s.showId);
+        if (!d) continue;
+        const lastSeason = s.lastWatchedEpisode?.season ?? 1;
+        const maxSeason = d.number_of_seasons ?? lastSeason + 1;
+        seasonRequests.push({ showId: s.showId, seasonNumber: lastSeason });
+        const nextSeason = lastSeason + 1;
+        if (nextSeason > 0 && nextSeason <= maxSeason) {
+          seasonRequests.push({ showId: s.showId, seasonNumber: nextSeason });
+        }
+      }
 
       const seen = new Set<string>();
       const uniqueSeasonReqs = seasonRequests.filter((r) => {
@@ -193,19 +233,22 @@ export function useContinueWatchingViewModel(): {
       const seasons = await batchResolveSeasons(uniqueSeasonReqs, language);
 
       // 4c. Merge TMDB metadata into progress (totals only, NO status re-derivation)
-      const mergedProgress = mergeTMDBMetadata(ranked, details).filter(
+      const mergedProgress = rankedMerged.filter(
         (show) =>
           show.watchedEpisodeCount > 0 &&
           !isShowDefinitelyCompleted(show) &&
           !completedShowIds.has(show.showId),
       );
 
+      const seasonFetchIds = new Set(seasonFetchTargets.map((show) => show.showId));
+
       // 4d. Build view model (pure mapping, NO logic)
       const vms = mergedProgress
         .map((p) => {
           const d = details.get(p.showId);
-          const seasonKey = `season:${p.showId}:${p.lastWatchedEpisode?.season ?? 1}:${language}`;
-          const season = seasons.get(seasonKey);
+          const startSeason = p.lastWatchedEpisode?.season ?? 1;
+          const maxSeason = d?.number_of_seasons ?? startSeason + 1;
+          const hasSeasonData = seasonFetchIds.has(p.showId);
 
           const episodesBySeason: Record<
             number,
@@ -221,8 +264,15 @@ export function useContinueWatchingViewModel(): {
             }>
           > = {};
 
-          if (season?.episodes) {
-            const seasonNum = p.lastWatchedEpisode?.season ?? 1;
+          for (
+            let seasonNum = startSeason;
+            hasSeasonData && seasonNum <= Math.min(startSeason + 1, maxSeason);
+            seasonNum++
+          ) {
+            const seasonKey = `season:${p.showId}:${seasonNum}:${language}`;
+            const season = seasons.get(seasonKey);
+            if (!season?.episodes) continue;
+
             episodesBySeason[seasonNum] = season.episodes.map(
               (ep: {
                 season_number: number;
@@ -246,11 +296,14 @@ export function useContinueWatchingViewModel(): {
             );
           }
 
-          return buildContinueWatchingVM({
-            progress: p,
-            details: d ?? null,
-            episodesBySeason,
-          });
+          return {
+            ...buildContinueWatchingVM({
+              progress: p,
+              details: d ?? null,
+              episodesBySeason,
+            }),
+            needsSeasonEnrichment: !hasSeasonData,
+          };
         })
         // 4e. Episode-driven inclusion:
         //     - Require at least one watched episode
@@ -262,12 +315,42 @@ export function useContinueWatchingViewModel(): {
             !vm.isFinished,
         );
 
-      return vms;
+      return { vms, toComplete, toReopen };
     },
     enabled: ranked.length > 0 && !!user && !watchedItemsLoading,
     staleTime: 60_000,
     gcTime: 5 * 60_000,
   });
+
+  useEffect(() => {
+    if (!user?.id || !query.data) return;
+
+    const { toComplete, toReopen } = query.data;
+    if (toComplete.length === 0 && toReopen.length === 0) return;
+
+    const syncKey = `${toComplete.join(",")}|${toReopen.join(",")}`;
+    if (syncedCompletionKeyRef.current === syncKey) return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        await syncTvCompletionStatuses({
+          userId: user.id,
+          toComplete,
+          toReopen,
+        });
+        if (cancelled) return;
+        syncedCompletionKeyRef.current = syncKey;
+        await queryClient.invalidateQueries({ queryKey: ["watched", user.id] });
+      } catch {
+        // Best-effort sync; the next pipeline run will retry.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [query.data, queryClient, user?.id]);
 
   // Guard against briefly rendering a stale query result while React Query
   // refreshes after a user marks a title complete. Completion is authoritative:
@@ -275,10 +358,10 @@ export function useContinueWatchingViewModel(): {
   // number of individually tracked episode rows.
   const data = useMemo(
     () =>
-      query.data?.filter(
+      query.data?.vms.filter(
         (show) => !completedShowIds.has(show.showId) && !show.isFinished,
       ),
-    [completedShowIds, query.data],
+    [completedShowIds, query.data?.vms],
   );
 
   return {

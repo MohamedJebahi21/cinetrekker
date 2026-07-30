@@ -176,7 +176,9 @@
     "lastWatched": "Son izlenen",
     "seriesProgress": "Dizi ilerlemesi",
     "openShow": "Diziyi Aç",
+    "resumeShow": "Diziyi Devam Et",
     "markNextEpisode": "Sonraki Bölümü İşaretle",
+    "loadingNextEpisode": "Sonraki bölüm yükleniyor...",
     "goToContinueWatchingItem": "Devam edilen öğeye git {{index}}",
     "comebackTitle": "Tekrar hoş geldiniz",
     "comebackBody": "{{days}} gündür uzaktaydınız. Bir içerik seçin ve bu gece ivme kazanın.",
@@ -442,6 +444,12 @@
     "title": "İzlediklerim",
     "empty": "Henüz hiçbir şey izlemediniz",
     "emptyDesc": "İzleme geçmişinizi takip etmek için film ve dizileri izlendi olarak işaretleyin"
+  },
+  "progress": {
+    "episodeMarkedWatched": "Bölüm izlendi olarak işaretlendi",
+    "episodeRemoved": "Bölüm ilerlemeden kaldırıldı",
+    "seasonMarkedWatched": "Sezon izlendi olarak işaretlendi",
+    "allSeasonsMarkedWatched": "Tüm sezonlar izlendi olarak işaretlendi"
   },
   "recommendations": {
     "title": "Öneriler",

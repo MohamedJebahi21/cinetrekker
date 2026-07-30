@@ -176,7 +176,9 @@
     "lastWatched": "Zuletzt gesehen",
     "seriesProgress": "Serienfortschritt",
     "openShow": "Serie öffnen",
+    "resumeShow": "Serie fortsetzen",
     "markNextEpisode": "Nächste Episode markieren",
+    "loadingNextEpisode": "Nächste Episode wird geladen...",
     "goToContinueWatchingItem": "Zum Fortsetzen-Element gehen {{index}}",
     "comebackTitle": "Willkommen zurück",
     "comebackBody": "Du warst {{days}} Tage weg. Wähle einen Titel und gewinne heute Abend wieder an Schwung.",
@@ -442,6 +444,12 @@
     "title": "Gesehen",
     "empty": "Du hast noch nichts gesehen",
     "emptyDesc": "Markiere Filme und Serien als gesehen, um deinen Verlauf zu verfolgen"
+  },
+  "progress": {
+    "episodeMarkedWatched": "Episode als gesehen markiert",
+    "episodeRemoved": "Episode aus dem Fortschritt entfernt",
+    "seasonMarkedWatched": "Staffel als gesehen markiert",
+    "allSeasonsMarkedWatched": "Alle Staffeln als gesehen markiert"
   },
   "recommendations": {
     "title": "Empfehlungen",

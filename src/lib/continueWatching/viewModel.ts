@@ -94,9 +94,13 @@ export function buildContinueWatchingVM(params: {
       ["ended", "canceled"].includes(details.status?.toLowerCase() ?? ""),
   );
 
-  // Slug-based href
+  // Slug-based href — deep-link to next episode season when available
   const showName = details?.name ?? progress.showName;
-  const href = `/tv/${slugify(showName)}-${progress.showId}`;
+  const baseHref = `/tv/${slugify(showName)}-${progress.showId}`;
+  const href =
+    nextEpisode && !nextResult?.isUpcoming
+      ? `${baseHref}?season=${nextEpisode.season_number}`
+      : baseHref;
 
   return {
     showId: progress.showId,

@@ -83,6 +83,34 @@ export function isShowDefinitelyCompleted(show: UserShowProgress): boolean {
   });
 }
 
+export function getShowsToMarkCompleted(
+  shows: UserShowProgress[],
+  completedShowIds: ReadonlySet<number>,
+): number[] {
+  return shows
+    .filter(
+      (show) =>
+        show.watchedEpisodeCount > 0 &&
+        isShowDefinitelyCompleted(show) &&
+        !completedShowIds.has(show.showId),
+    )
+    .map((show) => show.showId);
+}
+
+export function getShowsToReopen(
+  shows: UserShowProgress[],
+  completedShowIds: ReadonlySet<number>,
+): number[] {
+  return shows
+    .filter(
+      (show) =>
+        show.watchedEpisodeCount > 0 &&
+        completedShowIds.has(show.showId) &&
+        !isShowDefinitelyCompleted(show),
+    )
+    .map((show) => show.showId);
+}
+
 /**
  * Count episodes that should count toward completion right now.
  *

@@ -177,7 +177,9 @@
     "lastWatched": "شوهد مؤخراً",
     "seriesProgress": "تقدم المسلسل",
     "openShow": "فتح المسلسل",
+    "resumeShow": "متابعة المسلسل",
     "markNextEpisode": "تحديد الحلقة التالية كمشاهدة",
+    "loadingNextEpisode": "جارٍ تحميل الحلقة التالية...",
     "goToContinueWatchingItem": "انتقل إلى عنصر متابعة المشاهدة {{index}}",
     "comebackTitle": "مرحباً بعودتك",
     "comebackBody": "لقد كنت غائباً لمدة {{days}} يوماً. اختر عنواناً واحداً واستعد نشاطك الليلة.",
@@ -443,6 +445,12 @@
     "title": "تمت المشاهدة",
     "empty": "لم تشاهد أي شيء بعد",
     "emptyDesc": "حدد الأفلام والمسلسلات كمُشاهَدة لتتبع سجل المشاهدة"
+  },
+  "progress": {
+    "episodeMarkedWatched": "تم تحديد الحلقة كمشاهدة",
+    "episodeRemoved": "تمت إزالة الحلقة من التقدم",
+    "seasonMarkedWatched": "تم تحديد الموسم كمشاهَد",
+    "allSeasonsMarkedWatched": "تم تحديد جميع المواسم كمشاهَدة"
   },
   "watchedPage": {
     "seoTitle": "سجل المشاهدة - CineTrekker",

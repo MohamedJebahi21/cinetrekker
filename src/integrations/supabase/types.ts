@@ -394,7 +394,38 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      mark_tv_episode_watched: {
+        Args: {
+          p_show_id: number;
+          p_season_number: number;
+          p_episode_number: number;
+          p_episode_name?: string | null;
+          p_air_date?: string | null;
+          p_show_name?: string | null;
+          p_poster_path?: string | null;
+        };
+        Returns: undefined;
+      };
+      remove_tv_episode_watched: {
+        Args: {
+          p_show_id: number;
+          p_season_number: number;
+          p_episode_number: number;
+        };
+        Returns: undefined;
+      };
+      mark_tv_episodes_batch: {
+        Args: {
+          p_show_id: number;
+          p_episodes: Json;
+          p_show_name?: string | null;
+          p_poster_path?: string | null;
+          p_last_watched_season?: number | null;
+          p_last_watched_episode?: number | null;
+          p_watched_status?: string | null;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;
