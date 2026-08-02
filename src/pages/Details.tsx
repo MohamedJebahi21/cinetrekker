@@ -274,7 +274,7 @@ export default function Details() {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const language = i18n.language;
@@ -1417,7 +1417,10 @@ export default function Details() {
                       return (
                         <button
                           key={`sc-${n}`} type="button"
-                          onClick={() => setSelectedSeason(n)}
+                          onClick={() => {
+                            setSelectedSeason(n);
+                            setSearchParams(prev => { const next = new URLSearchParams(prev); next.set('season', String(n)); return next; }, { replace: true });
+                          }}
                           className={cn(
                             "flex items-center gap-2 whitespace-nowrap px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 border",
                             selectedSeason === n
