@@ -96,6 +96,7 @@ function reconcilePersistedEpisode(
     ),
   ]);
 }
+
 export interface FollowedShow {
   id: string;
   user_id: string;
@@ -237,31 +238,32 @@ export function useWatchedEpisodes(showId?: number) {
     [allWatchedEpisodes, showId],
   );
 
+  // ── Mark single episode ────────────────────────────────────────────────────
   const markEpisodeWatchedMutation = useMutation({
-    mutationFn: async ({ 
-      showId, 
-      seasonNumber, 
-      episodeNumber, 
-      episodeName, 
+    mutationFn: async ({
+      showId: sid,
+      seasonNumber,
+      episodeNumber,
+      episodeName,
       airDate,
       showName,
       posterPath,
-    }: { 
-      showId: number; 
-      seasonNumber: number; 
-      episodeNumber: number; 
-      episodeName?: string; 
+    }: {
+      showId: number;
+      seasonNumber: number;
+      episodeNumber: number;
+      episodeName?: string;
       airDate?: string;
       showName?: string;
       posterPath?: string | null;
     }) => {
       if (!user) throw new Error('Not authenticated');
-      
+
       const validatedEpisodeName = validateEpisodeName(episodeName);
       const validatedShowName = showName ? validateShowName(showName) : undefined;
 
       return markTvEpisodeWatched({
-        showId,
+        showId: sid,
         seasonNumber,
         episodeNumber,
         episodeName: validatedEpisodeName || null,
@@ -276,7 +278,13 @@ export function useWatchedEpisodes(showId?: number) {
       await cancelWatchedProgressQueries(queryClient, user.id);
 
       const previous = queryClient.getQueryData<WatchedEpisode[]>(queryKey);
-      const optimistic = buildOptimisticEpisode(user.id, variables);
+      const optimistic = buildOptimisticEpisode(user.id, {
+        showId: variables.showId,
+        seasonNumber: variables.seasonNumber,
+        episodeNumber: variables.episodeNumber,
+        episodeName: variables.episodeName,
+        airDate: variables.airDate,
+      });
 
       queryClient.setQueryData<WatchedEpisode[]>(queryKey, (old = []) => [
         optimistic,
@@ -295,6 +303,7 @@ export function useWatchedEpisodes(showId?: number) {
     onSuccess: (persistedEpisode) => {
       toast({ title: t('progress.episodeMarkedWatched', 'Episode marked as watched') });
       if (!user) return;
+      // Replace optimistic row with the DB-committed row; no extra refetch needed.
       reconcilePersistedEpisode(queryClient, user.id, persistedEpisode);
       invalidateDerivedWatchedProgress(queryClient, user.id);
     },
@@ -311,11 +320,11 @@ export function useWatchedEpisodes(showId?: number) {
     },
   });
 
+  // ── Remove single episode ──────────────────────────────────────────────────
   const removeEpisodeWatchedMutation = useMutation({
-    mutationFn: async ({ showId, seasonNumber, episodeNumber }: { showId: number; seasonNumber: number; episodeNumber: number }) => {
+    mutationFn: async ({ showId: sid, seasonNumber, episodeNumber }: { showId: number; seasonNumber: number; episodeNumber: number }) => {
       if (!user) throw new Error('Not authenticated');
-
-      await removeTvEpisodeWatched(showId, seasonNumber, episodeNumber);
+      await removeTvEpisodeWatched(sid, seasonNumber, episodeNumber);
     },
     onMutate: async (variables) => {
       if (!user) return;
@@ -323,6 +332,7 @@ export function useWatchedEpisodes(showId?: number) {
       await cancelWatchedProgressQueries(queryClient, user.id);
 
       const previous = queryClient.getQueryData<WatchedEpisode[]>(queryKey);
+      // Remove optimistically — no refetch needed on success.
       queryClient.setQueryData<WatchedEpisode[]>(queryKey, (old = []) =>
         old.filter(
           (episode) =>
@@ -336,12 +346,10 @@ export function useWatchedEpisodes(showId?: number) {
 
       return { previous };
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       toast({ title: t('progress.episodeRemoved', 'Episode removed from progress') });
       if (!user) return;
-      const queryKey = watchedEpisodesQueryKey(user.id);
-      await queryClient.cancelQueries({ queryKey });
-      await queryClient.refetchQueries({ queryKey, type: 'active' });
+      // Optimistic removal already applied; only invalidate derived views.
       invalidateDerivedWatchedProgress(queryClient, user.id);
     },
     onError: (error: Error, _variables, context) => {
@@ -357,16 +365,17 @@ export function useWatchedEpisodes(showId?: number) {
     },
   });
 
+  // ── Mark whole season ──────────────────────────────────────────────────────
   const markSeasonWatchedMutation = useMutation({
-    mutationFn: async ({ 
-      showId, 
-      seasonNumber, 
+    mutationFn: async ({
+      showId: sid,
+      seasonNumber,
       episodes,
       showName,
       posterPath,
-    }: { 
-      showId: number; 
-      seasonNumber: number; 
+    }: {
+      showId: number;
+      seasonNumber: number;
       episodes: Array<{ episode_number: number; name?: string; air_date?: string }>;
       showName?: string;
       posterPath?: string | null;
@@ -377,7 +386,7 @@ export function useWatchedEpisodes(showId?: number) {
       const lastEpisode = episodes[episodes.length - 1];
 
       await markTvEpisodesBatch({
-        showId,
+        showId: sid,
         episodes: episodes.map((ep) => ({
           season_number: seasonNumber,
           episode_number: ep.episode_number,
@@ -408,6 +417,7 @@ export function useWatchedEpisodes(showId?: number) {
       );
 
       queryClient.setQueryData<WatchedEpisode[]>(queryKey, (old = []) => {
+        // Remove existing entries for this show+season, then prepend optimistic.
         const remaining = old.filter(
           (episode) =>
             !(
@@ -420,12 +430,10 @@ export function useWatchedEpisodes(showId?: number) {
 
       return { previous };
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       toast({ title: t('progress.seasonMarkedWatched', 'Season marked as watched') });
       if (!user) return;
-      const queryKey = watchedEpisodesQueryKey(user.id);
-      await queryClient.cancelQueries({ queryKey });
-      await queryClient.refetchQueries({ queryKey, type: 'active' });
+      // Optimistic update already applied; only invalidate derived views.
       invalidateDerivedWatchedProgress(queryClient, user.id);
     },
     onError: (error: Error, _variables, context) => {
@@ -441,14 +449,15 @@ export function useWatchedEpisodes(showId?: number) {
     },
   });
 
+  // ── Mark all seasons ───────────────────────────────────────────────────────
   const markAllSeasonsWatchedMutation = useMutation({
-    mutationFn: async ({ 
-      showId, 
+    mutationFn: async ({
+      showId: sid,
       allEpisodes,
       showName,
       posterPath,
-    }: { 
-      showId: number; 
+    }: {
+      showId: number;
       allEpisodes: Array<{ season_number: number; episode_number: number; name?: string; air_date?: string }>;
       showName?: string;
       posterPath?: string | null;
@@ -463,7 +472,7 @@ export function useWatchedEpisodes(showId?: number) {
       });
 
       await markTvEpisodesBatch({
-        showId,
+        showId: sid,
         episodes: allEpisodes.map((ep) => ({
           season_number: ep.season_number,
           episode_number: ep.episode_number,
@@ -494,18 +503,17 @@ export function useWatchedEpisodes(showId?: number) {
       );
 
       queryClient.setQueryData<WatchedEpisode[]>(queryKey, (old = []) => {
+        // Remove all existing entries for this show, then prepend all optimistic.
         const remaining = old.filter((episode) => episode.show_id !== variables.showId);
         return [...optimistic, ...remaining];
       });
 
       return { previous };
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       toast({ title: t('progress.allSeasonsMarkedWatched', 'All seasons marked as watched') });
       if (!user) return;
-      const queryKey = watchedEpisodesQueryKey(user.id);
-      await queryClient.cancelQueries({ queryKey });
-      await queryClient.refetchQueries({ queryKey, type: 'active' });
+      // Optimistic update already applied; only invalidate derived views.
       invalidateDerivedWatchedProgress(queryClient, user.id);
     },
     onError: (error: Error, _variables, context) => {
@@ -521,9 +529,9 @@ export function useWatchedEpisodes(showId?: number) {
     },
   });
 
-  const isEpisodeWatched = (showId: number, seasonNumber: number, episodeNumber: number) => {
+  const isEpisodeWatched = (sid: number, seasonNumber: number, episodeNumber: number) => {
     return watchedEpisodes.some(
-      ep => ep.show_id === showId && ep.season_number === seasonNumber && ep.episode_number === episodeNumber
+      ep => ep.show_id === sid && ep.season_number === seasonNumber && ep.episode_number === episodeNumber
     );
   };
 

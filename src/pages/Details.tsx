@@ -1401,10 +1401,23 @@ export default function Details() {
                       }} disabled={!selectedSeason || !seasonDetails || publishedEpisodes.length === 0}>
                         <Check className="w-3.5 h-3.5" />{t("details.markSeason", "Mark Season")}
                       </Button>
-                      <Button variant="outline" size="sm" className="rounded-xl gap-1 shrink-0" onClick={() => {
-                        if (!selectedSeason || !seasonDetails) return;
-                        markAllSeasonsWatched({ showId: mediaId, allEpisodes: seasonDetails.episodes?.map(ep => ({ season_number: selectedSeason, episode_number: ep.episode_number, name: ep.name, air_date: ep.air_date ?? undefined })) || [], showName: details?.name, posterPath: details?.poster_path });
-                      }} disabled={!selectedSeason || !seasonDetails}>
+                      <Button variant="outline" size="sm" className="rounded-xl gap-1 shrink-0" onClick={async () => {
+                        if (!availableSeasonNumbers.length) return;
+                        // Fetch all seasons' episodes in parallel, then mark everything.
+                        const allSeasonData = await Promise.all(
+                          availableSeasonNumbers.map(n => getTVSeasonDetails(mediaId, n, language))
+                        );
+                        const allEpisodes = allSeasonData.flatMap((sd, i) =>
+                          (sd?.episodes ?? []).filter((ep: { air_date?: string | null }) => ep.air_date && ep.air_date <= todayDateKey).map((ep: { episode_number: number; name: string; air_date?: string | null }) => ({
+                            season_number: availableSeasonNumbers[i],
+                            episode_number: ep.episode_number,
+                            name: ep.name,
+                            air_date: ep.air_date ?? undefined,
+                          }))
+                        );
+                        if (allEpisodes.length === 0) return;
+                        markAllSeasonsWatched({ showId: mediaId, allEpisodes, showName: details?.name, posterPath: details?.poster_path });
+                      }} disabled={!availableSeasonNumbers.length}>
                         <Check className="w-3.5 h-3.5" />{t("details.markAllSeasonsWatched", "Mark All Seasons Watched")}
                       </Button>
                     </>
