@@ -1,7 +1,110 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import type { ServerResponse } from "node:http";
 import type { Plugin } from "vite";
+
+const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+const TMDB_PROXY_PATH = "/functions/v1/tmdb-proxy";
+const TMDB_PROXY_EXCLUDED_PARAMS = new Set([
+  "endpoint",
+  "maturity_level",
+  "age_verified",
+]);
+
+function normalizeSecret(value: string | undefined): string | undefined {
+  const normalized = value?.trim().replace(/^['"]|['"]$/g, "");
+  if (!normalized) return undefined;
+  return normalized.replace(/^Bearer\s+/i, "").trim() || undefined;
+}
+
+function writeJsonResponse(
+  res: ServerResponse,
+  statusCode: number,
+  body: unknown,
+  cacheControl = "no-store",
+) {
+  res.statusCode = statusCode;
+  res.setHeader("Content-Type", "application/json");
+  res.setHeader("Cache-Control", cacheControl);
+  res.end(JSON.stringify(body));
+}
+
+const devTmdbProxyPlugin = (tmdbApiKey?: string): Plugin => ({
+  name: "dev-tmdb-proxy",
+  configureServer(server) {
+    server.middlewares.use(async (req, res, next) => {
+      if (!req.url?.startsWith(TMDB_PROXY_PATH)) {
+        next();
+        return;
+      }
+
+      if (!tmdbApiKey) {
+        next();
+        return;
+      }
+
+      try {
+        const url = new URL(req.url, "http://localhost");
+        const endpoint = url.searchParams.get("endpoint");
+
+        if (
+          !endpoint ||
+          !endpoint.startsWith("/") ||
+          endpoint.includes("..") ||
+          !/^\/[a-zA-Z0-9/_-]+$/.test(endpoint)
+        ) {
+          writeJsonResponse(res, 400, { error: "Invalid endpoint" });
+          return;
+        }
+
+        const tmdbParams = new URLSearchParams();
+        for (const [key, value] of url.searchParams.entries()) {
+          if (!TMDB_PROXY_EXCLUDED_PARAMS.has(key) && value) {
+            tmdbParams.set(key, value);
+          }
+        }
+
+        if (!tmdbParams.has("language")) tmdbParams.set("language", "en");
+        if (!tmdbParams.has("page")) tmdbParams.set("page", "1");
+
+        const isV4Token = tmdbApiKey.includes(".");
+        if (!isV4Token) {
+          tmdbParams.set("api_key", tmdbApiKey);
+        }
+
+        const tmdbUrl = `${TMDB_BASE_URL}${endpoint}?${tmdbParams.toString()}`;
+        const response = await fetch(tmdbUrl, {
+          headers: isV4Token
+            ? {
+                Authorization: `Bearer ${tmdbApiKey}`,
+                "Content-Type": "application/json",
+              }
+            : { "Content-Type": "application/json" },
+        });
+
+        const responseText = await response.text();
+        if (!response.ok) {
+          writeJsonResponse(
+            res,
+            response.status,
+            { error: `TMDB API error: ${response.status}` },
+          );
+          return;
+        }
+
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.setHeader("Cache-Control", "public, max-age=300");
+        res.end(responseText);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown TMDB proxy error";
+        writeJsonResponse(res, 500, { error: message });
+      }
+    });
+  },
+});
 
 // Security: Content Security Policy plugin
 const cspPlugin = (): Plugin => {
@@ -100,6 +203,9 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "::",
       port: 8080,
+      headers: {
+        "Cache-Control": "no-store",
+      },
       hmr: {
         overlay: false,
       },
@@ -113,7 +219,7 @@ export default defineConfig(({ mode }) => {
           }
         : undefined,
     },
-    plugins: [react(), cspPlugin()].filter(Boolean),
+    plugins: [devTmdbProxyPlugin(normalizeSecret(env.TMDB_API_KEY)), react(), cspPlugin()].filter(Boolean),
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),

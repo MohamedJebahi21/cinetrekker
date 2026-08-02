@@ -1,5 +1,16 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export interface MarkedTvEpisode {
+  id: string;
+  user_id: string;
+  show_id: number;
+  season_number: number;
+  episode_number: number;
+  episode_name: string | null;
+  air_date: string | null;
+  watched_at: string;
+}
+
 export interface MarkTvEpisodeInput {
   showId: number;
   seasonNumber: number;
@@ -25,8 +36,10 @@ export interface BatchTvEpisodeInput {
   watchedStatus?: "watching" | "completed";
 }
 
-export async function markTvEpisodeWatched(input: MarkTvEpisodeInput): Promise<void> {
-  const { error } = await supabase.rpc("mark_tv_episode_watched", {
+export async function markTvEpisodeWatched(
+  input: MarkTvEpisodeInput,
+): Promise<MarkedTvEpisode> {
+  const { data, error } = await supabase.rpc("mark_tv_episode_watched", {
     p_show_id: input.showId,
     p_season_number: input.seasonNumber,
     p_episode_number: input.episodeNumber,
@@ -37,6 +50,11 @@ export async function markTvEpisodeWatched(input: MarkTvEpisodeInput): Promise<v
   });
 
   if (error) throw error;
+  if (!data?.[0]) {
+    throw new Error("Episode mutation did not return the persisted episode");
+  }
+
+  return data[0];
 }
 
 export async function removeTvEpisodeWatched(

@@ -404,7 +404,16 @@ export type Database = {
           p_show_name?: string | null;
           p_poster_path?: string | null;
         };
-        Returns: undefined;
+        Returns: {
+          air_date: string | null;
+          episode_name: string | null;
+          episode_number: number;
+          id: string;
+          season_number: number;
+          show_id: number;
+          user_id: string;
+          watched_at: string;
+        }[];
       };
       remove_tv_episode_watched: {
         Args: {

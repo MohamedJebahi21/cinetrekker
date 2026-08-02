@@ -8,6 +8,7 @@ import { validateShowName, validateEpisodeName } from '@/lib/validation';
 import {
   markTvEpisodeWatched,
   markTvEpisodesBatch,
+  type MarkedTvEpisode,
   removeTvEpisodeWatched,
 } from '@/lib/tvEpisodeProgress';
 
@@ -68,6 +69,32 @@ function buildOptimisticEpisode(
     air_date: input.airDate ?? null,
     watched_at: new Date().toISOString(),
   };
+}
+
+/**
+ * Replace an optimistic row with the row returned by the transaction.
+ *
+ * The RPC response is the mutation's commit-time source of truth. Keeping it
+ * in the cache avoids an immediately-following read racing an optimistic
+ * update and restoring an old episode list.
+ */
+function reconcilePersistedEpisode(
+  queryClient: QueryClient,
+  userId: string,
+  episode: MarkedTvEpisode,
+) {
+  const queryKey = watchedEpisodesQueryKey(userId);
+  queryClient.setQueryData<WatchedEpisode[]>(queryKey, (old = []) => [
+    episode,
+    ...old.filter(
+      (current) =>
+        !(
+          current.show_id === episode.show_id &&
+          current.season_number === episode.season_number &&
+          current.episode_number === episode.episode_number
+        ),
+    ),
+  ]);
 }
 export interface FollowedShow {
   id: string;
@@ -233,7 +260,7 @@ export function useWatchedEpisodes(showId?: number) {
       const validatedEpisodeName = validateEpisodeName(episodeName);
       const validatedShowName = showName ? validateShowName(showName) : undefined;
 
-      await markTvEpisodeWatched({
+      return markTvEpisodeWatched({
         showId,
         seasonNumber,
         episodeNumber,
@@ -265,14 +292,10 @@ export function useWatchedEpisodes(showId?: number) {
 
       return { previous };
     },
-    onSuccess: async () => {
+    onSuccess: (persistedEpisode) => {
       toast({ title: t('progress.episodeMarkedWatched', 'Episode marked as watched') });
       if (!user) return;
-      const queryKey = watchedEpisodesQueryKey(user.id);
-      // Reconcile optimistic rows with the server without letting a stale
-      // in-flight fetch overwrite the mutation result.
-      await queryClient.cancelQueries({ queryKey });
-      await queryClient.refetchQueries({ queryKey, type: 'active' });
+      reconcilePersistedEpisode(queryClient, user.id, persistedEpisode);
       invalidateDerivedWatchedProgress(queryClient, user.id);
     },
     onError: (error: Error, _variables, context) => {
