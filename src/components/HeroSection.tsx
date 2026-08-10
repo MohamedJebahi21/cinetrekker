@@ -261,22 +261,24 @@ export function HeroSection() {
                 type="button"
                 aria-label={`Go to weekly spotlight slide ${i + 1} of ${topWeekly.length}`}
                 onClick={() => goToSlide(i)}
-                className="h-1 flex-1 overflow-hidden rounded-t-full bg-white/20 transition-all hover:bg-white/30"
+                className="group flex h-11 flex-1 items-end justify-center pb-0"
               >
-                <div
-                  key={isActive ? `desktop-progress-${activeItem.id}` : `desktop-progress-${item.id}`}
-                  className={cn(
-                    "h-full bg-primary",
-                    isActive && !prefersReducedMotion
-                      ? "origin-left animate-hero-progress"
-                      : i < activeIndex
-                        ? "w-full"
-                        : "w-0",
-                  )}
-                  style={{
-                    animationPlayState: isPaused ? "paused" : "running",
-                  }}
-                />
+                <div className="h-1 w-full overflow-hidden rounded-t-full bg-white/20 transition-all group-hover:bg-white/30">
+                  <div
+                    key={isActive ? `desktop-progress-${activeItem.id}` : `desktop-progress-${item.id}`}
+                    className={cn(
+                      "h-full bg-primary",
+                      isActive && !prefersReducedMotion
+                        ? "origin-left animate-hero-progress"
+                        : i < activeIndex
+                          ? "w-full"
+                          : "w-0",
+                    )}
+                    style={{
+                      animationPlayState: isPaused ? "paused" : "running",
+                    }}
+                  />
+                </div>
               </button>
             );
           })}
@@ -322,22 +324,24 @@ export function HeroSection() {
                     type="button"
                     aria-label={`Go to weekly spotlight slide ${i + 1} of ${topWeekly.length}`}
                     onClick={() => goToSlide(i)}
-                    className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/20"
+                    className="group flex h-11 flex-1 items-center justify-center"
                   >
-                    <div
-                      key={isActive ? `mobile-progress-${activeItem.id}` : `mobile-progress-${item.id}`}
-                      className={cn(
-                        "h-full bg-primary",
-                        isActive && !prefersReducedMotion
-                          ? "origin-left animate-hero-progress"
-                          : i < activeIndex
-                            ? "w-full"
-                            : "w-0",
-                      )}
-                      style={{
-                        animationPlayState: isPaused ? "paused" : "running",
-                      }}
-                    />
+                    <div className="h-0.5 w-full overflow-hidden rounded-full bg-white/20">
+                      <div
+                        key={isActive ? `mobile-progress-${activeItem.id}` : `mobile-progress-${item.id}`}
+                        className={cn(
+                          "h-full bg-primary",
+                          isActive && !prefersReducedMotion
+                            ? "origin-left animate-hero-progress"
+                            : i < activeIndex
+                              ? "w-full"
+                              : "w-0",
+                        )}
+                        style={{
+                          animationPlayState: isPaused ? "paused" : "running",
+                        }}
+                      />
+                    </div>
                   </button>
                 );
               })}
@@ -359,16 +363,16 @@ export function HeroSection() {
                 type="button"
                 onClick={() => goToSlide(index)}
                 className={cn(
-                  "flex-shrink-0 overflow-hidden rounded-md border transition",
+                  "flex-shrink-0 overflow-hidden rounded-md border transition h-11 w-[79px]",
                   isActive
                     ? "border-primary shadow-[0_0_0_2px_hsl(var(--primary)/0.36)]"
                     : "border-white/10 opacity-60"
                 )}
               >
                 {thumb ? (
-                  <img src={thumb} alt="" loading="lazy" className="h-10 w-[72px] object-cover" />
+                  <img src={thumb} alt="" loading="lazy" className="h-full w-full object-cover" />
                 ) : (
-                  <div className="h-10 w-[72px] bg-white/5" />
+                  <div className="h-full w-full bg-white/5" />
                 )}
               </button>
             );
@@ -420,7 +424,7 @@ export function HeroSection() {
               </p>
 
               <div className="mt-3 grid grid-cols-[1fr_auto_auto] gap-2">
-                <Button asChild className="h-10 rounded-2xl bg-white text-black font-bold hover:bg-white/90">
+                <Button asChild className="h-11 rounded-2xl bg-white text-black font-bold hover:bg-white/90">
                   <Link to={`/${activeMediaType}/${activeItem.id}`}>
                     <Info className="mr-2 h-4 w-4" />{t("common.details", "Details")}
                   </Link>
@@ -428,7 +432,7 @@ export function HeroSection() {
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-10 w-10 rounded-2xl border-white/20 bg-black/20 text-white"
+                  className="h-11 w-11 rounded-2xl border-white/20 bg-black/20 text-white"
                   onClick={() => { void (inWatchlist ? removeFromWatchlist(activeItem.id, activeMediaType) : addToWatchlist(activeItem.id, activeMediaType)); }}
                   aria-label={
                     inWatchlist
@@ -441,7 +445,7 @@ export function HeroSection() {
                 <Button
                   variant="outline"
                   size="icon"
-                  className={cn("h-10 w-10 rounded-2xl border-white/20 bg-black/20 text-white", inWatched && "border-green-400/40 text-green-300")}
+                  className={cn("h-11 w-11 rounded-2xl border-white/20 bg-black/20 text-white", inWatched && "border-green-400/40 text-green-300")}
                   onClick={() => { void (inWatched ? removeFromWatched(activeItem.id, activeMediaType) : addToWatched(activeItem.id, activeMediaType, undefined, undefined, "completed")); }}
                   aria-label={
                     inWatched

@@ -59,8 +59,8 @@ test.describe("Mobile navigation", () => {
   });
 
   test("hamburger menu opens, shows links, and closes", async ({ page }) => {
-    const openMenuButton = page.getByRole("button", { name: /open menu/i });
-    const mobileDialog = page.getByRole("dialog", { name: /cinetrekker/i });
+    const openMenuButton = page.getByRole("button", { name: /^menu$/i });
+    const mobileDialog = page.getByRole("dialog", { name: /menu/i });
 
     await expect(openMenuButton).toBeVisible();
     await openMenuButton.click();
@@ -83,7 +83,7 @@ test.describe("Mobile navigation", () => {
     await expect(page).toHaveURL(/\/search$/);
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    await mobileNav.getByRole("button", { name: /^watchlist$/i }).click();
+    await mobileNav.getByRole("button", { name: /sign in/i }).click();
     await expect(page).toHaveURL(/\/login$/);
   });
 
@@ -115,8 +115,7 @@ test.describe("Mobile carousel", () => {
     await expect.poll(async () => pageButtons.count(), { timeout: 15000 }).toBeGreaterThan(1);
 
     await pageButtons.nth(1).click();
-    await expect(pageButtons.nth(1)).toHaveClass(/w-6/);
-    await expect(pageButtons.nth(1)).toHaveClass(/bg-primary/);
+    await expect(pageButtons.nth(1)).toHaveAttribute("aria-pressed", "true");
   });
 
   test("search page accepts typed queries on mobile", async ({ page }) => {

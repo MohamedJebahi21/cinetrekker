@@ -15,6 +15,7 @@ export default defineConfig({
     viewport: { width: 1280, height: 720 },
     actionTimeout: 10000,
     ignoreHTTPSErrors: true,
+    storageState: "./tests/playwright-guest-state.json",
   },
   webServer: {
     command: "npm run preview -- --host 127.0.0.1 --port 4173",

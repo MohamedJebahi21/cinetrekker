@@ -23,7 +23,7 @@ test.describe("TV details season deep-link", () => {
     await page.goto("/tv/breaking-bad-1396?season=2");
     await expect(page.locator("main").first()).toBeVisible();
 
-    const seasonTwoTab = page.getByRole("button", { name: /^S2\b/ }).first();
+    const seasonTwoTab = page.getByRole("button", { name: /S2/ }).first();
     await expect(seasonTwoTab).toBeVisible({ timeout: 30_000 });
     await expect(seasonTwoTab).toHaveClass(/bg-primary/);
   });

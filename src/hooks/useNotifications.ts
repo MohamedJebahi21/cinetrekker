@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -88,7 +88,7 @@ export function useNotifications() {
   const [guestNotifications, setGuestNotifications] = useState<
     AppNotification[]
   >(() => readGuestNotifications());
-  const userNotificationsKey = ["notifications", user?.id] as const;
+  const userNotificationsKey = useMemo(() => ["notifications", user?.id] as const, [user?.id]);
 
   useEffect(() => {
     if (!canUseStorage()) {
@@ -193,7 +193,7 @@ export function useNotifications() {
     return () => {
       cancelled = true;
     };
-  }, [queryClient, user]);
+  }, [queryClient, user, userNotificationsKey]);
 
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: userNotificationsKey,

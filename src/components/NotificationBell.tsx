@@ -63,7 +63,7 @@ function NotificationBellComponent() {
       variant="ghost"
       size="icon"
       className={cn(
-        "relative !h-9 !min-h-9 !w-9 !min-w-9 overflow-visible rounded-full border border-white/10 bg-white/5 text-foreground/90 backdrop-blur transition-colors duration-200 hover:bg-white/10 hover:text-primary focus-visible:ring-2 focus-visible:ring-red-500/50",
+        "relative !h-11 !min-h-11 !w-11 !min-w-11 md:!h-9 md:!min-h-9 md:!w-9 md:!min-w-9 overflow-visible rounded-full border border-white/10 bg-white/5 text-foreground/90 backdrop-blur transition-colors duration-200 hover:bg-white/10 hover:text-primary focus-visible:ring-2 focus-visible:ring-red-500/50",
         unreadCount > 0 && "border-primary/25 bg-primary/5",
       )}
       type="button"

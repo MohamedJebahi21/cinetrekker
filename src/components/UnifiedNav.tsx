@@ -410,13 +410,13 @@ export function UnifiedNav() {
 
         <div className="ml-auto flex items-center gap-1 md:hidden">
           {user && <NotificationBell />}
-          <Button asChild variant="outline" size="icon" className="h-9 w-9">
+          <Button asChild variant="outline" size="icon" className="h-11 w-11">
             <Link to={user ? "/profile" : "/login"} aria-label={t("nav.profile", "Profile")}>
               {profileImageUrl ? (
                 <img
                   src={profileImageUrl}
                   alt={t("nav.profile", "Profile")}
-                  className="h-7 w-7 rounded-full object-cover"
+                  className="h-8 w-8 rounded-full object-cover"
                 />
               ) : (
                 <User className="h-5 w-5" />
@@ -426,7 +426,7 @@ export function UnifiedNav() {
           <Button
             variant="outline"
             size="icon"
-            className="h-9 w-9"
+            className="h-11 w-11"
             onClick={() => setIsMobileSheetOpen((current) => !current)}
             aria-label={isMobileSheetOpen ? t("common.close", "Close") : t("nav.menu", "Menu")}
             aria-expanded={isMobileSheetOpen}
@@ -559,8 +559,9 @@ export function UnifiedNav() {
               </p>
             </SheetHeader>
 
-            <motion.div
-              className="mt-5 space-y-5"
+            <nav aria-label={t("nav.main", "Main navigation")}>
+              <motion.div
+                className="mt-5 space-y-5"
               variants={mobileMenuListVariants}
               initial="hidden"
               animate="visible"
@@ -707,6 +708,7 @@ export function UnifiedNav() {
                 )}
               </div>
             </motion.div>
+          </nav>
           </motion.div>
         </SheetContent>
       </Sheet>

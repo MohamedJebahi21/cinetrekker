@@ -80,12 +80,12 @@ test.describe("mobile overlays", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/", { waitUntil: "domcontentloaded" });
 
-    const openMenu = page.getByRole("button", { name: /open menu/i });
+    const openMenu = page.getByRole("button", { name: /^menu$/i });
     await expect(openMenu).toBeVisible();
     await openMenu.click();
     await page.waitForTimeout(350);
 
-    const dialog = page.getByRole("dialog", { name: /cinetrekker/i });
+    const dialog = page.getByRole("dialog", { name: /menu/i });
     await expect(dialog).toBeVisible();
 
     const result = await dialog.evaluate((node) => {

@@ -1,0 +1,23 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:4173",
+      "localStorage": [
+        {
+          "name": "cinetrekker_guest_onboarding_seen",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "origin": "http://127.0.0.1:4173",
+      "localStorage": [
+        {
+          "name": "cinetrekker_guest_onboarding_seen",
+          "value": "true"
+        }
+      ]
+    }
+  ]
+}

@@ -30,24 +30,29 @@ function writeJsonResponse(
   res.end(JSON.stringify(body));
 }
 
-const devTmdbProxyPlugin = (tmdbApiKey?: string): Plugin => ({
-  name: "dev-tmdb-proxy",
-  configureServer(server) {
-    server.middlewares.use(async (req, res, next) => {
-      if (!req.url?.startsWith(TMDB_PROXY_PATH)) {
+// Paths the TMDB proxy plugin should intercept
+const TMDB_PROXY_PATHS = [TMDB_PROXY_PATH, "/api/tmdb-proxy"];
+
+function makeTmdbMiddleware(
+  tmdbApiKey: string | undefined,
+  supabaseFallback?: { origin: string; anonKey: string },
+) {
+  return async (req: import("node:http").IncomingMessage, res: import("node:http").ServerResponse, next: () => void) => {
+    const url = req.url ?? "";
+    if (!TMDB_PROXY_PATHS.some((p) => url.startsWith(p))) {
+      next();
+      return;
+    }
+
+    // If no direct TMDB key, fall back to the Supabase edge function.
+    if (!tmdbApiKey) {
+      if (!supabaseFallback) {
         next();
         return;
       }
-
-      if (!tmdbApiKey) {
-        next();
-        return;
-      }
-
       try {
-        const url = new URL(req.url, "http://localhost");
-        const endpoint = url.searchParams.get("endpoint");
-
+        const parsed = new URL(url, "http://localhost");
+        const endpoint = parsed.searchParams.get("endpoint");
         if (
           !endpoint ||
           !endpoint.startsWith("/") ||
@@ -58,53 +63,109 @@ const devTmdbProxyPlugin = (tmdbApiKey?: string): Plugin => ({
           return;
         }
 
-        const tmdbParams = new URLSearchParams();
-        for (const [key, value] of url.searchParams.entries()) {
-          if (!TMDB_PROXY_EXCLUDED_PARAMS.has(key) && value) {
-            tmdbParams.set(key, value);
-          }
-        }
-
-        if (!tmdbParams.has("language")) tmdbParams.set("language", "en");
-        if (!tmdbParams.has("page")) tmdbParams.set("page", "1");
-
-        const isV4Token = tmdbApiKey.includes(".");
-        if (!isV4Token) {
-          tmdbParams.set("api_key", tmdbApiKey);
-        }
-
-        const tmdbUrl = `${TMDB_BASE_URL}${endpoint}?${tmdbParams.toString()}`;
-        const response = await fetch(tmdbUrl, {
-          headers: isV4Token
-            ? {
-                Authorization: `Bearer ${tmdbApiKey}`,
-                "Content-Type": "application/json",
-              }
-            : { "Content-Type": "application/json" },
+        const passParams = new URLSearchParams(parsed.searchParams);
+        const edgeFnUrl = `${supabaseFallback.origin}/functions/v1/tmdb-proxy?${passParams.toString()}`;
+        const edgeRes = await fetch(edgeFnUrl, {
+          headers: {
+            Authorization: `Bearer ${supabaseFallback.anonKey}`,
+            apikey: supabaseFallback.anonKey,
+            "Content-Type": "application/json",
+          },
         });
 
-        const responseText = await response.text();
-        if (!response.ok) {
-          writeJsonResponse(
-            res,
-            response.status,
-            { error: `TMDB API error: ${response.status}` },
-          );
+        const text = await edgeRes.text();
+        if (!edgeRes.ok) {
+          writeJsonResponse(res, edgeRes.status, { error: `TMDB proxy error: ${edgeRes.status}` });
           return;
         }
-
         res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");
         res.setHeader("Cache-Control", "public, max-age=300");
-        res.end(responseText);
+        res.end(text);
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Unknown TMDB proxy error";
+        const message = error instanceof Error ? error.message : "Supabase fallback error";
         writeJsonResponse(res, 500, { error: message });
       }
-    });
+      return;
+    }
+
+    try {
+      const parsed = new URL(url, "http://localhost");
+      const endpoint = parsed.searchParams.get("endpoint");
+
+      if (
+        !endpoint ||
+        !endpoint.startsWith("/") ||
+        endpoint.includes("..") ||
+        !/^\/[a-zA-Z0-9/_-]+$/.test(endpoint)
+      ) {
+        writeJsonResponse(res, 400, { error: "Invalid endpoint" });
+        return;
+      }
+
+      const tmdbParams = new URLSearchParams();
+      for (const [key, value] of parsed.searchParams.entries()) {
+        if (!TMDB_PROXY_EXCLUDED_PARAMS.has(key) && value) {
+          tmdbParams.set(key, value);
+        }
+      }
+
+      if (!tmdbParams.has("language")) tmdbParams.set("language", "en");
+      if (!tmdbParams.has("page")) tmdbParams.set("page", "1");
+
+      const isV4Token = tmdbApiKey.includes(".");
+      if (!isV4Token) {
+        tmdbParams.set("api_key", tmdbApiKey);
+      }
+
+      const tmdbUrl = `${TMDB_BASE_URL}${endpoint}?${tmdbParams.toString()}`;
+      const response = await fetch(tmdbUrl, {
+        headers: isV4Token
+          ? {
+              Authorization: `Bearer ${tmdbApiKey}`,
+              "Content-Type": "application/json",
+            }
+          : { "Content-Type": "application/json" },
+      });
+
+      const responseText = await response.text();
+      if (!response.ok) {
+        writeJsonResponse(
+          res,
+          response.status,
+          { error: `TMDB API error: ${response.status}` },
+        );
+        return;
+      }
+
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader("Cache-Control", "public, max-age=300");
+      res.end(responseText);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown TMDB proxy error";
+      writeJsonResponse(res, 500, { error: message });
+    }
+  };
+}
+
+const devTmdbProxyPlugin = (
+  tmdbApiKey?: string,
+  supabaseFallback?: { origin: string; anonKey: string },
+): Plugin => ({
+  name: "dev-tmdb-proxy",
+  configureServer(server) {
+    server.middlewares.use(makeTmdbMiddleware(tmdbApiKey, supabaseFallback));
+  },
+  configurePreviewServer(server) {
+    // Also handle /api/tmdb-proxy during `vite preview` (used by E2E tests).
+    // In production builds, auth headers are not sent to Supabase, so we
+    // intercept here and call TMDB directly — or fall back to Supabase edge fn.
+    server.middlewares.use(makeTmdbMiddleware(tmdbApiKey, supabaseFallback));
   },
 });
+
 
 // Security: Content Security Policy plugin
 const cspPlugin = (): Plugin => {
@@ -199,6 +260,7 @@ export default defineConfig(({ mode }) => {
     }
   }
 
+
   return {
     server: {
       host: "::",
@@ -211,6 +273,12 @@ export default defineConfig(({ mode }) => {
       },
       proxy: supabaseOrigin
         ? {
+            "/api/tmdb-proxy": {
+              target: supabaseOrigin,
+              changeOrigin: true,
+              secure: true,
+              rewrite: (path) => path.replace(/^\/api\/tmdb-proxy/, "/functions/v1/tmdb-proxy"),
+            },
             "/functions/v1": {
               target: supabaseOrigin,
               changeOrigin: true,
@@ -219,7 +287,33 @@ export default defineConfig(({ mode }) => {
           }
         : undefined,
     },
-    plugins: [devTmdbProxyPlugin(normalizeSecret(env.TMDB_API_KEY)), react(), cspPlugin()].filter(Boolean),
+    preview: {
+      port: 4173,
+      // Note: /api/tmdb-proxy is intentionally NOT listed here.
+      // Our configurePreviewServer middleware intercepts it first and
+      // makes authenticated calls to the Supabase edge function.
+      // The http-proxy rules run before configurePreviewServer middleware,
+      // so any rule here would bypass our auth-header injection.
+      proxy: supabaseOrigin
+        ? {
+            "/functions/v1": {
+              target: supabaseOrigin,
+              changeOrigin: true,
+              secure: true,
+            },
+          }
+        : undefined,
+    },
+    plugins: [
+      devTmdbProxyPlugin(
+        normalizeSecret(env.TMDB_API_KEY),
+        supabaseOrigin && env.VITE_SUPABASE_ANON_KEY
+          ? { origin: supabaseOrigin, anonKey: normalizeSecret(env.VITE_SUPABASE_ANON_KEY) ?? env.VITE_SUPABASE_ANON_KEY }
+          : undefined,
+      ),
+      react(),
+      cspPlugin(),
+    ].filter(Boolean),
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
