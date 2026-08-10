@@ -16,6 +16,8 @@
  * The vercel.json rewrite sends /movie/*, /tv/*, /person/* through here first.
  */
 
+import fs from "node:fs";
+import path from "node:path";
 import { getRequiredServerEnv } from "./_lib/env.js";
 import { createServerLogger } from "./_lib/logger.js";
 
@@ -23,6 +25,39 @@ const TMDB_BASE = "https://api.themoviedb.org/3";
 const BASE_URL = "https://cinetrekker.vercel.app";
 
 const logger = createServerLogger("edge-meta");
+
+/**
+ * Load the production asset tags from dist/index.html so the SSR shell boots the
+ * real (hashed) Vite bundle instead of the dev-only /src/main.tsx entry.
+ * Read once per cold start and cached — dist/index.html is immutable per deploy.
+ * The file is made available to this function via vercel.json functions.includeFiles.
+ */
+let entryAssetsCache = null;
+
+function getEntryAssets() {
+  if (entryAssetsCache) return entryAssetsCache;
+
+  const result = { headTags: "", scriptTag: "" };
+  try {
+    const html = fs.readFileSync(
+      path.join(process.cwd(), "dist/index.html"),
+      "utf8",
+    );
+    const assetTags =
+      html.match(/<(?:link|script)\b[^>]*\b(?:href|src)="\/assets\/[^"]*"[^>]*>/g) ||
+      [];
+    result.headTags = assetTags.filter((tag) => tag.startsWith("<link")).join("\n    ");
+    result.scriptTag = assetTags.find((tag) => tag.startsWith("<script")) || "";
+    if (!result.headTags && !result.scriptTag) {
+      logger.warn("[edge-meta] No /assets/ tags found in dist/index.html");
+    }
+  } catch (error) {
+    logger.error("[edge-meta] Failed to read dist/index.html:", error?.message || error);
+  }
+
+  entryAssetsCache = result;
+  return result;
+}
 
 /**
  * Slugify a title (matches src/lib/seo.ts slugifySegment).
@@ -122,6 +157,8 @@ function buildHeadHtml({ title, description, image, canonical, type, releaseDate
   // Escape JSON-LD for safe inline script
   const jsonLdStr = jsonLd ? JSON.stringify(jsonLd).replace(/</g, "\\u003c").replace(/>/g, "\\u003e") : "";
 
+  const { headTags, scriptTag } = getEntryAssets();
+
   return `<!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -159,6 +196,8 @@ function buildHeadHtml({ title, description, image, canonical, type, releaseDate
 
   <!-- Preconnect for TMDB images -->
   <link rel="preconnect" href="https://image.tmdb.org" />
+
+  ${headTags}
 
   ${jsonLdStr ? `<script type="application/ld+json" data-cinetrekker-jsonld="true">${jsonLdStr}</script>` : ""}
 
@@ -198,7 +237,7 @@ function buildHeadHtml({ title, description, image, canonical, type, releaseDate
       </main>
     </div>
   </div>
-  <script type="module" src="/src/main.tsx"></script>
+  ${scriptTag}
 </body>
 </html>`;
 }
@@ -553,6 +592,7 @@ export default async function handler(req, res) {
     logger.error(`[edge-meta] Error for ${pathname}:`, error?.message || error);
 
     // Fall through to SPA shell on error
+    const { headTags, scriptTag } = getEntryAssets();
     return res.status(200).send(`
 <!DOCTYPE html>
 <html lang="en" class="dark">
@@ -562,10 +602,12 @@ export default async function handler(req, res) {
   <title>CineTrekker Movie Tracker</title>
   <meta name="robots" content="noindex,nofollow" />
   <link rel="canonical" href="${BASE_URL}${pathname}" />
+
+  ${headTags}
 </head>
 <body>
   <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
+  ${scriptTag}
 </body>
 </html>
 `);
