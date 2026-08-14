@@ -3,7 +3,9 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import type { ServerResponse } from "node:http";
 import type { Plugin } from "vite";
+import { fileURLToPath } from "node:url";
 
+const PROJECT_ROOT = path.dirname(fileURLToPath(import.meta.url));
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const TMDB_PROXY_PATH = "/functions/v1/tmdb-proxy";
 const TMDB_PROXY_EXCLUDED_PARAMS = new Set([
@@ -30,6 +32,20 @@ function writeJsonResponse(
   res.end(JSON.stringify(body));
 }
 
+async function fetchWithTimeout(
+  input: string,
+  init: RequestInit = {},
+  timeoutMs = 8_000,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 // Paths the TMDB proxy plugin should intercept
 const TMDB_PROXY_PATHS = [TMDB_PROXY_PATH, "/api/tmdb-proxy"];
 
@@ -46,8 +62,11 @@ function makeTmdbMiddleware(
 
     // If no direct TMDB key, fall back to the Supabase edge function.
     if (!tmdbApiKey) {
-      if (!supabaseFallback) {
-        next();
+        if (!supabaseFallback) {
+        writeJsonResponse(res, 503, {
+          error: "TMDB service is not configured for local development.",
+          setup: "Copy .env.example to .env.local, add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY, then restart Vite.",
+        });
         return;
       }
       try {
@@ -65,7 +84,7 @@ function makeTmdbMiddleware(
 
         const passParams = new URLSearchParams(parsed.searchParams);
         const edgeFnUrl = `${supabaseFallback.origin}/functions/v1/tmdb-proxy?${passParams.toString()}`;
-        const edgeRes = await fetch(edgeFnUrl, {
+        const edgeRes = await fetchWithTimeout(edgeFnUrl, {
           headers: {
             Authorization: `Bearer ${supabaseFallback.anonKey}`,
             apikey: supabaseFallback.anonKey,
@@ -82,9 +101,10 @@ function makeTmdbMiddleware(
         res.setHeader("Content-Type", "application/json");
         res.setHeader("Cache-Control", "public, max-age=300");
         res.end(text);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Supabase fallback error";
-        writeJsonResponse(res, 500, { error: message });
+      } catch {
+        writeJsonResponse(res, 503, {
+          error: "TMDB service is temporarily unavailable in local development.",
+        });
       }
       return;
     }
@@ -119,7 +139,7 @@ function makeTmdbMiddleware(
       }
 
       const tmdbUrl = `${TMDB_BASE_URL}${endpoint}?${tmdbParams.toString()}`;
-      const response = await fetch(tmdbUrl, {
+      const response = await fetchWithTimeout(tmdbUrl, {
         headers: isV4Token
           ? {
               Authorization: `Bearer ${tmdbApiKey}`,
@@ -143,9 +163,12 @@ function makeTmdbMiddleware(
       res.setHeader("Cache-Control", "public, max-age=300");
       res.end(responseText);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unknown TMDB proxy error";
-      writeJsonResponse(res, 500, { error: message });
+      writeJsonResponse(res, 502, {
+        error:
+          error instanceof Error && error.name === "AbortError"
+            ? "TMDB request timed out."
+            : "TMDB service is temporarily unavailable.",
+      });
     }
   };
 }
@@ -316,11 +339,11 @@ export default defineConfig(({ mode }) => {
     ].filter(Boolean),
     resolve: {
       alias: {
-        "@": path.resolve(__dirname, "./src"),
-        react: path.resolve(__dirname, "node_modules/react"),
-        "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+        "@": path.resolve(PROJECT_ROOT, "./src"),
+        react: path.resolve(PROJECT_ROOT, "node_modules/react"),
+        "react-dom": path.resolve(PROJECT_ROOT, "node_modules/react-dom"),
         "react-dom/client": path.resolve(
-          __dirname,
+          PROJECT_ROOT,
           "node_modules/react-dom/client",
         ),
       },
@@ -389,6 +412,10 @@ export default defineConfig(({ mode }) => {
 
             if (id.includes("node_modules/@supabase/supabase-js")) {
               return "vendor-supabase";
+            }
+
+            if (id.includes("node_modules/recharts")) {
+              return "vendor-charts";
             }
 
             if (

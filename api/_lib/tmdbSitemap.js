@@ -1,6 +1,6 @@
 import { getRequiredServerEnv } from "./env.js";
+import { fetchWithTimeout } from "./fetchWithTimeout.js";
 
-const fetch = globalThis.fetch;
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const DEFAULT_DYNAMIC_LIMIT = 10000;
@@ -33,7 +33,11 @@ function buildMediaPath(mediaType, id, title) {
 async function fetchTmdb(pathname, params = {}) {
   const apiKey = getRequiredServerEnv("TMDB_API_KEY");
   const query = new URLSearchParams({ api_key: apiKey, ...params });
-  const response = await fetch(`${TMDB_BASE}${pathname}?${query.toString()}`);
+  const response = await fetchWithTimeout(
+    `${TMDB_BASE}${pathname}?${query.toString()}`,
+    { headers: { Accept: "application/json" } },
+    8_000,
+  );
 
   if (!response.ok) {
     throw new Error(

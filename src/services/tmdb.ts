@@ -204,25 +204,32 @@ const fetchTMDB = async <T>(
         logger.error(
           "401 Unauthorized: Invalid Supabase API key or expired session",
         );
-        throw new Error("AUTHENTICATION_ERROR");
+        throw new Error(
+          "Movie data is unavailable because the local Supabase configuration is invalid.",
+        );
       }
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        await response.json().catch(() => ({}));
         const statusText =
-          response.status === 404
-            ? "Unavailable - Invalid endpoint"
-            : response.status >= 500
-              ? "Server Error - TMDB proxy issue"
-              : `HTTP ${response.status}`;
-        logger.error(`TMDB Proxy Error [${response.status}]`, {
+          response.status === 401
+            ? "TMDB access is not configured for this environment."
+            : response.status === 404
+              ? "The requested title was not found."
+              : response.status === 429
+                ? "Too many requests. Please wait a moment and try again."
+                : response.status >= 500
+                  ? "Movie data is temporarily unavailable."
+                  : "The movie data request was rejected.";
+
+        logger.warn(`TMDB proxy request failed [${response.status}]`, {
           endpoint,
           status: response.status,
-          statusText,
-          error: errorData,
         });
 
-        throw new Error(errorData.error || `TMDB API error: ${statusText}`);
+        const clientError = new Error(statusText);
+        Object.assign(clientError, { status: response.status });
+        throw clientError;
       }
 
       const data = await response.json();
@@ -236,12 +243,11 @@ const fetchTMDB = async <T>(
     return result as T;
   } catch (error) {
     tmdbInFlight.delete(cacheKey);
-    if (error instanceof DOMException && error.name === "AbortError") {
-      throw new Error("Request timed out. Please try again.");
-    }
-    // Ensure authentication errors propagate with correct type
-    if (error instanceof Error && error.message === "AUTHENTICATION_ERROR") {
-      throw error;
+    if (
+      error instanceof Error &&
+      (error.name === "AbortError" || error.message.includes("timed out"))
+    ) {
+      throw new Error("Movie data took too long to load. Please try again.");
     }
     throw error;
   }

@@ -1,0 +1,105 @@
+TABLES
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:2 CREATE TABLE public.profiles (
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:11 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:19 CREATE TABLE public.followed_shows (
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:32 ALTER TABLE public.followed_shows ENABLE ROW LEVEL SECURITY;
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:41 CREATE TABLE public.watched_episodes (
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:54 ALTER TABLE public.watched_episodes ENABLE ROW LEVEL SECURITY;
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:63 CREATE TABLE public.user_watchlist (
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:73 ALTER TABLE public.user_watchlist ENABLE ROW LEVEL SECURITY;
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:81 CREATE TABLE public.user_watched (
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:94 ALTER TABLE public.user_watched ENABLE ROW LEVEL SECURITY;
+20260121152412_8dbce6cf-cd47-41d3-a5cb-addd8ef3e554.sql:2 ALTER TABLE public.user_watchlist
+20260121152412_8dbce6cf-cd47-41d3-a5cb-addd8ef3e554.sql:6 ALTER TABLE public.user_watched
+20260213120000_add_profile_fields.sql:2 ALTER TABLE public.profiles
+20260214000001_create_new_episodes_cache.sql:2 CREATE TABLE IF NOT EXISTS new_episodes_cache (
+20260214000001_create_new_episodes_cache.sql:14 ALTER TABLE new_episodes_cache ENABLE ROW LEVEL SECURITY;
+20260220110000_harden_profile_photo_constraints.sql:4 ALTER TABLE public.profiles
+20260220110000_harden_profile_photo_constraints.sql:7 ALTER TABLE public.profiles
+20260302090000_add_content_policy_fields.sql:2 ALTER TABLE public.profiles
+20260302090000_add_content_policy_fields.sql:7 ALTER TABLE public.profiles
+20260302090000_add_content_policy_fields.sql:10 ALTER TABLE public.profiles
+20260302103000_add_safety_filtering_fields.sql:1 ALTER TABLE public.profiles
+20260302113000_add_maturity_rating_enum.sql:1 ALTER TABLE public.profiles
+20260302113000_add_maturity_rating_enum.sql:5 ALTER TABLE public.profiles
+20260302113000_add_maturity_rating_enum.sql:8 ALTER TABLE public.profiles
+20260302201000_profile_privacy_validation.sql:1 ALTER TABLE public.profiles
+20260302201000_profile_privacy_validation.sql:44 ALTER TABLE public.profiles
+20260302201000_profile_privacy_validation.sql:47 ALTER TABLE public.profiles
+20260302201000_profile_privacy_validation.sql:57 ALTER TABLE public.profiles
+20260302201000_profile_privacy_validation.sql:60 ALTER TABLE public.profiles
+20260308120000_add_actor_matches_cache_fields.sql:2 ALTER TABLE public.profiles
+20260312090000_add_follow_and_notifications.sql:11 CREATE TABLE IF NOT EXISTS public.movie_followers (
+20260312090000_add_follow_and_notifications.sql:29 ALTER TABLE public.movie_followers ENABLE ROW LEVEL SECURITY;
+20260312090000_add_follow_and_notifications.sql:53 CREATE TABLE IF NOT EXISTS public.notifications (
+20260312090000_add_follow_and_notifications.sql:75 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+20260312100000_add_followed_title_state_and_notification_event_key.sql:7 CREATE TABLE IF NOT EXISTS public.followed_title_state (
+20260312100000_add_followed_title_state_and_notification_event_key.sql:24 ALTER TABLE public.notifications
+20260317153000_backfill_missing_tables_for_actions.sql:7 CREATE TABLE IF NOT EXISTS public.movie_followers (
+20260317153000_backfill_missing_tables_for_actions.sql:20 ALTER TABLE public.movie_followers ENABLE ROW LEVEL SECURITY;
+20260317153000_backfill_missing_tables_for_actions.sql:56 CREATE TABLE IF NOT EXISTS public.notifications (
+20260317153000_backfill_missing_tables_for_actions.sql:77 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+20260317153000_backfill_missing_tables_for_actions.sql:123 CREATE TABLE IF NOT EXISTS public.followed_title_state (
+20260317153000_backfill_missing_tables_for_actions.sql:142 CREATE TABLE IF NOT EXISTS public.collections (
+20260317153000_backfill_missing_tables_for_actions.sql:155 ALTER TABLE public.collections ENABLE ROW LEVEL SECURITY;
+20260317153000_backfill_missing_tables_for_actions.sql:201 CREATE TABLE IF NOT EXISTS public.collection_items (
+20260317153000_backfill_missing_tables_for_actions.sql:212 ALTER TABLE public.collection_items ENABLE ROW LEVEL SECURITY;
+20260317162000_add_profile_favorite_titles.sql:4 ALTER TABLE public.profiles
+20260317182000_notification_audit_fixes.sql:5 CREATE TABLE IF NOT EXISTS public.followed_title_state_user (
+20260317182000_notification_audit_fixes.sql:26 ALTER TABLE public.followed_title_state_user ENABLE ROW LEVEL SECURITY;
+20260814170000_harden_legacy_state_rls.sql:9 ALTER TABLE public.followed_title_state ENABLE ROW LEVEL SECURITY;
+
+RLS ENABLED
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:11 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:32 ALTER TABLE public.followed_shows ENABLE ROW LEVEL SECURITY;
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:54 ALTER TABLE public.watched_episodes ENABLE ROW LEVEL SECURITY;
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:73 ALTER TABLE public.user_watchlist ENABLE ROW LEVEL SECURITY;
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:94 ALTER TABLE public.user_watched ENABLE ROW LEVEL SECURITY;
+20260214000001_create_new_episodes_cache.sql:14 ALTER TABLE new_episodes_cache ENABLE ROW LEVEL SECURITY;
+20260312090000_add_follow_and_notifications.sql:29 ALTER TABLE public.movie_followers ENABLE ROW LEVEL SECURITY;
+20260312090000_add_follow_and_notifications.sql:75 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+20260317153000_backfill_missing_tables_for_actions.sql:20 ALTER TABLE public.movie_followers ENABLE ROW LEVEL SECURITY;
+20260317153000_backfill_missing_tables_for_actions.sql:77 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+20260317153000_backfill_missing_tables_for_actions.sql:155 ALTER TABLE public.collections ENABLE ROW LEVEL SECURITY;
+20260317153000_backfill_missing_tables_for_actions.sql:212 ALTER TABLE public.collection_items ENABLE ROW LEVEL SECURITY;
+20260317182000_notification_audit_fixes.sql:26 ALTER TABLE public.followed_title_state_user ENABLE ROW LEVEL SECURITY;
+20260814170000_harden_legacy_state_rls.sql:9 ALTER TABLE public.followed_title_state ENABLE ROW LEVEL SECURITY;
+
+RLS FORCED
+
+POLICIES
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:14 CREATE POLICY "Users can view their own profile" ON public.profiles FOR SELECT USING (auth.uid() = user_id);
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:15 CREATE POLICY "Users can insert their own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = user_id);
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:16 CREATE POLICY "Users can update their own profile" ON public.profiles FOR UPDATE USING (auth.uid() = user_id);
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:35 CREATE POLICY "Users can view their followed shows" ON public.followed_shows FOR SELECT USING (auth.uid() = user_id);
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:36 CREATE POLICY "Users can follow shows" ON public.followed_shows FOR INSERT WITH CHECK (auth.uid() = user_id);
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:37 CREATE POLICY "Users can update their followed shows" ON public.followed_shows FOR UPDATE USING (auth.uid() = user_id);
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:38 CREATE POLICY "Users can unfollow shows" ON public.followed_shows FOR DELETE USING (auth.uid() = user_id);
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:57 CREATE POLICY "Users can view their watched episodes" ON public.watched_episodes FOR SELECT USING (auth.uid() = user_id);
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:58 CREATE POLICY "Users can mark episodes as watched" ON public.watched_episodes FOR INSERT WITH CHECK (auth.uid() = user_id);
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:59 CREATE POLICY "Users can update watched episodes" ON public.watched_episodes FOR UPDATE USING (auth.uid() = user_id);
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:60 CREATE POLICY "Users can remove watched episodes" ON public.watched_episodes FOR DELETE USING (auth.uid() = user_id);
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:76 CREATE POLICY "Users can view their watchlist" ON public.user_watchlist FOR SELECT USING (auth.uid() = user_id);
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:77 CREATE POLICY "Users can add to watchlist" ON public.user_watchlist FOR INSERT WITH CHECK (auth.uid() = user_id);
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:78 CREATE POLICY "Users can remove from watchlist" ON public.user_watchlist FOR DELETE USING (auth.uid() = user_id);
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:97 CREATE POLICY "Users can view their watched media" ON public.user_watched FOR SELECT USING (auth.uid() = user_id);
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:98 CREATE POLICY "Users can add watched media" ON public.user_watched FOR INSERT WITH CHECK (auth.uid() = user_id);
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:99 CREATE POLICY "Users can update watched media" ON public.user_watched FOR UPDATE USING (auth.uid() = user_id);
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:100 CREATE POLICY "Users can remove watched media" ON public.user_watched FOR DELETE USING (auth.uid() = user_id);
+
+FUNCTIONS
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:103 CREATE OR REPLACE FUNCTION public.handle_new_user() security_definer=False
+20260113225115_d0cd8a57-4efe-4253-a9e7-b4afc13e3739.sql:118 CREATE OR REPLACE FUNCTION public.update_updated_at_column() security_definer=False
+20260302201000_profile_privacy_validation.sql:4 CREATE OR REPLACE FUNCTION public.validate_profile_text_fields() security_definer=False
+20260729140000_tv_episode_progress_rpc.sql:3 CREATE OR REPLACE FUNCTION public.mark_tv_episode_watched( security_definer=True
+20260729140000_tv_episode_progress_rpc.sql:92 CREATE OR REPLACE FUNCTION public.remove_tv_episode_watched( security_definer=True
+20260729140000_tv_episode_progress_rpc.sql:117 CREATE OR REPLACE FUNCTION public.mark_tv_episodes_batch( security_definer=True
+20260802120000_return_persisted_tv_episode.sql:8 CREATE FUNCTION public.mark_tv_episode_watched( security_definer=True
+20260802123000_ensure_tv_episode_progress_support_rpcs.sql:4 CREATE OR REPLACE FUNCTION public.remove_tv_episode_watched( security_definer=True
+20260802123000_ensure_tv_episode_progress_support_rpcs.sql:29 CREATE OR REPLACE FUNCTION public.mark_tv_episodes_batch( security_definer=True
+20260806000000_fix_handle_new_user_trigger.sql:6 CREATE OR REPLACE FUNCTION public.handle_new_user() security_definer=False
+20260812130000_add_public_profile_rpc.sql:14 CREATE OR REPLACE FUNCTION public.get_public_profile(target_user_id uuid) security_definer=True
+
+FUNCTION GRANTS
+20260812130000_add_public_profile_rpc.sql:47 REVOKE ALL ON FUNCTION public.get_public_profile(uuid) FROM public;
+20260812130000_add_public_profile_rpc.sql:48 GRANT EXECUTE ON FUNCTION public.get_public_profile(uuid) TO anon, authenticated;

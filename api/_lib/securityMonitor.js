@@ -1,5 +1,6 @@
 import { getServerEnv, isServerProduction } from "./env.js";
 import { createServerLogger } from "./logger.js";
+import { fetchWithTimeout } from "./fetchWithTimeout.js";
 
 const logger = createServerLogger("security");
 const ALERT_THROTTLE_MS = 5 * 60 * 1000;
@@ -64,7 +65,7 @@ export async function reportSecurityEvent({
   alertState.set(throttleKey, now);
 
   try {
-    await fetch(webhook, {
+    await fetchWithTimeout(webhook, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

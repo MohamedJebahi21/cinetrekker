@@ -1,9 +1,12 @@
 import { reportSecurityEvent } from "./securityMonitor.js";
 
+import { isServerProduction } from "./env.js";
+
 const RATE_LIMIT_CLEANUP_MS = 5 * 60 * 1000;
 const ENDPOINT_LIMITS = {
   default: { windowMs: 60 * 1000, ipMaxRequests: 30 },
   recommend: { windowMs: 60 * 1000, ipMaxRequests: 15 },
+  tmdb: { windowMs: 60 * 1000, ipMaxRequests: 60 },
   feedback: { windowMs: 10 * 60 * 1000, ipMaxRequests: 3 },
   follow: { windowMs: 60 * 1000, ipMaxRequests: 12, userMaxRequests: 20 },
   unfollow: { windowMs: 60 * 1000, ipMaxRequests: 12, userMaxRequests: 20 },
@@ -104,12 +107,18 @@ function isRateLimitedInMemory(key, config, limit) {
 }
 
 async function isRateLimitedDistributed(key, config, limit) {
+  const useProductionFailClosed = isServerProduction();
+
   if (typeof runtimeFetch !== "function") {
-    return isRateLimitedInMemory(key, config, limit);
+    return useProductionFailClosed
+      ? { limited: true, unavailable: true, retryAfter: 60 }
+      : isRateLimitedInMemory(key, config, limit);
   }
 
   if (!UPSTASH_REDIS_REST_URL || !UPSTASH_REDIS_REST_TOKEN) {
-    return isRateLimitedInMemory(key, config, limit);
+    return useProductionFailClosed
+      ? { limited: true, unavailable: true, retryAfter: 60 }
+      : isRateLimitedInMemory(key, config, limit);
   }
 
   try {
@@ -128,7 +137,9 @@ async function isRateLimitedDistributed(key, config, limit) {
     });
 
     if (!response.ok) {
-      return isRateLimitedInMemory(key, config, limit);
+      return useProductionFailClosed
+        ? { limited: true, unavailable: true, retryAfter: 60 }
+        : isRateLimitedInMemory(key, config, limit);
     }
 
     const payload = await response.json();
@@ -141,7 +152,9 @@ async function isRateLimitedDistributed(key, config, limit) {
       retryAfter: ttl > 0 ? ttl : windowSeconds,
     };
   } catch {
-    return isRateLimitedInMemory(key, config, limit);
+    return useProductionFailClosed
+      ? { limited: true, unavailable: true, retryAfter: 60 }
+      : isRateLimitedInMemory(key, config, limit);
   }
 }
 
@@ -151,6 +164,23 @@ async function applyRateLimit(req, res, prefix, key, limitKind, limit) {
 
   if (!limitCheck.limited) {
     return { ok: true };
+  }
+
+  if (limitCheck.unavailable) {
+    await reportSecurityEvent({
+      event: "rate_limit_unavailable",
+      severity: "critical",
+      scope: prefix,
+      message: "Distributed rate limiting is unavailable; request blocked.",
+      req,
+      details: { key },
+      shouldAlert: true,
+    });
+    return {
+      ok: false,
+      status: 503,
+      error: "Security controls are temporarily unavailable. Please try again later.",
+    };
   }
 
   res.setHeader("Retry-After", String(limitCheck.retryAfter));

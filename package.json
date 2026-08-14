@@ -29,6 +29,8 @@
     "test:smoke": "playwright test tests/smoke.spec.ts --project=chromium",
     "audit:desktop": "node ./scripts/run-lighthouse-desktop.mjs",
     "audit:desktop:full": "npm run build && npm run audit:desktop",
+    "staging:manifest": "node ./scripts/staging/generate-migration-manifest.mjs",
+    "staging:env": "node ./scripts/staging/validate-staging-env.mjs",
     "test:e2e:desktop": "playwright test --project=chromium --project=firefox --project=webkit",
     "test:e2e:mobile:search-regressions": "playwright test tests/mobile-features.spec.ts --project=mobile-safari --grep \"slash shortcuts do not open a second search dialog\""
   },

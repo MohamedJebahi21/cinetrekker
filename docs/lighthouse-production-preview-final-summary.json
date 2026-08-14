@@ -1,0 +1,127 @@
+{
+  "finalUrl": "http://127.0.0.1:4174/",
+  "fetchTime": "2026-08-14T16:20:51.298Z",
+  "categories": {
+    "performance": {
+      "score": 0.99,
+      "title": "Performance"
+    },
+    "accessibility": {
+      "score": 1,
+      "title": "Accessibility"
+    },
+    "best-practices": {
+      "score": 0.96,
+      "title": "Best Practices"
+    },
+    "seo": {
+      "score": 1,
+      "title": "SEO"
+    }
+  },
+  "metrics": {
+    "first-contentful-paint": {
+      "score": 0.94,
+      "display": "0.8 s",
+      "numericValue": 815.4499999999998
+    },
+    "largest-contentful-paint": {
+      "score": 0.98,
+      "display": "0.8 s",
+      "numericValue": 815.4500000000002
+    },
+    "speed-index": {
+      "score": 0.99,
+      "display": "0.8 s",
+      "numericValue": 815.4499999999998
+    },
+    "total-blocking-time": {
+      "score": 1,
+      "display": "0 ms",
+      "numericValue": 0
+    },
+    "cumulative-layout-shift": {
+      "score": 1,
+      "display": "0",
+      "numericValue": 0
+    },
+    "interactive": {
+      "score": 1,
+      "display": "0.8 s",
+      "numericValue": 815.4500000000003
+    },
+    "server-response-time": {
+      "score": 1,
+      "display": "Root document took 0 ms",
+      "numericValue": 2.043
+    }
+  },
+  "failed": [
+    {
+      "id": "errors-in-console",
+      "title": "Browser errors were logged to the console",
+      "score": 0,
+      "display": ""
+    },
+    {
+      "id": "render-blocking-resources",
+      "title": "Eliminate render-blocking resources",
+      "score": 0,
+      "display": "Est savings of 30 ms"
+    },
+    {
+      "id": "unused-css-rules",
+      "title": "Reduce unused CSS",
+      "score": 0,
+      "display": "Est savings of 31 KiB"
+    },
+    {
+      "id": "unused-javascript",
+      "title": "Reduce unused JavaScript",
+      "score": 0,
+      "display": "Est savings of 241 KiB"
+    },
+    {
+      "id": "bf-cache",
+      "title": "Page prevented back/forward cache restoration",
+      "score": 0,
+      "display": "2 failure reasons"
+    },
+    {
+      "id": "forced-reflow-insight",
+      "title": "Forced reflow",
+      "score": 0,
+      "display": ""
+    },
+    {
+      "id": "network-dependency-tree-insight",
+      "title": "Network dependency tree",
+      "score": 0,
+      "display": ""
+    },
+    {
+      "id": "render-blocking-insight",
+      "title": "Render blocking requests",
+      "score": 0,
+      "display": "Est savings of 30 ms"
+    },
+    {
+      "id": "first-contentful-paint",
+      "title": "First Contentful Paint",
+      "score": 0.94,
+      "display": "0.8 s"
+    },
+    {
+      "id": "largest-contentful-paint",
+      "title": "Largest Contentful Paint",
+      "score": 0.98,
+      "display": "0.8 s"
+    },
+    {
+      "id": "speed-index",
+      "title": "Speed Index",
+      "score": 0.99,
+      "display": "0.8 s"
+    }
+  ]
+}

@@ -257,6 +257,27 @@
     touch-action: manipulation;
   }
 
+  @media (max-width: 767px) {
+    button,
+    [role="button"],
+    input:not([type="checkbox"]):not([type="radio"]),
+    textarea,
+    select {
+      min-height: 44px;
+    }
+
+    .topbar-brand,
+    .topbar-icon-button,
+    .topbar-menu-button,
+    .tabs-trigger,
+    .touch-target,
+    .mobile-nav a,
+    .sticky-footer button {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
   @media (pointer: coarse) {
     button,
     [role="button"],

@@ -29,9 +29,9 @@ export function Footer() {
           </div>
 
           <div className="min-w-0">
-            <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground/80">
+            <h2 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground/80">
               {t("footer.explore", "Explore")}
-            </h3>
+            </h2>
             <nav className="flex flex-col gap-3" aria-label={t("footer.exploreLinks", "Explore links")}>
               <Link to="/" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
                 {t("nav.home", "Home")}
@@ -49,9 +49,9 @@ export function Footer() {
           </div>
 
           <div className="min-w-0">
-            <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground/80">
+            <h2 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground/80">
               {t("footer.support", "Support")}
-            </h3>
+            </h2>
             <nav className="flex flex-col gap-3" aria-label={t("footer.supportLinks", "Support links")}>
               <a
                 href="https://buymeacoffee.com/mohamed_jebahi"
@@ -71,9 +71,9 @@ export function Footer() {
           </div>
 
           <div className="min-w-0">
-            <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground/80">
+            <h2 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground/80">
               {t("footer.legal", "Legal")}
-            </h3>
+            </h2>
             <nav className="flex flex-col gap-3" aria-label={t("footer.legalLinks", "Legal links")}>
               <Link to="/privacy" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
                 {t("nav.privacy", "Privacy Policy")}
