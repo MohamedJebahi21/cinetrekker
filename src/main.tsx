@@ -118,6 +118,9 @@ void initI18n()
       </StrictMode>,
     );
 
+    document.documentElement.dataset.cinetrekkerMounted = "true";
+    window.dispatchEvent(new Event("cinetrekker:mounted"));
+
     const isVercelHost =
       typeof window !== "undefined" && /(?:^|\.)vercel\.app$/i.test(window.location.hostname);
     const shouldLoadSpeedInsights =
