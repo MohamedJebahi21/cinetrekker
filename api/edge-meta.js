@@ -33,6 +33,23 @@ const logger = createServerLogger("edge-meta");
  * The file is made available to this function via vercel.json functions.includeFiles.
  */
 let entryAssetsCache = null;
+let spaShellTemplateCache = null;
+
+function getSpaShellTemplate() {
+  if (spaShellTemplateCache) return spaShellTemplateCache;
+
+  try {
+    spaShellTemplateCache = fs.readFileSync(
+      path.join(process.cwd(), "dist/index.html"),
+      "utf8",
+    );
+  } catch (error) {
+    logger.error("[edge-meta] Failed to read SPA shell:", error?.message || error);
+    spaShellTemplateCache = "";
+  }
+
+  return spaShellTemplateCache;
+}
 
 function getEntryAssets() {
   if (entryAssetsCache) return entryAssetsCache;
@@ -145,7 +162,7 @@ function sanitizeMeta(text, maxLen = 300) {
 /**
  * Build the complete HTML head section for a movie or TV page.
  */
-function buildHeadHtml({ title, description, image, canonical, type, releaseDate, rating, jsonLd }) {
+function buildLegacyHeadHtml({ title, description, image, canonical, type, releaseDate, rating, jsonLd }) {
   const siteName = "CineTrekker";
   const safeTitle = sanitizeMeta(title || `${siteName} Movie Tracker`);
   const fullTitle = safeTitle.includes(siteName) ? safeTitle : `${safeTitle} | ${siteName}`;
@@ -241,6 +258,66 @@ function buildHeadHtml({ title, description, image, canonical, type, releaseDate
   ${scriptTag}
 </body>
 </html>`;
+}
+
+function escapeHtmlAttribute(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/\"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+/**
+ * Render direct content pages from the exact Vite document generated for the
+ * current deployment. The application boot sequence and module-preload order
+ * then stay identical to standard SPA routes; only crawlable metadata varies.
+ */
+function buildHeadHtml({ title, description, image, canonical, type, releaseDate, rating, jsonLd }) {
+  const shell = getSpaShellTemplate();
+  if (!shell) {
+    return buildLegacyHeadHtml({ title, description, image, canonical, type, releaseDate, rating, jsonLd });
+  }
+
+  const siteName = "CineTrekker";
+  const safeTitle = sanitizeMeta(title || `${siteName} Movie Tracker`, 180);
+  const fullTitle = safeTitle.includes(siteName) ? safeTitle : `${safeTitle} | ${siteName}`;
+  const safeDescription = sanitizeMeta(description || "Track movies and TV shows on CineTrekker.", 320);
+  const safeCanonical = canonical || BASE_URL;
+  const safeImage = image || `${BASE_URL}/og-image.png`;
+  const ogType = type === "tv" ? "video.tv_show" : type === "person" ? "profile" : "video.movie";
+  const jsonLdStr = jsonLd
+    ? JSON.stringify(jsonLd).replace(/</g, "\\u003c").replace(/>/g, "\\u003e")
+    : "";
+
+  const metadata = `
+    <meta name="description" content="${escapeHtmlAttribute(safeDescription)}" />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <link rel="canonical" href="${escapeHtmlAttribute(safeCanonical)}" />
+    <meta property="og:type" content="${ogType}" />
+    <meta property="og:site_name" content="${siteName}" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content="${escapeHtmlAttribute(fullTitle)}" />
+    <meta property="og:description" content="${escapeHtmlAttribute(safeDescription)}" />
+    <meta property="og:image" content="${escapeHtmlAttribute(safeImage)}" />
+    <meta property="og:url" content="${escapeHtmlAttribute(safeCanonical)}" />
+    ${releaseDate ? `<meta property="video:release_date" content="${escapeHtmlAttribute(releaseDate)}" />` : ""}
+    ${rating ? `<meta property="video:rating" content="${escapeHtmlAttribute(rating)}" />` : ""}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${escapeHtmlAttribute(fullTitle)}" />
+    <meta name="twitter:description" content="${escapeHtmlAttribute(safeDescription)}" />
+    <meta name="twitter:image" content="${escapeHtmlAttribute(safeImage)}" />
+    ${jsonLdStr ? `<script type="application/ld+json" data-cinetrekker-jsonld="true">${jsonLdStr}</script>` : ""}
+  `;
+
+  return shell
+    .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtmlAttribute(fullTitle)}</title>`)
+    .replace(/<meta\s+name=["']description["'][^>]*>\s*/gi, "")
+    .replace(/<meta\s+name=["']robots["'][^>]*>\s*/gi, "")
+    .replace(/<meta\s+(?:property|name)=["'](?:og:[^"']+|twitter:[^"']+)["'][^>]*>\s*/gi, "")
+    .replace(/<link\s+rel=["']canonical["'][^>]*>\s*/gi, "")
+    .replace(/<script\s+type=["']application\/ld\+json["'][\s\S]*?<\/script>\s*/gi, "")
+    .replace("</head>", `${metadata}\n  </head>`);
 }
 
 /**
