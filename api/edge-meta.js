@@ -198,6 +198,7 @@ function buildHeadHtml({ title, description, image, canonical, type, releaseDate
   <link rel="preconnect" href="https://image.tmdb.org" />
 
   ${headTags}
+  <script defer src="/boot-watchdog.js"></script>
 
   ${jsonLdStr ? `<script type="application/ld+json" data-cinetrekker-jsonld="true">${jsonLdStr}</script>` : ""}
 
@@ -586,7 +587,10 @@ export default async function handler(req, res) {
     const html = buildHeadHtml(meta);
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=86400");
+    // The HTML points at deployment-hashed assets. Cache it neither at the
+    // edge nor in browsers so direct content links never retain a previous
+    // deployment's entry bundle after a release.
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     return res.status(200).send(html);
   } catch (error) {
     logger.error(`[edge-meta] Error for ${pathname}:`, error?.message || error);
@@ -604,6 +608,7 @@ export default async function handler(req, res) {
   <link rel="canonical" href="${BASE_URL}${pathname}" />
 
   ${headTags}
+  <script defer src="/boot-watchdog.js"></script>
 </head>
 <body>
   <div id="root"></div>
