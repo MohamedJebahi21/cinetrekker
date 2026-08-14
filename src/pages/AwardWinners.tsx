@@ -618,7 +618,7 @@ export default function AwardWinners() {
                 <SelectContent className="rounded-xl border-border/40 bg-popover/95 backdrop-blur-sm">
                   <div className="px-2 py-1.5">
                     <input
-                      className="w-full rounded-lg bg-neutral-800 border border-neutral-700 px-3 py-1.5 text-xs text-white placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                      className="w-full rounded-lg bg-neutral-800 border border-neutral-700 px-3 py-1.5 text-base md:text-xs text-white placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-yellow-500"
                       placeholder={t("awards.typeToSearch", "Type to search...")}
                       value={actorQuery}
                       onChange={(e) => setActorQuery(e.target.value)}

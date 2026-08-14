@@ -40,6 +40,27 @@ interface QueryBuilder {
 
 interface LooseSupabaseClient {
   from(table: string): QueryBuilder;
+  rpc<T = unknown>(
+    fn: string,
+    args?: Record<string, unknown>,
+  ): Promise<QueryResult<T>>;
+}
+
+/**
+ * Curated, non-sensitive slice of a profile that is safe to expose to any
+ * viewer. Mirrors exactly the columns returned by the `get_public_profile`
+ * SECURITY DEFINER function — never date_of_birth, maturity/filtering flags,
+ * or show_* preference toggles.
+ */
+export interface PublicProfile {
+  user_id: string;
+  display_name: string | null;
+  bio: string | null;
+  profile_photo: string | null;
+  favorite_genres: number[] | null;
+  favorite_titles: string[] | null;
+  is_public: boolean;
+  created_at: string;
 }
 
 export interface Comment {
@@ -73,7 +94,7 @@ export interface CommentLike {
 type CommentRow = Comment;
 type ProfileRow = Pick<
   UserProfile,
-  "user_id" | "display_name" | "avatar_url" | "bio"
+  "user_id" | "display_name" | "profile_photo" | "bio"
 >;
 
 const asDb = (supabase: unknown) => supabase as LooseSupabaseClient;
@@ -172,7 +193,7 @@ export const socialService = {
     const userIds = comments.map((c) => c.user_id);
     const { data: profilesData, error: profilesError } = await db
       .from("profiles")
-      .select("user_id, display_name, avatar_url, bio")
+      .select("user_id, display_name, profile_photo, bio")
       .in("user_id", userIds);
 
     if (profilesError) {
@@ -277,9 +298,9 @@ export const socialService = {
 
     const { data: likerProfile, error: likerError } = await db
       .from("profiles")
-      .select("display_name, avatar_url")
+      .select("display_name, profile_photo")
       .eq("user_id", userId)
-      .single<Pick<UserProfile, "display_name" | "avatar_url">>();
+      .single<Pick<UserProfile, "display_name" | "profile_photo">>();
 
     if (likerError) {
       logger.error("Error fetching liker profile:", likerError);
@@ -371,5 +392,27 @@ export const socialService = {
 
     if (error) throw error;
     return (Array.isArray(data) ? data : []) as UserProfile[];
+  },
+
+  /**
+   * Fetch the curated public view of a profile via the `get_public_profile`
+   * RPC. Returns the row only when the target profile is public (or the
+   * caller is its owner); otherwise `null`. Never exposes sensitive columns.
+   */
+  async getPublicProfile(userId: string): Promise<PublicProfile | null> {
+    const { supabase } = await loadSupabaseModule();
+    const db = asDb(supabase);
+    const { data, error } = await db.rpc<PublicProfile[]>(
+      "get_public_profile",
+      { target_user_id: userId },
+    );
+
+    if (error) {
+      logger.error("Error fetching public profile:", error);
+      return null;
+    }
+
+    const rows = Array.isArray(data) ? data : [];
+    return rows[0] ?? null;
   },
 };

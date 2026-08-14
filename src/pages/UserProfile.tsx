@@ -22,6 +22,7 @@ export default function UserProfile() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { watched } = useUserLists();
+  const isOwnProfile = !!user?.id && user.id === userId;
 
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ["public-profile", userId],
@@ -60,13 +61,18 @@ export default function UserProfile() {
   };
 
   const uniqueWatchedEntries = useMemo(() => {
+    // `watched` comes from the logged-in session (useUserLists), and RLS on
+    // user_watched only allows `auth.uid() = user_id`, so another user's rows
+    // are unreachable from the client. Only surface this data on your own
+    // profile — otherwise we'd be showing the viewer's list on someone else's page.
+    if (!isOwnProfile) return [] as WatchedEntry[];
     const map = new Map<string, WatchedEntry>();
     watched.forEach((item) => {
       const key = `${item.mediaType}-${item.mediaId}`;
       if (!map.has(key)) map.set(key, item as WatchedEntry);
     });
     return Array.from(map.values());
-  }, [watched]);
+  }, [watched, isOwnProfile]);
 
   if (!userId) return null;
 
@@ -94,8 +100,6 @@ export default function UserProfile() {
       </div>
     );
   }
-
-  const isOwnProfile = user?.id === userId;
 
   const stats = {
     watchedCount: uniqueWatchedEntries.length,
@@ -164,19 +168,25 @@ export default function UserProfile() {
 
                   <div className="w-full grid grid-cols-3 gap-2 mt-6 pt-6 border-t border-border">
                     <div className="text-center">
-                      <div className="text-lg font-bold">{stats.watchedCount}</div>
+                      <div className="text-lg font-bold">
+                        {isOwnProfile ? stats.watchedCount : "—"}
+                      </div>
                       <div className="text-xs text-muted-foreground uppercase tracking-wider">
                         Watched
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-bold">{stats.moviesWatched}</div>
+                      <div className="text-lg font-bold">
+                        {isOwnProfile ? stats.moviesWatched : "—"}
+                      </div>
                       <div className="text-xs text-muted-foreground uppercase tracking-wider">
                         Movies
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-bold">{stats.tvWatched}</div>
+                      <div className="text-lg font-bold">
+                        {isOwnProfile ? stats.tvWatched : "—"}
+                      </div>
                       <div className="text-xs text-muted-foreground uppercase tracking-wider">
                         Series
                       </div>
@@ -242,7 +252,9 @@ export default function UserProfile() {
                   </div>
                 ) : (
                   <p className="text-muted-foreground py-8 text-center">
-                    No watched items yet
+                    {isOwnProfile
+                      ? "No watched items yet"
+                      : "This user's watched activity isn't public"}
                   </p>
                 )}
               </section>

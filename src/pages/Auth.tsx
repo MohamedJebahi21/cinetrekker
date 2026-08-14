@@ -269,9 +269,9 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <button 
+                          <button
                             type="button"
-                            className="text-muted-foreground hover:text-foreground transition-colors outline-none"
+                            className="hidden text-muted-foreground hover:text-foreground transition-colors outline-none md:inline-flex md:items-center"
                             aria-label={t("auth.passwordRules", "Password requirements")}
                           >
                             <Info className="h-4 w-4" />
@@ -329,6 +329,16 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                       )}
                     </button>
                   </div>
+
+                  {activeTab === "register" && (
+                    <ul className="mt-2 space-y-0.5 text-xs text-muted-foreground md:hidden">
+                      <li>{t("auth.passwordRuleMin", "• Minimum 8 characters")}</li>
+                      <li>{t("auth.passwordRuleProTip", "• Tip: Use uppercase and numbers for strength")}</li>
+                      <li className="italic opacity-70">
+                        {t("auth.passwordSymbolsOptional", "(Symbols are optional)")}
+                      </li>
+                    </ul>
+                  )}
 
                   {activeTab === "login" && (
                     <div className="flex justify-end">

@@ -3,6 +3,7 @@
  * - Proxies AI prompt handling to OpenAI (server-side) to keep keys secret
  * - Asks the model for a JSON array of movie/TV title suggestions
  * - Resolves suggestions via TMDB search and filters out adult content
+ * - Uses bounded concurrency and request timeouts to prevent Vercel timeouts.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -17,6 +18,8 @@ const TMDB_BASE = "https://api.themoviedb.org/3";
 const MAX_PROMPT_LENGTH = 500;
 const MAX_LIMIT = 20;
 const MIN_LIMIT = 1;
+const TMDB_TIMEOUT_MS = 4000;
+const CONCURRENCY_LIMIT = 3;
 
 const REQUIRED_ENV_VARS = ["OPENAI_API_KEY"];
 const missingVars = getMissingServerEnv(REQUIRED_ENV_VARS);
@@ -26,6 +29,44 @@ if (missingVars.length > 0 && process.env.NODE_ENV === "production") {
   logger.error(
     "Configure these in Vercel Dashboard -> Settings -> Environment Variables",
   );
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = TMDB_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(id);
+    return res;
+  } catch (err) {
+    clearTimeout(id);
+    throw err;
+  }
+}
+
+async function mapConcurrently(items, concurrency, fn) {
+  const results = [];
+  let index = 0;
+
+  async function worker() {
+    while (index < items.length) {
+      const currentIndex = index++;
+      if (currentIndex >= items.length) break;
+      try {
+        const res = await fn(items[currentIndex], currentIndex);
+        results[currentIndex] = res;
+      } catch (err) {
+        results[currentIndex] = null;
+      }
+    }
+  }
+
+  const workers = Array.from(
+    { length: Math.min(concurrency, items.length) },
+    () => worker(),
+  );
+  await Promise.all(workers);
+  return results;
 }
 
 export default async function handler(req, res) {
@@ -57,6 +98,9 @@ export default async function handler(req, res) {
 
   const openAiKey = getServerEnv("OPENAI_API_KEY");
   const tmdbKey = getServerEnv("TMDB_API_KEY");
+  const openaiBase = getServerEnv("OPENAI_API_BASE", "https://api.openai.com/v1");
+
+  logger.info(`Keys status: OpenAI=${!!openAiKey}, TMDB=${!!tmdbKey}, Base=${openaiBase}`);
 
   if (!openAiKey || !tmdbKey) {
     return res.status(503).json({ error: "Service temporarily unavailable" });
@@ -65,8 +109,9 @@ export default async function handler(req, res) {
   try {
     const system = `You are a helpful film expert. Given a short user prompt, return a strict JSON object with two keys: "summary" (a short 1-2 sentence summary as a film critic, no more than ~140 characters) and "suggestions" (an array of up to ${normalizedLimit} items). Each suggestion must be an object with keys: "title" (string), optionally "year" (number), and "media_type" which must be either "movie" or "tv". Do NOT include adult content. Output MUST be valid JSON and contain only the JSON object.`;
 
+    const openaiBase = getServerEnv("OPENAI_API_BASE", "https://api.openai.com/v1");
     const openaiRes = await fetch(
-      "https://api.openai.com/v1/chat/completions",
+      `${openaiBase}/chat/completions`,
       {
         method: "POST",
         headers: {
@@ -74,7 +119,7 @@ export default async function handler(req, res) {
           Authorization: `Bearer ${openAiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
+          model: "gpt-5-mini",
           messages: [
             { role: "system", content: system },
             { role: "user", content: normalizedPrompt },
@@ -149,23 +194,24 @@ export default async function handler(req, res) {
       return true;
     };
 
-    for (const suggestion of suggestions) {
-      if (resolved.length >= normalizedLimit) break;
+    // Process suggestions with bounded concurrency
+    await mapConcurrently(suggestions, CONCURRENCY_LIMIT, async (suggestion) => {
+      if (resolved.length >= normalizedLimit) return;
       const media = suggestion.media_type === "tv" ? "tv" : "movie";
       const searchUrl = `${TMDB_BASE}/search/${media}?query=${encodeURIComponent(suggestion.title)}&include_adult=false&language=${encodeURIComponent(language)}`;
 
       try {
-        const searchResponse = await fetch(searchUrl, {
+        const searchResponse = await fetchWithTimeout(searchUrl, {
           headers: {
             Authorization: `Bearer ${tmdbKey}`,
           },
         });
 
-        if (!searchResponse.ok) continue;
+        if (!searchResponse.ok) return;
 
         const searchJson = await searchResponse.json();
         const first = (searchJson.results || [])[0];
-        if (!first || first.adult) continue;
+        if (!first || first.adult) return;
 
         pushIfNew({
           id: first.id,
@@ -176,13 +222,14 @@ export default async function handler(req, res) {
           vote_average: first.vote_average ?? 0,
         });
 
+        // Optional recommendation expansion (best effort)
         try {
           const recommendationsUrl = `${TMDB_BASE}/${media}/${first.id}/recommendations?language=${encodeURIComponent(language)}`;
-          const recommendationsResponse = await fetch(recommendationsUrl, {
+          const recommendationsResponse = await fetchWithTimeout(recommendationsUrl, {
             headers: {
               Authorization: `Bearer ${tmdbKey}`,
             },
-          });
+          }, 3000);
 
           if (recommendationsResponse.ok) {
             const recommendationsJson = await recommendationsResponse.json();
@@ -200,17 +247,17 @@ export default async function handler(req, res) {
             }
           }
         } catch {
-          // Recommendation expansion is best-effort only.
+          // Recommendation expansion timeout or error is non-fatal
         }
       } catch {
-        continue;
+        // Individual search failure is non-fatal
       }
-    }
+    });
 
     if (resolved.length === 0) {
       try {
         const searchUrl = `${TMDB_BASE}/search/multi?query=${encodeURIComponent(normalizedPrompt)}&include_adult=false&language=${encodeURIComponent(language)}`;
-        const searchResponse = await fetch(searchUrl, {
+        const searchResponse = await fetchWithTimeout(searchUrl, {
           headers: {
             Authorization: `Bearer ${tmdbKey}`,
           },
@@ -267,7 +314,7 @@ export default async function handler(req, res) {
 
     return res
       .status(200)
-      .json({ summary: parsed.summary || "", results: resolved });
+      .json({ summary: parsed.summary || "", results: resolved.slice(0, normalizedLimit) });
   } catch (error) {
     logger.error("Unhandled recommendation error.", error);
     return res.status(500).json({ error: "Internal server error" });

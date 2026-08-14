@@ -30,6 +30,21 @@ export function HeroSection() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [touchStart, setTouchStart] = useState<TouchPoint | null>(null);
+  // Pick the hero backdrop resolution by viewport so phones don't download the
+  // large desktop image. Only the matching layout block is mounted below, so a
+  // single correctly-sized image loads instead of both. Initialised
+  // synchronously so the eager LCP image requests the right size on first paint
+  // (even when the trending query is already cached).
+  const [isMobileViewport, setIsMobileViewport] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 768,
+  );
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 767px)");
+    const onChange = () => setIsMobileViewport(window.innerWidth < 768);
+    mql.addEventListener("change", onChange);
+    onChange();
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
 
   const { data: weeklyResponse } = useQuery({
     queryKey: ["hero-top-weekly", language, includeAdult],
@@ -58,15 +73,15 @@ export function HeroSection() {
     const next = topWeekly[(activeIndex + 1) % topWeekly.length];
     if (!next?.backdrop_path) return;
     const img = new Image();
-    img.src = getBackdropUrl(next.backdrop_path, "w1280") || "";
-  }, [activeIndex, topWeekly]);
+    img.src = getBackdropUrl(next.backdrop_path, isMobileViewport ? "w780" : "w1280") || "";
+  }, [activeIndex, topWeekly, isMobileViewport]);
 
   if (topWeekly.length === 0) return null;
 
   const activeItem = topWeekly[activeIndex];
   const activeTitle = getMediaTitle(activeItem);
   const heroImage = activeItem.backdrop_path
-    ? getBackdropUrl(activeItem.backdrop_path, "w1280") || ""
+    ? getBackdropUrl(activeItem.backdrop_path, isMobileViewport ? "w780" : "w1280") || ""
     : "";
   const activeYear =
     activeItem.release_date?.slice(0, 4) ||
@@ -108,7 +123,8 @@ export function HeroSection() {
       onTouchCancel={() => setIsPaused(false)}
     >
       {/* ── Desktop layout: full-width backdrop with floating elements ── */}
-      <div className="relative hidden md:block min-h-[550px] lg:min-h-[600px] w-full overflow-hidden">
+      {!isMobileViewport && (
+      <div className="relative min-h-[550px] lg:min-h-[600px] w-full overflow-hidden">
         {/* Animated backdrop */}
         <AnimatePresence mode="wait">
           <motion.img
@@ -284,8 +300,10 @@ export function HeroSection() {
           })}
         </div>
       </div>
+      )}
 
       {/* ── Mobile layout: full-width stacked ── */}
+      {isMobileViewport && (
       <div className="md:hidden">
         <div className="relative overflow-hidden bg-background">
           {/* Backdrop */}
@@ -468,6 +486,7 @@ export function HeroSection() {
           </div>
         )}
       </div>
+      )}
     </section>
   );
 }

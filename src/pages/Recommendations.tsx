@@ -206,7 +206,7 @@ function RecommendationCarousel({
             {/* Hide button */}
             <button
               type="button"
-              className="absolute right-1.5 top-1.5 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-border/50 bg-background/80 text-muted-foreground opacity-0 backdrop-blur-sm transition-all hover:border-red-500/60 hover:bg-red-500/10 hover:text-red-400 group-hover/card:opacity-100"
+              className="absolute right-1.5 top-1.5 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-border/50 bg-background/80 text-muted-foreground opacity-100 backdrop-blur-sm transition-all hover:border-red-500/60 hover:bg-red-500/10 hover:text-red-400 md:opacity-0 md:group-hover/card:opacity-100"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -336,7 +336,7 @@ function PodiumSection({
                 <button
                   type="button"
                   onClick={() => onHide(item!)}
-                  className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground opacity-0 transition hover:text-red-400 group-hover/card:opacity-100"
+                  className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground opacity-100 transition hover:text-red-400 md:opacity-0 md:group-hover/card:opacity-100"
                 >
                   <EyeOff className="h-3 w-3" />
                 </button>

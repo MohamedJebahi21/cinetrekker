@@ -109,7 +109,7 @@ export function WatchedStatusDialog({
             <Label className="text-base font-semibold">
               {t('actions.yourRating', 'Your Rating')}
             </Label>
-            <div className="flex items-center gap-2">
+            <div className="grid grid-cols-10 gap-1">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => (
                 <button
                   key={star}
@@ -117,12 +117,12 @@ export function WatchedStatusDialog({
                   onClick={() => setRating(star)}
                   onMouseEnter={() => setHoveredStar(star)}
                   onMouseLeave={() => setHoveredStar(0)}
-                  className="rounded transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="flex h-11 w-full items-center justify-center rounded transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary"
                   aria-label={t('watchedStatusDialog.rateOutOfTen', 'Rate {{star}} out of 10', { star })}
                 >
                   <Star
                     className={cn(
-                      'h-6 w-6 transition-colors',
+                      'h-5 w-5 transition-colors sm:h-6 sm:w-6',
                       star <= (hoveredStar || rating)
                         ? 'fill-primary text-primary'
                         : 'text-muted-foreground',
@@ -130,9 +130,9 @@ export function WatchedStatusDialog({
                   />
                 </button>
               ))}
-              <span className="ml-2 min-w-[3ch] text-2xl font-bold text-primary">
-                {hoveredStar || rating}/10
-              </span>
+            </div>
+            <div className="text-right text-2xl font-bold text-primary">
+              {hoveredStar || rating}/10
             </div>
           </div>
 

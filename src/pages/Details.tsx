@@ -1492,7 +1492,7 @@ export default function Details() {
                             <button
                               type="button"
                               onClick={() => handleEpisodeToggle(episode.season_number, episode.episode_number, episode.name, episode.air_date)}
-                              className={cn("flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background", ew ? "bg-emerald-500 text-white shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-white/8 text-muted-foreground hover:bg-white/15")}
+                              className={cn("flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background", ew ? "bg-emerald-500 text-white shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-white/8 text-muted-foreground hover:bg-white/15")}
                               aria-pressed={ew}
                               aria-label={
                                 ew
@@ -1500,7 +1500,7 @@ export default function Details() {
                                   : t("details.markEpisodeWatched", "Mark {{episode}} as watched", { episode: episode.name })
                               }
                             >
-                              {ew && <Check className="w-3.5 h-3.5" />}
+                              {ew && <Check className="w-4 h-4" />}
                             </button>
                             <AccordionPrimitive.Header className="flex flex-1 min-w-0">
                               <AccordionPrimitive.Trigger className="flex flex-1 items-center justify-between gap-2 min-w-0 text-left font-normal py-0 md:hover:no-underline [&[data-state=open]>svg]:rotate-180">

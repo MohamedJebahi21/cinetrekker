@@ -392,7 +392,7 @@ function SearchDropdownComponent({ className, onNavigate }: SearchDropdownProps)
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          className="main-search-input h-10 rounded-lg border border-border/80 bg-card/80 pl-9 pr-16 text-sm shadow-sm transition-[background-color,border-color,box-shadow] duration-200 placeholder:text-muted-foreground/75 hover:border-border focus:border-primary/55 focus-visible:ring-0 focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
+          className="main-search-input h-10 rounded-lg border border-border/80 bg-card/80 pl-9 pr-16 text-base md:text-sm shadow-sm transition-[background-color,border-color,box-shadow] duration-200 placeholder:text-muted-foreground/75 hover:border-border focus:border-primary/55 focus-visible:ring-0 focus-visible:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
           aria-label={t("search.placeholder")}
           role="combobox"
           aria-autocomplete="list"

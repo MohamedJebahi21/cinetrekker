@@ -476,6 +476,17 @@ export default function Calendar() {
     [followedShowIds, followShow, unfollowShow]
   );
 
+  // Keyboard activation for clickable (non-button) card elements: Enter or Space
+  // fires the same action as a click, matching native button behavior. Space is
+  // prevented from scrolling the page.
+  const activateOnKey =
+    (activate: () => void) => (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        activate();
+      }
+    };
+
   return (
     <>
       <SEO
@@ -869,37 +880,53 @@ export default function Calendar() {
                               sortedItems.map((item) => (
                                 <div
                                   key={`${item.type}-${item.id}`}
+                                  role="button"
+                                  tabIndex={0}
+                                  aria-label={`View details for ${item.title}`}
                                   onClick={() => setSelectedItem({ id: item.id, type: item.type })}
+                                  onKeyDown={activateOnKey(() =>
+                                    setSelectedItem({ id: item.id, type: item.type }),
+                                  )}
                                   className={cn(
-                                    "group relative flex items-center gap-3 rounded-xl border border-border/50 bg-card p-2.5 transition-all duration-300 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-lg cursor-pointer",
+                                    "group relative flex items-center gap-3 rounded-xl border border-border/50 bg-card p-2.5 transition-all duration-300 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                                     item.isFollowed && "ring-1 ring-primary/40"
                                   )}
                                 >
                                   {/* Card Quick-Action Overlay */}
-                                  <div className="absolute right-2 top-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                  <div className="absolute right-2 top-2 z-10 opacity-100 transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100">
                                     {item.type === 'movie' ? (
                                       <button
                                         onClick={(e) => handleWatchlistToggle(e, item)}
+                                        aria-label={
+                                          watchlistMovieIds.has(item.id)
+                                            ? t("actions.removeFromWatchlistTitle", "Remove {{title}} from watchlist", { title: item.title })
+                                            : t("actions.addToWatchlistTitle", "Add {{title}} to watchlist", { title: item.title })
+                                        }
                                         className={cn(
-                                          "flex h-6 w-6 items-center justify-center rounded-full shadow-md backdrop-blur border text-white transition",
+                                          "flex h-11 w-11 items-center justify-center rounded-full shadow-md backdrop-blur border text-white transition md:h-6 md:w-6",
                                           watchlistMovieIds.has(item.id)
                                             ? "bg-destructive border-destructive/20 hover:bg-destructive/80"
                                             : "bg-primary border-primary/20 hover:bg-primary/80"
                                         )}
                                       >
-                                        {watchlistMovieIds.has(item.id) ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                                        {watchlistMovieIds.has(item.id) ? <Minus className="h-4 w-4 md:h-3.5 md:w-3.5" /> : <Plus className="h-4 w-4 md:h-3.5 md:w-3.5" />}
                                       </button>
                                     ) : (
                                       <button
                                         onClick={(e) => handleFollowToggle(e, item)}
+                                        aria-label={
+                                          followedShowIds.has(item.id)
+                                            ? t("calendar.unfollowTitle", "Unfollow {{title}}", { title: item.title })
+                                            : t("calendar.followTitle", "Follow {{title}}", { title: item.title })
+                                        }
                                         className={cn(
-                                          "flex h-6 w-6 items-center justify-center rounded-full shadow-md backdrop-blur border text-white transition",
+                                          "flex h-11 w-11 items-center justify-center rounded-full shadow-md backdrop-blur border text-white transition md:h-6 md:w-6",
                                           followedShowIds.has(item.id)
                                             ? "bg-destructive border-destructive/20 hover:bg-destructive/80"
                                             : "bg-amber-500 border-amber-500/20 hover:bg-amber-500/80"
                                         )}
                                       >
-                                        <Star className={cn("h-3.5 w-3.5", followedShowIds.has(item.id) && "fill-current")} />
+                                        <Star className={cn("h-4 w-4 md:h-3.5 md:w-3.5", followedShowIds.has(item.id) && "fill-current")} />
                                       </button>
                                     )}
                                   </div>
@@ -1106,9 +1133,15 @@ export default function Calendar() {
                           {dayItems.map((item) => (
                             <div
                               key={`${item.type}-${item.id}`}
+                              role="button"
+                              tabIndex={0}
+                              aria-label={`View details for ${item.title}`}
                               onClick={() => setSelectedItem({ id: item.id, type: item.type })}
+                              onKeyDown={activateOnKey(() =>
+                                setSelectedItem({ id: item.id, type: item.type }),
+                              )}
                               className={cn(
-                                "group relative overflow-hidden rounded-2xl border border-border/50 bg-card p-4 transition-all duration-300 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-lg cursor-pointer flex flex-col sm:flex-row gap-4",
+                                "group relative overflow-hidden rounded-2xl border border-border/50 bg-card p-4 transition-all duration-300 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-lg cursor-pointer flex flex-col sm:flex-row gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                                 item.isFollowed && "ring-1 ring-primary/40"
                               )}
                             >
@@ -1230,11 +1263,18 @@ export default function Calendar() {
             {dayModalItems?.map((item) => (
               <div
                 key={`${item.type}-${item.id}`}
+                role="button"
+                tabIndex={0}
+                aria-label={`View details for ${item.title}`}
                 onClick={() => {
                   setDayModalItems(null);
                   setSelectedItem({ id: item.id, type: item.type });
                 }}
-                className="flex items-center gap-3 rounded-xl border border-border/50 bg-muted/20 p-2 hover:bg-muted/40 transition cursor-pointer"
+                onKeyDown={activateOnKey(() => {
+                  setDayModalItems(null);
+                  setSelectedItem({ id: item.id, type: item.type });
+                })}
+                className="flex items-center gap-3 rounded-xl border border-border/50 bg-muted/20 p-2 hover:bg-muted/40 transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <div className="relative aspect-[2/3] w-10 overflow-hidden rounded-lg border border-border/40">
                   <img src={getImageUrl(item.posterPath, 'w92')} alt="" className="h-full w-full object-cover" />

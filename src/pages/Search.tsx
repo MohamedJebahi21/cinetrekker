@@ -1027,8 +1027,13 @@ export default function Search() {
 
   // Card click navigates via the card's Link; quick preview removed
 
-  // Extracted filters content so it can be used in desktop and mobile drawer
-  const FiltersContent = () => (
+  // Filters markup shared by the desktop panel and the mobile drawer.
+  // NOTE: this is a plain JSX *element*, not a `() => (...)` component. Defining a
+  // component inside render gives it a new function identity on every keystroke
+  // (setQuery re-renders Search), which made React unmount/remount the whole
+  // filter subtree — closing open dropdowns and dropping focus. An element keeps
+  // stable child types, so React reconciles it in place.
+  const filtersContent = (
     <>
       <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -1316,7 +1321,7 @@ export default function Search() {
 
           {desktopFiltersExpanded ? (
             <div className="mt-5 border-t border-border/50 pt-5">
-              <FiltersContent />
+              {filtersContent}
             </div>
           ) : null}
         </div>
@@ -1351,7 +1356,7 @@ export default function Search() {
             </DrawerHeader>
 
             <div ref={mobileFiltersRef} className="max-h-[64vh] overflow-y-auto px-4 py-4">
-              <FiltersContent />
+              {filtersContent}
             </div>
 
             <DrawerFooter className="border-t border-border/60 px-4 pt-4">

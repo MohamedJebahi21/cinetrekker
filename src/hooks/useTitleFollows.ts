@@ -43,39 +43,21 @@ interface FollowTitleInput {
 const GUEST_FOLLOWS_KEY = "cinetrekker_guest_follows";
 const GUEST_FOLLOWS_EVENT = "cinetrekker:guest-follows-updated";
 const GUEST_TITLE_STATE_KEY = "cinetrekker_guest_followed_title_state";
-const FOLLOW_STATE_SCHEMA_MISSING_KEY = "cinetrekker_follow_state_schema_missing";
 const logger = createLogger("title-follows");
 
-let followStateSchemaMissing = readPersistentSchemaMissingFlag();
+// Session-only, in-memory flag. If the optional `followed_title_state_user`
+// metadata table is reported missing, we fall back to local-only follow state
+// for the rest of THIS browser session, then start fresh on the next reload.
+// It is deliberately NOT persisted to localStorage: persisting it meant a
+// single transient error (or a schema that has since been deployed) disabled
+// the remote metadata path permanently until storage was manually cleared.
+// Resetting on reload makes the flag self-healing.
+let followStateSchemaMissing = false;
 
 function canUseStorage() {
   return (
     typeof window !== "undefined" && typeof window.localStorage !== "undefined"
   );
-}
-
-function readPersistentSchemaMissingFlag(): boolean {
-  if (!canUseStorage()) return false;
-
-  try {
-    return window.localStorage.getItem(FOLLOW_STATE_SCHEMA_MISSING_KEY) === "true";
-  } catch {
-    return false;
-  }
-}
-
-function persistSchemaMissingFlag(value: boolean) {
-  if (!canUseStorage()) return;
-
-  try {
-    if (value) {
-      window.localStorage.setItem(FOLLOW_STATE_SCHEMA_MISSING_KEY, "true");
-    } else {
-      window.localStorage.removeItem(FOLLOW_STATE_SCHEMA_MISSING_KEY);
-    }
-  } catch {
-    // Ignore storage failures.
-  }
 }
 
 function isMissingFollowStateSchemaError(error: unknown): boolean {
@@ -96,9 +78,8 @@ function markFollowStateSchemaMissing(error: unknown): boolean {
 
   if (!followStateSchemaMissing) {
     followStateSchemaMissing = true;
-    persistSchemaMissingFlag(true);
     logger.warn(
-      "followed_title_state_user is unavailable; using local follow-state fallback.",
+      "followed_title_state_user is unavailable; using local follow-state fallback for this session.",
     );
   }
 
@@ -360,55 +341,56 @@ export function useTitleFollows() {
 
   const { data: remoteFollows = [], isLoading } = useQuery({
     queryKey: ["title-follows", user?.id],
-    enabled: !!user && !followStateSchemaMissing,
+    // The follows list lives in followed_shows / movie_followers and does NOT
+    // depend on the optional followed_title_state_user metadata table, so it
+    // must not be gated on followStateSchemaMissing. Gating it here let a single
+    // transient error permanently disable the entire follows list.
+    enabled: !!user,
     queryFn: async () => {
       if (!user) {
         return [] as FollowedTitle[];
       }
 
-      try {
-        const [showsResult, moviesResult] = await Promise.all([
-          supabase
-            .from("followed_shows")
-            .select("show_id,show_name,poster_path,followed_at,user_id")
-            .eq("user_id", user.id)
-            .order("followed_at", { ascending: false }),
-          supabase
-            .from("movie_followers")
-            .select("movie_id,created_at,user_id")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false }),
-        ]);
+      const [showsResult, moviesResult] = await Promise.all([
+        supabase
+          .from("followed_shows")
+          .select("show_id,show_name,poster_path,followed_at,user_id")
+          .eq("user_id", user.id)
+          .order("followed_at", { ascending: false }),
+        supabase
+          .from("movie_followers")
+          .select("movie_id,created_at,user_id")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false }),
+      ]);
 
-        if (showsResult.error) {
-          throw showsResult.error;
-        }
-
-        if (moviesResult.error) {
-          throw moviesResult.error;
-        }
-
-        return dedupeTitles([
-          ...showsResult.data.map((show): FollowedTitle => ({
-            id: createFollowKey("tv", show.show_id),
-            mediaId: show.show_id,
-            mediaType: "tv",
-            title: show.show_name,
-            posterPath: show.poster_path,
-            followedAt: show.followed_at,
-            userId: show.user_id,
-          })),
-          ...moviesResult.data
-            .map(normalizeMovieFollow)
-            .filter((item): item is FollowedTitle => item !== null),
-        ]);
-      } catch (error) {
-        if (markFollowStateSchemaMissing(error)) {
-          return [] as FollowedTitle[];
-        }
-
-        throw error;
+      if (showsResult.error) {
+        throw showsResult.error;
       }
+
+      if (moviesResult.error) {
+        throw moviesResult.error;
+      }
+
+      // Errors above come from followed_shows / movie_followers and propagate to
+      // React Query for normal retry. They must NOT be reclassified as the
+      // metadata table being missing (markFollowStateSchemaMissing) — this query
+      // never touches followed_title_state_user, and doing so used to
+      // permanently disable follows for the whole browser.
+      return dedupeTitles([
+        ...showsResult.data.map((show): FollowedTitle => ({
+          id: createFollowKey("tv", show.show_id),
+          mediaId: show.show_id,
+          mediaType: "tv",
+          title: show.show_name,
+          posterPath: show.poster_path,
+          followedAt: show.followed_at,
+          userId: show.user_id,
+        })),
+        ...moviesResult.data
+          .map(normalizeMovieFollow)
+          .filter((item): item is FollowedTitle => item !== null),
+      ]);
     },
   });
 

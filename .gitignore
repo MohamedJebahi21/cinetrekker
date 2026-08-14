@@ -51,3 +51,5 @@ supabase/functions/.env
 *.njsproj*
 *.sln
 *.sw?
+.vercel
+.env*

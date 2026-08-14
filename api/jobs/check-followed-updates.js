@@ -6,6 +6,7 @@ import { reportSecurityEvent } from "../_lib/securityMonitor.js";
 
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const DEFAULT_BATCH_SIZE = 5;
+const TMDB_TIMEOUT_MS = 4000;
 const logger = createServerLogger("check-followed-updates");
 
 function isAuthorizedCronCall(req) {
@@ -34,17 +35,26 @@ function parseMovieKey(movieId) {
 
 async function fetchTmdbDetails(mediaType, tmdbId, tmdbApiKey) {
   const endpoint = mediaType === "tv" ? "tv" : "movie";
-  const response = await fetch(
-    `${TMDB_BASE_URL}/${endpoint}/${tmdbId}?api_key=${encodeURIComponent(tmdbApiKey)}&language=en-US`,
-  );
-
-  if (!response.ok) {
-    throw new Error(
-      `TMDB request failed (${response.status}) for ${endpoint}-${tmdbId}`,
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), TMDB_TIMEOUT_MS);
+  try {
+    const response = await fetch(
+      `${TMDB_BASE_URL}/${endpoint}/${tmdbId}?api_key=${encodeURIComponent(tmdbApiKey)}&language=en-US`,
+      { signal: controller.signal },
     );
-  }
+    clearTimeout(id);
 
-  return response.json();
+    if (!response.ok) {
+      throw new Error(
+        `TMDB request failed (${response.status}) for ${endpoint}-${tmdbId}`,
+      );
+    }
+
+    return response.json();
+  } catch (err) {
+    clearTimeout(id);
+    throw err;
+  }
 }
 
 function toDateOnly(value) {
@@ -226,40 +236,34 @@ export default async function handler(req, res) {
     const movieKeys = Array.from(followersByMovie.keys());
     const parsedKeys = movieKeys.map(parseMovieKey).filter(Boolean);
 
-    const followerUserIds = Array.from(
-      new Set(followRows.map((row) => row.user_id).filter(Boolean)),
-    );
-
-
-    let existingStates = [];
-    let stateError = null;
-    const movieIdList = parsedKeys.map((parsed) => parsed.movieKey).filter((id) => typeof id === "string" && id.length > 0);
-    if (followerUserIds.length > 0 && movieIdList.length > 0) {
-      const result = await supabase
-        .from("followed_title_state_user")
-        .select("*")
-        .in("user_id", followerUserIds)
-        .in("movie_id", movieIdList);
-      existingStates = result.data;
-      stateError = result.error;
-      if (stateError) {
-        return json(res, 500, { error: "Failed to read title state." });
-      }
-    }
-
-    const stateByUserMovieId = new Map(
-      (existingStates || []).map((state) => [
-        `${state.user_id}|${state.movie_id}`,
-        state,
-      ]),
-    );
-
     let processedTitles = 0;
     let notificationsCreated = 0;
     let errors = 0;
 
+    // Process unique followed movies in batches to avoid O(users * movies) query explosion and timeouts
     for (let index = 0; index < parsedKeys.length; index += DEFAULT_BATCH_SIZE) {
       const batch = parsedKeys.slice(index, index + DEFAULT_BATCH_SIZE);
+      const batchMovieIds = batch.map((p) => p.movieKey);
+
+      // Fetch states for only this batch of movies
+      const { data: batchStates, error: stateError } = await supabase
+        .from("followed_title_state_user")
+        .select("*")
+        .in("movie_id", batchMovieIds);
+
+      if (stateError) {
+        logger.error("Failed to read batch title states", stateError);
+        errors += batch.length;
+        continue;
+      }
+
+      const stateByUserMovieId = new Map(
+        (batchStates || []).map((state) => [
+          `${state.user_id}|${state.movie_id}`,
+          state,
+        ]),
+      );
+
       const batchResults = await Promise.all(
         batch.map(async (parsed) => {
           try {

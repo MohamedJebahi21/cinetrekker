@@ -1824,9 +1824,11 @@ export default function Profile() {
         <div className="absolute inset-x-0 top-0 z-0 h-[200px] md:h-[260px] w-full overflow-hidden border-b border-border">
           {profileCoverBackdrop ? (
             <img
-              src={getBackdropUrl(profileCoverBackdrop, "original") ?? ""}
+              src={getBackdropUrl(profileCoverBackdrop, "w1280") ?? ""}
               alt="Profile cover backdrop"
               className="h-full w-full object-cover opacity-15"
+              loading="lazy"
+              decoding="async"
             />
           ) : (
             <div className="h-full w-full bg-muted/40" />
@@ -2218,7 +2220,7 @@ export default function Profile() {
                                   "profile.bioPlaceholder",
                                   "Tell us about your cinematic journey...",
                                 )}
-                                className="min-h-[110px] w-full resize-y rounded-lg border border-border bg-background p-4 text-sm"
+                                className="min-h-[110px] w-full resize-y rounded-lg border border-border bg-background p-4 text-base md:text-sm"
                                 maxLength={500}
                               />
                               <p className="text-[10px] text-muted-foreground">

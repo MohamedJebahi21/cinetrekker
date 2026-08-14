@@ -314,6 +314,9 @@ export default function Settings() {
   );
 
   const initialStateRef = useRef<SettingsState>(DEFAULT_SETTINGS);
+  // Mirrors `hasUnsavedChanges` synchronously so async loads (getProfile /
+  // realtime) can tell whether the user has in-progress edits before stomping them.
+  const hasUnsavedRef = useRef(false);
 
   const hasSettingsChangedMemo = useCallback(
     () => hasSettingsChanged(initialStateRef.current, settings),
@@ -349,14 +352,22 @@ export default function Settings() {
 
       setIsLoading(true);
       try {
-        const apply = (loaded: SettingsState) => {
+        const apply = (loaded: SettingsState, opts?: { force?: boolean }) => {
+          // A late server refresh (getProfile resolving, or a realtime push)
+          // must not overwrite edits the user has already made but not saved.
+          // `force` is used only for the initial load that seeds the baseline.
+          if (!opts?.force && hasUnsavedRef.current) return;
           const normalized = normalizeSettingsState(loaded, DEFAULT_SETTINGS);
           setSettings(normalized);
           initialStateRef.current = normalized;
+          hasUnsavedRef.current = false;
           setHasUnsaved(false);
         };
 
-        apply(readStoredSettings(localStorage.getItem(profileKey), DEFAULT_SETTINGS) ?? DEFAULT_SETTINGS);
+        apply(
+          readStoredSettings(localStorage.getItem(profileKey), DEFAULT_SETTINGS) ?? DEFAULT_SETTINGS,
+          { force: true },
+        );
 
         void profileService.getProfile(user.id)
           .then((profile) => {
@@ -384,7 +395,10 @@ export default function Settings() {
   }, [profileKey, text, toast, user?.id]);
 
   useEffect(() => {
-    if (!isLoadingSettings) setHasUnsaved(hasSettingsChangedMemo());
+    if (isLoadingSettings) return;
+    const dirty = hasSettingsChangedMemo();
+    hasUnsavedRef.current = dirty;
+    setHasUnsaved(dirty);
   }, [isLoadingSettings, hasSettingsChangedMemo]);
 
   // Hash scroll
@@ -438,6 +452,7 @@ export default function Settings() {
         });
       }
       initialStateRef.current = { ...settings };
+      hasUnsavedRef.current = false;
       setHasUnsaved(false);
       toast({ title: text("settings.settingsSaved", "Settings saved"), description: text("settings.settingsSavedDesc", "Your preferences have been updated.") });
     } catch (e) {
@@ -450,6 +465,7 @@ export default function Settings() {
 
   const handleCancelChanges = () => {
     setSettings({ ...initialStateRef.current });
+    hasUnsavedRef.current = false;
     setHasUnsaved(false);
   };
 
@@ -736,7 +752,7 @@ export default function Settings() {
                             onClick={() => setFontSize((c) => Math.max(MIN_FONT_SIZE, c - FONT_SIZE_STEP))}
                             disabled={fontSize <= MIN_FONT_SIZE}
                             aria-label={text("settings.decreaseFontSize", "Decrease font size")}
-                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-sm font-semibold text-foreground hover:bg-accent disabled:opacity-40 transition-colors"
+                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border bg-card text-base font-semibold text-foreground hover:bg-accent disabled:opacity-40 transition-colors"
                           >
                             −
                           </button>
@@ -758,7 +774,7 @@ export default function Settings() {
                             onClick={() => setFontSize((c) => Math.min(MAX_FONT_SIZE, c + FONT_SIZE_STEP))}
                             disabled={fontSize >= MAX_FONT_SIZE}
                             aria-label={text("settings.increaseFontSize", "Increase font size")}
-                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-sm font-semibold text-foreground hover:bg-accent disabled:opacity-40 transition-colors"
+                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border bg-card text-base font-semibold text-foreground hover:bg-accent disabled:opacity-40 transition-colors"
                           >
                             +
                           </button>

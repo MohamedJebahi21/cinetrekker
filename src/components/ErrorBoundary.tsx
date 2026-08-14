@@ -95,7 +95,7 @@ export function ApiError({ message, onRetry }: ApiErrorProps) {
 // Offline indicator component
 export function OfflineIndicator() {
   return (
-    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-auto z-50 animate-fade-in">
+    <div className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 right-4 md:left-auto md:right-4 md:w-auto z-50 animate-fade-in">
       <div className="bg-destructive text-destructive-foreground px-4 py-3 rounded-lg shadow-lg flex items-center gap-3">
         <div className="w-2 h-2 rounded-full bg-destructive-foreground animate-pulse" />
         <span className="text-sm font-medium">You're offline</span>

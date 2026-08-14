@@ -549,15 +549,15 @@ export default function Following() {
                       )}
 
                       {/* Top Right Quick Unfollow Action */}
-                      <div className="absolute right-2 top-2 z-10 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">
+                      <div className="absolute right-2 top-2 z-10 opacity-100 transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
                         <Button
                           variant="secondary"
                           size="icon"
                           onClick={(e) => handleUnfollow(e, show.id, show.media_type as "movie" | "tv")}
-                          className="h-8 w-8 rounded-full border border-white/10 bg-black/60 text-destructive backdrop-blur-md transition-all duration-200 hover:scale-110 hover:bg-destructive hover:text-destructive-foreground"
+                          className="h-11 w-11 rounded-full border border-white/10 bg-black/60 text-destructive backdrop-blur-md transition-all duration-200 hover:scale-110 hover:bg-destructive hover:text-destructive-foreground md:h-8 md:w-8"
                           aria-label={t("following.unfollowTitle", "Unfollow {{title}}", { title })}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-5 w-5 md:h-4 md:w-4" />
                         </Button>
                       </div>
 

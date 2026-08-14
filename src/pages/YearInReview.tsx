@@ -220,7 +220,7 @@ export default function YearInReview() {
     return (
       <>
         <SEO title={t("yearInReview.seoTitle", "{{year}} Year in Review", { year: currentYear })} />
-        <div className="ct-page-shell flex min-h-screen items-center justify-center px-4">
+        <div className="ct-page-shell flex min-h-[100dvh] items-center justify-center px-4">
           <Card className="ct-panel max-w-md p-10 text-center space-y-6 backdrop-blur-md">
             <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
               <Calendar className="h-8 w-8 animate-pulse" />

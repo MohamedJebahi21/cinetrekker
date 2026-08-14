@@ -299,7 +299,7 @@ export function EmptySectionMessage({
  */
 export function EmptyPageLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex items-center justify-center min-h-screen px-4">
+    <div className="flex items-center justify-center min-h-[100dvh] px-4">
       <div className="max-w-md w-full text-center">{children}</div>
     </div>
   );

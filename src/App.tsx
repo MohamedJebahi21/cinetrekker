@@ -115,7 +115,7 @@ function NetworkMonitor() {
 
   return (
     <div
-      className="sticky top-0 z-[90] border-b border-primary/25 bg-primary/10 px-4 py-2 text-center text-sm text-primary backdrop-blur-sm"
+      className="sticky top-0 z-[90] border-b border-primary/25 bg-primary/10 px-4 py-2 pt-[max(0.5rem,env(safe-area-inset-top,0px))] text-center text-sm text-primary backdrop-blur-sm"
       role="status"
       aria-live="polite"
     >
