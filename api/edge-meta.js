@@ -20,7 +20,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { getRequiredServerEnv } from "./_lib/env.js";
 import { createServerLogger } from "./_lib/logger.js";
-import { fetchWithTimeout, isTimeoutError } from "./_lib/fetchWithTimeout.js";
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const BASE_URL = "https://cinetrekker.vercel.app";
@@ -118,25 +117,15 @@ function parseContentPath(pathname) {
 async function fetchTmdb(pathname, params = {}) {
   const apiKey = getRequiredServerEnv("TMDB_API_KEY");
   const query = new URLSearchParams({ api_key: apiKey, ...params });
-  const response = await fetchWithTimeout(
-    `${TMDB_BASE}${pathname}?${query.toString()}`,
-    { headers: { Accept: "application/json" } },
-    8_000,
-  );
+  const response = await fetch(`${TMDB_BASE}${pathname}?${query.toString()}`, {
+    headers: { Accept: "application/json" },
+  });
 
   if (!response.ok) {
-    const error = new Error(`TMDB fetch failed (${response.status})`);
-    error.status = response.status;
-    throw error;
+    throw new Error(`TMDB fetch failed (${response.status}) for ${pathname}`);
   }
 
-  try {
-    return await response.json();
-  } catch {
-    const error = new Error("TMDB returned invalid JSON");
-    error.status = 502;
-    throw error;
-  }
+  return response.json();
 }
 
 /**
@@ -600,10 +589,7 @@ export default async function handler(req, res) {
     res.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=86400");
     return res.status(200).send(html);
   } catch (error) {
-    const message = isTimeoutError(error)
-      ? "TMDB metadata request timed out."
-      : "Failed to build dynamic metadata.";
-    logger.warn(`[edge-meta] ${message}`, error?.message || error);
+    logger.error(`[edge-meta] Error for ${pathname}:`, error?.message || error);
 
     // Fall through to SPA shell on error
     const { headTags, scriptTag } = getEntryAssets();

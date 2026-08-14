@@ -1,12 +1,10 @@
 import { json } from "./_lib/http.js";
-import { enforceRequestSecurity } from "./_lib/requestSecurity.js";
 import { getServerEnv } from "./_lib/env.js";
 import { createServerLogger } from "./_lib/logger.js";
 
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const EXCLUDED_PARAMS = new Set(["endpoint", "maturity_level"]);
 const logger = createServerLogger("tmdb-proxy");
-const TMDB_TIMEOUT_MS = 8_000;
 
 function getCacheControlHeader(endpoint) {
   if (endpoint.startsWith("/trending")) {
@@ -146,31 +144,18 @@ function applyServerSideSafetyFilter(data, maturityRating) {
   return payload;
 }
 
-async function fetchWithTimeout(url, options = {}) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), TMDB_TIMEOUT_MS);
-
-  try {
-    return await fetch(url, { ...options, signal: controller.signal });
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
-
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
     return json(res, 405, { error: "Method not allowed" });
   }
 
-  const security = await enforceRequestSecurity(req, res, "tmdb");
-  if (!security.ok) {
-    return json(res, security.status, { error: security.error });
-  }
-
   const tmdbApiKey = getServerEnv("TMDB_API_KEY");
   if (!tmdbApiKey) {
-    return json(res, 503, { error: "TMDB service is temporarily unavailable." });
+    return json(res, 500, {
+      error: "TMDB API key is missing.",
+      missing: ["TMDB_API_KEY", "VITE_TMDB_API_KEY"],
+    });
   }
 
   const endpoint = String(req.query?.endpoint || "");
@@ -220,7 +205,7 @@ export default async function handler(req, res) {
   const tmdbUrl = `${TMDB_BASE_URL}${endpoint}?${tmdbParams.toString()}`;
 
   try {
-    const response = await fetchWithTimeout(tmdbUrl, {
+    const response = await fetch(tmdbUrl, {
       headers: isV4Token
         ? {
             Authorization: `Bearer ${tmdbApiKey}`,
@@ -230,50 +215,28 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
       logger.warn("TMDB upstream error.", {
         endpoint,
         status: response.status,
       });
-
-      if (response.status === 429) {
-        const retryAfter = response.headers.get("retry-after");
-        if (retryAfter) res.setHeader("Retry-After", retryAfter);
-        return json(res, 429, {
-          error: "TMDB is rate limiting requests. Please try again shortly.",
-        });
-      }
-
-      if (response.status === 404) {
-        return json(res, 404, { error: "The requested title was not found." });
-      }
-
-      if (response.status >= 500) {
-        return json(res, 502, { error: "TMDB is temporarily unavailable." });
-      }
-
-      return json(res, 400, { error: "TMDB rejected this request." });
+      return json(res, response.status, {
+        error: `TMDB API error: ${response.status}`,
+        details: errorText,
+      });
     }
 
-    let upstreamPayload;
-    try {
-      upstreamPayload = await response.json();
-    } catch {
-      return json(res, 502, { error: "TMDB returned an invalid response." });
-    }
-
-    const data = applyServerSideSafetyFilter(upstreamPayload, maturityRating);
+    const data = applyServerSideSafetyFilter(
+      await response.json(),
+      maturityRating,
+    );
     res.setHeader("Cache-Control", getCacheControlHeader(endpoint));
     return json(res, 200, data);
   } catch (error) {
     logger.error("Failed to reach TMDB.", error);
-    if (error instanceof Error && error.name === "AbortError") {
-      return json(res, 504, {
-        error: "TMDB took too long to respond. Please try again.",
-      });
-    }
-
     return json(res, 502, {
-      error: "TMDB is temporarily unavailable. Please try again.",
+      error: "Failed to reach TMDB",
+      details: error instanceof Error ? error.message : String(error),
     });
   }
 }

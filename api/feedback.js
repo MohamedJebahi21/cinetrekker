@@ -2,7 +2,6 @@ import { enforceRequestSecurity } from './_lib/requestSecurity.js';
 import { verifyBotProtection } from './_lib/botProtection.js';
 import { createServerLogger } from './_lib/logger.js';
 import { reportSecurityEvent } from './_lib/securityMonitor.js';
-import { fetchWithTimeout } from './_lib/fetchWithTimeout.js';
 
 const MAX_NAME_LENGTH = 120;
 const MAX_EMAIL_LENGTH = 254;
@@ -78,7 +77,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetchWithTimeout('https://api.resend.com/emails', {
+    const response = await runtimeFetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${RESEND_API_KEY}`,

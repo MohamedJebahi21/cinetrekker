@@ -484,7 +484,7 @@ export default function Index() {
 
       <HeroSection />
 
-      <div className="page-container space-y-5 pb-24 pt-6 sm:pt-7 md:space-y-8 md:pb-0 md:pt-8">
+      <main className="page-container space-y-5 pb-24 pt-6 sm:pt-7 md:space-y-8 md:pb-0 md:pt-8">
         {authLoading ? (
           <AuthHomeSkeleton />
         ) : user ? (
@@ -552,7 +552,7 @@ export default function Index() {
             ) : null}
           </>
         )}
-      </div>
+      </main>
 
       <Dialog open={onboardingOpen} onOpenChange={setOnboardingOpen}>
         <DialogContent className="max-w-2xl border-border bg-card text-card-foreground">
@@ -597,10 +597,7 @@ export default function Index() {
                 {t("nav.signIn", "Sign In")}
               </Link>
             </Button>
-            <Button
-              asChild
-              className="btn-primary-glow bg-[#b91c2a] text-white hover:bg-[#a91524]"
-            >
+            <Button asChild className="btn-primary-glow">
               <Link to="/signup" onClick={dismissOnboarding}>
                 {t("home.createFreeAccount", "Create Free Account")}
               </Link>

@@ -1,5 +1,4 @@
 import { getClientIP } from "./requestSecurity.js";
-import { fetchWithTimeout } from "./fetchWithTimeout.js";
 import { getServerEnv } from "./env.js";
 import { reportSecurityEvent } from "./securityMonitor.js";
 
@@ -105,7 +104,7 @@ export async function verifyBotProtection(req, body, scope = "feedback") {
     formData.set("response", token);
     formData.set("remoteip", getClientIP(req));
 
-    const response = await fetchWithTimeout(captchaConfig.verifyUrl, {
+    const response = await fetch(captchaConfig.verifyUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",

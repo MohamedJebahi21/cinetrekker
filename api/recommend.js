@@ -19,10 +19,7 @@ const MAX_PROMPT_LENGTH = 500;
 const MAX_LIMIT = 20;
 const MIN_LIMIT = 1;
 const TMDB_TIMEOUT_MS = 4000;
-const AI_TIMEOUT_MS = 12_000;
 const CONCURRENCY_LIMIT = 3;
-const AI_RECOMMENDATIONS_ENABLED =
-  getServerEnv("AI_RECOMMENDATIONS_ENABLED") === "true";
 
 const REQUIRED_ENV_VARS = ["OPENAI_API_KEY"];
 const missingVars = getMissingServerEnv(REQUIRED_ENV_VARS);
@@ -75,12 +72,6 @@ async function mapConcurrently(items, concurrency, fn) {
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
-  if (!AI_RECOMMENDATIONS_ENABLED) {
-    return res.status(501).json({
-      error: "AI recommendations are an upcoming feature.",
-    });
-  }
-
   const security = await enforceRequestSecurity(req, res, "recommend");
   if (!security.ok) {
     return res.status(security.status).json({ error: security.error });
@@ -119,7 +110,7 @@ export default async function handler(req, res) {
     const system = `You are a helpful film expert. Given a short user prompt, return a strict JSON object with two keys: "summary" (a short 1-2 sentence summary as a film critic, no more than ~140 characters) and "suggestions" (an array of up to ${normalizedLimit} items). Each suggestion must be an object with keys: "title" (string), optionally "year" (number), and "media_type" which must be either "movie" or "tv". Do NOT include adult content. Output MUST be valid JSON and contain only the JSON object.`;
 
     const openaiBase = getServerEnv("OPENAI_API_BASE", "https://api.openai.com/v1");
-    const openaiRes = await fetchWithTimeout(
+    const openaiRes = await fetch(
       `${openaiBase}/chat/completions`,
       {
         method: "POST",
@@ -137,7 +128,6 @@ export default async function handler(req, res) {
           temperature: 0.8,
         }),
       },
-      AI_TIMEOUT_MS,
     );
 
     if (!openaiRes.ok) {

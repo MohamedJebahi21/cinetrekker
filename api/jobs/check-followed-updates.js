@@ -17,15 +17,8 @@ function isAuthorizedCronCall(req) {
     typeof req?.headers?.["x-cron-secret"] === "string"
       ? req.headers["x-cron-secret"].trim()
       : "";
-  const authorization =
-    typeof req?.headers?.authorization === "string"
-      ? req.headers.authorization.trim()
-      : "";
-  const bearerToken = authorization.match(/^Bearer\s+(.+)$/i)?.[1]?.trim() || "";
 
-  // Vercel delivers CRON_SECRET as `Authorization: Bearer <secret>`.
-  // Keep x-cron-secret for explicit local/staging manual invocations.
-  return cronHeader === cronSecret || bearerToken === cronSecret;
+  return cronHeader === cronSecret;
 }
 
 function parseMovieKey(movieId) {
@@ -172,25 +165,19 @@ async function insertNotifications(supabase, rows) {
     return 0;
   }
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("notifications")
-    .upsert(rows, {
-      onConflict: "user_id,event_key",
-      ignoreDuplicates: true,
-    })
-    .select("id");
+    .upsert(rows, { onConflict: "user_id,event_key", ignoreDuplicates: true });
 
   if (error) {
     throw error;
   }
 
-  return Array.isArray(data) ? data.length : 0;
+  return rows.length;
 }
 
 export default async function handler(req, res) {
-  // Vercel Cron invokes configured paths with GET. POST remains available for
-  // explicitly authenticated local and staging verification requests.
-  if (req.method !== "GET" && req.method !== "POST") {
+  if (req.method !== "POST") {
     return json(res, 405, { error: "Method Not Allowed" });
   }
 
@@ -213,8 +200,8 @@ export default async function handler(req, res) {
 
   const tmdbApiKey = getServerEnv("TMDB_API_KEY");
   if (!tmdbApiKey) {
-    return json(res, 503, {
-      error: "Update checks are temporarily unavailable because TMDB is not configured.",
+    return json(res, 500, {
+      error: "TMDB_API_KEY or VITE_TMDB_API_KEY is missing.",
     });
   }
 

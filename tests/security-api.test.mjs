@@ -130,12 +130,12 @@ test("invalid token flooding is blocked by pre-auth rate limiting before extra a
   assert.equal(authCalls, 12);
 });
 
-test("cron auth rejects an invalid Authorization bearer token", async () => {
+test("cron auth bypass attempts fail without x-cron-secret even when authorization header is present", async () => {
   process.env.CRON_SECRET = "real-cron-secret";
   const req = createMockReq({
     method: "POST",
     headers: {
-      authorization: "Bearer wrong-cron-secret",
+      authorization: "Bearer real-cron-secret",
     },
     url: "/api/jobs/check-followed-updates",
   });
@@ -145,31 +145,6 @@ test("cron auth rejects an invalid Authorization bearer token", async () => {
 
   assert.equal(res.statusCode, 401);
   assert.equal(res.body.error, "Unauthorized");
-});
-
-test("cron accepts Vercel's GET Authorization bearer token before configuration checks", async () => {
-  process.env.CRON_SECRET = "real-cron-secret";
-  const previousTmdbKey = process.env.TMDB_API_KEY;
-  delete process.env.TMDB_API_KEY;
-
-  try {
-    const req = createMockReq({
-      method: "GET",
-      headers: {
-        authorization: "Bearer real-cron-secret",
-      },
-      url: "/api/jobs/check-followed-updates",
-    });
-    const res = createMockRes();
-
-    await cronHandler(req, res);
-
-    assert.equal(res.statusCode, 503);
-    assert.match(res.body.error, /TMDB is not configured/);
-  } finally {
-    if (previousTmdbKey === undefined) delete process.env.TMDB_API_KEY;
-    else process.env.TMDB_API_KEY = previousTmdbKey;
-  }
 });
 
 test("feedback spam scenarios are blocked by honeypot and rate limit", async () => {

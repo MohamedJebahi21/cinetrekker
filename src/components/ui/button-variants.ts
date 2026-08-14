@@ -6,7 +6,7 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-sm hover:bg-primary hover:shadow-[0_10px_20px_hsl(var(--primary)/0.2)]",
+          "bg-primary text-primary-foreground shadow-sm hover:bg-primary/92 hover:shadow-[0_10px_20px_hsl(var(--primary)/0.2)]",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/92 hover:shadow-[0_12px_24px_hsl(var(--destructive)/0.18)] focus-visible:ring-red-500/50 focus-visible:ring-offset-2",
         outline:

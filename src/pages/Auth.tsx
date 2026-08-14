@@ -29,6 +29,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -74,7 +75,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
 
   const handleGoogleSignIn = async () => {
     try {
-      const { error } = await signInWithProvider("google", { rememberMe });
+      const { error } = await signInWithProvider("google");
       if (error) throw error;
     } catch (error: unknown) {
       const { userMessage } = processAuthError(error);
@@ -162,16 +163,11 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
 
     try {
       if (activeTab === "login") {
-        const { error } = await signIn(emailValidation.data, password, {
-          rememberMe,
-        });
+        const { error } = await signIn(emailValidation.data, password);
         if (error) throw error;
         navigate("/");
       } else {
-        const { error } = await signUp(emailValidation.data, password, {
-          username: username.trim(),
-          rememberMe,
-        });
+        const { error } = await signUp(emailValidation.data, password, { username: username.trim() });
         if (error) throw error;
         const result = processSignupResult();
         setMessage({ type: "complete", text: result.userMessage });
@@ -187,18 +183,14 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
   return (
     <>
       <SEO
-        title={
-          activeTab === "register"
-            ? t("auth.signupSeoTitle", "Create Your CineTrekker Account")
-            : t("auth.loginSeoTitle", "Sign In to CineTrekker")
-        }
+        title={t("auth.seoTitle", "Sign In or Register - CineTrekker")}
         description={t("auth.seoDescription", "Access your CineTrekker account to sync watchlists, ratings, and recommendations.")}
-        canonical={`https://cinetrekker.vercel.app/${activeTab === "register" ? "signup" : "login"}`}
+        canonical="https://cinetrekker.vercel.app/auth"
       />
       <div className="flex min-h-[100dvh] items-center justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(1rem,env(safe-area-inset-top,0px))]">
         <Card className="w-full max-w-md rounded-2xl">
           <CardHeader>
-            <h1 className="text-2xl font-semibold leading-none tracking-tight">{activeTab === "register" ? t("auth.createAccountHeading", "Create your CineTrekker account") : t("auth.signInHeading", "Sign in to CineTrekker")}</h1>
+            <CardTitle>{t("auth.appName", "CineTrekker")}</CardTitle>
             <CardDescription>
               {t("auth.tagline", "Track what you watch, save your next pick, and keep your lists in sync.")}
             </CardDescription>
@@ -206,12 +198,11 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger id="auth-tab-login" aria-controls="auth-panel" value="login">{t("auth.loginTab", "Login")}</TabsTrigger>
-                <TabsTrigger id="auth-tab-register" aria-controls="auth-panel" value="register">{t("auth.registerTab", "Register")}</TabsTrigger>
+                <TabsTrigger value="login">{t("auth.loginTab", "Login")}</TabsTrigger>
+                <TabsTrigger value="register">{t("auth.registerTab", "Register")}</TabsTrigger>
               </TabsList>
 
-              <div id="auth-panel" role="tabpanel" aria-labelledby={activeTab === "login" ? "auth-tab-login" : "auth-tab-register"}>
-                <form onSubmit={handleAuth} className="space-y-4 pt-4">
+              <form onSubmit={handleAuth} className="space-y-4 pt-4">
                 {message && (
                   <Alert
                     variant={
@@ -280,7 +271,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                         <TooltipTrigger asChild>
                           <button
                             type="button"
-                            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                            className="hidden text-muted-foreground hover:text-foreground transition-colors outline-none md:inline-flex md:items-center"
                             aria-label={t("auth.passwordRules", "Password requirements")}
                           >
                             <Info className="h-4 w-4" />
@@ -462,8 +453,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                   </svg>
                   Continue with Google
                 </Button>
-                </form>
-              </div>
+              </form>
             </Tabs>
           </CardContent>
         </Card>

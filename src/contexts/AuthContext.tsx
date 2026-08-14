@@ -10,28 +10,15 @@ import type { User, Session } from "@supabase/supabase-js";
 import { isSupabaseConfigured } from "@/lib/envValidation";
 import { createLogger } from "@/lib/logger";
 import { loadSupabaseModule } from "@/lib/loadSupabaseModule";
-import {
-  clearAuthPersistence,
-  setAuthPersistence,
-} from "@/integrations/supabase/client";
 
 export interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (
-    email: string,
-    code: string,
-    options?: { username?: string; rememberMe?: boolean },
-  ) => Promise<{ error: Error | null }>;
-  signIn: (
-    email: string,
-    code: string,
-    options?: { rememberMe?: boolean },
-  ) => Promise<{ error: Error | null }>;
+  signUp: (email: string, code: string, options?: { username?: string }) => Promise<{ error: Error | null }>;
+  signIn: (email: string, code: string) => Promise<{ error: Error | null }>;
   signInWithProvider: (
     provider: "google" | "facebook" | "apple",
-    options?: { rememberMe?: boolean },
   ) => Promise<{ error: Error | null }>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -152,21 +139,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const signUp = useCallback(
-    async (
-      email: string,
-      code: string,
-      options?: { username?: string; rememberMe?: boolean },
-    ) => {
-      if (!isSupabaseConfigured()) {
+  const signUp = useCallback(async (email: string, code: string, options?: { username?: string }) => {
+    if (!isSupabaseConfigured()) {
       return { error: new Error(MISSING_ENV_AUTH_ERROR) };
     }
 
-      setAuthPersistence(options?.rememberMe === true);
-
-      try {
-        const { supabase } = await loadSupabaseModule();
-        const { error } = await supabase.auth.signUp({
+    try {
+      const { supabase } = await loadSupabaseModule();
+      const { error } = await supabase.auth.signUp({
         email,
         password: code,
         options: {
@@ -175,45 +155,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           },
         },
       });
-        return { error: (error as Error | null) ?? null };
-      } catch (error) {
-        return { error: toAuthError(error) };
-      }
-    },
-    [],
-  );
+      return { error: (error as Error | null) ?? null };
+    } catch (error) {
+      return { error: toAuthError(error) };
+    }
+  }, []);
 
-  const signIn = useCallback(
-    async (email: string, code: string, options?: { rememberMe?: boolean }) => {
+  const signIn = useCallback(async (email: string, code: string) => {
     if (!isSupabaseConfigured()) {
       return { error: new Error(MISSING_ENV_AUTH_ERROR) };
     }
 
-      setAuthPersistence(options?.rememberMe === true);
-
-      try {
-        const { supabase } = await loadSupabaseModule();
-        const { error } = await supabase.auth.signInWithPassword({
+    try {
+      const { supabase } = await loadSupabaseModule();
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password: code,
       });
-        return { error: (error as Error | null) ?? null };
-      } catch (error) {
-        return { error: toAuthError(error) };
-      }
-    },
-    [],
-  );
+      return { error: (error as Error | null) ?? null };
+    } catch (error) {
+      return { error: toAuthError(error) };
+    }
+  }, []);
 
   const signInWithProvider = useCallback(async (
     provider: "google" | "facebook" | "apple",
-    options?: { rememberMe?: boolean },
   ) => {
     if (!isSupabaseConfigured()) {
       return { error: new Error(MISSING_ENV_AUTH_ERROR) };
     }
-
-    setAuthPersistence(options?.rememberMe === true);
 
     try {
       const { supabase } = await loadSupabaseModule();
@@ -231,7 +201,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(async () => {
     if (!isSupabaseConfigured()) {
-      clearAuthPersistence();
       return;
     }
 
@@ -249,7 +218,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setSession(null);
       setUser(null);
-      clearAuthPersistence();
       window.dispatchEvent(new Event("cinetrekker:sign-out"));
     } catch (error) {
       logger.warn("Sign out failed.", toAuthError(error));
