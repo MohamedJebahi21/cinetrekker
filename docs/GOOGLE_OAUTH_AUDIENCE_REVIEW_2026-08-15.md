@@ -21,3 +21,11 @@ CineTrekker must either publish the External consent configuration before a publ
 ## Safeguards observed
 
 This review did not change Google Cloud, Supabase, OAuth client settings, redirect URIs, consent-screen data, or credentials. No OAuth secrets or user tokens are retained in this record.
+
+## Publication outcome
+
+On 15 August 2026, the owner explicitly authorized production publication and the Google Auth Platform Audience page was updated from **Testing** to **In production** for the **External** user type. The page now offers **Back to testing**, confirming the publish action succeeded. Public Google-account users are no longer limited to the test-user list.
+
+Google also displays a Verification Center notice stating that the app requires verification and references the possible **unverified app** screen. The application is published, but this notice should be treated as a launch-quality follow-up: do not claim that the Google consent experience is verification-warning-free until the Verification Center has been inspected and any required submission has been completed.
+
+The Verification Center confirms that **data-access verification is not required**, because the application does not request sensitive or restricted scopes. It separately states that **branding is not being shown to users** and offers a branding-verification path. Accordingly, public Google sign-in is enabled, but Google branding verification remains a distinct, unsubmitted follow-up that may affect the consent experience.

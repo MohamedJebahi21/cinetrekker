@@ -16,7 +16,7 @@
 - [x] **P3 — Apply `20260814190000_add_public_social_profile_rpc.sql` in Supabase.** The production migration was corrected for the existing comments schema and verified read-only after execution.
 - [ ] **P4 — Complete authenticated social-mutation acceptance testing.** Controlled production checks passed for follow/unfollow, the deferred Details-page comments UI, comment creation, and reply-composer opening; all temporary data was removed and verified at zero. Reply submission and like/unlike remain unverified because the browser automation session reset during reply text entry and later lost the scroll container. Recipient social notifications also require a trusted server-side or database-side creator; the client intentionally avoids unauthorized cross-user notification inserts. See `docs/SOCIAL_ACCEPTANCE_TEST_2026-08-15.md`.
 - [x] **P5 — Configure Google OAuth.** The provider is enabled and production and localhost sign-in paths were verified previously.
-- [ ] **P6 — Resolve Google OAuth audience readiness.** A read-only Google Cloud check found the consent audience is **External** but the publishing state is **Testing** with no test users listed. Ordinary public users are therefore blocked from Google sign-in. Explicitly choose either **Publish app** for public launch or add the intended private-beta users as testers; revoke unused OAuth secrets in Google Cloud. See `docs/GOOGLE_OAUTH_AUDIENCE_REVIEW_2026-08-15.md`.
+- [x] **P6 — Publish the Google OAuth audience.** The consent audience is **External** and publishing status is **In production**; public Google-account users are no longer limited to a test-user list. The Google Verification Center confirms no data-access verification is required for the identity-only scope set. A separate branding-verification notice remains and may affect the consent experience; inspect and submit that process only with explicit approval. See `docs/GOOGLE_OAUTH_AUDIENCE_REVIEW_2026-08-15.md`.
 
 ## 3. Deployment and Production Acceptance
 
@@ -54,7 +54,8 @@
 | Social foundation | Public social RPC migration, People directory, public profiles, typed service boundary | `ff095ae`, live browser verification |
 | Redis remediation | Managed Upstash provisioning, managed-alias resolver, regression test | `7282880`, live proxy HTTP 200 |
 | Production browser fix | Same-origin safe-read policy, direct home and Details verification | `2c2dc3a`, live browser verification |
-| Incident readiness | Request references and production observability runbook | `docs/PRODUCTION_OBSERVABILITY_RUNBOOK.md` |
+| Incident readiness | Request references, production observability runbook, and independent five-minute uptime checks | `docs/PRODUCTION_OBSERVABILITY_RUNBOOK.md`, `d8224d4` |
+| Google OAuth access | External consent application published for public Google-account access; identity-only data access exempt from scope verification | Google Auth Platform, 15 August 2026 |
 
 ## Working Rules
 
