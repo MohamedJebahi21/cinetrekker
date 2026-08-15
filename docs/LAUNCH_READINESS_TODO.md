@@ -1,6 +1,6 @@
 # CineTrekker Launch-Readiness Checklist
 
-> **Last reconciled:** 15 August 2026. This checklist separates completed production work from the remaining account-level, authenticated-flow, and operating-process work. The current `main` code release is `d719ca1`; `83d4d23` records the Continue Watching acceptance cleanup and `d719ca1` records the social-flow hardening.
+> **Last reconciled:** 15 August 2026. This checklist separates completed production work from the remaining account-level, authenticated-flow, and operating-process work. The current `main` code release is `d719ca1`; `83d4d23` records the Continue Watching acceptance cleanup, `d719ca1` records the social-flow hardening, and `docs/SOCIAL_ACCEPTANCE_TEST_2026-08-15.md` records the controlled authenticated social check.
 
 ## 1. Source Control and Local Development Alignment
 
@@ -14,7 +14,7 @@
 - [x] **P1 — Repair production Redis rate-limiting.** A managed Upstash Redis database is provisioned through Vercel for Production and Preview. The server prefers its managed REST aliases while retaining the legacy variable fallback; no provider secrets were copied into code or logs.
 - [x] **P2 — Verify normal and fail-closed protected-endpoint behavior.** The public TMDB proxy returned HTTP 200 with an `X-Request-Id` after remediation, and the browser homepage loaded real discovery content.
 - [x] **P3 — Apply `20260814190000_add_public_social_profile_rpc.sql` in Supabase.** The production migration was corrected for the existing comments schema and verified read-only after execution.
-- [ ] **P4 — Complete authenticated social-mutation acceptance testing.** Anonymous People, public-profile, counts, favorites, and comments displays are verified. The production People directory was rechecked after `d719ca1` with no browser-console errors; public directory data and social entry points rendered successfully. Follow/unfollow and comment creation/reply testing still require a designated non-production test account and explicit confirmation before writing social data. Recipient social notifications also require a trusted server-side or database-side creator; the client now avoids attempting unauthorized cross-user notification inserts.
+- [ ] **P4 — Complete authenticated social-mutation acceptance testing.** Controlled production checks passed for follow/unfollow, the deferred Details-page comments UI, comment creation, and reply-composer opening; all temporary data was removed and verified at zero. Reply submission and like/unlike remain unverified because the browser automation session reset during reply text entry and later lost the scroll container. Recipient social notifications also require a trusted server-side or database-side creator; the client intentionally avoids unauthorized cross-user notification inserts. See `docs/SOCIAL_ACCEPTANCE_TEST_2026-08-15.md`.
 - [x] **P5 — Configure Google OAuth.** The provider is enabled and production and localhost sign-in paths were verified previously.
 - [ ] **P6 — Confirm Google OAuth audience readiness.** Confirm whether the consent screen is published or whether the intended launch users are listed as testers; revoke unused OAuth secrets in Google Cloud.
 
@@ -23,7 +23,7 @@
 - [x] **D1 — Push the consolidated release to GitHub.** The production branch contains the validated hardening and remediation commits.
 - [x] **D2 — Deploy after Redis remediation.** Vercel successfully deployed the rate-limit compatibility and same-origin request-policy fixes.
 - [x] **D3 — Verify production deployment and direct-route behavior.** Production home, direct movie route, and static SPA routing rendered successfully.
-- [ ] **D4 — Complete the authenticated production acceptance matrix.** The guest journey, discovery, direct Details route, People directory, and public profile route are verified. Registration, email sign-in, Google sign-in, logout/login, watchlist persistence, watched status, progress, Continue Watching, comment mutation, follow mutation, mobile navigation, and offline/retry behavior remain to be tested with a designated account and explicit approval for any writes.
+- [ ] **D4 — Complete the authenticated production acceptance matrix.** The guest journey, discovery, direct Details route, People directory, public profile route, registration, email sign-in, Google sign-in, logout/login, watchlist persistence, watched status, progress, Continue Watching, follow/unfollow, and comment creation are verified. Reply submission, like/unlike, mobile navigation, and offline/retry behavior remain to be tested with a stable designated-account session and explicit approval for any writes.
 - [x] **D5 — Confirm safe request-reference behavior.** The TMDB proxy emitted `X-Request-Id`, and the client rendered a safe visible reference during the diagnosed Fresh Discovery failure.
 
 ## 4. Monitoring and Incident Operations
@@ -39,7 +39,7 @@
 ## 5. Product and Maintainability Follow-Up
 
 - [x] **M1a — Deploy the public social foundation.** People discovery, public profiles, counts, favorite titles, profile tabs, and public read RPCs are live and browser-verified.
-- [ ] **M1b — Complete the social interaction rollout.** The broad public-profile fallback has been removed, failures for follow/comment/reply mutations are surfaced in the UI, comment spoiler reveal is keyboard-accessible, likes refresh after completion, and signed-out commenters receive a clear sign-in path. Test and refine authenticated follows, comments, replies, trusted recipient-notification behavior, friend suggestions, and meaningful empty states before broad social promotion.
+- [ ] **M1b — Complete the social interaction rollout.** The broad public-profile fallback has been removed, failures for follow/comment/reply mutations are surfaced in the UI, comment spoiler reveal is keyboard-accessible, likes refresh after completion, and signed-out commenters receive a clear sign-in path. Controlled checks verified follows and comment creation; complete reply submission and like/unlike with a stable session, then refine trusted recipient-notification behavior, friend suggestions, and meaningful empty states before broad social promotion.
 - [ ] **M2 — Continue the staged Profile architecture refactor.** The identity hero is extracted; move remaining large Profile sections into focused components and hooks when product changes touch them.
 - [ ] **M3 — Add privacy-conscious product analytics.** Measure onboarding CTA intent, account completion, first saved title, first progress update, and return engagement without collecting sensitive content.
 - [ ] **M4 — Add moderation and support operations.** Define reporting, review, removal, escalation, and response-time behavior before broad public social rollout.
