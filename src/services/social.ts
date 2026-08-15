@@ -312,11 +312,13 @@ export const socialService = {
   async unfollowUser(followerId: string, followingId: string): Promise<void> {
     const { supabase } = await loadSupabaseModule();
     const db = asDb(supabase);
-    await db
+    const { error } = await db
       .from("follows")
       .delete()
       .eq("follower_id", followerId)
       .eq("following_id", followingId);
+
+    if (error) throw error;
   },
 
   async isFollowing(followerId: string, followingId: string): Promise<boolean> {
@@ -455,98 +457,32 @@ export const socialService = {
   async deleteComment(commentId: string, _userId?: string): Promise<void> {
     const { supabase } = await loadSupabaseModule();
     const db = asDb(supabase);
-    await db.from("comments").delete().eq("id", commentId);
+    const { error } = await db.from("comments").delete().eq("id", commentId);
+
+    if (error) throw error;
   },
 
   async likeComment(userId: string, commentId: string): Promise<void> {
-    logger.debug("likeComment called", { userId, commentId });
     const { supabase } = await loadSupabaseModule();
     const db = asDb(supabase);
-
-    const { data: comment, error: commentError } = await db
-      .from("comments")
-      .select("*")
-      .eq("id", commentId)
-      .single<Comment>();
-
-    if (commentError) {
-      logger.error("Error fetching comment:", commentError);
-      throw commentError;
-    }
-    if (!comment) {
-      logger.error("Comment not found");
-      throw new Error("Comment not found");
-    }
-
-    logger.debug("Found comment", comment);
-
-    if (comment.user_id === userId) {
-      logger.debug("User liked their own comment; skipping notification");
-      const { error: likeError } = await db.from("comment_likes").insert({
-        user_id: userId,
-        comment_id: commentId,
-      });
-      if (likeError) {
-        logger.error("Error inserting like:", likeError);
-        throw likeError;
-      }
-      logger.debug("Successfully inserted like for own comment");
-      return;
-    }
-
-    const { data: likerProfile, error: likerError } = await db
-      .from("profiles")
-      .select("display_name, profile_photo")
-      .eq("user_id", userId)
-      .single<Pick<UserProfile, "display_name" | "profile_photo">>();
-
-    if (likerError) {
-      logger.error("Error fetching liker profile:", likerError);
-    }
-    logger.debug("Liker profile", likerProfile);
-
-    const likerName = likerProfile?.display_name || "Someone";
-    const notificationMessage = `${likerName} liked your comment.`;
-    const eventKey = `comment_like:${commentId}:${userId}`;
-    logger.debug("Notification message", notificationMessage);
-
-    const { error: likeError } = await db.from("comment_likes").insert({
+    const { error } = await db.from("comment_likes").insert({
       user_id: userId,
       comment_id: commentId,
     });
-    if (likeError) {
-      logger.error("Error inserting like:", likeError);
-      throw likeError;
-    }
-    logger.debug("Successfully inserted like");
 
-    const { error: notificationError } = await db.from("notifications").insert({
-      user_id: comment.user_id,
-      movie_id: `${comment.media_type}-${comment.media_id}`,
-      event_key: eventKey,
-      type: "comment_like",
-      message: notificationMessage,
-      is_read: false,
-    });
-    if (notificationError) {
-      if (notificationError.code === "23505") {
-        logger.debug("Notification already exists, skipping");
-      } else {
-        logger.error("Error inserting notification:", notificationError);
-      }
-    } else {
-      logger.debug("Successfully inserted notification");
-    }
+    if (error) throw error;
   },
 
   async unlikeComment(userId: string, commentId: string): Promise<void> {
     const { supabase } = await loadSupabaseModule();
     const db = asDb(supabase);
-    await db
+    const { error } = await db
       .from("comment_likes")
       .delete()
       .eq("user_id", userId)
       .eq("comment_id", commentId);
+
+    if (error) throw error;
   },
 
   async getLikedComments(userId: string): Promise<string[]> {
@@ -560,36 +496,6 @@ export const socialService = {
     if (error) throw error;
     const rows = Array.isArray(data) ? (data as Array<{ comment_id: string }>) : [];
     return rows.map((like) => like.comment_id);
-  },
-
-  async getUserProfileByUserId(userId: string): Promise<UserProfile | null> {
-    const { supabase } = await loadSupabaseModule();
-    const db = asDb(supabase);
-    const { data, error } = await db
-      .from("profiles")
-      .select("*")
-      .eq("user_id", userId)
-      .single<UserProfile>();
-
-    if (error) {
-      if (error.code === "PGRST116") {
-        return null;
-      }
-      throw error;
-    }
-    return data as UserProfile;
-  },
-
-  async getAllPublicProfiles(): Promise<UserProfile[]> {
-    const { supabase } = await loadSupabaseModule();
-    const db = asDb(supabase);
-    const { data, error } = await db
-      .from("profiles")
-      .select("*")
-      .eq("is_public", true);
-
-    if (error) throw error;
-    return (Array.isArray(data) ? data : []) as UserProfile[];
   },
 
   /**

@@ -9,6 +9,7 @@ import { Image } from "@/components/ui/Image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { buildCanonicalUrl } from "@/lib/seo";
+import { useToast } from "@/hooks/use-toast";
 
 function ProfileAvatar({ profile }: { profile: DirectoryProfile }) {
   return (
@@ -31,6 +32,7 @@ function ProfileAvatar({ profile }: { profile: DirectoryProfile }) {
 function ProfileDirectoryCard({ profile }: { profile: DirectoryProfile }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const isOwnProfile = user?.id === profile.user_id;
 
   const { data: isFollowing } = useQuery({
@@ -53,6 +55,13 @@ function ProfileDirectoryCard({ profile }: { profile: DirectoryProfile }) {
       queryClient.invalidateQueries({ queryKey: ["is-following", user?.id, profile.user_id] });
       queryClient.invalidateQueries({ queryKey: ["public-profile-summary", profile.user_id] });
       queryClient.invalidateQueries({ queryKey: ["public-profiles-directory"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Unable to update follow status",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 

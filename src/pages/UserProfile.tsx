@@ -32,6 +32,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { getImageUrl, getMediaTitle } from "@/services/tmdb";
 import { buildCanonicalUrl } from "@/lib/seo";
+import { useToast } from "@/hooks/use-toast";
 
 // Public-profile response contracts are parsed in the social service, keeping
 // direct Supabase RPC details out of this presentation component.
@@ -230,6 +231,7 @@ export default function UserProfile() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const isOwnProfile = !!user?.id && user.id === userId;
   const [activeTab, setActiveTab] = useState<"favorites" | "activity" | "followers" | "following">("favorites");
 
@@ -243,33 +245,8 @@ export default function UserProfile() {
     enabled: !!userId,
   });
 
-  // ── Fallback to legacy query when the new RPC is not yet deployed ────────
-  const { data: legacyProfile, isLoading: isLoadingLegacy } = useQuery({
-    queryKey: ["public-profile-legacy", userId],
-    queryFn: async () => {
-      if (!userId) return null;
-      return socialService.getUserProfileByUserId(userId);
-    },
-    enabled: !!userId && !profile && !isLoadingProfile,
-  });
-
-  const resolvedProfile = profile ?? (legacyProfile
-    ? {
-        user_id: legacyProfile.user_id,
-        display_name: legacyProfile.display_name,
-        bio: legacyProfile.bio,
-        avatar_url: legacyProfile.avatar_url ?? legacyProfile.profile_photo,
-        favorite_genres: legacyProfile.favorite_genres,
-        favorite_titles: legacyProfile.favorite_titles,
-        is_public: legacyProfile.is_public,
-        created_at: legacyProfile.created_at,
-        followers_count: 0,
-        following_count: 0,
-        comments_count: 0,
-      }
-    : null);
-
-  const isLoading = isLoadingProfile || (isLoadingLegacy && !profile);
+  const resolvedProfile = profile;
+  const isLoading = isLoadingProfile;
 
   // ── Follow state ─────────────────────────────────────────────────────────
   const { data: isFollowing } = useQuery({
@@ -293,6 +270,13 @@ export default function UserProfile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["is-following"] });
       queryClient.invalidateQueries({ queryKey: ["public-profile-summary", userId] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t("userProfile.followError", "Unable to update follow status"),
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 

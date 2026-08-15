@@ -110,24 +110,25 @@ function CommentCard({
                 size="icon"
                 onClick={() => deleteMutation.mutate(comment.id)}
                 className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                aria-label={t("comments.delete", "Delete comment")}
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
             </div>
           )}
         </div>
-        <p 
-          className={cn(
-            "text-muted-foreground text-sm mb-2",
-            containsSpoiler && !revealedSpoiler && "blur-sm hover:blur-none transition-all cursor-pointer"
-          )}
-          onClick={() => containsSpoiler && !revealedSpoiler && onToggleSpoiler(comment.id)}
-        >
-          {containsSpoiler && !revealedSpoiler 
-            ? t("comments.spoilerWarning", "Reveal spoiler")
-            : comment.content
-          }
-        </p>
+        {containsSpoiler && !revealedSpoiler ? (
+          <button
+            type="button"
+            onClick={() => onToggleSpoiler(comment.id)}
+            aria-expanded={false}
+            className="mb-2 block w-full cursor-pointer text-left text-sm text-muted-foreground blur-sm transition-all hover:blur-none focus-visible:blur-none"
+          >
+            {t("comments.spoilerWarning", "Reveal spoiler")}
+          </button>
+        ) : (
+          <p className="mb-2 text-sm text-muted-foreground">{comment.content}</p>
+        )}
         <div className="flex items-center gap-4">
           {user && (
             <Button
@@ -274,6 +275,13 @@ export function MediaComments({ mediaId, mediaType }: MediaCommentsProps) {
         queryKey: ["comments", mediaType, mediaId],
       });
     },
+    onError: (error: Error) => {
+      toast({
+        title: t("comments.postError", "Unable to post comment"),
+        description: error.message,
+        variant: "destructive",
+      });
+    },
     onSettled: () => setIsSubmitting(false),
   });
 
@@ -288,6 +296,13 @@ export function MediaComments({ mediaId, mediaType }: MediaCommentsProps) {
       setReplyingToId(null);
       queryClient.invalidateQueries({
         queryKey: ["comments", mediaType, mediaId],
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t("comments.replyError", "Unable to post reply"),
+        description: error.message,
+        variant: "destructive",
       });
     },
     onSettled: () => setIsSubmittingReply(false),
@@ -326,6 +341,10 @@ export function MediaComments({ mediaId, mediaType }: MediaCommentsProps) {
         variant: "destructive",
       });
       queryClient.invalidateQueries({ queryKey: ["likedComments", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["comments", mediaType, mediaId] });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments", mediaType, mediaId] });
     },
   });
 
@@ -526,6 +545,11 @@ export function MediaComments({ mediaId, mediaType }: MediaCommentsProps) {
         <div className="text-center py-8 text-muted-foreground">
           <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-50" />
           <p>{t("comments.noComments", "No comments yet. Be the first to share your thoughts!")}</p>
+          {!user && (
+            <Button asChild variant="outline" size="sm" className="mt-4">
+              <Link to="/login">{t("comments.signInToComment", "Sign in to join the conversation")}</Link>
+            </Button>
+          )}
         </div>
       )}
 
