@@ -25,7 +25,7 @@
     "test:ci": "npm run lint && npm run type-check && npm run test:security && npm run i18n:verify",
     "preview": "vite preview",
     "test:security": "node --test tests/security-api.test.mjs",
-    "test:unit": "node --experimental-strip-types --test tests/continue-watching.test.mjs",
+    "test:unit": "node --experimental-strip-types --test tests/continue-watching.test.mjs tests/discover-results.test.mjs tests/request-reference.test.mjs",
     "test:smoke": "playwright test tests/smoke.spec.ts --project=chromium",
     "audit:desktop": "node ./scripts/run-lighthouse-desktop.mjs",
     "audit:desktop:full": "npm run build && npm run audit:desktop",

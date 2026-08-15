@@ -11,6 +11,7 @@ import {
 } from "@/types/media";
 import { SafetyLevel, type MaturityRating } from "@/lib/contentFilter";
 import { createLogger } from "@/lib/logger";
+import { createRequestReferenceError } from "@/lib/requestReference";
 import { ENV, getTmdbProxyUrl } from "@/lib/envValidation";
 import { toDisplayTitle } from "@/lib/displayTitle";
 
@@ -199,12 +200,17 @@ const fetchTMDB = async <T>(
         }
       });
 
+      const requestId = response.headers.get("x-request-id");
+
       // Explicit 401 handling - Stop retries immediately
       if (response.status === 401) {
         logger.error(
           "401 Unauthorized: Invalid Supabase API key or expired session",
         );
-        throw new Error("AUTHENTICATION_ERROR");
+        throw createRequestReferenceError("AUTHENTICATION_ERROR", {
+          requestId,
+          status: response.status,
+        });
       }
 
       if (!response.ok) {
@@ -222,7 +228,10 @@ const fetchTMDB = async <T>(
           error: errorData,
         });
 
-        throw new Error(errorData.error || `TMDB API error: ${statusText}`);
+        throw createRequestReferenceError(
+          errorData.error || `TMDB API error: ${statusText}`,
+          { requestId, status: response.status },
+        );
       }
 
       const data = await response.json();

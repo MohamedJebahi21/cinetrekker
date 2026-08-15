@@ -342,7 +342,8 @@
     "total": "Total",
     "watching": "Watching",
     "completed": "Completed",
-    "planToWatch": "Plan to Watch"
+    "planToWatch": "Plan to Watch",
+    "totalHours": "Hours"
   },
   "details": {
     "whereToWatch": "Wo man schauen kann",
@@ -396,7 +397,8 @@
     "followShow": "Serie folgen",
     "unfollowShow": "Nicht mehr folgen",
     "following": "Folge ich",
-    "watchTrailer": "Trailer ansehen"
+    "watchTrailer": "Trailer ansehen",
+    "invalidId": "This title is unavailable or no longer exists."
   },
   "actions": {
     "addToWatchlist": "Zur Merkliste hinzufügen",
@@ -770,7 +772,9 @@
     "providerGoogle": "Google",
     "providerFacebook": "Facebook",
     "providerApple": "Apple",
-    "providerUnavailable": "{{provider}} sign-in is not available right now. Please try email login instead."
+    "providerUnavailable": "{{provider}} sign-in is not available right now. Please try email login instead.",
+    "signIn": "Sign in",
+    "signInRequired": "Sign in to continue"
   },
   "privacy": {
     "title": "Datenschutzerklärung",

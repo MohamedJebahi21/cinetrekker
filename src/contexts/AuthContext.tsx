@@ -38,6 +38,35 @@ function toAuthError(error: unknown): Error {
   return error instanceof Error ? error : new Error(String(error));
 }
 
+async function getOAuthLaunchError(authorizeUrl: string, provider: string): Promise<Error | null> {
+  try {
+    const response = await fetch(authorizeUrl, {
+      headers: { Accept: "application/json" },
+    });
+
+    if (response.ok) {
+      return null;
+    }
+
+    // Never expose provider or upstream diagnostics to the browser. The user
+    // only needs a clear alternative path when a provider is unavailable.
+    return new Error(
+      `${provider} sign-in is currently unavailable. Please use email and password instead.`,
+    );
+  } catch {
+    // The preflight is a user-experience safeguard. If it cannot run (for
+    // example due to a transient network issue), keep the normal OAuth route
+    // available rather than blocking an otherwise valid provider redirect.
+    return null;
+  }
+}
+
+function getBrowserRedirectUrl(authorizeUrl: string): string {
+  const url = new URL(authorizeUrl);
+  url.searchParams.delete("skip_http_redirect");
+  return url.toString();
+}
+
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (context === undefined) {
@@ -187,13 +216,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const { supabase } = await loadSupabaseModule();
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          // Keep Supabase errors in-app so unsupported or misconfigured
+          // providers do not replace CineTrekker with a raw JSON response.
+          skipBrowserRedirect: true,
         },
       });
-      return { error: (error as Error | null) ?? null };
+
+      if (error) {
+        return { error: error as Error };
+      }
+
+      if (!data.url) {
+        return {
+          error: new Error("The selected sign-in provider did not return a redirect URL."),
+        };
+      }
+
+      const launchError = await getOAuthLaunchError(data.url, provider === "google" ? "Google" : "This");
+      if (launchError) {
+        return { error: launchError };
+      }
+
+      window.location.assign(getBrowserRedirectUrl(data.url));
+      return { error: null };
     } catch (error) {
       return { error: toAuthError(error) };
     }

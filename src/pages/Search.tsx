@@ -70,6 +70,11 @@ import { cn } from "@/lib/utils";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { safeT } from "@/lib/i18n";
 import { getSearchHistory, type SearchHistoryItem } from "@/lib/searchHistory";
+import {
+  combineDiscoverResponses,
+  tagDiscoverResponse,
+  type PagedDiscoverMedia,
+} from "@/lib/discoverResults";
 import { createLogger } from "@/lib/logger";
 
 const LANGUAGES = [
@@ -221,12 +226,6 @@ function getDiscoverSort(
   }
   return sortBy;
 }
-
-type PagedMedia = {
-  page: number;
-  total_pages: number;
-  results: Media[];
-};
 
 type MultiSelectOption = {
   id: string;
@@ -609,7 +608,7 @@ export default function Search() {
   });
 
   // Discover query (combined movies + TV when needed)
-  const discoverQuery = useInfiniteQuery<PagedMedia>({
+  const discoverQuery = useInfiniteQuery<PagedDiscoverMedia>({
     queryKey: [
       "discover",
       mediaTypeFilter,
@@ -647,13 +646,7 @@ export default function Search() {
           },
           language,
         );
-        return {
-          totalPages: resp.total_pages,
-          results: resp.results.map((m) => ({
-            ...m,
-            media_type: "movie" as const,
-          })),
-        };
+        return tagDiscoverResponse(resp, "movie");
       };
 
       const fetchTVResults = async (selectedLanguage?: string) => {
@@ -668,13 +661,7 @@ export default function Search() {
           },
           language,
         );
-        return {
-          totalPages: resp.total_pages,
-          results: resp.results.map((show) => ({
-            ...show,
-            media_type: "tv" as const,
-          })),
-        };
+        return tagDiscoverResponse(resp, "tv");
       };
 
       if (mediaTypeFilter === "movie") {
@@ -683,12 +670,10 @@ export default function Search() {
             fetchMovieResults(selectedLanguage),
           ),
         );
+        const combined = combineDiscoverResponses(page, movieResponses);
         return {
-          page,
-          total_pages: Math.max(...movieResponses.map((response) => response.totalPages)),
-          results: dedupeMedia(
-            movieResponses.flatMap((response) => response.results),
-          ),
+          ...combined,
+          results: dedupeMedia(combined.results),
         };
       }
 
@@ -698,12 +683,10 @@ export default function Search() {
             fetchTVResults(selectedLanguage),
           ),
         );
+        const combined = combineDiscoverResponses(page, tvResponses);
         return {
-          page,
-          total_pages: Math.max(...tvResponses.map((response) => response.totalPages)),
-          results: dedupeMedia(
-            tvResponses.flatMap((response) => response.results),
-          ),
+          ...combined,
+          results: dedupeMedia(combined.results),
         };
       }
 
@@ -714,15 +697,10 @@ export default function Search() {
           ]),
       );
 
+      const combined = combineDiscoverResponses(page, combinedResponses);
       return {
-        page,
-        total_pages: Math.max(
-          ...combinedResponses.map((response) => response.totalPages),
-        ),
-        results: dedupeMedia(
-          // @ts-expect-error - Combined responses can have mixed media types from multiple discover endpoints
-          combinedResponses.flatMap((response) => response.results),
-        ),
+        ...combined,
+        results: dedupeMedia(combined.results),
       };
     },
     enabled: Boolean(useDiscoverMode),

@@ -21,6 +21,7 @@ import {
   TrendingUp,
   DollarSign,
   ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import {
   getMovieDetails,
@@ -73,6 +74,7 @@ import { FollowUpdatesButton } from "@/components/FollowUpdatesButton";
 import { MediaComments } from "@/components/MediaComments";
 import { usePinnedFavorites } from "@/hooks/usePinnedFavorites";
 import { logger } from "@/lib/logger";
+import { getRequestReference } from "@/lib/requestReference";
 import { getPublishedEpisodeTotal } from "@/lib/continueWatching/progress";
 import { toDisplayTitle } from "@/lib/displayTitle";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
@@ -279,6 +281,8 @@ export default function Details() {
   const { toast } = useToast();
   const language = i18n.language;
   const castScrollRef = useRef<HTMLDivElement>(null);
+  const castPreviewScrollRef = useRef<HTMLDivElement>(null);
+  const videoScrollRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<Record<string, HTMLElement>>({});
   const backdropRef = useRef<HTMLDivElement>(null);
@@ -570,7 +574,13 @@ export default function Details() {
   if (isError || !details) {
     logger.warn("[Details] Error loading media data", error);
     if ((error as Error)?.message?.includes("404")) return <TitleUnavailable title={t("search.noResultsTitle")} description={t("details.invalidId")} homeLabel={t("nav.home")} />;
-    return <MovieRouteError message={(error as Error)?.message || t("common.error")} onRetry={() => refetch()} />;
+    return (
+      <MovieRouteError
+        message={(error as Error)?.message || t("common.error")}
+        onRetry={() => refetch()}
+        requestReference={getRequestReference(error)}
+      />
+    );
   }
   if (isBlockedByPolicy) {
     const mode = strictFiltering ? t("details.contentBlockedModeStrict", "Strict mode") : t("details.contentBlockedModeModerate", "Moderate mode");
@@ -633,7 +643,7 @@ export default function Details() {
     .sort((a, b) => b._s - a._s)
     .slice(0, 12);
 
-  const shouldTruncateOverview = overview.length > 300 || overview.includes("\n");
+  const shouldTruncateOverview = overview.length > 180 || overview.includes("\n");
   const isPinnedFavorite = pinnedFavoriteKeys.includes(currentMediaKey);
   const statusConfig = details.status ? getStatusConfig(details.status) : null;
 
@@ -745,6 +755,11 @@ export default function Details() {
 
   const handlePlayVideo = (key: string) => { setTrailerVideoKey(key); setTrailerOpen(true); };
   const scrollTo = (id: string) => document.getElementById(`section-${id}`)?.scrollIntoView({ behavior: "smooth" });
+  const scrollCarousel = (ref: React.RefObject<HTMLDivElement | null>, direction: 1 | -1) => {
+    const container = ref.current;
+    if (!container) return;
+    container.scrollBy({ left: direction * Math.max(280, Math.floor(container.clientWidth * 0.82)), behavior: "smooth" });
+  };
 
   const navItems = [
     { id: "overview", label: t("details.overview", "Overview"), show: true },
@@ -1099,7 +1114,7 @@ export default function Details() {
         >
           {/* Overview + Keywords */}
           <Reveal>
-            <div className="rounded-2xl border border-white/8 bg-card/40 backdrop-blur-sm p-6 h-full">
+            <div className="self-start rounded-2xl border border-white/8 bg-card/40 p-5 backdrop-blur-sm sm:p-6">
               <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground mb-4">{t("details.overview", "Overview")}</p>
 
               {/* Director/Creator quick line */}
@@ -1116,38 +1131,206 @@ export default function Details() {
                 </div>
               )}
 
-              <p className={cn("text-sm leading-[1.9] text-foreground/75 md:text-[15px] whitespace-pre-line", !showFullOverview && shouldTruncateOverview && "line-clamp-5")}>
+              <p
+                id="details-overview-text"
+                className={cn("text-sm leading-7 text-foreground/75 md:text-[15px] whitespace-pre-line", !showFullOverview && shouldTruncateOverview && "line-clamp-3")}
+              >
                 {overview}
               </p>
               {shouldTruncateOverview && (
-                <Button variant="link" size="sm" className="mt-2 px-0 text-primary font-semibold" onClick={() => setShowFullOverview(s => !s)}>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="mt-1.5 h-auto px-0 text-primary font-semibold"
+                  aria-expanded={showFullOverview}
+                  aria-controls="details-overview-text"
+                  onClick={() => setShowFullOverview(s => !s)}
+                >
                   {showFullOverview ? t("common.readLess", "Read Less") : t("common.readMore", "Read More")}
                 </Button>
               )}
 
               {/* Keywords */}
               {keywords.length > 0 && (
-                <div className="mt-5 pt-5 border-t border-white/6">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground mb-3">Tags</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(showAllKeywords ? keywords : keywords.slice(0, 14)).map(kw => (
-                      <span key={kw.id} className="px-2.5 py-1 rounded-full text-xs bg-white/5 border border-white/8 text-foreground/60 hover:border-primary/30 hover:text-foreground transition-colors cursor-default">
+                <div className="mt-4 border-t border-white/6 pt-4">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground">Tags</p>
+                    {keywords.length > 8 ? (
+                      <button
+                        type="button"
+                        className="text-xs font-semibold text-primary transition-colors hover:text-primary/80"
+                        aria-expanded={showAllKeywords}
+                        aria-controls="details-tags"
+                        onClick={() => setShowAllKeywords(s => !s)}
+                      >
+                        {showAllKeywords ? "Show less" : `+${keywords.length - 8} more`}
+                      </button>
+                    ) : null}
+                  </div>
+                  <div id="details-tags" className="flex flex-wrap gap-1.5">
+                    {(showAllKeywords ? keywords : keywords.slice(0, 8)).map(kw => (
+                      <span key={kw.id} className="rounded-full border border-white/8 bg-white/5 px-2 py-0.5 text-[11px] text-foreground/60 transition-colors hover:border-primary/30 hover:text-foreground">
                         {kw.name}
                       </span>
                     ))}
-                    {keywords.length > 14 && (
-                      <button onClick={() => setShowAllKeywords(s => !s)} className="px-2.5 py-1 rounded-full text-xs text-primary hover:bg-primary/10 transition-colors border border-primary/20">
-                        {showAllKeywords ? "Less" : `+${keywords.length - 14}`}
-                      </button>
-                    )}
                   </div>
                 </div>
+              )}
+
+              {mediaType === "tv" && seasons.length > 0 && (
+                <section ref={el => { if (el) sectionRefs.current.episodes = el; }} id="section-episodes" className="mt-5 border-t border-white/6 pt-5">
+                  <div className="mb-5 grid gap-4 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.5fr)] xl:items-start">
+                    <div className="max-w-[19rem]">
+                      <h2 className="text-base font-bold text-foreground">{t("details.availableEpisodes", "Available Episodes")}</h2>
+                      <p className="mt-1 text-sm leading-6 text-muted-foreground">{t("details.availableEpisodesDescription", "Browse published episodes and read summaries.")}</p>
+                    </div>
+                    <div className="min-w-0 space-y-2 xl:pt-0.5">
+                      {user && (
+                        <div className="flex flex-wrap gap-2 xl:justify-end">
+                          <Button variant="outline" size="sm" className="rounded-xl gap-1 shrink-0" onClick={() => {
+                            if (!selectedSeason || !seasonDetails) return;
+                            markSeasonWatched({ showId: mediaId, seasonNumber: selectedSeason!, episodes: publishedEpisodes.map(ep => ({ episode_number: ep.episode_number, name: ep.name, air_date: ep.air_date ?? undefined })), showName: details?.name, posterPath: details?.poster_path });
+                          }} disabled={!selectedSeason || !seasonDetails || publishedEpisodes.length === 0}>
+                            <Check className="w-3.5 h-3.5" />{t("details.markSeason", "Mark Season")}
+                          </Button>
+                          <Button variant="outline" size="sm" className="rounded-xl gap-1 shrink-0" onClick={async () => {
+                            if (!availableSeasonNumbers.length) return;
+                            const allSeasonData = await Promise.all(availableSeasonNumbers.map(n => getTVSeasonDetails(mediaId, n, language)));
+                            const allEpisodes = allSeasonData.flatMap((sd, i) =>
+                              (sd?.episodes ?? []).filter((ep: { air_date?: string | null }) => ep.air_date && ep.air_date <= todayDateKey).map((ep: { episode_number: number; name: string; air_date?: string | null }) => ({
+                                season_number: availableSeasonNumbers[i],
+                                episode_number: ep.episode_number,
+                                name: ep.name,
+                                air_date: ep.air_date ?? undefined,
+                              }))
+                            );
+                            if (allEpisodes.length === 0) return;
+                            markAllSeasonsWatched({ showId: mediaId, allEpisodes, showName: details?.name, posterPath: details?.poster_path });
+                          }} disabled={!availableSeasonNumbers.length}>
+                            <Check className="w-3.5 h-3.5" />{t("details.markAllSeasonsWatched", "Mark All Seasons Watched")}
+                          </Button>
+                        </div>
+                      )}
+                      <div className="flex flex-wrap gap-1.5 pb-1 xl:justify-end">
+                        {(availableSeasonNumbers.length > 0 ? availableSeasonNumbers : seasons.slice().reverse()).map(n => {
+                          const prog = seasonProgress[n];
+                          const seasonInfo = details.seasons?.find((s: { season_number: number }) => s.season_number === n);
+                          return (
+                            <button
+                              key={`sc-${n}`} type="button"
+                              onClick={() => {
+                                setSelectedSeason(n);
+                                setSearchParams(prev => { const next = new URLSearchParams(prev); next.set("season", String(n)); return next; }, { replace: true });
+                              }}
+                              className={cn(
+                                "flex items-center gap-1.5 whitespace-nowrap rounded-xl border px-2.5 py-1 text-xs font-medium transition-all duration-200",
+                                selectedSeason === n
+                                  ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                                  : "border-white/10 bg-background/50 hover:border-white/20 hover:bg-white/8"
+                              )}
+                            >
+                              {seasonInfo?.poster_path && (
+                                <img src={getImageUrl(seasonInfo.poster_path, "w92") || ""} alt={`Season ${n}`} className="h-6 w-4 rounded object-cover opacity-90" />
+                              )}
+                              S{n}
+                              {prog && prog.total > 0 && <span className={cn("text-[10px]", selectedSeason === n ? "opacity-80" : "text-muted-foreground")}>{prog.watched}/{prog.total}</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {!selectedSeason ? (
+                    <p className="text-sm text-muted-foreground">{t("details.selectSeasonPrompt", "Select a season above.")}</p>
+                  ) : !seasonDetails ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />{t("details.loadingSeasonEpisodes", "Loading...")}</div>
+                  ) : publishedEpisodes.length === 0 ? (
+                    <div className="rounded-xl border border-white/8 bg-white/3 px-4 py-5 text-sm text-muted-foreground">{t("details.noPublishedEpisodes", "No published episodes available for this season yet.")}</div>
+                  ) : (
+                    <DeferredBlock className="space-y-2" placeholderClassName="h-[420px]">
+                      <Accordion type="single" collapsible className="w-full">
+                        {publishedEpisodes.map((episode, index) => {
+                          const ew = isEpisodeWatched(mediaId, episode.season_number, episode.episode_number);
+                          const isNext = !ew && publishedEpisodes.slice(0, index).every(prev => isEpisodeWatched(mediaId, prev.season_number, prev.episode_number));
+                          return (
+                            <AccordionItem key={`ep-${episode.id}`} value={`ep-${episode.id}`} className={cn("border-b border-white/6 last:border-0", isNext && "bg-primary/5 ring-1 ring-inset ring-primary/20")}>
+                              <div className="flex w-full items-center gap-3 py-3">
+                                {episode.still_path && (
+                                  <div className="hidden w-20 shrink-0 overflow-hidden rounded-lg border border-white/8 sm:block aspect-video">
+                                    <Image src={getImageUrl(episode.still_path, "w185") || ""} alt={episode.name} width={185} height={104} className="h-full w-full object-cover" loading="lazy" />
+                                  </div>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => handleEpisodeToggle(episode.season_number, episode.episode_number, episode.name, episode.air_date)}
+                                  className={cn("flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background", ew ? "bg-emerald-500 text-white shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-white/8 text-muted-foreground hover:bg-white/15")}
+                                  aria-pressed={ew}
+                                  aria-label={ew ? t("details.markEpisodeUnwatched", "Mark {{episode}} as unwatched", { episode: episode.name }) : t("details.markEpisodeWatched", "Mark {{episode}} as watched", { episode: episode.name })}
+                                >
+                                  {ew && <Check className="h-4 w-4" />}
+                                </button>
+                                <AccordionPrimitive.Header className="flex min-w-0 flex-1">
+                                  <AccordionPrimitive.Trigger className="flex min-w-0 flex-1 items-center justify-between gap-2 py-0 text-left font-normal md:hover:no-underline [&[data-state=open]>svg]:rotate-180">
+                                    <div className="min-w-0 flex-1">
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">S{episode.season_number}E{episode.episode_number}</span>
+                                        {isNext && <Badge variant="outline" className="px-1.5 py-0 text-[10px]">Next Up</Badge>}
+                                        {episode.vote_average && episode.vote_average > 0 && <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground"><Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />{episode.vote_average.toFixed(1)}</span>}
+                                      </div>
+                                      <p className="mt-0.5 line-clamp-1 text-sm font-semibold text-foreground">{episode.name}</p>
+                                      <p className="mt-0.5 text-xs text-muted-foreground">{episode.air_date ? new Date(episode.air_date).toLocaleDateString(language) : "TBA"}{episode.runtime ? ` · ${episode.runtime} ${t("details.minutes")}` : ""}</p>
+                                    </div>
+                                    <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
+                                  </AccordionPrimitive.Trigger>
+                                </AccordionPrimitive.Header>
+                              </div>
+                              <AccordionContent>
+                                <div className="mb-2 rounded-xl border border-white/8 bg-white/3 p-4">
+                                  <p className="text-sm leading-relaxed text-muted-foreground">{episode.overview?.trim() || t("details.noEpisodeDescription", "No description available.")}</p>
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          );
+                        })}
+                      </Accordion>
+                    </DeferredBlock>
+                  )}
+                </section>
               )}
             </div>
           </Reveal>
 
           {/* Sidebar */}
           <div className="space-y-4">
+            {details.credits?.cast && details.credits.cast.length > 0 && (
+              <Reveal>
+                <div className="rounded-2xl border border-white/8 bg-card/40 p-5 backdrop-blur-sm">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground">Cast</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Explore the people behind the story.</p>
+                    </div>
+                    <button type="button" onClick={() => scrollTo("cast")} className="shrink-0 text-xs font-semibold text-primary transition-colors hover:text-primary/80">View all</button>
+                  </div>
+                  <div ref={castPreviewScrollRef} className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2">
+                    {details.credits.cast.slice(0, 8).map((person: { id: number; name: string; character?: string; profile_path?: string | null }) => (
+                      <Link key={`sidebar-cast-${person.id}`} to={buildPersonPath(person.id, person.name)} className="group/cast w-20 shrink-0 snap-start">
+                        <div className="aspect-[2/3] overflow-hidden rounded-xl border border-white/8 bg-muted/50 transition-colors group-hover/cast:border-primary/40">
+                          {person.profile_path ? (
+                            <Image src={getImageUrl(person.profile_path, "w185") || ""} alt={person.name} width={185} height={278} className="h-full w-full object-cover transition-transform duration-300 group-hover/cast:scale-105" loading="lazy" showSkeleton />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-muted text-xl font-bold text-muted-foreground" aria-hidden="true">{person.name.slice(0, 1)}</div>
+                          )}
+                        </div>
+                        <p className="mt-1.5 line-clamp-2 text-[11px] font-semibold leading-tight text-foreground group-hover/cast:text-primary">{person.name}</p>
+                        <p className="mt-0.5 line-clamp-1 text-[10px] text-muted-foreground">{person.character || "Cast"}</p>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </Reveal>
+            )}
             {/* Watch options */}
             <Reveal>
               <div className="rounded-2xl border border-white/8 bg-card/40 backdrop-blur-sm p-5">
@@ -1286,9 +1469,22 @@ export default function Details() {
         {orderedVideos.length > 0 && (
           <Reveal>
             <section ref={el => { if (el) sectionRefs.current.videos = el; }} id="section-videos" className="mt-12">
-              <h2 className="section-title mb-5">Videos & Trailers</h2>
+              <div className="mb-5 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground">Watch preview</p>
+                  <h2 className="section-title mt-1 mb-0">Videos & Trailers</h2>
+                </div>
+                <div className="flex items-center gap-2" aria-label="Video carousel controls">
+                  <Button type="button" variant="outline" size="icon" className="h-9 w-9 rounded-full" onClick={() => scrollCarousel(videoScrollRef, -1)} aria-label="Scroll videos left">
+                    <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                  <Button type="button" variant="outline" size="icon" className="h-9 w-9 rounded-full" onClick={() => scrollCarousel(videoScrollRef, 1)} aria-label="Scroll videos right">
+                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                </div>
+              </div>
               <DeferredBlock className="mt-4" placeholderClassName="h-56 sm:h-64">
-                <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar scroll-smooth snap-x snap-mandatory">
+                <div ref={videoScrollRef} className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-4 scroll-smooth">
                   {orderedVideos.map((video, i) => (
                     <VideoCard key={video.id} video={video} onPlay={handlePlayVideo} featured={i === 0} />
                   ))}
@@ -1381,164 +1577,6 @@ export default function Details() {
           <div className="glass-card p-4 mt-6 text-sm text-muted-foreground">
             <Link to="/login" className="text-primary hover:underline">{t("auth.signInRequired")}</Link>{" "}{t("home.hero.subtitle")}
           </div>
-        )}
-
-        {/* ─── EPISODES ───────────────────────────────────────── */}
-        {mediaType === "tv" && seasons.length > 0 && (
-          <Reveal>
-            <section ref={el => { if (el) sectionRefs.current.episodes = el; }} id="section-episodes" className="rounded-2xl border border-white/8 bg-card/40 backdrop-blur-sm p-6 mt-12">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-5">
-                <div>
-                  <h2 className="text-base font-bold text-foreground">{t("details.availableEpisodes", "Episodes")}</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">{t("details.availableEpisodesDescription", "Browse published episodes and read summaries.")}</p>
-                </div>
-                <div className="flex flex-wrap gap-2 items-center">
-                  {user && (
-                    <>
-                      <Button variant="outline" size="sm" className="rounded-xl gap-1 shrink-0" onClick={() => {
-                        if (!selectedSeason || !seasonDetails) return;
-                        markSeasonWatched({ showId: mediaId, seasonNumber: selectedSeason!, episodes: publishedEpisodes.map(ep => ({ episode_number: ep.episode_number, name: ep.name, air_date: ep.air_date ?? undefined })), showName: details?.name, posterPath: details?.poster_path });
-                      }} disabled={!selectedSeason || !seasonDetails || publishedEpisodes.length === 0}>
-                        <Check className="w-3.5 h-3.5" />{t("details.markSeason", "Mark Season")}
-                      </Button>
-                      <Button variant="outline" size="sm" className="rounded-xl gap-1 shrink-0" onClick={async () => {
-                        if (!availableSeasonNumbers.length) return;
-                        // Fetch all seasons' episodes in parallel, then mark everything.
-                        const allSeasonData = await Promise.all(
-                          availableSeasonNumbers.map(n => getTVSeasonDetails(mediaId, n, language))
-                        );
-                        const allEpisodes = allSeasonData.flatMap((sd, i) =>
-                          (sd?.episodes ?? []).filter((ep: { air_date?: string | null }) => ep.air_date && ep.air_date <= todayDateKey).map((ep: { episode_number: number; name: string; air_date?: string | null }) => ({
-                            season_number: availableSeasonNumbers[i],
-                            episode_number: ep.episode_number,
-                            name: ep.name,
-                            air_date: ep.air_date ?? undefined,
-                          }))
-                        );
-                        if (allEpisodes.length === 0) return;
-                        markAllSeasonsWatched({ showId: mediaId, allEpisodes, showName: details?.name, posterPath: details?.poster_path });
-                      }} disabled={!availableSeasonNumbers.length}>
-                        <Check className="w-3.5 h-3.5" />{t("details.markAllSeasonsWatched", "Mark All Seasons Watched")}
-                      </Button>
-                    </>
-                  )}
-                  {/* Season chips with poster thumbnails */}
-                  <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
-                    {(availableSeasonNumbers.length > 0 ? availableSeasonNumbers : seasons.slice().reverse()).map(n => {
-                      const prog = seasonProgress[n];
-                      const seasonInfo = details.seasons?.find((s: { season_number: number }) => s.season_number === n);
-                      return (
-                        <button
-                          key={`sc-${n}`} type="button"
-                          onClick={() => {
-                            setSelectedSeason(n);
-                            setSearchParams(prev => { const next = new URLSearchParams(prev); next.set('season', String(n)); return next; }, { replace: true });
-                          }}
-                          className={cn(
-                            "flex items-center gap-2 whitespace-nowrap px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 border",
-                            selectedSeason === n
-                              ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
-                              : "bg-background/50 border-white/10 hover:bg-white/8 hover:border-white/20"
-                          )}
-                        >
-                          {seasonInfo?.poster_path && (
-                            <img
-                              src={getImageUrl(seasonInfo.poster_path, "w92") || ""}
-                              alt={`Season ${n}`}
-                              className="w-5 h-7 rounded object-cover opacity-90"
-                            />
-                          )}
-                          S{n}
-                          {prog && prog.total > 0 && (
-                            <span className={cn("text-[10px]", selectedSeason === n ? "opacity-80" : "text-muted-foreground")}>
-                              {prog.watched}/{prog.total}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {!selectedSeason ? (
-                <p className="text-sm text-muted-foreground">{t("details.selectSeasonPrompt", "Select a season above.")}</p>
-              ) : !seasonDetails ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />{t("details.loadingSeasonEpisodes", "Loading...")}</div>
-              ) : publishedEpisodes.length === 0 ? (
-                <div className="rounded-xl border border-white/8 bg-white/3 px-4 py-5 text-sm text-muted-foreground">
-                  {t("details.noPublishedEpisodes", "No published episodes available for this season yet.")}
-                </div>
-              ) : (
-                <DeferredBlock className="space-y-2" placeholderClassName="h-[420px]">
-                  <Accordion type="single" collapsible className="w-full">
-                    {publishedEpisodes.map((episode, index) => {
-                      const ew = isEpisodeWatched(mediaId, episode.season_number, episode.episode_number);
-                      const isNext = !ew && publishedEpisodes.slice(0, index).every(prev => isEpisodeWatched(mediaId, prev.season_number, prev.episode_number));
-                      return (
-                        <AccordionItem
-                          key={`ep-${episode.id}`}
-                          value={`ep-${episode.id}`}
-                          className={cn("border-b border-white/6 last:border-0", isNext && "bg-primary/5 ring-1 ring-inset ring-primary/20")}
-                        >
-                          <div className="flex items-center gap-3 py-3 w-full">
-                            {/* Episode still */}
-                            {episode.still_path && (
-                              <div className="flex-shrink-0 w-20 aspect-video rounded-lg overflow-hidden hidden sm:block border border-white/8">
-                                <Image src={getImageUrl(episode.still_path, "w185") || ""} alt={episode.name} width={185} height={104} className="w-full h-full object-cover" loading="lazy" />
-                              </div>
-                            )}
-                            {/* Watch toggle */}
-                            <button
-                              type="button"
-                              onClick={() => handleEpisodeToggle(episode.season_number, episode.episode_number, episode.name, episode.air_date)}
-                              className={cn("flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background", ew ? "bg-emerald-500 text-white shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-white/8 text-muted-foreground hover:bg-white/15")}
-                              aria-pressed={ew}
-                              aria-label={
-                                ew
-                                  ? t("details.markEpisodeUnwatched", "Mark {{episode}} as unwatched", { episode: episode.name })
-                                  : t("details.markEpisodeWatched", "Mark {{episode}} as watched", { episode: episode.name })
-                              }
-                            >
-                              {ew && <Check className="w-4 h-4" />}
-                            </button>
-                            <AccordionPrimitive.Header className="flex flex-1 min-w-0">
-                              <AccordionPrimitive.Trigger className="flex flex-1 items-center justify-between gap-2 min-w-0 text-left font-normal py-0 md:hover:no-underline [&[data-state=open]>svg]:rotate-180">
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">S{episode.season_number}E{episode.episode_number}</span>
-                                    {isNext && <Badge variant="outline" className="text-[10px] px-1.5 py-0">Next Up</Badge>}
-                                    {episode.vote_average && episode.vote_average > 0 && (
-                                      <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                                        <Star className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400" />{episode.vote_average.toFixed(1)}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <p className="text-sm font-semibold text-foreground mt-0.5 line-clamp-1">{episode.name}</p>
-                                  <p className="text-xs text-muted-foreground mt-0.5">
-                                    {episode.air_date ? new Date(episode.air_date).toLocaleDateString(language) : "TBA"}
-                                    {episode.runtime ? ` · ${episode.runtime} ${t("details.minutes")}` : ""}
-                                  </p>
-                                </div>
-                                <ChevronDown className="w-4 h-4 shrink-0 transition-transform duration-200 text-muted-foreground" />
-                              </AccordionPrimitive.Trigger>
-                            </AccordionPrimitive.Header>
-                          </div>
-                          <AccordionContent>
-                            <div className="rounded-xl border border-white/8 bg-white/3 p-4 mb-2">
-                              <p className="text-sm leading-relaxed text-muted-foreground">
-                                {episode.overview?.trim() || t("details.noEpisodeDescription", "No description available.")}
-                              </p>
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      );
-                    })}
-                  </Accordion>
-                </DeferredBlock>
-              )}
-            </section>
-          </Reveal>
         )}
 
         {/* ─── MORE LIKE THIS ──────────────────────────────────── */}

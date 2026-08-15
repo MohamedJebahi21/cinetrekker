@@ -34,7 +34,7 @@ export function WatchlistStats({
     >
       <GlassStatCard
         icon={Bookmark}
-        label={t("stats.total") || "Total"}
+        label={t("stats.total", "Total")}
         value={totalCount}
         variant="primary"
         size="md"
@@ -44,7 +44,7 @@ export function WatchlistStats({
       {watchingCount > 0 && (
         <GlassStatCard
           icon={Eye}
-          label={t("stats.watching") || "Watching"}
+          label={t("stats.watching", "Watching")}
           value={watchingCount}
           variant="warning"
           size="md"
@@ -55,7 +55,7 @@ export function WatchlistStats({
       {completedCount > 0 && (
         <GlassStatCard
           icon={Bookmark}
-          label={t("stats.completed") || "Completed"}
+          label={t("stats.completed", "Completed")}
           value={completedCount}
           variant="success"
           size="md"
@@ -66,7 +66,7 @@ export function WatchlistStats({
       {planToWatchCount > 0 && (
         <GlassStatCard
           icon={Clock}
-          label={t("stats.planToWatch") || "Plan to Watch"}
+          label={t("stats.planToWatch", "Plan to Watch")}
           value={planToWatchCount}
           variant="warning"
           size="md"
@@ -77,7 +77,7 @@ export function WatchlistStats({
       {totalHours > 0 && (
         <GlassStatCard
           icon={Clock}
-          label={t("stats.totalHours") || "Hours"}
+          label={t("stats.totalHours", "Hours")}
           value={totalHours}
           variant="danger"
           size="md"

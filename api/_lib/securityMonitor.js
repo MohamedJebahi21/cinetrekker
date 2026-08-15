@@ -32,6 +32,10 @@ export async function reportSecurityEvent({
     scope,
     message,
     timestamp: new Date().toISOString(),
+    requestId:
+      typeof req?.__cinetrekkerRequestId === "string"
+        ? req.__cinetrekkerRequestId
+        : null,
     method: req?.method || null,
     path: req?.url || req?.headers?.["x-vercel-id"] || null,
     ip:

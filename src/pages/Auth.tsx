@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Eye, EyeOff, Info } from "lucide-react";
+import { BookmarkCheck, Cloud, Eye, EyeOff, Info, ShieldCheck, Sparkles } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -35,6 +35,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import SEO from "@/components/SEO";
 import { useToast } from "@/hooks/use-toast";
+import { saveOAuthReturnPath } from "@/lib/authRedirect";
 
 
 
@@ -72,9 +73,12 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
   const location = useLocation();
   const { signIn, signUp, resetPassword, signInWithProvider } = useAuth();
   const { toast } = useToast();
+  const redirectPath =
+    (location.state as { from?: string } | null)?.from || "/";
 
   const handleGoogleSignIn = async () => {
     try {
+      saveOAuthReturnPath(redirectPath);
       const { error } = await signInWithProvider("google");
       if (error) throw error;
     } catch (error: unknown) {
@@ -165,7 +169,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
       if (activeTab === "login") {
         const { error } = await signIn(emailValidation.data, password);
         if (error) throw error;
-        navigate("/");
+        navigate(redirectPath);
       } else {
         const { error } = await signUp(emailValidation.data, password, { username: username.trim() });
         if (error) throw error;
@@ -187,15 +191,76 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
         description={t("auth.seoDescription", "Access your CineTrekker account to sync watchlists, ratings, and recommendations.")}
         canonical="https://cinetrekker.vercel.app/auth"
       />
-      <div className="flex min-h-[100dvh] items-center justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(1rem,env(safe-area-inset-top,0px))]">
-        <Card className="w-full max-w-md rounded-2xl">
-          <CardHeader>
-            <CardTitle>{t("auth.appName", "CineTrekker")}</CardTitle>
-            <CardDescription>
-              {t("auth.tagline", "Track what you watch, save your next pick, and keep your lists in sync.")}
+      <div className="flex min-h-[100dvh] items-center justify-center bg-[radial-gradient(circle_at_top,hsla(var(--primary)/0.16),transparent_38%),linear-gradient(160deg,hsla(var(--background)/0.96),hsla(var(--card)/0.94))] px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(1rem,env(safe-area-inset-top,0px))]">
+        <div className="grid w-full max-w-5xl overflow-hidden rounded-[2rem] border border-border/70 bg-card/95 shadow-[0_28px_90px_rgba(0,0,0,0.3)] lg:grid-cols-[0.88fr_1.12fr]">
+          <aside className="relative hidden overflow-hidden border-r border-border/60 bg-[radial-gradient(circle_at_top_right,hsla(var(--primary)/0.3),transparent_38%),linear-gradient(160deg,hsla(var(--background)/0.98),hsla(var(--card)/0.94))] p-8 lg:flex lg:flex-col">
+            <div className="absolute -right-16 top-20 h-56 w-56 rounded-full bg-primary/12 blur-3xl" aria-hidden="true" />
+            <div className="relative">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary/85">
+                {t("auth.valueEyebrow", "CineTrekker")}
+              </p>
+              <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground">
+                {t("auth.valueTitle", "Make every next watch feel intentional.")}
+              </h1>
+              <p className="mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
+                {t("auth.valueDescription", "Build a personal record of what you love, what comes next, and the shows you do not want to lose track of.")}
+              </p>
+            </div>
+            <ul className="relative mt-10 space-y-4" aria-label={t("auth.valuePointsLabel", "Account benefits")}>
+              {[
+                {
+                  icon: BookmarkCheck,
+                  title: t("auth.valuePoint1Title", "One home for your queue"),
+                  body: t("auth.valuePoint1Body", "Track movies, series, ratings, and progress together."),
+                },
+                {
+                  icon: Cloud,
+                  title: t("auth.valuePoint2Title", "Pick up on any device"),
+                  body: t("auth.valuePoint2Body", "Keep the lists you care about when you switch browsers or devices."),
+                },
+                {
+                  icon: ShieldCheck,
+                  title: t("auth.valuePoint3Title", "Stay in control"),
+                  body: t("auth.valuePoint3Body", "Explore freely first, then create an account when syncing matters."),
+                },
+              ].map((point) => {
+                const Icon = point.icon;
+                return (
+                  <li key={point.title} className="flex gap-3 rounded-2xl border border-border/60 bg-background/30 p-3.5">
+                    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary">
+                      <Icon className="h-4.5 w-4.5" aria-hidden="true" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{point.title}</p>
+                      <p className="mt-1 text-xs leading-5 text-muted-foreground">{point.body}</p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="relative mt-auto pt-8 text-xs leading-5 text-muted-foreground">
+              {t("auth.guestReassurance", "You can keep browsing as a guest. Creating an account is only needed when you want your activity to travel with you.")}
+            </p>
+          </aside>
+
+          <Card className="w-full rounded-none border-0 bg-transparent shadow-none">
+          <CardHeader className="px-5 pb-2 pt-6 sm:px-8 sm:pt-8">
+            <div className="flex items-center gap-2 text-primary lg:hidden">
+              <Sparkles className="h-4 w-4" aria-hidden="true" />
+              <span className="text-xs font-semibold uppercase tracking-[0.18em]">{t("auth.appName", "CineTrekker")}</span>
+            </div>
+            <CardTitle className="mt-2 text-2xl tracking-tight">
+              {activeTab === "register"
+                ? t("auth.registerTitle", "Create your watch home")
+                : t("auth.loginTitle", "Welcome back")}
+            </CardTitle>
+            <CardDescription className="max-w-md leading-6">
+              {activeTab === "register"
+                ? t("auth.registerDescription", "Save your next watches, then keep that progress wherever you go.")
+                : t("auth.loginDescription", "Pick up your lists, progress, and next great watch.")}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-5 pb-6 sm:px-8 sm:pb-8">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">{t("auth.loginTab", "Login")}</TabsTrigger>
@@ -432,6 +497,11 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                       : t("auth.submitCreateAccount", "Create Account")}
                   </span>
                 </Button>
+                {activeTab === "register" ? (
+                  <p className="text-center text-xs leading-5 text-muted-foreground">
+                    {t("auth.signupReassurance", "Free to create. Keep browsing as a guest whenever you prefer.")}
+                  </p>
+                ) : null}
 
                 <div className="my-6 flex items-center">
                   <div className="flex-grow border-t border-muted-foreground/30"></div>
@@ -456,7 +526,8 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
               </form>
             </Tabs>
           </CardContent>
-        </Card>
+          </Card>
+        </div>
       </div>
     </>
   );

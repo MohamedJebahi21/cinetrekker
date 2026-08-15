@@ -342,7 +342,8 @@
     "total": "Total",
     "watching": "Watching",
     "completed": "Completed",
-    "planToWatch": "Plan to Watch"
+    "planToWatch": "Plan to Watch",
+    "totalHours": "Hours"
   },
   "details": {
     "whereToWatch": "Nerede izlemeliyim",
@@ -396,7 +397,8 @@
     "followShow": "Diziyi Takip Et",
     "unfollowShow": "Takibi Bırak",
     "following": "Takip Ediliyor",
-    "watchTrailer": "Fragmanı İzle"
+    "watchTrailer": "Fragmanı İzle",
+    "invalidId": "This title is unavailable or no longer exists."
   },
   "actions": {
     "addToWatchlist": "Listeye Ekle",
@@ -770,7 +772,9 @@
     "providerGoogle": "Google",
     "providerFacebook": "Facebook",
     "providerApple": "Apple",
-    "providerUnavailable": "{{provider}} sign-in is not available right now. Please try email login instead."
+    "providerUnavailable": "{{provider}} sign-in is not available right now. Please try email login instead.",
+    "signIn": "Sign in",
+    "signInRequired": "Sign in to continue"
   },
   "privacy": {
     "title": "Gizlilik Politikası",

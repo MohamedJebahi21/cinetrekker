@@ -6,6 +6,7 @@ import SEO from '@/components/SEO';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { GENERIC_AUTH_ERROR } from '@/lib/authErrorHandler';
+import { consumeOAuthReturnPath } from '@/lib/authRedirect';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -15,9 +16,9 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        const error = searchParams.get('error');
+        const callbackError = searchParams.get('error') || searchParams.get('error_code');
 
-        if (error) {
+        if (callbackError) {
           // Single error path - show generic message
           toast({
             title: t('common.error'),
@@ -28,9 +29,13 @@ export default function AuthCallback() {
           return;
         }
 
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        const code = searchParams.get('code');
+        const sessionResult = code
+          ? await supabase.auth.exchangeCodeForSession(code)
+          : await supabase.auth.getSession();
+        const session = sessionResult.data.session;
 
-        if (sessionError || !session) {
+        if (sessionResult.error || !session) {
           // No session - generic error
           toast({
             title: t('common.error'),
@@ -46,7 +51,7 @@ export default function AuthCallback() {
           title: t('auth.signIn'),
           description: 'Welcome!',
         });
-        navigate('/', { replace: true });
+        navigate(consumeOAuthReturnPath(), { replace: true });
       } catch {
         // Catch block - do NOT log error object
         console.warn('[Auth] Callback processed');

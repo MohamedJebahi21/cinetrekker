@@ -91,14 +91,208 @@ export interface CommentLike {
   created_at: string;
 }
 
+export interface PublicProfileSummary {
+  user_id: string;
+  display_name: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  favorite_genres: number[] | null;
+  favorite_titles: string[] | null;
+  is_public: boolean;
+  created_at: string;
+  followers_count: number;
+  following_count: number;
+  comments_count: number;
+}
+
+export interface PublicProfileComment {
+  id: string;
+  media_id: number;
+  media_type: "movie" | "tv";
+  content: string;
+  parent_id: string | null;
+  contains_spoiler: boolean;
+  likes_count: number;
+  created_at: string;
+}
+
+export interface PublicConnectionProfile {
+  user_id: string;
+  display_name: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  favorite_genres: number[] | null;
+  favorite_titles: string[] | null;
+  created_at: string;
+  followers_count: number;
+}
+
+export interface DirectoryProfile {
+  user_id: string;
+  display_name: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  favorite_titles: string[] | null;
+  created_at: string;
+  followers_count: number;
+  comments_count: number;
+}
+
+type UnknownRecord = Record<string, unknown>;
+
 type CommentRow = Comment;
 type ProfileRow = Pick<
   UserProfile,
-  "user_id" | "display_name" | "profile_photo" | "bio"
+  "user_id" | "display_name" | "avatar_url" | "bio"
 >;
 
 const asDb = (supabase: unknown) => supabase as LooseSupabaseClient;
 const logger = createLogger("social");
+
+function isRecord(value: unknown): value is UnknownRecord {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function readRequiredString(row: UnknownRecord, key: string): string | null {
+  const value = row[key];
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+function readNullableString(row: UnknownRecord, key: string): string | null {
+  const value = row[key];
+  return typeof value === "string" ? value : null;
+}
+
+function readNumberArray(row: UnknownRecord, key: string): number[] | null {
+  const value = row[key];
+  if (!Array.isArray(value) || value.some((item) => typeof item !== "number")) {
+    return null;
+  }
+  return value;
+}
+
+function readStringArray(row: UnknownRecord, key: string): string[] | null {
+  const value = row[key];
+  if (!Array.isArray(value) || value.some((item) => typeof item !== "string")) {
+    return null;
+  }
+  return value;
+}
+
+function readCount(row: UnknownRecord, key: string): number {
+  const value = row[key];
+  const parsed =
+    typeof value === "number"
+      ? value
+      : typeof value === "string"
+        ? Number(value)
+        : 0;
+  return Number.isFinite(parsed) && parsed >= 0 ? Math.trunc(parsed) : 0;
+}
+
+function parsePublicProfileSummary(value: unknown): PublicProfileSummary | null {
+  if (!isRecord(value)) return null;
+  const userId = readRequiredString(value, "user_id");
+  const createdAt = readRequiredString(value, "created_at");
+  if (!userId || !createdAt || typeof value.is_public !== "boolean") return null;
+
+  return {
+    user_id: userId,
+    display_name: readNullableString(value, "display_name"),
+    bio: readNullableString(value, "bio"),
+    avatar_url: readNullableString(value, "avatar_url"),
+    favorite_genres: readNumberArray(value, "favorite_genres"),
+    favorite_titles: readStringArray(value, "favorite_titles"),
+    is_public: value.is_public,
+    created_at: createdAt,
+    followers_count: readCount(value, "followers_count"),
+    following_count: readCount(value, "following_count"),
+    comments_count: readCount(value, "comments_count"),
+  };
+}
+
+function parsePublicProfileComment(value: unknown): PublicProfileComment | null {
+  if (!isRecord(value)) return null;
+  const id = readRequiredString(value, "id");
+  const content = readRequiredString(value, "content");
+  const createdAt = readRequiredString(value, "created_at");
+  const mediaType = value.media_type;
+  const mediaId = value.media_id;
+  if (
+    !id ||
+    !content ||
+    !createdAt ||
+    (mediaType !== "movie" && mediaType !== "tv") ||
+    typeof mediaId !== "number"
+  ) {
+    return null;
+  }
+
+  return {
+    id,
+    media_id: mediaId,
+    media_type: mediaType,
+    content,
+    parent_id: readNullableString(value, "parent_id"),
+    contains_spoiler: value.contains_spoiler === true,
+    likes_count: readCount(value, "likes_count"),
+    created_at: createdAt,
+  };
+}
+
+function parsePublicConnectionProfile(
+  value: unknown,
+): PublicConnectionProfile | null {
+  if (!isRecord(value)) return null;
+  const userId = readRequiredString(value, "user_id");
+  const createdAt = readRequiredString(value, "created_at");
+  if (!userId || !createdAt) return null;
+
+  return {
+    user_id: userId,
+    display_name: readNullableString(value, "display_name"),
+    bio: readNullableString(value, "bio"),
+    avatar_url: readNullableString(value, "avatar_url"),
+    favorite_genres: readNumberArray(value, "favorite_genres"),
+    favorite_titles: readStringArray(value, "favorite_titles"),
+    created_at: createdAt,
+    followers_count: readCount(value, "followers_count"),
+  };
+}
+
+function parseDirectoryProfile(value: unknown): DirectoryProfile | null {
+  const connection = parsePublicConnectionProfile(value);
+  if (!connection || !isRecord(value)) return null;
+
+  return {
+    user_id: connection.user_id,
+    display_name: connection.display_name,
+    bio: connection.bio,
+    avatar_url: connection.avatar_url,
+    favorite_titles: connection.favorite_titles,
+    created_at: connection.created_at,
+    followers_count: connection.followers_count,
+    comments_count: readCount(value, "comments_count"),
+  };
+}
+
+async function getPublicRpcRows(
+  functionName: string,
+  args: Record<string, unknown>,
+): Promise<unknown[]> {
+  try {
+    const { supabase } = await loadSupabaseModule();
+    const { data, error } = await asDb(supabase).rpc<unknown>(functionName, args);
+    if (error) {
+      logger.error(`Public social RPC failed: ${functionName}`, error);
+      return [];
+    }
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    logger.error(`Public social RPC failed: ${functionName}`, error);
+    return [];
+  }
+}
 
 export const socialService = {
   // --- Follow functions ---
@@ -191,10 +385,10 @@ export const socialService = {
     }
 
     const userIds = comments.map((c) => c.user_id);
-    const { data: profilesData, error: profilesError } = await db
-      .from("profiles")
-      .select("user_id, display_name, profile_photo, bio")
-      .in("user_id", userIds);
+    const { data: profilesData, error: profilesError } = await db.rpc<ProfileRow[]>(
+      "get_public_profile_summaries",
+      { target_user_ids: [...new Set(userIds)] },
+    );
 
     if (profilesError) {
       logger.error("Error fetching profiles:", profilesError);
@@ -206,7 +400,11 @@ export const socialService = {
 
     const profileMap = new Map<string, Partial<UserProfile>>();
     profiles.forEach((profile) => {
-      profileMap.set(profile.user_id, profile);
+      profileMap.set(profile.user_id, {
+        ...profile,
+        // Ensure avatar_url is populated from the curated public RPC result
+        avatar_url: (profile as { avatar_url?: string | null }).avatar_url ?? null,
+      });
     });
 
     return comments.map((comment) => ({
@@ -414,5 +612,48 @@ export const socialService = {
 
     const rows = Array.isArray(data) ? data : [];
     return rows[0] ?? null;
+  },
+
+  async getPublicProfileSummary(
+    userId: string,
+  ): Promise<PublicProfileSummary | null> {
+    const rows = await getPublicRpcRows("get_public_profile_summary", {
+      target_user_id: userId,
+    });
+    return rows.map(parsePublicProfileSummary).find(Boolean) ?? null;
+  },
+
+  async getPublicProfileComments(userId: string): Promise<PublicProfileComment[]> {
+    const rows = await getPublicRpcRows("get_public_profile_comments", {
+      target_user_id: userId,
+      result_limit: 12,
+    });
+    return rows
+      .map(parsePublicProfileComment)
+      .filter((comment): comment is PublicProfileComment => comment !== null);
+  },
+
+  async getPublicProfileConnections(
+    userId: string,
+    kind: "followers" | "following",
+  ): Promise<PublicConnectionProfile[]> {
+    const rows = await getPublicRpcRows("get_public_profile_connections", {
+      target_user_id: userId,
+      connection_kind: kind,
+      result_limit: 24,
+    });
+    return rows
+      .map(parsePublicConnectionProfile)
+      .filter((profile): profile is PublicConnectionProfile => profile !== null);
+  },
+
+  async listPublicProfiles(searchTerm: string): Promise<DirectoryProfile[]> {
+    const rows = await getPublicRpcRows("list_public_profiles", {
+      search_term: searchTerm || null,
+      result_limit: 24,
+    });
+    return rows
+      .map(parseDirectoryProfile)
+      .filter((profile): profile is DirectoryProfile => profile !== null);
   },
 };

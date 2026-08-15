@@ -58,6 +58,32 @@ export interface UserProfile {
   updated_at: string;
 }
 
+type ProfileWritePayload = Partial<UserProfile> & {
+  user_id?: string;
+  updated_at?: string;
+};
+
+type ProfileQueryResult<T = unknown> = {
+  data: T | null;
+  error: { code?: string; message?: string } | null;
+};
+
+interface ProfileQueryBuilder {
+  select(columns?: string): ProfileQueryBuilder;
+  update(values: ProfileWritePayload): ProfileQueryBuilder;
+  insert(values: ProfileWritePayload[]): ProfileQueryBuilder;
+  eq(column: string, value: unknown): ProfileQueryBuilder;
+  single<T = unknown>(): Promise<ProfileQueryResult<T>>;
+}
+
+interface ProfileDatabaseClient {
+  from(table: "profiles"): ProfileQueryBuilder;
+}
+
+function asProfileDatabase(supabase: unknown): ProfileDatabaseClient {
+  return supabase as ProfileDatabaseClient;
+}
+
 const DEFAULT_PROFILE: Omit<UserProfile, "id" | "user_id"> = {
   display_name: null,
   bio: null,
@@ -89,7 +115,8 @@ export const profileService = {
   async getProfile(userId: string): Promise<UserProfile | null> {
     try {
       const { supabase } = await loadSupabaseModule();
-      const { data, error } = await supabase
+      const db = asProfileDatabase(supabase);
+      const { data, error } = await db
         .from("profiles")
         .select("*")
         .eq("user_id", userId)
@@ -116,6 +143,7 @@ export const profileService = {
   ): Promise<UserProfile> {
     try {
       const { supabase } = await loadSupabaseModule();
+      const db = asProfileDatabase(supabase);
       const existing = await this.getProfile(userId);
 
       const profileData: Partial<UserProfile> & { user_id: string; updated_at: string } = {
@@ -133,10 +161,9 @@ export const profileService = {
 
       if (existing) {
         // Update
-        result = await supabase
+        result = await db
           .from("profiles")
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .update(profileData as any)
+          .update(profileData)
           .eq("user_id", userId)
           .select()
           .single();
@@ -148,10 +175,9 @@ export const profileService = {
           created_at: new Date().toISOString(),
         };
 
-        result = await supabase
+        result = await db
           .from("profiles")
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .insert([insertData as any])
+          .insert([insertData])
           .select()
           .single();
       }
@@ -179,15 +205,15 @@ export const profileService = {
   async initializeProfile(userId: string): Promise<UserProfile> {
     try {
       const { supabase } = await loadSupabaseModule();
+      const db = asProfileDatabase(supabase);
       const insertData = {
         user_id: userId,
         ...DEFAULT_PROFILE,
       };
 
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("profiles")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .insert([insertData as any])
+        .insert([insertData])
         .select()
         .single();
 

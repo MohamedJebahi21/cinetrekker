@@ -1,0 +1,52 @@
+[
+  {
+    "route": "/",
+    "status": 200,
+    "viewportWidth": 390,
+    "documentWidth": 390,
+    "bodyWidth": 390,
+    "horizontalOverflow": false,
+    "focusableCount": 169,
+    "title": "CineTrekker Movie Tracker | Track Movies, TV Shows, and Watchlists"
+  },
+  {
+    "route": "/search",
+    "status": 200,
+    "viewportWidth": 390,
+    "documentWidth": 390,
+    "bodyWidth": 390,
+    "horizontalOverflow": false,
+    "focusableCount": 131,
+    "title": "Search Movies and TV Shows | CineTrekker Movie Tracker"
+  },
+  {
+    "route": "/trending",
+    "status": 200,
+    "viewportWidth": 390,
+    "documentWidth": 390,
+    "bodyWidth": 390,
+    "horizontalOverflow": false,
+    "focusableCount": 227,
+    "title": "Trending Movie Tracker Picks | CineTrekker"
+  },
+  {
+    "route": "/watchlist",
+    "status": 200,
+    "viewportWidth": 390,
+    "documentWidth": 390,
+    "bodyWidth": 390,
+    "horizontalOverflow": false,
+    "focusableCount": 29,
+    "title": "My Watchlist - CineTrekker"
+  },
+  {
+    "route": "/login",
+    "status": 200,
+    "viewportWidth": 390,
+    "documentWidth": 390,
+    "bodyWidth": 390,
+    "horizontalOverflow": false,
+    "focusableCount": 39,
+    "title": "Sign In or Register - CineTrekker"
+  }
+]

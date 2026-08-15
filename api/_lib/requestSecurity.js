@@ -1,9 +1,13 @@
 import { reportSecurityEvent } from "./securityMonitor.js";
 
 const RATE_LIMIT_CLEANUP_MS = 5 * 60 * 1000;
+const REQUEST_ID_HEADER = "x-request-id";
+const REQUEST_ID_PATTERN = /^[a-zA-Z0-9_-]{8,96}$/;
+const REQUEST_ID_PROPERTY = "__cinetrekkerRequestId";
 const ENDPOINT_LIMITS = {
   default: { windowMs: 60 * 1000, ipMaxRequests: 30 },
   recommend: { windowMs: 60 * 1000, ipMaxRequests: 15 },
+  "tmdb-proxy": { windowMs: 60 * 1000, ipMaxRequests: 60 },
   feedback: { windowMs: 10 * 60 * 1000, ipMaxRequests: 3 },
   follow: { windowMs: 60 * 1000, ipMaxRequests: 12, userMaxRequests: 20 },
   unfollow: { windowMs: 60 * 1000, ipMaxRequests: 12, userMaxRequests: 20 },
@@ -30,13 +34,58 @@ const ENDPOINT_LIMITS = {
 };
 
 const requestStore = new Map();
-const runtimeFetch = globalThis.fetch;
-const UPSTASH_REDIS_REST_URL = process.env.UPSTASH_REDIS_REST_URL;
-const UPSTASH_REDIS_REST_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+let runtimeFetch = globalThis.fetch;
+let upstashRedisRestUrl = process.env.UPSTASH_REDIS_REST_URL;
+let upstashRedisRestToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 let lastCleanupAt = 0;
+
+function isProductionRuntime() {
+  return process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
+}
+
+function rateLimitUnavailable(retryAfter = 60) {
+  return {
+    limited: false,
+    unavailable: true,
+    retryAfter,
+  };
+}
 
 function getEndpointConfig(prefix) {
   return ENDPOINT_LIMITS[prefix] || ENDPOINT_LIMITS.default;
+}
+
+function createRequestId() {
+  if (globalThis.crypto?.randomUUID) {
+    return `ct_${globalThis.crypto.randomUUID().replace(/-/g, "")}`;
+  }
+
+  return `ct_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 12)}`;
+}
+
+export function ensureRequestId(req, res) {
+  const existing = req?.[REQUEST_ID_PROPERTY];
+  if (typeof existing === "string" && REQUEST_ID_PATTERN.test(existing)) {
+    if (res?.setHeader) res.setHeader("X-Request-Id", existing);
+    return existing;
+  }
+
+  const requested = req?.headers?.[REQUEST_ID_HEADER];
+  const requestId =
+    typeof requested === "string" && REQUEST_ID_PATTERN.test(requested)
+      ? requested
+      : createRequestId();
+
+  if (req) req[REQUEST_ID_PROPERTY] = requestId;
+  if (res?.setHeader) res.setHeader("X-Request-Id", requestId);
+  return requestId;
+}
+
+export function getRequestId(req) {
+  const requestId = req?.[REQUEST_ID_PROPERTY];
+  return typeof requestId === "string" && REQUEST_ID_PATTERN.test(requestId)
+    ? requestId
+    : null;
 }
 
 export function getClientIP(req) {
@@ -105,19 +154,23 @@ function isRateLimitedInMemory(key, config, limit) {
 
 async function isRateLimitedDistributed(key, config, limit) {
   if (typeof runtimeFetch !== "function") {
-    return isRateLimitedInMemory(key, config, limit);
+    return isProductionRuntime()
+      ? rateLimitUnavailable()
+      : isRateLimitedInMemory(key, config, limit);
   }
 
-  if (!UPSTASH_REDIS_REST_URL || !UPSTASH_REDIS_REST_TOKEN) {
-    return isRateLimitedInMemory(key, config, limit);
+  if (!upstashRedisRestUrl || !upstashRedisRestToken) {
+    return isProductionRuntime()
+      ? rateLimitUnavailable()
+      : isRateLimitedInMemory(key, config, limit);
   }
 
   try {
     const windowSeconds = Math.ceil(config.windowMs / 1000);
-    const response = await runtimeFetch(`${UPSTASH_REDIS_REST_URL}/pipeline`, {
+    const response = await runtimeFetch(`${upstashRedisRestUrl}/pipeline`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${UPSTASH_REDIS_REST_TOKEN}`,
+        Authorization: `Bearer ${upstashRedisRestToken}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify([
@@ -128,7 +181,9 @@ async function isRateLimitedDistributed(key, config, limit) {
     });
 
     if (!response.ok) {
-      return isRateLimitedInMemory(key, config, limit);
+      return isProductionRuntime()
+        ? rateLimitUnavailable()
+        : isRateLimitedInMemory(key, config, limit);
     }
 
     const payload = await response.json();
@@ -141,13 +196,33 @@ async function isRateLimitedDistributed(key, config, limit) {
       retryAfter: ttl > 0 ? ttl : windowSeconds,
     };
   } catch {
-    return isRateLimitedInMemory(key, config, limit);
+    return isProductionRuntime()
+      ? rateLimitUnavailable()
+      : isRateLimitedInMemory(key, config, limit);
   }
 }
 
 async function applyRateLimit(req, res, prefix, key, limitKind, limit) {
   const config = getEndpointConfig(prefix);
   const limitCheck = await isRateLimitedDistributed(key, config, limit);
+
+  if (limitCheck.unavailable) {
+    res.setHeader("Retry-After", String(limitCheck.retryAfter));
+    await reportSecurityEvent({
+      event: "rate_limit_unavailable",
+      severity: "error",
+      scope: prefix,
+      message: "Distributed rate limiting is unavailable; request was blocked.",
+      req,
+      details: { limitKind },
+      shouldAlert: true,
+    });
+    return {
+      ok: false,
+      status: 503,
+      error: "Request protection is temporarily unavailable. Please try again shortly.",
+    };
+  }
 
   if (!limitCheck.limited) {
     return { ok: true };
@@ -176,6 +251,7 @@ async function applyRateLimit(req, res, prefix, key, limitKind, limit) {
 }
 
 export async function enforceRequestSecurity(req, res, prefix) {
+  ensureRequestId(req, res);
   const origin = req?.headers?.origin;
   if (!isAllowedOrigin(origin)) {
     await reportSecurityEvent({
@@ -201,6 +277,7 @@ export async function enforceAuthenticatedRequestSecurity(
   prefix,
   userId,
 ) {
+  ensureRequestId(req, res);
   const config = getEndpointConfig(prefix);
   if (!config.userMaxRequests || !userId) {
     return { ok: true };
@@ -217,7 +294,16 @@ export async function enforceAuthenticatedRequestSecurity(
   );
 }
 
+export function setRateLimitDependenciesForTests({ fetch, url, token } = {}) {
+  runtimeFetch = fetch ?? globalThis.fetch;
+  upstashRedisRestUrl = url ?? process.env.UPSTASH_REDIS_REST_URL;
+  upstashRedisRestToken = token ?? process.env.UPSTASH_REDIS_REST_TOKEN;
+}
+
 export function resetRequestSecurityStateForTests() {
   requestStore.clear();
   lastCleanupAt = 0;
+  runtimeFetch = globalThis.fetch;
+  upstashRedisRestUrl = process.env.UPSTASH_REDIS_REST_URL;
+  upstashRedisRestToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 }

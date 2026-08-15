@@ -3,9 +3,12 @@ import assert from "node:assert/strict";
 
 import followHandler from "../api/follow.js";
 import feedbackHandler from "../api/feedback.js";
+import tmdbProxyHandler from "../api/tmdb-proxy.js";
 import cronHandler from "../api/jobs/check-followed-updates.js";
 import {
+  ensureRequestId,
   resetRequestSecurityStateForTests,
+  setRateLimitDependenciesForTests,
 } from "../api/_lib/requestSecurity.js";
 import {
   resetAuthUserResolverForTests,
@@ -147,6 +150,139 @@ test("cron auth bypass attempts fail without x-cron-secret even when authorizati
   assert.equal(res.body.error, "Unauthorized");
 });
 
+test("production blocks protected requests when distributed rate limiting is unavailable", async () => {
+  const previousNodeEnv = process.env.NODE_ENV;
+  const previousVercelEnv = process.env.VERCEL_ENV;
+
+  try {
+    process.env.NODE_ENV = "production";
+    delete process.env.VERCEL_ENV;
+    setRateLimitDependenciesForTests({ url: "", token: "" });
+
+    const req = createMockReq({
+      method: "GET",
+      headers: { origin: "https://cinetrekker.vercel.app" },
+      query: { endpoint: "/movie/1" },
+      url: "/api/tmdb-proxy",
+    });
+    const res = createMockRes();
+
+    await tmdbProxyHandler(req, res);
+
+    assert.equal(res.statusCode, 503);
+    assert.match(res.body.error, /protection is temporarily unavailable/i);
+    assert.equal(res.headers["Retry-After"], "60");
+  } finally {
+    if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previousNodeEnv;
+    if (previousVercelEnv === undefined) delete process.env.VERCEL_ENV;
+    else process.env.VERCEL_ENV = previousVercelEnv;
+  }
+});
+
+test("TMDB proxy rejects an exhausted distributed request budget", async () => {
+  const previousNodeEnv = process.env.NODE_ENV;
+  const previousTmdbKey = process.env.TMDB_API_KEY;
+  const fetchStub = async () => ({
+    ok: true,
+    async json() {
+      return {
+        result: [{ result: 61 }, { result: 1 }, { result: 60 }],
+      };
+    },
+  });
+
+  try {
+    process.env.NODE_ENV = "test";
+    process.env.TMDB_API_KEY = "test-tmdb-key";
+    setRateLimitDependenciesForTests({
+      fetch: fetchStub,
+      url: "https://redis.test",
+      token: "redis-token",
+    });
+
+    const req = createMockReq({
+      method: "GET",
+      headers: { origin: "http://localhost:8080" },
+      query: { endpoint: "/movie/1" },
+      url: "/api/tmdb-proxy",
+    });
+    const res = createMockRes();
+
+    await tmdbProxyHandler(req, res);
+
+    assert.equal(res.statusCode, 429);
+    assert.match(res.body.error, /too many requests/i);
+    assert.equal(res.headers["Retry-After"], "60");
+  } finally {
+    if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previousNodeEnv;
+    if (previousTmdbKey === undefined) delete process.env.TMDB_API_KEY;
+    else process.env.TMDB_API_KEY = previousTmdbKey;
+  }
+});
+
+test("TMDB proxy consults rate limiting and does not expose upstream diagnostics", async () => {
+  const previousNodeEnv = process.env.NODE_ENV;
+  const previousTmdbKey = process.env.TMDB_API_KEY;
+  const originalFetch = global.fetch;
+  const requests = [];
+
+  const fetchStub = async (url) => {
+    requests.push(String(url));
+    if (String(url).startsWith("https://redis.test/pipeline")) {
+      return {
+        ok: true,
+        async json() {
+          return {
+            result: [{ result: 1 }, { result: 1 }, { result: 60 }],
+          };
+        },
+      };
+    }
+
+    return {
+      ok: false,
+      status: 500,
+      async text() {
+        return "internal upstream diagnostic";
+      },
+    };
+  };
+
+  try {
+    process.env.NODE_ENV = "test";
+    process.env.TMDB_API_KEY = "test-tmdb-key";
+    global.fetch = fetchStub;
+    setRateLimitDependenciesForTests({
+      fetch: fetchStub,
+      url: "https://redis.test",
+      token: "redis-token",
+    });
+
+    const req = createMockReq({
+      method: "GET",
+      headers: { origin: "http://localhost:8080" },
+      query: { endpoint: "/movie/1" },
+      url: "/api/tmdb-proxy",
+    });
+    const res = createMockRes();
+
+    await tmdbProxyHandler(req, res);
+
+    assert.equal(res.statusCode, 502);
+    assert.equal(res.body.error, "Content data is temporarily unavailable.");
+    assert.equal(Object.hasOwn(res.body, "details"), false);
+    assert.equal(requests.some((url) => url.startsWith("https://redis.test/pipeline")), true);
+  } finally {
+    global.fetch = originalFetch;
+    if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previousNodeEnv;
+    if (previousTmdbKey === undefined) delete process.env.TMDB_API_KEY;
+    else process.env.TMDB_API_KEY = previousTmdbKey;
+  }
+});
+
 test("feedback spam scenarios are blocked by honeypot and rate limit", async () => {
   process.env.TURNSTILE_SECRET_KEY = "turnstile-secret";
   process.env.RESEND_API_KEY = "resend-secret";
@@ -217,4 +353,40 @@ test("feedback spam scenarios are blocked by honeypot and rate limit", async () 
   } finally {
     global.fetch = originalFetch;
   }
+});
+
+
+test("request identifiers preserve validated support references and replace malformed input", async () => {
+  const suppliedReq = createMockReq({
+    headers: { "x-request-id": "support_case_2026" },
+  });
+  const suppliedRes = createMockRes();
+
+  assert.equal(ensureRequestId(suppliedReq, suppliedRes), "support_case_2026");
+  assert.equal(suppliedRes.headers["X-Request-Id"], "support_case_2026");
+  assert.equal(ensureRequestId(suppliedReq, suppliedRes), "support_case_2026");
+
+  const malformedReq = createMockReq({
+    headers: { "x-request-id": "not valid / unsafe" },
+  });
+  const malformedRes = createMockRes();
+  const generatedId = ensureRequestId(malformedReq, malformedRes);
+
+  assert.match(generatedId, /^ct_[a-z0-9_]+$/i);
+  assert.equal(malformedRes.headers["X-Request-Id"], generatedId);
+});
+
+test("TMDB proxy includes the safe request identifier on early validation failures", async () => {
+  const req = createMockReq({
+    method: "POST",
+    headers: { "x-request-id": "proxy_validation_2026" },
+    url: "/api/tmdb-proxy",
+  });
+  const res = createMockRes();
+
+  await tmdbProxyHandler(req, res);
+
+  assert.equal(res.statusCode, 405);
+  assert.equal(res.headers["X-Request-Id"], "proxy_validation_2026");
+  assert.equal(res.headers.Allow, "GET");
 });

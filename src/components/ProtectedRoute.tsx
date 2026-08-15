@@ -43,16 +43,25 @@ export function ProtectedRoute({
     );
   }
 
+  const requestedPath = `${location.pathname}${location.search}${location.hash}`;
+  const accessMessage = location.pathname.startsWith("/watchlist")
+    ? "Sign in to keep this watchlist synced across your devices."
+    : location.pathname.startsWith("/recommendations")
+      ? "Sign in to unlock recommendations shaped by your watch history."
+      : location.pathname.startsWith("/profile")
+        ? "Sign in to manage your CineTrekker profile and preferences."
+        : "Sign in to keep this activity connected to your CineTrekker account.";
+
   // Redirect to login if not authenticated
   if (!user) {
     return (
       <Navigate
         to="/login"
         state={{
-          from: location.pathname,
+          from: requestedPath,
           authMessage: hasTimedOut
-            ? 'Your session check took too long. Please sign in to continue.'
-            : 'Please sign in to access this page.',
+            ? "Your session check took too long. Please sign in to continue."
+            : accessMessage,
         }}
         replace
       />

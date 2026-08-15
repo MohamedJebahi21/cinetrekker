@@ -6,6 +6,15 @@ import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("error-boundary");
 
+function createErrorReference() {
+  const suffix =
+    typeof crypto?.randomUUID === "function"
+      ? crypto.randomUUID().replace(/-/g, "").slice(0, 12)
+      : Math.random().toString(36).slice(2, 14);
+
+  return `ct-${Date.now().toString(36)}-${suffix}`;
+}
+
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
@@ -16,6 +25,7 @@ interface State {
   hasError: boolean;
   error: Error | null;
   isRetrying: boolean;
+  referenceId: string | null;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -23,14 +33,24 @@ export class ErrorBoundary extends Component<Props, State> {
     hasError: false,
     error: null,
     isRetrying: false,
+    referenceId: null,
   };
 
   public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error, isRetrying: false };
+    return {
+      hasError: true,
+      error,
+      isRetrying: false,
+      referenceId: createErrorReference(),
+    };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    logger.error("ErrorBoundary caught an error", error, errorInfo);
+    logger.error("ErrorBoundary caught an error", {
+      referenceId: this.state.referenceId,
+      error,
+      errorInfo,
+    });
   }
 
   private handleRetry = async () => {
@@ -41,7 +61,12 @@ export class ErrorBoundary extends Component<Props, State> {
     } catch (retryError) {
       logger.error("ErrorBoundary retry failed", retryError);
     } finally {
-      this.setState({ hasError: false, error: null, isRetrying: false });
+      this.setState({
+        hasError: false,
+        error: null,
+        isRetrying: false,
+        referenceId: null,
+      });
     }
   };
 
@@ -59,7 +84,13 @@ export class ErrorBoundary extends Component<Props, State> {
                 actionLabel={this.state.isRetrying ? "Retrying..." : "Retry"}
                 onAction={this.handleRetry}
                 className="mb-4"
-              />
+              >
+                {this.state.referenceId ? (
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Reference: {this.state.referenceId}
+                  </p>
+                ) : null}
+              </ErrorBanner>
             </div>
         </div>
       );
@@ -73,9 +104,14 @@ export class ErrorBoundary extends Component<Props, State> {
 interface ApiErrorProps {
   message?: string;
   onRetry?: () => void;
+  requestReference?: string | null;
 }
 
-export function ApiError({ message, onRetry }: ApiErrorProps) {
+export function ApiError({
+  message,
+  onRetry,
+  requestReference,
+}: ApiErrorProps) {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
       <div className="w-full max-w-md mx-auto">
@@ -86,7 +122,13 @@ export function ApiError({ message, onRetry }: ApiErrorProps) {
           }
           actionLabel={onRetry ? "Retry" : undefined}
           onAction={onRetry}
-        />
+        >
+          {requestReference ? (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Reference: {requestReference}
+            </p>
+          ) : null}
+        </ErrorBanner>
       </div>
     </div>
   );

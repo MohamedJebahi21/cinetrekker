@@ -343,7 +343,8 @@
     "total": "Total",
     "watching": "Watching",
     "completed": "Completed",
-    "planToWatch": "Plan to Watch"
+    "planToWatch": "Plan to Watch",
+    "totalHours": "Hours"
   },
   "details": {
     "whereToWatch": "أين يمكن المشاهدة",
@@ -397,7 +398,8 @@
     "followShow": "متابعة المسلسل",
     "unfollowShow": "إلغاء المتابعة",
     "following": "يتم المتابعة",
-    "watchTrailer": "مشاهدة الإعلان"
+    "watchTrailer": "مشاهدة الإعلان",
+    "invalidId": "This title is unavailable or no longer exists."
   },
   "actions": {
     "addToWatchlist": "أضف لقائمة المشاهدة",

@@ -1,6 +1,10 @@
 import { json } from "./_lib/http.js";
 import { getServerEnv } from "./_lib/env.js";
 import { createServerLogger } from "./_lib/logger.js";
+import {
+  enforceRequestSecurity,
+  ensureRequestId,
+} from "./_lib/requestSecurity.js";
 
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const EXCLUDED_PARAMS = new Set(["endpoint", "maturity_level"]);
@@ -145,17 +149,22 @@ function applyServerSideSafetyFilter(data, maturityRating) {
 }
 
 export default async function handler(req, res) {
+  ensureRequestId(req, res);
+
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
     return json(res, 405, { error: "Method not allowed" });
   }
 
+  const security = await enforceRequestSecurity(req, res, "tmdb-proxy");
+  if (!security.ok) {
+    return json(res, security.status, { error: security.error });
+  }
+
   const tmdbApiKey = getServerEnv("TMDB_API_KEY");
   if (!tmdbApiKey) {
-    return json(res, 500, {
-      error: "TMDB API key is missing.",
-      missing: ["TMDB_API_KEY", "VITE_TMDB_API_KEY"],
-    });
+    logger.error("TMDB server configuration is missing.");
+    return json(res, 503, { error: "Content data is temporarily unavailable." });
   }
 
   const endpoint = String(req.query?.endpoint || "");
@@ -215,14 +224,15 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
       logger.warn("TMDB upstream error.", {
         endpoint,
         status: response.status,
       });
-      return json(res, response.status, {
-        error: `TMDB API error: ${response.status}`,
-        details: errorText,
+      return json(res, response.status === 404 ? 404 : 502, {
+        error:
+          response.status === 404
+            ? "The requested title was not found."
+            : "Content data is temporarily unavailable.",
       });
     }
 
@@ -235,8 +245,7 @@ export default async function handler(req, res) {
   } catch (error) {
     logger.error("Failed to reach TMDB.", error);
     return json(res, 502, {
-      error: "Failed to reach TMDB",
-      details: error instanceof Error ? error.message : String(error),
+      error: "Content data is temporarily unavailable.",
     });
   }
 }

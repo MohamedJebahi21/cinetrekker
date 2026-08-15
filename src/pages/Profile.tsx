@@ -34,6 +34,7 @@ import {
   Award,
   ChevronLeft,
   ChevronRight,
+  ArrowRight,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useUserLists } from "@/contexts/UserListsContext";
@@ -51,6 +52,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -68,6 +70,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PaginationDotButton, PaginationDots } from "@/components/ui/pagination-dots";
 import SEO from "@/components/SEO";
 import { StickySaveBar } from "@/components/StickySaveBar";
+import { ProfileIdentityHero } from "@/components/profile/ProfileIdentityHero";
 import { humanizeUiText } from "@/lib/humanize-ui-text";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePinnedFavorites } from "@/hooks/usePinnedFavorites";
@@ -211,7 +214,7 @@ function useCountUp(target: number, durationMs: number, reduceMotion: boolean) {
 export default function Profile() {
   const { t, i18n } = useTranslation();
   const { theme } = useTheme();
-  const { watched } = useUserLists();
+  const { watched, watchlist } = useUserLists();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -227,6 +230,7 @@ export default function Profile() {
   const [ageInput, setAgeInput] = useState<string>("");
   const [displayName, setDisplayName] = useState<string>("");
   const [bio, setBio] = useState<string>("");
+  const [isPublic, setIsPublic] = useState(false);
   const [dobError, setDobError] = useState<string>("");
   const [favoriteGenres, setFavoriteGenres] = useState<number[]>([]);
   const [isEmailRevealed, setIsEmailRevealed] = useState(false);
@@ -369,6 +373,7 @@ export default function Profile() {
     displayName: "",
     bio: "",
     favoriteGenres: [] as number[],
+    isPublic: false,
   });
   const initialSnapshotReadyRef = useRef(false);
 
@@ -381,6 +386,7 @@ export default function Profile() {
       displayName: displayName || "",
       bio: bio || "",
       favoriteGenres: favoriteGenres,
+      isPublic,
     };
 
     return (
@@ -389,9 +395,10 @@ export default function Profile() {
       initial.displayName !== current.displayName ||
       initial.bio !== current.bio ||
       JSON.stringify(initial.favoriteGenres) !==
-        JSON.stringify(current.favoriteGenres)
+        JSON.stringify(current.favoriteGenres) ||
+      initial.isPublic !== current.isPublic
     );
-  }, [profilePhoto, dateOfBirth, displayName, bio, favoriteGenres]);
+  }, [profilePhoto, dateOfBirth, displayName, bio, favoriteGenres, isPublic]);
 
   // Load profile from Supabase (with localStorage fallback)
   useEffect(() => {
@@ -426,6 +433,7 @@ export default function Profile() {
             setDateOfBirth(profile.date_of_birth || "");
             setDisplayName(profile.display_name || "");
             setBio(profile.bio || "");
+            setIsPublic(profile.is_public ?? false);
             setFavoriteGenres(profile.favorite_genres || []);
             const normalizedFavorites = normalizePinnedFavoriteKeys(
               Array.isArray(profile.favorite_titles)
@@ -468,6 +476,7 @@ export default function Profile() {
                 setDateOfBirth(updatedProfile.date_of_birth || "");
                 setDisplayName(updatedProfile.display_name || "");
                 setBio(updatedProfile.bio || "");
+                setIsPublic(updatedProfile.is_public ?? false);
                 setFavoriteGenres(updatedProfile.favorite_genres || []);
                 setPinnedFavoriteKeys(
                   normalizePinnedFavoriteKeys(
@@ -559,6 +568,7 @@ export default function Profile() {
         displayName: displayName || "",
         bio: bio || "",
         favoriteGenres: [...favoriteGenres],
+        isPublic,
       };
       initialSnapshotReadyRef.current = true;
       setHasUnsavedChanges(false);
@@ -570,6 +580,7 @@ export default function Profile() {
     displayName,
     bio,
     favoriteGenres,
+    isPublic,
     hasChanges,
   ]);
 
@@ -578,7 +589,7 @@ export default function Profile() {
     if (initialSnapshotReadyRef.current) {
       setHasUnsavedChanges(hasChanges());
     }
-  }, [profilePhoto, dateOfBirth, displayName, bio, favoriteGenres, hasChanges]);
+  }, [profilePhoto, dateOfBirth, displayName, bio, favoriteGenres, isPublic, hasChanges]);
 
   const handleSaveProfile = async (): Promise<void> => {
     setIsSaving(true);
@@ -632,7 +643,7 @@ export default function Profile() {
           profile_photo: null,
           avatar_url: profilePhoto || null,
           favorite_genres: favoriteGenres,
-          is_public: false,
+          is_public: isPublic,
           show_age: false,
         });
       }
@@ -646,6 +657,7 @@ export default function Profile() {
         displayName: validatedDisplayName || "",
         bio: sanitizedBio || "",
         favoriteGenres: [...favoriteGenres],
+        isPublic,
       };
 
       // Dispatch custom event to notify other components
@@ -682,6 +694,7 @@ export default function Profile() {
     setDisplayName(initialStateRef.current.displayName || "");
     setBio(initialStateRef.current.bio || "");
     setFavoriteGenres([...initialStateRef.current.favoriteGenres]);
+    setIsPublic(initialStateRef.current.isPublic);
     setHasUnsavedChanges(false);
     setIsEditMode(false);
   };
@@ -1139,6 +1152,46 @@ export default function Profile() {
     (item) => typeof item.rating === "number",
   ).length;
 
+  const viewingState = useMemo(() => {
+    const current = uniqueWatchedEntries.filter(
+      (item) => item.status === "watching",
+    ).length;
+    const completed = uniqueWatchedEntries.filter(
+      (item) =>
+        item.status !== "watching" &&
+        item.status !== "dropped" &&
+        item.status !== "plan_to_watch",
+    ).length;
+    const pausedOrDropped = uniqueWatchedEntries.filter(
+      (item) => item.status === "dropped",
+    ).length;
+    const plannedKeys = new Set([
+      ...watchlist.map((item) => `${item.mediaType}-${item.mediaId}`),
+      ...uniqueWatchedEntries
+        .filter((item) => item.status === "plan_to_watch")
+        .map((item) => `${item.mediaType}-${item.mediaId}`),
+    ]);
+
+    return {
+      current,
+      completed,
+      pausedOrDropped,
+      planned: plannedKeys.size,
+    };
+  }, [uniqueWatchedEntries, watchlist]);
+
+  const achievementMilestones = useMemo(
+    () => [
+      { label: text("profile.milestoneExplorer", "Explorer"), target: 10 },
+      { label: text("profile.milestoneCollector", "Collector"), target: 50 },
+      { label: text("profile.milestoneCinephile", "Cinephile"), target: 150 },
+    ],
+    [text],
+  );
+  const nextAchievementMilestone = achievementMilestones.find(
+    (milestone) => moviesWatched < milestone.target,
+  );
+
   const totalWatchHours = useMemo(() => {
     const runtimeMinutes = watchedInsights.reduce(
       (total, item) => total + item.runtimeMinutes,
@@ -1184,6 +1237,11 @@ export default function Profile() {
         }))
         .filter((entry) => Boolean(entry.preview)),
     [pinnedFavoriteBase, previewMap],
+  );
+
+  const topPicks = useMemo(
+    () => [...favoriteMovies, ...favoriteSeries].slice(0, 4),
+    [favoriteMovies, favoriteSeries],
   );
 
   const profileCoverBackdrop = useMemo(() => {
@@ -1343,6 +1401,13 @@ export default function Profile() {
         count,
       }));
   }, [watchedInsights]);
+
+  const topDecade = useMemo(
+    () =>
+      [...decadeDistribution].sort((first, second) => second.count - first.count)[0] ??
+      null,
+    [decadeDistribution],
+  );
 
   const topDirectors = useMemo(() => {
     const counts = new Map<string, number>();
@@ -1534,7 +1599,7 @@ export default function Profile() {
     (section: "overview" | "favorites" | "taste" | "edit") => {
       if (section === "edit") return activeProfileTab === "edit";
       if (activeProfileTab === "edit") return false;
-      return activeProfileTab === "overview" || activeProfileTab === section;
+      return activeProfileTab === section;
     },
     [activeProfileTab],
   );
@@ -1549,6 +1614,31 @@ export default function Profile() {
       );
     }).length;
   }, [watched]);
+
+  const recentViewingSummary = useMemo(() => {
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const insightByKey = new Map(
+      watchedInsights.map((item) => [item.key, item]),
+    );
+    const activeDays = new Set<string>();
+    let runtimeMinutes = 0;
+    let titlesLogged = 0;
+
+    uniqueWatchedEntries.forEach((item) => {
+      const watchedAt = new Date(item.watchedAt || item.addedAt || 0);
+      if (watchedAt.getTime() < sevenDaysAgo) return;
+
+      titlesLogged += 1;
+      activeDays.add(watchedAt.toISOString().slice(0, 10));
+      runtimeMinutes += insightByKey.get(`${item.mediaType}-${item.mediaId}`)?.runtimeMinutes || 0;
+    });
+
+    return {
+      titlesLogged,
+      activeDays: activeDays.size,
+      hours: Math.round(runtimeMinutes / 60),
+    };
+  }, [uniqueWatchedEntries, watchedInsights]);
 
   const latestRatedDateLabel = useMemo(() => {
     const rated = watched
@@ -1846,199 +1936,27 @@ export default function Profile() {
           <TooltipProvider>
             <div className="relative z-10 mt-10 md:mt-20">
               <motion.section variants={itemVariants} className="mb-8">
-                <Card className="profile-identity-card relative overflow-hidden">
-                  <CardContent className="p-5 sm:p-7">
-                    <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-                      <div
-                        className="flex w-full flex-col items-center sm:w-[11rem] sm:min-w-[11rem]"
-                      >
-                        <div
-                          className="relative group"
-                          onDragOver={(event) => {
-                            event.preventDefault();
-                            setIsAvatarDragActive(true);
-                          }}
-                          onDragLeave={(event) => {
-                            if (
-                              event.currentTarget.contains(
-                                event.relatedTarget as Node | null,
-                              )
-                            ) {
-                              return;
-                            }
-                            setIsAvatarDragActive(false);
-                          }}
-                          onDrop={(event) => {
-                            event.preventDefault();
-                            setIsAvatarDragActive(false);
-                            const file = event.dataTransfer.files?.[0];
-                            if (!file) return;
-                            void handlePhotoFile(file);
-                          }}
-                        >
-                          <div
-                            className={cn(
-                              "relative h-28 w-28 overflow-hidden rounded-2xl border-2 border-border bg-muted shadow-lg sm:h-32 sm:w-32",
-                              isAvatarDragActive && "border-primary scale-[1.02]",
-                            )}
-                          >
-                            {profilePhoto ? (
-                              <Image
-                                src={profilePhoto}
-                                alt={text("profile.title", "Profile")}
-                                width={160}
-                                height={160}
-                                className="h-full w-full object-cover"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center">
-                                <User className="h-16 w-16 text-neutral-600" />
-                              </div>
-                            )}
-                            <div
-                              className={cn(
-                                "absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/65 px-4 text-center text-white transition-opacity",
-                                isAvatarDragActive
-                                  ? "opacity-100"
-                                  : "opacity-0 group-hover:opacity-100",
-                              )}
-                            >
-                              <Camera className="h-6 w-6" />
-                              <p className="text-xs font-semibold">
-                                {text("profile.dropPhotoToUpload", "Drop a photo to upload")}
-                              </p>
-                              <p className="text-[11px] text-white/70">
-                                {text("profile.photoFormats", "JPG, PNG, or WebP up to 2MB")}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          id="profile-photo-input"
-                          ref={profilePhotoInputRef}
-                          onChange={handlePhotoChange}
-                        />
-                        <div className="mt-4 flex w-full max-w-[11rem] flex-col gap-2">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                className={cn(
-                                  "h-9 w-full justify-center text-xs",
-                                )}
-                                onClick={() => profilePhotoInputRef.current?.click()}
-                                type="button"
-                              >
-                                <Camera className="mr-2 h-4 w-4" />
-                                {profilePhoto
-                                  ? text("profile.changePhoto", "Change photo")
-                                  : text("profile.uploadPhoto", "Upload photo")}
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {text("profile.avatarUploadHint", "Click or drop an image to update your avatar")}
-                            </TooltipContent>
-                          </Tooltip>
-                          {profilePhoto ? (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-9 w-full justify-center text-xs"
-                              onClick={handlePhotoRemove}
-                            >
-                              <X className="mr-2 h-4 w-4" />
-                              {text("common.delete", "Remove")}
-                            </Button>
-                          ) : null}
-                        </div>
-                        <p className="mt-2 max-w-[11rem] text-center text-[11px] leading-4 text-muted-foreground">
-                          {text("profile.photoUploadHint", "Drag and drop a profile picture or choose a file.")}
-                        </p>
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2.5">
-                          <h1 className="text-balance text-3xl font-semibold tracking-[-0.04em] text-foreground sm:text-4xl">
-                            {userName}
-                          </h1>
-                          <Badge variant="secondary" className="rounded-md px-2.5 py-1">
-                            <Trophy className="mr-1.5 h-3.5 w-3.5" />
-                            {cinephileLevel}
-                          </Badge>
-                        </div>
-
-                        {/* Cinephile Level Progression Bar */}
-                        <div className="mt-3 max-w-xl">
-                          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                            <span className="font-semibold text-foreground">{cinephileLevel}</span>
-                            {nextLevelRequirement ? (
-                              <span>
-                                {moviesWatched} / {nextLevelRequirement.count} {text("profile.toNextLevel", "to")} {nextLevelRequirement.name}
-                              </span>
-                            ) : (
-                              <span className="text-primary font-bold">{text("profile.maxLevel", "Max Rank")}</span>
-                            )}
-                          </div>
-                          <Progress
-                            value={levelProgress}
-                            className="h-1.5"
-                          />
-                        </div>
-
-                        <div className="profile-stat-grid mt-5 grid gap-2 sm:grid-cols-3">
-                          {/* Movies Watched */}
-                          <div className="profile-stat px-4 py-3">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <Film className="h-3.5 w-3.5 text-muted-foreground" />
-                              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                                {text("profile.moviesWatched", "Movies Watched")}
-                              </p>
-                            </div>
-                            <p className="text-xl font-bold text-foreground tabular-nums">{countMoviesWatched}</p>
-                          </div>
-                          {/* Ratings */}
-                          <div className="profile-stat px-4 py-3">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <Star className="h-3.5 w-3.5 text-muted-foreground" />
-                              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                                {text("profile.ratings", "Ratings")}
-                              </p>
-                            </div>
-                            <p className="text-xl font-bold text-foreground tabular-nums">{countRatings}</p>
-                          </div>
-                          {/* Watch Time */}
-                          <div className="profile-stat px-4 py-3">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                                {text("profile.watchTime", "Watch Time")}
-                              </p>
-                            </div>
-                            <p className="text-xl font-bold text-foreground tabular-nums">
-                              {totalWatchDaysHoursMinutes}
-                            </p>
-                          </div>
-                        </div>
-
-                      <div className="mt-3 flex items-center gap-3">
-                          <Link
-                            to="/achievements"
-                            className="text-xs font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
-                          >
-                            {text("profile.viewAllAchievements", "View All Achievements")} {"->"}
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <ProfileIdentityHero
+                  profilePhoto={profilePhoto}
+                  isAvatarDragActive={isAvatarDragActive}
+                  onAvatarDragActiveChange={setIsAvatarDragActive}
+                  profilePhotoInputRef={profilePhotoInputRef}
+                  onPhotoFile={handlePhotoFile}
+                  onPhotoChange={handlePhotoChange}
+                  onPhotoRemove={handlePhotoRemove}
+                  text={text}
+                  userName={userName}
+                  bio={bio}
+                  cinephileLevel={cinephileLevel}
+                  nextLevelRequirement={nextLevelRequirement}
+                  moviesWatched={moviesWatched}
+                  levelProgress={levelProgress}
+                  countMoviesWatched={countMoviesWatched}
+                  countRatings={countRatings}
+                  totalWatchDaysHoursMinutes={totalWatchDaysHoursMinutes}
+                  achievementMilestones={achievementMilestones}
+                  userId={user?.id}
+                />
               </motion.section>
 
               <motion.section variants={itemVariants} className="mb-8">
@@ -2229,6 +2147,28 @@ export default function Profile() {
                               </p>
                             </div>
 
+                            <div className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3">
+                              <div className="flex items-start justify-between gap-4">
+                                <div>
+                                  <Label htmlFor="profile-public" className="text-sm font-semibold text-foreground">
+                                    {text("profile.publicProfile", "Public profile")}
+                                  </Label>
+                                  <p className="mt-1 max-w-xl text-xs leading-5 text-muted-foreground">
+                                    {text(
+                                      "profile.publicProfileHint",
+                                      "Let other cinephiles discover your profile, pinned favorites, and public comments. Your age, private lists, and settings stay private.",
+                                    )}
+                                  </p>
+                                </div>
+                                <Switch
+                                  id="profile-public"
+                                  checked={isPublic}
+                                  onCheckedChange={setIsPublic}
+                                  aria-label={text("profile.publicProfile", "Public profile")}
+                                />
+                              </div>
+                            </div>
+
                             <div className="flex gap-3">
                               <Button
                                 type="button"
@@ -2263,15 +2203,30 @@ export default function Profile() {
                   ) : null}
 
                   {shouldShowProfileSection("overview") ? (
-                  <motion.section variants={itemVariants} id="stats-overview" className="space-y-6">
-                    <div className="mb-2 space-y-1">
-                      <h2 className="flex items-center gap-2 text-xl font-semibold">
-                        <TrendingUp className="h-5 w-5 text-primary" />
-                        {text("profile.viewingProfile", "Viewing profile")}
-                      </h2>
-                      <p className="text-sm text-muted-foreground">
-                        {text("profile.overviewSubtitle", "A quick read on your taste and progress.")}
-                      </p>
+                  <motion.section variants={itemVariants} id="stats-overview" className="profile-overview space-y-6">
+                    <div className="profile-section-heading flex flex-col gap-3 border-b border-border/65 pb-5 sm:flex-row sm:items-end sm:justify-between">
+                      <div>
+                        <p className="profile-hero-eyebrow text-[10px] font-semibold uppercase text-primary">
+                          {text("profile.overviewEyebrow", "Profile overview")}
+                        </p>
+                        <h2 className="mt-1 flex items-center gap-2 text-2xl font-semibold tracking-[-0.03em] text-foreground">
+                          <TrendingUp className="h-5 w-5 text-primary" />
+                          {text("profile.viewingProfile", "Your screen story")}
+                        </h2>
+                        <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+                          {text("profile.overviewSubtitle", "Your current pace, defining taste, and latest watches in one focused view.")}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="w-fit text-xs text-muted-foreground hover:text-foreground"
+                        onClick={() => setActiveProfileTab("taste")}
+                      >
+                        {text("profile.openTasteStats", "Open Taste & Stats")}
+                        <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                      </Button>
                     </div>
 
                     <div className="hidden grid-cols-1 gap-4 md:grid-cols-3">
@@ -2335,7 +2290,7 @@ export default function Profile() {
                     </div>
 
                     {/* Persona & Level Details row */}
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div className="profile-overview-grid grid grid-cols-1 gap-4 md:grid-cols-2">
                       {/* Persona Card */}
                       {cinephilePersona && (
                         <div className="h-full">
@@ -2367,35 +2322,57 @@ export default function Profile() {
                         </div>
                       )}
 
-                      {/* Milestone Stats Card */}
+                      {/* Viewing state and next reward */}
                       <Card className="border border-border bg-card h-full transition-colors duration-150 hover:bg-accent/20">
                         <CardContent className="pt-6 space-y-4">
                           <div className="flex items-center gap-3">
                             <div className="rounded-lg bg-muted p-3 text-foreground">
-                              <Trophy className="h-5 w-5" />
+                              <Eye className="h-5 w-5" />
                             </div>
                             <div>
                               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                                {text("profile.cinephileMilestones", "Trek Progress")}
+                                {text("profile.viewingState", "Viewing state")}
                               </p>
                               <h4 className="text-xl font-bold tracking-tight text-foreground">
-                                {text("profile.journeyTitle", "Cinephile Ranks")}
+                                {text("profile.whatYoureTracking", "What you’re tracking")}
                               </h4>
                             </div>
                           </div>
-                          
-                          <div className="space-y-3 pt-1">
-                            <div className="flex justify-between text-xs">
-                              <span className="text-muted-foreground">Casual Viewer (1-50)</span>
-                              <span className="font-semibold text-foreground">{moviesWatched >= 50 ? "✓ Completed" : `${moviesWatched}/50`}</span>
-                            </div>
-                            <div className="flex justify-between text-xs">
-                              <span className="text-muted-foreground">Movie Buff (51-150)</span>
-                              <span className="font-semibold text-foreground">{moviesWatched >= 150 ? "✓ Completed" : moviesWatched > 50 ? `${moviesWatched}/150` : "Locked"}</span>
-                            </div>
-                            <div className="flex justify-between text-xs">
-                              <span className="text-muted-foreground">Cinephile (151-300)</span>
-                              <span className="font-semibold text-foreground">{moviesWatched >= 300 ? "✓ Completed" : moviesWatched > 150 ? `${moviesWatched}/300` : "Locked"}</span>
+
+                          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                            <Link to="/watchlist" className="rounded-lg border border-border/70 bg-background/45 px-2.5 py-2 transition-colors hover:bg-accent">
+                              <p className="text-lg font-bold tabular-nums text-foreground">{viewingState.current}</p>
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{text("profile.current", "Current")}</p>
+                            </Link>
+                            <Link to="/watched" className="rounded-lg border border-border/70 bg-background/45 px-2.5 py-2 transition-colors hover:bg-accent">
+                              <p className="text-lg font-bold tabular-nums text-foreground">{viewingState.completed}</p>
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{text("profile.completed", "Completed")}</p>
+                            </Link>
+                            <Link to="/watchlist" className="rounded-lg border border-border/70 bg-background/45 px-2.5 py-2 transition-colors hover:bg-accent">
+                              <p className="text-lg font-bold tabular-nums text-foreground">{viewingState.planned}</p>
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{text("profile.planned", "Planned")}</p>
+                            </Link>
+                            <Link to="/watched" className="rounded-lg border border-border/70 bg-background/45 px-2.5 py-2 transition-colors hover:bg-accent">
+                              <p className="text-lg font-bold tabular-nums text-foreground">{viewingState.pausedOrDropped}</p>
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{text("profile.paused", "Paused")}</p>
+                            </Link>
+                          </div>
+
+                          <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <Award className="h-4 w-4 shrink-0 text-primary" />
+                                <p className="truncate text-xs font-semibold text-foreground">
+                                  {nextAchievementMilestone
+                                    ? `${text("profile.nextAchievement", "Next achievement")}: ${nextAchievementMilestone.label}`
+                                    : text("profile.allMilestonesUnlocked", "All core milestones unlocked")}
+                                </p>
+                              </div>
+                              <span className="shrink-0 text-xs font-bold tabular-nums text-primary">
+                                {nextAchievementMilestone
+                                  ? `${moviesWatched}/${nextAchievementMilestone.target}`
+                                  : "✓"}
+                              </span>
                             </div>
                           </div>
                         </CardContent>
@@ -2404,74 +2381,180 @@ export default function Profile() {
                   </motion.section>
                   ) : null}
 
+                  {shouldShowProfileSection("overview") ? (
+                  <motion.section variants={itemVariants} id="profile-weekly-recap">
+                    <Card className="profile-recap-card border border-border bg-card">
+                      <CardContent className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            <CalendarDays className="h-3.5 w-3.5 text-primary" />
+                            {text("profile.sevenDayRecap", "7-day recap")}
+                          </p>
+                          <h2 className="mt-1 text-base font-semibold text-foreground">
+                            {recentViewingSummary.titlesLogged > 0
+                              ? text("profile.recentRhythm", "Your recent viewing rhythm")
+                              : text("profile.startYourWeek", "Start your next watch")}
+                          </h2>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {recentViewingSummary.titlesLogged > 0
+                              ? t("profile.recentRecapDetail", "{{titles}} title(s) across {{days}} active day(s) and about {{hours}} hour(s).", {
+                                  titles: recentViewingSummary.titlesLogged,
+                                  days: recentViewingSummary.activeDays,
+                                  hours: recentViewingSummary.hours,
+                                })
+                              : text("profile.recentRecapEmpty", "Log a title to begin building your personal viewing story.")}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 flex-wrap gap-2">
+                          <Button asChild size="sm" variant="outline">
+                            <Link to="/watched">{text("profile.openDiary", "Open history")}</Link>
+                          </Button>
+                          <Button asChild size="sm">
+                            <Link to="/year-in-review">{text("profile.yearInReview", "Year in Review")}</Link>
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.section>
+                  ) : null}
+
+                  {shouldShowProfileSection("overview") && topPicks.length > 0 ? (
+                  <motion.section variants={itemVariants} id="profile-top-picks" className="space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <h2 className="flex items-center gap-2 text-base font-semibold">
+                          <Star className="h-4 w-4 text-primary" />
+                          {text("profile.topPicks", "Top picks")}
+                        </h2>
+                        <p className="text-xs text-muted-foreground">
+                          {text("profile.topPicksSubtitle", "A quick read on the titles that define your taste.")}
+                        </p>
+                      </div>
+                      <Button asChild size="sm" variant="outline" className="shrink-0 text-xs">
+                        <button type="button" onClick={() => setActiveProfileTab("favorites")}>
+                          {text("profile.viewFavorites", "Favorites")}
+                        </button>
+                      </Button>
+                    </div>
+                    <div className="profile-top-picks-grid grid grid-cols-4 gap-2 sm:gap-3">
+                      {topPicks.map(({ item, preview }) => (
+                        <Link
+                          key={`top-pick-${item.mediaType}-${item.mediaId}`}
+                          to={`/${item.mediaType === "movie" ? "movie" : "tv"}/${item.mediaId}`}
+                          className="group min-w-0"
+                        >
+                          <div className="relative aspect-[2/3] overflow-hidden rounded-lg border border-border bg-card transition-colors group-hover:border-primary/60">
+                            <Image
+                              src={getImageUrl(preview.posterPath, "w342")}
+                              srcSet={`${getImageUrl(preview.posterPath, "w154")} 154w, ${getImageUrl(preview.posterPath, "w342")} 342w`}
+                              sizes="(max-width: 640px) 22vw, 132px"
+                              alt={preview.title}
+                              width={342}
+                              height={513}
+                              loading="lazy"
+                              className="h-full w-full object-cover"
+                              showSkeleton
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                            <p className="absolute inset-x-0 bottom-0 line-clamp-2 p-2 text-[10px] font-semibold leading-tight text-white sm:text-xs">
+                              {preview.title}
+                            </p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </motion.section>
+                  ) : null}
+
                   {shouldShowProfileSection("overview") && recentlyWatched.length > 0 ? (
-                  <motion.section variants={itemVariants} id="recently-watched" className="space-y-3">
+                  <motion.section variants={itemVariants} id="recently-watched" className="profile-activity-section space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
                         <h2 className="flex items-center gap-2 text-base font-semibold">
                           <Clock className="h-4 w-4 text-muted-foreground" />
-                          {text("profile.recentlyWatched", "Recently Watched")}
+                          {text("profile.recentActivity", "Recent activity")}
                         </h2>
                         <p className="text-xs text-muted-foreground">
-                          {text("profile.recentlyWatchedSubtitle", "Your latest additions to the watch log.")}
+                          {watchedThisMonth > 0
+                            ? `${watchedThisMonth} ${text(
+                                "profile.activityThisMonth",
+                                watchedThisMonth === 1 ? "title logged this month" : "titles logged this month",
+                              )}`
+                            : text("profile.recentlyWatchedSubtitle", "Your latest additions to the watch log.")}
                         </p>
                       </div>
                       <Button asChild size="sm" variant="outline" className="shrink-0 text-xs">
                         <Link to="/watched">{text("profile.viewAll", "View all")}</Link>
                       </Button>
                     </div>
-                    <div className="relative overflow-hidden">
-                      <div className="hide-scrollbar flex gap-3 overflow-x-auto pb-2 scroll-smooth">
-                        {recentlyWatched.map((item) => {
-                          const itemKey = `${item.mediaType}-${item.mediaId}`;
-                          const insight = watchedInsights.find((wi) => wi.key === itemKey);
-                          const daysAgo = Math.floor(
-                            (Date.now() - new Date(item.watchedAt || item.addedAt || 0).getTime()) /
-                              (24 * 60 * 60 * 1000),
-                          );
-                          const timeLabel =
-                            daysAgo === 0
-                              ? text("common.today", "Today")
-                              : daysAgo === 1
-                              ? text("common.yesterday", "Yesterday")
-                              : t("profile.daysAgo", "{{n}}d ago", { n: daysAgo });
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      {recentlyWatched.slice(0, 6).map((item) => {
+                        const itemKey = `${item.mediaType}-${item.mediaId}`;
+                        const insight = watchedInsights.find((wi) => wi.key === itemKey);
+                        const daysAgo = Math.floor(
+                          (Date.now() - new Date(item.watchedAt || item.addedAt || 0).getTime()) /
+                            (24 * 60 * 60 * 1000),
+                        );
+                        const timeLabel =
+                          daysAgo === 0
+                            ? text("common.today", "Today")
+                            : daysAgo === 1
+                            ? text("common.yesterday", "Yesterday")
+                            : t("profile.daysAgo", "{{n}}d ago", { n: daysAgo });
+                        const activityLabel =
+                          item.status === "watching"
+                            ? text("profile.startedWatching", "Started watching")
+                            : item.status === "dropped"
+                            ? text("profile.pausedWatching", "Paused watching")
+                            : text("profile.loggedWatch", "Logged a watch");
 
-                          return (
-                            <Link
-                              key={itemKey}
-                              to={`/${item.mediaType === "movie" ? "movie" : "tv"}/${item.mediaId}`}
-                              className="group relative flex-shrink-0 w-[100px]"
-                            >
-                              <div className="relative aspect-[2/3] overflow-hidden rounded-lg border border-border bg-card transition-colors duration-150 group-hover:border-border-hover">
-                                {insight?.posterPath ? (
-                                  <Image
-                                    src={getImageUrl(insight.posterPath, "w185")}
-                                    alt={insight.title}
-                                    width={185}
-                                    height={278}
-                                    className="h-full w-full object-cover"
-                                    loading="lazy"
-                                    showSkeleton
-                                  />
-                                ) : (
-                                  <div className="flex h-full w-full items-center justify-center bg-card">
-                                    <Film className="h-6 w-6 text-muted-foreground" />
-                                  </div>
-                                )}
-                                {typeof item.rating === "number" && (
-                                  <div className="absolute right-1 top-1 flex h-4.5 w-4.5 items-center justify-center rounded bg-primary text-[10px] font-bold text-primary-foreground shadow-sm">
-                                    {item.rating}
-                                  </div>
-                                )}
+                        return (
+                          <Link
+                            key={itemKey}
+                            to={`/${item.mediaType === "movie" ? "movie" : "tv"}/${item.mediaId}`}
+                            className="group flex min-h-[124px] gap-3 rounded-xl border border-border bg-card p-3 transition-colors duration-150 hover:bg-accent/35"
+                          >
+                            <div className="relative h-[98px] w-[66px] shrink-0 overflow-hidden rounded-md border border-border bg-muted">
+                              {insight?.posterPath ? (
+                                <Image
+                                  src={getImageUrl(insight.posterPath, "w185")}
+                                  alt={insight.title}
+                                  width={185}
+                                  height={278}
+                                  className="h-full w-full object-cover"
+                                  loading="lazy"
+                                  showSkeleton
+                                />
+                              ) : (
+                                <div className="flex h-full w-full items-center justify-center bg-card">
+                                  <Film className="h-5 w-5 text-muted-foreground" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1 py-0.5">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="line-clamp-2 text-sm font-semibold leading-tight text-foreground">
+                                  {insight?.title || `#${item.mediaId}`}
+                                </p>
+                                {typeof item.rating === "number" ? (
+                                  <span className="shrink-0 rounded bg-primary/12 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                                    ★ {item.rating}
+                                  </span>
+                                ) : null}
                               </div>
-                              <p className="mt-1.5 line-clamp-2 text-xs font-medium leading-tight text-foreground/95">
-                                {insight?.title || `#${item.mediaId}`}
+                              <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                {activityLabel} · {item.mediaType === "movie" ? text("common.movie", "Movie") : text("profile.series", "Series")}
                               </p>
-                              <p className="text-[10px] text-muted-foreground">{timeLabel}</p>
-                            </Link>
-                          );
-                        })}
-                      </div>
+                              {item.note ? (
+                                <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                                  {item.note}
+                                </p>
+                              ) : null}
+                              <p className="mt-2 text-[10px] text-muted-foreground">{timeLabel}</p>
+                            </div>
+                          </Link>
+                        );
+                      })}
                     </div>
                   </motion.section>
                   ) : null}
@@ -3152,6 +3235,14 @@ export default function Profile() {
                           <p className="text-xs text-muted-foreground">
                             {text("profile.decadeDistributionSubtitle", "Distribution of logged films across decades of release.")}
                           </p>
+                          {topDecade ? (
+                            <p className="rounded-lg border border-primary/15 bg-primary/5 px-3 py-2 text-xs leading-relaxed text-foreground/85">
+                              {t("profile.decadeTakeaway", "You return to {{decade}} most often: {{count}} logged title(s).", {
+                                decade: topDecade.decade,
+                                count: topDecade.count,
+                              })}
+                            </p>
+                          ) : null}
                           <Card className="ct-panel w-full">
                             <CardContent className="space-y-4 pt-6">
                               {decadeDistribution.length === 0 ? (
@@ -3194,6 +3285,14 @@ export default function Profile() {
                           <p className="text-xs text-muted-foreground">
                             {text("profile.ratingDistributionSubtitle", "Spread of your rated titles.")}
                           </p>
+                          {mostUsedRating ? (
+                            <p className="rounded-lg border border-primary/15 bg-primary/5 px-3 py-2 text-xs leading-relaxed text-foreground/85">
+                              {t("profile.ratingTakeaway", "Your most common score is {{rating}} stars across {{count}} title(s).", {
+                                rating: mostUsedRating.rating,
+                                count: mostUsedRating.count,
+                              })}
+                            </p>
+                          ) : null}
                           <Card className="ct-panel w-full">
                             <CardContent className="space-y-4 pt-6">
                               {ratingDistribution.map((entry) => {
@@ -3262,6 +3361,19 @@ export default function Profile() {
                           <p className="text-xs text-muted-foreground">
                             {text("profile.crewInsightsSubtitle", "Directors and actors you watch most frequently.")}
                           </p>
+                          {topDirectors[0] || topCast[0] ? (
+                            <p className="rounded-lg border border-primary/15 bg-primary/5 px-3 py-2 text-xs leading-relaxed text-foreground/85">
+                              {topDirectors[0]
+                                ? t("profile.directorTakeaway", "Your most revisited director is {{name}} ({{count}} title(s)).", {
+                                    name: topDirectors[0].name,
+                                    count: topDirectors[0].count,
+                                  })
+                                : t("profile.castTakeaway", "Your most revisited performer is {{name}} ({{count}} title(s)).", {
+                                    name: topCast[0].name,
+                                    count: topCast[0].count,
+                                  })}
+                            </p>
+                          ) : null}
                           <Card className="w-full transition-all duration-200">
                             <CardContent className="space-y-6 pt-6">
                               {/* Directors */}

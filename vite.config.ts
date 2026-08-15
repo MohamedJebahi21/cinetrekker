@@ -192,8 +192,9 @@ const cspPlugin = (): Plugin => {
     "form-action 'self'",
     "require-trusted-types-for 'script'",
     "trusted-types cinetrekker default dompurify",
-    "upgrade-insecure-requests",
-    "block-all-mixed-content",
+    // Do not upgrade local Vite assets to HTTPS. WebKit honors this directive
+    // for localhost and then cannot load Vite's HTTP module endpoints. The
+    // production CSP is supplied separately by Vercel headers.
   ].join("; ");
 
   return {

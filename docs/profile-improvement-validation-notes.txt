@@ -1,0 +1,1 @@
+Local browser verification: `/profile` correctly redirected an unauthenticated visitor to `/login`, so the protected authenticated profile surface could not be visually reviewed without using an account. Source-level review, type checking, linting, and the production build remain valid.

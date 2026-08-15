@@ -102,6 +102,10 @@
     "more": "More",
     "userMenu": "User menu"
   },
+  "auth": {
+    "signIn": "Sign in",
+    "signInRequired": "Sign in to continue"
+  },
   "notFound": {
     "returnHome": "Return Home",
     "search": "Search"
@@ -373,6 +377,7 @@
     ,"watching": "Watching"
     ,"completed": "Completed"
     ,"planToWatch": "Plan to Watch"
+    ,"totalHours": "Hours"
   },
   "details": {
     "overview": "Overview",
@@ -389,6 +394,7 @@
     "status": "Status",
     "minutes": "min",
     "noOverview": "No overview available",
+    "invalidId": "This title is unavailable or no longer exists.",
     "contentBlockedTitle": "Title unavailable",
     "contentBlockedDescription": "This title is hidden by {{mode}}.",
     "contentBlockedSettingsHint": "To access it, go to Settings > Content Safety and adjust your filtering mode.",

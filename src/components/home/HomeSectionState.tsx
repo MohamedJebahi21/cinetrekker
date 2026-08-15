@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { getRequestReference } from "@/lib/requestReference";
 
 type HomeSectionStateProps = {
   title: string;
@@ -19,17 +20,24 @@ function HomeSectionFallback({
   description,
   onRetry,
   retryLabel = "Try again",
+  requestReference,
 }: {
   title: string;
   description: string;
   onRetry?: () => void;
   retryLabel?: string;
+  requestReference?: string | null;
 }) {
   return (
     <section className="home-section-shell">
       <div className="ct-panel min-h-[420px] p-6 text-center sm:min-h-[520px]">
         <h2 className="text-lg font-semibold text-foreground">{title}</h2>
         <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+        {requestReference ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Reference: {requestReference}
+          </p>
+        ) : null}
         {onRetry ? (
           <Button
             type="button"
@@ -65,6 +73,7 @@ export function HomeSectionState({
           "We couldn't load this section right now. Please try again."
         }
         onRetry={onRetry}
+        requestReference={getRequestReference(error)}
       />
     );
   }

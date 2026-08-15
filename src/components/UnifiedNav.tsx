@@ -65,6 +65,12 @@ const navigationGroups = [
     ],
   },
   {
+    title: "Community",
+    links: [
+      { path: "/people", labelKey: "nav.people", defaultLabel: "People", icon: User, desc: "Discover public profiles and follow fellow cinephiles." },
+    ],
+  },
+  {
     title: "Discovery & Explore",
     links: [
       { path: "/discover", labelKey: "nav.discover", defaultLabel: "Discover", icon: Compass, desc: "Explore recommendations and releases." },
@@ -88,6 +94,8 @@ const navigationGroups = [
 ];
 
 // Flat menu links kept for backwards compatibility with currentPageLabel
+const primaryNavigationGroups = navigationGroups.filter((group) => group.title !== "Community");
+
 const menuLinks = [
   { path: "/profile", labelKey: "nav.profile", defaultLabel: "Profile", icon: User },
   { path: "/discover", labelKey: "nav.discover", defaultLabel: "Discover", icon: Compass },
@@ -104,6 +112,7 @@ const menuLinks = [
   { path: "/awards", labelKey: "nav.awards", defaultLabel: "Awards", icon: Award },
   { path: "/year-in-review", labelKey: "nav.yearInReview", defaultLabel: "Year In Review", icon: Award },
   { path: "/following", labelKey: "nav.following", defaultLabel: "Following", icon: User },
+  { path: "/people", labelKey: "nav.people", defaultLabel: "People", icon: User },
 ];
 
 function BurgerIcon({ isOpen }: { isOpen: boolean }) {
@@ -454,35 +463,19 @@ export function UnifiedNav() {
               />
 
               <motion.div
-                className="relative z-20 mx-auto h-full w-full overflow-y-auto border-t border-border bg-background px-6 py-6 shadow-sm"
+                className="relative z-20 h-full w-full overflow-y-auto border-t border-border bg-background px-4 py-6 shadow-none sm:px-6 sm:py-8"
                 initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.994 }}
                 animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: reduceMotion ? 0.16 : 0.32, ease: [0.22, 1, 0.36, 1] }}
               >
-                <div className="desktop-menu-shell mx-auto max-w-[82rem] space-y-8">
-                  <div className="desktop-menu-intro flex items-end justify-between gap-6 border-b border-border/70 pb-6">
-                    <div>
-                      <p className="ct-kicker mb-2">
-                        {t("nav.more", "More")}
-                      </p>
-                      <h2 className="text-3xl font-semibold tracking-tight text-foreground">
-                        {t("nav.menu", "Menu")}
-                      </h2>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        {t("nav.mobileSubtitle", "Browse tools and extra pages live here.")}
-                      </p>
-                    </div>
-                    <p className="hidden text-sm text-muted-foreground lg:block">
-                      Jump directly to the part of CineTrekker you need.
-                    </p>
-                  </div>
-
-                  <div className="desktop-menu-grid grid gap-8 md:grid-cols-3">
-                    {navigationGroups.map((group) => (
-                      <div key={group.title} className="desktop-menu-group space-y-3">
-                        <h3 className="border-b border-border/70 pb-3 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                          {group.title}
-                        </h3>
+                <div className="desktop-menu-shell mx-auto flex min-h-full max-w-[78rem] items-center">
+                  <nav aria-label={t("nav.main", "Main navigation")} className="desktop-menu-grid grid w-full gap-5 md:grid-cols-3">
+                    {primaryNavigationGroups.map((group) => (
+                      <section key={group.title} className="desktop-menu-group min-w-0 self-stretch rounded-2xl border border-border bg-card p-4 shadow-[0_16px_36px_hsl(var(--background)/0.24)] sm:p-5">
+                        <div className="mb-3 flex items-center justify-between gap-3 border-b border-border pb-3">
+                          <h3 className="text-[0.7rem] font-semibold uppercase tracking-[0.17em] text-muted-foreground">{group.title}</h3>
+                          <span className="rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">{group.links.length}</span>
+                        </div>
                         <motion.div
                           className="flex flex-col gap-2"
                           variants={desktopMenuGridVariants}
@@ -494,43 +487,36 @@ export function UnifiedNav() {
                             const Icon = item.icon;
                             const isActive = pathname === item.path;
                             return (
-                              <motion.div
-                                key={item.path}
-                                variants={menuItemVariants}
-                              >
+                              <motion.div key={item.path} variants={menuItemVariants}>
                                 <Link
                                   to={item.path}
                                   onClick={() => setIsDesktopMenuOpen(false)}
+                                  aria-current={isActive ? "page" : undefined}
                                   className={cn(
-                                    "group relative flex min-h-[4.75rem] items-start gap-3 overflow-hidden rounded-xl border border-border/80 bg-card/70 px-3.5 py-3 text-sm transition-[background-color,border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-card hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                                    isActive && "border-primary/55 bg-primary/[0.09] shadow-[inset_3px_0_0_hsl(var(--primary))]"
+                                    "group relative flex min-h-[4.65rem] items-start gap-3 overflow-hidden rounded-xl border border-border bg-background px-3.5 py-3 text-sm transition-[background-color,border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-lg hover:shadow-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                                    isActive && "border-primary/60 bg-primary/10 shadow-[inset_3px_0_0_hsl(var(--primary)),0_8px_20px_hsl(var(--primary)/0.1)]"
                                   )}
                                 >
                                   <div className={cn(
-                                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-background/70 text-muted-foreground transition-colors duration-200 group-hover:border-primary/25 group-hover:text-primary",
-                                    isActive && "border-primary/35 bg-primary/10 text-primary"
+                                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition-colors duration-200 group-hover:border-primary/30 group-hover:bg-primary/10 group-hover:text-primary",
+                                    isActive && "border-primary/45 bg-primary/15 text-primary"
                                   )}>
-                                    <Icon className="h-4 w-4" />
+                                    <Icon className="h-4 w-4" aria-hidden="true" />
                                   </div>
-                                  <div className="min-w-0 space-y-1 pt-0.5">
-                                    <p className={cn(
-                                      "text-sm font-semibold text-foreground transition-colors duration-200 group-hover:text-primary",
-                                      isActive && "text-primary"
-                                    )}>
+                                  <div className="min-w-0 flex-1 pt-0.5">
+                                    <p className={cn("text-sm font-semibold leading-5 text-foreground transition-colors duration-200 group-hover:text-primary", isActive && "text-primary")}>
                                       {t(item.labelKey, item.defaultLabel)}
                                     </p>
-                                    <p className="line-clamp-1 text-xs font-normal leading-5 text-muted-foreground">
-                                      {item.desc}
-                                    </p>
+                                    <p className="mt-0.5 line-clamp-2 text-xs font-normal leading-4 text-muted-foreground">{item.desc}</p>
                                   </div>
                                 </Link>
                               </motion.div>
                             );
                           })}
                         </motion.div>
-                      </div>
+                      </section>
                     ))}
-                  </div>
+                  </nav>
                 </div>
               </motion.div>
             </div>,
@@ -628,7 +614,7 @@ export function UnifiedNav() {
               )}
 
               {/* Categorized Menu Links on Mobile */}
-              {navigationGroups.map((group) => (
+              {primaryNavigationGroups.map((group) => (
                 <div key={group.title} className="space-y-2 border-t border-border pt-4">
                   <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground px-1">
                     {group.title}
