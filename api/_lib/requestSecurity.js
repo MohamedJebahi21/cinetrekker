@@ -120,9 +120,18 @@ export function getClientIP(req) {
   return req?.socket?.remoteAddress || "unknown";
 }
 
-export function isAllowedOrigin(origin) {
+export function isAllowedOrigin(origin, method = "GET") {
   if (!origin) {
-    return process.env.NODE_ENV !== "production";
+    // Browsers omit Origin on ordinary same-origin safe requests. Keep
+    // production mutations protected while allowing public read endpoints to
+    // serve the page that initiated them.
+    const normalizedMethod = typeof method === "string" ? method.toUpperCase() : "GET";
+    return (
+      process.env.NODE_ENV !== "production" ||
+      normalizedMethod === "GET" ||
+      normalizedMethod === "HEAD" ||
+      normalizedMethod === "OPTIONS"
+    );
   }
 
   const allowedOrigins = new Set([
@@ -271,7 +280,7 @@ async function applyRateLimit(req, res, prefix, key, limitKind, limit) {
 export async function enforceRequestSecurity(req, res, prefix) {
   ensureRequestId(req, res);
   const origin = req?.headers?.origin;
-  if (!isAllowedOrigin(origin)) {
+  if (!isAllowedOrigin(origin, req?.method)) {
     await reportSecurityEvent({
       event: "forbidden_origin",
       severity: "warning",

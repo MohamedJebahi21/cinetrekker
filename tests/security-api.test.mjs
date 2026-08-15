@@ -7,6 +7,7 @@ import tmdbProxyHandler from "../api/tmdb-proxy.js";
 import cronHandler from "../api/jobs/check-followed-updates.js";
 import {
   ensureRequestId,
+  isAllowedOrigin,
   resetRequestSecurityStateForTests,
   setRateLimitDependenciesForTests,
 } from "../api/_lib/requestSecurity.js";
@@ -148,6 +149,21 @@ test("cron auth bypass attempts fail without x-cron-secret even when authorizati
 
   assert.equal(res.statusCode, 401);
   assert.equal(res.body.error, "Unauthorized");
+});
+
+test("production permits origin-less safe reads but rejects origin-less writes", () => {
+  const previousNodeEnv = process.env.NODE_ENV;
+
+  try {
+    process.env.NODE_ENV = "production";
+    assert.equal(isAllowedOrigin(undefined, "GET"), true);
+    assert.equal(isAllowedOrigin(undefined, "HEAD"), true);
+    assert.equal(isAllowedOrigin(undefined, "OPTIONS"), true);
+    assert.equal(isAllowedOrigin(undefined, "POST"), false);
+  } finally {
+    if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previousNodeEnv;
+  }
 });
 
 test("production blocks protected requests when distributed rate limiting is unavailable", async () => {
