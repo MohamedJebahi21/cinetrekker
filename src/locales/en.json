@@ -833,8 +833,12 @@
     "dataUsageDesc": "Your data is used solely to provide you with a personalized experience, including recommendations based on your viewing history.",
     "dataSharing": "Data Sharing",
     "dataSharingDesc": "We do not sell or share your personal data with third parties.",
+    "googleSignIn": "Google Sign-In",
+    "googleSignInDesc": "When you choose Google Sign-In, Google provides your email address, basic profile information, and a unique account identifier. CineTrekker uses this identity data only to authenticate your account, create or link your CineTrekker profile, and keep your account available across devices.",
+    "googleSignInNoExtraAccess": "CineTrekker does not request access to Gmail, Google Drive, contacts, calendars, or other Google services. We do not sell Google identity data or use it for advertising.",
     "contact": "Contact",
-    "contactDesc": "For any privacy-related questions, please contact us."
+    "contactDesc": "For privacy-related questions or data requests, use the Feedback page or email the CineTrekker privacy contact.",
+    "contactEmail": "Privacy contact"
   },
   "filters": {
     "type": "Type",

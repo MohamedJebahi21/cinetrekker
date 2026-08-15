@@ -7,6 +7,7 @@ import {
   Share2,
   Mail,
   Cookie,
+  KeyRound,
   Clock3,
   UserCheck,
   Server,
@@ -75,6 +76,16 @@ export default function Privacy() {
 
         <Card className="ct-panel">
           <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground"><KeyRound className="h-5 w-5 text-primary" />{safeT(t, "privacy.googleSignIn", "Google Sign-In")}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-muted-foreground leading-relaxed">
+            <p>{safeT(t, "privacy.googleSignInDesc", "When you choose Google Sign-In, Google provides your email address, basic profile information, and a unique account identifier. CineTrekker uses this identity data only to authenticate your account, create or link your CineTrekker profile, and keep your account available across devices.")}</p>
+            <p>{safeT(t, "privacy.googleSignInNoExtraAccess", "CineTrekker does not request access to Gmail, Google Drive, contacts, calendars, or other Google services. We do not sell Google identity data or use it for advertising.")}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="ct-panel">
+          <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground"><Cookie className="h-5 w-5 text-primary" />{safeT(t, "privacy.cookiesAndStorage", "Cookies and Local Storage")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-muted-foreground leading-relaxed">
@@ -127,8 +138,11 @@ export default function Privacy() {
             <CardTitle className="flex items-center gap-2 text-foreground"><Mail className="h-5 w-5 text-primary" />{t("privacy.contact", "Contact and Requests")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-muted-foreground leading-relaxed">
-            <p>{t("privacy.contactDesc", "For privacy-related requests, contact the CineTrekker team via the Feedback page.")}</p>
-            <div className="flex flex-wrap gap-3">
+            <p>{safeT(t, "privacy.contactDesc", "For privacy-related questions or data requests, use the Feedback page or email the CineTrekker privacy contact.")}</p>
+            <div className="flex flex-wrap items-center gap-3">
+              <a href="mailto:cinetrekker.contact@gmail.com" className="text-primary hover:text-primary/80">
+                {safeT(t, "privacy.contactEmail", "Privacy contact")}: cinetrekker.contact@gmail.com
+              </a>
               <Link to="/feedback" className="text-primary hover:text-primary/80">
                 {safeT(t, "privacy.feedbackLink", "Go to Feedback")}
               </Link>

@@ -796,7 +796,11 @@
     "dataSharing": "Veri Paylaşımı",
     "dataSharingDesc": "Kişisel verilerinizi üçüncü taraflarla satmıyor veya paylaşmıyoruz.",
     "contact": "İletişim",
-    "contactDesc": "Gizlilikle ilgili sorularınız için lütfen bizimle iletişime geçin.",
+    "googleSignIn": "Google ile giriş",
+    "googleSignInDesc": "Google ile giriş yaptığınızda Google e-posta adresinizi, temel profil bilgilerinizi ve benzersiz hesap tanımlayıcınızı sağlar. CineTrekker bu kimlik verilerini yalnızca hesabınızı doğrulamak, CineTrekker profilinizi oluşturmak veya bağlamak ve hesabınızı cihazlarınızda kullanılabilir tutmak için kullanır.",
+    "googleSignInNoExtraAccess": "CineTrekker Gmail, Google Drive, kişiler, takvimler veya diğer Google hizmetlerine erişim istemez. Google kimlik verilerini satmayız ve reklam için kullanmayız.",
+    "contactDesc": "Gizlilik soruları veya veri talepleri için Geri Bildirim sayfasını kullanın ya da CineTrekker gizlilik iletişimine yazın.",
+    "contactEmail": "Gizlilik iletişimi",
     "seoTitle": "Privacy Policy",
     "seoDescription": "CineTrekker privacy policy and data handling practices"
   },

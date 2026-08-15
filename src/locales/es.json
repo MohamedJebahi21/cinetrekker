@@ -796,7 +796,11 @@
     "dataSharing": "Compartir datos",
     "dataSharingDesc": "No vendemos ni compartimos tus datos personales con terceros.",
     "contact": "Contacto",
-    "contactDesc": "Para cualquier pregunta relacionada con la privacidad, contáctanos.",
+    "googleSignIn": "Inicio de sesión con Google",
+    "googleSignInDesc": "Cuando eliges iniciar sesión con Google, Google proporciona tu dirección de correo electrónico, información básica de perfil y un identificador de cuenta único. CineTrekker usa estos datos de identidad solo para autenticar tu cuenta, crear o vincular tu perfil de CineTrekker y mantener tu cuenta disponible en todos tus dispositivos.",
+    "googleSignInNoExtraAccess": "CineTrekker no solicita acceso a Gmail, Google Drive, contactos, calendarios ni otros servicios de Google. No vendemos datos de identidad de Google ni los usamos para publicidad.",
+    "contactDesc": "Para preguntas de privacidad o solicitudes de datos, usa la página de comentarios o escribe al contacto de privacidad de CineTrekker.",
+    "contactEmail": "Contacto de privacidad",
     "seoTitle": "Privacy Policy",
     "seoDescription": "CineTrekker privacy policy and data handling practices"
   },
