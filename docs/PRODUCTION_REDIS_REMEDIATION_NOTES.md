@@ -17,3 +17,17 @@ The compatibility commit `7282880` passed the complete local quality gate and wa
 ## Initial Live Verification
 
 A direct same-origin probe of `/api/tmdb-proxy?endpoint=%2Ftrending%2Fall%2Fday` returned HTTP 200 with TMDB JSON and an `X-Request-Id`, confirming the managed Redis-backed protection path is reachable. The first browser homepage load nevertheless rendered the client-safe Fresh Discovery error state with reference `ct_fb736391ef774eee8c2e55a502eb4820`. No browser-console error was emitted. Server logs and the exact homepage request shape must be inspected before declaring the release healthy.
+
+The follow-up commit `2c2dc3a` corrected the same-origin safe-read policy, passed the complete local quality gate, and was deployed by Vercel successfully in 17 seconds. The remaining browser acceptance check will confirm that homepage discovery renders cards rather than a client-safe error state.
+
+## Final Browser Acceptance Checks
+
+After deployment `2c2dc3a`, the live homepage rendered the Weekly Spotlight and populated Fresh Discovery with real media cards. The direct movie route `/movie/spider-man-brand-new-day-969681` also loaded full title metadata, cast, and video sections after a fresh navigation. This confirms both the same-origin proxy path and the previously problematic deep-link route are operational.
+
+The public `/people` directory also settled successfully and rendered the available public profile card (including profile, follow, follower-count, and favorites affordances) without an RPC or route error. This verifies that the applied social-profile migration is serving the production client.
+
+The direct public profile route for the discovered user also loaded successfully, including profile metadata, follower/following/comment counts, favorite titles, and social navigation tabs. No production RPC or render errors were observed across the public social experience.
+
+## Operational Monitoring Status
+
+Vercel logs and request references are active and were used to isolate and remediate the production request-policy issue. The Vercel Alerts page confirms that automated anomaly alerts require a Pro-plan upgrade, so no Vercel-native alert could be enabled on the current Hobby plan. Until an external uptime monitor is connected or the plan is upgraded, the operational fallback is the committed production observability runbook plus periodic review of Vercel logs and the managed Upstash dashboard.
