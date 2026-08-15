@@ -33,6 +33,7 @@ import type {
 } from "@/types/continueWatching";
 import type { MediaDetails } from "@/types/media";
 import { getNextEpisode } from "./nextEpisode";
+import { getReleasedProgressPercent } from "./progressDisplay";
 
 /**
  * Build a ContinueWatchingVM from progress + TMDB data.
@@ -55,15 +56,14 @@ export function buildContinueWatchingVM(params: {
 }): ContinueWatchingVM {
   const { progress, details, episodesBySeason } = params;
 
-  // Prefer the release-aware total calculated by progress.ts. The raw TMDB
-  // total can include future episodes in a currently airing season.
-  const totalEpisodes = progress.totalEpisodes ?? details?.number_of_episodes ?? null;
-
-  // Progress percentage (display only, no status inference)
-  const progressPercent =
-    totalEpisodes && totalEpisodes > 0
-      ? Math.min(100, Math.round((progress.watchedEpisodeCount / totalEpisodes) * 100))
-      : Math.min(95, Math.max(5, progress.watchedEpisodeCount * 10));
+  // Use only the release-aware total calculated by progress.ts. Showing a
+  // synthetic percentage before this metadata is available makes the card
+  // appear to lose progress when TMDB data later arrives.
+  const releasedEpisodeCount = progress.totalEpisodes;
+  const progressPercent = getReleasedProgressPercent(
+    progress.watchedEpisodeCount,
+    releasedEpisodeCount,
+  );
 
   // Next episode resolution (display only)
   const nextResult = details
@@ -116,6 +116,7 @@ export function buildContinueWatchingVM(params: {
     nextEpisodeAirDate: nextEpisode?.air_date ?? null,
     nextEpisodeIsUpcoming: nextResult?.isUpcoming ?? false,
     watchedEpisodeCount: progress.watchedEpisodeCount,
+    releasedEpisodeCount,
     progressPercent,
     // Status is a display label from progress.ts — never used for logic.
     status: progress.status,

@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { getNextEpisode } from "../src/lib/continueWatching/nextEpisode.ts";
+import { getReleasedProgressPercent } from "../src/lib/continueWatching/progressDisplay.ts";
 import {
   getPublishedEpisodeTotal,
   isDefinitelyCompleted,
@@ -140,6 +141,14 @@ test("getShowsToMarkCompleted finds shows ready to complete", () => {
   );
 
   assert.deepEqual(completed, [1]);
+});
+
+test("Continue Watching does not invent progress before a release-aware total is available", () => {
+  assert.equal(getReleasedProgressPercent(5, null), null);
+});
+
+test("Continue Watching percentage uses the verified released total", () => {
+  assert.equal(getReleasedProgressPercent(5, 11), 45);
 });
 
 test("getShowsToReopen finds completed shows with new episodes", () => {

@@ -117,24 +117,37 @@ function ContinueWatchingCard({
   return (
     <Card
       ref={cardRef}
-      className="group w-[min(88vw,340px)] shrink-0 snap-start overflow-hidden rounded-[1.75rem] border-border/60 bg-gradient-to-br from-card via-card to-card/60 shadow-[0_18px_50px_rgba(0,0,0,0.16)] transition-[transform,border-color,box-shadow] duration-300 hover:-translate-y-1 hover:border-primary/45 hover:shadow-[0_24px_60px_rgba(229,9,20,0.14)] sm:h-[470px] sm:w-[410px] lg:w-[460px]"
+      className="group w-[min(86vw,360px)] shrink-0 snap-start overflow-hidden rounded-[1.5rem] border-border/70 bg-card/95 shadow-[0_18px_46px_rgba(0,0,0,0.2)] transition-[transform,border-color,box-shadow] duration-300 hover:-translate-y-1 hover:border-primary/55 hover:shadow-[0_24px_62px_rgba(229,9,20,0.18)] sm:w-[390px] lg:w-[420px]"
     >
       <CardContent className="p-0">
-        <div className="flex h-full flex-col sm:flex-row">
-          <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-muted/40 sm:aspect-auto sm:w-[42%] lg:w-[44%]">
+        <div className="flex h-full flex-col">
+          <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-muted/40">
             <Image
               src={display.posterPath ? `https://image.tmdb.org/t/p/w500${display.posterPath}` : ""}
               alt={display.title}
               width={500}
               height={750}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.045]"
+              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.055]"
               loading="lazy"
               showSkeleton
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent sm:bg-gradient-to-r sm:from-transparent sm:via-transparent sm:to-card/95" />
-            <div className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/55 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm sm:hidden">
-              <Tv className="h-3.5 w-3.5" aria-hidden="true" />
-              {display.progressPercent}% complete
+            <div className="absolute inset-0 bg-gradient-to-t from-card via-background/15 to-transparent" />
+            <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-md">
+              <Play className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
+              {t("home.continueWatchingEyebrow", "In progress")}
+            </div>
+            <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3">
+              <span className="rounded-full border border-white/15 bg-black/55 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-md">
+                {t("home.episodesTracked", {
+                  count: display.watchedEpisodeCount,
+                  defaultValue: "{{count}} episodes tracked",
+                })}
+              </span>
+              {display.progressPercent != null ? (
+                <span className="rounded-full border border-primary/25 bg-primary/90 px-2.5 py-1 text-xs font-bold text-primary-foreground shadow-lg">
+                  {display.progressPercent}%
+                </span>
+              ) : null}
             </div>
           </div>
 
@@ -142,24 +155,28 @@ function ContinueWatchingCard({
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-primary/90">
-                  {t("home.continueWatchingEyebrow", "In progress")}
+                  {hasNextEpisode
+                    ? t("home.nextEpisode", "Next episode")
+                    : t("home.continueWatchingEyebrow", "In progress")}
                 </p>
                 <h3 className="mt-1 line-clamp-2 text-lg font-bold leading-tight text-foreground sm:text-xl">
                   <bdi dir="auto">{display.title}</bdi>
                 </h3>
                 <p className="mt-1.5 text-xs text-muted-foreground sm:text-sm">
-                  {t("home.episodesTracked", {
-                    count: display.watchedEpisodeCount,
-                    defaultValue: "{{count}} episodes tracked",
-                  })}
+                  {display.releasedEpisodeCount != null
+                    ? `${display.watchedEpisodeCount} / ${display.releasedEpisodeCount} ${t("home.releasedEpisodes", "released episodes")}`
+                    : t("home.episodesTracked", {
+                        count: display.watchedEpisodeCount,
+                        defaultValue: "{{count}} episodes tracked",
+                      })}
                 </p>
               </div>
-              <span className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary sm:inline-flex">
+              <span className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary shadow-[0_10px_24px_rgba(229,9,20,0.12)] sm:inline-flex">
                 <Tv className="h-5 w-5" aria-hidden="true" />
               </span>
             </div>
 
-            <div className="relative mt-4 min-h-[100px] overflow-hidden rounded-2xl border border-border/70 bg-background/55 p-3.5 before:absolute before:inset-y-3 before:left-0 before:w-0.5 before:rounded-r-full before:bg-primary">
+            <div className="relative mt-4 min-h-[108px] overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-background/85 to-muted/30 p-3.5 before:absolute before:inset-y-3 before:left-0 before:w-0.5 before:rounded-r-full before:bg-primary">
               {enrichment.isFetching && item.needsSeasonEnrichment ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -194,38 +211,49 @@ function ContinueWatchingCard({
                     S{display.lastWatchedEpisode.season}E{display.lastWatchedEpisode.episode}
                   </p>
                 </>
-              ) : null}
+              ) : (
+                <p className="pl-1 text-sm text-muted-foreground">
+                  {t("home.episodeActivityPreserved", "Your watched episodes are saved and ready when the next episode is available.")}
+                </p>
+              )}
             </div>
 
-            <div className="mt-4">
-              <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+            <div className="mt-4 rounded-xl border border-border/60 bg-background/35 px-3 py-2.5">
+              <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
                 <span className="font-medium">{t("home.seriesProgress", "Series progress")}</span>
-                <span className="font-semibold text-foreground">{display.progressPercent}%</span>
+                {display.progressPercent != null ? (
+                  <span className="font-semibold text-foreground">{display.progressPercent}%</span>
+                ) : (
+                  <span>{t("home.progressSyncing", "Episodes saved")}</span>
+                )}
               </div>
-              <Progress value={display.progressPercent} className="h-2.5 bg-muted/70 [&>div]:bg-primary" />
+              {display.progressPercent != null ? (
+                <Progress value={display.progressPercent} className="mt-2 h-2 bg-muted/70 [&>div]:bg-primary" />
+              ) : (
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  {t("home.progressMetadataPending", "Progress will appear after the released episode total is confirmed.")}
+                </p>
+              )}
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-2 sm:mt-auto sm:flex sm:flex-col sm:pt-5">
+            <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border/50 pt-4">
               <Button
                 asChild
                 className={cn(
-                  "h-10 gap-2 text-sm font-semibold shadow-sm sm:h-11",
+                  "h-10 gap-2 text-sm font-semibold shadow-[0_10px_22px_rgba(229,9,20,0.16)]",
                   hasNextEpisode ? "col-span-1" : "col-span-2",
-                  "sm:flex-1 sm:h-10",
                 )}
               >
                 <Link to={display.href}>
                   <Play className="h-4 w-4" />
-                  {hasNextEpisode
-                    ? t("home.resumeShow", "Resume Show")
-                    : t("home.openShow", "Open Show")}
+                  {t("common.details", "Details")}
                 </Link>
               </Button>
               {hasNextEpisode ? (
                 <Button
                   type="button"
                   variant="outline"
-                  className="col-span-1 h-10 gap-2 text-sm font-semibold sm:h-11 sm:flex-1"
+                  className="col-span-1 h-10 gap-2 border-primary/20 bg-background/50 text-sm font-semibold hover:border-primary/45 hover:bg-primary/5"
                   disabled={isMarkingThisEpisode}
                   onClick={() => {
                     onMarkEpisode({
@@ -382,7 +410,7 @@ export function ContinueWatching() {
 
   if (!data || data.length === 0) {
     return (
-      <section className="ct-panel min-h-[380px] p-4 md:min-h-[460px] md:p-6">
+      <section className="ct-panel relative min-h-[380px] overflow-hidden border-primary/15 bg-[radial-gradient(circle_at_top_right,rgba(229,9,20,0.12),transparent_34%),linear-gradient(145deg,hsl(var(--card)),hsl(var(--background)))] p-4 md:min-h-[460px] md:p-6">
         <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -402,9 +430,11 @@ export function ContinueWatching() {
           </Button>
         </div>
 
-        <div className="flex h-[320px] items-center justify-center rounded-3xl border border-dashed border-border/60 bg-background/30 p-6 text-center">
+        <div className="flex h-[320px] items-center justify-center rounded-3xl border border-dashed border-primary/25 bg-background/45 p-6 text-center shadow-inner">
           <div className="max-w-md space-y-3">
-            <Tv className="mx-auto h-10 w-10 text-primary" />
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary shadow-[0_12px_30px_rgba(229,9,20,0.12)]">
+              <Tv className="h-7 w-7" />
+            </span>
             <h3 className="text-lg font-semibold text-foreground">
               {t("home.continueWatchingEmptyTitle", "Nothing to continue yet")}
             </h3>
@@ -434,9 +464,9 @@ export function ContinueWatching() {
   ).length;
 
   return (
-    <section className="ct-panel relative overflow-hidden p-4 md:p-6">
+    <section className="ct-panel relative overflow-hidden border-primary/15 bg-[radial-gradient(circle_at_100%_0%,rgba(229,9,20,0.15),transparent_28%),linear-gradient(145deg,hsl(var(--card)),hsl(var(--background)))] p-4 md:p-6">
       <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-primary/10 blur-3xl" aria-hidden="true" />
-      <div className="relative mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="relative mb-5 flex flex-col gap-4 border-b border-border/60 pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
             <Play className="h-5 w-5 text-primary" />
@@ -470,14 +500,14 @@ export function ContinueWatching() {
             ) : null}
           </div>
         </div>
-        <Button asChild variant="outline" size="sm" className="relative min-h-10 bg-background/35">
+        <Button asChild variant="outline" size="sm" className="relative min-h-10 border-primary/20 bg-background/55 hover:border-primary/45 hover:bg-primary/5">
           <Link to="/watched">{t("home.viewWatchingList", "View Watching List")}</Link>
         </Button>
       </div>
 
       <div
         ref={scrollContainerRef}
-        className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-3 overscroll-x-contain [scrollbar-width:none] md:gap-5"
+        className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-4 overscroll-x-contain [scrollbar-width:none] md:gap-5"
       >
         {data.map((item) => (
           <ContinueWatchingCard

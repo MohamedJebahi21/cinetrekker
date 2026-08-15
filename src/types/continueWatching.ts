@@ -78,7 +78,10 @@ export interface ContinueWatchingVM {
   nextEpisodeAirDate: string | null; // formatted date
   nextEpisodeIsUpcoming: boolean;
   watchedEpisodeCount: number;
-  progressPercent: number; // 0-100
+  /** Release-aware denominator; null until authoritative episode metadata is available. */
+  releasedEpisodeCount: number | null;
+  /** Null when a verified released-episode total is unavailable. */
+  progressPercent: number | null;
   status: ShowStatus;
   /** True when TMDB confirms the series has ended and no episode remains to resume. */
   isFinished: boolean;
