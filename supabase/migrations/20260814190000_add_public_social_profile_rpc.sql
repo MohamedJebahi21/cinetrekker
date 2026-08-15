@@ -9,6 +9,11 @@
 -- exposes a target profile only when it is public or belongs to the caller.
 -- ============================================================
 
+-- The existing production comments table predates spoiler support. Add the
+-- non-null, default-false flag before exposing it through the public comment RPC.
+ALTER TABLE public.comments
+  ADD COLUMN IF NOT EXISTS contains_spoiler boolean NOT NULL DEFAULT false;
+
 CREATE OR REPLACE FUNCTION public.get_public_profile_summary(target_user_id uuid)
 RETURNS TABLE (
   user_id uuid,
