@@ -31,7 +31,7 @@
 - [ ] **O1 — Configure automated Vercel function alerts.** Blocked by the current Hobby-plan limitation: Vercel Alerts requires Pro. Do not upgrade without a separate user decision.
 - [ ] **O2 — Configure Upstash reachability and error-rate monitoring.** The managed Upstash database is connected and its dashboard is available through Vercel; configure alerting or a documented review cadence before broad traffic growth.
 - [ ] **O3 — Configure Supabase Auth monitoring.** Add a sign-up and OAuth-callback review procedure or provider-level alerts.
-- [ ] **O4 — Configure independent uptime checks.** A read-only assessment validated the public home page and cache-friendly discovery proxy as monitor targets. UptimeRobot is recommended for two five-minute HTTP monitors with a two-failure alert threshold; account creation and alert-contact confirmation still require approval. See `docs/UPTIME_MONITORING_RECOMMENDATION_2026-08-15.md`.
+- [x] **O4 — Configure independent uptime checks.** Two approved UptimeRobot monitors for the public home page and cache-friendly discovery proxy are active and currently report Up; owner dashboard evidence showed 2 Up / 0 Down. The provider’s free-plan five-minute cadence is active. Optional monitor naming and alert-noise tuning remain dashboard-maintenance tasks. See `docs/UPTIME_MONITORING_RECOMMENDATION_2026-08-15.md`.
 - [ ] **O5 — Optionally configure `SECURITY_ALERT_WEBHOOK_URL`.** Requires an approved webhook destination and explicit confirmation.
 - [x] **O6 — Publish the incident and observability runbook.** See `docs/PRODUCTION_OBSERVABILITY_RUNBOOK.md`.
 - [ ] **O7 — Assign incident ownership and test first response.** Name a primary and backup owner, then run a documented 503 or OAuth-callback drill.

@@ -27,3 +27,9 @@ No UptimeRobot, Better Stack, or other monitoring account has been created. No m
 
 [1] [UptimeRobot API and free-plan summary](https://uptimerobot.com/api/)  
 [2] [Better Stack Uptime](https://betterstack.com/uptime)
+
+## Activation and verification
+
+On 15 August 2026, the owner completed UptimeRobot’s emailed activation flow for both requested monitors. The owner’s dashboard evidence confirms that two CineTrekker monitors are active, both currently report **Up**, the current-status summary shows **2 Up / 0 Down**, and the dashboard reports no incident in the observed period. The provider’s dashboard uses the free-plan five-minute check cadence.
+
+The quick-monitor activation flow does not expose monitor naming, custom alert escalation, or response-keyword configuration during creation. The two active checks should therefore be treated as baseline availability monitors. If alert-noise tuning, richer monitor names, or an explicit two-failure escalation policy is needed, configure those in the UptimeRobot dashboard in a separate approved maintenance step.
