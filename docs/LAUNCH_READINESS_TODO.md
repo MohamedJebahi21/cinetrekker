@@ -1,6 +1,6 @@
 # CineTrekker Launch-Readiness Checklist
 
-> **Last reconciled:** 15 August 2026. This checklist separates completed production work from the remaining account-level, authenticated-flow, and operating-process work. The current `main` code release is `2c2dc3a`; `840d069` records the associated remediation documentation.
+> **Last reconciled:** 15 August 2026. This checklist separates completed production work from the remaining account-level, authenticated-flow, and operating-process work. The current `main` code release is `d719ca1`; `83d4d23` records the Continue Watching acceptance cleanup and `d719ca1` records the social-flow hardening.
 
 ## 1. Source Control and Local Development Alignment
 
@@ -14,7 +14,7 @@
 - [x] **P1 — Repair production Redis rate-limiting.** A managed Upstash Redis database is provisioned through Vercel for Production and Preview. The server prefers its managed REST aliases while retaining the legacy variable fallback; no provider secrets were copied into code or logs.
 - [x] **P2 — Verify normal and fail-closed protected-endpoint behavior.** The public TMDB proxy returned HTTP 200 with an `X-Request-Id` after remediation, and the browser homepage loaded real discovery content.
 - [x] **P3 — Apply `20260814190000_add_public_social_profile_rpc.sql` in Supabase.** The production migration was corrected for the existing comments schema and verified read-only after execution.
-- [ ] **P4 — Complete authenticated social-mutation acceptance testing.** Anonymous People, public-profile, counts, favorites, and comments displays are verified. Follow/unfollow and comment creation/reply testing still require a designated non-production test account and explicit confirmation before writing social data.
+- [ ] **P4 — Complete authenticated social-mutation acceptance testing.** Anonymous People, public-profile, counts, favorites, and comments displays are verified. The production People directory was rechecked after `d719ca1` with no browser-console errors; public directory data and social entry points rendered successfully. Follow/unfollow and comment creation/reply testing still require a designated non-production test account and explicit confirmation before writing social data. Recipient social notifications also require a trusted server-side or database-side creator; the client now avoids attempting unauthorized cross-user notification inserts.
 - [x] **P5 — Configure Google OAuth.** The provider is enabled and production and localhost sign-in paths were verified previously.
 - [ ] **P6 — Confirm Google OAuth audience readiness.** Confirm whether the consent screen is published or whether the intended launch users are listed as testers; revoke unused OAuth secrets in Google Cloud.
 
@@ -39,7 +39,7 @@
 ## 5. Product and Maintainability Follow-Up
 
 - [x] **M1a — Deploy the public social foundation.** People discovery, public profiles, counts, favorite titles, profile tabs, and public read RPCs are live and browser-verified.
-- [ ] **M1b — Complete the social interaction rollout.** Test and refine authenticated follows, comments, replies, notification behavior, friend suggestions, and meaningful empty states before broad social promotion.
+- [ ] **M1b — Complete the social interaction rollout.** The broad public-profile fallback has been removed, failures for follow/comment/reply mutations are surfaced in the UI, comment spoiler reveal is keyboard-accessible, likes refresh after completion, and signed-out commenters receive a clear sign-in path. Test and refine authenticated follows, comments, replies, trusted recipient-notification behavior, friend suggestions, and meaningful empty states before broad social promotion.
 - [ ] **M2 — Continue the staged Profile architecture refactor.** The identity hero is extracted; move remaining large Profile sections into focused components and hooks when product changes touch them.
 - [ ] **M3 — Add privacy-conscious product analytics.** Measure onboarding CTA intent, account completion, first saved title, first progress update, and return engagement without collecting sensitive content.
 - [ ] **M4 — Add moderation and support operations.** Define reporting, review, removal, escalation, and response-time behavior before broad public social rollout.
