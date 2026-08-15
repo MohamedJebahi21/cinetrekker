@@ -1,6 +1,6 @@
 # CineTrekker Launch-Readiness Checklist
 
-> **Last reconciled:** 15 August 2026. This checklist separates completed production work from the remaining account-level, authenticated-flow, and operating-process work. The current `main` code release is `d719ca1`; `83d4d23` records the Continue Watching acceptance cleanup, `d719ca1` records the social-flow hardening, and `docs/SOCIAL_ACCEPTANCE_TEST_2026-08-15.md` records the controlled authenticated social check.
+> **Last reconciled:** 15 August 2026. This checklist separates completed production work from the remaining account-level, authenticated-flow, and operating-process work. The current `main` code release is `d719ca1`; `83d4d23` records the Continue Watching acceptance cleanup, `d719ca1` records the social-flow hardening, `docs/SOCIAL_ACCEPTANCE_TEST_2026-08-15.md` records the controlled authenticated social check, and `docs/GOOGLE_OAUTH_AUDIENCE_REVIEW_2026-08-15.md` records the OAuth audience review.
 
 ## 1. Source Control and Local Development Alignment
 
@@ -16,7 +16,7 @@
 - [x] **P3 — Apply `20260814190000_add_public_social_profile_rpc.sql` in Supabase.** The production migration was corrected for the existing comments schema and verified read-only after execution.
 - [ ] **P4 — Complete authenticated social-mutation acceptance testing.** Controlled production checks passed for follow/unfollow, the deferred Details-page comments UI, comment creation, and reply-composer opening; all temporary data was removed and verified at zero. Reply submission and like/unlike remain unverified because the browser automation session reset during reply text entry and later lost the scroll container. Recipient social notifications also require a trusted server-side or database-side creator; the client intentionally avoids unauthorized cross-user notification inserts. See `docs/SOCIAL_ACCEPTANCE_TEST_2026-08-15.md`.
 - [x] **P5 — Configure Google OAuth.** The provider is enabled and production and localhost sign-in paths were verified previously.
-- [ ] **P6 — Confirm Google OAuth audience readiness.** Confirm whether the consent screen is published or whether the intended launch users are listed as testers; revoke unused OAuth secrets in Google Cloud.
+- [ ] **P6 — Resolve Google OAuth audience readiness.** A read-only Google Cloud check found the consent audience is **External** but the publishing state is **Testing** with no test users listed. Ordinary public users are therefore blocked from Google sign-in. Explicitly choose either **Publish app** for public launch or add the intended private-beta users as testers; revoke unused OAuth secrets in Google Cloud. See `docs/GOOGLE_OAUTH_AUDIENCE_REVIEW_2026-08-15.md`.
 
 ## 3. Deployment and Production Acceptance
 
