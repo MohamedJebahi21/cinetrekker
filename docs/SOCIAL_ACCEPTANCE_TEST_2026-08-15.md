@@ -2,32 +2,34 @@
 
 ## Scope and safeguards
 
-A controlled production acceptance check was run with the designated test account after explicit approval for reversible social writes. The test used the Reacher TV title (`media_id=108978`) and a public profile listed in the People directory. The only user-facing content created was a clearly labelled temporary parent comment. It was removed before the test was closed.
+A controlled production acceptance check was run with the designated test account after explicit approval for reversible social writes. The target was the Reacher TV title (`media_id=108978`). The run began with an empty rendered comment thread, created one clearly labelled temporary parent comment, exercised the reply composer, and exercised the like control. Every temporary record created in this run was removed before the run was closed.
 
 ## Verified results
 
-| Interaction | Result | Evidence |
+| Interaction | Result | Evidence and interpretation |
 |---|---|---|
-| Follow a public profile | **Passed** | The People-directory button changed from `Follow` to `Following`. |
-| Unfollow a public profile | **Passed** | The control returned to `Follow`; the follower count settled back to its original value after the directory refresh. |
-| Render the Details-page comments UI | **Passed** | Scrolling to the deferred Reviews section rendered the comments form, spoiler control, sort control, and comment thread. |
-| Create a comment | **Passed** | The temporary Reacher comment appeared immediately with its author link, delete control, zero-like state, and reply action. |
-| Open the reply composer | **Passed** | The reply composer opened for the temporary comment. |
-| Submit a reply | **Not verified** | The browser automation session reset twice when text entry was attempted. No reply was accepted or created. This is recorded as an automation-environment block, not an application failure. |
-| Like and unlike a comment | **Not verified** | Browser-session instability prevented access to the persisted comment after the reply attempts. No like was created. |
+| Follow a public profile | **Passed** | The People-directory control changed from `Follow` to `Following`, then returned to `Follow` after unfollowing. The follower count settled back to its original value after the directory refresh. |
+| Render the Details-page comments UI | **Passed** | Deferred loading rendered the comments form, spoiler control, sort control, author link, ownership control, like control, and reply action on the Reacher Details page. |
+| Create a comment | **Passed** | The temporary parent comment appeared immediately with the designated test account as author, a delete control, an initial zero-like state, and a reply action. |
+| Open the reply composer | **Passed** | The composer opened for the temporary parent comment and displayed its reply context. |
+| Submit a reply | **Not verified** | Browser-managed text entry repeatedly reset the page during the native interaction. A controlled browser-side form submission did not render or persist the reply. No reply record remained. This does not establish a production application failure, but it leaves normal-user reply submission unproven. |
+| Like a comment | **Follow-up required** | One controlled like action changed the visible count from `0` to `2`, rather than the expected `1`. The count therefore did not provide a passing single-like assertion. |
+| Unlike a comment | **Conditionally passed; follow-up required** | A fresh control after rerender changed the visible count from `2` back to `0`. The final state was restored, but the unexpected two-like increment must be investigated before this flow can be accepted. |
 | Recipient social notifications | **Not applicable to this release** | Client-side cross-user notification inserts are intentionally disabled. Recipient social notifications require an approved trusted server-side or database-side creator. |
 
 ## Cleanup verification
 
-The temporary follow relationship was removed through the People directory. The remaining temporary Reacher comment and any related likes were removed through the authenticated production SQL editor using an exact match on the designated test account, media ID, media type, and temporary content.
+The temporary parent comment was deleted through its authenticated ownership control. The rendered thread returned to the empty-comments state. A read-only SQL verification then showed zero matching temporary comments and two residual likes on the designated test account. Those residual test likes were removed under the same explicit approval, followed by a post-cleanup count query.
 
-| Verified cleanup query | Remaining records |
+| Cleanup check | Final result |
 |---|---:|
-| Temporary Reacher comments | **0** |
-| Likes attached to matching temporary comments | **0** |
+| Temporary Reacher comments matching either controlled test string | **0** |
+| Designated test-account `comment_likes` records after cleanup | **0** |
 
-No reply or like record existed to remove. The test account was restored to its pre-test social state.
+The test account is restored to a zero-like social-test state. No temporary comment, reply, follow relationship, or like remains from this controlled run.
 
-## Remaining acceptance work
+## Required follow-up before social acceptance can be closed
 
-The reply-submission and like/unlike paths still require a stable authenticated browser session or an equivalent approved end-to-end harness. Before recipient social notifications are promoted, implement and test a trusted notification creator with moderation, rate-limit, and abuse-review controls.
+The team should run the reply flow in a stable authenticated browser or Playwright session that uses normal keyboard input and proves that a child comment persists and renders. Separately, inspect the database constraints and like mutation path to determine why a single controlled like produced a count of two. In particular, verify the uniqueness rule for `(user_id, comment_id)`, the comment-like counter maintenance trigger or function, and the query-refresh behaviour. No schema, production configuration, or application code was changed by this test record.
+
+Before recipient social notifications are promoted, implement and test a trusted notification creator with moderation, rate-limit, and abuse-review controls.
