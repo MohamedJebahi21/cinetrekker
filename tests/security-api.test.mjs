@@ -180,6 +180,74 @@ test("production blocks protected requests when distributed rate limiting is una
   }
 });
 
+test("managed Upstash REST aliases take precedence over stale legacy credentials", async () => {
+  const previousNodeEnv = process.env.NODE_ENV;
+  const previousTmdbKey = process.env.TMDB_API_KEY;
+  const previousManagedUrl = process.env.UPSTASH_REDIS_REST_KV_REST_API_URL;
+  const previousManagedToken = process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN;
+  const previousLegacyUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const previousLegacyToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const originalFetch = global.fetch;
+  const requests = [];
+
+  try {
+    process.env.NODE_ENV = "test";
+    process.env.TMDB_API_KEY = "test-tmdb-key";
+    process.env.UPSTASH_REDIS_REST_KV_REST_API_URL = "https://managed-redis.test";
+    process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN = "managed-token";
+    process.env.UPSTASH_REDIS_REST_URL = "https://stale-redis.test";
+    process.env.UPSTASH_REDIS_REST_TOKEN = "stale-token";
+
+    const fetchStub = async (url, options = {}) => {
+      requests.push({ url: String(url), authorization: options.headers?.Authorization });
+      if (String(url).endsWith("/pipeline")) {
+        return {
+          ok: true,
+          async json() {
+            return { result: [{ result: 1 }, { result: 1 }, { result: 60 }] };
+          },
+        };
+      }
+      return {
+        ok: true,
+        async json() {
+          return { results: [] };
+        },
+      };
+    };
+    global.fetch = fetchStub;
+    setRateLimitDependenciesForTests({ fetch: fetchStub });
+
+    const req = createMockReq({
+      method: "GET",
+      headers: { origin: "http://localhost:8080" },
+      query: { endpoint: "/movie/1" },
+      url: "/api/tmdb-proxy",
+    });
+    const res = createMockRes();
+
+    await tmdbProxyHandler(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(requests[0], {
+      url: "https://managed-redis.test/pipeline",
+      authorization: "Bearer managed-token",
+    });
+  } finally {
+    const restore = (key, value) => {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    };
+    restore("NODE_ENV", previousNodeEnv);
+    restore("TMDB_API_KEY", previousTmdbKey);
+    restore("UPSTASH_REDIS_REST_KV_REST_API_URL", previousManagedUrl);
+    restore("UPSTASH_REDIS_REST_KV_REST_API_TOKEN", previousManagedToken);
+    restore("UPSTASH_REDIS_REST_URL", previousLegacyUrl);
+    restore("UPSTASH_REDIS_REST_TOKEN", previousLegacyToken);
+    global.fetch = originalFetch;
+  }
+});
+
 test("TMDB proxy rejects an exhausted distributed request budget", async () => {
   const previousNodeEnv = process.env.NODE_ENV;
   const previousTmdbKey = process.env.TMDB_API_KEY;

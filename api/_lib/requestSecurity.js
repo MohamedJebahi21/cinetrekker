@@ -35,8 +35,26 @@ const ENDPOINT_LIMITS = {
 
 const requestStore = new Map();
 let runtimeFetch = globalThis.fetch;
-let upstashRedisRestUrl = process.env.UPSTASH_REDIS_REST_URL;
-let upstashRedisRestToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+/**
+ * Vercel's managed Upstash integration uses a project-prefix contract that
+ * differs from the legacy application variables. Prefer the managed REST
+ * aliases whenever present so a rotated or provisioned store takes effect
+ * without copying secrets through a browser or source control.
+ */
+function getUpstashRestCredentials() {
+  return {
+    url:
+      process.env.UPSTASH_REDIS_REST_KV_REST_API_URL ||
+      process.env.UPSTASH_REDIS_REST_URL,
+    token:
+      process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN ||
+      process.env.UPSTASH_REDIS_REST_TOKEN,
+  };
+}
+
+let { url: upstashRedisRestUrl, token: upstashRedisRestToken } =
+  getUpstashRestCredentials();
 let lastCleanupAt = 0;
 
 function isProductionRuntime() {
@@ -295,15 +313,17 @@ export async function enforceAuthenticatedRequestSecurity(
 }
 
 export function setRateLimitDependenciesForTests({ fetch, url, token } = {}) {
+  const credentials = getUpstashRestCredentials();
   runtimeFetch = fetch ?? globalThis.fetch;
-  upstashRedisRestUrl = url ?? process.env.UPSTASH_REDIS_REST_URL;
-  upstashRedisRestToken = token ?? process.env.UPSTASH_REDIS_REST_TOKEN;
+  upstashRedisRestUrl = url ?? credentials.url;
+  upstashRedisRestToken = token ?? credentials.token;
 }
 
 export function resetRequestSecurityStateForTests() {
+  const credentials = getUpstashRestCredentials();
   requestStore.clear();
   lastCleanupAt = 0;
   runtimeFetch = globalThis.fetch;
-  upstashRedisRestUrl = process.env.UPSTASH_REDIS_REST_URL;
-  upstashRedisRestToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+  upstashRedisRestUrl = credentials.url;
+  upstashRedisRestToken = credentials.token;
 }
