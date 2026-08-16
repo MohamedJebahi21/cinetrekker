@@ -78,6 +78,7 @@ import { getRequestReference } from "@/lib/requestReference";
 import { getPublishedEpisodeTotal } from "@/lib/continueWatching/progress";
 import { toDisplayTitle } from "@/lib/displayTitle";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
+import { trackProductEvent } from "@/lib/analytics";
 import { PaginationDotButton, PaginationDots } from "@/components/ui/pagination-dots";
 import {
   buildCanonicalUrl,
@@ -712,6 +713,9 @@ export default function Details() {
   // ── Handlers ──
   const handleAddToWatchlist = async () => {
     const next = !optimisticInWatchlist;
+    if (next) {
+      trackProductEvent("first_title_saved", { media_kind: mediaType });
+    }
     setOptimisticInWatchlist(next); setIsWatchlistPending(true);
     try { if (next) await addToWatchlist(mediaId, mediaType); else await removeFromWatchlist(mediaId, mediaType); }
     catch { setOptimisticInWatchlist(!next); } finally { setIsWatchlistPending(false); }
@@ -732,14 +736,22 @@ export default function Details() {
   };
 
   const handleSaveStatus = ({ rating: r, note: n, status: s }: { rating: number; note: string; status: "watching" | "completed" | "dropped" | "plan_to_watch" }) => {
-    if (watched) updateWatchedItem(mediaId, mediaType, { rating: r, note: n, status: s });
-    else addToWatched(mediaId, mediaType, r, n, s);
+    if (watched) {
+      updateWatchedItem(mediaId, mediaType, { rating: r, note: n, status: s });
+    } else {
+      trackProductEvent("first_progress_recorded", { media_kind: mediaType, progress_mode: "title" });
+      addToWatched(mediaId, mediaType, r, n, s);
+    }
     setStatusDialogOpen(false);
   };
 
   const handleEpisodeToggle = (seasonNumber: number, episodeNumber: number, episodeName: string, airDate: string | null) => {
-    if (isEpisodeWatched(mediaId, seasonNumber, episodeNumber)) removeEpisodeWatched({ showId: mediaId, seasonNumber, episodeNumber });
-    else markEpisodeWatched({ showId: mediaId, seasonNumber, episodeNumber, episodeName, airDate: airDate || undefined, showName: title, posterPath: details?.poster_path });
+    if (isEpisodeWatched(mediaId, seasonNumber, episodeNumber)) {
+      removeEpisodeWatched({ showId: mediaId, seasonNumber, episodeNumber });
+    } else {
+      trackProductEvent("first_progress_recorded", { media_kind: mediaType, progress_mode: "episode" });
+      markEpisodeWatched({ showId: mediaId, seasonNumber, episodeNumber, episodeName, airDate: airDate || undefined, showName: title, posterPath: details?.poster_path });
+    }
   };
 
   const handleShare = async () => {

@@ -103,6 +103,9 @@ export interface PublicProfileSummary {
   followers_count: number;
   following_count: number;
   comments_count: number;
+  movies_count: number;
+  episodes_count: number;
+  shows_count: number;
 }
 
 export interface PublicProfileComment {
@@ -208,6 +211,9 @@ function parsePublicProfileSummary(value: unknown): PublicProfileSummary | null 
     followers_count: readCount(value, "followers_count"),
     following_count: readCount(value, "following_count"),
     comments_count: readCount(value, "comments_count"),
+    movies_count: readCount(value, "movies_count"),
+    episodes_count: readCount(value, "episodes_count"),
+    shows_count: readCount(value, "shows_count"),
   };
 }
 

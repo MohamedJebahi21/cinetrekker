@@ -452,7 +452,7 @@ export default function UserProfile() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.08, ease: "easeOut" }}
-            className="flex items-center gap-6 mb-8 border-b border-border/50 pb-6"
+            className="flex items-center gap-6 mb-8 border-b border-border/50 pb-6 overflow-x-auto no-scrollbar"
           >
             {[
               {
@@ -466,6 +466,18 @@ export default function UserProfile() {
                 value: resolvedProfile.following_count,
                 tab: "following" as const,
                 icon: Users,
+              },
+              {
+                label: "Movies",
+                value: resolvedProfile.movies_count,
+                tab: "favorites" as const,
+                icon: Film,
+              },
+              {
+                label: "Episodes",
+                value: resolvedProfile.episodes_count,
+                tab: "favorites" as const,
+                icon: Tv,
               },
               {
                 label: "Comments",

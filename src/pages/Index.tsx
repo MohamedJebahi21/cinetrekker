@@ -20,6 +20,7 @@ import { HomeWatchlistSkeleton } from "@/components/home/HomeWatchlistSkeleton";
 import { MotionRevealSection } from "@/components/motion/MotionRevealSection";
 import { PaginationDots, PaginationDotStatic } from "@/components/ui/pagination-dots";
 import GuestSyncBanner from "@/components/GuestSyncBanner";
+import { trackProductEvent } from "@/lib/analytics";
 import {
   buildCanonicalUrl,
   toBreadcrumbJsonLd,
@@ -221,7 +222,12 @@ export default function Index() {
             <Button asChild className="btn-primary-glow min-h-11 rounded-xl">
               <Link to="/discover">{t("home.guestJourneyExplore", "Explore what is trending")}</Link>
             </Button>
-            <Button asChild variant="outline" className="min-h-11 rounded-xl bg-background/35">
+            <Button
+              asChild
+              variant="outline"
+              className="min-h-11 rounded-xl bg-background/35"
+              onClick={() => trackProductEvent("signup_intent", { entry_surface: "home" })}
+            >
               <Link to="/signup">{t("home.createFreeAccount", "Create Free Account")}</Link>
             </Button>
           </div>

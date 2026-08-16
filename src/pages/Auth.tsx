@@ -36,6 +36,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import SEO from "@/components/SEO";
 import { useToast } from "@/hooks/use-toast";
 import { saveOAuthReturnPath } from "@/lib/authRedirect";
+import { trackProductEvent } from "@/lib/analytics";
 
 
 
@@ -78,6 +79,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
 
   const handleGoogleSignIn = async () => {
     try {
+      trackProductEvent("signup_intent", { entry_surface: "login" });
       saveOAuthReturnPath(redirectPath);
       const { error } = await signInWithProvider("google");
       if (error) throw error;
@@ -173,6 +175,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
       } else {
         const { error } = await signUp(emailValidation.data, password, { username: username.trim() });
         if (error) throw error;
+        trackProductEvent("account_created", { auth_method: "email" });
         const result = processSignupResult();
         setMessage({ type: "complete", text: result.userMessage });
       }
@@ -261,7 +264,12 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
             </CardDescription>
           </CardHeader>
           <CardContent className="px-5 pb-6 sm:px-8 sm:pb-8">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <Tabs value={activeTab} onValueChange={(val) => {
+              setActiveTab(val);
+              if (val === "register") {
+                trackProductEvent("signup_intent", { entry_surface: "login" });
+              }
+            }}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">{t("auth.loginTab", "Login")}</TabsTrigger>
                 <TabsTrigger value="register">{t("auth.registerTab", "Register")}</TabsTrigger>
