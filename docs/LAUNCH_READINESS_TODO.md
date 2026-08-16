@@ -41,7 +41,7 @@
 - [x] **M1a — Deploy the public social foundation.** People discovery, public profiles, counts, favorite titles, profile tabs, and public read RPCs are live and browser-verified.
 - [x] **M1b — Complete the social interaction rollout.** The broad public-profile fallback has been removed, failures for follow/comment/reply mutations are surfaced in the UI, comment spoiler reveal is keyboard-accessible, likes refresh after completion, and signed-out commenters receive a clear sign-in path. The like-count anomaly was fixed. **Trusted notifications** for follows and comment replies are now automatically generated via secure database triggers. A stable-session acceptance run for replies is the only remaining social-interaction proof.
 - [ ] **M2 — Continue the staged Profile architecture refactor.** The identity hero is extracted; move remaining large Profile sections into focused components and hooks when product changes touch them.
-- [ ] **M3 — Add privacy-conscious product analytics.** The provider comparison, strict event schema, implementation boundaries, and approval gate are documented in `docs/PRIVACY_CONSCIOUS_ANALYTICS_PLAN.md`. No script, provider, analytics event, or environment setting is live.
+- [x] **M3 — Add privacy-conscious product analytics.** A typed analytics wrapper (`src/lib/analytics.ts`) and event hooks for `signup_intent`, `account_created`, `first_title_saved`, and `first_progress_recorded` are implemented. The Umami script hook is present in `index.html`. Tracking remains inactive until the `VITE_ANALYTICS_ENDPOINT` environment variable is provided.
 - [x] **M4 — Establish launch-stage moderation and support operations.** `docs/MODERATION_PROCEDURES.md` defines Feedback-based reporting, review/removal criteria, escalation, response targets, an appeal path, and an approval-gated copyright notice route. An in-context comment-reporting feature remains a future product task.
 - [x] **M5 — Complete legal and recovery readiness.** Policy accuracy, support contact (`cinetrekker.contact@gmail.com`), and the backup/recovery process (`docs/BACKUP_AND_RECOVERY_PLAN.md`) are established. A staged rollout and rollback plan are documented in the observability runbook.
 
@@ -59,6 +59,8 @@
 | Dependency monitoring assessment | Supabase Auth Logs visibility and Upstash monitoring options assessed without provider changes | `docs/DEPENDENCY_MONITORING_ASSESSMENT_2026-08-15.md` |
 | Moderation procedure | Feedback-based intake, review criteria, response targets, escalation, appeals, and legal-contact boundary documented | `docs/MODERATION_PROCEDURES.md` |
 | Analytics measurement plan | Umami/Plausible comparison, minimal aggregate events, privacy contract, and approval gate documented | `docs/PRIVACY_CONSCIOUS_ANALYTICS_PLAN.md` |
+| Analytics implementation | Typed wrapper and event hooks for activation funnel implemented | `b043f44`, `src/lib/analytics.ts` |
+| Mobile profile stats | Movies and Episodes counts added to public profile with mobile rail | `b043f44`, `UserProfile.tsx` |
 | Windows reconciliation | Safe Windows preflight, pull, and quality-gate sequence documented | `docs/WINDOWS_CHECKOUT_SYNC.md` |
 | Backup and recovery plan | Supabase backup cadence, manual export procedure, and disaster recovery scenarios documented | `docs/BACKUP_AND_RECOVERY_PLAN.md` |
 
