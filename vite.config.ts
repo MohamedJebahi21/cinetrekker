@@ -266,6 +266,7 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "::",
       port: 8080,
+      allowedHosts: ["localhost", ".manus.computer"],
       headers: {
         "Cache-Control": "no-store",
       },
@@ -290,6 +291,7 @@ export default defineConfig(({ mode }) => {
     },
     preview: {
       port: 4173,
+      allowedHosts: ["localhost", ".manus.computer"],
       // Note: /api/tmdb-proxy is intentionally NOT listed here.
       // Our configurePreviewServer middleware intercepts it first and
       // makes authenticated calls to the Supabase edge function.

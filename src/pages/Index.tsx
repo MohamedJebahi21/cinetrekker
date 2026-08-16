@@ -17,6 +17,7 @@ import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { HomeSectionState } from "@/components/home/HomeSectionState";
 import { HomeStatsSnapshot } from "@/components/home/HomeStatsSnapshot";
 import { HomeWatchlistSkeleton } from "@/components/home/HomeWatchlistSkeleton";
+import { SuggestedPeopleRail } from "@/components/home/SuggestedPeopleRail";
 import { MotionRevealSection } from "@/components/motion/MotionRevealSection";
 import { PaginationDots, PaginationDotStatic } from "@/components/ui/pagination-dots";
 import GuestSyncBanner from "@/components/GuestSyncBanner";
@@ -533,6 +534,9 @@ export default function Index() {
             <MotionRevealSection tone="soft" delayClassName="delay-250" accentOpacityClassName="opacity-22">
               {discoveryHubSection}
             </MotionRevealSection>
+            <MotionRevealSection tone="soft" delayClassName="delay-300" accentOpacityClassName="opacity-18">
+              <SuggestedPeopleRail />
+            </MotionRevealSection>
             {hasLibraryActivity ? (
               <MotionRevealSection tone="soft" delayClassName="delay-250" accentOpacityClassName="opacity-18">
                 <HomeStatsSnapshot watched={watched} watchlist={watchlist} />
@@ -554,6 +558,9 @@ export default function Index() {
             </MotionRevealSection>
             <MotionRevealSection tone="soft" delayClassName="delay-150" accentOpacityClassName="opacity-20">
               {discoveryHubSection}
+            </MotionRevealSection>
+            <MotionRevealSection tone="soft" delayClassName="delay-250" accentOpacityClassName="opacity-18">
+              <SuggestedPeopleRail />
             </MotionRevealSection>
             {watchlistSection ? (
               <MotionRevealSection tone="soft" delayClassName="delay-250" accentOpacityClassName="opacity-22">

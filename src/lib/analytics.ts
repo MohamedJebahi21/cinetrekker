@@ -34,6 +34,12 @@ type AnalyticsEvents = {
   first_progress_recorded: FirstProgressRecordedProps;
 };
 
+type UmamiWindow = Window & {
+  umami?: {
+    track?: (eventName: string, properties?: Record<string, string>) => void;
+  };
+};
+
 /**
  * Tracks a product event using the configured analytics provider (Umami).
  * Fails silently if analytics are not configured or blocked.
@@ -43,7 +49,7 @@ export function trackProductEvent<K extends keyof AnalyticsEvents>(
   props: AnalyticsEvents[K]
 ) {
   // Only track if Umami is available in the global scope
-  const umami = (window as any).umami;
+  const umami = (window as UmamiWindow).umami;
   
   if (typeof umami?.track === "function") {
     try {
