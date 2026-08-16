@@ -104,7 +104,7 @@ function NotificationBellComponent() {
           {previewNotifications.map((notification) => (
             <div
               key={notification.id}
-              className="group/notification flex items-start gap-3 rounded-2xl border border-border/60 bg-background/58 px-3 py-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/28 hover:bg-card/82"
+              className="group/notification flex items-start gap-3 rounded-2xl border border-border/60 bg-background px-3 py-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/28 hover:bg-card"
             >
               <button
                 type="button"
@@ -143,7 +143,7 @@ function NotificationBellComponent() {
               <button
                 type="button"
                 onClick={() => handleMarkRead(notification.id)}
-                className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-xl border border-border/60 bg-card/70 px-3 text-xs font-semibold text-foreground shadow-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-xl border border-border/60 bg-card px-3 text-xs font-semibold text-foreground shadow-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 aria-label={`Mark notification as read: ${notification.message}`}
               >
                 <Check className="h-3.5 w-3.5" />
@@ -154,7 +154,7 @@ function NotificationBellComponent() {
           {unreadNotifications.length > previewNotifications.length ? (
             <Link
               to="/notifications"
-            className="flex min-h-10 items-center justify-center rounded-xl border border-border/60 bg-background/60 px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="flex min-h-10 items-center justify-center rounded-xl border border-border/60 bg-background px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               View {unreadNotifications.length - previewNotifications.length} more unread
             </Link>
@@ -196,7 +196,7 @@ function NotificationBellComponent() {
         <SheetContent
           side="top"
           showCloseButton={false}
-          className="safe-area-insets h-[88vh] max-h-[88vh] rounded-b-[28px] rounded-t-none border-b border-border/60 bg-card/98 px-0 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] pt-[max(0.5rem,env(safe-area-inset-top,0px))] shadow-2xl"
+          className="safe-area-insets h-[88vh] max-h-[88vh] rounded-b-[28px] rounded-t-none border-b border-border/60 bg-card px-0 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] pt-[max(0.5rem,env(safe-area-inset-top,0px))] shadow-2xl"
         >
           <SheetHeader className="border-b border-border/60 px-4 pb-4 pt-3 text-left">
             <div className="flex items-start justify-between gap-3">
@@ -240,9 +240,9 @@ function NotificationBellComponent() {
       <PopoverContent
         align="end"
         sideOffset={12}
-        className="w-[26rem] overflow-hidden rounded-[1.5rem] border-border/60 bg-popover/98 p-0 shadow-[0_26px_80px_hsl(var(--background)/0.5)] ring-1 ring-white/10 backdrop-blur-2xl"
+        className="w-[26rem] overflow-hidden rounded-[1.5rem] border-border/60 bg-popover p-0 shadow-[0_26px_80px_hsl(var(--background)/0.5)] ring-1 ring-white/10"
       >
-        <div className="relative overflow-hidden border-b border-border/60 bg-card/94 px-5 py-4">
+        <div className="relative overflow-hidden border-b border-border/60 bg-card px-5 py-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="text-base font-bold tracking-tight text-foreground">

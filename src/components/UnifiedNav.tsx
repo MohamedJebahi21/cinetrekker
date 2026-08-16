@@ -318,9 +318,9 @@ export function UnifiedNav() {
     <header
       role="banner"
       className={cn(
-        "sticky top-0 left-0 right-0 z-[90] border-b border-border/70 bg-background/88 pt-[env(safe-area-inset-top,0px)] backdrop-blur-xl transition-[background-color,box-shadow,border-color] duration-300",
+        "sticky top-0 left-0 right-0 z-[90] border-b border-border/70 bg-background pt-[env(safe-area-inset-top,0px)] backdrop-blur-xl transition-[background-color,box-shadow,border-color] duration-300",
         isScrolled &&
-          "border-border bg-[hsl(var(--background)/0.96)] shadow-[0_10px_28px_hsl(var(--foreground)/0.08)]",
+          "border-border bg-background shadow-[0_10px_28px_hsl(var(--foreground)/0.08)]",
       )}
     >
       <div className="topbar-inner container mx-auto flex h-16 max-w-[84rem] items-center gap-3 px-4 sm:px-6">

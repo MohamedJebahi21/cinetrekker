@@ -68,7 +68,7 @@ export default function Notifications() {
         canonical="https://cinetrekker.vercel.app/notifications"
       />
       <div className="page-container mx-auto max-w-5xl pt-20 pb-28 md:pb-0">
-        <div className="mb-8 overflow-hidden rounded-[1.75rem] border border-border/60 bg-card/78 p-5 shadow-[0_18px_70px_hsl(var(--background)/0.24)] ring-1 ring-white/5 backdrop-blur-2xl md:p-6">
+        <div className="mb-8 overflow-hidden rounded-[1.75rem] border border-border/60 bg-card p-5 shadow-[0_18px_70px_hsl(var(--background)/0.24)] ring-1 ring-white/5 md:p-6">
           <div className="flex flex-col gap-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
@@ -100,7 +100,7 @@ export default function Notifications() {
                   variant="secondary"
                   size="sm"
                   onClick={() => setFilter("all")}
-                  className="min-h-11 w-full gap-2 rounded-2xl border border-border/60 bg-background/60 font-semibold sm:w-auto"
+                  className="min-h-11 w-full gap-2 rounded-2xl border border-border/60 bg-background font-semibold sm:w-auto"
                 >
                   <Filter className="h-4 w-4" />
                   Reset filters
@@ -109,7 +109,7 @@ export default function Notifications() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-border/60 bg-background/60 px-4 py-3.5 shadow-inner">
+              <div className="rounded-2xl border border-border/60 bg-background px-4 py-3.5 shadow-inner">
                 <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
                   Total
                 </div>
@@ -125,7 +125,7 @@ export default function Notifications() {
                   {unreadCount}
                 </div>
               </div>
-              <div className="rounded-2xl border border-border/60 bg-background/60 px-4 py-3.5 shadow-inner">
+              <div className="rounded-2xl border border-border/60 bg-background px-4 py-3.5 shadow-inner">
                 <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
                   Read
                 </div>
@@ -160,7 +160,7 @@ export default function Notifications() {
                       "inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                       active
                         ? "border-primary bg-primary text-primary-foreground shadow-[0_12px_28px_hsl(var(--primary)/0.2)]"
-                        : "border-border/60 bg-background/60 text-muted-foreground hover:border-border hover:bg-background hover:text-foreground",
+                        : "border-border/60 bg-background text-muted-foreground hover:border-border hover:bg-background hover:text-foreground",
                     )}
                     aria-pressed={active}
                   >
@@ -185,7 +185,7 @@ export default function Notifications() {
             {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="flex items-center gap-4 rounded-3xl border border-border/60 bg-card/70 px-4 py-4"
+                className="flex items-center gap-4 rounded-3xl border border-border/60 bg-card px-4 py-4"
               >
                 <div className="h-16 w-11 animate-pulse rounded-xl bg-muted" />
                 <div className="min-w-0 flex-1 space-y-3">
@@ -235,7 +235,7 @@ export default function Notifications() {
                   "group flex items-start gap-4 rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:border-border/80 hover:shadow-lg hover:shadow-black/5 sm:p-4",
                   !n.is_read
                     ? "border-primary/25 bg-primary/[0.07] shadow-[0_14px_36px_hsl(var(--primary)/0.06)]"
-                    : "border-border/60 bg-card/72",
+                    : "border-border/60 bg-card",
                 )}
               >
                 <button

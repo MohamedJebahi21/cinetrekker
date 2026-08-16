@@ -21,7 +21,7 @@ export function MobileBottomNav() {
 
   return (
     <nav
-      className="mobile-nav-safe fixed bottom-0 left-0 right-0 z-40 border-t border-border/50 bg-background/92 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-[20px] md:hidden"
+      className="mobile-nav-safe fixed bottom-0 left-0 right-0 z-40 border-t border-border/50 bg-background pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-[20px] md:hidden"
       aria-label={t("nav.main", "Main navigation")}
     >
       <div className="flex min-h-[3.25rem] items-stretch">
