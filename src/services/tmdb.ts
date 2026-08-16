@@ -56,6 +56,19 @@ function setCachedResponse(cacheKey: string, ttlMs: number, data: unknown): void
   tmdbResponseCache.set(cacheKey, { expiresAt: Date.now() + ttlMs, data });
 }
 
+async function readJsonPayload(
+  response: Response,
+): Promise<{ data: unknown; isJson: boolean }> {
+  const body = await response.text();
+  if (!body.trim()) return { data: null, isJson: false };
+
+  try {
+    return { data: JSON.parse(body) as unknown, isJson: true };
+  } catch {
+    return { data: null, isJson: false };
+  }
+}
+
 function parseMaturityFromStorage(): {
   maturityLevel: MaturityRating;
   ageVerified: boolean;
@@ -213,8 +226,15 @@ const fetchTMDB = async <T>(
         });
       }
 
+      const payload = await readJsonPayload(response);
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData =
+          payload.data &&
+          typeof payload.data === "object" &&
+          !Array.isArray(payload.data)
+            ? (payload.data as Record<string, unknown>)
+            : {};
         const statusText =
           response.status === 404
             ? "Unavailable - Invalid endpoint"
@@ -229,12 +249,26 @@ const fetchTMDB = async <T>(
         });
 
         throw createRequestReferenceError(
-          errorData.error || `TMDB API error: ${statusText}`,
+          typeof errorData.error === "string"
+            ? errorData.error
+            : `TMDB API error: ${statusText}`,
           { requestId, status: response.status },
         );
       }
 
-      const data = await response.json();
+      if (!payload.isJson) {
+        logger.error("TMDB proxy returned a non-JSON response", {
+          endpoint,
+          status: response.status,
+          requestId,
+        });
+        throw createRequestReferenceError(
+          "TMDB proxy returned invalid data. Please try again.",
+          { requestId, status: response.status },
+        );
+      }
+
+      const data = payload.data as T;
       setCachedResponse(cacheKey, getCacheTTL(endpoint), data);
       return data;
     })();

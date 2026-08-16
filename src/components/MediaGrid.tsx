@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { motion, type Variants } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { useMediaEngagement } from '@/hooks/useMediaEngagement';
 import { Media } from '@/types/media';
 import { MediaCard, MediaCardSkeleton } from '@/components/MediaCard';
 import MovieSkeleton from '@/components/ui/MovieSkeleton';
@@ -42,10 +43,27 @@ export function MediaGrid({
   onToggleSelect,
 }: MediaGridProps) {
   const { t } = useTranslation();
-  const isFirstMount = React.useRef(true);
-  React.useEffect(() => {
+  const isFirstMount = useRef(true);
+  useEffect(() => {
     isFirstMount.current = false;
   }, []);
+
+  const engagementQuery = useMediaEngagement(
+    items.map((item) => ({
+      id: item.id,
+      media_type: item.media_type || 'movie',
+    }))
+  );
+
+  const engagementMap = new Map<string, { comment_count: number; tracking_count: number }>();
+  if (engagementQuery.data) {
+    engagementQuery.data.forEach((eng) => {
+      engagementMap.set(`${eng.media_type}-${eng.media_id}`, {
+        comment_count: eng.comment_count,
+        tracking_count: eng.tracking_count,
+      });
+    });
+  }
 
   const containerVariants = {
     initial: isFirstMount.current ? { opacity: 0 } : { opacity: 1 },
@@ -119,6 +137,7 @@ export function MediaGrid({
               ) ?? false
             }
             onToggleSelect={onToggleSelect}
+            engagement={engagementMap.get(`${media.media_type || 'movie'}-${media.id}`)}
           />
         </motion.div>
       ))}

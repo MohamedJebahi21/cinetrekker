@@ -141,6 +141,13 @@ export interface DirectoryProfile {
   comments_count: number;
 }
 
+export interface MediaEngagement {
+  media_id: number;
+  media_type: string;
+  comment_count: number;
+  tracking_count: number;
+}
+
 type UnknownRecord = Record<string, unknown>;
 
 type CommentRow = Comment;
@@ -243,6 +250,27 @@ function parsePublicProfileComment(value: unknown): PublicProfileComment | null 
     contains_spoiler: value.contains_spoiler === true,
     likes_count: readCount(value, "likes_count"),
     created_at: createdAt,
+  };
+}
+
+function parseMediaEngagement(value: unknown): MediaEngagement | null {
+  if (!isRecord(value)) return null;
+  const mediaId = value.media_id;
+  const mediaType = value.media_type;
+  if (
+    typeof mediaId !== "number" ||
+    !Number.isInteger(mediaId) ||
+    mediaId <= 0 ||
+    (mediaType !== "movie" && mediaType !== "tv")
+  ) {
+    return null;
+  }
+
+  return {
+    media_id: mediaId,
+    media_type: mediaType,
+    comment_count: readCount(value, "comment_count"),
+    tracking_count: readCount(value, "tracking_count"),
   };
 }
 
@@ -567,5 +595,18 @@ export const socialService = {
     return rows
       .map(parseDirectoryProfile)
       .filter((profile): profile is DirectoryProfile => profile !== null);
+  },
+
+  async getMediaEngagement(
+    mediaIds: number[],
+    mediaTypes: string[],
+  ): Promise<MediaEngagement[]> {
+    const rows = await getPublicRpcRows("get_media_engagement", {
+      p_media_ids: mediaIds,
+      p_media_types: mediaTypes,
+    });
+    return rows
+      .map(parseMediaEngagement)
+      .filter((engagement): engagement is MediaEngagement => engagement !== null);
   },
 };

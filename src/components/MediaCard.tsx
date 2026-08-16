@@ -7,6 +7,8 @@ import {
   Loader2,
   Bookmark,
   Share2,
+  MessageSquare,
+  Flame,
 } from "lucide-react";
 import { motion, useMotionValue, useTransform, useSpring, useReducedMotion } from "framer-motion";
 import { Media } from "@/types/media";
@@ -42,6 +44,10 @@ export interface MediaCardProps {
   selectable?: boolean;
   selected?: boolean;
   onToggleSelect?: (mediaId: number, mediaType: "movie" | "tv") => void;
+  engagement?: {
+    comment_count: number;
+    tracking_count: number;
+  };
 }
 
 const STATUS_CONFIG: Record<string, { icon: string; labelKey: string; defaultLabel: string; color: string }> = {
@@ -137,6 +143,7 @@ export const MediaCard = React.memo(function MediaCard({
   selectable = false,
   selected = false,
   onToggleSelect,
+  engagement,
 }: MediaCardProps) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
@@ -353,6 +360,30 @@ export const MediaCard = React.memo(function MediaCard({
           {/* Poster with gradient overlay for text readability */}
           <div className="aspect-[2/3] relative overflow-hidden rounded-t-xl bg-surface-dark-3">
             <PosterImage posterPath={media.poster_path} alt={posterAlt} />
+
+            {/* Social Engagement Badges */}
+            <div className="absolute left-2 top-2 z-20 flex flex-col gap-1.5">
+              {engagement && engagement.tracking_count > 0 && (
+                <Badge
+                  variant="secondary"
+                  className="h-6 gap-1 bg-black/60 px-2 text-[10px] font-bold text-white backdrop-blur-md border-white/10"
+                >
+                  <Flame className="h-3 w-3 text-orange-500 fill-orange-500" />
+                  {engagement.tracking_count > 999
+                    ? `${(engagement.tracking_count / 1000).toFixed(1)}k`
+                    : engagement.tracking_count}
+                </Badge>
+              )}
+              {engagement && engagement.comment_count > 0 && (
+                <Badge
+                  variant="secondary"
+                  className="h-6 gap-1 bg-black/60 px-2 text-[10px] font-bold text-white backdrop-blur-md border-white/10"
+                >
+                  <MessageSquare className="h-3 w-3 text-primary fill-primary/20" />
+                  {engagement.comment_count}
+                </Badge>
+              )}
+            </div>
 
             {/* Enhanced gradient overlay - darker on hover */}
             <div className="absolute inset-0 bg-gradient-to-t from-surface-dark-2/80 via-transparent to-transparent opacity-100 transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100" />

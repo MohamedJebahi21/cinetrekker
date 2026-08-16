@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight, Film } from "lucide-react";
 import { Media } from "@/types/media";
 import { MediaCard, MediaCardSkeleton } from "@/components/MediaCard";
+import { useMediaEngagement } from "@/hooks/useMediaEngagement";
 import { Button } from "@/components/ui/button";
 import {
   PaginationDotButton,
@@ -95,6 +96,22 @@ export function MediaCarouselEnhanced({
   emptyMessage,
   showManualNav = true,
 }: MediaCarouselProps) {
+  const engagementQuery = useMediaEngagement(
+    items.map((item) => ({
+      id: item.id,
+      media_type: item.media_type || "movie",
+    }))
+  );
+
+  const engagementMap = new Map<string, { comment_count: number; tracking_count: number }>();
+  if (engagementQuery.data) {
+    engagementQuery.data.forEach((eng) => {
+      engagementMap.set(`${eng.media_type}-${eng.media_id}`, {
+        comment_count: eng.comment_count,
+        tracking_count: eng.tracking_count,
+      });
+    });
+  }
   const { t } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollCheckFrameRef = useRef<number | null>(null);
@@ -258,7 +275,11 @@ export function MediaCarouselEnhanced({
                 key={`${item.id}-${item.media_type || "unknown"}`}
                 className="w-[calc(50vw-1.5rem)] flex-shrink-0 snap-start [content-visibility:auto] [contain-intrinsic-size:220px_420px] sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
               >
-                <MediaCard media={item} interactionMode="rail" />
+                <MediaCard
+                  media={item}
+                  interactionMode="rail"
+                  engagement={engagementMap.get(`${item.media_type || 'movie'}-${item.id}`)}
+                />
               </div>
             ))}
           </div>
