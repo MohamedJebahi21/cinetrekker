@@ -123,7 +123,7 @@ test.describe("Mobile carousel", () => {
     await page.goto("/search", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
 
-    const searchInput = page.locator('input[type="text"][inputmode="search"]').first();
+    const searchInput = page.locator('input[type="text"][inputmode="search"]:visible').first();
 
     await expect(searchInput).toBeVisible();
     await searchInput.fill("inception");

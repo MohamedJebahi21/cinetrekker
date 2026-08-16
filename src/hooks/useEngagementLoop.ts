@@ -7,6 +7,7 @@ export function useEngagementLoop() {
   const [streakDays, setStreakDays] = useState(0);
   const [comebackDays, setComebackDays] = useState(0);
   const [inactivityHours, setInactivityHours] = useState(0);
+  const [checkedInToday, setCheckedInToday] = useState(false);
 
   useEffect(() => {
     const firstVisit = registerEngagementVisit();
@@ -15,6 +16,7 @@ export function useEngagementLoop() {
     setInactivityHours(
       Math.max(0, Math.floor((Date.now() - firstVisit.lastActiveAt) / (60 * 60 * 1000))),
     );
+    setCheckedInToday(firstVisit.checkedInToday);
     if (!hasRegisteredSession) {
       trackEngagementEvent("session_start", {
         streakDays: firstVisit.streakDays,
@@ -27,6 +29,7 @@ export function useEngagementLoop() {
       const state = readEngagementState();
       setStreakDays(state.streakDays);
       setInactivityHours(state.inactivityHours);
+      setCheckedInToday(state.checkedInToday);
     };
 
     let intervalId: number | null = null;
@@ -70,6 +73,7 @@ export function useEngagementLoop() {
     streakDays,
     comebackDays,
     inactivityHours,
+    checkedInToday,
     reminderTone,
   };
 }

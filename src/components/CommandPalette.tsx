@@ -40,10 +40,11 @@ export default function CommandPalette() {
       typeof value === "object" &&
       "id" in value &&
       "name" in value &&
-      typeof (value as { id?: unknown }).id === "string" &&
+      (typeof (value as { id?: unknown }).id === "string" ||
+        typeof (value as { id?: unknown }).id === "number") &&
       typeof (value as { name?: unknown }).name === "string"
     );
-  }) as Array<{ id: string; name: string }>;
+  }) as Array<{ id: string | number; name: string }>;
 
   // Global shortcut
   useEffect(() => {
@@ -157,6 +158,14 @@ export default function CommandPalette() {
           <CommandSeparator />
 
           <CommandGroup heading={t("commandPalette.collections", "Collections")}>
+            <CommandItem
+              onSelect={() => {
+                navigate("/collections");
+                setOpen(false);
+              }}
+            >
+              {t("commandPalette.openCollections", "Open collections")}
+            </CommandItem>
             {safeCollections.length === 0 && (
               <CommandItem disabled>
                 {t("commandPalette.noCollections", "No collections")}
@@ -166,7 +175,7 @@ export default function CommandPalette() {
               <CommandItem
                 key={c.id}
                 onSelect={() => {
-                  navigate(`/watchlist?collection=${c.id}`);
+                  navigate(`/collections/${c.id}`);
                   setOpen(false);
                 }}
               >

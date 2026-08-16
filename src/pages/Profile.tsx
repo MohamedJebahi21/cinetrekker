@@ -462,11 +462,11 @@ export default function Profile() {
             }
           }
 
-          // Subscribe to real-time updates (only if component is still mounted)
+          // Realtime updates are intentionally initialized after the first render path.
+          // A slow channel handshake must never keep the profile page in its loading state.
           if (isMounted) {
-            subscription = await profileService.subscribeToProfile(
-              user.id,
-              (updatedProfile) => {
+            void profileService
+              .subscribeToProfile(user.id, (updatedProfile) => {
                 if (!isMounted) return;
                 setProfilePhoto(
                   updatedProfile.avatar_url ||
@@ -485,8 +485,17 @@ export default function Profile() {
                       : [],
                   ),
                 );
-              },
-            );
+              })
+              .then((nextSubscription) => {
+                if (isMounted) {
+                  subscription = nextSubscription;
+                } else {
+                  void nextSubscription.unsubscribe();
+                }
+              })
+              .catch((subscriptionError) => {
+                console.warn("Profile realtime updates unavailable", subscriptionError);
+              });
           }
         } else {
           // Guest user - load from localStorage only
@@ -1956,6 +1965,7 @@ export default function Profile() {
                   totalWatchDaysHoursMinutes={totalWatchDaysHoursMinutes}
                   achievementMilestones={achievementMilestones}
                   userId={user?.id}
+                  isEditMode={isEditMode}
                 />
               </motion.section>
 

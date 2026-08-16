@@ -21,7 +21,10 @@ export type EngagementEventName =
   | "watched_remove"
   | "recommendation_hide"
   | "share_open"
-  | "share_copy_link";
+  | "share_copy_link"
+  | "daily_checkin"
+  | "quest_complete"
+  | "trivia_answer";
 
 export type EngagementEvent = {
   name: EngagementEventName;
@@ -116,7 +119,12 @@ export function registerEngagementVisit(nowTs = Date.now()) {
   const yesterday = dayKeyFromTs(nowTs - 24 * 60 * 60 * 1000);
 
   if (!canUseStorage()) {
-    return { streakDays: 1, comebackDays: 0, lastActiveAt: nowTs };
+    return {
+      streakDays: 1,
+      comebackDays: 0,
+      lastActiveAt: nowTs,
+      checkedInToday: true,
+    };
   }
 
   const current = parseVisits(window.localStorage.getItem(VISITS_KEY));
@@ -129,6 +137,7 @@ export function registerEngagementVisit(nowTs = Date.now()) {
       streakDays: next.streakDays || 1,
       comebackDays: Math.floor((nowTs - previousActiveAt) / (24 * 60 * 60 * 1000)),
       lastActiveAt: previousActiveAt,
+      checkedInToday: true,
     };
   }
 
@@ -145,6 +154,7 @@ export function registerEngagementVisit(nowTs = Date.now()) {
     streakDays: next.streakDays,
     comebackDays: Math.floor((nowTs - previousActiveAt) / (24 * 60 * 60 * 1000)),
     lastActiveAt: previousActiveAt,
+    checkedInToday: true,
   };
 }
 
@@ -154,6 +164,7 @@ export function readEngagementState() {
       streakDays: 0,
       lastActiveAt: Date.now(),
       inactivityHours: 0,
+      checkedInToday: false,
     };
   }
   const parsed = parseVisits(window.localStorage.getItem(VISITS_KEY));
@@ -162,6 +173,7 @@ export function readEngagementState() {
     streakDays: parsed.streakDays,
     lastActiveAt: parsed.lastActiveAt,
     inactivityHours: Math.max(0, inactivityHours),
+    checkedInToday: parsed.lastVisitDay === dayKeyFromTs(Date.now()),
   };
 }
 

@@ -96,6 +96,8 @@ const Achievements = lazy(() => import("./pages/Achievements"));
 const PrintWatchlist = lazy(() => import("./pages/PrintWatchlist"));
 const AwardWinners = lazy(() => import("./pages/AwardWinners"));
 const YearInReview = lazy(() => import("./pages/YearInReview"));
+const Collections = lazy(() => import("./pages/Collections"));
+const Quests = lazy(() => import("./pages/Quests"));
 const isVercelHost =
   typeof window !== "undefined" &&
   /(?:^|\.)vercel\.app$/i.test(window.location.hostname);
@@ -316,6 +318,22 @@ function AppRoutes() {
             }
           />
           <Route
+            path="/collections"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Collections />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/collections/:collectionId"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Collections />
+              </Suspense>
+            }
+          />
+          <Route
             path="/watched"
             element={
               <Suspense fallback={<RouteSpinner />}>
@@ -393,6 +411,16 @@ function AppRoutes() {
               <ProtectedRoute>
                 <Suspense fallback={<RouteSpinner />}>
                   <Achievements />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/quests"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<RouteSpinner />}>
+                  <Quests />
                 </Suspense>
               </ProtectedRoute>
             }

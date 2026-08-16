@@ -15,6 +15,7 @@ import Bookmark from "lucide-react/dist/esm/icons/bookmark";
 import CheckSquare from "lucide-react/dist/esm/icons/check-square";
 import Trophy from "lucide-react/dist/esm/icons/trophy";
 import Heart from "lucide-react/dist/esm/icons/heart";
+import FolderHeart from "lucide-react/dist/esm/icons/folder-heart";
 import { useQuery } from "@tanstack/react-query";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -60,6 +61,7 @@ const navigationGroups = [
       { path: "/", labelKey: "nav.home", defaultLabel: "Home", icon: Compass, desc: "Your personal feed and tonight's picks." },
       { path: "/profile", labelKey: "nav.profile", defaultLabel: "Profile", icon: User, desc: "Manage your account, rank, and stats." },
       { path: "/watchlist", labelKey: "nav.watchlist", defaultLabel: "Watchlist", icon: Bookmark, desc: "Your list of titles to watch." },
+      { path: "/collections", labelKey: "nav.collections", defaultLabel: "Collections", icon: FolderHeart, desc: "Curate themed lists worth sharing." },
       { path: "/watched", labelKey: "nav.watched", defaultLabel: "Watched", icon: CheckSquare, desc: "Your logged watch history." },
       { path: "/following", labelKey: "nav.following", defaultLabel: "Following", icon: User, desc: "Titles you are tracking for updates." },
     ],
@@ -87,6 +89,7 @@ const navigationGroups = [
       { path: "/calendar", labelKey: "nav.calendar", defaultLabel: "Calendar", icon: CalendarDays, desc: "TV schedule and movie release tracker." },
       { path: "/stats", labelKey: "nav.stats", defaultLabel: "Stats", icon: Award, desc: "Detailed analysis of your viewing habits." },
       { path: "/achievements", labelKey: "nav.achievements", defaultLabel: "Achievements", icon: Award, desc: "Trophies and milestones unlocked." },
+      { path: "/quests", labelKey: "nav.quests", defaultLabel: "Monthly Quests", icon: Trophy, desc: "Time-limited challenges and rewards." },
       { path: "/year-in-review", labelKey: "nav.yearInReview", defaultLabel: "Year In Review", icon: Award, desc: "Your personal annual wrapped recap." },
       { path: "/awards", labelKey: "nav.awards", defaultLabel: "Awards", icon: Award, desc: "Browse award winners and nominees." },
     ],
@@ -100,6 +103,7 @@ const menuLinks = [
   { path: "/profile", labelKey: "nav.profile", defaultLabel: "Profile", icon: User },
   { path: "/discover", labelKey: "nav.discover", defaultLabel: "Discover", icon: Compass },
   { path: "/watchlist", labelKey: "nav.watchlist", defaultLabel: "Watchlist", icon: Bookmark },
+  { path: "/collections", labelKey: "nav.collections", defaultLabel: "Collections", icon: FolderHeart },
   { path: "/watched", labelKey: "nav.watched", defaultLabel: "Watched", icon: CheckSquare },
   { path: "/trending", labelKey: "nav.trending", defaultLabel: "Trending", icon: Film },
   { path: "/search", labelKey: "nav.search", defaultLabel: "Search", icon: Compass },
@@ -107,6 +111,7 @@ const menuLinks = [
   { path: "/calendar", labelKey: "nav.calendar", defaultLabel: "Calendar", icon: CalendarDays },
   { path: "/stats", labelKey: "nav.stats", defaultLabel: "Stats", icon: Award },
   { path: "/achievements", labelKey: "nav.achievements", defaultLabel: "Achievements", icon: Award },
+  { path: "/quests", labelKey: "nav.quests", defaultLabel: "Monthly Quests", icon: Trophy },
   { path: "/genres", labelKey: "nav.genres", defaultLabel: "Genres", icon: Layers },
   { path: "/decades", labelKey: "nav.decades", defaultLabel: "Decades", icon: CalendarDays },
   { path: "/awards", labelKey: "nav.awards", defaultLabel: "Awards", icon: Award },
@@ -336,7 +341,7 @@ export function UnifiedNav() {
           </span>
         </div>
 
-        <div className="topbar-search min-w-0 flex-1">
+        <div className={cn("topbar-search min-w-0 flex-1", pathname === "/search" && "hidden md:block")}>
           <Suspense fallback={searchFallback}>
             <SearchDropdown />
           </Suspense>
@@ -419,19 +424,6 @@ export function UnifiedNav() {
 
         <div className="ml-auto flex items-center gap-1 md:hidden">
           {user && <NotificationBell />}
-          <Button asChild variant="outline" size="icon" className="h-11 w-11">
-            <Link to={user ? "/profile" : "/login"} aria-label={t("nav.profile", "Profile")}>
-              {profileImageUrl ? (
-                <img
-                  src={profileImageUrl}
-                  alt={t("nav.profile", "Profile")}
-                  className="h-8 w-8 rounded-full object-cover"
-                />
-              ) : (
-                <User className="h-5 w-5" />
-              )}
-            </Link>
-          </Button>
           <Button
             variant="outline"
             size="icon"

@@ -46,6 +46,7 @@ export type ProfileIdentityHeroProps = {
   totalWatchDaysHoursMinutes: string;
   achievementMilestones: Milestone[];
   userId?: string;
+  isEditMode?: boolean;
 };
 
 export function ProfileIdentityHero({
@@ -68,6 +69,7 @@ export function ProfileIdentityHero({
   totalWatchDaysHoursMinutes,
   achievementMilestones,
   userId,
+  isEditMode = false,
 }: ProfileIdentityHeroProps) {
   const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
     if (event.currentTarget.contains(event.relatedTarget as Node | null)) {
@@ -86,8 +88,8 @@ export function ProfileIdentityHero({
   return (
     <Card className="profile-identity-card profile-premium-hero relative overflow-hidden">
       <CardContent className="p-5 sm:p-7 lg:p-8">
-        <div className="profile-identity-layout flex flex-col gap-6 sm:flex-row sm:items-start lg:gap-8">
-          <div className="flex w-full flex-col items-center sm:w-[9.5rem] sm:min-w-[9.5rem]">
+        <div className="profile-identity-layout flex items-start gap-4 sm:gap-7 lg:gap-8">
+          <div className="flex w-20 shrink-0 flex-col items-center sm:w-[9.5rem] sm:min-w-[9.5rem]">
             <div
               className="relative group"
               onDragOver={(event) => {
@@ -99,7 +101,7 @@ export function ProfileIdentityHero({
             >
               <div
                 className={cn(
-                  "profile-avatar-frame relative h-28 w-28 overflow-hidden rounded-2xl border-2 border-border bg-muted shadow-lg sm:h-32 sm:w-32",
+                  "profile-avatar-frame relative h-20 w-20 overflow-hidden rounded-2xl border-2 border-border bg-muted shadow-lg sm:h-32 sm:w-32",
                   isAvatarDragActive && "border-primary scale-[1.02]",
                 )}
               >
@@ -144,7 +146,8 @@ export function ProfileIdentityHero({
               ref={profilePhotoInputRef}
               onChange={onPhotoChange}
             />
-            <div className="mt-4 flex w-full max-w-[11rem] flex-col gap-2">
+            {isEditMode ? <>
+              <div className="mt-4 flex w-full max-w-[11rem] flex-col gap-2">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -180,6 +183,7 @@ export function ProfileIdentityHero({
             <p className="mt-2 max-w-[11rem] text-center text-[11px] leading-4 text-muted-foreground">
               {text("profile.photoUploadHint", "Drag and drop a profile picture or choose a file.")}
             </p>
+            </> : null}
           </div>
 
           <div className="min-w-0 flex-1">

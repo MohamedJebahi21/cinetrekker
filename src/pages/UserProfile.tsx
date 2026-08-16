@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { getImageUrl, getMediaTitle } from "@/services/tmdb";
 import { buildCanonicalUrl } from "@/lib/seo";
 import { useToast } from "@/hooks/use-toast";
+import { TasteMatchCard } from "@/components/social/TasteMatchCard";
 
 // Public-profile response contracts are parsed in the social service, keeping
 // direct Supabase RPC details out of this presentation component.
@@ -501,6 +502,10 @@ export default function UserProfile() {
               </button>
             ))}
           </motion.div>
+
+          {!isOwnProfile && user && (
+            <TasteMatchCard target={resolvedProfile} />
+          )}
 
           {/* ── Tabbed content ────────────────────────────────────────────── */}
           <motion.div
