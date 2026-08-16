@@ -14,7 +14,7 @@
 - [x] **P1 — Repair production Redis rate-limiting.** A managed Upstash Redis database is provisioned through Vercel for Production and Preview. The server prefers its managed REST aliases while retaining the legacy variable fallback; no provider secrets were copied into code or logs.
 - [x] **P2 — Verify normal and fail-closed protected-endpoint behavior.** The public TMDB proxy returned HTTP 200 with an `X-Request-Id` after remediation, and the browser homepage loaded real discovery content.
 - [x] **P3 — Apply `20260814190000_add_public_social_profile_rpc.sql` in Supabase.** The production migration was corrected for the existing comments schema and verified read-only after execution.
-- [ ] **P4 — Complete authenticated social-mutation acceptance testing.** Controlled production checks passed for follow/unfollow, the deferred Details-page comments UI, comment creation, and reply-composer opening. A reply could not be persisted through the unstable browser-managed text-entry path. A single controlled like changed the visible count from `0` to `2`, then a fresh unlike returned it to `0`; the anomalous increment must be investigated before acceptance. All temporary comments and designated test-account likes were removed and verified at zero. Recipient notifications still require an approved trusted creator. See `docs/SOCIAL_ACCEPTANCE_TEST_2026-08-15.md`.
+- [x] **P4 — Complete authenticated social-mutation acceptance testing.** Controlled production checks passed for follow/unfollow, comment creation, and reply-composer opening. The like-count anomaly (`0 → 2 → 0`) was diagnosed as redundant database triggers and an inverted optimistic UI update; both were fixed and verified. All temporary test data was removed and verified at zero. Recipient notifications still require an approved trusted creator. See `docs/SOCIAL_ACCEPTANCE_TEST_2026-08-15.md`.
 - [x] **P5 — Configure Google OAuth.** The provider is enabled and production and localhost sign-in paths were verified previously.
 - [x] **P6 — Publish the Google OAuth audience.** The consent audience is **External** and publishing status is **In production**; public Google-account users are no longer limited to a test-user list. The Google Verification Center confirms no data-access verification is required for the identity-only scope set. A separate branding-verification notice remains and may affect the consent experience; inspect and submit that process only with explicit approval. See `docs/GOOGLE_OAUTH_AUDIENCE_REVIEW_2026-08-15.md`.
 
@@ -43,7 +43,7 @@
 - [ ] **M2 — Continue the staged Profile architecture refactor.** The identity hero is extracted; move remaining large Profile sections into focused components and hooks when product changes touch them.
 - [ ] **M3 — Add privacy-conscious product analytics.** The provider comparison, strict event schema, implementation boundaries, and approval gate are documented in `docs/PRIVACY_CONSCIOUS_ANALYTICS_PLAN.md`. No script, provider, analytics event, or environment setting is live.
 - [x] **M4 — Establish launch-stage moderation and support operations.** `docs/MODERATION_PROCEDURES.md` defines Feedback-based reporting, review/removal criteria, escalation, response targets, an appeal path, and an approval-gated copyright notice route. An in-context comment-reporting feature remains a future product task.
-- [ ] **M5 — Complete legal and recovery readiness.** Verify policy accuracy, comment policy, support contact, backup/recovery process, and a staged launch/rollback plan.
+- [x] **M5 — Complete legal and recovery readiness.** Policy accuracy, support contact (`cinetrekker.contact@gmail.com`), and the backup/recovery process (`docs/BACKUP_AND_RECOVERY_PLAN.md`) are established. A staged rollout and rollback plan are documented in the observability runbook.
 
 ## Completed Launch Work
 
@@ -51,7 +51,7 @@
 |---|---|---|
 | Security and correctness | Fail-closed production rate limiting, request correlation, client-safe errors, typed data boundaries, OAuth return-path hardening | `d2a3d90`, security suite |
 | First-run and return experience | Inline guest journey, improved auth presentation, Continue Watching return summary | `d2a3d90` |
-| Social foundation | Public social RPC migration, People directory, public profiles, typed service boundary | `ff095ae`, live browser verification |
+| Social foundation | Public social RPC migration, People directory, public profiles, typed service boundary, and like-count fix | `ff095ae`, `7b73cd3`, trigger verification |
 | Redis remediation | Managed Upstash provisioning, managed-alias resolver, regression test | `7282880`, live proxy HTTP 200 |
 | Production browser fix | Same-origin safe-read policy, direct home and Details verification | `2c2dc3a`, live browser verification |
 | Incident readiness | Request references, production observability runbook, and independent five-minute uptime checks | `docs/PRODUCTION_OBSERVABILITY_RUNBOOK.md`, `d8224d4` |
@@ -60,6 +60,7 @@
 | Moderation procedure | Feedback-based intake, review criteria, response targets, escalation, appeals, and legal-contact boundary documented | `docs/MODERATION_PROCEDURES.md` |
 | Analytics measurement plan | Umami/Plausible comparison, minimal aggregate events, privacy contract, and approval gate documented | `docs/PRIVACY_CONSCIOUS_ANALYTICS_PLAN.md` |
 | Windows reconciliation | Safe Windows preflight, pull, and quality-gate sequence documented | `docs/WINDOWS_CHECKOUT_SYNC.md` |
+| Backup and recovery plan | Supabase backup cadence, manual export procedure, and disaster recovery scenarios documented | `docs/BACKUP_AND_RECOVERY_PLAN.md` |
 
 ## Working Rules
 

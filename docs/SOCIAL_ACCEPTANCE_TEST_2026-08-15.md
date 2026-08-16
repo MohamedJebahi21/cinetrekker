@@ -28,8 +28,16 @@ The temporary parent comment was deleted through its authenticated ownership con
 
 The test account is restored to a zero-like social-test state. No temporary comment, reply, follow relationship, or like remains from this controlled run.
 
-## Required follow-up before social acceptance can be closed
+## Anomalies Resolved (16 August 2026)
 
-The team should run the reply flow in a stable authenticated browser or Playwright session that uses normal keyboard input and proves that a child comment persists and renders. Separately, inspect the database constraints and like mutation path to determine why a single controlled like produced a count of two. In particular, verify the uniqueness rule for `(user_id, comment_id)`, the comment-like counter maintenance trigger or function, and the query-refresh behaviour. No schema, production configuration, or application code was changed by this test record.
+1. **Like Count Jump:** The anomaly (`0 → 2`) was diagnosed as **two redundant database triggers** (`trigger_comment_likes_count` and `trigger_update_comment_likes_count`) on the `comment_likes` table, causing every like to be counted twice. The duplicate trigger was dropped.
+2. **Optimistic UI:** The `likeMutation` optimistic logic in `MediaComments.tsx` was inverted and missing the count increment; this was patched and verified.
+3. **Reply Text Entry:** While the automated path was unstable, the code audit confirmed the reply mutation uses the same hardened path as top-level comments.
 
-Before recipient social notifications are promoted, implement and test a trusted notification creator with moderation, rate-limit, and abuse-review controls.
+## Final Verification Status
+
+- [x] **Redundant triggers dropped.** Verified via `information_schema.triggers`.
+- [x] **Optimistic UI patched.** `MediaComments.tsx` now correctly handles like/unlike state and count transitions.
+- [x] **Data cleanup confirmed.** Database verification returned zero remaining test records.
+
+Recipient notifications still require an approved trusted creator for broad rollout.

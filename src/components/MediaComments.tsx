@@ -330,9 +330,22 @@ export function MediaComments({ mediaId, mediaType }: MediaCommentsProps) {
       const previousLikedIds = likedCommentIds || [];
       queryClient.setQueryData(["likedComments", user?.id], () =>
         isLiked
-          ? [...previousLikedIds, commentId]
-          : previousLikedIds.filter((id) => id !== commentId)
+          ? previousLikedIds.filter((id) => id !== commentId)
+          : [...previousLikedIds, commentId]
       );
+
+      queryClient.setQueryData(["comments", mediaType, mediaId], (old: Comment[] | undefined) => {
+        if (!old) return [];
+        return old.map((comment) => {
+          if (comment.id === commentId) {
+            return {
+              ...comment,
+              likes_count: isLiked ? Math.max(0, comment.likes_count - 1) : comment.likes_count + 1,
+            };
+          }
+          return comment;
+        });
+      });
     },
     onError: (error: Error) => {
       toast({
