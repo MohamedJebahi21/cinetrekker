@@ -185,6 +185,12 @@ function NotificationBellComponent() {
             </button>
           )}
         </div>
+        <Link
+          to="/settings#section-notifications"
+          className="mt-2 inline-flex min-h-9 w-full items-center justify-center rounded-xl text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          Manage notification preferences
+        </Link>
       </div>
     </section>
   );

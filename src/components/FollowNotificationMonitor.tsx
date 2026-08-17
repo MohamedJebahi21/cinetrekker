@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { getMovieDetails, getTVDetails } from "@/services/tmdb";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -14,6 +15,10 @@ import {
 } from "@/hooks/useTitleFollows";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import {
+  readNotificationPreferences,
+  subscribeToNotificationPreferences,
+} from "@/lib/notificationPreferences";
 
 const GUEST_TITLE_STATE_KEY = "cinetrekker_guest_followed_title_state";
 
@@ -156,11 +161,21 @@ function buildChangeNotifications(
 export function FollowNotificationMonitor() {
   const { user } = useAuth();
   const { followedTitles } = useTitleFollows();
+  const [preferencesVersion, setPreferencesVersion] = useState(0);
+
+  useEffect(
+    () =>
+      subscribeToNotificationPreferences(() => {
+        setPreferencesVersion((version) => version + 1);
+      }),
+    [],
+  );
 
   useQuery({
     queryKey: [
       "follow-notification-monitor",
       user?.id ?? "guest",
+      preferencesVersion,
       followedTitles.map((item) => item.id).join("|"),
     ],
     enabled: followedTitles.length > 0 && !isFollowStateSchemaMissing(),
@@ -213,26 +228,27 @@ export function FollowNotificationMonitor() {
       const currentById = Object.fromEntries(
         currentStates.map((item) => [item.state.movie_id, item.state]),
       );
+      const notificationPreferences = readNotificationPreferences(user?.id);
 
       if (!user) {
         const previousById = readGuestTitleStates();
-        const guestNotifications = currentStates.flatMap(
-          ({ follow, title, state }) => {
-            const previous = previousById[state.movie_id];
-            return buildChangeNotifications(follow, title, previous, state).map(
-              (notification) => ({
-                id: notification.eventKey,
-                user_id: "guest",
-                movie_id: state.movie_id,
-                event_key: notification.eventKey,
-                type: notification.type,
-                message: notification.message,
-                created_at: new Date().toISOString(),
-                is_read: false,
-              }),
-            );
-          },
-        );
+        const guestNotifications = notificationPreferences.releaseUpdates
+          ? currentStates.flatMap(({ follow, title, state }) => {
+              const previous = previousById[state.movie_id];
+              return buildChangeNotifications(follow, title, previous, state).map(
+                (notification) => ({
+                  id: notification.eventKey,
+                  user_id: "guest",
+                  movie_id: state.movie_id,
+                  event_key: notification.eventKey,
+                  type: notification.type,
+                  message: notification.message,
+                  created_at: new Date().toISOString(),
+                  is_read: false,
+                }),
+              );
+            })
+          : [];
 
         if (guestNotifications.length > 0) {
           const existingKeys = new Set(
@@ -246,9 +262,11 @@ export function FollowNotificationMonitor() {
 
           if (nextNotifications.length > 0) {
             appendGuestNotifications(nextNotifications);
-            nextNotifications.slice(0, 3).forEach((item) => {
-              toast({ title: "New Update", description: item.message });
-            });
+            if (notificationPreferences.inAppToasts) {
+              nextNotifications.slice(0, 3).forEach((item) => {
+                toast({ title: "New Update", description: item.message });
+              });
+            }
           }
         }
 
@@ -283,19 +301,20 @@ export function FollowNotificationMonitor() {
         ) as Record<string, FollowedTitleState>;
       }
 
-      const notificationsToInsert = currentStates.flatMap(
-        ({ follow, title, state }) =>
-          buildChangeNotifications(follow, title, previousById[state.movie_id], state).map(
-            (notification) => ({
-              user_id: user.id,
-              movie_id: state.movie_id,
-              event_key: notification.eventKey,
-              type: notification.type,
-              message: notification.message,
-              is_read: false,
-            }),
-          ),
-      );
+      const notificationsToInsert = notificationPreferences.releaseUpdates
+        ? currentStates.flatMap(({ follow, title, state }) =>
+            buildChangeNotifications(follow, title, previousById[state.movie_id], state).map(
+              (notification) => ({
+                user_id: user.id,
+                movie_id: state.movie_id,
+                event_key: notification.eventKey,
+                type: notification.type,
+                message: notification.message,
+                is_read: false,
+              }),
+            ),
+          )
+        : [];
 
       if (notificationsToInsert.length > 0) {
         const { error: notificationError } = await supabase
@@ -309,9 +328,11 @@ export function FollowNotificationMonitor() {
           throw notificationError;
         }
 
-        notificationsToInsert.slice(0, 3).forEach((item) => {
-          toast({ title: "New update", description: item.message });
-        });
+        if (notificationPreferences.inAppToasts) {
+          notificationsToInsert.slice(0, 3).forEach((item) => {
+            toast({ title: "New update", description: item.message });
+          });
+        }
       }
 
       const { error: stateError } = await supabase

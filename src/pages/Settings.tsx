@@ -35,6 +35,9 @@ import {
   ShieldCheck,
   Globe,
   ChevronRight,
+  BellRing,
+  MessageCircle,
+  CalendarClock,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -79,6 +82,11 @@ import {
   saveReduceMotionPreference,
 } from "@/lib/accessibility-preferences";
 import {
+  readNotificationPreferences,
+  saveNotificationPreferences,
+  type NotificationPreferences,
+} from "@/lib/notificationPreferences";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -120,6 +128,7 @@ const FONT_SIZE_STEP = 10;
 
 const NAV_ITEMS = [
   { id: "section-account",        label: "Account",        icon: UserRound    },
+  { id: "section-notifications",  label: "Notifications",  icon: BellRing     },
   { id: "section-accessibility",  label: "Accessibility",  icon: Accessibility },
   { id: "section-privacy",        label: "Privacy",        icon: Lock         },
   { id: "section-content-safety", label: "Content Safety", icon: Shield       },
@@ -307,6 +316,9 @@ export default function Settings() {
   const [reduceMotion, setReduceMotion] = useState<boolean>(
     () => readAccessibilityPreferences().reduceMotion,
   );
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences>(
+    () => readNotificationPreferences(user?.id),
+  );
 
   const text = useCallback(
     (key: string, fallback: string) => humanizeUiText(String(t(key, fallback))),
@@ -409,6 +421,10 @@ export default function Settings() {
     if (el) window.setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 40);
   }, [location.hash]);
 
+  useEffect(() => {
+    setNotificationPreferences(readNotificationPreferences(user?.id));
+  }, [user?.id]);
+
   // Font size
   useEffect(() => {
     const clamped = saveFontSizePreference(fontSize);
@@ -435,6 +451,22 @@ export default function Settings() {
     toast({
       title: text("settings.changeSaved", "Preference updated"),
       description: text("settings.changeSavedDesc", "Your change will be included when you tap Save Changes."),
+    });
+  };
+
+  const updateNotificationPreference = (
+    key: keyof NotificationPreferences,
+    checked: boolean,
+  ) => {
+    const next = saveNotificationPreferences(user?.id, {
+      ...notificationPreferences,
+      [key]: checked,
+    });
+    setNotificationPreferences(next);
+    triggerPulse(`notification-${key}`);
+    toast({
+      title: text("settings.notificationsUpdated", "Notification preference updated"),
+      description: text("settings.notificationsUpdatedDesc", "This choice is active on this device."),
     });
   };
 
@@ -724,7 +756,105 @@ export default function Settings() {
                 </SettingsSection>
               </motion.div>
 
-              {/* ══ 2. ACCESSIBILITY ════════════════════════════════════════ */}
+              {/* ══ 2. NOTIFICATIONS ════════════════════════════════════════ */}
+              <motion.div id="section-notifications" variants={rowVariants}>
+                <SettingsSection
+                  id="section-notifications-panel"
+                  label={text("settings.notificationsSection", "Notifications")}
+                  icon={BellRing}
+                  title={text("settings.notificationsTitle", "Notification controls")}
+                  description={text("settings.notificationsDescription", "Choose the updates that earn your attention. These choices are saved on this device and affect the in-app notification center immediately.")}
+                >
+                  <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-start gap-3">
+                      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+                        <BellRing className="h-4.5 w-4.5" aria-hidden="true" />
+                      </span>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">
+                          {text("settings.notificationDeliveryNow", "In-app delivery is on")}
+                        </p>
+                        <p className="mt-1 max-w-2xl text-sm leading-5 text-muted-foreground">
+                          {text("settings.notificationDeliveryNowDesc", "Release updates appear in your CineTrekker inbox while you are using the app. Browser alerts and email delivery are not enabled yet.")}
+                        </p>
+                      </div>
+                    </div>
+                    <Link
+                      to="/notifications"
+                      className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-background px-3.5 text-sm font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    >
+                      {text("settings.openNotificationCenter", "Open inbox")}
+                      <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    </Link>
+                  </div>
+
+                  <Divider />
+
+                  <SettingsSwitchRow
+                    id="notification-releaseUpdates"
+                    icon={BellRing}
+                    title={text("settings.releaseUpdates", "Followed-title release updates")}
+                    description={text("settings.releaseUpdatesDesc", "Add new episodes, movie releases, season changes, and release-date changes from titles you follow to your notification inbox.")}
+                    checked={notificationPreferences.releaseUpdates}
+                    onCheckedChange={(checked) => updateNotificationPreference("releaseUpdates", checked)}
+                    isPulsing={pulseRowId === "notification-releaseUpdates"}
+                  />
+
+                  <Divider />
+
+                  <SettingsSwitchRow
+                    id="notification-inAppToasts"
+                    icon={Sparkles}
+                    title={text("settings.inAppToastAlerts", "In-app update banners")}
+                    description={text("settings.inAppToastAlertsDesc", "Show a small on-screen banner when a new eligible update reaches your inbox.")}
+                    checked={notificationPreferences.inAppToasts}
+                    disabled={!notificationPreferences.releaseUpdates}
+                    disabledHint={text("settings.inAppToastAlertsHint", "Turn on followed-title release updates first.")}
+                    onCheckedChange={(checked) => updateNotificationPreference("inAppToasts", checked)}
+                    isPulsing={pulseRowId === "notification-inAppToasts"}
+                  />
+
+                  <Divider />
+
+                  <div className="flex items-start justify-between gap-6 py-4">
+                    <div className="flex min-w-0 flex-1 items-start gap-3">
+                      <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground">
+                          {text("settings.socialUpdates", "Replies and social activity")}
+                        </p>
+                        <p className="mt-0.5 text-sm leading-snug text-muted-foreground">
+                          {text("settings.socialUpdatesDesc", "Comment replies, follow activity, and collection interactions will use this preference when their delivery is enabled.")}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="shrink-0 rounded-full border border-border/60 bg-muted/40 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                      {text("common.comingSoon", "Coming soon")}
+                    </span>
+                  </div>
+
+                  <Divider />
+
+                  <div className="flex items-start justify-between gap-6 py-4">
+                    <div className="flex min-w-0 flex-1 items-start gap-3">
+                      <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground">
+                          {text("settings.weeklyDigest", "Weekly watchlist digest")}
+                        </p>
+                        <p className="mt-0.5 text-sm leading-snug text-muted-foreground">
+                          {text("settings.weeklyDigestDesc", "A calm weekly look at what is new, what is unfinished, and what is waiting in your watchlist. It will always be opt-in.")}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="shrink-0 rounded-full border border-border/60 bg-muted/40 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                      {text("common.comingSoon", "Coming soon")}
+                    </span>
+                  </div>
+                </SettingsSection>
+              </motion.div>
+
+              {/* ══ 3. ACCESSIBILITY ════════════════════════════════════════ */}
               <motion.div id="section-accessibility" variants={rowVariants}>
                 <SettingsSection
                   id="section-accessibility-panel"
