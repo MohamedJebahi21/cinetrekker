@@ -46,3 +46,9 @@ The settings route correctly redirects an anonymous session to the existing sign
 ## Validation plan
 
 Review the refined theme locally at desktop and mobile breakpoints across public routes. Run type checking, a production build, and existing browser regression tests before committing and deploying the redesign.
+
+## Production deployment check — 2026-08-17
+
+Commit `8d2b50d` was pushed to `main`. The first production-token inspection immediately after the push still returned the preceding color system (`--background: 228 18% 7%`, `--card: 228 16% 11%`, and `--primary: 353 70% 56%`). After the deployment window, a production reload rendered the expected signed-in home experience, including Up Next and Continue Watching, without a client-visible regression.
+
+Production token inspection then confirmed that the editorial noir release is live: `--background: 222 15% 7%`, `--card: 222 12% 11%`, `--secondary: 222 10% 14%`, and `--primary: 356 68% 48%`. These values match the committed release palette.
