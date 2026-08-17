@@ -218,6 +218,120 @@ export type Database = {
         };
         Relationships: [];
       };
+      notification_preferences: {
+        Row: {
+          user_id: string;
+          release_updates: boolean;
+          in_app_toasts: boolean;
+          social_activity: boolean;
+          weekly_digest: boolean;
+          browser_push_enabled: boolean;
+          digest_day: number;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          release_updates?: boolean;
+          in_app_toasts?: boolean;
+          social_activity?: boolean;
+          weekly_digest?: boolean;
+          browser_push_enabled?: boolean;
+          digest_day?: number;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          release_updates?: boolean;
+          in_app_toasts?: boolean;
+          social_activity?: boolean;
+          weekly_digest?: boolean;
+          browser_push_enabled?: boolean;
+          digest_day?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          content_encoding: string;
+          user_agent: string | null;
+          is_active: boolean;
+          created_at: string;
+          last_seen_at: string;
+          revoked_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          content_encoding?: string;
+          user_agent?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          last_seen_at?: string;
+          revoked_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          endpoint?: string;
+          p256dh?: string;
+          auth?: string;
+          content_encoding?: string;
+          user_agent?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          last_seen_at?: string;
+          revoked_at?: string | null;
+        };
+        Relationships: [];
+      };
+      notification_delivery_log: {
+        Row: {
+          id: string;
+          user_id: string;
+          notification_id: string | null;
+          subscription_id: string | null;
+          delivery_key: string;
+          channel: string;
+          status: string;
+          detail: string | null;
+          created_at: string;
+          delivered_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          notification_id?: string | null;
+          subscription_id?: string | null;
+          delivery_key: string;
+          channel: string;
+          status?: string;
+          detail?: string | null;
+          created_at?: string;
+          delivered_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          notification_id?: string | null;
+          subscription_id?: string | null;
+          delivery_key?: string;
+          channel?: string;
+          status?: string;
+          detail?: string | null;
+          created_at?: string;
+          delivered_at?: string | null;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           adult_content_enabled: boolean;

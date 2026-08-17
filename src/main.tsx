@@ -18,6 +18,7 @@ import { installChunkErrorHandlers } from "@/lib/chunkErrorRecovery";
 import "@/lib/trustedTypes";
 import { scheduleIdleTask } from "@/lib/idleCallback";
 import { createLogger } from "@/lib/logger";
+import { registerCineTrekkerServiceWorker } from "@/lib/browserPush";
 
 // Install chunk error handlers BEFORE React renders
 installChunkErrorHandlers();
@@ -120,6 +121,14 @@ void initI18n()
 
     document.documentElement.dataset.cinetrekkerMounted = "true";
     window.dispatchEvent(new Event("cinetrekker:mounted"));
+
+    // This only installs the background notification handler. Permission is
+    // requested later from the explicit Settings action, never on page load.
+    scheduleIdleTask(() => {
+      void registerCineTrekkerServiceWorker().catch((error) => {
+        logger.warn("Service worker registration failed", error);
+      });
+    }, { timeout: 3500 });
 
     const isVercelHost =
       typeof window !== "undefined" && /(?:^|\.)vercel\.app$/i.test(window.location.hostname);

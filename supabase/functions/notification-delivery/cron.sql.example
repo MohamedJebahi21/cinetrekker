@@ -1,0 +1,45 @@
+-- CineTrekker notification-delivery schedules
+--
+-- Before running this file, deploy the notification-delivery Edge Function and
+-- create the two Vault secrets below with real values. Never commit either
+-- secret to source control.
+--
+-- select vault.create_secret('YOUR_CRON_SECRET', 'notification_delivery_cron_secret');
+-- select vault.create_secret('YOUR_SUPABASE_ANON_OR_PUBLISHABLE_KEY', 'notification_delivery_publishable_key');
+--
+-- The Edge Function validates x-cron-secret before it scans notification rows.
+-- Keep the pending scan modest; delivery log rows make retries idempotent.
+
+select cron.schedule(
+  'cinetrekker-notification-pending-push',
+  '0 */15 * * *',
+  $$
+    select net.http_post(
+      url := (select decrypted_secret from vault.decrypted_secrets where name = 'project_url') || '/functions/v1/notification-delivery',
+      headers := jsonb_build_object(
+        'Content-Type', 'application/json',
+        'apikey', (select decrypted_secret from vault.decrypted_secrets where name = 'notification_delivery_publishable_key'),
+        'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'notification_delivery_cron_secret')
+      ),
+      body := '{"mode":"pending_notifications"}'::jsonb
+    );
+  $$
+);
+
+-- Run daily; each user receives a digest only when their chosen UTC digest_day
+-- matches the current day and they opted in.
+select cron.schedule(
+  'cinetrekker-weekly-watchlist-digest',
+  '0 0 17 * * *',
+  $$
+    select net.http_post(
+      url := (select decrypted_secret from vault.decrypted_secrets where name = 'project_url') || '/functions/v1/notification-delivery',
+      headers := jsonb_build_object(
+        'Content-Type', 'application/json',
+        'apikey', (select decrypted_secret from vault.decrypted_secrets where name = 'notification_delivery_publishable_key'),
+        'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'notification_delivery_cron_secret')
+      ),
+      body := '{"mode":"weekly_digest"}'::jsonb
+    );
+  $$
+);

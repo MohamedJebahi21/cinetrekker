@@ -82,8 +82,17 @@ import {
   saveReduceMotionPreference,
 } from "@/lib/accessibility-preferences";
 import {
+  BrowserPushError,
+  disableBrowserPush,
+  enableBrowserPush,
+  getBrowserPushReadiness,
+  type BrowserPushReadiness,
+} from "@/lib/browserPush";
+import {
+  loadSyncedNotificationPreferences,
   readNotificationPreferences,
   saveNotificationPreferences,
+  syncNotificationPreferences,
   type NotificationPreferences,
 } from "@/lib/notificationPreferences";
 import {
@@ -319,6 +328,10 @@ export default function Settings() {
   const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences>(
     () => readNotificationPreferences(user?.id),
   );
+  const [browserPushReadiness, setBrowserPushReadiness] = useState<BrowserPushReadiness>(
+    () => getBrowserPushReadiness(),
+  );
+  const [isUpdatingBrowserPush, setIsUpdatingBrowserPush] = useState(false);
 
   const text = useCallback(
     (key: string, fallback: string) => humanizeUiText(String(t(key, fallback))),
@@ -422,7 +435,20 @@ export default function Settings() {
   }, [location.hash]);
 
   useEffect(() => {
+    let cancelled = false;
     setNotificationPreferences(readNotificationPreferences(user?.id));
+
+    if (!user?.id) return () => { cancelled = true; };
+
+    void loadSyncedNotificationPreferences(user.id)
+      .then((preferences) => {
+        if (!cancelled) setNotificationPreferences(preferences);
+      })
+      .catch((error) => {
+        logger.warn("Notification preferences could not sync", error);
+      });
+
+    return () => { cancelled = true; };
   }, [user?.id]);
 
   // Font size
@@ -464,10 +490,55 @@ export default function Settings() {
     });
     setNotificationPreferences(next);
     triggerPulse(`notification-${key}`);
+    void syncNotificationPreferences(user?.id, next).catch((error) => {
+      logger.warn("Notification preference sync failed", error);
+    });
     toast({
       title: text("settings.notificationsUpdated", "Notification preference updated"),
-      description: text("settings.notificationsUpdatedDesc", "This choice is active on this device."),
+      description: text("settings.notificationsUpdatedDesc", "This choice is active now and will sync to your account when available."),
     });
+  };
+
+  const handleBrowserPushChange = async () => {
+    if (!user?.id) {
+      toast({
+        title: text("settings.browserAlertsSignInTitle", "Sign in to enable browser alerts"),
+        description: text("settings.browserAlertsSignInDesc", "Browser alerts are connected to your CineTrekker account."),
+      });
+      return;
+    }
+
+    setIsUpdatingBrowserPush(true);
+    try {
+      const nextReadiness = notificationPreferences.browserPushEnabled
+        ? await disableBrowserPush(user.id)
+        : await enableBrowserPush(user.id);
+      setBrowserPushReadiness(nextReadiness);
+      setNotificationPreferences((current) => ({
+        ...current,
+        browserPushEnabled: !current.browserPushEnabled,
+      }));
+      toast({
+        title: notificationPreferences.browserPushEnabled
+          ? text("settings.browserAlertsDisabled", "Browser alerts disabled")
+          : text("settings.browserAlertsEnabled", "Browser alerts enabled"),
+        description: notificationPreferences.browserPushEnabled
+          ? text("settings.browserAlertsDisabledDesc", "This device will no longer receive CineTrekker browser alerts.")
+          : text("settings.browserAlertsEnabledDesc", "This device can now receive the updates you choose."),
+      });
+    } catch (error) {
+      const description = error instanceof BrowserPushError
+        ? error.message
+        : text("settings.browserAlertsErrorDesc", "CineTrekker could not update browser alerts on this device.");
+      setBrowserPushReadiness(getBrowserPushReadiness());
+      toast({
+        title: text("settings.browserAlertsError", "Browser alerts were not changed"),
+        description,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingBrowserPush(false);
+    }
   };
 
   const handleSaveSettings = async () => {
@@ -813,6 +884,49 @@ export default function Settings() {
                     onCheckedChange={(checked) => updateNotificationPreference("inAppToasts", checked)}
                     isPulsing={pulseRowId === "notification-inAppToasts"}
                   />
+
+                  <Divider />
+
+                  <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-start gap-3">
+                      <BellRing className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground">
+                          {text("settings.browserAlerts", "Browser alerts")}
+                        </p>
+                        <p className="mt-0.5 text-sm leading-snug text-muted-foreground">
+                          {browserPushReadiness.permission === "denied"
+                            ? text("settings.browserAlertsDenied", "Alerts are blocked in this browser. You can re-enable them from your browser's site settings.")
+                            : browserPushReadiness.supported && browserPushReadiness.configured
+                              ? text("settings.browserAlertsReady", "Receive the release updates you choose even when CineTrekker is not open.")
+                              : text("settings.browserAlertsPending", "The permission flow is ready; secure delivery configuration is being completed.")}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant={notificationPreferences.browserPushEnabled ? "outline" : "default"}
+                      disabled={
+                        isUpdatingBrowserPush ||
+                        !browserPushReadiness.supported ||
+                        !browserPushReadiness.secure ||
+                        !browserPushReadiness.configured ||
+                        browserPushReadiness.permission === "denied"
+                      }
+                      onClick={() => void handleBrowserPushChange()}
+                      className="min-h-10 shrink-0 bg-primary px-4 font-semibold text-primary-foreground hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground"
+                    >
+                      {isUpdatingBrowserPush
+                        ? text("settings.browserAlertsUpdating", "Updating…")
+                        : notificationPreferences.browserPushEnabled
+                          ? text("settings.browserAlertsDisable", "Disable on this device")
+                          : browserPushReadiness.permission === "denied"
+                            ? text("settings.browserAlertsBlocked", "Blocked by browser")
+                            : !browserPushReadiness.configured
+                              ? text("common.comingSoon", "Coming soon")
+                              : text("settings.browserAlertsEnable", "Enable browser alerts")}
+                    </Button>
+                  </div>
 
                   <Divider />
 
