@@ -5,6 +5,7 @@ import {
 } from "@/lib/notificationPreferences";
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_WEB_PUSH_PUBLIC_KEY?.trim() || "";
+const SERVICE_WORKER_READY_TIMEOUT_MS = 8_000;
 
 export type BrowserPushReadiness = {
   supported: boolean;
@@ -75,15 +76,33 @@ export function getBrowserPushReadiness(): BrowserPushReadiness {
   };
 }
 
+async function waitForActiveServiceWorker() {
+  return new Promise<ServiceWorkerRegistration>((resolve, reject) => {
+    const timeout = window.setTimeout(() => {
+      reject(new Error("The service worker did not become active in time."));
+    }, SERVICE_WORKER_READY_TIMEOUT_MS);
+
+    void navigator.serviceWorker.ready
+      .then((registration) => {
+        window.clearTimeout(timeout);
+        resolve(registration);
+      })
+      .catch((error: unknown) => {
+        window.clearTimeout(timeout);
+        reject(error);
+      });
+  });
+}
+
 export async function registerCineTrekkerServiceWorker() {
   if (!hasWindow() || !("serviceWorker" in navigator) || !window.isSecureContext) {
     return null;
   }
 
-  // `register()` resolves before the worker is necessarily active. Waiting for
-  // `ready` prevents PushManager.subscribe() from racing the first install.
-  await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-  return navigator.serviceWorker.ready;
+  // `register()` resolves before the worker is necessarily active. Wait for the
+  // active worker, but fail visibly instead of leaving the Settings control stuck.
+  const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  return registration.active ? registration : waitForActiveServiceWorker();
 }
 
 export async function enableBrowserPush(userId: string) {
@@ -119,7 +138,19 @@ export async function enableBrowserPush(userId: string) {
     );
   }
 
-  const registration = await registerCineTrekkerServiceWorker();
+  let registration: ServiceWorkerRegistration | null;
+  try {
+    registration = await registerCineTrekkerServiceWorker();
+  } catch (error) {
+    const detail = error instanceof Error && error.message
+      ? ` (${error.message})`
+      : "";
+    throw new BrowserPushError(
+      `CineTrekker could not start the notification service on this device${detail}`,
+      "subscription_failed",
+    );
+  }
+
   if (!registration) {
     throw new BrowserPushError(
       "CineTrekker could not start the notification service on this device.",
