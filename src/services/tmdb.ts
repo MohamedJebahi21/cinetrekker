@@ -390,18 +390,12 @@ function getTitleMatchScore(media: Media, query: string): number {
  * TMDB guarantees these endpoints match original, translated, and alternate
  * names, whereas multi-search is retained for people-inclusive experiences.
  */
-export const searchCatalogTitles = async (
-  query: string,
-  page: number = 1,
-  language: string = "en",
-  includeAdult: boolean = false,
-  signal?: AbortSignal,
-): Promise<TMDBResponse<Media>> => {
-  const [movieResponse, tvResponse] = await Promise.all([
-    searchMovies(query, page, language, includeAdult, signal),
-    searchTV(query, page, language, includeAdult, signal),
-  ]);
-
+function mergeCatalogTitleResponses(
+  movieResponse: TMDBResponse<Media>,
+  tvResponse: TMDBResponse<Media>,
+  rankingQuery: string,
+  page: number,
+): TMDBResponse<Media> {
   const seen = new Set<string>();
   const results = [...movieResponse.results, ...tvResponse.results]
     .map((media) => ({
@@ -415,7 +409,8 @@ export const searchCatalogTitles = async (
       return true;
     })
     .sort((a, b) => {
-      const scoreDifference = getTitleMatchScore(b, query) - getTitleMatchScore(a, query);
+      const scoreDifference =
+        getTitleMatchScore(b, rankingQuery) - getTitleMatchScore(a, rankingQuery);
       if (scoreDifference !== 0) return scoreDifference;
       return (b.popularity || 0) - (a.popularity || 0);
     });
@@ -426,6 +421,72 @@ export const searchCatalogTitles = async (
     total_pages: Math.max(movieResponse.total_pages, tvResponse.total_pages),
     total_results: movieResponse.total_results + tvResponse.total_results,
   };
+}
+
+function getVowelRecoveryQueries(query: string): string[] {
+  const letters = Array.from(query);
+  if (letters.length < 5) return [];
+
+  // Only run after a complete no-results search. This small, bounded fallback
+  // covers a common international-title spelling variation (for example,
+  // “yiralti” → “yeralti”) without broadening ordinary search traffic.
+  const candidates = new Set<string>();
+  for (let index = 1; index < letters.length - 1 && candidates.size < 2; index += 1) {
+    if (/[aiıioöuü]/i.test(letters[index])) {
+      const candidate = [...letters];
+      candidate[index] = "e";
+      candidates.add(candidate.join(""));
+    }
+  }
+
+  candidates.delete(query);
+  return Array.from(candidates);
+}
+
+async function searchCatalogTitleQuery(
+  query: string,
+  page: number,
+  language: string,
+  includeAdult: boolean,
+  signal?: AbortSignal,
+): Promise<TMDBResponse<Media>> {
+  const [movieResponse, tvResponse] = await Promise.all([
+    searchMovies(query, page, language, includeAdult, signal),
+    searchTV(query, page, language, includeAdult, signal),
+  ]);
+
+  return mergeCatalogTitleResponses(movieResponse, tvResponse, query, page);
+}
+
+export const searchCatalogTitles = async (
+  query: string,
+  page: number = 1,
+  language: string = "en",
+  includeAdult: boolean = false,
+  signal?: AbortSignal,
+): Promise<TMDBResponse<Media>> => {
+  const primary = await searchCatalogTitleQuery(
+    query,
+    page,
+    language,
+    includeAdult,
+    signal,
+  );
+
+  if (primary.results.length > 0 || page !== 1) return primary;
+
+  for (const fallbackQuery of getVowelRecoveryQueries(query)) {
+    const recovered = await searchCatalogTitleQuery(
+      fallbackQuery,
+      page,
+      language,
+      includeAdult,
+      signal,
+    );
+    if (recovered.results.length > 0) return recovered;
+  }
+
+  return primary;
 };
 
 export const searchPeople = async (
