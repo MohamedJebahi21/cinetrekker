@@ -18,6 +18,7 @@ import { HomeStatsSnapshot } from "@/components/home/HomeStatsSnapshot";
 import { HomeWatchlistSkeleton } from "@/components/home/HomeWatchlistSkeleton";
 import { SuggestedPeopleRail } from "@/components/home/SuggestedPeopleRail";
 import { UpNextCommandCenter } from "@/components/home/UpNextCommandCenter";
+import { ContinueWatching } from "@/components/ContinueWatching";
 import { ActivationJourney } from "@/components/home/ActivationJourney";
 import { CommunityActivityFeed } from "@/components/home/CommunityActivityFeed";
 import { DailyCheckInCard } from "@/components/home/DailyCheckInCard";
@@ -522,7 +523,10 @@ export default function Index() {
             <MotionRevealSection tone="standard" delayClassName="delay-75" accentOpacityClassName="opacity-25">
               <UpNextCommandCenter />
             </MotionRevealSection>
-            <MotionRevealSection tone="bold" delayClassName="delay-100" accentOpacityClassName="opacity-18">
+            <MotionRevealSection tone="soft" delayClassName="delay-100" accentOpacityClassName="opacity-22">
+              <ContinueWatching />
+            </MotionRevealSection>
+            <MotionRevealSection tone="bold" delayClassName="delay-150" accentOpacityClassName="opacity-18">
               <ActivationJourney />
             </MotionRevealSection>
             <MotionRevealSection tone="bold" delayClassName="delay-150" accentOpacityClassName="opacity-16">
