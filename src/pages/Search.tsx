@@ -29,7 +29,7 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import {
-  searchMulti,
+  searchCatalogTitles,
   getMovieGenres,
   getTVGenres,
   discoverMovies,
@@ -599,7 +599,12 @@ export default function Search() {
   const searchQuery = useInfiniteQuery({
     queryKey: ["search", normalizedQuery, language, includeAdult],
     queryFn: ({ pageParam = 1 }) =>
-      searchMulti(normalizedQuery, pageParam as number, language, includeAdult),
+      searchCatalogTitles(
+        normalizedQuery,
+        pageParam as number,
+        language,
+        includeAdult,
+      ),
     enabled: Boolean(useSearchMode),
     retry: 1,
     initialPageParam: 1,
@@ -1230,6 +1235,12 @@ export default function Search() {
               {t(
                 "search.heroSubtitle",
                 "Search by title, then narrow fast with genre, runtime, language, release year, and streaming filters without losing momentum.",
+              )}
+            </p>
+            <p className="mt-2 text-xs font-medium text-primary/90">
+              {t(
+                "search.internationalTitleHint",
+                "Original, translated, and alternate international titles are all supported.",
               )}
             </p>
           </div>

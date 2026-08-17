@@ -345,6 +345,89 @@ export const searchTV = async (
   }, signal);
 };
 
+function getSearchResultKey(media: Media): string {
+  const mediaType = media.media_type || (media.title ? "movie" : "tv");
+  return `${mediaType}-${media.id}`;
+}
+
+function normalizeSearchTitle(value: string | undefined): string {
+  return (value || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[ıİ]/g, "i")
+    .toLocaleLowerCase()
+    .replace(/[\s!"#$%&'()*+,./:;<=>?@[\\\]^_`{|}~\-–—]+/g, " ")
+    .trim();
+}
+
+function getTitleMatchScore(media: Media, query: string): number {
+  const normalizedQuery = normalizeSearchTitle(query);
+  if (!normalizedQuery) return 0;
+
+  const localizedTitle = normalizeSearchTitle(media.title || media.name);
+  const originalTitle = normalizeSearchTitle(
+    media.original_title || media.original_name,
+  );
+
+  const scoreTitle = (title: string, priority: number) => {
+    if (!title) return 0;
+    if (title === normalizedQuery) return 400 + priority;
+    if (title.startsWith(normalizedQuery)) return 250 + priority;
+    if (title.includes(normalizedQuery)) return 150 + priority;
+    return 0;
+  };
+
+  // Give exact and prefix matches in the original name a small boost so users
+  // searching an international title see the source-language result first.
+  return Math.max(
+    scoreTitle(originalTitle, 30),
+    scoreTitle(localizedTitle, 0),
+  );
+}
+
+/**
+ * Search movies and TV shows through their dedicated TMDB endpoints.
+ * TMDB guarantees these endpoints match original, translated, and alternate
+ * names, whereas multi-search is retained for people-inclusive experiences.
+ */
+export const searchCatalogTitles = async (
+  query: string,
+  page: number = 1,
+  language: string = "en",
+  includeAdult: boolean = false,
+  signal?: AbortSignal,
+): Promise<TMDBResponse<Media>> => {
+  const [movieResponse, tvResponse] = await Promise.all([
+    searchMovies(query, page, language, includeAdult, signal),
+    searchTV(query, page, language, includeAdult, signal),
+  ]);
+
+  const seen = new Set<string>();
+  const results = [...movieResponse.results, ...tvResponse.results]
+    .map((media) => ({
+      ...media,
+      media_type: media.media_type || (media.title ? "movie" : "tv"),
+    }))
+    .filter((media) => {
+      const key = getSearchResultKey(media);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => {
+      const scoreDifference = getTitleMatchScore(b, query) - getTitleMatchScore(a, query);
+      if (scoreDifference !== 0) return scoreDifference;
+      return (b.popularity || 0) - (a.popularity || 0);
+    });
+
+  return {
+    page,
+    results,
+    total_pages: Math.max(movieResponse.total_pages, tvResponse.total_pages),
+    total_results: movieResponse.total_results + tvResponse.total_results,
+  };
+};
+
 export const searchPeople = async (
   query: string,
   page: number = 1,
