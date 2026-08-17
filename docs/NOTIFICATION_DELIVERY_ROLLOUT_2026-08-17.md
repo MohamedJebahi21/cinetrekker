@@ -44,3 +44,7 @@ Release checks and the weekly digest are deterministic. They should be run by a 
 [2] [MDN — Using the Notifications API](https://developer.mozilla.org/en-US/docs/Web/API/Notifications_API/Using_the_Notifications_API)  
 [3] [Supabase — Scheduling Edge Functions](https://supabase.com/docs/guides/functions/schedule-functions)  
 [4] [Supabase — Cron](https://supabase.com/docs/guides/cron)
+
+## Production verification
+
+Production verification on 2026-08-17 confirmed that the signed-in **Settings → Notifications** section renders the effective followed-title release switch and the separate in-app update-banner switch. The release switch, banner switch, open-inbox link, desktop Settings navigation entry, and explicitly marked upcoming social/digest categories were all present and readable. The control center correctly states that browser and email delivery are not yet enabled.
