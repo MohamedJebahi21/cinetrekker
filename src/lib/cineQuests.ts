@@ -32,17 +32,38 @@ function isInCurrentMonth(item: UserMediaItem, monthStart: Date) {
   return !Number.isNaN(date.getTime()) && date >= monthStart;
 }
 
+function countActiveDays(items: UserMediaItem[]) {
+  const activeDays = new Set<string>();
+  items.forEach((item) => {
+    if (!item.watchedAt) return;
+    const watchedDate = new Date(item.watchedAt);
+    if (Number.isNaN(watchedDate.getTime())) return;
+    activeDays.add(watchedDate.toISOString().slice(0, 10));
+  });
+  return activeDays.size;
+}
+
 export function buildMonthlyCineQuests(
   watched: UserMediaItem[],
   watchlist: UserMediaItem[],
   now = new Date(),
 ): CineQuest[] {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const watchedThisMonth = uniqueItems(watched.filter((item) => isInCurrentMonth(item, monthStart)));
-  const movieCount = watchedThisMonth.filter((item) => item.mediaType === "movie").length;
-  const tvCount = watchedThisMonth.filter((item) => item.mediaType === "tv").length;
-  const ratedCount = watchedThisMonth.filter((item) => typeof item.rating === "number" && item.rating > 0).length;
+  const watchedThisMonth = uniqueItems(
+    watched.filter((item) => isInCurrentMonth(item, monthStart)),
+  );
+  const moviesThisMonth = watchedThisMonth.filter(
+    (item) => item.mediaType === "movie",
+  );
+  const tvThisMonth = watchedThisMonth.filter((item) => item.mediaType === "tv");
+  const ratedCount = watchedThisMonth.filter(
+    (item) => typeof item.rating === "number" && item.rating > 0,
+  ).length;
   const watchlistCount = uniqueItems(watchlist).length;
+  const watchlistAddedThisMonth = uniqueItems(
+    watchlist.filter((item) => isInCurrentMonth(item, monthStart)),
+  ).length;
+  const activeDayCount = countActiveDays(watchedThisMonth);
 
   const quest = (
     id: string,
@@ -78,23 +99,23 @@ export function buildMonthlyCineQuests(
       "Double Feature",
       "Watch two movies this month — make it a night worth remembering.",
       2,
-      movieCount,
+      moviesThisMonth.length,
       "Double Feature badge",
       "amber",
     ),
     quest(
       "monthly-series-starter",
       "Series Starter",
-      "Watch three TV shows and keep your series radar moving.",
+      "Log three TV shows and keep your series radar moving.",
       3,
-      tvCount,
+      tvThisMonth.length,
       "Series Starter badge",
       "violet",
     ),
     quest(
       "monthly-rate-card",
       "Rate Your Night",
-      "Rate three titles after watching them so your taste gets smarter.",
+      "Rate three watched titles so your taste profile gets sharper.",
       3,
       ratedCount,
       "Critic badge",
@@ -108,6 +129,33 @@ export function buildMonthlyCineQuests(
       watchlistCount,
       "Curator badge",
       "rose",
+    ),
+    quest(
+      "monthly-marathon",
+      "Movie Marathon",
+      "Log five movies this month and build a memorable run.",
+      5,
+      moviesThisMonth.length,
+      "Marathon badge",
+      "amber",
+    ),
+    quest(
+      "monthly-steady-viewer",
+      "Steady Viewer",
+      "Log activity on three different days this month to keep your rhythm alive.",
+      3,
+      activeDayCount,
+      "Steady Viewer badge",
+      "emerald",
+    ),
+    quest(
+      "monthly-fresh-shelf",
+      "Fresh Shelf",
+      "Add three new titles to your watchlist and give future-you options.",
+      3,
+      watchlistAddedThisMonth,
+      "Fresh Shelf badge",
+      "violet",
     ),
   ];
 }

@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { getBackdropUrl, getImageUrl, getMediaTitle, getTrending } from "@/services/tmdb";
 import { useContentPolicy } from "@/contexts/content-policy-context";
 import { useUserLists } from "@/contexts/UserListsContext";
+import { buildMediaPath } from "@/lib/seo";
 
 const AUTO_PLAY_MS = 6000;
 const SWIPE_THRESHOLD = 42;
@@ -87,6 +88,7 @@ export function HeroSection() {
     activeItem.release_date?.slice(0, 4) ||
     activeItem.first_air_date?.slice(0, 4) || "";
   const activeMediaType = activeItem.media_type === "tv" ? "tv" : "movie";
+  const activeMediaPath = buildMediaPath(activeMediaType, activeItem.id, activeTitle);
   const inWatchlist = isInWatchlist(activeItem.id, activeMediaType);
   const inWatched = isWatched(activeItem.id, activeMediaType);
 
@@ -164,7 +166,7 @@ export function HeroSection() {
             <p className="max-w-xl text-sm leading-6 text-white/72 lg:text-base">
               {t(
                 "home.heroValueProp",
-                "Discover, track, and discuss what to watch next in one place.",
+                "Track what you watch, save what is next, and discover your next favorite in one place.",
               )}
             </p>
 
@@ -200,7 +202,7 @@ export function HeroSection() {
             {/* Actions */}
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <Button asChild className="h-11 rounded-full bg-white text-black hover:bg-white/90 font-bold px-6 shadow-lg">
-                <Link to={`/${activeMediaType}/${activeItem.id}`}>
+                <Link to={activeMediaPath}>
                   <Info className="mr-2 h-4.5 w-4.5" />
                   {t("common.details", "Details")}
                 </Link>
@@ -437,13 +439,13 @@ export function HeroSection() {
               <p className="mt-1.5 text-[13px] leading-6 text-white/68">
                 {t(
                   "home.heroValueProp",
-                  "Discover, track, and discuss what to watch next in one place.",
+                  "Track what you watch, save what is next, and discover your next favorite in one place.",
                 )}
               </p>
 
               <div className="mt-3 grid grid-cols-[1fr_auto_auto] gap-2">
                 <Button asChild className="h-11 rounded-2xl bg-white text-black font-bold hover:bg-white/90">
-                  <Link to={`/${activeMediaType}/${activeItem.id}`}>
+                  <Link to={activeMediaPath}>
                     <Info className="mr-2 h-4 w-4" />{t("common.details", "Details")}
                   </Link>
                 </Button>

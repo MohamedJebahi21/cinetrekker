@@ -1,27 +1,27 @@
 export const siteMetadata = {
   siteName: "CineTrekker",
-  title: "CineTrekker Movie Tracker | Track Movies, TV Shows, and Watchlists",
+  title: "Movie & TV Show Tracker — Watchlist and Progress | CineTrekker",
   description:
-    "CineTrekker is a movie tracker for building watchlists, tracking movies and TV shows, discovering trending titles, and following updates from one fast, mobile-friendly hub.",
+    "Track movies and TV shows, build a watchlist you will actually use, log progress, and discover what to watch next with CineTrekker.",
   canonical: "https://cinetrekker.vercel.app",
   keywords:
-    "movie tracker, tv show tracker, watchlist app, movie discovery, film tracking, trending movies, personalized recommendations",
+    "movie tracker, TV show tracker, watchlist app, track movies, track TV shows, movie watchlist, TV show watchlist, what to watch next",
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "https://cinetrekker.vercel.app",
-    title: "CineTrekker Movie Tracker | Track Movies, TV Shows, and Watchlists",
+    title: "Movie & TV Show Tracker — Watchlist and Progress | CineTrekker",
     description:
-      "Use CineTrekker as your movie tracker to organize watchlists, follow new releases, and discover movies and series faster.",
+      "Track movies and TV shows, organize a watchlist, log your progress, and find your next great watch with CineTrekker.",
     images: ["https://cinetrekker.vercel.app/og-image.png"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "CineTrekker Movie Tracker | Track Movies, TV Shows, and Watchlists",
+    title: "Movie & TV Show Tracker — Watchlist and Progress | CineTrekker",
     description:
-      "Track movies, TV shows, and watchlist progress with a movie tracker built for discovery, organization, and fast browsing.",
+      "Track movies and TV shows, build a watchlist, log your progress, and discover your next favorite with CineTrekker.",
     image: "https://cinetrekker.vercel.app/og-image.png",
-    imageAlt: "CineTrekker movie tracker preview image",
+    imageAlt: "CineTrekker movie and TV show tracker preview image",
   },
 } as const;
 

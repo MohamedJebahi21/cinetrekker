@@ -213,15 +213,16 @@ export default function Index() {
       <div className="relative grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(18rem,0.9fr)] lg:items-end">
         <div className="max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary/85">
-            {t("home.guestJourneyEyebrow", "Your watch journey starts here")}
+            {t("home.guestJourneyEyebrow", "Your movie and TV tracker")}
           </p>
           <h2 id="guest-journey-title" className="mt-2 text-2xl font-bold tracking-tight text-foreground md:text-3xl">
-            {t("home.guestJourneyTitle", "Explore first. Make it yours when you are ready.")}
+            {t("home.guestJourneyTitle", "Keep every great watch in one place.")}
           </h2>
           <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground md:text-base">
             {t(
               "home.guestJourneyDescription",
-              "Browse what is trending, save titles on this device, and create a free account only when you want your progress to follow you everywhere.",
+                              "Discover what is worth watching, save it for later, and create a free account when you want your progress and watchlist to follow you everywhere.",
+
             )}
           </p>
           <div className="mt-5 flex flex-col gap-2.5 sm:flex-row">
@@ -243,18 +244,18 @@ export default function Index() {
           {[
             {
               step: "01",
-              title: t("home.guestJourneyStep1Title", "Find a great next watch"),
-              body: t("home.guestJourneyStep1Body", "Start with weekly highlights and fresh releases."),
+              title: t("home.guestJourneyStep1Title", "Discover your next favorite"),
+              body: t("home.guestJourneyStep1Body", "Start with weekly standouts, trending titles, and new releases."),
             },
             {
               step: "02",
-              title: t("home.guestJourneyStep2Title", "Save what interests you"),
-              body: t("home.guestJourneyStep2Body", "Keep a local queue while you explore."),
+              title: t("home.guestJourneyStep2Title", "Build a watchlist with intent"),
+              body: t("home.guestJourneyStep2Body", "Keep a simple queue of films and series you genuinely want to see."),
             },
             {
               step: "03",
-              title: t("home.guestJourneyStep3Title", "Sync when it matters"),
-              body: t("home.guestJourneyStep3Body", "A free account keeps your progress across devices."),
+              title: t("home.guestJourneyStep3Title", "Remember every watch"),
+              body: t("home.guestJourneyStep3Body", "A free account keeps your watchlist and progress in sync across devices."),
             },
           ].map((item) => (
             <li key={item.step} className="rounded-2xl border border-border/60 bg-background/40 p-3.5">
@@ -333,19 +334,19 @@ export default function Index() {
             {t("home.discoveryHubLabel", "Discovery Hub")}
           </p>
           <h2 className="section-title mb-1">
-            {t("home.discoveryHubTitle", "Pick your next move")}
+            {t("home.discoveryHubTitle", "Find your next favorite")}
           </h2>
           <p className="text-sm text-muted-foreground">
             {t(
               "home.discoveryHubDesc",
-              "Use CineTrekker as a quick launchpad: search directly, jump into trending titles, open your watchlist, or go deeper into recommendations.",
+              "Search, save, and track movies and series in one focused place — from your first idea to the moment you press play.",
             )}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             {[
-              t("home.discoveryHubTag1", "Fast search"),
-              t("home.discoveryHubTag2", "Trending now"),
-              t("home.discoveryHubTag3", "Personalized picks"),
+              t("home.discoveryHubTag1", "Track your progress"),
+              t("home.discoveryHubTag2", "Build your watchlist"),
+              t("home.discoveryHubTag3", "Discover what is next"),
             ].map((tag) => (
               <span
                 key={tag}
@@ -362,19 +363,19 @@ export default function Index() {
             {
               href: "/search",
               label: t("nav.search", "Search"),
-              desc: t("home.discoveryHubSearchDesc", "Find a movie, show, or person fast."),
+              desc: t("home.discoveryHubSearchDesc", "Find a movie, series, or person without the noise."),
               icon: Search,
             },
             {
               href: "/trending",
               label: t("nav.trending", "Trending"),
-              desc: t("home.discoveryHubTrendingDesc", "See what is moving right now."),
+              desc: t("home.discoveryHubTrendingDesc", "See the movies and series people are talking about right now."),
               icon: Flame,
             },
             {
               href: "/watchlist",
               label: t("nav.watchlist", "Watchlist"),
-              desc: t("home.discoveryHubWatchlistDesc", "Continue from the titles you saved."),
+              desc: t("home.discoveryHubWatchlistDesc", "Keep your next great watches ready when you need them."),
               icon: Bookmark,
             },
             {
@@ -384,7 +385,7 @@ export default function Index() {
                 : t("nav.signUp", "Get Started"),
               desc: user
                 ? t("home.discoveryHubRecsDesc", "Open your taste-matched picks.")
-                : t("home.discoveryHubSignupDesc", "Create an account to sync your activity."),
+                : t("home.discoveryHubSignupDesc", "Create a free account to keep every save and watch in sync."),
               icon: Sparkles,
             },
           ].map((item) => {
@@ -420,7 +421,7 @@ export default function Index() {
           <p className="text-sm text-muted-foreground">
             {t(
               "home.globalDiscoveryHint",
-              "Trending titles and fresh releases live here so the rest of the homepage can stay focused on your queue.",
+              "Browse today’s breakout titles, this week’s favorites, and fresh releases — then save the ones you want to watch.",
             )}
           </p>
         </div>
@@ -502,10 +503,10 @@ export default function Index() {
   return (
     <div className="ct-page-shell min-h-screen">
       <SEO
-        title="CineTrekker Movie Tracker | Track Movies, TV Shows, and Watchlists"
-        description="CineTrekker is a movie tracker for finding trending movies, managing your watchlist, following new releases, and organizing what to watch next."
+        title="Movie & TV Show Tracker — Watchlist and Progress | CineTrekker"
+        description="Track movies and TV shows, build a watchlist you will actually use, log your progress, and discover what to watch next with CineTrekker."
         canonical={buildCanonicalUrl("/")}
-        keywords="movie tracker, track movies, tv show tracker, watchlist app, discover trending movies, personalized recommendations"
+        keywords="movie tracker, TV show tracker, watchlist app, track movies, track TV shows, movie watchlist, TV show watchlist, what to watch next"
         jsonLd={[
           toWebsiteSearchJsonLd(),
           toBreadcrumbJsonLd([{ name: "Home", path: "/" }]),
