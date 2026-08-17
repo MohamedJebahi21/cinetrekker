@@ -199,3 +199,9 @@ Use a simple weekly scorecard rather than a vanity dashboard. Establish a baseli
 [3]: https://developer.mozilla.org/en-US/docs/Web/API/Push_API/Best_Practices "MDN — Web Push API Notifications best practices"
 [4]: https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Best_practices "MDN — Best practices for PWAs"
 [5]: https://vercel.com/kb/guide/avoiding-duplicate-content-with-vercel-app-urls "Vercel — Avoiding duplicate-content SEO with vercel.app URLs and custom domains"
+
+## Implementation update — Up Next command center
+
+The first roadmap priority was implemented in commit `2ab0f14`. The authenticated home page now replaces separate Continue Watching and daily release-radar panels with a single responsive **Up Next** command center. It ranks an available next episode above a same-day personal release, then falls back to a watchlist or discovery decision. The surface keeps the prior “Details” convention, permits one-tap marking of a released next episode, and provides compact supporting queue and calendar actions.
+
+Production verification on 2026-08-17 confirmed the new panel rendered successfully in an authenticated browser session. In the observed account state, no unfinished series or release was eligible, so the intended watchlist fallback and “Nothing new on your radar today” state were both displayed. The previous standalone Continue Watching and daily-release panels were absent from the authenticated home page.
