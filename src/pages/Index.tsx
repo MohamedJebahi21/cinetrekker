@@ -31,7 +31,6 @@ import {
   buildCanonicalUrl,
   toBreadcrumbJsonLd,
   toFaqJsonLd,
-  toWebsiteSearchJsonLd,
 } from "@/lib/seo";
 
 const BecauseYouLiked = lazy(() =>
@@ -508,7 +507,6 @@ export default function Index() {
         canonical={buildCanonicalUrl("/")}
         keywords="movie tracker, TV show tracker, watchlist app, track movies, track TV shows, movie watchlist, TV show watchlist, what to watch next"
         jsonLd={[
-          toWebsiteSearchJsonLd(),
           toBreadcrumbJsonLd([{ name: "Home", path: "/" }]),
           toFaqJsonLd(faqItems),
         ]}

@@ -21,20 +21,38 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "CineTrekker",
-      "alternateName": "CineTrekker Movie Tracker",
-      "url": "https://cinetrekker.vercel.app",
-      "description": "CineTrekker helps people track movies and TV shows, build an intentional watchlist, log progress, and discover what to watch next.",
-      "inLanguage": "en-US",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": {
-          "@type": "EntryPoint",
-          "urlTemplate": "https://cinetrekker.vercel.app/search?q={search_term_string}"
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://cinetrekker.vercel.app/#website",
+          "url": "https://cinetrekker.vercel.app/",
+          "name": "CineTrekker",
+          "alternateName": ["Cine Trekker", "CineTrekker Movie Tracker", "cinetrekker.vercel.app"],
+          "description": "CineTrekker helps people track movies and TV shows, build an intentional watchlist, log progress, and discover what to watch next.",
+          "inLanguage": "en-US",
+          "publisher": { "@id": "https://cinetrekker.vercel.app/#organization" },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://cinetrekker.vercel.app/search?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
         },
-        "query-input": "required name=search_term_string"
-      }
+        {
+          "@type": "Organization",
+          "@id": "https://cinetrekker.vercel.app/#organization",
+          "name": "CineTrekker",
+          "url": "https://cinetrekker.vercel.app/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://cinetrekker.vercel.app/apple-touch-icon.png",
+            "width": 180,
+            "height": 180
+          }
+        }
+      ]
     }
     </script>
 
