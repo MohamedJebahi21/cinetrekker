@@ -80,7 +80,10 @@ export async function registerCineTrekkerServiceWorker() {
     return null;
   }
 
-  return navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  // `register()` resolves before the worker is necessarily active. Waiting for
+  // `ready` prevents PushManager.subscribe() from racing the first install.
+  await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  return navigator.serviceWorker.ready;
 }
 
 export async function enableBrowserPush(userId: string) {
@@ -124,12 +127,23 @@ export async function enableBrowserPush(userId: string) {
     );
   }
 
-  let subscription = await registration.pushManager.getSubscription();
-  if (!subscription) {
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-    });
+  let subscription: PushSubscription | null;
+  try {
+    subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+  } catch (error) {
+    const detail = error instanceof Error && error.message
+      ? ` (${error.message})`
+      : "";
+    throw new BrowserPushError(
+      `CineTrekker could not create a browser subscription on this device${detail}`,
+      "subscription_failed",
+    );
   }
 
   const { endpoint, p256dh, auth } = getSubscriptionKeys(subscription);
