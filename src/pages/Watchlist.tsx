@@ -72,7 +72,14 @@ type WatchlistMedia = Media & {
 export default function Watchlist() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
-  const { watchlist, watched, addToWatchlist, addToWatched, removeFromWatchlist } = useUserLists();
+  const {
+    watchlist,
+    watched,
+    addToWatchlist,
+    addToWatched,
+    removeFromWatchlist,
+    loading: userListsLoading,
+  } = useUserLists();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const language = i18n.language;
@@ -141,6 +148,7 @@ export default function Watchlist() {
   });
 
   const effectiveStatusFilter = isSharedView ? "all" : statusFilter;
+  const isContentLoading = userListsLoading || (listItems.length > 0 && isLoading);
 
   let filteredMedia = mediaDetails.filter((media) => {
     if (
@@ -411,6 +419,7 @@ export default function Watchlist() {
                 watchingCount={statusCounts.watching}
                 completedCount={statusCounts.completed}
                 planToWatchCount={statusCounts.plan_to_watch}
+                isLoading={isContentLoading}
               />
             </div>
 
@@ -701,7 +710,7 @@ export default function Watchlist() {
             </motion.div>
           )}
 
-          {isLoading ? (
+          {isContentLoading ? (
             <MediaGrid items={[]} isLoading columns="normal" gap="md" />
           ) : filteredMedia.length > 0 ? (
             viewMode === "grid" ? (

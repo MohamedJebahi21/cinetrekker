@@ -10,6 +10,7 @@ interface WatchlistStatsProps {
   planToWatchCount?: number;
   totalHours?: number;
   compact?: boolean;
+  isLoading?: boolean;
 }
 
 export function WatchlistStats({
@@ -93,8 +94,23 @@ export function WatchlistStatsLine({
   watchingCount = 0,
   completedCount = 0,
   planToWatchCount = 0,
+  isLoading = false,
 }: Omit<WatchlistStatsProps, "totalHours" | "compact">) {
   const { t } = useTranslation();
+
+  if (isLoading) {
+    return (
+      <div
+        className="flex min-h-5 items-center gap-3"
+        aria-busy="true"
+        aria-label={t("common.loading", "Loading watchlist summary")}
+      >
+        <span className="h-4 w-20 animate-pulse rounded-full bg-muted" />
+        <span className="h-4 w-24 animate-pulse rounded-full bg-muted/80" />
+        <span className="h-4 w-20 animate-pulse rounded-full bg-muted/70" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">

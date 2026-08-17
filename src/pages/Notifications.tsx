@@ -32,6 +32,15 @@ export default function Notifications() {
   } = useNotifications();
 
   const readCount = notifications.length - unreadCount;
+  const renderCount = (value: number) =>
+    isLoading ? (
+      <span
+        className="inline-block h-7 w-8 animate-pulse rounded-md bg-muted align-middle"
+        aria-label="Loading count"
+      />
+    ) : (
+      value
+    );
 
   const filteredNotifications = useMemo(() => {
     if (filter === "unread") {
@@ -114,7 +123,7 @@ export default function Notifications() {
                   Total
                 </div>
                 <div className="mt-2 text-2xl font-semibold text-foreground">
-                  {notifications.length}
+                  {renderCount(notifications.length)}
                 </div>
               </div>
               <div className="rounded-2xl border border-primary/25 bg-primary/10 px-4 py-3.5 shadow-[0_14px_36px_hsl(var(--primary)/0.07)]">
@@ -122,7 +131,7 @@ export default function Notifications() {
                   Unread
                 </div>
                 <div className="mt-2 text-2xl font-semibold text-foreground">
-                  {unreadCount}
+                  {renderCount(unreadCount)}
                 </div>
               </div>
               <div className="rounded-2xl border border-border/60 bg-background px-4 py-3.5 shadow-inner">
@@ -130,7 +139,7 @@ export default function Notifications() {
                   Read
                 </div>
                 <div className="mt-2 text-2xl font-semibold text-foreground">
-                  {readCount}
+                  {renderCount(readCount)}
                 </div>
               </div>
             </div>
@@ -171,7 +180,11 @@ export default function Notifications() {
                         active ? "bg-primary-foreground/15" : "bg-muted text-foreground",
                       )}
                     >
-                      {count}
+                      {isLoading ? (
+                        <span className="h-3 w-4 animate-pulse rounded-full bg-current/25" aria-label="Loading count" />
+                      ) : (
+                        count
+                      )}
                     </span>
                   </button>
                 );

@@ -764,11 +764,33 @@ export default function Settings() {
 
           {/* Main content */}
           {isLoadingSettings ? (
-            <div className="flex flex-1 items-center justify-center py-24">
-              <div className="flex flex-col items-center gap-3">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary" />
-                <p className="text-sm text-muted-foreground">Loading settings…</p>
-              </div>
+            <div className="min-w-0 flex-1 space-y-8" aria-busy="true" aria-label="Loading settings">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <section
+                  key={index}
+                  className="rounded-2xl border border-border/60 bg-card p-5 shadow-[0_14px_40px_hsl(var(--background)/0.14)]"
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="mt-0.5 h-5 w-5 shrink-0 animate-pulse rounded-md bg-muted" />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="h-5 w-40 animate-pulse rounded-full bg-muted" />
+                      <div className="h-4 w-72 max-w-full animate-pulse rounded-full bg-muted/75" />
+                    </div>
+                  </div>
+                  <div className="mt-6 divide-y divide-border/50">
+                    {Array.from({ length: index === 0 ? 2 : 3 }).map((__, row) => (
+                      <div key={row} className="flex min-h-20 items-center justify-between gap-4 py-4">
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <div className="h-4 w-32 animate-pulse rounded-full bg-muted" />
+                          <div className="h-3 w-56 max-w-full animate-pulse rounded-full bg-muted/70" />
+                        </div>
+                        <span className="h-9 w-16 shrink-0 animate-pulse rounded-full bg-muted/80" />
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))}
+              <p className="sr-only" role="status">Loading settings…</p>
             </div>
           ) : (
             <motion.div

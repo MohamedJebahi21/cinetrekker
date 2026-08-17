@@ -1,5 +1,5 @@
-import { enforceRequestSecurity } from './_lib/requestSecurity.js';
-import { verifyBotProtection } from './_lib/botProtection.js';
+import { enforceRequestSecurity, isAllowedOrigin } from './_lib/requestSecurity.js';
+import { getBotProtectionClientConfig, verifyBotProtection } from './_lib/botProtection.js';
 import { createServerLogger } from './_lib/logger.js';
 import { reportSecurityEvent } from './_lib/securityMonitor.js';
 
@@ -27,7 +27,25 @@ function parseBody(req) {
 }
 
 export default async function handler(req, res) {
+  if (req.method === 'GET') {
+    if (!isAllowedOrigin(req.headers?.origin, req.method)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const captcha = getBotProtectionClientConfig();
+    const available = Boolean(
+      captcha.provider &&
+        captcha.siteKey &&
+        (process.env.TURNSTILE_SECRET_KEY || process.env.RECAPTCHA_SECRET_KEY) &&
+        process.env.RESEND_API_KEY &&
+        process.env.FEEDBACK_TO_EMAIL,
+    );
+
+    return res.status(200).json({ available, captchaProvider: captcha.provider });
+  }
+
   if (req.method !== 'POST') {
+    res.setHeader('Allow', 'GET, POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 

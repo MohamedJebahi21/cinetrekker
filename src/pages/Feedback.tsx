@@ -55,11 +55,34 @@ export default function Feedback() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedbackAvailability, setFeedbackAvailability] = useState<
+    'checking' | 'available' | 'unavailable'
+  >('checking');
   const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
   const turnstileWidgetIdRef = useRef<string | null>(null);
 
+  const feedbackServiceAvailable = feedbackAvailability === 'available';
+
   useEffect(() => {
-    if (!CAPTCHA_SITE_KEY || !turnstileContainerRef.current) return;
+    const controller = new AbortController();
+
+    void fetch('/api/feedback', { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) return { available: false };
+        return response.json() as Promise<{ available?: boolean }>;
+      })
+      .then((status) => {
+        setFeedbackAvailability(status.available ? 'available' : 'unavailable');
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setFeedbackAvailability('unavailable');
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    if (!feedbackServiceAvailable || !CAPTCHA_SITE_KEY || !turnstileContainerRef.current) return;
 
     const existingScript = document.querySelector<HTMLScriptElement>(
       CAPTCHA_PROVIDER === 'turnstile'
@@ -131,12 +154,22 @@ export default function Feedback() {
         turnstileWidgetIdRef.current = null;
       }
     };
-  }, []);
+  }, [feedbackServiceAvailable]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
     setSuccess('');
+
+    if (!feedbackServiceAvailable) {
+      setError(
+        t(
+          'feedback.unavailableError',
+          'Feedback submissions are temporarily unavailable. Please email cinetrekker.contact@gmail.com instead.',
+        ),
+      );
+      return;
+    }
 
     if (!name.trim() || !email.trim() || !message.trim()) {
       setError(t('feedback.formErrorRequired', 'Please fill in all fields before sending feedback.'));
@@ -202,6 +235,26 @@ export default function Feedback() {
         </p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-5 rounded-xl border border-border/40 bg-card/50 p-6">
+          {feedbackAvailability !== 'available' && (
+            <div
+              className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
+              role="status"
+              aria-live="polite"
+            >
+              {feedbackAvailability === 'checking'
+                ? t('feedback.checkingAvailability', 'Checking feedback service availability…')
+                : t(
+                    'feedback.serviceUnavailable',
+                    'The feedback form is temporarily unavailable. Please email us directly instead.',
+                  )}{' '}
+              <a
+                href="mailto:cinetrekker.contact@gmail.com"
+                className="font-semibold text-amber-50 underline underline-offset-4 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                cinetrekker.contact@gmail.com
+              </a>
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="feedback-name">{t('feedback.nameLabel', 'Name')}</Label>
             <Input
@@ -212,6 +265,7 @@ export default function Feedback() {
               autoComplete="name"
               aria-invalid={Boolean(error)}
               aria-describedby={error ? 'feedback-form-error' : undefined}
+              disabled={!feedbackServiceAvailable || isSubmitting}
               required
             />
           </div>
@@ -227,6 +281,7 @@ export default function Feedback() {
               autoComplete="email"
               aria-invalid={Boolean(error)}
               aria-describedby={error ? 'feedback-form-error' : undefined}
+              disabled={!feedbackServiceAvailable || isSubmitting}
               required
             />
           </div>
@@ -241,6 +296,7 @@ export default function Feedback() {
               className="min-h-[140px]"
               aria-invalid={Boolean(error)}
               aria-describedby={error ? 'feedback-form-error' : undefined}
+              disabled={!feedbackServiceAvailable || isSubmitting}
               required
             />
           </div>
@@ -261,11 +317,11 @@ export default function Feedback() {
             {CAPTCHA_SITE_KEY && (
               <div id="feedback-bot-protection" ref={turnstileContainerRef} />
             )}
-            {!CAPTCHA_CONFIGURED && (
+            {feedbackServiceAvailable && !CAPTCHA_CONFIGURED && (
               <p className="text-sm text-muted-foreground">
                 {t(
                   'feedback.botProtectionUnavailable',
-                  'Bot protection is currently unavailable. Feedback submissions are still open.',
+                  'Bot protection is currently unavailable. Feedback submissions are disabled.',
                 )}
               </p>
             )}
@@ -285,11 +341,15 @@ export default function Feedback() {
           <Button
             type="submit"
             className="w-full sm:w-auto"
-            disabled={isSubmitting}
+            disabled={!feedbackServiceAvailable || isSubmitting}
           >
             {isSubmitting
               ? t('feedback.sending', 'Sending...')
-              : t('feedback.sendButton', 'Send Feedback')}
+              : feedbackAvailability === 'checking'
+                ? t('feedback.checking', 'Checking availability...')
+                : feedbackServiceAvailable
+                  ? t('feedback.sendButton', 'Send Feedback')
+                  : t('feedback.unavailableButton', 'Feedback temporarily unavailable')}
           </Button>
         </form>
       </div>
