@@ -24,3 +24,7 @@ A custom first-party domain is **not required** for Google to recognize the site
 
 [1]: https://developers.google.com/search/docs/appearance/site-names "Google Search Central — Provide a site name to Google Search"
 [2]: https://vercel.com/kb/guide/avoiding-duplicate-content-with-vercel-app-urls "Vercel — Avoiding duplicate-content SEO with vercel.app URLs and custom domains"
+
+## Deployment verification
+
+Commit `5540db3` was pushed to `main` on 2026-08-17. The deployed HTML at `https://cinetrekker.vercel.app/` was then checked directly and confirmed to contain the new ordered alternate-name array, proving that the strengthened `WebSite` and `Organization` identity graph is live.
