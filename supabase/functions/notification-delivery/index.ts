@@ -325,7 +325,7 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const cronSecret = Deno.env.get("CRON_SECRET");
+  const cronSecret = Deno.env.get("NOTIFICATION_DELIVERY_CRON_SECRET") ?? Deno.env.get("CRON_SECRET");
   const vapidPublicKey = Deno.env.get("WEB_PUSH_PUBLIC_KEY");
   const vapidPrivateKey = Deno.env.get("WEB_PUSH_PRIVATE_KEY");
   const vapidContact = Deno.env.get("WEB_PUSH_CONTACT_EMAIL");
