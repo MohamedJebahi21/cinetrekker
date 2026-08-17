@@ -1,6 +1,3 @@
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { format, isToday, parseISO } from "date-fns";
 import { useTranslation } from "react-i18next";
 import {
   BellRing,
@@ -12,98 +9,11 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-import { useAuth } from "@/contexts/AuthContext";
-import { useUserLists } from "@/contexts/UserListsContext";
-import { useTitleFollows, type FollowedTitle } from "@/hooks/useTitleFollows";
-import {
-  getImageUrl,
-  getMediaTitle,
-  getMovieDetails,
-  getTVDetails,
-} from "@/services/tmdb";
-import type { MediaDetails } from "@/types/media";
+import { useDailyReleases } from "@/hooks/useDailyReleases";
+import { getImageUrl } from "@/services/tmdb";
 import { cn } from "@/lib/utils";
 import { Image } from "@/components/ui/Image";
 import { Button } from "@/components/ui/button";
-
-interface ReleaseCandidate {
-  id: number;
-  mediaType: "movie" | "tv";
-  title: string;
-  posterPath: string | null;
-  source: "following" | "watchlist";
-}
-
-interface DailyRelease extends ReleaseCandidate {
-  date: string;
-  seasonNumber?: number;
-  episodeNumber?: number;
-  episodeName?: string;
-}
-
-function buildCandidates(
-  followedTitles: FollowedTitle[],
-  watchlist: Array<{ mediaId: number; mediaType: "movie" | "tv" }>,
-): ReleaseCandidate[] {
-  const candidates = new Map<string, ReleaseCandidate>();
-
-  followedTitles.forEach((item) => {
-    candidates.set(`${item.mediaType}-${item.mediaId}`, {
-      id: item.mediaId,
-      mediaType: item.mediaType,
-      title: item.title,
-      posterPath: item.posterPath,
-      source: "following",
-    });
-  });
-
-  watchlist.forEach((item) => {
-    const key = `${item.mediaType}-${item.mediaId}`;
-    if (candidates.has(key)) return;
-
-    candidates.set(key, {
-      id: item.mediaId,
-      mediaType: item.mediaType,
-      title: "",
-      posterPath: null,
-      source: "watchlist",
-    });
-  });
-
-  return Array.from(candidates.values()).slice(0, 40);
-}
-
-async function resolveDailyRelease(
-  candidate: ReleaseCandidate,
-  language: string,
-  todayKey: string,
-): Promise<DailyRelease | null> {
-  try {
-    const details: MediaDetails =
-      candidate.mediaType === "movie"
-        ? await getMovieDetails(candidate.id, language)
-        : await getTVDetails(candidate.id, language);
-
-    const episode = candidate.mediaType === "tv" ? details.next_episode_to_air : null;
-    const date = episode?.air_date || details.release_date;
-
-    if (!date || date.slice(0, 10) !== todayKey) {
-      return null;
-    }
-
-    return {
-      ...candidate,
-      title: getMediaTitle(details) || candidate.title || "Untitled release",
-      posterPath: details.poster_path || candidate.posterPath,
-      date,
-      seasonNumber: episode?.season_number,
-      episodeNumber: episode?.episode_number,
-      episodeName: episode?.name,
-    };
-  } catch {
-    return null;
-  }
-}
 
 function DailyReleaseSkeleton() {
   return (
@@ -126,51 +36,15 @@ function DailyReleaseSkeleton() {
 }
 
 export function DailyReleaseHighlight() {
-  const { t, i18n } = useTranslation();
-  const { user } = useAuth();
-  const { watchlist } = useUserLists();
-  const { followedTitles } = useTitleFollows();
-  const language = i18n.language;
-  const todayKey = format(new Date(), "yyyy-MM-dd");
-
-  const candidates = useMemo(
-    () => buildCandidates(followedTitles, watchlist),
-    [followedTitles, watchlist],
-  );
-
-  const releaseQuery = useQuery({
-    queryKey: [
-      "home-daily-releases",
-      user?.id,
-      language,
-      todayKey,
-      candidates.map((candidate) => `${candidate.mediaType}-${candidate.id}`),
-    ],
-    enabled: !!user,
-    staleTime: 1000 * 60 * 10,
-    queryFn: async () => {
-      if (candidates.length === 0) return [] as DailyRelease[];
-
-      const results = await Promise.all(
-        candidates.map((candidate) =>
-          resolveDailyRelease(candidate, language, todayKey),
-        ),
-      );
-
-      return results
-        .filter((item): item is DailyRelease => item !== null)
-        .sort((left, right) => {
-          if (left.source !== right.source) {
-            return left.source === "following" ? -1 : 1;
-          }
-          return left.title.localeCompare(right.title);
-        });
-    },
-  });
-
-  const releases = releaseQuery.data ?? [];
-  const releaseCount = releases.length;
-  const hasCandidates = candidates.length > 0;
+  const { t } = useTranslation();
+  const {
+    releases,
+    releaseCount,
+    hasCandidates,
+    isLoading,
+    isError,
+    refetch,
+  } = useDailyReleases();
 
   return (
     <section
@@ -225,9 +99,9 @@ export function DailyReleaseHighlight() {
           </Link>
         </div>
 
-        {releaseQuery.isLoading ? (
+        {isLoading ? (
           <DailyReleaseSkeleton />
-        ) : releaseQuery.isError ? (
+        ) : isError ? (
           <div className="flex flex-col items-start gap-3 rounded-2xl border border-destructive/20 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-semibold text-foreground">
@@ -241,7 +115,7 @@ export function DailyReleaseHighlight() {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => void releaseQuery.refetch()}
+              onClick={() => void refetch()}
               className="min-h-10 gap-2 rounded-xl bg-background/45"
             >
               <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
@@ -332,7 +206,7 @@ export function DailyReleaseHighlight() {
           </div>
         )}
 
-        {releaseQuery.data && releaseQuery.data.length > 3 ? (
+        {releases.length > 3 ? (
           <div className="mt-4 text-right">
             <Link
               to="/calendar"

@@ -8,7 +8,6 @@ import { HeroSection } from "@/components/HeroSection";
 import { MediaCardSkeleton } from "@/components/MediaCard";
 import { MediaSection } from "@/components/MediaSection";
 import { MediaCarouselEnhanced } from "@/components/MediaCarouselEnhanced";
-import { ContinueWatching } from "@/components/ContinueWatching";
 import SEO from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserLists } from "@/contexts/UserListsContext";
@@ -18,7 +17,7 @@ import { HomeSectionState } from "@/components/home/HomeSectionState";
 import { HomeStatsSnapshot } from "@/components/home/HomeStatsSnapshot";
 import { HomeWatchlistSkeleton } from "@/components/home/HomeWatchlistSkeleton";
 import { SuggestedPeopleRail } from "@/components/home/SuggestedPeopleRail";
-import { DailyReleaseHighlight } from "@/components/home/DailyReleaseHighlight";
+import { UpNextCommandCenter } from "@/components/home/UpNextCommandCenter";
 import { CommunityActivityFeed } from "@/components/home/CommunityActivityFeed";
 import { DailyCheckInCard } from "@/components/home/DailyCheckInCard";
 import { CineQuestHub } from "@/components/quests/CineQuestHub";
@@ -520,18 +519,15 @@ export default function Index() {
         ) : user ? (
           <>
             <MotionRevealSection tone="standard" delayClassName="delay-75" accentOpacityClassName="opacity-25">
-              <ContinueWatching />
+              <UpNextCommandCenter />
             </MotionRevealSection>
-            <MotionRevealSection tone="bold" delayClassName="delay-100" accentOpacityClassName="opacity-24">
-              <DailyReleaseHighlight />
-            </MotionRevealSection>
-            <MotionRevealSection tone="bold" delayClassName="delay-150" accentOpacityClassName="opacity-18">
+            <MotionRevealSection tone="bold" delayClassName="delay-100" accentOpacityClassName="opacity-18">
               <DailyCheckInCard />
             </MotionRevealSection>
-            <MotionRevealSection tone="bold" delayClassName="delay-200" accentOpacityClassName="opacity-16">
+            <MotionRevealSection tone="bold" delayClassName="delay-150" accentOpacityClassName="opacity-16">
               <CineQuestHub limit={2} />
             </MotionRevealSection>
-            <MotionRevealSection tone="bold" delayClassName="delay-250" accentOpacityClassName="opacity-14">
+            <MotionRevealSection tone="bold" delayClassName="delay-200" accentOpacityClassName="opacity-14">
               <DailyTriviaCard />
             </MotionRevealSection>
             <MotionRevealSection tone="soft" delayClassName="delay-300" accentOpacityClassName="opacity-16">
