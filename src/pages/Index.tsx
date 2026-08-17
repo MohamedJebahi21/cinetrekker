@@ -18,6 +18,7 @@ import { HomeStatsSnapshot } from "@/components/home/HomeStatsSnapshot";
 import { HomeWatchlistSkeleton } from "@/components/home/HomeWatchlistSkeleton";
 import { SuggestedPeopleRail } from "@/components/home/SuggestedPeopleRail";
 import { UpNextCommandCenter } from "@/components/home/UpNextCommandCenter";
+import { ActivationJourney } from "@/components/home/ActivationJourney";
 import { CommunityActivityFeed } from "@/components/home/CommunityActivityFeed";
 import { DailyCheckInCard } from "@/components/home/DailyCheckInCard";
 import { CineQuestHub } from "@/components/quests/CineQuestHub";
@@ -522,12 +523,15 @@ export default function Index() {
               <UpNextCommandCenter />
             </MotionRevealSection>
             <MotionRevealSection tone="bold" delayClassName="delay-100" accentOpacityClassName="opacity-18">
-              <DailyCheckInCard />
+              <ActivationJourney />
             </MotionRevealSection>
             <MotionRevealSection tone="bold" delayClassName="delay-150" accentOpacityClassName="opacity-16">
-              <CineQuestHub limit={2} />
+              <DailyCheckInCard />
             </MotionRevealSection>
             <MotionRevealSection tone="bold" delayClassName="delay-200" accentOpacityClassName="opacity-14">
+              <CineQuestHub limit={2} />
+            </MotionRevealSection>
+            <MotionRevealSection tone="bold" delayClassName="delay-250" accentOpacityClassName="opacity-14">
               <DailyTriviaCard />
             </MotionRevealSection>
             <MotionRevealSection tone="soft" delayClassName="delay-300" accentOpacityClassName="opacity-16">

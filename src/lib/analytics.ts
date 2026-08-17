@@ -27,11 +27,29 @@ type FirstProgressRecordedProps = {
   progress_mode: "title" | "episode";
 };
 
+type ActivationStep = "queue" | "watch" | "follow" | "taste";
+
+type ActivationCompletedProps = {
+  completed_required_steps: "3";
+  optional_taste_complete: "yes" | "no";
+};
+
+type ActivationDismissedProps = {
+  completed_required_steps: "0" | "1" | "2";
+};
+
+type ActivationStepOpenedProps = {
+  step: ActivationStep;
+};
+
 type AnalyticsEvents = {
   signup_intent: SignupIntentProps;
   account_created: AccountCreatedProps;
   first_title_saved: FirstTitleSavedProps;
   first_progress_recorded: FirstProgressRecordedProps;
+  activation_completed: ActivationCompletedProps;
+  activation_dismissed: ActivationDismissedProps;
+  activation_step_opened: ActivationStepOpenedProps;
 };
 
 type UmamiWindow = Window & {
