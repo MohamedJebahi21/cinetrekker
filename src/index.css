@@ -613,16 +613,16 @@
   /* Phase 5: Button states - hover, active, disabled */
   .btn-primary-glow {
     @apply relative overflow-hidden;
-    transition: all 0.18s ease-in-out;
+    transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
   }
 
   .btn-primary-glow:hover {
-    box-shadow: 0 0 30px hsl(358 94% 46% / 0.32);
-    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 5px 14px hsl(var(--primary) / 0.2);
+    transform: translateY(-1px);
   }
 
   .btn-primary-glow:active {
-    transform: translateY(0) scale(0.98);
+    transform: translateY(0);
   }
 
   .btn-primary-glow:disabled {
@@ -1490,51 +1490,66 @@ a:focus-visible {
 :root {
   --font-display: "Space Grotesk", "DM Sans", system-ui, sans-serif;
   --font-body: "DM Sans", system-ui, sans-serif;
-  --background: 36 20% 97%;
-  --foreground: 228 18% 13%;
-  --card: 36 20% 99%;
-  --card-foreground: 228 18% 13%;
-  --card-hover: 36 16% 95%;
-  --popover: 36 20% 99%;
-  --popover-foreground: 228 18% 13%;
-  --primary: 353 68% 42%;
+  --background: 32 22% 97%;
+  --foreground: 222 17% 13%;
+  --card: 32 18% 99%;
+  --card-foreground: 222 17% 13%;
+  --card-hover: 30 14% 95%;
+  --popover: 32 18% 99%;
+  --popover-foreground: 222 17% 13%;
+  --primary: 356 67% 42%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 34 16% 94%;
-  --secondary-foreground: 228 12% 28%;
-  --muted: 34 14% 93%;
-  --muted-foreground: 228 8% 43%;
-  --border: 34 12% 86%;
-  --input: 34 12% 86%;
-  --ring: 353 68% 42%;
+  --secondary: 30 14% 94%;
+  --secondary-foreground: 222 12% 29%;
+  --muted: 30 13% 93%;
+  --muted-foreground: 222 8% 43%;
+  --border: 30 11% 85%;
+  --input: 30 11% 85%;
+  --ring: 356 67% 42%;
   --radius: 0.7rem;
-  --glass-bg: 36 20% 99% / 0.82;
-  --glass-border: 34 12% 85% / 0.84;
-  --shadow-card: 0 8px 26px hsl(228 18% 13% / 0.06), 0 1px 2px hsl(228 18% 13% / 0.05);
-  --shadow-card-hover: 0 18px 38px hsl(228 18% 13% / 0.12), 0 3px 8px hsl(228 18% 13% / 0.06);
-  --ct-gradient-shell: linear-gradient(180deg, hsl(var(--background)), hsl(34 18% 95%));
+  --glass-bg: 32 18% 99% / 0.9;
+  --glass-border: 30 11% 85% / 0.9;
+  --shadow-card: 0 1px 2px hsl(222 17% 13% / 0.05), 0 12px 30px hsl(222 17% 13% / 0.055);
+  --shadow-card-hover: 0 2px 4px hsl(222 17% 13% / 0.07), 0 18px 38px hsl(222 17% 13% / 0.1);
+  --ct-gradient-shell: linear-gradient(180deg, hsl(var(--background)), hsl(30 16% 95%));
 }
 
 .dark {
-  --background: 228 18% 7%;
-  --foreground: 36 18% 95%;
-  --card: 228 16% 11%;
-  --card-foreground: 36 18% 95%;
-  --card-hover: 228 14% 15%;
-  --popover: 228 16% 10%;
-  --popover-foreground: 36 18% 95%;
-  --primary: 353 70% 56%;
-  --secondary: 228 13% 14%;
-  --secondary-foreground: 36 12% 82%;
-  --muted: 228 13% 14%;
-  --muted-foreground: 228 8% 68%;
-  --border: 228 11% 21%;
-  --input: 228 11% 21%;
-  --ring: 353 70% 56%;
-  --glass-bg: 228 16% 11% / 0.9;
-  --glass-border: 228 11% 22% / 0.92;
-  --shadow-card: 0 14px 34px hsl(228 30% 2% / 0.36), 0 1px 2px hsl(0 0% 0% / 0.28);
-  --shadow-card-hover: 0 22px 48px hsl(228 30% 2% / 0.54), 0 0 0 1px hsl(var(--primary) / 0.14);
-  --ct-gradient-shell: linear-gradient(180deg, hsl(var(--background)), hsl(228 17% 5%));
+  --background: 222 15% 7%;
+  --foreground: 32 18% 94%;
+  --card: 222 12% 11%;
+  --card-foreground: 32 18% 94%;
+  --card-hover: 222 10% 14%;
+  --popover: 222 14% 9%;
+  --popover-foreground: 32 18% 94%;
+  --primary: 356 68% 48%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 222 10% 14%;
+  --secondary-foreground: 32 12% 82%;
+  --muted: 222 10% 14%;
+  --muted-foreground: 220 8% 66%;
+  --accent: 356 34% 18%;
+  --accent-foreground: 32 18% 94%;
+  --border: 222 9% 20%;
+  --input: 222 9% 20%;
+  --ring: 356 68% 54%;
+  --glass-bg: 222 12% 11% / 0.98;
+  --glass-border: 222 9% 21% / 0.94;
+  --shadow-card: 0 1px 2px hsl(0 0% 0% / 0.28), 0 14px 32px hsl(222 28% 2% / 0.34);
+  --shadow-card-hover: 0 2px 5px hsl(0 0% 0% / 0.34), 0 20px 42px hsl(222 28% 2% / 0.45);
+  --ct-gradient-shell: linear-gradient(180deg, hsl(222 15% 8%), hsl(222 16% 6%));
+}
+
+[data-theme="oled"] {
+  --background: 0 0% 0%;
+  --card: 0 0% 5%;
+  --popover: 0 0% 4%;
+  --secondary: 0 0% 8%;
+  --muted: 0 0% 8%;
+  --border: 0 0% 14%;
+  --input: 0 0% 14%;
+  --primary: 356 68% 50%;
+  --ring: 356 68% 56%;
 }
 
 html { background: hsl(var(--background)); }
@@ -1545,7 +1560,7 @@ body {
 
 .ct-page-shell { background: var(--ct-gradient-shell); }
 .ct-page-shell::before,
-body::after { opacity: 0.35; }
+body::after { opacity: 0.16; }
 
 .page-container {
   width: min(100%, 80rem);
@@ -1634,10 +1649,10 @@ button:active,
 .topbar-icon-button:hover { background: hsl(var(--foreground) / 0.06); color: hsl(var(--foreground)); }
 .topbar-menu-button {
   margin-left: 0.5rem;
-  border-color: hsl(var(--border) / 0.8);
-  background: hsl(var(--card) / 0.7);
+  border-color: hsl(var(--border) / 0.92);
+  background: hsl(var(--secondary));
 }
-.topbar-menu-button:hover { background: hsl(var(--card)); border-color: hsl(var(--border)); }
+.topbar-menu-button:hover { background: hsl(var(--card)); border-color: hsl(var(--primary) / 0.32); }
 .topbar-divider { width: 1px; height: 1.25rem; margin-inline: 0.375rem; background: hsl(var(--border) / 0.9); }
 
 .desktop-menu-grid { align-items: start; }
@@ -1670,8 +1685,8 @@ button:active,
 .profile-premium-hero {
   border-color: hsl(var(--border) / 0.96) !important;
   background:
-    radial-gradient(circle at 86% 18%, hsl(var(--primary) / 0.11), transparent 30%),
-    linear-gradient(125deg, hsl(var(--card) / 0.99), hsl(var(--card) / 0.9)) !important;
+    radial-gradient(circle at 86% 18%, hsl(var(--primary) / 0.055), transparent 30%),
+    linear-gradient(125deg, hsl(var(--card)), hsl(var(--card) / 0.92)) !important;
 }
 .profile-premium-hero::before {
   content: "";
@@ -1793,36 +1808,36 @@ body { font-variant-numeric: tabular-nums; }
 }
 .ct-page-shell {
   background:
-    radial-gradient(75rem 28rem at 50% -10rem, hsl(var(--primary) / 0.09), transparent 62%),
+    radial-gradient(72rem 24rem at 50% -12rem, hsl(var(--primary) / 0.045), transparent 64%),
     linear-gradient(180deg, hsl(var(--background)), hsl(var(--background)));
 }
-.ct-page-shell::before { opacity: 0.22; }
+.ct-page-shell::before { opacity: 0.1; }
 .ct-panel,
 .ct-panel-strong,
 .ct-list-surface {
-  border-radius: 1rem;
-  border-color: var(--ct-border-subtle);
-  background: var(--ct-surface-raised);
-  box-shadow: 0 1px 2px hsl(var(--foreground) / 0.04), 0 10px 28px hsl(var(--foreground) / 0.045);
+  border-radius: 0.875rem;
+  border-color: hsl(var(--border) / 0.9);
+  background: hsl(var(--card));
+  box-shadow: 0 1px 2px hsl(var(--foreground) / 0.035), 0 12px 28px hsl(var(--foreground) / 0.04);
 }
 .ct-panel,
 .ct-panel-strong { padding: clamp(1.25rem, 2vw, 2rem); }
 .ct-toolbar {
   gap: 0.625rem;
   padding: 0.5rem;
-  border-radius: 0.875rem;
-  border-color: var(--ct-border-subtle);
-  background: var(--ct-surface-subtle);
-  box-shadow: none;
+  border-radius: 0.75rem;
+  border-color: hsl(var(--border) / 0.88);
+  background: hsl(var(--secondary));
+  box-shadow: inset 0 1px 0 hsl(var(--foreground) / 0.025);
 }
 .ct-toggle-group {
-  border-radius: 0.75rem;
-  border-color: var(--ct-border-subtle);
-  background: hsl(var(--muted) / 0.58);
+  border-radius: 0.625rem;
+  border-color: hsl(var(--border) / 0.88);
+  background: hsl(var(--muted));
   box-shadow: none;
 }
 .ct-toggle-button { border-radius: 0.5rem; padding: 0.5rem 0.75rem; }
-.ct-toggle-button-active { box-shadow: 0 1px 2px hsl(var(--primary) / 0.22); }
+.ct-toggle-button-active { box-shadow: 0 1px 2px hsl(var(--primary) / 0.16); }
 .ct-list-row { gap: 1rem; padding: 1rem 1.25rem; }
 .ct-list-row + .ct-list-row { border-top: 1px solid hsl(var(--border) / 0.65); }
 .ct-list-row:hover { background: hsl(var(--primary) / 0.045); }
@@ -1852,7 +1867,7 @@ body { font-variant-numeric: tabular-nums; }
 }
 .media-grid { gap: clamp(0.75rem, 1.5vw, 1.25rem); }
 .media-card { overflow: hidden; background: hsl(var(--card)); border: 1px solid var(--ct-border-subtle); box-shadow: none; }
-.media-card:hover { border-color: hsl(var(--primary) / 0.38); box-shadow: 0 14px 30px hsl(var(--foreground) / 0.12); }
+.media-card:hover { border-color: hsl(var(--primary) / 0.44); box-shadow: 0 16px 30px hsl(var(--foreground) / 0.1); }
 .media-card h3 { font-weight: 650; }
 .ct-panel :where(input, textarea, select),
 .ct-toolbar :where(input, textarea, select) { background: hsl(var(--background)); }
