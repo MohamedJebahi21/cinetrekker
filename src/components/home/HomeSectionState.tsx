@@ -91,8 +91,8 @@ export function HomeSectionState({
 
   if (loading) {
     return (
-      <section className="home-section-shell min-h-[640px] sm:min-h-[720px]">
-        {skeleton ?? null}
+      <section className="home-section-shell" aria-busy="true" aria-label={`Loading ${title}`}>
+        {skeleton ?? <div className="min-h-[420px] sm:min-h-[520px]" />}
       </section>
     );
   }

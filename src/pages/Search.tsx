@@ -1373,7 +1373,7 @@ export default function Search() {
       </div>
 
       {/* Results Header */}
-      <div className="mb-4">
+      <div className="mb-4 min-h-5" aria-live="polite">
         <p className="text-sm text-muted-foreground">
           {isLoadingOrRefreshing && !loadingTimedOut ? (
             <>{t("common.loading")}</>
@@ -1446,9 +1446,9 @@ export default function Search() {
       ) : null}
 
       {/* Results */}
-      {isLoadingOrRefreshing && !loadingTimedOut ? (
-        <div className="media-grid">
-          {Array.from({ length: 18 }).map((_, i) => (
+      {isLoading && !loadingTimedOut ? (
+        <div className="media-grid" aria-busy="true" aria-label={t("common.loading", "Loading results")}>
+          {Array.from({ length: 20 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
         </div>

@@ -383,6 +383,11 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                         }));
                       }}
                       required
+                      aria-describedby={
+                        activeTab === "register"
+                          ? "auth-password-requirements"
+                          : undefined
+                      }
                       className="pr-10"
                     />
                     <button
@@ -404,7 +409,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                   </div>
 
                   {activeTab === "register" && (
-                    <ul className="mt-2 space-y-0.5 text-xs text-muted-foreground md:hidden">
+                    <ul id="auth-password-requirements" className="mt-2 space-y-0.5 text-xs text-muted-foreground">
                       <li>{t("auth.passwordRuleMin", "• Minimum 8 characters")}</li>
                       <li>{t("auth.passwordRuleProTip", "• Tip: Use uppercase and numbers for strength")}</li>
                       <li className="italic opacity-70">

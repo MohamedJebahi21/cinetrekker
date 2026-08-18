@@ -33,16 +33,16 @@ export function Footer() {
               {t("footer.explore", "Explore")}
             </h3>
             <nav className="flex flex-col gap-3" aria-label={t("footer.exploreLinks", "Explore links")}>
-              <Link to="/" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
+              <Link to="/" className="-mx-1 inline-flex min-h-8 items-center break-words rounded-md px-1 text-[0.92rem] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                 {t("nav.home", "Home")}
               </Link>
-              <Link to="/watchlist" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
+              <Link to="/watchlist" className="-mx-1 inline-flex min-h-8 items-center break-words rounded-md px-1 text-[0.92rem] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                 {t("nav.watchlist", "Watchlist")}
               </Link>
-              <Link to="/watched" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
+              <Link to="/watched" className="-mx-1 inline-flex min-h-8 items-center break-words rounded-md px-1 text-[0.92rem] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                 {t("nav.watched", "Watched")}
               </Link>
-              <Link to="/search" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
+              <Link to="/search" className="-mx-1 inline-flex min-h-8 items-center break-words rounded-md px-1 text-[0.92rem] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                 {t("nav.search", "Search")}
               </Link>
             </nav>
@@ -57,14 +57,14 @@ export function Footer() {
                 href="https://buymeacoffee.com/mohamed_jebahi"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground"
+                className="-mx-1 inline-flex min-h-8 items-center break-words rounded-md px-1 text-[0.92rem] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 {t("footer.buyMeACoffee", "Buy Me a Coffee")}
               </a>
-              <Link to="/about" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
+              <Link to="/about" className="-mx-1 inline-flex min-h-8 items-center break-words rounded-md px-1 text-[0.92rem] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                 {t("footer.about", "About")}
               </Link>
-              <Link to="/feedback" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
+              <Link to="/feedback" className="-mx-1 inline-flex min-h-8 items-center break-words rounded-md px-1 text-[0.92rem] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                 {t("footer.feedback", "Feedback")}
               </Link>
             </nav>
@@ -75,13 +75,13 @@ export function Footer() {
               {t("footer.legal", "Legal")}
             </h3>
             <nav className="flex flex-col gap-3" aria-label={t("footer.legalLinks", "Legal links")}>
-              <Link to="/privacy" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
+              <Link to="/privacy" className="-mx-1 inline-flex min-h-8 items-center break-words rounded-md px-1 text-[0.92rem] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                 {t("nav.privacy", "Privacy Policy")}
               </Link>
-              <Link to="/terms" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
+              <Link to="/terms" className="-mx-1 inline-flex min-h-8 items-center break-words rounded-md px-1 text-[0.92rem] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                 {t("footer.terms", "Terms of Service")}
               </Link>
-              <Link to="/cookies" className="break-words rounded-sm text-[0.92rem] text-muted-foreground transition-colors hover:text-foreground">
+              <Link to="/cookies" className="-mx-1 inline-flex min-h-8 items-center break-words rounded-md px-1 text-[0.92rem] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                 {t("footer.cookies", "Cookie Policy")}
               </Link>
             </nav>
@@ -107,7 +107,7 @@ export function Footer() {
                 href="https://www.themoviedb.org/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="transition-opacity hover:opacity-80"
+                className="inline-flex min-h-8 min-w-8 items-center justify-center rounded-md px-1 transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <img
                   src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg"
