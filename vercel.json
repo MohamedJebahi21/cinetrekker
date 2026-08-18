@@ -18,6 +18,14 @@
       "destination": "/api/sitemap"
     },
     {
+      "source": "/api/notifications/unread-count",
+      "destination": "/api/notifications?action=unread-count"
+    },
+    {
+      "source": "/api/notifications/mark-read",
+      "destination": "/api/notifications?action=mark-read"
+    },
+    {
       "source": "/movie/:path*",
       "destination": "/api/edge-meta"
     },

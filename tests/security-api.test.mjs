@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import followHandler from "../api/follow.js";
 import feedbackHandler from "../api/feedback.js";
+import notificationsHandler from "../api/notifications.js";
 import tmdbProxyHandler from "../api/tmdb-proxy.js";
 import cronHandler from "../api/jobs/check-followed-updates.js";
 import {
@@ -364,6 +365,28 @@ test("TMDB proxy consults rate limiting and does not expose upstream diagnostics
     else process.env.NODE_ENV = previousNodeEnv;
     if (previousTmdbKey === undefined) delete process.env.TMDB_API_KEY;
     else process.env.TMDB_API_KEY = previousTmdbKey;
+  }
+});
+
+test("consolidated notification actions preserve their route-specific HTTP methods", async () => {
+  const cases = [
+    { action: "list", method: "POST" },
+    { action: "unread-count", method: "POST" },
+    { action: "mark-read", method: "GET" },
+  ];
+
+  for (const { action, method } of cases) {
+    const req = createMockReq({
+      method,
+      query: { action },
+      url: `/api/notifications?action=${action}`,
+    });
+    const res = createMockRes();
+
+    await notificationsHandler(req, res);
+
+    assert.equal(res.statusCode, 405, `${action} should reject ${method}`);
+    assert.deepEqual(res.body, { error: "Method Not Allowed" });
   }
 });
 
