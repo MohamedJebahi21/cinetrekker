@@ -1,0 +1,72 @@
+name: Release Quality Gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Build, security, and browser quality gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Static and API-security checks
+        run: npm run test:ci
+
+      - name: Runtime dependency audit
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Unit checks
+        run: npm run test:unit
+
+      - name: Chromium smoke checks
+        run: npm run test:smoke
+
+      - name: Mobile Safari search regression
+        run: npm run test:e2e:mobile:search-regressions
+
+      - name: Discovery layout and visual regression gates
+        run: >-
+          npx playwright test
+          tests/discovery-layout-stability.spec.ts
+          tests/visual-regression.spec.ts
+          --project=chromium
+
+      - name: Upload Playwright diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-diagnostics-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 14
