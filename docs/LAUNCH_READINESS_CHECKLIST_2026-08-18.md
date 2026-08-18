@@ -14,7 +14,8 @@
 | Continue Watching | Complete | Restored alongside Up Next |
 | Feedback user experience | Safely degraded | Unavailable service disables form and offers direct email fallback |
 | Loading stability | In progress | Home/search/profile/public-profile skeleton improvements deployed |
-| Web Vitals instrumentation | Code complete; provider configuration pending | Consent-gated CLS/INP/LCP reporter deployed in `d47fa3d` |
+| Web Vitals instrumentation | Code complete; provider configuration pending | Consent-gated CLS/INP/LCP reporter deployed in `d47fa3d`; a consent-off production session was verified to load no Umami tracker script on 18 August 2026 |
+| Hosted release quality gate | Complete | GitHub Actions run `32183156485` passed lint, types, API security, i18n, audit, build, unit, smoke, mobile Safari, layout-stability, and CI-native visual-regression checks |
 
 ## Confirmed External-Service Prerequisites
 
@@ -32,17 +33,17 @@
 | P0-1 | Configure a production CAPTCHA provider for feedback (`TURNSTILE_SECRET_KEY` + `VITE_TURNSTILE_SITE_KEY`, or matching reCAPTCHA keys) | Blocked by provider credentials | Product owner / deployment administrator | `GET /api/feedback` returns `available: true` and identifies the selected CAPTCHA provider |
 | P0-2 | Configure feedback mail delivery (`RESEND_API_KEY`, `FEEDBACK_TO_EMAIL`) | Blocked by provider credentials | Product owner / deployment administrator | A controlled feedback message arrives at the configured support mailbox once, with no duplicate delivery |
 | P0-3 | Run controlled end-to-end feedback verification after P0-1 and P0-2 | Waiting on P0-1/P0-2 | Agent | Valid form success, invalid CAPTCHA rejection, rate-limit response, recipient delivery, and no browser errors |
-| P0-4 | Keep the direct support-email fallback live until P0-3 is verified | Complete | Agent | Disabled form controls and `cinetrekker.contact@gmail.com` fallback visible whenever delivery is unavailable |
+| P0-4 | Keep the direct support-email fallback live until P0-3 is verified | Complete | Agent | Disabled form controls and `cinetrekker.contact@gmail.com` fallback were reverified in production on 18 August 2026; `GET /api/feedback` returned `available: false` and `captchaProvider: null` |
 
 ## P1 — Measurement, Reliability, and Privacy
 
 | ID | Task | Status | Owner | Completion evidence |
 |---|---|---|---|---|
-| P1-1 | Configure an existing or approved Umami analytics installation for consenting production visitors | Code and runbook complete; blocked by public provider configuration | Product owner / deployment administrator | Consent-accepted visits produce coarse `web_vital` events for home and search |
+| P1-1 | Configure an existing or approved Umami analytics installation for consenting production visitors | Code and runbook complete; blocked by public provider configuration | Product owner / deployment administrator | A consent-off production session was reverified to load no Umami script on 18 August 2026; consent-accepted visits remain pending provider configuration and must produce only coarse `web_vital` events for home and search |
 | P1-2 | Keep privacy boundaries for Web Vitals telemetry | Complete | Agent | Events include only metric name, route class, rating, and coarse bucket; no identifiers, titles, IDs, queries, or raw values |
 | P1-3 | Maintain automated home/search layout-stability gate | Complete | Agent | Chromium quality test measures initial-layout shift and enforces local CLS ≤ 0.15 |
-| P1-4 | Run a safe disposable two-account authentication and social-boundary test | Test complete; live execution blocked by disposable account credentials | Agent | Credential-gated test skips safely until two expressly provided non-customer accounts are available, then verifies signup/login, reversible follow state, sign-out, and isolated account state |
-| P1-5 | Verify browser-push opt-in after the service-worker activation fix | Waiting on a fresh Settings opt-in attempt | Agent and authorized account owner | New `push_subscriptions` record appears only after explicit Settings action; no prompt on page load |
+| P1-4 | Run a safe disposable two-account authentication and social-boundary test | Test complete; live execution blocked by disposable account credentials | Agent | Reverified on 18 August 2026: the credential-gated suite skips safely with no `CINETREKKER_E2E_*` variables; with two expressly provided non-customer accounts, it verifies login, reversible follow state, sign-out, and isolated account state |
+| P1-5 | Verify browser-push opt-in after the service-worker activation fix | Waiting on a fresh Settings opt-in attempt | Agent and authorized account owner | Passive production verification on 18 August 2026 confirmed the Settings control does not request permission on page load, while an explicit signed-in Settings action remains required to create or refresh a `push_subscriptions` record |
 
 ## P2 — Regression Prevention and Product Operations
 
