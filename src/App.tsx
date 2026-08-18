@@ -33,6 +33,7 @@ import { websiteJsonLd } from "@/lib/schema";
 import { siteMetadata } from "@/lib/metadata";
 import { applyAccessibilityPreferencesToRoot } from "@/lib/accessibility-preferences";
 import { useCookieConsent } from "@/hooks/useCookieConsent";
+import { WebVitalsReporter } from "@/components/WebVitalsReporter";
 import { scheduleIdleTask } from "@/lib/idleCallback";
 import Index from "./pages/Index";
 const KeyboardShortcuts = lazy(() => import("@/components/KeyboardShortcuts"));
@@ -625,6 +626,7 @@ const App = () => {
                   </Suspense>
                 )}
                 <Sonner position="bottom-right" />
+                <WebVitalsReporter />
                 <SEO
                   jsonLd={websiteJsonLd({
                     name: siteMetadata.siteName,

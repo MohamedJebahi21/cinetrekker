@@ -42,7 +42,15 @@ type ActivationStepOpenedProps = {
   step: ActivationStep;
 };
 
+type WebVitalProps = {
+  metric: "CLS" | "INP" | "LCP";
+  route: "home" | "search";
+  rating: "good" | "needs_improvement" | "poor";
+  value_bucket: string;
+};
+
 type AnalyticsEvents = {
+  web_vital: WebVitalProps;
   signup_intent: SignupIntentProps;
   account_created: AccountCreatedProps;
   first_title_saved: FirstTitleSavedProps;
