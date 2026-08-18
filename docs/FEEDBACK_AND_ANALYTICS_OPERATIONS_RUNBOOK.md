@@ -38,14 +38,15 @@ The application’s direct email fallback must remain available whenever the end
 
 ## 4. Umami Configuration Procedure
 
-1. Create or select the approved Umami website entry for `cinetrekker.vercel.app`.
-2. Copy the tracker script URL and website ID into `VITE_UMAMI_SCRIPT_URL` and `VITE_UMAMI_WEBSITE_ID` in Vercel Production. Both values are public tracker configuration, not server secrets.
-3. Redeploy production.
-4. Open CineTrekker in a new browser profile, decline non-essential cookies, and verify no Umami tracker script is appended to the document.
-5. Open CineTrekker in another new browser profile, accept cookies, and verify one HTTPS tracker script is appended.
-6. Navigate between home and search. Verify normal page views appear in Umami and that URL search text is absent from the recorded page path.
-7. Verify the `web_vital` events contain only `metric`, `route`, `rating`, and `value_bucket`. They must not contain user identifiers, title text, TMDB IDs, feedback content, raw metric values, or search queries.
-8. Enable browser Do Not Track in a separate test profile. Confirm the tracker does not load and no custom `web_vital` event is emitted.
+1. Create or select the approved Umami website entry for `cinetrekker.vercel.app`, and record its exact HTTPS origin.
+2. Add that exact origin to `script-src`, `script-src-elem`, and `connect-src` in `vercel.json`, then commit it. Do not use a broad `https:` CSP allowance: Umami loads from the tracker-script origin and sends data to that origin by default.[1]
+3. Copy the tracker script URL and website ID into `VITE_UMAMI_SCRIPT_URL` and `VITE_UMAMI_WEBSITE_ID` in Vercel Production. Both values are public tracker configuration, not server secrets.
+4. Redeploy production.
+5. Open CineTrekker in a new browser profile, decline non-essential cookies, and verify no Umami tracker script is appended to the document.
+6. Open CineTrekker in another new browser profile, accept cookies, and verify one HTTPS tracker script is appended.
+7. Navigate between home and search. Verify normal page views appear in Umami and that URL search text is absent from the recorded page path.
+8. Verify the `web_vital` events contain only `metric`, `route`, `rating`, and `value_bucket`. They must not contain user identifiers, title text, TMDB IDs, feedback content, raw metric values, or search queries.
+9. Enable browser Do Not Track in a separate test profile. Confirm the tracker does not load and no custom `web_vital` event is emitted.
 
 Umami’s tracker supports SPA route detection, JavaScript custom events through `window.umami.track`, URL-search exclusion, and an explicit Do Not Track option.[1][2][3]
 
