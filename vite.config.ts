@@ -263,6 +263,9 @@ export default defineConfig(({ mode }) => {
 
 
   return {
+    // VITE_ remains the project standard. NEXT_PUBLIC_ is included only for
+    // compatibility with the existing public Turnstile site-key setting.
+    envPrefix: ["VITE_", "NEXT_PUBLIC_"],
     server: {
       host: "::",
       port: 8080,

@@ -32,16 +32,16 @@ function getCaptchaConfig() {
 }
 
 export function getBotProtectionClientConfig() {
-  const siteKey =
-    getServerEnv("VITE_TURNSTILE_SITE_KEY") || getServerEnv("VITE_RECAPTCHA_SITE_KEY");
+  const turnstileSiteKey =
+    getServerEnv("VITE_TURNSTILE_SITE_KEY") ||
+    // Backward compatibility for the existing Vercel configuration. New
+    // deployments should continue to use the Vite-prefixed public key.
+    getServerEnv("NEXT_PUBLIC_TURNSTILE_SITE_KEY");
+  const recaptchaSiteKey = getServerEnv("VITE_RECAPTCHA_SITE_KEY");
 
   return {
-    provider: getServerEnv("VITE_TURNSTILE_SITE_KEY")
-      ? "turnstile"
-      : getServerEnv("VITE_RECAPTCHA_SITE_KEY")
-        ? "recaptcha"
-        : null,
-    siteKey: siteKey || "",
+    provider: turnstileSiteKey ? "turnstile" : recaptchaSiteKey ? "recaptcha" : null,
+    siteKey: turnstileSiteKey || recaptchaSiteKey || "",
     honeypotFieldName: DEFAULT_HONEYPOT_FIELD,
   };
 }

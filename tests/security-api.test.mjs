@@ -65,6 +65,8 @@ beforeEach(() => {
   resetSecurityAlertsForTests();
   delete process.env.TURNSTILE_SECRET_KEY;
   delete process.env.RECAPTCHA_SECRET_KEY;
+  delete process.env.VITE_TURNSTILE_SITE_KEY;
+  delete process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   delete process.env.RESEND_API_KEY;
   delete process.env.FEEDBACK_TO_EMAIL;
 });
@@ -388,6 +390,21 @@ test("consolidated notification actions preserve their route-specific HTTP metho
     assert.equal(res.statusCode, 405, `${action} should reject ${method}`);
     assert.deepEqual(res.body, { error: "Method Not Allowed" });
   }
+});
+
+test("feedback availability accepts the legacy public Turnstile key name", async () => {
+  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = "public-turnstile-site-key";
+  process.env.TURNSTILE_SECRET_KEY = "turnstile-secret";
+  process.env.RESEND_API_KEY = "resend-secret";
+  process.env.FEEDBACK_TO_EMAIL = "alerts@example.com";
+
+  const req = createMockReq({ method: "GET", url: "/api/feedback" });
+  const res = createMockRes();
+
+  await feedbackHandler(req, res);
+
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(res.body, { available: true, captchaProvider: "turnstile" });
 });
 
 test("feedback spam scenarios are blocked by honeypot and rate limit", async () => {
