@@ -34,6 +34,7 @@ import { siteMetadata } from "@/lib/metadata";
 import { applyAccessibilityPreferencesToRoot } from "@/lib/accessibility-preferences";
 import { useCookieConsent } from "@/hooks/useCookieConsent";
 import { WebVitalsReporter } from "@/components/WebVitalsReporter";
+import { UmamiAnalytics } from "@/components/UmamiAnalytics";
 import { scheduleIdleTask } from "@/lib/idleCallback";
 import Index from "./pages/Index";
 const KeyboardShortcuts = lazy(() => import("@/components/KeyboardShortcuts"));
@@ -627,6 +628,7 @@ const App = () => {
                 )}
                 <Sonner position="bottom-right" />
                 <WebVitalsReporter />
+                <UmamiAnalytics />
                 <SEO
                   jsonLd={websiteJsonLd({
                     name: siteMetadata.siteName,
