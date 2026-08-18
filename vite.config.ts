@@ -175,15 +175,15 @@ const cspPlugin = (): Plugin => {
 
   const policy = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://vercel.live https://va.vercel-scripts.com",
-    "script-src-elem 'self' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com",
+    "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://vercel.live https://va.vercel-scripts.com https://challenges.cloudflare.com",
+    "script-src-elem 'self' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com https://challenges.cloudflare.com",
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self' data: https://frontend-cdn.perplexity.ai https://r2cdn.perplexity.ai",
     "img-src 'self' blob: data: https: https://image.tmdb.org https://www.themoviedb.org https://*.supabase.co",
     "media-src 'self' blob: https: data:",
     "worker-src 'self' blob:",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.themoviedb.org https://vercel.live https://va.vercel-scripts.com wss://*.vercel.com",
-    "frame-src 'self' https://www.youtube.com https://player.vimeo.com https://vercel.live",
+    "frame-src 'self' https://www.youtube.com https://player.vimeo.com https://vercel.live https://challenges.cloudflare.com",
     allowVsCodeSimpleBrowser
       ? "frame-ancestors 'self' vscode-webview: https://*.vscode-cdn.net https://*.vscode-webview.net"
       : "frame-ancestors 'none'",
