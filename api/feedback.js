@@ -41,7 +41,11 @@ export default async function handler(req, res) {
         process.env.FEEDBACK_TO_EMAIL,
     );
 
-    return res.status(200).json({ available, captchaProvider: captcha.provider });
+    return res.status(200).json({
+      available,
+      captchaProvider: available ? captcha.provider : null,
+      captchaSiteKey: available ? captcha.siteKey : null,
+    });
   }
 
   if (req.method !== 'POST') {

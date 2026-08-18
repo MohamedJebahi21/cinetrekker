@@ -39,13 +39,13 @@ declare global {
   }
 }
 
-const TURNSTILE_SITE_KEY =
-  (import.meta.env.VITE_TURNSTILE_SITE_KEY ||
-    import.meta.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) as string | undefined;
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined;
-const CAPTCHA_PROVIDER = TURNSTILE_SITE_KEY ? 'turnstile' : RECAPTCHA_SITE_KEY ? 'recaptcha' : null;
-const CAPTCHA_SITE_KEY = TURNSTILE_SITE_KEY || RECAPTCHA_SITE_KEY || '';
-const CAPTCHA_CONFIGURED = Boolean(CAPTCHA_SITE_KEY);
+type CaptchaProvider = 'turnstile' | 'recaptcha';
+
+type FeedbackAvailabilityResponse = {
+  available?: boolean;
+  captchaProvider?: CaptchaProvider | null;
+  captchaSiteKey?: string | null;
+};
 
 export default function Feedback() {
   const { t } = useTranslation();
@@ -60,34 +60,52 @@ export default function Feedback() {
   const [feedbackAvailability, setFeedbackAvailability] = useState<
     'checking' | 'available' | 'unavailable'
   >('checking');
+  const [captchaConfig, setCaptchaConfig] = useState<{
+    provider: CaptchaProvider;
+    siteKey: string;
+  } | null>(null);
   const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
   const turnstileWidgetIdRef = useRef<string | null>(null);
 
   const feedbackServiceAvailable = feedbackAvailability === 'available';
+  const captchaProvider = captchaConfig?.provider ?? null;
+  const captchaSiteKey = captchaConfig?.siteKey ?? '';
+  const captchaConfigured = Boolean(captchaProvider && captchaSiteKey);
 
   useEffect(() => {
     const controller = new AbortController();
 
     void fetch('/api/feedback', { signal: controller.signal })
       .then(async (response) => {
-        if (!response.ok) return { available: false };
-        return response.json() as Promise<{ available?: boolean }>;
+        if (!response.ok) return { available: false } satisfies FeedbackAvailabilityResponse;
+        return response.json() as Promise<FeedbackAvailabilityResponse>;
       })
       .then((status) => {
-        setFeedbackAvailability(status.available ? 'available' : 'unavailable');
+        const provider =
+          status.captchaProvider === 'turnstile' || status.captchaProvider === 'recaptcha'
+            ? status.captchaProvider
+            : null;
+        const siteKey = typeof status.captchaSiteKey === 'string' ? status.captchaSiteKey.trim() : '';
+        const available = Boolean(status.available && provider && siteKey);
+
+        setCaptchaConfig(available && provider ? { provider, siteKey } : null);
+        setFeedbackAvailability(available ? 'available' : 'unavailable');
       })
       .catch(() => {
-        if (!controller.signal.aborted) setFeedbackAvailability('unavailable');
+        if (!controller.signal.aborted) {
+          setCaptchaConfig(null);
+          setFeedbackAvailability('unavailable');
+        }
       });
 
     return () => controller.abort();
   }, []);
 
   useEffect(() => {
-    if (!feedbackServiceAvailable || !CAPTCHA_SITE_KEY || !turnstileContainerRef.current) return;
+    if (!feedbackServiceAvailable || !captchaSiteKey || !turnstileContainerRef.current) return;
 
     const existingScript = document.querySelector<HTMLScriptElement>(
-      CAPTCHA_PROVIDER === 'turnstile'
+      captchaProvider === 'turnstile'
         ? 'script[data-turnstile-script="true"]'
         : 'script[data-recaptcha-script="true"]',
     );
@@ -97,11 +115,11 @@ export default function Feedback() {
         return;
       }
 
-      if (CAPTCHA_PROVIDER === 'turnstile' && window.turnstile) {
+      if (captchaProvider === 'turnstile' && window.turnstile) {
         turnstileWidgetIdRef.current = window.turnstile.render(
           turnstileContainerRef.current,
           {
-            sitekey: CAPTCHA_SITE_KEY,
+            sitekey: captchaSiteKey,
             theme: 'auto',
             callback: (token) => setCaptchaToken(token),
             'expired-callback': () => setCaptchaToken(''),
@@ -110,11 +128,11 @@ export default function Feedback() {
         );
       }
 
-      if (CAPTCHA_PROVIDER === 'recaptcha' && window.grecaptcha) {
+      if (captchaProvider === 'recaptcha' && window.grecaptcha) {
         turnstileWidgetIdRef.current = window.grecaptcha.render(
           turnstileContainerRef.current,
           {
-            sitekey: CAPTCHA_SITE_KEY,
+            sitekey: captchaSiteKey,
             theme: 'dark',
             callback: (token) => setCaptchaToken(token),
             'expired-callback': () => setCaptchaToken(''),
@@ -131,14 +149,14 @@ export default function Feedback() {
 
     const script = document.createElement('script');
     const captchaUrl =
-      CAPTCHA_PROVIDER === 'turnstile'
+      captchaProvider === 'turnstile'
         ? 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
         : 'https://www.google.com/recaptcha/api.js?render=explicit';
     // script.src is a TrustedScriptURL sink; use the cinetrekker policy.
     script.src = toTrustedScriptURL(captchaUrl) as string;
     script.async = true;
     script.defer = true;
-    if (CAPTCHA_PROVIDER === 'turnstile') {
+    if (captchaProvider === 'turnstile') {
       script.dataset.turnstileScript = 'true';
     } else {
       script.dataset.recaptchaScript = 'true';
@@ -148,7 +166,7 @@ export default function Feedback() {
 
     return () => {
       if (
-        CAPTCHA_PROVIDER === 'turnstile' &&
+        captchaProvider === 'turnstile' &&
         turnstileWidgetIdRef.current &&
         window.turnstile?.remove
       ) {
@@ -156,7 +174,7 @@ export default function Feedback() {
         turnstileWidgetIdRef.current = null;
       }
     };
-  }, [feedbackServiceAvailable]);
+  }, [feedbackServiceAvailable, captchaConfigured, captchaProvider, captchaSiteKey]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -208,10 +226,10 @@ export default function Feedback() {
       setMessage('');
       setHoneypot('');
       setCaptchaToken('');
-      if (CAPTCHA_PROVIDER === 'turnstile' && turnstileWidgetIdRef.current && window.turnstile?.reset) {
+      if (captchaProvider === 'turnstile' && turnstileWidgetIdRef.current && window.turnstile?.reset) {
         window.turnstile.reset(turnstileWidgetIdRef.current);
       }
-      if (CAPTCHA_PROVIDER === 'recaptcha' && turnstileWidgetIdRef.current && window.grecaptcha?.reset) {
+      if (captchaProvider === 'recaptcha' && turnstileWidgetIdRef.current && window.grecaptcha?.reset) {
         window.grecaptcha.reset(turnstileWidgetIdRef.current);
       }
     } catch {
@@ -316,10 +334,10 @@ export default function Feedback() {
 
           <div className="space-y-2">
             <Label htmlFor="feedback-bot-protection">{t('feedback.botProtectionLabel', 'Bot Protection')}</Label>
-            {CAPTCHA_SITE_KEY && (
+            {captchaSiteKey && (
               <div id="feedback-bot-protection" ref={turnstileContainerRef} />
             )}
-            {feedbackServiceAvailable && !CAPTCHA_CONFIGURED && (
+            {feedbackServiceAvailable && !captchaConfigured && (
               <p className="text-sm text-muted-foreground">
                 {t(
                   'feedback.botProtectionUnavailable',

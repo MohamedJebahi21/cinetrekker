@@ -404,7 +404,11 @@ test("feedback availability accepts the legacy public Turnstile key name", async
   await feedbackHandler(req, res);
 
   assert.equal(res.statusCode, 200);
-  assert.deepEqual(res.body, { available: true, captchaProvider: "turnstile" });
+  assert.deepEqual(res.body, {
+    available: true,
+    captchaProvider: "turnstile",
+    captchaSiteKey: "public-turnstile-site-key",
+  });
 });
 
 test("feedback spam scenarios are blocked by honeypot and rate limit", async () => {
