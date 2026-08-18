@@ -34,6 +34,7 @@ import { getImageUrl, getMediaTitle } from "@/services/tmdb";
 import { buildCanonicalUrl } from "@/lib/seo";
 import { useToast } from "@/hooks/use-toast";
 import { TasteMatchCard } from "@/components/social/TasteMatchCard";
+import { PublicProfileSkeleton } from "@/components/profile/ProfilePageSkeletons";
 
 // Public-profile response contracts are parsed in the social service, keeping
 // direct Supabase RPC details out of this presentation component.
@@ -304,14 +305,7 @@ export default function UserProfile() {
   if (!userId) return null;
 
   if (isLoading) {
-    return (
-      <div className="page-container pt-24 flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <p className="text-sm text-muted-foreground">{t("common.loading", "Loading…")}</p>
-        </div>
-      </div>
-    );
+    return <PublicProfileSkeleton />;
   }
 
   if (!resolvedProfile) {

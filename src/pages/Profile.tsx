@@ -71,6 +71,7 @@ import { PaginationDotButton, PaginationDots } from "@/components/ui/pagination-
 import SEO from "@/components/SEO";
 import { StickySaveBar } from "@/components/StickySaveBar";
 import { ProfileIdentityHero } from "@/components/profile/ProfileIdentityHero";
+import { PrivateProfileSkeleton } from "@/components/profile/ProfilePageSkeletons";
 import { humanizeUiText } from "@/lib/humanize-ui-text";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePinnedFavorites } from "@/hooks/usePinnedFavorites";
@@ -1935,11 +1936,7 @@ export default function Profile() {
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background" />
         </div>
 
-        {isLoadingProfile && (
-          <div className="flex justify-center items-center py-12 relative z-10">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        )}
+        {isLoadingProfile && <PrivateProfileSkeleton />}
 
         {!isLoadingProfile && (
           <TooltipProvider>
