@@ -22,6 +22,7 @@
 | Service | Current state | Required next action |
 |---|---|---|
 | Vercel administration | An existing Vercel integration is present for the task but is currently disabled. | Enable it only when production environment values must be inspected or updated, then use the deployment administrator’s approved provider credentials. |
+| Vercel Hobby function capacity | Production deployment is at the Hobby plan’s 12-serverless-function ceiling, verified on 18 August 2026. | Do not add another standalone Vercel Function without first consolidating an existing route or moving to a plan with a higher function limit. |
 | CAPTCHA provider | No provider credentials are available in the checked-out project. | Supply or configure either Cloudflare Turnstile or Google reCAPTCHA credentials in Vercel production. |
 | Resend | No mail-delivery credential is available in the checked-out project. | Supply or configure a verified Resend API key and a verified recipient address in Vercel production. |
 | Umami | No configured integration was found for the task. | Supply the approved Umami script/configuration if field Web Vitals should be collected for consenting users. |
@@ -54,6 +55,7 @@
 | P2-3 | Add a release verification checklist for build, tests, deployment, and production smoke checks | Complete | Agent | Checklist, operational runbook, visual baselines, stability gate, build, smoke, mobile, API-security, and i18n checks form a repeatable release sequence |
 | P2-4 | Resolve dependency audit findings without breaking the production build | Complete for production dependencies | Agent | Safe upgrades moved React Router to 7.18.2 and DOMPurify to 3.4.13; `npm audit --omit=dev` reports 0 production vulnerabilities |
 | P2-5 | Establish ongoing release cadence and production incident response notes | Complete | Agent and product owner | Release cadence, quality gate, support route, severity guide, safe fallbacks, rollback procedure, and evidence-handling rules are documented |
+| P2-6 | Preserve deployability within the Vercel Hobby function cap | Complete | Agent | A 13th function was rejected by Vercel; the change was reverted, production was restored on `38d088f`, and the 12-function constraint is documented for future route work |
 
 ## Implementation Order
 
