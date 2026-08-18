@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import followHandler from "../api/follow.js";
 import feedbackHandler from "../api/feedback.js";
+import notFoundHandler from "../api/[...path].js";
 import tmdbProxyHandler from "../api/tmdb-proxy.js";
 import cronHandler from "../api/jobs/check-followed-updates.js";
 import {
@@ -365,6 +366,20 @@ test("TMDB proxy consults rate limiting and does not expose upstream diagnostics
     if (previousTmdbKey === undefined) delete process.env.TMDB_API_KEY;
     else process.env.TMDB_API_KEY = previousTmdbKey;
   }
+});
+
+test("unknown API routes return a generic no-store response", () => {
+  const req = createMockReq({
+    method: "GET",
+    url: "/api/this-endpoint-does-not-exist",
+  });
+  const res = createMockRes();
+
+  notFoundHandler(req, res);
+
+  assert.equal(res.statusCode, 404);
+  assert.deepEqual(res.body, { error: "Not found" });
+  assert.equal(res.headers["Cache-Control"], "no-store, no-cache, must-revalidate, proxy-revalidate");
 });
 
 test("feedback spam scenarios are blocked by honeypot and rate limit", async () => {
