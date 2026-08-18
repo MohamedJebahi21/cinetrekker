@@ -1,0 +1,56 @@
+name: Update Visual Snapshots
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: visual-snapshot-update-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Refresh Chromium visual baselines
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Regenerate visual baselines
+        run: >-
+          npx playwright test
+          tests/visual-regression.spec.ts
+          --project=chromium
+          --update-snapshots
+
+      - name: Commit hosted baselines
+        run: |
+          git add tests/visual-regression.spec.ts-snapshots/
+
+          if git diff --cached --quiet; then
+            echo "No visual baseline changes were produced."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "test: refresh hosted visual baselines"
+          git push
