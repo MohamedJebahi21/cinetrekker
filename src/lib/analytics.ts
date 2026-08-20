@@ -10,6 +10,8 @@
  * - No free-form text or search queries.
  */
 
+import { hasAcceptedCookieConsent } from "@/lib/cookieConsent";
+
 type SignupIntentProps = {
   entry_surface: "home" | "login" | "settings";
 };
@@ -66,23 +68,37 @@ type UmamiWindow = Window & {
   };
 };
 
+function doNotTrackEnabled() {
+  return (
+    typeof navigator !== "undefined" &&
+    ["1", "yes"].includes(navigator.doNotTrack?.toLowerCase() ?? "")
+  );
+}
+
 /**
- * Tracks a product event using the configured analytics provider (Umami).
- * Fails silently if analytics are not configured or blocked.
+ * Tracks a product event only after explicit non-essential-cookie consent.
+ * Fails silently when analytics are unavailable, consent is absent or revoked,
+ * or the visitor has enabled Do Not Track.
  */
 export function trackProductEvent<K extends keyof AnalyticsEvents>(
   eventName: K,
   props: AnalyticsEvents[K]
 ) {
-  // Only track if Umami is available in the global scope
+  if (
+    typeof window === "undefined" ||
+    !hasAcceptedCookieConsent() ||
+    doNotTrackEnabled()
+  ) {
+    return;
+  }
+
   const umami = (window as UmamiWindow).umami;
-  
+
   if (typeof umami?.track === "function") {
     try {
       umami.track(eventName, props);
-    } catch (error) {
-      // Silent failure for analytics
-      console.warn(`[Analytics] Failed to track ${eventName}:`, error);
+    } catch {
+      // Analytics must never disrupt the product experience.
     }
   }
 }

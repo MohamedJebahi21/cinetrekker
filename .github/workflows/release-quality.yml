@@ -48,6 +48,9 @@ jobs:
       - name: Unit checks
         run: npm run test:unit
 
+      - name: Analytics privacy browser regressions
+        run: npm run test:analytics-privacy
+
       - name: Chromium smoke checks
         run: npm run test:smoke
 

@@ -12,13 +12,14 @@
 | PWA-01 | P3 | Add a privacy-safe offline recovery path for public application-shell resources; never cache private lists or account data. | **Completed** | The service worker caches only public navigation shells and same-origin static assets, falls back to `/offline.html`, and excludes APIs and private routes. |
 | SEO-01 | P3 | Review public sitemap scope and add only evergreen public pages that are suitable for indexing. | **Completed** | `robots.txt` and the production-serving static sitemap now allow and include `/people` and `/calendar`; personal routes remain excluded. |
 | REG-01 | P2 | Add targeted automated coverage for the remediated URL recovery, loading stability, focus order, and offline fallback behavior. | **Completed** | Focus-order and GoTrue-warning coverage were added; release-quality CI passed on the final main branch. |
+| ANA-01 | P2 | Harden consent-gated analytics so no tracker or product event can run without explicit consent or when Do Not Track is enabled; provide a production configuration handoff. | **Completed; configuration pending** | `UmamiAnalytics` gates script insertion; `trackProductEvent()` now independently gates custom events; static and browser regression coverage added. See `docs/UMAMI_ANALYTICS_SETUP_2026-08-20.md`. |
 
 ## Credential-dependent launch gates
 
 | ID | Gate | Why it cannot be automated safely | Required human completion |
 |---|---|---|---|
 | OPS-01 | Feedback delivery | **Completed by the user on the live site.** | The user confirmed that Turnstile verification and live feedback submission worked in a real browser; no automated CAPTCHA retest is required. |
-| OPS-02 | Umami analytics | Production site ID and script URL are not configured. | Configure approved values, test accepted-consent and rejected-consent behavior. |
+| OPS-02 | Umami analytics | **Implementation-ready; human configuration still required.** Production site ID and script URL remain unset, and the tracker host must be added to the restrictive CSP when selected. | Follow `docs/UMAMI_ANALYTICS_SETUP_2026-08-20.md`: configure the approved production values, commit the minimal CSP allow-list update, redeploy, then complete the no-decision, rejected-consent, accepted-consent, and Do Not Track checks. |
 | OPS-03 | Two-account privacy | Requires disposable authenticated identities and social interactions. | Verify profiles, follows, comments, notification isolation, and revocation; delete test records afterward. |
 | OPS-04 | Browser push | Requires explicit signed-in user intent and a browser permission prompt. | Enable alerts in Settings, receive one notification, then disable and verify unsubscribe. |
 | OPS-05 | Field Core Web Vitals | Lab testing does not replace real-user 75th-percentile reporting. | Review mobile and desktop LCP/CLS in Search Console, CrUX, or approved RUM after traffic is available. |
