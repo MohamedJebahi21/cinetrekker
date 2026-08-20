@@ -127,8 +127,10 @@ export default function Index() {
     lastGenreName,
     filteredGenreItems,
     moreInGenreQuery,
-    criticalDataQuery,
     trendingDayQuery,
+    trendingWeekQuery,
+    newReleasesQuery,
+    activeDiscoveryQuery,
     watchlistPreviewQuery,
   } = useHomePageData({
     language,
@@ -136,12 +138,8 @@ export default function Index() {
     watchlist,
   });
 
-  const newReleases = criticalDataQuery.data?.newReleases;
-  const trendingWeek = criticalDataQuery.data?.trendingWeek;
   const watchlistTimedOut = useLoadingTimeout(watchlistPreviewQuery.isLoading, 20_000);
-  const discoveryTimedOut = useLoadingTimeout(
-    criticalDataQuery.isLoading || trendingDayQuery.isLoading,
-  );
+  const discoveryTimedOut = useLoadingTimeout(activeDiscoveryQuery.isLoading);
   const personalizedTimedOut = useLoadingTimeout(
     moreInGenreQuery.isLoading,
   );
@@ -455,18 +453,15 @@ export default function Index() {
 
       <HomeSectionState
         title={t("home.freshDiscovery", "Fresh Discovery")}
-        loading={!deferredEnabled || criticalDataQuery.isLoading || trendingDayQuery.isLoading}
+        loading={!deferredEnabled || activeDiscoveryQuery.isLoading}
         timedOut={discoveryTimedOut}
         error={
-          criticalDataQuery.error instanceof Error
-            ? criticalDataQuery.error
-            : trendingDayQuery.error instanceof Error
-              ? trendingDayQuery.error
-              : null
+          activeDiscoveryQuery.error instanceof Error
+            ? activeDiscoveryQuery.error
+            : null
         }
         onRetry={() => {
-          void criticalDataQuery.refetch();
-          void trendingDayQuery.refetch();
+          void activeDiscoveryQuery.refetch();
         }}
         skeleton={<TrendingSectionSkeleton />}
       >
@@ -482,7 +477,7 @@ export default function Index() {
           {discoverTab === "trending-week" ? (
             <MediaCarouselEnhanced
               title={t("home.trendingWeek", "Trending This Week")}
-              items={trendingWeek?.results || []}
+              items={trendingWeekQuery.data?.results || []}
               showMoreLink="/discover"
               showMoreLabel={t("home.seeAllTrending", "See All Trending")}
             />
@@ -490,7 +485,7 @@ export default function Index() {
           {discoverTab === "new-releases" ? (
             <MediaCarouselEnhanced
               title={t("home.newReleases", "New Releases")}
-              items={newReleases?.results || []}
+              items={newReleasesQuery.data?.results || []}
               showMoreLink="/discover"
               showMoreLabel={t("home.seeAllNewMovieReleases", "See All New Movie Releases")}
             />

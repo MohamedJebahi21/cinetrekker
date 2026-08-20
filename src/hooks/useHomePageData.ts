@@ -99,19 +99,20 @@ export function useHomePageData({
     enabled: !!lastGenreId,
   });
 
-  const criticalDataQuery = useQuery({
-    queryKey: ["home-critical", language, includeAdult],
-    queryFn: async () => {
-      const [newReleasesData, trendingWeekData] = await Promise.all([
-        getNowPlayingMovies(1, language, includeAdult),
-        getTrending("all", "week", language, 1, includeAdult),
-      ]);
+  // Fresh Discovery is below the fold. Fetch only the active tab after the
+  // hero has had a short uncontended start, rather than competing with its
+  // eager backdrop request. The weekly tab deliberately shares HeroSection's
+  // query key, so opening it reuses the already-fetched spotlight data.
+  const trendingWeekQuery = useQuery({
+    queryKey: ["hero-top-weekly", language, includeAdult],
+    queryFn: () => getTrending("all", "week", language, 1, includeAdult),
+    enabled: deferredEnabled && discoverTab === "trending-week",
+  });
 
-      return {
-        newReleases: newReleasesData,
-        trendingWeek: trendingWeekData,
-      };
-    },
+  const newReleasesQuery = useQuery({
+    queryKey: ["home-new-releases", language, includeAdult],
+    queryFn: () => getNowPlayingMovies(1, language, includeAdult),
+    enabled: deferredEnabled && discoverTab === "new-releases",
   });
 
   const watchlistPreviewQuery = useQuery({
@@ -136,7 +137,7 @@ export function useHomePageData({
   const trendingDayQuery = useQuery({
     queryKey: ["trending", "day", language, includeAdult],
     queryFn: () => getTrending("all", "day", language, 1, includeAdult),
-    enabled: deferredEnabled,
+    enabled: deferredEnabled && discoverTab === "trending-day",
   });
 
   const excludedIds = useMemo(
@@ -152,9 +153,14 @@ export function useHomePageData({
     [excludedIds, moreInGenreQuery.data],
   );
 
-  const hasDeferredErrors = Boolean(
-    trendingDayQuery.error,
-  );
+  const activeDiscoveryQuery =
+    discoverTab === "trending-week"
+      ? trendingWeekQuery
+      : discoverTab === "new-releases"
+        ? newReleasesQuery
+        : trendingDayQuery;
+
+  const hasDeferredErrors = Boolean(activeDiscoveryQuery.error);
 
   return {
     includeAdult,
@@ -166,9 +172,11 @@ export function useHomePageData({
     lastGenreName,
     filteredGenreItems,
     moreInGenreQuery,
-    criticalDataQuery,
     watchlistPreviewQuery,
     trendingDayQuery,
+    trendingWeekQuery,
+    newReleasesQuery,
+    activeDiscoveryQuery,
     hasDeferredErrors,
   };
 }
