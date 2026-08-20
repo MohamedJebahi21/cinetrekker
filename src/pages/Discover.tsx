@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Compass, Flame, Layers, Sparkles, Trophy, Tv, Film, Star, ChevronRight, Play, TrendingUp, Clock, Popcorn } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -69,7 +69,6 @@ function SpotlightHeroSkeleton() {
 function SpotlightHero({ items }: { items: Media[] }) {
   const [active, setActive] = useState(0);
   const [fading, setFading] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { t } = useTranslation();
 
   const cycle = (next: number) => {
@@ -77,13 +76,8 @@ function SpotlightHero({ items }: { items: Media[] }) {
     setTimeout(() => { setActive(next); setFading(false); }, 350);
   };
 
-  useEffect(() => {
-    if (items.length < 2) return;
-    timerRef.current = setInterval(() => {
-      setActive(prev => { const next = (prev + 1) % Math.min(items.length, 5); cycle(next); return prev; });
-    }, 6000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [items.length]);
+  // Preserve the initial LCP candidate. Spotlight changes remain available through
+  // the pagination controls and poster strip, without an automatic late repaint.
 
   if (!items.length) return null;
   const item = items[Math.min(active, items.length - 1)];
@@ -171,7 +165,7 @@ function SpotlightHero({ items }: { items: Media[] }) {
               <button
                 key={i}
                 type="button"
-                onClick={() => { if (timerRef.current) clearInterval(timerRef.current); cycle(i); }}
+                onClick={() => cycle(i)}
                 className="flex h-11 w-11 items-center justify-center rounded-full transition-colors duration-200 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 aria-label={`Go to slide ${i + 1}`}
               >
@@ -189,7 +183,7 @@ function SpotlightHero({ items }: { items: Media[] }) {
           {items.slice(0, 5).map((it, i) => (
             <button
               key={it.id}
-              onClick={() => { if (timerRef.current) clearInterval(timerRef.current); cycle(i); }}
+              onClick={() => cycle(i)}
               className={cn("h-16 w-11 shrink-0 overflow-hidden rounded-lg border transition-[border-color,opacity,transform] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white", i === active ? "border-white opacity-100 shadow-lg" : "border-white/20 opacity-55 hover:border-white/50 hover:opacity-90")}
               aria-label={it.title || it.name}
             >

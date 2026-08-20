@@ -11,7 +11,6 @@ import { useContentPolicy } from "@/contexts/content-policy-context";
 import { useUserLists } from "@/contexts/UserListsContext";
 import { buildMediaPath } from "@/lib/seo";
 
-const AUTO_PLAY_MS = 6000;
 const SWIPE_THRESHOLD = 42;
 
 type TouchPoint = { x: number; y: number };
@@ -94,14 +93,9 @@ export function HeroSection() {
 
   useEffect(() => { setActiveIndex(0); }, [topWeekly.length]);
 
-  // Le minuteur évite les mises à jour React continues pendant l'animation.
-  useEffect(() => {
-    if (prefersReducedMotion || topWeekly.length <= 1 || isPaused) return;
-    const timer = window.setTimeout(() => {
-      setActiveIndex((current) => (current + 1) % topWeekly.length);
-    }, AUTO_PLAY_MS);
-    return () => window.clearTimeout(timer);
-  }, [prefersReducedMotion, topWeekly.length, isPaused, activeIndex]);
+  // Keep the initial above-the-fold image stable. Automatic rotation can replace
+  // the largest contentful element long after first paint, worsening LCP. Users
+  // can still choose any spotlight with the visible controls below.
 
   // Preload next image
   useEffect(() => {
