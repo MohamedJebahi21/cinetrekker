@@ -10,9 +10,16 @@
   "functions": {
     "api/edge-meta.js": {
       "includeFiles": "dist/index.html"
+    },
+    "api/home-hero.js": {
+      "includeFiles": "dist/index.html"
     }
   },
   "rewrites": [
+    {
+      "source": "/",
+      "destination": "/api/home-hero"
+    },
     {
       "source": "/sitemap.xml",
       "destination": "/api/sitemap"
