@@ -137,7 +137,7 @@ function RouteSpinner() {
 
   return (
     <div
-      className="page-container pt-20 flex items-center justify-center"
+      className="page-container flex min-h-[calc(100dvh-4rem)] items-center justify-center pt-20"
       role="status"
       aria-live="polite"
     >
