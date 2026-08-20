@@ -5,7 +5,7 @@ import { queryClient } from "./lib/queryClient";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./index.css";
-import { initI18n } from "./i18n";
+import i18n, { initI18n } from "./i18n";
 import {
   applyThemeToDocument,
   readStoredTheme,
@@ -19,12 +19,47 @@ import "@/lib/trustedTypes";
 import { scheduleIdleTask } from "@/lib/idleCallback";
 import { createLogger } from "@/lib/logger";
 import { registerCineTrekkerServiceWorker } from "@/lib/browserPush";
+import { getTrending } from "@/services/tmdb";
 
 // Install chunk error handlers BEFORE React renders
 installChunkErrorHandlers();
 applyThemeToDocument(readStoredTheme());
 
 const logger = createLogger("bootstrap");
+
+function getInitialHeroIncludeAdult(): boolean {
+  try {
+    const raw = window.localStorage.getItem("cinetrekker_content_policy");
+    if (!raw) return true;
+    const policy = JSON.parse(raw) as {
+      maturityRating?: string;
+      safetyLevel?: string;
+      strictFiltering?: boolean;
+      moderateFiltering?: boolean;
+    };
+    const maturity = policy.safetyLevel ?? policy.maturityRating;
+    return !(
+      policy.strictFiltering === true ||
+      policy.moderateFiltering === true ||
+      maturity === "strict" ||
+      maturity === "moderate"
+    );
+  } catch {
+    return true;
+  }
+}
+
+function primeHomeHeroQuery() {
+  if (window.location.pathname !== "/") return;
+
+  const language = i18n.language || "en";
+  const includeAdult = getInitialHeroIncludeAdult();
+  void queryClient.prefetchQuery({
+    queryKey: ["hero-top-weekly", language, includeAdult],
+    queryFn: () => getTrending("all", "week", language, 1, includeAdult),
+    staleTime: 5 * 60_000,
+  });
+}
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
@@ -108,6 +143,8 @@ void initI18n()
     if (!rootElement) {
       throw new Error("Missing root element in index.html");
     }
+
+    primeHomeHeroQuery();
 
     createRoot(rootElement).render(
       <StrictMode>
