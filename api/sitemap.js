@@ -20,6 +20,8 @@ const STATIC_ROUTES = [
   { path: "/cookies", changefreq: "monthly", priority: "0.3" },
   { path: "/accessibility", changefreq: "monthly", priority: "0.4" },
   { path: "/discover", changefreq: "weekly", priority: "0.8" },
+  { path: "/people", changefreq: "weekly", priority: "0.6" },
+  { path: "/calendar", changefreq: "daily", priority: "0.7" },
 ];
 
 // Last modified dates for static routes
@@ -36,6 +38,8 @@ const STATIC_LASTMOD = {
   "/cookies": "2026-05-01",
   "/accessibility": "2026-05-01",
   "/discover": "2026-06-01",
+  "/people": "2026-08-20",
+  "/calendar": "2026-08-20",
 };
 
 /**

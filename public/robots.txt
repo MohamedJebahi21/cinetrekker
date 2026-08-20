@@ -14,6 +14,8 @@ Allow: /terms
 Allow: /cookies
 Allow: /accessibility
 Allow: /discover
+Allow: /people
+Allow: /calendar
 
 # Auth-only pages - noindex
 Disallow: /login
@@ -31,8 +33,6 @@ Disallow: /following
 Disallow: /following/
 Disallow: /recommendations
 Disallow: /recommendations/
-Disallow: /calendar
-Disallow: /calendar/
 Disallow: /stats
 Disallow: /stats/
 Disallow: /achievements
