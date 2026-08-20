@@ -2,122 +2,105 @@
 
 **Audit date:** 20 August 2026
 **Environment:** `https://cinetrekker.vercel.app` production deployment
-**Prepared by:** Manus AI
-**Audit mode:** Non-destructive, unauthenticated public-user and boundary testing. No accounts, watches, follows, comments, feedback messages, subscriptions, or other user data were created or changed.
+**Audit mode:** Non-destructive public-user, responsive, security-boundary, SEO, accessibility, and synthetic performance testing. No accounts, watches, follows, comments, feedback messages, subscriptions, or other user data were created or changed.
 
 ## Executive conclusion
 
-CineTrekker has a solid baseline for a public launch: the audited crawl covered 43 public and authentication-boundary route/device combinations without navigation exceptions, page-level console errors, failed network requests, or horizontal overflow. Public routing, canonical metadata, secure headers, API authorization boundaries, consent-gated analytics, and opt-in browser-alert behavior all tested as expected. Original-language search now satisfies the stated Turkish-title requirement: both `yiralti` and `yıralti` return **Yeraltı** as the top result. [1] [2] [3]
+CineTrekker now has a **sound public-release baseline**. The audit covered 43 public and authentication-boundary route/device combinations without navigation errors, console errors, failed public requests, or horizontal overflow. Public routing, canonical metadata, security headers, API authorization boundaries, consent-gated analytics, opt-in browser alerts, and the requested original-language Turkish search behavior all passed. Both `yiralti` and `yıralti` surface **Yeraltı** first in production. [1] [2]
 
-However, the product should **not yet be declared launch-ready**. One reproducible P0 defect makes a realistic invalid movie or TV link render as a blank page, and the Home and Discover pages have material visual-stability and loading-performance risks. The P0 is a contained code fix. The performance findings are laboratory signals, not population-level field data, but are large enough to remediate before traffic is scaled. Google defines a good LCP as 2.5 seconds or less and a good CLS as 0.1 or less; the reported values must ultimately be confirmed in field telemetry at the 75th percentile. [4] [5] [6]
+The confirmed P0 blank-page failure, 404 indexing defect, Home and Discover layout shifts, compact Discover controls, Calendar quick-action targets, duplicate Home landmark, and Person JSON-LD hydration regression have been remediated and re-verified in production. The final synthetic CLS measurements were effectively zero: **Home 0.00000030** and **Discover 0.00000028**. Discover’s LCP also fell to **1.684s** in the final run. [3]
 
-> **Launch decision:** Fix the P0 blank-page failure, ship the 404 indexing correction, then re-test visual stability and LCP before promoting the product as ready for broad daily use. Complete the credential-dependent checks separately before enabling the related operational promises.
+> **Launch decision:** The application is suitable for a controlled public launch. Do not claim complete operational readiness until the remaining human/credential-dependent checks are signed off. For broad traffic promotion, prioritize the remaining Home LCP improvement and field measurement.
 
-| Area | Current assessment | Release implication |
+| Area | Final assessment | Release implication |
 |---|---|---|
-| Public routing and first-use flow | **Pass** across the audited route set | Suitable baseline for further release validation |
-| Security, API boundaries, and consent gating | **Pass** in unauthenticated checks | No high-severity exposure found in this audit |
-| Original-language discovery | **Pass** for `yiralti` and `yıralti` | Required Turkish search behavior is live |
-| Invalid content URL recovery | **Fail — P0** | Must fix before launch sign-off |
-| Home and Discover stability/performance | **Fail — P1** | Remediate and re-measure before traffic growth |
-| Feedback, push, analytics, and multi-account privacy | **Pending manual/credential checks** | Do not claim full operational verification yet |
+| Public routing and first-use flow | **Pass** | A visitor can discover, search, open details, and recover from invalid URLs |
+| Security, API boundaries, consent, and push opt-in | **Pass** in non-destructive audit | No high-severity public exposure found |
+| Original-language discovery | **Pass** | Both required Turkish spellings find **Yeraltı** |
+| Invalid detail URL recovery | **Pass — remediated P0** | No blank-page dead end on tested invalid title URL |
+| 404 indexing | **Pass — remediated** | Unknown route reports `noindex,follow` |
+| Layout stability | **Pass — remediated** | Home and Discover final CLS are far below the 0.10 good threshold |
+| Discover LCP | **Pass** in final synthetic run | Final measurement: 1.684s |
+| Home LCP | **Needs optimization / field validation** | Final synthetic measurement: 4.700s; improved, but still above the 2.5s good threshold |
+| Feedback, analytics, two-account privacy, and push delivery | **Pending manual verification** | Do not market these as end-to-end verified until completed |
 
 ## Scope and methodology
 
-The audit used a fresh browser context, desktop and mobile/tablet viewports, direct-route navigation, keyboard checks, metadata inspection, responsive inspection, API-boundary requests, and synthetic browser performance instrumentation. The first-time-user flow covered initial load, title search, opening a public detail page, browser-back navigation, zero-results handling, genre discovery, sign-in validation, sign-up rendering, password-recovery availability, public-profile failure handling, and feedback validation. [1]
+The audit used fresh browser contexts, desktop, tablet, and mobile viewports, direct-route navigation, keyboard checks, metadata inspection, responsive inspection, unauthenticated API-boundary requests, and synthetic performance instrumentation. The first-time-user flow covered initial load, title search, public detail navigation, browser-back behavior, zero-results handling, genre discovery, sign-in validation, sign-up rendering, password-recovery availability, public-profile failure handling, and feedback validation. [1]
 
-The performance results below are **synthetic laboratory measurements** collected after a settled-load window. They are useful for detecting regressions and locating DOM shifts, but they are not a substitute for Chrome UX Report, Search Console, or real-user monitoring. Google recommends evaluating Core Web Vitals at the 75th percentile and separately for mobile and desktop. [4] [5] [6]
+Performance values are synthetic laboratory measurements. Google evaluates Core Web Vitals at the 75th percentile, separately for mobile and desktop; these results remove demonstrated regressions but do not substitute for CrUX, Search Console, or real-user monitoring. Google’s published good thresholds are LCP ≤2.5 seconds and CLS ≤0.1. [4] [5] [6]
+
+## Remediated findings
+
+| Priority | Finding | Remediation delivered | Production verification |
+|---|---|---|---|
+| **P0** | Invalid movie, TV, or Person URLs could boot a blank document because the server fallback extracted an opening module-script tag without its closing tag. | `api/edge-meta.js` now captures the complete production module script. | An invalid movie URL booted the app and settled on the visible “The requested title was not found” recovery UI with navigation and retry. [3] [7] |
+| **P1** | Arbitrary 404 routes advertised `index,follow`. | `TitleStatus.tsx` now supplies `robots="noindex,follow"`. | A live unknown route rendered the 404 recovery page and reported `robots: noindex,follow` after hydration. [3] |
+| **P1** | Home had CLS 0.347; Discover had CLS 0.185 and the initial lazy-route shell also caused a later 0.418 Discover shift during remediation testing. | Hero/loading geometry is reserved; the shared lazy-route fallback keeps the footer below the viewport while a route chunk loads; Discover’s spotlight has a persistent reserved slot. | Final CLS: Home **0.00000030**; Discover **0.00000028**. [3] [8] |
+| **P1** | Automatic hero rotation replaced the initial largest element after six seconds, inflating synthetic LCP. | Home and Discover retain the initial spotlight until a user selects a different item; manual thumbnail, pagination, and swipe controls remain. | Discover final LCP **1.684s**; Home LCP improved from 6.588s to **4.700s**. [3] |
+| **P2** | Discover pagination controls and Calendar quick actions were below the recommended touch-target size. | Discover pagination and Calendar quick actions retain 44×44px interactive hit areas at every breakpoint. | Included in the passing browser and visual-regression quality gate. [9] |
+| **P2** | Person JSON-LD was removed by client hydration. | `Person.tsx` now emits a complete `Person` payload plus `BreadcrumbList`. | Settled live Person route reports both `Person` and `BreadcrumbList`. [3] |
+| **P2** | Home contained two `main` landmarks. | The nested Home landmark is now a `section`; the application shell owns the single `main`. | Source correction included in the passing release quality gate. [9] |
 
 ## Verified strengths
 
-CineTrekker’s baseline is stronger than a typical pre-launch media tracker. The public aliases redirect correctly, protected routes redirect unauthenticated visitors to sign-in rather than exposing private content, and the first-time-user flow does not dead-end. No horizontal overflow was observed in the audited mobile/tablet routes. [1]
+CineTrekker’s public baseline is stronger than a typical pre-launch media tracker. Protected routes redirect unauthenticated visitors to sign-in rather than exposing private screens. No horizontal overflow was observed across the audited mobile and tablet routes. [1]
 
-The production security posture also tested well. The deployment exposed a restrictive content security policy, HSTS, anti-framing and MIME-sniffing defenses, a restrictive permissions policy, trusted-types enforcement, and HTTPS redirection. Source-map probes returned 404. Notification endpoints returned `401` without a bearer token, invalid mutation methods returned `405`, and the unmatched API response exposed no stack trace, secret, or user data. [1]
+The production security posture tested well: CSP, HSTS, anti-framing, MIME-sniffing protection, restrictive permissions policy, Trusted Types enforcement, and HTTPS redirect behavior were present. Source-map probes returned 404. Notification endpoints returned `401` without a bearer token, invalid mutation methods returned `405`, and unmatched API responses exposed no stack trace, secret, or user data. [1]
 
-Privacy controls behaved appropriately in a fresh context: no Umami or Vercel Analytics script was present before cookie consent, and this audit did not trigger `Notification.requestPermission`. Browser alerts therefore remain opt-in rather than being requested on page load. [1]
+Privacy behavior also passed: no Umami or Vercel Analytics script appeared before consent, and the audit never invoked `Notification.requestPermission`. Browser alerts therefore remain opt-in and are not requested at page load. [1]
 
-| Verified item | Evidence | Status |
+| Verified item | Status |
+|---|---|
+| Canonical, title, description, Open Graph, and image-alt checks | **Pass**, with intentional `noindex` on 404 |
+| Movie and TV structured data after client hydration | **Pass** |
+| Person and BreadcrumbList structured data after client hydration | **Pass** |
+| Skip link and single Home `main` landmark | **Pass** |
+| International title search: `yiralti` and `yıralti` | **Pass** — 25 results, **Yeraltı** first |
+| Feedback labels and TMDB attribution link name | **Pass** |
+| Browser alerts | **Pass** — opt-in only |
+
+## Remaining release work
+
+### P1 — Home LCP optimization and field validation
+
+The final Home LCP is **4.700s**, an improvement from the earlier 6.588s measurement but still above Google’s 2.5-second good threshold and 4-second poor threshold. The final candidate remains the TMDB `w1280` hero backdrop. [3] [5]
+
+The next performance iteration should profile the critical path from the trending-data request to the first hero backdrop paint. Prioritize a cacheable early source for the first hero title, server-emitted image preload only when that source is known, responsive image delivery, and real-user field measurement. Do not trade away the now-stable layout or use page-load carousel animation merely to alter the LCP candidate.
+
+### P2 — quality follow-up
+
+| Item | Status and next action |
+|---|---|
+| Keyboard focus order | One audit run reached `body` after header controls. Add a regression test across desktop and open-mobile-menu states before treating this as fully closed. |
+| Supabase GoTrue lock warnings | Four stale-auth-token lock warnings appeared on Discover tablet audit without a demonstrated user failure. Diagnose client initialization and cross-tab lock lifecycle using fresh and returning contexts. |
+| Offline experience | The service worker is push-only and does not provide app-shell or content caching. Keep the product documented as online-first unless a privacy-safe cache and invalidation policy is designed. [10] |
+| Sitemap scope | Current public sitemap and robots policy are internally consistent. Add only standalone, evergreen public routes after a product-led SEO decision. [11] |
+
+## Operational launch gates outside the public audit
+
+| Gate | Why pending | Completion criterion |
 |---|---|---|
-| Canonical, Open Graph, title, description, and image-alt checks | Audited Home, Search, Discover, detail, Person, Feedback, and unknown route | **Pass, with exceptions below** |
-| Movie and TV structured data | Movie retains `Movie`; TV retains `TVSeries` after client hydration | **Pass** |
-| Skip link | Targets the application `main` landmark | **Pass** |
-| International title search | `yiralti` and `yıralti` each return 25 results with **Yeraltı** first | **Pass** |
-| Feedback input labels | Current audit reports no missing labels; current source contains visible labels | **Pass — stale issue removed** |
-| TMDB attribution link name | Nested image alt text supplies the link’s accessible name | **Pass — not an unlabeled-control defect** |
+| Feedback delivery | Automated browsers cannot complete a human Turnstile challenge. | Submit one real-browser feedback message and confirm Resend delivery plus user-facing success/failure behavior. |
+| Analytics | Umami variables remain unconfigured. | Configure approved values; accept consent and verify one anonymous page view; reject consent and confirm no request. |
+| Two-account privacy | No accounts were created during this audit. | With disposable accounts, verify profile visibility, following/comments, notification isolation, revocation, then clean up test data. |
+| Browser push subscription | Permission was intentionally not requested during audit. | With a disposable account, explicitly enable alerts in Settings, accept the browser prompt, receive one notification, then disable/unsubscribe. |
+| Field performance | Current values are lab measurements. | Inspect 75th-percentile mobile/desktop LCP and CLS in Search Console, CrUX, or approved RUM after launch. |
 
-## Severity-ranked findings
+## Delivery record
 
-### P0 — release blocker
-
-| Finding | Evidence and user impact | Required remediation | Verification gate |
-|---|---|---|---|
-| **Invalid movie/TV/person URL can render a blank page.** | A direct invalid movie URL returned HTTP 200 with an almost empty document and a malformed module script that lacked `</script>`. A stale, mistyped, or shared-invalid title link can therefore strand a visitor on a blank page instead of showing recovery UI. The catch fallback in `api/edge-meta.js` derives `scriptTag` from a regex that only captures the opening script tag. [1] [7] | Make the fallback use the full production SPA shell, as the normal metadata response already does; or explicitly close an extracted module script before inserting it. Add a regression test for an invalid numeric title ID. Preserve `noindex,nofollow` on this error fallback. | Production invalid movie, TV, and Person IDs render the normal not-found/recovery experience with a booting app, no blank page, and no console error. |
-
-### P1 — high priority before broad promotion
-
-| Finding | Measured impact | Recommended remediation | Verification gate |
-|---|---|---|---|
-| **Home has poor CLS and late LCP.** | Home synthetic CLS was **0.347**; its largest shift occurred at about 1.8s, moving `main.page-container` from `y=65, height=895` to `y=666, height=294`. Home LCP was **6.24s**, with the hero backdrop as the candidate. CLS above 0.25 is poor and LCP above 4s is poor by Google’s published thresholds. [5] [6] [8] | Keep the first render’s shell and resolved content in the same vertical geometry. Reserve hero and initial content height, avoid replacing a large initial region with a much shorter one, and defer non-critical data sections without shifting already visible content. The Home hero already has eager/high-priority attributes, so first profile network, decode, and long JavaScript tasks rather than merely adding another priority hint. | Re-run cold-cache desktop and mobile tests. Target CLS ≤0.10 and LCP ≤2.5s where feasible; at minimum remove the dominant 0.347 shift before release. |
-| **Discover has unstable layout and late LCP.** | Discover synthetic CLS was **0.185**. At about 4.4s, the Mood panel and Browse By section moved about 537px while a larger region resolved. Discover LCP was **7.58s**, with the spotlight backdrop as the candidate. [5] [6] [8] | Render fixed-height skeletons or stable placeholders for the hero, Browse By, and mood content. Do not reorder or collapse above-the-fold sections as data resolves. Ensure the actual hero candidate is requested early, sized responsively, and not delayed behind non-essential work. | Re-run cold-cache desktop and mobile tests. Target CLS ≤0.10 and LCP ≤2.5s; investigate field data before declaring a Core Web Vitals pass. |
-| **User-facing 404 pages are indexable.** | An arbitrary unknown route returned a 404 recovery interface but advertised `robots: index,follow,max-image-preview:large` and self-canonicalized to the arbitrary path. This can create low-value indexed URLs. [3] | Pass `robots="noindex,follow"` to the shared SEO component in `src/pages/TitleStatus.tsx`. Keep the page usable and preserve a canonical only if it is intentionally meaningful. | Confirm an arbitrary unknown route reports `noindex,follow` after deployment. |
-
-### P2 — important quality and accessibility remediation
-
-| Finding | Evidence and user impact | Remediation |
-|---|---|---|
-| **Small touch targets in carousels and calendar actions.** | Discover pagination controls measured as little as 6×6px on tablet and 6×44px on mobile. Calendar quick-action buttons measured 24×24px on tablet; mobile external-detail links measured 30px high. These are difficult to tap reliably. [1] | Give each interactive target a minimum 44×44 CSS-pixel hit area, even if the visual dot/icon remains compact. Use padding or an invisible hit wrapper; retain visible focus styling. |
-| **Person structured data is removed after hydration.** | Server metadata can produce `Person` schema, but the client SEO manager clears existing CineTrekker JSON-LD and Person pages re-add only BreadcrumbList. The audited Person route therefore retained only BreadcrumbList. [3] [7] | Pass a complete Person JSON-LD payload from `src/pages/Person.tsx`, or make the SEO manager preserve server JSON-LD when it is semantically equivalent. Add a hydration regression test. |
-| **Homepage contains two `main` landmarks.** | The app shell wraps routes in `main`, while `Index.tsx` adds a second page-content `main`; the audit counted two main landmarks on Home. [3] | Change the nested Home landmark to a `section` or `div` while keeping the app shell as the sole page `main`. |
-| **Keyboard traversal needs a final focused regression.** | Initial focus order begins correctly with the skip link, but an audit run observed focus reaching `body` after the first header controls. This is not yet tied to a user-visible trap, but warrants an automated focus-order test. | Test the full sequence on desktop and mobile menu states. Ensure all interactive controls have a predictable tab order and focus never disappears visually. |
-| **Supabase GoTrue lock warnings need diagnosis.** | Discover logged four stale-auth-token lock acquisition warnings on tablet. The audit found no demonstrated user-facing failure, so this is an investigation item rather than a confirmed functional bug. [1] | Audit Supabase client initialization and cross-tab lock lifecycle; deduplicate initialization if needed. Re-test with fresh and returning browser contexts. |
-
-### P3 — enhancements and crawl-policy decisions
-
-| Finding | Rationale | Recommended action |
-|---|---|---|
-| **No offline experience.** | The service worker currently handles push and notification clicks only; it has no fetch handler or application-shell cache. The manifest is valid, but a user should not expect offline browsing. [9] | Either document the product as online-only or introduce a deliberately scoped offline shell and cached last-viewed metadata. Do not cache private user lists without a privacy and invalidation design. |
-| **Sitemap scope is intentionally narrow, but should be reviewed.** | The live sitemap contains core public discovery and legal pages, while `robots.txt` disallows account-oriented routes, calendar, stats, and feedback. This is not an indexing contradiction. [10] | Decide which genuinely public, high-value evergreen routes should be discoverable. Add only routes that provide standalone search value; do not add authenticated, thin, or duplicate routes merely for coverage. |
-| **First-visit product orientation can be clearer.** | The Home H1 is the currently featured title, while the product proposition appears below it. Cookie consent also occupies significant initial mobile viewport space until a choice is made. [1] | Keep the cinematic spotlight but make CineTrekker’s value proposition visibly primary to first-time visitors. Consider a compact, non-obstructive consent presentation that preserves access to mobile navigation. |
-
-## Items reclassified or removed from the backlog
-
-The final report intentionally excludes several stale or misclassified concerns. The feedback fields now have associated labels, and the audit confirms `labelsMissing: []`; they should not remain a P1 item. The TMDB attribution link is named through its nested image alternative text, so lack of an explicit `aria-label` does not create an unlabeled-link failure. [1] [3]
-
-The production sitemap does not include several app routes, but current robots directives intentionally exclude account-oriented and calendar/feedback routes. This is a product discovery decision, not a defect by itself. Similarly, the GoTrue warnings are recorded as a P2 investigation, not a confirmed production failure. [1] [10]
-
-## Operational launch gates that remain outside this audit
-
-The following checks require a real browser and/or authorized disposable accounts. They are not defects in the unauthenticated public build, but they must be completed before the corresponding capabilities are promoted to users.
-
-| Gate | Why it remains pending | Completion criterion |
-|---|---|---|
-| Feedback delivery | Turnstile widget and public runtime configuration load, but automated browsing cannot obtain a human CAPTCHA token. [1] | In a real browser, submit feedback once and verify successful Resend delivery and failure messaging. |
-| Analytics | No analytics scripts load before consent; Umami production variables are not configured. [1] | Configure the approved Umami site values, accept consent, and verify a single anonymized page view; reject consent and verify no analytics request. |
-| Two-account privacy | No accounts were created during this audit. [1] | With disposable accounts, verify profile visibility, follow/comment behavior, notification isolation, and revocation behavior. Clean up test accounts afterward. |
-| Browser push subscription | Permission was intentionally not requested during audit and the current browser context reports its automation default. [1] | Sign in with a disposable account, explicitly enable alerts in Settings, accept the browser prompt, verify one subscription and one notification; then test disable/unsubscribe. |
-| Field performance | Current LCP/CLS values are laboratory observations. [4] [5] [6] | After remediation, inspect Search Console/CrUX or approved real-user monitoring for 75th-percentile mobile and desktop LCP/CLS. |
-
-## Recommended delivery sequence
-
-| Order | Work package | Why now | Exit condition |
-|---|---|---|---|
-| 1 | Repair `api/edge-meta.js` invalid-content fallback | Eliminates the only P0 blank page | Invalid title URLs always boot into recovery UI |
-| 2 | Add noindex to `TitleStatus.tsx` | Low-risk SEO correction | Unknown route reports `noindex,follow` |
-| 3 | Stabilize Home and Discover initial geometry | Directly addresses retention-damaging visual jumps | No dominant layout shift in cold-load regression tests |
-| 4 | Trace hero image and main-thread LCP contributors | Performance priority attributes alone are not sufficient | Reduced lab LCP plus field instrumentation plan |
-| 5 | Correct touch targets and duplicate main landmark | Low-risk accessibility improvements | Controls have 44px hit areas; Home has one main landmark |
-| 6 | Preserve Person JSON-LD after hydration | Protects structured-data consistency | Person and BreadcrumbList schemas remain after React settles |
-| 7 | Complete manual operational gates | Converts configuration into verified capability | All four gates above have evidence and owner sign-off |
+The remediation was committed and pushed to `main` in the following production sequence: `ad11e15` (initial P0/P1/P2 remediation), CI-native visual-baseline commit `5c54273`, `e9280ca` (persistent Discover slot), `977e2b2` (stable lazy-route shell), and `a328dfb` (stable initial hero LCP). The final Release Quality Gate for `a328dfb` completed successfully: [run 32411666394](https://github.com/MohamedJebahi21/cinetrekker/actions/runs/32411666394).
 
 ## References
 
 [1]: ../audit-artifacts/full-e2e-audit-2026-08-18/EVIDENCE_NOTES.md "CineTrekker production audit evidence notes"
 [2]: ../audit-artifacts/full-e2e-audit-2026-08-18/international-search-summary.json "Production international-title search verification"
-[3]: ../audit-artifacts/full-e2e-audit-2026-08-18/quality-signals-detail-summary.json "Route-level SEO and accessibility signal summary"
-[4]: https://developers.google.com/search/docs/appearance/core-web-vitals "Google Search Central: Understanding Core Web Vitals and Google Search results"
+[3]: ../audit-artifacts/full-e2e-audit-2026-08-18/production-remediation-verification-summary.json "Final deployed remediation verification"
+[4]: https://developers.google.com/search/docs/appearance/core-web-vitals "Google Search Central: Core Web Vitals"
 [5]: https://web.dev/articles/lcp "web.dev: Largest Contentful Paint"
 [6]: https://web.dev/articles/cls "web.dev: Cumulative Layout Shift"
 [7]: ../api/edge-meta.js "CineTrekker server-rendered metadata handler"
-[8]: ../audit-artifacts/full-e2e-audit-2026-08-18/layout-stability-summary.json "CineTrekker layout stability and LCP measurements"
-[9]: ../audit-artifacts/full-e2e-audit-2026-08-18/coverage/sw.js "CineTrekker production service worker"
-[10]: https://cinetrekker.vercel.app/robots.txt "CineTrekker robots.txt"
+[8]: ../audit-artifacts/full-e2e-audit-2026-08-18/layout-stability-summary.json "Pre-remediation layout stability and LCP measurements"
+[9]: https://github.com/MohamedJebahi21/cinetrekker/actions/runs/32411666394 "Final release quality gate"
+[10]: ../audit-artifacts/full-e2e-audit-2026-08-18/coverage/sw.js "CineTrekker production service worker"
+[11]: https://cinetrekker.vercel.app/robots.txt "CineTrekker robots.txt"
