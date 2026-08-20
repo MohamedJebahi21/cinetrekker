@@ -177,7 +177,7 @@ export function HeroSection() {
 
         {/* Gradient overlays for text readability */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/40 to-transparent z-10" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/20 z-10" />
+        <div className="ct-hero-bottom-scrim absolute inset-0 z-10" />
 
         {/* Content anchored to middle-left */}
         <AnimatePresence mode="wait">
@@ -441,34 +441,34 @@ export function HeroSection() {
             exit={{ opacity: 0 }}
             transition={{ duration: td }}
           >
-            <div className="rounded-[1.75rem] border border-white/10 bg-[linear-gradient(180deg,rgba(17,17,19,0.98)_0%,rgba(12,12,14,0.94)_100%)] p-3 shadow-[0_-18px_60px_rgba(0,0,0,0.52)] backdrop-blur-xl">
+            <div className="ct-hero-mobile-card rounded-[1.75rem] border p-3 backdrop-blur-xl">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-                  <span className="rounded-sm bg-white/10 px-2 py-0.5 text-[9px] font-semibold text-white/70">
+                  <span className="rounded-sm bg-foreground/10 px-2 py-0.5 text-[9px] font-semibold text-muted-foreground">
                     {activeItem.media_type === "tv" ? t("common.tvShow", "TV Show") : t("common.movie", "Movie")}
                   </span>
                   {activeYear && (
-                    <span className="rounded-sm bg-white/10 px-2 py-0.5 text-[9px] font-semibold text-white/70">
+                    <span className="rounded-sm bg-foreground/10 px-2 py-0.5 text-[9px] font-semibold text-muted-foreground">
                       {activeYear}
                     </span>
                   )}
                   {activeItem.vote_average > 0 && (
-                    <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-white/70">
+                    <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-muted-foreground">
                       <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                       {activeItem.vote_average.toFixed(1)}
                     </span>
                   )}
                 </div>
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/80" aria-hidden="true">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-border/40 bg-foreground/5 text-muted-foreground" aria-hidden="true">
                   <Info className="h-4.5 w-4.5" />
                 </div>
               </div>
 
-              <h2 className="mt-2 text-[20px] font-black leading-[0.98] tracking-[-0.04em] text-white">
+              <h2 className="mt-2 text-[20px] font-black leading-[0.98] tracking-[-0.04em] text-foreground">
                 {activeTitle}
               </h2>
 
-              <p className="mt-1.5 text-[13px] leading-6 text-white/68">
+              <p className="mt-1.5 text-[13px] leading-6 text-muted-foreground">
                 {t(
                   "home.heroValueProp",
                   "Track what you watch, save what is next, and discover your next favorite in one place.",
@@ -476,7 +476,7 @@ export function HeroSection() {
               </p>
 
               <div className="mt-3 grid grid-cols-[1fr_auto_auto] gap-2">
-                <Button asChild className="h-11 rounded-2xl bg-white text-black font-bold hover:bg-white/90">
+                <Button asChild className="h-11 rounded-2xl bg-primary text-primary-foreground font-bold hover:bg-primary/90">
                   <Link to={activeMediaPath}>
                     <Info className="mr-2 h-4 w-4" />{t("common.details", "Details")}
                   </Link>
@@ -484,7 +484,7 @@ export function HeroSection() {
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-11 w-11 rounded-2xl border-white/20 bg-black/20 text-white"
+                  className="h-11 w-11 rounded-2xl border-border/50 bg-foreground/5 text-foreground hover:bg-foreground/10"
                   onClick={() => { void (inWatchlist ? removeFromWatchlist(activeItem.id, activeMediaType) : addToWatchlist(activeItem.id, activeMediaType)); }}
                   aria-label={
                     inWatchlist
@@ -492,12 +492,12 @@ export function HeroSection() {
                       : t("actions.addToWatchlistTitle", "Add {{title}} to watchlist", { title: activeTitle })
                   }
                 >
-                  <Bookmark className={cn("h-4 w-4", inWatchlist && "fill-white")} />
+                  <Bookmark className={cn("h-4 w-4", inWatchlist && "fill-current")} />
                 </Button>
                 <Button
                   variant="outline"
                   size="icon"
-                  className={cn("h-11 w-11 rounded-2xl border-white/20 bg-black/20 text-white", inWatched && "border-green-400/40 text-green-300")}
+                  className={cn("h-11 w-11 rounded-2xl border-border/50 bg-foreground/5 text-foreground hover:bg-foreground/10", inWatched && "border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-300")}
                   onClick={() => { void (inWatched ? removeFromWatched(activeItem.id, activeMediaType) : addToWatched(activeItem.id, activeMediaType, undefined, undefined, "completed")); }}
                   aria-label={
                     inWatched
@@ -514,7 +514,7 @@ export function HeroSection() {
 
         {activeItem.overview && (
             <div className="px-4 pb-2 pt-0.5">
-              <p className="line-clamp-2 text-[12.5px] leading-5 text-white/62">
+              <p className="line-clamp-2 text-[12.5px] leading-5 text-muted-foreground">
                 {activeItem.overview}
               </p>
           </div>

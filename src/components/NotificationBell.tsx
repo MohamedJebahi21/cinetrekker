@@ -63,7 +63,7 @@ function NotificationBellComponent() {
       variant="ghost"
       size="icon"
       className={cn(
-        "relative !h-11 !min-h-11 !w-11 !min-w-11 md:!h-9 md:!min-h-9 md:!w-9 md:!min-w-9 overflow-visible rounded-full border border-white/10 bg-white/5 text-foreground/90 backdrop-blur transition-colors duration-200 hover:bg-white/10 hover:text-primary focus-visible:ring-2 focus-visible:ring-red-500/50",
+        "relative !h-11 !min-h-11 !w-11 !min-w-11 md:!h-9 md:!min-h-9 md:!w-9 md:!min-w-9 overflow-visible rounded-full border border-border/40 bg-foreground/5 text-foreground/90 backdrop-blur transition-colors duration-200 hover:bg-foreground/10 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/50",
         unreadCount > 0 && "border-primary/25 bg-primary/5",
       )}
       type="button"
@@ -122,7 +122,7 @@ function NotificationBellComponent() {
                 <NotificationMediaThumb
                   movieId={notification.movie_id}
                   alt={notification.message}
-                  className="h-14 w-10 rounded-xl border border-white/10 shadow-sm"
+                  className="h-14 w-10 rounded-xl border border-border/40 shadow-sm"
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold leading-5 text-foreground">
@@ -246,7 +246,7 @@ function NotificationBellComponent() {
       <PopoverContent
         align="end"
         sideOffset={12}
-        className="w-[26rem] overflow-hidden rounded-[1.5rem] border-border/60 bg-popover p-0 shadow-[0_26px_80px_hsl(var(--background)/0.5)] ring-1 ring-white/10"
+        className="w-[26rem] overflow-hidden rounded-[1.5rem] border-border/60 bg-popover p-0 shadow-[0_26px_80px_hsl(var(--background)/0.5)] ring-1 ring-border/40"
       >
         <div className="relative overflow-hidden border-b border-border/60 bg-card px-5 py-4">
           <div className="flex items-start justify-between gap-3">

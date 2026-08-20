@@ -89,13 +89,13 @@ export function UserProfileDropdown({
                 variant="ghost"
                 size="icon"
                 className={cn(
-                  'relative !h-9 !min-h-9 !w-9 !min-w-9 flex items-center justify-center rounded-full text-foreground/90 transition-colors duration-200 hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-red-500/50',
-                  isOpen && 'bg-white/5',
+                  'relative !h-9 !min-h-9 !w-9 !min-w-9 flex items-center justify-center rounded-full text-foreground/90 transition-colors duration-200 hover:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-primary/50',
+                  isOpen && 'bg-foreground/5',
                   className
                 )}
                 aria-label={t('nav.userMenu', 'User menu')}
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-background/70 ring-2 ring-white/20">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-background/70 ring-2 ring-border/40">
                   {profilePhoto ? (
                     <Image
                       src={profilePhoto}
