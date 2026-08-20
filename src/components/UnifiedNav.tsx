@@ -38,6 +38,7 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetTrigger,
 } from "@/components/ui/sheet";
 import { languages } from "@/i18n";
 
@@ -315,7 +316,8 @@ export function UnifiedNav() {
   }, [pathname, t]);
 
   return (
-    <header
+    <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
+      <header
       role="banner"
       className={cn(
         "sticky top-0 left-0 right-0 z-[90] border-b border-border/70 bg-background pt-[env(safe-area-inset-top,0px)] backdrop-blur-xl transition-[background-color,box-shadow,border-color] duration-300",
@@ -424,17 +426,16 @@ export function UnifiedNav() {
 
         <div className="ml-auto flex items-center gap-1 md:hidden">
           {user && <NotificationBell />}
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-11 w-11"
-            onClick={() => setIsMobileSheetOpen((current) => !current)}
-            aria-label={isMobileSheetOpen ? t("common.close", "Close") : t("nav.menu", "Menu")}
-            aria-expanded={isMobileSheetOpen}
-            aria-controls="mobile-menu-panel"
-          >
-            <BurgerIcon isOpen={isMobileSheetOpen} />
-          </Button>
+          <SheetTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-11 w-11"
+              aria-label={isMobileSheetOpen ? t("common.close", "Close") : t("nav.menu", "Menu")}
+            >
+              <BurgerIcon isOpen={isMobileSheetOpen} />
+            </Button>
+          </SheetTrigger>
         </div>
       </div>
 
@@ -516,8 +517,7 @@ export function UnifiedNav() {
           )
         : null}
 
-      <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
-        <SheetContent
+      <SheetContent
           id="mobile-menu-panel"
           side="right"
           showCloseButton={false}
@@ -689,7 +689,7 @@ export function UnifiedNav() {
           </nav>
           </motion.div>
         </SheetContent>
-      </Sheet>
-    </header>
+      </header>
+    </Sheet>
   );
 }
