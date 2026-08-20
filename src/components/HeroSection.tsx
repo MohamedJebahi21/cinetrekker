@@ -194,7 +194,7 @@ export function HeroSection() {
               {t("home.topWatchedThisWeekKicker", "Weekly Spotlight")}
             </p>
 
-            <p className="max-w-xl text-sm leading-6 text-white/72 lg:text-base">
+            <p className="max-w-xl text-sm leading-6 text-white/75 lg:text-base">
               {t(
                 "home.heroValueProp",
                 "Track what you watch, save what is next, and discover your next favorite in one place.",
