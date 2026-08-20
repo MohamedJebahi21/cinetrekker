@@ -155,6 +155,26 @@ export default function Person() {
   const imdbId = person.external_ids?.imdb_id;
   const instagramId = person.external_ids?.instagram_id;
   const twitterId = person.external_ids?.twitter_id;
+  const canonicalUrl = buildCanonicalUrl(personPath);
+  const personJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: person.name,
+    url: canonicalUrl,
+    image: person.profile_path ? profileUrl : undefined,
+    description: bioText.slice(0, 500) || `Profile of ${person.name}`,
+    birthDate: person.birthday || undefined,
+    birthPlace: person.place_of_birth || undefined,
+    jobTitle: person.known_for_department || undefined,
+    knowsAbout: notableWorks
+      .map((credit) => credit.title || credit.name)
+      .filter((title): title is string => Boolean(title)),
+    sameAs: [
+      imdbId ? `https://www.imdb.com/name/${imdbId}` : null,
+      instagramId ? `https://instagram.com/${instagramId}` : null,
+      twitterId ? `https://twitter.com/${twitterId}` : null,
+    ].filter((url): url is string => Boolean(url)),
+  };
 
   return (
     <>
@@ -162,12 +182,15 @@ export default function Person() {
         title={`${person.name} | CineTrekker`}
         description={bioText ? bioText.slice(0, 160) : `View ${person.name}'s filmography and biography.`}
         image={profileUrl}
-        canonical={buildCanonicalUrl(personPath)}
-        jsonLd={[toBreadcrumbJsonLd([
-          { name: "Home", path: "/" },
-          { name: "People", path: "/search?type=person" },
-          { name: person.name, path: personPath },
-        ])]}
+        canonical={canonicalUrl}
+        jsonLd={[
+          personJsonLd,
+          toBreadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "People", path: "/search?type=person" },
+            { name: person.name, path: personPath },
+          ]),
+        ]}
       />
 
       {/* ═══════════════════════════════════════

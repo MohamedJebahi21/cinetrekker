@@ -896,6 +896,7 @@ export default function Calendar() {
                                   <div className="absolute right-2 top-2 z-10 opacity-100 transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100">
                                     {item.type === 'movie' ? (
                                       <button
+                                        type="button"
                                         onClick={(e) => handleWatchlistToggle(e, item)}
                                         aria-label={
                                           watchlistMovieIds.has(item.id)
@@ -903,16 +904,17 @@ export default function Calendar() {
                                             : t("actions.addToWatchlistTitle", "Add {{title}} to watchlist", { title: item.title })
                                         }
                                         className={cn(
-                                          "flex h-11 w-11 items-center justify-center rounded-full shadow-md backdrop-blur border text-white transition md:h-6 md:w-6",
+                                          "flex h-11 w-11 items-center justify-center rounded-full shadow-md backdrop-blur border text-white transition",
                                           watchlistMovieIds.has(item.id)
                                             ? "bg-destructive border-destructive/20 hover:bg-destructive/80"
                                             : "bg-primary border-primary/20 hover:bg-primary/80"
                                         )}
                                       >
-                                        {watchlistMovieIds.has(item.id) ? <Minus className="h-4 w-4 md:h-3.5 md:w-3.5" /> : <Plus className="h-4 w-4 md:h-3.5 md:w-3.5" />}
+                                        {watchlistMovieIds.has(item.id) ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                                       </button>
                                     ) : (
                                       <button
+                                        type="button"
                                         onClick={(e) => handleFollowToggle(e, item)}
                                         aria-label={
                                           followedShowIds.has(item.id)
@@ -920,13 +922,13 @@ export default function Calendar() {
                                             : t("calendar.followTitle", "Follow {{title}}", { title: item.title })
                                         }
                                         className={cn(
-                                          "flex h-11 w-11 items-center justify-center rounded-full shadow-md backdrop-blur border text-white transition md:h-6 md:w-6",
+                                          "flex h-11 w-11 items-center justify-center rounded-full shadow-md backdrop-blur border text-white transition",
                                           followedShowIds.has(item.id)
                                             ? "bg-destructive border-destructive/20 hover:bg-destructive/80"
                                             : "bg-amber-500 border-amber-500/20 hover:bg-amber-500/80"
                                         )}
                                       >
-                                        <Star className={cn("h-4 w-4 md:h-3.5 md:w-3.5", followedShowIds.has(item.id) && "fill-current")} />
+                                        <Star className={cn("h-4 w-4", followedShowIds.has(item.id) && "fill-current")} />
                                       </button>
                                     )}
                                   </div>

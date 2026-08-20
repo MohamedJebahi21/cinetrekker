@@ -16,6 +16,41 @@ const SWIPE_THRESHOLD = 42;
 
 type TouchPoint = { x: number; y: number };
 
+function HeroSectionSkeleton({ isMobileViewport }: { isMobileViewport: boolean }) {
+  if (isMobileViewport) {
+    return (
+      <section className="w-full border-b border-border/30 bg-background" aria-busy="true" aria-label="Loading weekly spotlight">
+        <div className="md:hidden">
+          <div className="min-h-[54svh] bg-card/45 skeleton-shimmer sm:min-h-[60svh]" />
+          <div className="space-y-3 px-4 pb-3 pt-2">
+            <div className="h-11 w-full rounded-md bg-card/45 skeleton-shimmer" />
+            <div className="rounded-[1.75rem] border border-border/50 bg-card/45 p-4">
+              <div className="h-5 w-2/3 rounded-md skeleton-shimmer" />
+              <div className="mt-3 h-4 w-full rounded-md skeleton-shimmer" />
+              <div className="mt-2 h-4 w-4/5 rounded-md skeleton-shimmer" />
+              <div className="mt-4 h-11 rounded-2xl skeleton-shimmer" />
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="w-full border-b border-border/30 bg-background" aria-busy="true" aria-label="Loading weekly spotlight">
+      <div className="relative min-h-[550px] overflow-hidden bg-card/45 skeleton-shimmer lg:min-h-[600px]">
+        <div className="absolute inset-y-0 left-0 flex w-full max-w-[700px] flex-col justify-center p-8 lg:p-16">
+          <div className="h-4 w-32 rounded-md skeleton-shimmer" />
+          <div className="mt-5 h-8 w-4/5 rounded-md skeleton-shimmer lg:h-12" />
+          <div className="mt-5 h-4 w-full rounded-md skeleton-shimmer" />
+          <div className="mt-3 h-4 w-3/4 rounded-md skeleton-shimmer" />
+          <div className="mt-7 h-11 w-40 rounded-full skeleton-shimmer" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function HeroSection() {
   const { t, i18n } = useTranslation();
   const {
@@ -77,7 +112,9 @@ export function HeroSection() {
     img.src = getBackdropUrl(next.backdrop_path, isMobileViewport ? "w780" : "w1280") || "";
   }, [activeIndex, topWeekly, isMobileViewport]);
 
-  if (topWeekly.length === 0) return null;
+  if (topWeekly.length === 0) {
+    return <HeroSectionSkeleton isMobileViewport={isMobileViewport} />;
+  }
 
   const activeItem = topWeekly[activeIndex];
   const activeTitle = getMediaTitle(activeItem);
@@ -317,6 +354,7 @@ export function HeroSection() {
                 alt=""
                 aria-hidden="true"
                 loading="eager"
+                fetchPriority="high"
                 className="absolute inset-0 h-full w-full object-cover object-center"
                 initial={{ opacity: 0, scale: 1.04 }}
                 animate={{ opacity: 1, scale: 1 }}

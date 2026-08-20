@@ -60,11 +60,10 @@ function getEntryAssets() {
       path.join(process.cwd(), "dist/index.html"),
       "utf8",
     );
-    const assetTags =
-      html.match(/<(?:link|script)\b[^>]*\b(?:href|src)="\/assets\/[^"]*"[^>]*>/g) ||
-      [];
-    result.headTags = assetTags.filter((tag) => tag.startsWith("<link")).join("\n    ");
-    result.scriptTag = assetTags.find((tag) => tag.startsWith("<script")) || "";
+    const linkTags = html.match(/<link\b[^>]*\bhref="\/assets\/[^"]*"[^>]*>/g) || [];
+    const scriptTags = html.match(/<script\b[^>]*\bsrc="\/assets\/[^"]*"[^>]*>[\s\S]*?<\/script>/g) || [];
+    result.headTags = linkTags.join("\n    ");
+    result.scriptTag = scriptTags[0] || "";
     if (!result.headTags && !result.scriptTag) {
       logger.warn("[edge-meta] No /assets/ tags found in dist/index.html");
     }

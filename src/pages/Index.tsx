@@ -515,7 +515,7 @@ export default function Index() {
 
       <HeroSection />
 
-      <main className="page-container space-y-5 pb-24 pt-6 sm:pt-7 md:space-y-8 md:pb-0 md:pt-8">
+      <section className="page-container space-y-5 pb-24 pt-6 sm:pt-7 md:space-y-8 md:pb-0 md:pt-8">
         {authLoading ? (
           <AuthHomeSkeleton />
         ) : user ? (
@@ -607,7 +607,7 @@ export default function Index() {
             ) : null}
           </>
         )}
-      </main>
+      </section>
     </div>
   );
 }

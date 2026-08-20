@@ -44,6 +44,28 @@ const MOODS = [
 ];
 
 // ── Spotlight auto-cycle hero ────────────────────────────────────────────────
+function SpotlightHeroSkeleton() {
+  return (
+    <section
+      aria-busy="true"
+      aria-label="Loading featured title"
+      className="relative isolate overflow-hidden rounded-2xl border border-white/10 bg-card/45 shadow-2xl"
+      style={{ minHeight: "clamp(370px, 52vh, 560px)" }}
+    >
+      <div className="absolute inset-0 skeleton-shimmer" />
+      <div className="relative z-10 flex min-h-[clamp(370px,52vh,560px)] flex-col justify-end p-6 sm:p-8 lg:p-10">
+        <div className="max-w-2xl space-y-4">
+          <div className="h-6 w-32 rounded-full skeleton-shimmer" />
+          <div className="h-10 w-3/4 rounded-md skeleton-shimmer sm:h-12" />
+          <div className="h-4 w-full rounded-md skeleton-shimmer" />
+          <div className="h-4 w-4/5 rounded-md skeleton-shimmer" />
+          <div className="h-11 w-40 rounded-lg skeleton-shimmer" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function SpotlightHero({ items }: { items: Media[] }) {
   const [active, setActive] = useState(0);
   const [fading, setFading] = useState(false);
@@ -81,6 +103,8 @@ function SpotlightHero({ items }: { items: Media[] }) {
             src={getBackdropUrl(item.backdrop_path, "w1280") || ""}
             alt=""
             aria-hidden="true"
+            loading="eager"
+            fetchPriority="high"
             className="h-full w-full object-cover object-center scale-[1.015]"
             style={{ transitionDuration: "8000ms" }}
           />
@@ -146,10 +170,16 @@ function SpotlightHero({ items }: { items: Media[] }) {
             {items.slice(0, 5).map((_, i) => (
               <button
                 key={i}
+                type="button"
                 onClick={() => { if (timerRef.current) clearInterval(timerRef.current); cycle(i); }}
-                className={cn("h-1.5 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white", i === active ? "w-6 bg-white" : "w-1.5 bg-white/35 hover:bg-white/60")}
+                className="flex h-11 w-11 items-center justify-center rounded-full transition-colors duration-200 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 aria-label={`Go to slide ${i + 1}`}
-              />
+              >
+                <span
+                  aria-hidden="true"
+                  className={cn("h-1.5 rounded-full transition-all duration-300", i === active ? "w-6 bg-white" : "w-1.5 bg-white/35")}
+                />
+              </button>
             ))}
           </div>
         )}
@@ -276,7 +306,7 @@ export default function Discover() {
         </div>
 
         {/* ── Spotlight Hero ── */}
-        {spotlightItems.length > 0 && <SpotlightHero items={spotlightItems} />}
+        {spotlightItems.length > 0 ? <SpotlightHero items={spotlightItems} /> : <SpotlightHeroSkeleton />}
 
         {/* ── Category quick-nav grid ── */}
         <section>

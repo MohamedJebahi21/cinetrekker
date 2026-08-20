@@ -28,6 +28,7 @@ const TitleStatus = () => {
       <SEO
         title={`${label} - CineTrekker`}
         description="The page you requested could not be found."
+        robots="noindex,follow"
       />
 
       <div className="flex min-h-[100dvh] items-center justify-center">
