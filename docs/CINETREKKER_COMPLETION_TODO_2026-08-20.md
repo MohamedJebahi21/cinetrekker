@@ -20,7 +20,7 @@
 |---|---|---|---|
 | OPS-01 | Feedback delivery | **Completed by the user on the live site.** | The user confirmed that Turnstile verification and live feedback submission worked in a real browser; no automated CAPTCHA retest is required. |
 | OPS-02 | Umami analytics | **Implementation-ready; human configuration still required.** Production site ID and script URL remain unset, and the tracker host must be added to the restrictive CSP when selected. | Follow `docs/UMAMI_ANALYTICS_SETUP_2026-08-20.md`: configure the approved production values, commit the minimal CSP allow-list update, redeploy, then complete the no-decision, rejected-consent, accepted-consent, and Do Not Track checks. |
-| OPS-03 | Two-account privacy | Requires disposable authenticated identities and social interactions. | Verify profiles, follows, comments, notification isolation, and revocation; delete test records afterward. |
+| OPS-03 | Two-account privacy | **Completed with disposable accounts; remediated one profile-RLS exposure found during the test.** | Profiles, follows, comments, likes, and notification isolation were verified. The test found and closed a direct private-profile read policy; all test interactions were removed and both disposable profiles were returned to private inactive state. See `docs/TWO_ACCOUNT_PRIVACY_VERIFICATION_2026-08-20.md`. |
 | OPS-04 | Browser push | Requires explicit signed-in user intent and a browser permission prompt. | Enable alerts in Settings, receive one notification, then disable and verify unsubscribe. |
 | OPS-05 | Field Core Web Vitals | Lab testing does not replace real-user 75th-percentile reporting. | Review mobile and desktop LCP/CLS in Search Console, CrUX, or approved RUM after traffic is available. |
 
