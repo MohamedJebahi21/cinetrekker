@@ -153,6 +153,7 @@ export function websiteJsonLd({
     "@type": "WebSite",
     "@id": `${url}#website`,
     name,
+    alternateName: ["Cine Trekker"],
     url,
     description,
     inLanguage: "en-US",
