@@ -54,6 +54,18 @@ test.describe("accessibility focus and touch target checks", () => {
     expect(focusVisible).toBe(true);
   });
 
+  test("keyboard traversal does not lose focus to the document body", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/");
+    await expect(page.locator("main").first()).toBeVisible();
+
+    for (let step = 0; step < 16; step += 1) {
+      await page.keyboard.press("Tab");
+      const activeTag = await page.evaluate(() => document.activeElement?.tagName);
+      expect(activeTag, `Focus escaped to the document body after Tab ${step + 1}`).not.toBe("BODY");
+    }
+  });
+
   test("mobile primary controls meet 44px touch target minimum", async ({
     page,
   }) => {
