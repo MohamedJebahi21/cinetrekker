@@ -48,3 +48,7 @@ The homepage has two `main` landmarks: the application shell’s top-level main 
 
 [1]: https://developers.google.com/search/docs/appearance/core-web-vitals "Google Search Central: Core Web Vitals"
 [2]: https://web.dev/articles/cls "web.dev: Cumulative Layout Shift"
+
+## 2026-08-20 Google site-name evidence
+
+The user-provided Google result screenshot (1120×263, reviewed in two ordered overlapping horizontal tiles) shows the host/site label as `cinetrekker.vercel.app`, while the organic result title already begins `CineTrekker: Movie & TV Show Tracker — Watchlist and ...`. This is a Google site-name selection issue, not a page-title issue. The metadata remediation should therefore strengthen consistent WebSite site-name signals and document that Google controls the final displayed label and re-crawl timing.
