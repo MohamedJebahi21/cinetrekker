@@ -306,7 +306,12 @@ export default function Discover() {
         </div>
 
         {/* ── Spotlight Hero ── */}
-        {spotlightItems.length > 0 ? <SpotlightHero items={spotlightItems} /> : <SpotlightHeroSkeleton />}
+        <div
+          aria-busy={spotlightItems.length === 0 || undefined}
+          style={{ minHeight: "clamp(370px, 52vh, 560px)" }}
+        >
+          {spotlightItems.length > 0 ? <SpotlightHero items={spotlightItems} /> : <SpotlightHeroSkeleton />}
+        </div>
 
         {/* ── Category quick-nav grid ── */}
         <section>
