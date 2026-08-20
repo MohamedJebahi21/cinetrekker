@@ -17,7 +17,7 @@
 
 | ID | Gate | Why it cannot be automated safely | Required human completion |
 |---|---|---|---|
-| OPS-01 | Feedback delivery | Cloudflare Turnstile requires a human challenge token. | Submit one real feedback message and confirm Resend delivery plus visible success/failure handling. |
+| OPS-01 | Feedback delivery | **Completed by the user on the live site.** | The user confirmed that Turnstile verification and live feedback submission worked in a real browser; no automated CAPTCHA retest is required. |
 | OPS-02 | Umami analytics | Production site ID and script URL are not configured. | Configure approved values, test accepted-consent and rejected-consent behavior. |
 | OPS-03 | Two-account privacy | Requires disposable authenticated identities and social interactions. | Verify profiles, follows, comments, notification isolation, and revocation; delete test records afterward. |
 | OPS-04 | Browser push | Requires explicit signed-in user intent and a browser permission prompt. | Enable alerts in Settings, receive one notification, then disable and verify unsubscribe. |
