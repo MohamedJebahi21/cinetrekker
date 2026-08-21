@@ -837,11 +837,8 @@ export default function Details() {
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/78 to-black/15 pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-transparent pointer-events-none" />
 
-        {/* Subtle grain texture */}
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E\")" }} />
-
         {/* Back button */}
-        <Link to="/" className="absolute top-20 left-4 z-20 flex items-center gap-2 text-sm text-white/80 hover:text-white bg-white/10 backdrop-blur-md px-3 py-2 rounded-xl transition-all border border-white/10 hover:border-white/30 hover:bg-white/20" aria-label={t("nav.home")}>
+        <Link to="/" className="absolute top-20 left-4 z-20 flex items-center gap-2 rounded-lg border border-white/15 bg-black/45 px-3 py-2 text-sm text-white/80 transition-colors hover:border-white/30 hover:bg-black/65 hover:text-white" aria-label={t("nav.home")}>
           <ChevronLeft className="w-4 h-4" />{t("nav.home")}
         </Link>
 
@@ -859,16 +856,16 @@ export default function Details() {
                       sizes="(max-width: 768px) 140px, 200px"
                       alt={getMediaAltText(title, mediaType, "poster")}
                       width={500} height={750} loading="lazy" showSkeleton
-                      className="w-36 md:w-44 rounded-2xl shadow-[0_22px_56px_rgba(0,0,0,0.65)] border border-white/10 group-hover:border-primary/40 transition-all duration-300"
+                      className="w-36 rounded-xl border border-white/10 shadow-2xl transition-colors duration-200 group-hover:border-primary/40 md:w-44"
                     />
                   ) : (
-                    <div className="w-36 md:w-44 aspect-[2/3] bg-muted/30 rounded-2xl border border-white/10 flex items-center justify-center backdrop-blur-sm">
+                    <div className="flex w-36 aspect-[2/3] items-center justify-center rounded-xl border border-white/10 bg-muted/30 md:w-44">
                       <Film className="w-12 h-12 text-white/30" />
                     </div>
                   )}
                   {/* Score ring on poster */}
                   {rating > 0 && (
-                    <div className="absolute -bottom-3 -right-3 bg-background/85 backdrop-blur-md rounded-full p-1 border border-white/10 shadow-xl">
+                    <div className="absolute -bottom-3 -right-3 rounded-full border border-white/10 bg-background p-1 shadow-lg">
                       <ScoreRing score={rating} size={54} />
                     </div>
                   )}
@@ -877,20 +874,13 @@ export default function Details() {
 
               {/* Title and metadata */}
               <div className="flex-1 space-y-3 md:pb-1">
-                {/* Badges */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline" className="border-white/20 bg-black/40 text-white/90 text-[10px] uppercase tracking-[0.18em] backdrop-blur-sm">
-                    {mediaType === "movie" ? t("common.movie") : t("common.tvShow")}
-                  </Badge>
-                  {year && <span className="text-sm text-white/60 font-medium">{year}</span>}
-                  {contentRatingTag && (
-                    <span className="px-2 py-0.5 text-xs font-bold rounded border border-white/25 bg-black/50 text-white/80 backdrop-blur-sm">{contentRatingTag}</span>
-                  )}
+                {/* Primary metadata */}
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-white/70">
+                  <span className="uppercase tracking-[0.16em] text-primary">{mediaType === "movie" ? t("common.movie") : t("common.tvShow")}</span>
+                  {year && <><span aria-hidden="true">•</span><span>{year}</span></>}
+                  {contentRatingTag && <><span aria-hidden="true">•</span><span>{contentRatingTag}</span></>}
                   {statusConfig && details.status && (
-                    <span className={cn("flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold rounded-full border backdrop-blur-sm", statusConfig.cls)}>
-                      <span className={cn("w-1.5 h-1.5 rounded-full animate-pulse", statusConfig.dot)} />
-                      {details.status}
-                    </span>
+                    <><span aria-hidden="true">•</span><span className="inline-flex items-center gap-1.5"><span className={cn("h-1.5 w-1.5 rounded-full", statusConfig.dot)} />{details.status}</span></>
                   )}
                 </div>
 
@@ -934,11 +924,7 @@ export default function Details() {
 
                 {/* Genres */}
                 {details.genres && details.genres.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {details.genres.map((g: { id: number; name: string }) => (
-                      <span key={g.id} className="px-3 py-1 rounded-full text-xs font-medium border border-white/15 bg-white/8 text-white/80 backdrop-blur-sm">{g.name}</span>
-                    ))}
-                  </div>
+                  <p className="text-sm text-white/70">{details.genres.map((g: { id: number; name: string }) => g.name).join(" · ")}</p>
                 )}
 
                 {watchedItem || heroFacts.length > 0 ? (
@@ -1000,7 +986,7 @@ export default function Details() {
           STICKY NAV
       ══════════════════════════════════════════════ */}
       {isStickyNavVisible && (
-        <div className="sticky top-0 z-50 bg-background/85 backdrop-blur-xl border-b border-white/8 shadow-sm">
+          <div className="sticky top-0 z-50 border-b border-border bg-background shadow-sm">
           <div className="page-container">
             <nav className="flex items-center gap-0.5 overflow-x-auto py-2.5 hide-scrollbar">
               {navItems.map(n => (
@@ -1008,10 +994,10 @@ export default function Details() {
                   key={n.id}
                   onClick={() => scrollTo(n.id)}
                   className={cn(
-                    "px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap",
+                    "whitespace-nowrap rounded-lg px-4 py-1.5 text-sm font-medium transition-colors duration-150",
                     activeSection === n.id
-                      ? "bg-primary text-primary-foreground shadow-sm shadow-primary/30"
-                      : "text-muted-foreground hover:text-foreground hover:bg-white/6"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >{n.label}</button>
               ))}
@@ -1027,7 +1013,7 @@ export default function Details() {
 
         {/* ─── ACTION BAR ─────────────────────────────────────── */}
         <Reveal className="mt-8">
-          <div className="rounded-2xl border border-white/8 bg-card/50 backdrop-blur-md p-5 shadow-xl">
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{t("details.primaryActions", "Your Next Move")}</p>
@@ -1037,7 +1023,7 @@ export default function Details() {
             <div className="flex flex-wrap gap-2">
               <Button
                 variant={optimisticInWatchlist ? "secondary" : "default"}
-                className={cn("gap-2 rounded-xl font-semibold", optimisticInWatchlist ? "bg-muted text-muted-foreground hover:bg-muted/80" : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20")}
+                className={cn("gap-2 font-semibold", optimisticInWatchlist ? "bg-muted text-muted-foreground hover:bg-muted/80" : "bg-primary text-primary-foreground hover:bg-primary/90")}
                 onClick={handleAddToWatchlist} disabled={isWatchlistPending}
               >
                 {isWatchlistPending ? <Loader2 className="w-4 h-4 animate-spin" /> : optimisticInWatchlist ? <Bookmark className="w-4 h-4 fill-current" /> : <Plus className="w-4 h-4" />}
@@ -1046,7 +1032,7 @@ export default function Details() {
 
               <Button
                 variant="outline"
-                className={cn("gap-2 rounded-xl font-semibold", optimisticWatched ? "border-emerald-500/50 bg-emerald-600 text-white hover:bg-emerald-700" : "")}
+                className={cn("gap-2 font-semibold", optimisticWatched ? "border-emerald-500/50 bg-emerald-600 text-white hover:bg-emerald-700" : "")}
                 onClick={handleMarkAsWatched} disabled={isWatchedPending}
               >
                 {isWatchedPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
@@ -1055,17 +1041,17 @@ export default function Details() {
 
               <FollowUpdatesButton mediaId={mediaId} mediaType={mediaType} title={title} posterPath={details.poster_path} details={details} />
 
-              <Button variant={isPinnedFavorite ? "secondary" : "outline"} className="gap-2 rounded-xl" onClick={handleTogglePinnedFavorite}>
+              <Button variant={isPinnedFavorite ? "secondary" : "outline"} className="gap-2" onClick={handleTogglePinnedFavorite}>
                 <Pin className="w-4 h-4" />{isPinnedFavorite ? "Pinned" : "Pin"}
               </Button>
 
               {featuredTrailerKey && (
-                <Button variant="outline" className="gap-2 rounded-xl" onClick={() => handlePlayVideo(featuredTrailerKey)}>
+                <Button variant="outline" className="gap-2" onClick={() => handlePlayVideo(featuredTrailerKey)}>
                   <PlayCircle className="w-4 h-4" />{t("details.watchTrailer", "Trailer")}
                 </Button>
               )}
 
-              <Button variant="outline" className="gap-2 rounded-xl" onClick={handleShare}>
+              <Button variant="outline" className="gap-2" onClick={handleShare}>
                 <Share2 className="w-4 h-4" />{t("details.share", "Share")}
               </Button>
 
