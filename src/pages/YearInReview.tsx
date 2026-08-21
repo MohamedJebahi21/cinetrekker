@@ -240,6 +240,13 @@ export default function YearInReview() {
               </p>
             </div>
 
+            <Button asChild className="min-h-11 rounded-xl px-5 font-semibold">
+              <Link to="/discover">
+                {t("yearInReview.discoverTitles", "Discover titles")}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+
             {/* If they have other years, let them select it! */}
             {availableYears.length > 1 && (
               <div className="pt-2 flex flex-col gap-2">
