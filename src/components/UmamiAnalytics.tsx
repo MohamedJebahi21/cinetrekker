@@ -43,7 +43,10 @@ export function UmamiAnalytics() {
 
     const script = document.createElement("script");
     script.id = SCRIPT_ID;
-    script.defer = true;
+    // This script is deliberately injected only after consent, after document
+    // parsing is complete. Explicit async execution is reliable for dynamic
+    // scripts; `defer` only governs parser-discovered script tags.
+    script.async = true;
     script.src = scriptUrl;
     script.dataset.websiteId = websiteId;
     script.dataset.excludeSearch = "true";
