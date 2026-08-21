@@ -11,3 +11,7 @@ The local production build was reviewed after the global surface, button, naviga
 | Local data rails | The local preview could not load the live TMDB data source, so Fresh Discovery correctly showed its existing error/retry state. This is an environment data-source limitation, not a design regression. |
 
 No tracking, watchlist, watched-state, notification, language, theme, browser-alert, or preference control was activated during review.
+
+## CI baseline reconciliation
+
+The Release Quality Gate changed only the public-profile recovery screenshot. The CI-rendered result preserves the route’s centered recovery hierarchy and primary action while reflecting the intentional opaque header, consolidated Preferences control, quieter page canvas, and refined footer typography. The prior baseline still encoded the previous multi-icon header and more decorative footer treatment. The CI-rendered actual image is therefore the appropriate replacement baseline.
