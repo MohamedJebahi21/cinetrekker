@@ -67,3 +67,23 @@ Remove the unnecessary `aria-label` from the card-level detail `Link`. The visib
 | Visual behavior | Card navigation destination, card appearance, and quick-action behavior remain unchanged. |
 | Regression coverage | A focused test asserts the card link has no `aria-label` override and the quick actions remain explicitly labelled. |
 | Validation | Unit suite, release-quality gate, production build, and live Lighthouse retest pass. |
+
+## Homepage MediaCard motion-cost reduction
+
+### Production performance evidence
+
+The post-release production desktop Lighthouse trace measured **2,250 ms Total Blocking Time**. Its largest long tasks include initial React work and `vendor-motion`, while the homepage renders multiple reusable MediaCards immediately. Each MediaCard eagerly creates two MotionValues, two transforms, and two springs—even before a visitor hovers a card—and wraps the card in a `motion.div` for an optional pointer-driven 3D tilt effect.
+
+### Remediation
+
+Replace the MediaCard `motion.div` wrapper and eager pointer-tilt MotionValues with a semantic static `div`. Existing CSS hover, active, focus, poster-scale, and quick-action transitions remain in place, so users retain visual feedback without per-card Framer Motion setup on first render.
+
+### Acceptance criteria
+
+| Criterion | Expected outcome |
+| --- | --- |
+| Initial card work | MediaCard no longer imports or creates Framer Motion values, transforms, or springs. |
+| Interaction behavior | Detail navigation, watchlist/watched actions, TV status flow, selection, and visual CSS hover/focus states are unchanged. |
+| Data safety | Rendering cards performs no mutation; action handlers are unchanged. |
+| Regression coverage | A focused test asserts there is no Framer Motion import or eager pointer-tilt implementation in MediaCard and verifies existing action handlers remain. |
+| Release validation | Unit suite, full quality gate, production build, and production Lighthouse retest pass. |
