@@ -1226,28 +1226,28 @@ export default function Search() {
         ]}
       />
       {/* Search Header */}
-      <div className="mb-8 rounded-[2rem] border border-border/60 bg-[linear-gradient(180deg,hsla(var(--card)/0.92),hsla(var(--card)/0.72))] px-4 py-4 shadow-[0_18px_45px_rgba(0,0,0,0.12)] backdrop-blur-md sm:px-6">
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="ct-kicker mb-2">{t("search.discoveryLab", "Discovery Lab")}</p>
-            <h1 className="section-title mb-0">{t("nav.search")}</h1>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              {t(
-                "search.heroSubtitle",
-                "Search by title, then narrow fast with genre, runtime, language, release year, and streaming filters without losing momentum.",
-              )}
-            </p>
-            <p className="mt-2 text-xs font-medium text-primary/90">
-              {t(
-                "search.internationalTitleHint",
-                "Original, translated, and alternate international titles are all supported.",
-              )}
-            </p>
-          </div>
+      <div className="mb-5 rounded-3xl border border-border/60 bg-[linear-gradient(180deg,hsla(var(--card)/0.9),hsla(var(--card)/0.76))] px-4 py-5 shadow-[0_14px_32px_rgba(0,0,0,0.1)] backdrop-blur-md sm:px-6">
+        <div className="max-w-3xl">
+          <p className="ct-kicker mb-1">{t("search.discoveryLab", "Discovery Lab")}</p>
+          <h1 className="heading-cinematic text-2xl font-semibold tracking-[-0.025em] text-foreground sm:text-3xl">
+            {t("nav.search")}
+          </h1>
+          <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted-foreground">
+            {t(
+              "search.heroSubtitle",
+              "Search by title, then narrow fast with genre, runtime, language, release year, and streaming filters without losing momentum.",
+            )}
+          </p>
+          <p className="mt-1.5 text-xs font-medium text-primary/90">
+            {t(
+              "search.internationalTitleHint",
+              "Original, translated, and alternate international titles are all supported.",
+            )}
+          </p>
         </div>
 
         {/* Search Input with Clear Button */}
-        <form className="relative max-w-2xl" onSubmit={handleSearchSubmit}>
+        <form className="relative mt-4 max-w-3xl" onSubmit={handleSearchSubmit}>
           <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input
             type="text"
@@ -1275,10 +1275,10 @@ export default function Search() {
       </div>
       {/* Advanced Filters (desktop) */}
       <div className="hidden md:block">
-        <div className="glass-card sticky top-24 z-20 mb-8 overflow-hidden p-5">
+        <div className="ct-toolbar sticky top-20 z-20 mb-5 justify-between px-3 py-2.5">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 {t("search.filters", "Filters")}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -1309,7 +1309,7 @@ export default function Search() {
           </div>
 
           {desktopFiltersExpanded ? (
-            <div className="mt-5 border-t border-border/50 pt-5">
+            <div className="mt-3 border-t border-border/50 pt-4">
               {filtersContent}
             </div>
           ) : null}
@@ -1373,7 +1373,7 @@ export default function Search() {
       </div>
 
       {/* Results Header */}
-      <div className="mb-4 min-h-5" aria-live="polite">
+      <div className="mb-3 min-h-5" aria-live="polite">
         <p className="text-sm text-muted-foreground">
           {isLoadingOrRefreshing && !loadingTimedOut ? (
             <>{t("common.loading")}</>
