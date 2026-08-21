@@ -3,8 +3,7 @@ import { createPortal } from "react-dom";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Settings from "lucide-react/dist/esm/icons/settings";
-import Palette from "lucide-react/dist/esm/icons/palette";
-import Globe from "lucide-react/dist/esm/icons/globe";
+import SlidersHorizontal from "lucide-react/dist/esm/icons/sliders-horizontal";
 import Layers from "lucide-react/dist/esm/icons/layers";
 import CalendarDays from "lucide-react/dist/esm/icons/calendar-days";
 import Award from "lucide-react/dist/esm/icons/award";
@@ -401,45 +400,56 @@ export function UnifiedNav() {
           )}
 
           <div className="topbar-divider" aria-hidden="true" />
-          <div className="topbar-action-group">
-            <Button asChild variant="ghost" size="icon" className="topbar-icon-button">
-              <Link to="/settings" aria-label={t("nav.settings", "Settings")}>
-                <Settings className="h-5 w-5" />
-              </Link>
-            </Button>
-
-            {/* Language Switcher */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="topbar-icon-button" aria-label={t("nav.changeLanguage", "Change language")}>
-                  <Globe className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[160px] bg-popover border-border/50">
-                {languages.map((lang) => (
-                  <DropdownMenuItem key={lang.code} onClick={() => i18n.changeLanguage(lang.code)} className={i18n.language === lang.code ? "bg-accent" : ""}>
-                    {lang.name}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Theme Switcher */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="topbar-icon-button" aria-label={t("nav.changeTheme", "Change theme")}>
-                  <Palette className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[140px] bg-popover border-border/50">
-                {(["dark", "light", "oled"] as const).map((option) => (
-                  <DropdownMenuItem key={option} onClick={() => setTheme(option)} className={theme === option ? "bg-accent" : ""}>
-                    {option === "dark" ? t("nav.themeDark", "Dark") : option === "light" ? t("nav.themeLight", "Light") : t("nav.themeOled", "OLED")}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="h-10 gap-2 border-border/70 bg-card/60 px-3 text-xs font-semibold text-foreground hover:bg-accent"
+                aria-label={t("nav.preferences", "Preferences")}
+              >
+                <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden lg:inline">{t("nav.preferences", "Preferences")}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[220px] border-border/50 bg-popover p-1.5">
+              <DropdownMenuItem asChild className="min-h-10 cursor-pointer font-medium">
+                <Link to="/settings">
+                  <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
+                  {t("nav.settings", "Settings")}
+                </Link>
+              </DropdownMenuItem>
+              <div className="my-1 border-t border-border/70" />
+              <p className="px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                {t("nav.changeLanguage", "Language")}
+              </p>
+              {languages.map((lang) => (
+                <DropdownMenuItem
+                  key={lang.code}
+                  onClick={() => i18n.changeLanguage(lang.code)}
+                  className={i18n.language === lang.code ? "bg-accent" : ""}
+                >
+                  {lang.name}
+                </DropdownMenuItem>
+              ))}
+              <div className="my-1 border-t border-border/70" />
+              <p className="px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                {t("nav.changeTheme", "Theme")}
+              </p>
+              {(["dark", "light", "oled"] as const).map((option) => (
+                <DropdownMenuItem
+                  key={option}
+                  onClick={() => setTheme(option)}
+                  className={theme === option ? "bg-accent" : ""}
+                >
+                  {option === "dark"
+                    ? t("nav.themeDark", "Dark")
+                    : option === "light"
+                      ? t("nav.themeLight", "Light")
+                      : t("nav.themeOled", "OLED")}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <Button
             variant="outline"
