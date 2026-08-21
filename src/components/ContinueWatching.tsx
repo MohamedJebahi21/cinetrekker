@@ -37,7 +37,7 @@ function ContinueWatchingSkeleton() {
         {Array.from({ length: 3 }).map((_, index) => (
           <div
             key={index}
-            className="h-[460px] w-[min(88vw,340px)] shrink-0 rounded-[1.75rem] border border-border/60 bg-card/60 skeleton-shimmer sm:h-[470px] sm:w-[410px] lg:w-[460px]"
+            className="h-[420px] w-[calc(50vw-1.5rem)] shrink-0 rounded-[1.5rem] border border-border/60 bg-card/60 skeleton-shimmer sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
           />
         ))}
       </div>
@@ -117,7 +117,7 @@ function ContinueWatchingCard({
   return (
     <Card
       ref={cardRef}
-      className="group w-[min(86vw,360px)] shrink-0 snap-start overflow-hidden rounded-[1.5rem] border-border/70 bg-card/95 shadow-[0_18px_46px_rgba(0,0,0,0.2)] transition-[transform,border-color,box-shadow] duration-300 hover:-translate-y-1 hover:border-primary/55 hover:shadow-[0_24px_62px_rgba(229,9,20,0.18)] sm:w-[390px] lg:w-[420px]"
+      className="group w-[calc(50vw-1.5rem)] shrink-0 snap-start overflow-hidden rounded-xl border-border/70 bg-card/95 shadow-[0_18px_46px_rgba(0,0,0,0.2)] transition-[transform,border-color,box-shadow] duration-300 hover:-translate-y-1 hover:border-primary/55 hover:shadow-[0_24px_62px_rgba(229,9,20,0.18)] sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
     >
       <CardContent className="p-0">
         <div className="flex h-full flex-col">
@@ -151,7 +151,7 @@ function ContinueWatchingCard({
             </div>
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col p-4 sm:p-5">
+          <div className="flex min-h-0 flex-1 flex-col p-3">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-primary/90">
@@ -159,7 +159,7 @@ function ContinueWatchingCard({
                     ? t("home.nextEpisode", "Next episode")
                     : t("home.continueWatchingEyebrow", "In progress")}
                 </p>
-                <h3 className="mt-1 line-clamp-2 text-lg font-bold leading-tight text-foreground sm:text-xl">
+                <h3 className="mt-1 line-clamp-2 text-base font-bold leading-tight text-foreground">
                   <bdi dir="auto">{display.title}</bdi>
                 </h3>
                 <p className="mt-1.5 text-xs text-muted-foreground sm:text-sm">
@@ -171,12 +171,12 @@ function ContinueWatchingCard({
                       })}
                 </p>
               </div>
-              <span className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary shadow-[0_10px_24px_rgba(229,9,20,0.12)] sm:inline-flex">
+              <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary shadow-[0_10px_24px_rgba(229,9,20,0.12)] lg:inline-flex">
                 <Tv className="h-5 w-5" aria-hidden="true" />
               </span>
             </div>
 
-            <div className="relative mt-4 min-h-[108px] overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-background/85 to-muted/30 p-3.5 before:absolute before:inset-y-3 before:left-0 before:w-0.5 before:rounded-r-full before:bg-primary">
+            <div className="relative mt-3 min-h-[92px] overflow-hidden rounded-xl border border-border/70 bg-gradient-to-br from-background/85 to-muted/30 p-3 before:absolute before:inset-y-3 before:left-0 before:w-0.5 before:rounded-r-full before:bg-primary">
               {enrichment.isFetching && item.needsSeasonEnrichment ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -218,7 +218,7 @@ function ContinueWatchingCard({
               )}
             </div>
 
-            <div className="mt-4 rounded-xl border border-border/60 bg-background/35 px-3 py-2.5">
+            <div className="mt-3 rounded-xl border border-border/60 bg-background/35 px-3 py-2">
               <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
                 <span className="font-medium">{t("home.seriesProgress", "Series progress")}</span>
                 {display.progressPercent != null ? (
@@ -236,11 +236,11 @@ function ContinueWatchingCard({
               )}
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border/50 pt-4">
+            <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border/50 pt-3">
               <Button
                 asChild
                 className={cn(
-                  "h-10 gap-2 text-sm font-semibold shadow-[0_10px_22px_rgba(229,9,20,0.16)]",
+                  "h-9 gap-1.5 text-xs font-semibold shadow-[0_10px_22px_rgba(229,9,20,0.16)]",
                   hasNextEpisode ? "col-span-1" : "col-span-2",
                 )}
               >
@@ -253,7 +253,7 @@ function ContinueWatchingCard({
                 <Button
                   type="button"
                   variant="outline"
-                  className="col-span-1 h-10 gap-2 border-primary/20 bg-background/50 text-sm font-semibold hover:border-primary/45 hover:bg-primary/5"
+                  className="col-span-1 h-9 gap-1.5 border-primary/20 bg-background/50 text-xs font-semibold hover:border-primary/45 hover:bg-primary/5"
                   disabled={isMarkingThisEpisode}
                   onClick={() => {
                     onMarkEpisode({
@@ -507,7 +507,7 @@ export function ContinueWatching() {
 
       <div
         ref={scrollContainerRef}
-        className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-4 overscroll-x-contain [scrollbar-width:none] md:gap-5"
+        className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-4 overscroll-x-contain [scrollbar-width:none]"
       >
         {data.map((item) => (
           <ContinueWatchingCard
