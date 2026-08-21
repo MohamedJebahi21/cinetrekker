@@ -50,13 +50,13 @@ export function EmptyState({
   return (
     <motion.div 
       className={cn(
-        'mx-auto flex max-w-xl flex-col items-center justify-center rounded-[2rem] border border-border/60 bg-card/45 px-5 py-12 text-center shadow-[0_20px_70px_hsl(var(--background)/0.22)] backdrop-blur-sm sm:px-8',
+        'mx-auto flex max-w-xl flex-col items-center justify-center rounded-2xl border border-border bg-card px-5 py-10 text-center shadow-sm sm:px-8',
         className,
       )}
       {...motionProps}
     >
       <motion.div 
-        className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80"
+        className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground"
         {...(prefersReducedMotion ? {} : {
           initial: { opacity: 0 },
           animate: { opacity: 1 },
@@ -66,18 +66,17 @@ export function EmptyState({
         {t("emptyState.nothingHereYet", "Nothing Here Yet")}
       </motion.div>
       <motion.div 
-        className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[1.35rem] border border-primary/15 bg-primary/10 shadow-[0_14px_36px_hsl(var(--primary)/0.12)]"
+        className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10"
         {...(prefersReducedMotion ? {} : {
           initial: { opacity: 0, scale: 0.86 },
           animate: { opacity: 1, scale: 1 },
           transition: { duration: 0.3, delay: 0.12, ease: 'easeOut' },
-          whileHover: { scale: 1.04 },
         })}
       >
         <Icon className="h-8 w-8 text-primary" />
       </motion.div>
       <motion.h3 
-        className="mb-2 text-balance text-2xl font-semibold tracking-tight text-foreground"
+        className="mb-2 text-balance text-xl font-semibold tracking-tight text-foreground"
         {...(prefersReducedMotion ? {} : {
           initial: { opacity: 0, y: 8 },
           animate: { opacity: 1, y: 0 },
@@ -88,7 +87,7 @@ export function EmptyState({
       </motion.h3>
       {description && (
         <motion.p 
-          className="mb-6 max-w-md text-pretty text-base leading-relaxed text-muted-foreground"
+          className="mb-6 max-w-md text-pretty text-sm leading-6 text-muted-foreground"
           {...(prefersReducedMotion ? {} : {
             initial: { opacity: 0, y: 8 },
             animate: { opacity: 1, y: 0 },

@@ -338,9 +338,8 @@ export function UnifiedNav() {
       <header
       role="banner"
       className={cn(
-        "sticky top-0 left-0 right-0 z-[90] border-b border-border/70 bg-background pt-[env(safe-area-inset-top,0px)] backdrop-blur-xl transition-[background-color,box-shadow,border-color] duration-300",
-        isScrolled &&
-          "border-border bg-background shadow-[0_10px_28px_hsl(var(--foreground)/0.08)]",
+        "sticky top-0 left-0 right-0 z-[90] border-b border-border bg-background pt-[env(safe-area-inset-top,0px)] transition-[background-color,box-shadow,border-color] duration-200",
+        isScrolled && "border-border bg-background shadow-sm",
       )}
     >
       <div className="topbar-inner container mx-auto flex h-16 max-w-[84rem] items-center gap-3 px-4 sm:px-6">
@@ -504,10 +503,10 @@ export function UnifiedNav() {
                 <div className="desktop-menu-shell mx-auto flex min-h-full max-w-[78rem] items-center">
                   <nav aria-label={t("nav.main", "Main navigation")} className="desktop-menu-grid grid w-full gap-5 md:grid-cols-3">
                     {primaryNavigationGroups.map((group) => (
-                      <section key={group.title} className="desktop-menu-group min-w-0 self-stretch rounded-2xl border border-border bg-card p-4 shadow-[0_16px_36px_hsl(var(--background)/0.24)] sm:p-5">
-                        <div className="mb-3 flex items-center justify-between gap-3 border-b border-border pb-3">
+                      <section key={group.title} className="desktop-menu-group min-w-0 self-stretch border-t border-border pt-4 first:border-t-0 first:pt-0">
+                        <div className="mb-2 flex items-center justify-between gap-3">
                           <h3 className="text-[0.7rem] font-semibold uppercase tracking-[0.17em] text-muted-foreground">{group.title}</h3>
-                          <span className="rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">{group.links.length}</span>
+                          <span className="text-[10px] font-medium text-muted-foreground">{group.links.length}</span>
                         </div>
                         <motion.div
                           className="flex flex-col gap-2"
@@ -526,13 +525,13 @@ export function UnifiedNav() {
                                   onClick={() => setIsDesktopMenuOpen(false)}
                                   aria-current={isActive ? "page" : undefined}
                                   className={cn(
-                                    "group relative flex min-h-[4.65rem] items-start gap-3 overflow-hidden rounded-xl border border-border bg-background px-3.5 py-3 text-sm transition-[background-color,border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-lg hover:shadow-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                                    isActive && "border-primary/60 bg-primary/10 shadow-[inset_3px_0_0_hsl(var(--primary)),0_8px_20px_hsl(var(--primary)/0.1)]"
+                                    "group relative flex min-h-[3.5rem] items-start gap-3 rounded-lg border border-transparent px-2.5 py-2.5 text-sm transition-[background-color,border-color,color] duration-150 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                                    isActive && "border-primary/25 bg-primary/8 text-primary"
                                   )}
                                 >
                                   <div className={cn(
-                                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition-colors duration-200 group-hover:border-primary/30 group-hover:bg-primary/10 group-hover:text-primary",
-                                    isActive && "border-primary/45 bg-primary/15 text-primary"
+                                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-colors duration-150 group-hover:bg-primary/10 group-hover:text-primary",
+                                    isActive && "bg-primary/12 text-primary"
                                   )}>
                                     <Icon className="h-4 w-4" aria-hidden="true" />
                                   </div>
@@ -540,7 +539,7 @@ export function UnifiedNav() {
                                     <p className={cn("text-sm font-semibold leading-5 text-foreground transition-colors duration-200 group-hover:text-primary", isActive && "text-primary")}>
                                       {t(item.labelKey, item.defaultLabel)}
                                     </p>
-                                    <p className="mt-0.5 line-clamp-2 text-xs font-normal leading-4 text-muted-foreground">{item.desc}</p>
+                                    <p className="mt-0.5 line-clamp-1 text-xs font-normal leading-4 text-muted-foreground">{item.desc}</p>
                                   </div>
                                 </Link>
                               </motion.div>
@@ -570,7 +569,7 @@ export function UnifiedNav() {
             animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
             transition={{ duration: reduceMotion ? 0.14 : 0.24, ease: [0.22, 1, 0.36, 1] }}
           >
-            <SheetHeader className="rounded-lg border border-border bg-card px-4 py-4 text-left">
+            <SheetHeader className="border-b border-border px-1 pb-4 text-left">
               <SheetTitle className="text-xl">{t("nav.menu", "Menu")}</SheetTitle>
               <p className="text-sm text-muted-foreground">
                 {t("nav.mobileSubtitle", "Browse tools and extra pages live here.")}
@@ -665,8 +664,8 @@ export function UnifiedNav() {
                             to={item.path}
                             onClick={() => setIsMobileSheetOpen(false)}
                             className={cn(
-                              "flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-accent",
-                              isActive && "border-primary bg-primary/10 text-primary"
+                              "flex items-center gap-3 rounded-lg border border-transparent px-3 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted",
+                              isActive && "bg-primary/8 text-primary"
                             )}
                           >
                             <Icon className={cn("h-4 w-4 shrink-0 text-muted-foreground", isActive && "text-primary")} />
@@ -703,7 +702,7 @@ export function UnifiedNav() {
                   <Link
                     to="/settings"
                     onClick={() => setIsMobileSheetOpen(false)}
-                    className="flex min-h-[44px] items-center gap-3 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+                    className="flex min-h-[44px] items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
                   >
                     <Settings className="h-4 w-4 shrink-0 text-muted-foreground" />
                     {t("nav.settings", "Settings")}

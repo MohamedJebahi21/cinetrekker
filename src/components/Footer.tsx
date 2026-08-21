@@ -6,9 +6,9 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-border/70 bg-card/45">
-      <div className="container mx-auto max-w-[82rem] px-4 py-10 pb-[max(calc(3.5rem+env(safe-area-inset-bottom,0px)),1.5rem)] md:py-14 md:pb-12">
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-5 md:gap-12">
+    <footer className="border-t border-border bg-background">
+      <div className="container mx-auto max-w-[82rem] px-4 py-9 pb-[max(calc(3.5rem+env(safe-area-inset-bottom,0px)),1.5rem)] md:py-12 md:pb-10">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-5 md:gap-10">
           <div className="min-w-0 md:col-span-2">
             <div className="mb-4 flex items-center gap-3">
               <img
@@ -16,7 +16,7 @@ export function Footer() {
                 alt="CineTrekker logo"
                 className="h-10 w-10 rounded-xl object-cover shadow-sm ring-1 ring-white/10"
               />
-              <span className="text-xl font-semibold leading-none tracking-[-0.025em] text-foreground sm:text-2xl">
+              <span className="text-lg font-semibold leading-none tracking-[-0.02em] text-foreground sm:text-xl">
                 {t("common.appName")}
               </span>
             </div>
@@ -29,10 +29,10 @@ export function Footer() {
           </div>
 
           <div className="min-w-0">
-            <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground/80">
+            <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               {t("footer.explore", "Explore")}
             </h3>
-            <nav className="flex flex-col gap-3" aria-label={t("footer.exploreLinks", "Explore links")}>
+            <nav className="flex flex-col gap-2.5" aria-label={t("footer.exploreLinks", "Explore links")}>
               <Link to="/" className="-mx-1 inline-flex min-h-8 items-center break-words rounded-md px-1 text-[0.92rem] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                 {t("nav.home", "Home")}
               </Link>
@@ -52,10 +52,10 @@ export function Footer() {
           </div>
 
           <div className="min-w-0">
-            <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground/80">
+            <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               {t("footer.support", "Support")}
             </h3>
-            <nav className="flex flex-col gap-3" aria-label={t("footer.supportLinks", "Support links")}>
+            <nav className="flex flex-col gap-2.5" aria-label={t("footer.supportLinks", "Support links")}>
               <a
                 href="https://buymeacoffee.com/mohamed_jebahi"
                 target="_blank"
@@ -74,10 +74,10 @@ export function Footer() {
           </div>
 
           <div className="min-w-0">
-            <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground/80">
+            <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               {t("footer.legal", "Legal")}
             </h3>
-            <nav className="flex flex-col gap-3" aria-label={t("footer.legalLinks", "Legal links")}>
+            <nav className="flex flex-col gap-2.5" aria-label={t("footer.legalLinks", "Legal links")}>
               <Link to="/privacy" className="-mx-1 inline-flex min-h-8 items-center break-words rounded-md px-1 text-[0.92rem] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                 {t("nav.privacy", "Privacy Policy")}
               </Link>
@@ -91,7 +91,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 border-t border-border/70 pt-5">
+        <div className="mt-8 border-t border-border pt-5">
           <div className="flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-4 sm:gap-y-2">
             <p className="text-[0.84rem] text-muted-foreground sm:shrink-0">
               © {currentYear} {t("common.appName")}. {t("footer.allRightsReserved", "All rights reserved.")}
