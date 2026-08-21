@@ -205,7 +205,7 @@ export default function Index() {
 
   const guestJourneySection = !user && !hasListActivity ? (
     <section
-      className="relative overflow-hidden rounded-[1.75rem] border border-primary/20 bg-[radial-gradient(circle_at_top_right,hsla(var(--primary)/0.18),transparent_44%),linear-gradient(135deg,hsla(var(--card)/0.98),hsla(var(--background)/0.92))] p-5 shadow-[0_20px_56px_rgba(0,0,0,0.16)] md:p-7"
+      className="rounded-2xl border border-border bg-card p-5 md:p-7"
       aria-labelledby="guest-journey-title"
     >
       <div className="relative grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(18rem,0.9fr)] lg:items-end">
@@ -256,9 +256,9 @@ export default function Index() {
               body: t("home.guestJourneyStep3Body", "A free account keeps your watchlist and progress in sync across devices."),
             },
           ].map((item) => (
-            <li key={item.step} className="rounded-2xl border border-border/60 bg-background/40 p-3.5">
+            <li key={item.step} className="border-l border-border pl-3 first:border-primary">
               <div className="flex items-start gap-3">
-                <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/12 text-primary">
+                <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <div>
@@ -325,7 +325,7 @@ export default function Index() {
   );
 
   const discoveryHubSection = (
-    <section className="ct-panel overflow-hidden p-5 md:p-6">
+    <section className="border-y border-border py-6 md:py-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="max-w-2xl">
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
@@ -340,20 +340,7 @@ export default function Index() {
               "Search, save, and track movies and series in one focused place — from your first idea to the moment you press play.",
             )}
           </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {[
-              t("home.discoveryHubTag1", "Track your progress"),
-              t("home.discoveryHubTag2", "Build your watchlist"),
-              t("home.discoveryHubTag3", "Discover what is next"),
-            ].map((tag) => (
-              <span
-                key={tag}
-                className="inline-flex rounded-full border border-border/60 bg-background/35 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
+
         </div>
 
         <div className="grid gap-2 sm:grid-cols-2 lg:min-w-[320px] lg:grid-cols-1 xl:min-w-[360px] xl:grid-cols-2">
@@ -392,10 +379,10 @@ export default function Index() {
               <Link
                 key={item.href}
                 to={item.href}
-                className="group rounded-2xl border border-border/60 bg-background/35 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:bg-background/50"
+                className="group rounded-xl border border-transparent p-3 transition-colors duration-150 hover:bg-muted"
               >
                 <div className="flex items-start gap-3">
-                  <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary transition-colors group-hover:bg-primary/18">
+                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
                     <Icon className="h-5 w-5" />
                   </span>
                   <div className="min-w-0">
@@ -521,10 +508,12 @@ export default function Index() {
             <MotionRevealSection tone="soft" delayClassName="delay-100" accentOpacityClassName="opacity-22">
               <ContinueWatching />
             </MotionRevealSection>
-            <MotionRevealSection tone="bold" delayClassName="delay-150" accentOpacityClassName="opacity-18">
-              <ActivationJourney />
-            </MotionRevealSection>
-            <MotionRevealSection tone="bold" delayClassName="delay-150" accentOpacityClassName="opacity-16">
+              {!hasLibraryActivity ? (
+                <MotionRevealSection tone="soft" delayClassName="delay-150">
+                  <ActivationJourney />
+                </MotionRevealSection>
+              ) : null}
+              <MotionRevealSection tone="bold" delayClassName="delay-150" accentOpacityClassName="opacity-16">
               <DailyCheckInCard />
             </MotionRevealSection>
             <MotionRevealSection tone="bold" delayClassName="delay-200" accentOpacityClassName="opacity-14">

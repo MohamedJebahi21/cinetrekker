@@ -158,7 +158,7 @@ export function HeroSection() {
     >
       {/* ── Desktop layout: full-width backdrop with floating elements ── */}
       {!isMobileViewport && (
-      <div className="relative min-h-[550px] lg:min-h-[600px] w-full overflow-hidden">
+      <div className="relative min-h-[520px] lg:min-h-[560px] w-full overflow-hidden">
         {/* Animated backdrop */}
         <AnimatePresence mode="wait">
           <motion.img
@@ -208,20 +208,13 @@ export function HeroSection() {
             </h1>
 
             {/* Meta badges */}
-            <div className="mt-4 flex flex-wrap items-center gap-2">
+            <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-medium text-white/75">
+              <span>{activeItem.media_type === "tv" ? t("common.tvShow", "TV Show") : t("common.movie", "Movie")}</span>
+              {activeYear && <span aria-hidden="true">•</span>}
+              {activeYear && <span>{activeYear}</span>}
               {activeItem.vote_average > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3.5 py-1 text-xs font-bold text-primary ring-1 ring-white/10">
-                  ★ {activeItem.vote_average.toFixed(1)}
-                </span>
+                <><span aria-hidden="true">•</span><span className="text-primary">★ {activeItem.vote_average.toFixed(1)}</span></>
               )}
-              {activeYear && (
-                <span className="rounded-full bg-white/10 px-3.5 py-1 text-xs font-semibold text-white/80 ring-1 ring-white/10">
-                  {activeYear}
-                </span>
-              )}
-              <span className="rounded-full bg-white/10 px-3.5 py-1 text-xs font-semibold text-white/80 ring-1 ring-white/10">
-                {activeItem.media_type === "tv" ? t("common.tvShow", "TV Show") : t("common.movie", "Movie")}
-              </span>
             </div>
 
             {/* Description */}
@@ -232,8 +225,8 @@ export function HeroSection() {
             )}
 
             {/* Actions */}
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              <Button asChild className="h-11 rounded-full bg-white text-black hover:bg-white/90 font-bold px-6 shadow-lg">
+            <div className="mt-6 flex flex-wrap items-center gap-2.5">
+              <Button asChild className="h-11 rounded-lg bg-primary px-5 font-semibold text-primary-foreground hover:bg-primary/90">
                 <Link to={activeMediaPath}>
                   <Info className="mr-2 h-4.5 w-4.5" />
                   {t("common.details", "Details")}
@@ -241,7 +234,7 @@ export function HeroSection() {
               </Button>
               <Button
                 variant="outline"
-                className="h-11 rounded-full border-white/20 bg-black/40 text-white hover:bg-white/10 font-semibold px-6 backdrop-blur-sm"
+                className="h-11 rounded-lg border-white/20 bg-black/55 px-4 font-semibold text-white hover:bg-white/10"
                 onClick={() => { void (inWatchlist ? removeFromWatchlist(activeItem.id, activeMediaType) : addToWatchlist(activeItem.id, activeMediaType)); }}
               >
                 <Bookmark className={cn("mr-2 h-4.5 w-4.5", inWatchlist && "fill-white")} />
@@ -250,7 +243,7 @@ export function HeroSection() {
               <Button
                 variant="outline"
                 className={cn(
-                  "h-11 rounded-full border-white/20 bg-black/40 text-white hover:bg-white/10 font-semibold px-6 backdrop-blur-sm",
+                  "h-11 rounded-lg border-white/20 bg-black/55 px-4 font-semibold text-white hover:bg-white/10",
                   inWatched && "border-green-400/40 bg-green-900/20 text-green-300"
                 )}
                 onClick={() => { void (inWatched ? removeFromWatched(activeItem.id, activeMediaType) : addToWatched(activeItem.id, activeMediaType, undefined, undefined, "completed")); }}
@@ -280,10 +273,10 @@ export function HeroSection() {
                 aria-label={`Select featured title: ${getMediaTitle(item)}`}
                 title={getMediaTitle(item)}
                 className={cn(
-                  "relative h-20 w-14 lg:h-24 lg:w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all duration-300 hover:scale-105",
+                  "relative h-16 w-12 lg:h-20 lg:w-14 flex-shrink-0 overflow-hidden rounded-md border transition-[border-color,opacity,transform] duration-150 hover:-translate-y-0.5",
                   isActive
-                    ? "border-primary shadow-[0_0_12px_hsl(var(--primary)/0.58)] opacity-100 scale-105 z-10"
-                    : "border-white/10 opacity-50 hover:opacity-80"
+                    ? "border-primary opacity-100 z-10"
+                    : "border-white/15 opacity-55 hover:opacity-90"
                 )}
               >
                 {thumb ? (
@@ -309,7 +302,8 @@ export function HeroSection() {
               <button
                 key={`pb-${item.id}-${i}`}
                 type="button"
-                aria-label={`Go to weekly spotlight slide ${i + 1} of ${topWeekly.length}`}
+                aria-label={t("home.selectFeaturedTitle", "Select featured title: {{title}}", { title: getMediaTitle(item) })}
+                aria-pressed={isActive}
                 onClick={() => goToSlide(i)}
                 className="group flex h-11 flex-1 items-end justify-center pb-0"
               >
@@ -361,12 +355,10 @@ export function HeroSection() {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(247,37,37,0.14),transparent_36%),linear-gradient(180deg,rgba(0,0,0,0.12)_0%,rgba(0,0,0,0.4)_45%,rgba(8,8,10,0.94)_100%)]" />
 
             <div className="absolute inset-x-4 top-4 flex items-center justify-between">
-              <span className="inline-flex rounded-full border border-white/10 bg-black/30 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.3em] text-white/75 backdrop-blur-md">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/75">
                 {t("home.topWatchedThisWeekKicker", "Weekly Spotlight")}
               </span>
-              <span className="inline-flex rounded-full border border-white/10 bg-black/30 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.24em] text-white/60 backdrop-blur-md">
-                {activeYear}
-              </span>
+              <span className="text-[10px] font-medium text-white/65">{activeYear}</span>
             </div>
 
             <div className="absolute inset-x-4 bottom-3 flex gap-1">
@@ -376,7 +368,7 @@ export function HeroSection() {
                   <button
                     key={`mob-pb-${item.id}-${i}`}
                     type="button"
-                    aria-label={`Go to weekly spotlight slide ${i + 1} of ${topWeekly.length}`}
+                    aria-label={t("home.selectFeaturedTitle", "Select featured title: {{title}}", { title: getMediaTitle(item) })}
                     onClick={() => goToSlide(i)}
                     className="group flex h-11 flex-1 items-center justify-center"
                   >
@@ -404,48 +396,17 @@ export function HeroSection() {
 
         </div>
 
-        {/* Horizontal thumbnail strip */}
-        <div className="scrollbar-hide flex gap-2 overflow-x-auto px-4 pb-2.5 pt-1.5">
-          {topWeekly.map((item, index) => {
-            const isActive = index === activeIndex;
-            const thumb = item.backdrop_path
-              ? getBackdropUrl(item.backdrop_path, "w300") || ""
-              : "";
-            return (
-              <button
-                key={`hero-mob-thumb-${item.id}-${index}`}
-                type="button"
-                onClick={() => goToSlide(index)}
-                aria-label={t("home.selectFeaturedTitle", "Select featured title: {{title}}", { title: getMediaTitle(item) })}
-                aria-pressed={isActive}
-                className={cn(
-                  "flex-shrink-0 overflow-hidden rounded-md border transition h-11 w-[79px]",
-                  isActive
-                    ? "border-primary shadow-[0_0_0_2px_hsl(var(--primary)/0.36)]"
-                    : "border-white/10 opacity-60"
-                )}
-              >
-                {thumb ? (
-                  <img src={thumb} alt="" loading="lazy" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="h-full w-full bg-white/5" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-
         {/* Text content */}
         <AnimatePresence mode="wait">
           <motion.div
             key={`hero-mob-content-${activeItem.id}`}
-            className="px-4 pb-2.5 pt-1"
+            className="px-4 pb-4 pt-3"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: td }}
           >
-            <div className="ct-hero-mobile-card rounded-[1.75rem] border p-3 backdrop-blur-xl">
+            <div className="ct-hero-mobile-card rounded-2xl border p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                   <span className="rounded-sm bg-foreground/10 px-2 py-0.5 text-[9px] font-semibold text-muted-foreground">
@@ -463,12 +424,12 @@ export function HeroSection() {
                     </span>
                   )}
                 </div>
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-border/40 bg-foreground/5 text-muted-foreground" aria-hidden="true">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-foreground/5 text-muted-foreground" aria-hidden="true">
                   <Info className="h-4.5 w-4.5" />
                 </div>
               </div>
 
-              <h2 className="mt-2 text-[20px] font-black leading-[0.98] tracking-[-0.04em] text-foreground">
+              <h2 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.03em] text-foreground">
                 {activeTitle}
               </h2>
 
@@ -480,7 +441,7 @@ export function HeroSection() {
               </p>
 
               <div className="mt-3 grid grid-cols-[1fr_auto_auto] gap-2">
-                <Button asChild className="h-11 rounded-2xl bg-primary text-primary-foreground font-bold hover:bg-primary/90">
+                <Button asChild className="h-11 rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90">
                   <Link to={activeMediaPath}>
                     <Info className="mr-2 h-4 w-4" />{t("common.details", "Details")}
                   </Link>
@@ -488,7 +449,7 @@ export function HeroSection() {
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-11 w-11 rounded-2xl border-border/50 bg-foreground/5 text-foreground hover:bg-foreground/10"
+                  className="h-11 w-11 rounded-lg border-border/50 bg-foreground/5 text-foreground hover:bg-foreground/10"
                   onClick={() => { void (inWatchlist ? removeFromWatchlist(activeItem.id, activeMediaType) : addToWatchlist(activeItem.id, activeMediaType)); }}
                   aria-label={
                     inWatchlist
@@ -501,7 +462,7 @@ export function HeroSection() {
                 <Button
                   variant="outline"
                   size="icon"
-                  className={cn("h-11 w-11 rounded-2xl border-border/50 bg-foreground/5 text-foreground hover:bg-foreground/10", inWatched && "border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-300")}
+                  className={cn("h-11 w-11 rounded-lg border-border/50 bg-foreground/5 text-foreground hover:bg-foreground/10", inWatched && "border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-300")}
                   onClick={() => { void (inWatched ? removeFromWatched(activeItem.id, activeMediaType) : addToWatched(activeItem.id, activeMediaType, undefined, undefined, "completed")); }}
                   aria-label={
                     inWatched
