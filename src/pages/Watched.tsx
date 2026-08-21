@@ -35,6 +35,7 @@ export default function Watched() {
     filterOptions,
     clearFilters,
     isLoading,
+    hasWatchedItems,
     filteredMedia,
     hasActiveFilters,
   } = useWatchedFilters(language);
@@ -113,8 +114,9 @@ export default function Watched() {
             )}
           </div>
 
-          <div className="ct-panel mb-8 p-4 md:p-5">
-            <div className="grid gap-4 lg:grid-cols-4">
+          {hasWatchedItems || hasActiveFilters ? (
+            <div className="ct-panel mb-8 p-4 md:p-5">
+              <div className="grid gap-4 lg:grid-cols-4">
               <div className="ct-filter-field">
                 <label className="ct-filter-label">
                   {t("filters.language", "Language")}
@@ -220,8 +222,9 @@ export default function Watched() {
                   />
                 </div>
               </div>
+              </div>
             </div>
-          </div>
+          ) : null}
 
           {!isLoading && filteredMedia.length > 0 ? (
             <div className="mb-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -247,14 +250,29 @@ export default function Watched() {
           ) : null}
 
           {isLoading ? (
-            <div className="media-grid">
-              {Array.from({ length: 12 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="aspect-[2/3] rounded-xl bg-muted animate-pulse"
-                />
-              ))}
-            </div>
+            hasWatchedItems ? (
+              <div className="media-grid">
+                {Array.from({ length: 12 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="aspect-[2/3] rounded-xl bg-muted animate-pulse"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div
+                className="ct-panel flex min-h-44 items-center justify-center px-6 py-10"
+                role="status"
+                aria-label="Loading watched history"
+                aria-busy="true"
+              >
+                <div className="w-full max-w-sm space-y-3">
+                  <div className="h-3 w-24 rounded-full skeleton-shimmer" />
+                  <div className="h-6 w-3/4 rounded-md skeleton-shimmer" />
+                  <div className="h-4 w-full rounded-md skeleton-shimmer" />
+                </div>
+              </div>
+            )
           ) : filteredMedia.length > 0 ? (
             <div className="space-y-8">
               {groups.map(([yearBucket, items]) => (

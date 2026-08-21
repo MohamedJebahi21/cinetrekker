@@ -15,7 +15,7 @@ import {
 const ALL = "all";
 
 export function useWatchedFilters(language: string) {
-  const { watched } = useUserLists();
+  const { watched, loading: userListsLoading } = useUserLists();
   const [filterLang, setFilterLang] = useState<string>(ALL);
   const [filterType, setFilterType] = useState<string>(ALL);
   const [filterCountry, setFilterCountry] = useState<string>(ALL);
@@ -153,7 +153,8 @@ export function useWatchedFilters(language: string) {
     setFilterYear,
     filterOptions,
     clearFilters,
-    isLoading: detailsQuery.isLoading,
+    isLoading: userListsLoading || detailsQuery.isLoading,
+    hasWatchedItems: watched.length > 0,
     filteredMedia,
     hasActiveFilters,
   };
