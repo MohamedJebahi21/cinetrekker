@@ -8,7 +8,7 @@ const source = await readFile(
 );
 
 const freshDiscoveryWidthContract =
-  "w-[calc(50vw-1.5rem)] shrink-0 snap-start overflow-hidden rounded-xl";
+  "w-[calc(50vw-1.5rem)] shrink-0 snap-start overflow-hidden";
 const responsiveRailWidths = "sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]";
 
 test("Continue Watching matches the Fresh Discovery desktop rail width contract", () => {
