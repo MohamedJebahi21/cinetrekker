@@ -222,6 +222,7 @@ export default function Discover() {
   const includeAdult = !(strictFiltering || moderateFiltering);
   const language = i18n.language;
   const [activeMood, setActiveMood] = useState<number | null>(null);
+  const [moodPickerOpen, setMoodPickerOpen] = useState(false);
   const [deferredDiscoveryReady, setDeferredDiscoveryReady] = useState(false);
 
   useEffect(() => {
@@ -325,74 +326,100 @@ export default function Discover() {
           {spotlightItems.length > 0 ? <SpotlightHero items={spotlightItems} /> : <SpotlightHeroSkeleton />}
         </div>
 
-        {/* ── Category quick-nav grid ── */}
-        <section>
-          <h2 className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground mb-4">Browse By</h2>
-          <div className="grid grid-cols-4 gap-2 sm:grid-cols-4 md:grid-cols-8">
-            {CATEGORIES.map(cat => {
-              const Icon = cat.icon;
-              return (
-                <Link
-                  key={cat.to}
-                  to={cat.to}
-                  className={cn(
-                    "flex flex-col items-center gap-2 rounded-xl border bg-card/55 p-4 text-center shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-card hover:shadow-md active:translate-y-0",
-                    cat.bg, cat.border
-                  )}
-                >
-                  <Icon className={cn("w-5 h-5", cat.color)} />
-                  <span className="text-[11px] font-semibold text-foreground/80 leading-tight">{cat.label}</span>
-                </Link>
-              );
-            })}
+        {/* ── Compact discovery controls ── */}
+        <section className="ct-toolbar flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4" aria-label="Discovery controls">
+          <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="shrink-0">
+              <p className="ct-kicker">Browse</p>
+              <p className="hidden text-xs text-muted-foreground sm:block">Start with a category</p>
+            </div>
+            <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto pb-1 sm:pb-0" aria-label="Browse discovery categories">
+              {CATEGORIES.map((cat) => {
+                const Icon = cat.icon;
+                return (
+                  <Link
+                    key={cat.to}
+                    to={cat.to}
+                    className={cn(
+                      "inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg border bg-card/35 px-3 text-xs font-semibold text-foreground/75 transition-colors duration-200 hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70",
+                      cat.border,
+                    )}
+                  >
+                    <Icon className={cn("h-4 w-4", cat.color)} />
+                    {cat.label}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
+          <Button
+            type="button"
+            variant={moodPickerOpen || activeMood !== null ? "secondary" : "outline"}
+            size="sm"
+            className="shrink-0 gap-2 sm:self-auto"
+            aria-expanded={moodPickerOpen || activeMood !== null}
+            aria-controls="discover-mood-picker"
+            onClick={() => setMoodPickerOpen((current) => !current)}
+          >
+            <Sparkles className="h-4 w-4" />
+            Mood picks
+          </Button>
         </section>
 
         {/* ── Mood / Vibe filter ── */}
-        <section className="ct-panel p-5 sm:p-6">
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h2 className="text-base font-bold">What's your mood?</h2>
-              <p className="text-sm text-muted-foreground mt-0.5">Find something that fits how you feel right now</p>
+        {(moodPickerOpen || activeMood !== null) && (
+          <section id="discover-mood-picker" className="ct-panel p-5 sm:p-6" aria-label="Mood picks">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-bold">What’s your mood?</h2>
+                <p className="mt-0.5 text-sm text-muted-foreground">Find something that fits how you feel right now</p>
+              </div>
+              {activeMood !== null && (
+                <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => setActiveMood(null)}>
+                  Clear ×
+                </Button>
+              )}
             </div>
+
+            <div className="flex flex-wrap gap-2">
+              {MOODS.map((mood, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    if (activeMood === i) {
+                      setActiveMood(null);
+                      return;
+                    }
+                    setActiveMood(i);
+                    setMoodPickerOpen(true);
+                  }}
+                  aria-pressed={activeMood === i}
+                  className={cn(
+                    "min-h-11 rounded-lg border px-3.5 py-2 text-sm font-medium transition-colors duration-200",
+                    activeMood === i
+                      ? cn(mood.color, mood.border, mood.text, "border-opacity-60 shadow-sm")
+                      : "bg-card/40 text-foreground/70 hover:bg-card hover:text-foreground",
+                  )}
+                >
+                  {mood.label}
+                </button>
+              ))}
+            </div>
+
             {activeMood !== null && (
-              <Button variant="ghost" size="sm" className="text-muted-foreground text-xs" onClick={() => setActiveMood(null)}>
-                Clear ×
-              </Button>
+              <div className="mt-5 flex items-center justify-between border-t border-white/8 pt-5">
+                <p className="text-sm text-muted-foreground">
+                  Showing <span className="font-semibold text-foreground">{MOODS[activeMood].label}</span> picks
+                </p>
+                <Button asChild size="sm" className="gap-1.5 rounded-xl">
+                  <Link to={`/search?genre=${MOODS[activeMood].genre}&sort=${MOODS[activeMood].sort}`}>
+                    See All Results <ChevronRight className="h-3.5 w-3.5" />
+                  </Link>
+                </Button>
+              </div>
             )}
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {MOODS.map((mood, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveMood(activeMood === i ? null : i)}
-                aria-pressed={activeMood === i}
-                className={cn(
-                  "min-h-11 rounded-lg border px-3.5 py-2 text-sm font-medium transition-colors duration-200",
-                  activeMood === i
-                    ? cn(mood.color, mood.border, mood.text, "border-opacity-60 shadow-sm")
-                    : "bg-card/40 text-foreground/70 hover:bg-card hover:text-foreground"
-                )}
-              >
-                {mood.label}
-              </button>
-            ))}
-          </div>
-
-          {activeMood !== null && (
-            <div className="mt-5 pt-5 border-t border-white/8 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                Showing <span className="text-foreground font-semibold">{MOODS[activeMood].label}</span> picks
-              </p>
-              <Button asChild size="sm" className="rounded-xl gap-1.5">
-                <Link to={`/search?genre=${MOODS[activeMood].genre}&sort=${MOODS[activeMood].sort}`}>
-                  See All Results <ChevronRight className="w-3.5 h-3.5" />
-                </Link>
-              </Button>
-            </div>
-          )}
-        </section>
+          </section>
+        )}
 
         {/* ── Trending Today ── */}
         <MediaSection
