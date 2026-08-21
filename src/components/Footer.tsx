@@ -92,17 +92,17 @@ export function Footer() {
         </div>
 
         <div className="mt-10 border-t border-border/70 pt-5">
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-            <p className="shrink-0 text-[0.84rem] text-muted-foreground">
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-4 sm:gap-y-2">
+            <p className="text-[0.84rem] text-muted-foreground sm:shrink-0">
               © {currentYear} {t("common.appName")}. {t("footer.allRightsReserved", "All rights reserved.")}
             </p>
-            <p className="flex-1 text-center text-xs leading-relaxed text-muted-foreground/70 min-w-0">
+            <p className="w-full text-left text-xs leading-relaxed text-muted-foreground/70 sm:min-w-0 sm:flex-1 sm:text-center">
               {t(
                 "footer.attribution",
                 "This product uses the TMDB API but is not endorsed or certified by TMDB. All movie and TV show data, including images and metadata, is provided by The Movie Database (TMDB).",
               )}
             </p>
-            <div className="shrink-0 flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:shrink-0">
               <span className="text-sm text-muted-foreground">
                 {t("footer.poweredBy", "Powered by")}
               </span>

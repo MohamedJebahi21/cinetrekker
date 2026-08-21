@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import House from "lucide-react/dist/esm/icons/house";
@@ -15,9 +16,34 @@ export function MobileBottomNav() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const [isEditing, setIsEditing] = useState(false);
   const { user } = useAuth();
   const profilePath = user ? "/profile" : "/login";
   const profileActive = pathname.startsWith("/profile") || pathname.startsWith("/login");
+  const isFeedbackRoute = pathname === "/feedback";
+
+  useEffect(() => {
+    const editorSelector = "input:not([type='checkbox']):not([type='radio']), textarea, select, [contenteditable='true']";
+    const updateEditingState = () => {
+      const activeElement = document.activeElement;
+      setIsEditing(Boolean(activeElement?.matches(editorSelector)));
+    };
+
+    const handleFocusOut = () => window.requestAnimationFrame(updateEditingState);
+
+    window.addEventListener("focusin", updateEditingState);
+    window.addEventListener("focusout", handleFocusOut);
+    updateEditingState();
+
+    return () => {
+      window.removeEventListener("focusin", updateEditingState);
+      window.removeEventListener("focusout", handleFocusOut);
+    };
+  }, []);
+
+  if (isFeedbackRoute || isEditing) {
+    return null;
+  }
 
   return (
     <nav

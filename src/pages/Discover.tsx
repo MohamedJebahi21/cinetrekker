@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Compass, Flame, Layers, Sparkles, Trophy, Tv, Film, Star, ChevronRight, Play, TrendingUp, Clock, Popcorn } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -93,15 +93,18 @@ function SpotlightHero({ items }: { items: Media[] }) {
       {/* Backdrop */}
       <div className={cn("absolute inset-0 transition-opacity duration-500", fading ? "opacity-0" : "opacity-100")}>
         {item.backdrop_path ? (
-          <img
-            src={getBackdropUrl(item.backdrop_path, "w1280") || ""}
-            alt=""
-            aria-hidden="true"
-            loading="eager"
-            fetchPriority="high"
-            className="h-full w-full object-cover object-center scale-[1.015]"
-            style={{ transitionDuration: "8000ms" }}
-          />
+          <picture>
+            <source media="(max-width: 767px)" srcSet={getBackdropUrl(item.backdrop_path, "w780") || ""} />
+            <img
+              src={getBackdropUrl(item.backdrop_path, "w1280") || ""}
+              alt=""
+              aria-hidden="true"
+              loading="eager"
+              fetchPriority="high"
+              className="h-full w-full object-cover object-center scale-[1.015]"
+              style={{ transitionDuration: "8000ms" }}
+            />
+          </picture>
         ) : (
           <div className="h-full w-full bg-[linear-gradient(135deg,hsl(var(--card)),hsl(var(--background)))]" />
         )}
@@ -219,6 +222,12 @@ export default function Discover() {
   const includeAdult = !(strictFiltering || moderateFiltering);
   const language = i18n.language;
   const [activeMood, setActiveMood] = useState<number | null>(null);
+  const [deferredDiscoveryReady, setDeferredDiscoveryReady] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDeferredDiscoveryReady(true), 800);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const { data: trendingNow } = useQuery({
     queryKey: ["discover", "trending-day", language, includeAdult],
@@ -228,46 +237,55 @@ export default function Discover() {
   const { data: trendingWeek } = useQuery({
     queryKey: ["discover", "trending-week", language, includeAdult],
     queryFn: () => getTrending("all", "week", language, 1, includeAdult),
+    enabled: deferredDiscoveryReady,
   });
 
   const { data: popularMovies } = useQuery({
     queryKey: ["discover", "popular-movies", language, includeAdult],
     queryFn: () => getPopularMovies(1, language, includeAdult),
+    enabled: deferredDiscoveryReady,
   });
 
   const { data: popularTV } = useQuery({
     queryKey: ["discover", "popular-tv", language, includeAdult],
     queryFn: () => getPopularTV(1, language, includeAdult),
+    enabled: deferredDiscoveryReady,
   });
 
   const { data: topRatedMovies } = useQuery({
     queryKey: ["discover", "top-rated-movies", language, includeAdult],
     queryFn: () => getTopRatedMovies(1, language, includeAdult),
+    enabled: deferredDiscoveryReady,
   });
 
   const { data: topRatedTV } = useQuery({
     queryKey: ["discover", "top-rated-tv", language, includeAdult],
     queryFn: () => getTopRatedTV(1, language, includeAdult),
+    enabled: deferredDiscoveryReady,
   });
 
   const { data: nowPlayingMovies } = useQuery({
     queryKey: ["discover", "now-playing", language, includeAdult],
     queryFn: () => getNowPlayingMovies(1, language, includeAdult),
+    enabled: deferredDiscoveryReady,
   });
 
   const { data: upcomingMovies } = useQuery({
     queryKey: ["discover", "upcoming", language, includeAdult],
     queryFn: () => getUpcomingMovies(1, language, includeAdult),
+    enabled: deferredDiscoveryReady,
   });
 
   const { data: airingTodayTV } = useQuery({
     queryKey: ["discover", "airing-today", language, includeAdult],
     queryFn: () => getAiringTodayTV(1, language, includeAdult),
+    enabled: deferredDiscoveryReady,
   });
 
   const { data: onTheAirTV } = useQuery({
     queryKey: ["discover", "on-the-air", language, includeAdult],
     queryFn: () => getOnTheAirTV(1, language, includeAdult),
+    enabled: deferredDiscoveryReady,
   });
 
   const spotlightItems = trendingNow?.results?.slice(0, 5) ?? [];
@@ -349,8 +367,9 @@ export default function Discover() {
               <button
                 key={i}
                 onClick={() => setActiveMood(activeMood === i ? null : i)}
+                aria-pressed={activeMood === i}
                 className={cn(
-                  "rounded-lg border px-3.5 py-2 text-sm font-medium transition-colors duration-200",
+                  "min-h-11 rounded-lg border px-3.5 py-2 text-sm font-medium transition-colors duration-200",
                   activeMood === i
                     ? cn(mood.color, mood.border, mood.text, "border-opacity-60 shadow-sm")
                     : "bg-card/40 text-foreground/70 hover:bg-card hover:text-foreground"
@@ -383,6 +402,8 @@ export default function Discover() {
           emptyMessage="Trending titles will appear shortly."
         />
 
+        {deferredDiscoveryReady ? (
+          <>
         {/* ── Airing on TV Today ── */}
         <MediaSection
           title="📺 Airing on TV Today"
@@ -454,6 +475,12 @@ export default function Discover() {
           showMoreLink="/search?type=tv"
           emptyMessage="Popular TV shows will appear shortly."
         />
+          </>
+        ) : (
+          <div className="flex min-h-24 items-center justify-center rounded-2xl border border-border/50 bg-card/35 px-4 text-sm text-muted-foreground" aria-live="polite">
+            {t("discover.preparingPicks", "Preparing more fresh picks…")}
+          </div>
+        )}
 
       </div>
     </div>

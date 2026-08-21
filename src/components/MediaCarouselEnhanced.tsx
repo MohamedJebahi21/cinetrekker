@@ -284,6 +284,13 @@ export function MediaCarouselEnhanced({
             ))}
           </div>
 
+          {scrollState.canScrollRight ? (
+            <div aria-hidden="true" className="pointer-events-none absolute bottom-8 right-3 flex items-center gap-0.5 rounded-full border border-border/60 bg-background/85 px-2 py-1 text-[10px] font-semibold text-muted-foreground shadow-sm backdrop-blur-sm md:hidden">
+              <span>Swipe</span>
+              <ChevronRight className="h-3.5 w-3.5" />
+            </div>
+          ) : null}
+
           {scrollState.pageCount > 1 ? (
             <div className="mt-4 flex justify-center">
               <PaginationDots>

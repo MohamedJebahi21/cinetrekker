@@ -15,6 +15,7 @@ import Bookmark from "lucide-react/dist/esm/icons/bookmark";
 import CheckSquare from "lucide-react/dist/esm/icons/check-square";
 import Trophy from "lucide-react/dist/esm/icons/trophy";
 import Heart from "lucide-react/dist/esm/icons/heart";
+import Search from "lucide-react/dist/esm/icons/search";
 import FolderHeart from "lucide-react/dist/esm/icons/folder-heart";
 import { useQuery } from "@tanstack/react-query";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
@@ -315,6 +316,24 @@ export function UnifiedNav() {
     return segment.charAt(0).toUpperCase() + segment.slice(1);
   }, [pathname, t]);
 
+  const mobileNavigationGroups = useMemo(() => {
+    if (user) return primaryNavigationGroups;
+
+    const [personal, community, discovery, insights] = navigationGroups;
+    return [
+      {
+        title: t("nav.explore", "Explore"),
+        links: [
+          personal.links[0],
+          ...discovery.links.filter((item) => item.path !== "/recommendations"),
+          insights.links[0],
+          insights.links[5],
+          ...community.links,
+        ],
+      },
+    ];
+  }, [t, user]);
+
   return (
     <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
       <header
@@ -343,11 +362,22 @@ export function UnifiedNav() {
           </span>
         </div>
 
-        <div className={cn("topbar-search min-w-0 flex-1", pathname === "/search" && "hidden md:block")}>
+        <div className={cn("topbar-search hidden min-w-0 flex-1 sm:block", pathname === "/search" && "hidden md:block")}>
           <Suspense fallback={searchFallback}>
             <SearchDropdown />
           </Suspense>
         </div>
+
+        {pathname !== "/search" && (
+          <Link
+            to="/search"
+            className="inline-flex h-11 min-w-11 items-center justify-center gap-2 rounded-xl border border-border/70 bg-card/70 px-3 text-sm font-semibold text-foreground shadow-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:hidden"
+            aria-label={t("nav.search", "Search")}
+          >
+            <Search className="h-5 w-5" aria-hidden="true" />
+            <span className="sr-only">{t("nav.search", "Search")}</span>
+          </Link>
+        )}
 
         <div className="topbar-actions ml-auto hidden items-center md:flex">
           {user ? (
@@ -605,8 +635,8 @@ export function UnifiedNav() {
                 </motion.div>
               )}
 
-              {/* Categorized Menu Links on Mobile */}
-              {primaryNavigationGroups.map((group) => (
+              {/* Guest visitors see discovery essentials first; signed-in users retain their full personal workspace. */}
+              {mobileNavigationGroups.map((group) => (
                 <div key={group.title} className="space-y-2 border-t border-border pt-4">
                   <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground px-1">
                     {group.title}
@@ -642,6 +672,17 @@ export function UnifiedNav() {
                   </div>
                 </div>
               ))}
+
+              {!user && (
+                <section className="space-y-2 border-t border-border pt-4" aria-label={t("nav.accountOnly", "Your account")}>
+                  <p className="px-1 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
+                    {t("nav.accountOnly", "Your account")}
+                  </p>
+                  <p className="px-1 text-xs leading-5 text-muted-foreground">
+                    {t("nav.accountOnlyDescription", "Sign in to unlock your watchlist, progress, collections, recommendations, and viewing stats.")}
+                  </p>
+                </section>
+              )}
 
               {/* Settings & Auth Section */}
               <div className="space-y-2 border-t border-border pt-4">

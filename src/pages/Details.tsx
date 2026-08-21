@@ -1487,10 +1487,10 @@ export default function Details() {
                   <h2 className="section-title mt-1 mb-0">Videos & Trailers</h2>
                 </div>
                 <div className="flex items-center gap-2" aria-label="Video carousel controls">
-                  <Button type="button" variant="outline" size="icon" className="h-9 w-9 rounded-full" onClick={() => scrollCarousel(videoScrollRef, -1)} aria-label="Scroll videos left">
+                  <Button type="button" variant="outline" size="icon" className="h-11 w-11 rounded-full" onClick={() => scrollCarousel(videoScrollRef, -1)} aria-label="Scroll videos left">
                     <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                   </Button>
-                  <Button type="button" variant="outline" size="icon" className="h-9 w-9 rounded-full" onClick={() => scrollCarousel(videoScrollRef, 1)} aria-label="Scroll videos right">
+                  <Button type="button" variant="outline" size="icon" className="h-11 w-11 rounded-full" onClick={() => scrollCarousel(videoScrollRef, 1)} aria-label="Scroll videos right">
                     <ChevronRight className="h-4 w-4" aria-hidden="true" />
                   </Button>
                 </div>

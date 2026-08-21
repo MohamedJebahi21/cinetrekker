@@ -1,30 +1,61 @@
-import { useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useLayoutEffect, useRef } from "react";
+import { useLocation, useNavigationType } from "react-router-dom";
+
+type ScrollPosition = { left: number; top: number };
 
 /**
- * ScrollToTop component
- * Scrolls window to top whenever the location pathname changes.
- * Mount this inside the Router but outside Routes so all navigations reset scroll position.
+ * Keeps forward navigation predictable while preserving a visitor's place when
+ * they use the browser's Back or Forward controls. The previous implementation
+ * reset every pathname change, which made deep discovery feeds feel broken on
+ * mobile after opening a title detail page.
  */
 export default function ScrollToTop() {
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const navigationType = useNavigationType();
+  const positions = useRef(new Map<string, ScrollPosition>());
   const isFirstRender = useRef(true);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const savePosition = () => {
+      positions.current.set(location.key, {
+        left: window.scrollX,
+        top: window.scrollY,
+      });
+    };
+
+    savePosition();
+    window.addEventListener("scroll", savePosition, { passive: true });
+
+    return () => {
+      savePosition();
+      window.removeEventListener("scroll", savePosition);
+    };
+  }, [location.key]);
+
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
 
-    try {
-      if (typeof window !== 'undefined') {
-        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-      }
-    } catch (e) {
-      // fail silently in non-browser or restricted environments
-      console.warn('ScrollToTop: unable to scroll to top', e);
-    }
-  }, [pathname]);
+    const savedPosition = navigationType === "POP"
+      ? positions.current.get(location.key)
+      : undefined;
+
+    const frame = window.requestAnimationFrame(() => {
+      window.scrollTo({
+        left: savedPosition?.left ?? 0,
+        top: savedPosition?.top ?? 0,
+        behavior: "auto",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [location.key, navigationType]);
 
   return null;
 }

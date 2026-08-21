@@ -20,6 +20,7 @@ function HeroSectionSkeleton({ isMobileViewport }: { isMobileViewport: boolean }
     return (
       <section className="w-full border-b border-border/30 bg-background" aria-busy="true" aria-label="Loading weekly spotlight">
         <div className="md:hidden">
+          <h1 className="sr-only">CineTrekker movie and TV tracker</h1>
           <div className="min-h-[54svh] bg-card/45 skeleton-shimmer sm:min-h-[60svh]" />
           <div className="space-y-3 px-4 pb-3 pt-2">
             <div className="h-11 w-full rounded-md bg-card/45 skeleton-shimmer" />
@@ -338,6 +339,7 @@ export function HeroSection() {
       {/* ── Mobile layout: full-width stacked ── */}
       {isMobileViewport && (
       <div className="md:hidden">
+        <h1 className="sr-only">{t("home.mobilePageTitle", "CineTrekker movie and TV tracker")}</h1>
         <div className="relative overflow-hidden bg-background">
           {/* Backdrop */}
           <div className="relative min-h-[54svh] sm:min-h-[60svh]">
@@ -414,6 +416,8 @@ export function HeroSection() {
                 key={`hero-mob-thumb-${item.id}-${index}`}
                 type="button"
                 onClick={() => goToSlide(index)}
+                aria-label={t("home.selectFeaturedTitle", "Select featured title: {{title}}", { title: getMediaTitle(item) })}
+                aria-pressed={isActive}
                 className={cn(
                   "flex-shrink-0 overflow-hidden rounded-md border transition h-11 w-[79px]",
                   isActive
