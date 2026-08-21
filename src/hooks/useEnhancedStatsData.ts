@@ -17,7 +17,7 @@ type GenreRecord = {
 };
 
 export function useEnhancedStatsData(language: string) {
-  const { watched } = useUserLists();
+  const { watched, loading: userListsLoading } = useUserLists();
   const [selectedYear, setSelectedYear] = useState<number | "all">("all");
   const [selectedType, setSelectedType] = useState<MediaTypeFilter>("all");
   const [selectedLang, setSelectedLang] = useState<string>("all");
@@ -157,7 +157,8 @@ export function useEnhancedStatsData(language: string) {
   }, [filteredMedia]);
 
   return {
-    mediaLoading: detailsQuery.isLoading,
+    mediaLoading: userListsLoading || detailsQuery.isLoading,
+    hasWatchedItems: watched.length > 0,
     selectedYear,
     setSelectedYear,
     selectedType,

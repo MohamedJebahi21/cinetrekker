@@ -41,6 +41,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { GlassStatCard } from "@/components/GlassStatCard";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -82,6 +83,7 @@ export default function EnhancedStats() {
 
   const {
     mediaLoading,
+    hasWatchedItems,
     selectedYear,
     setSelectedYear,
     selectedType,
@@ -240,6 +242,56 @@ export default function EnhancedStats() {
         <div className="flex flex-col items-center gap-4">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
           <span className="text-sm font-semibold text-muted-foreground">Analyzing dashboard statistics...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasWatchedItems) {
+    return (
+      <div className="ct-page-shell min-h-screen">
+        <div className="page-container w-full max-w-6xl space-y-8 pt-20 pb-24 md:pb-12">
+          <div className="flex items-start gap-4">
+            <div className="ct-panel flex shrink-0 items-center justify-center rounded-xl border-primary/20 bg-primary/10 p-3">
+              <Award className="h-8 w-8 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <p className="ct-kicker mb-1">Cinephile Dashboard</p>
+              <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl">
+                Analytics & Insights
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your viewing insights will take shape as you log titles.
+              </p>
+            </div>
+          </div>
+
+          <Card className="ct-panel border-primary/20 bg-primary/5">
+            <CardContent className="flex flex-col gap-5 py-8 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="rounded-xl border border-primary/20 bg-primary/10 p-3 text-primary">
+                  <BarChart2 className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+                    {t("profile.startYourWeek", "Start your next watch")}
+                  </p>
+                  <h2 className="mt-1 text-xl font-semibold text-foreground">
+                    No viewing data yet
+                  </h2>
+                  <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+                    {t("profile.recentRecapEmpty", "Log a title to begin building your personal viewing story.")}
+                  </p>
+                </div>
+              </div>
+              <Button asChild className="shrink-0">
+                <Link to="/discover">
+                  {t("watched.discoverTitles", "Discover titles")}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
