@@ -167,7 +167,7 @@ function buildLegacyHeadHtml({ title, description, image, canonical, type, relea
   const fullTitle = safeTitle.includes(siteName) ? safeTitle : `${safeTitle} | ${siteName}`;
   const safeDesc = sanitizeMeta(description || "Track movies and TV shows on CineTrekker.", 320);
   const safeImage = image || `${BASE_URL}/og-image.png`;
-  const ogType = type === "tv" ? "video.tv_show" : type === "person" ? "profile" : "video.movie";
+  const ogType = type === "tv" ? "video.tv_show" : type === "person" ? "profile" : type === "website" ? "website" : "video.movie";
   const safeCanonical = canonical || BASE_URL;
 
   // Escape JSON-LD for safe inline script
@@ -284,7 +284,7 @@ function buildHeadHtml({ title, description, image, canonical, type, releaseDate
   const safeDescription = sanitizeMeta(description || "Track movies and TV shows on CineTrekker.", 320);
   const safeCanonical = canonical || BASE_URL;
   const safeImage = image || `${BASE_URL}/og-image.png`;
-  const ogType = type === "tv" ? "video.tv_show" : type === "person" ? "profile" : "video.movie";
+  const ogType = type === "tv" ? "video.tv_show" : type === "person" ? "profile" : type === "website" ? "website" : "video.movie";
   const jsonLdStr = jsonLd
     ? JSON.stringify(jsonLd).replace(/</g, "\\u003c").replace(/>/g, "\\u003e")
     : "";
@@ -605,6 +605,44 @@ async function buildPersonMeta(id) {
   };
 }
 
+function buildMovieTrackerMeta() {
+  const canonical = `${BASE_URL}/movie-tracker`;
+  const description = "Track movies, TV shows, watchlists, and episode progress in one free, focused place. Explore CineTrekker before you sign up.";
+
+  return {
+    title: "Free Movie & TV Show Tracker",
+    description,
+    image: `${BASE_URL}/og-image.png`,
+    canonical,
+    type: "website",
+    releaseDate: undefined,
+    rating: undefined,
+    jsonLd: [
+      {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        name: "Free Movie & TV Show Tracker",
+        description,
+        url: canonical,
+        isPartOf: {
+          "@type": "WebSite",
+          name: "CineTrekker",
+          url: BASE_URL,
+        },
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
+          { "@type": "ListItem", position: 2, name: "Movie & TV Show Tracker", item: canonical },
+        ],
+      },
+    ],
+    redirectCanonical: null,
+  };
+}
+
 export default async function handler(req, res) {
   // Only handle GET requests
   if (req.method !== "GET") {
@@ -614,6 +652,13 @@ export default async function handler(req, res) {
   // Extract the request URL
   const url = new URL(req.url, BASE_URL);
   const pathname = url.pathname;
+
+  if (pathname === "/movie-tracker") {
+    const html = buildHeadHtml(buildMovieTrackerMeta());
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    return res.status(200).send(html);
+  }
 
   // Parse the path to determine what content we're dealing with
   const parsed = parseContentPath(pathname);

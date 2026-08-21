@@ -26,6 +26,10 @@
       "destination": "/api/notifications?action=mark-read"
     },
     {
+      "source": "/movie-tracker",
+      "destination": "/api/edge-meta"
+    },
+    {
       "source": "/movie/:path*",
       "destination": "/api/edge-meta"
     },

@@ -93,6 +93,7 @@ const Calendar = lazy(() => import("./pages/Calendar"));
 const EnhancedStats = lazy(() => import("./pages/EnhancedStats"));
 const GenreBrowser = lazy(() => import("./pages/GenreBrowser"));
 const Discover = lazy(() => import("./pages/Discover"));
+const MovieTracker = lazy(() => import("./pages/MovieTracker"));
 const DecadeExplorer = lazy(() => import("./pages/DecadeExplorer"));
 const Achievements = lazy(() => import("./pages/Achievements"));
 const PrintWatchlist = lazy(() => import("./pages/PrintWatchlist"));
@@ -272,6 +273,14 @@ function AppRoutes() {
             element={
               <Suspense fallback={<RouteSpinner />}>
                 <Discover />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/movie-tracker"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <MovieTracker />
               </Suspense>
             }
           />
