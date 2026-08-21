@@ -39,7 +39,7 @@
  */
 
 import { useEffect, useMemo, useRef } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -310,6 +310,9 @@ export function useContinueWatchingViewModel(): {
     enabled: ranked.length > 0 && !!user && !watchedItemsLoading,
     staleTime: 60_000,
     gcTime: 5 * 60_000,
+    // Marking an episode changes watchedHash and therefore rekeys this query.
+    // Keep the current rail mounted while the updated view model resolves.
+    placeholderData: keepPreviousData,
   });
 
   useEffect(() => {
@@ -356,7 +359,9 @@ export function useContinueWatchingViewModel(): {
 
   return {
     data,
-    isLoading: query.isLoading || watchedItemsLoading,
+    // Preserve the populated rail during a mutation-driven rekey; initial
+    // loading remains visible only when no current or placeholder data exists.
+    isLoading: (query.isLoading && !query.data) || watchedItemsLoading,
     error: query.error ?? null,
     refetch: () => query.refetch(),
   };
