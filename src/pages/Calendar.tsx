@@ -102,6 +102,31 @@ type CalendarTVItem = Media & {
   last_episode_to_air?: TVEpisodeInfo | null;
 };
 
+function getCalendarItemKey(item: CalendarItem) {
+  return [
+    item.type,
+    item.id,
+    item.date.split('T')[0],
+    item.seasonNumber ?? '',
+    item.episodeNumber ?? '',
+  ].join(':');
+}
+
+function deduplicateCalendarItems(items: CalendarItem[]) {
+  const uniqueItems = new Map<string, CalendarItem>();
+
+  items.forEach((item) => {
+    const key = getCalendarItemKey(item);
+    const existing = uniqueItems.get(key);
+
+    if (!existing || (!existing.isFollowed && item.isFollowed)) {
+      uniqueItems.set(key, item);
+    }
+  });
+
+  return Array.from(uniqueItems.values());
+}
+
 export default function Calendar() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
@@ -312,7 +337,7 @@ export default function Calendar() {
       });
     }
 
-    return items;
+    return deduplicateCalendarItems(items);
   }, [
     upcomingMovies,
     onAirTV,
