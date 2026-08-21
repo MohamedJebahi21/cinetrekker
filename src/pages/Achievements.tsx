@@ -92,12 +92,13 @@ function getThresholdDate(
 
 export default function Achievements() {
   const { t, i18n } = useTranslation();
-  const { watched } = useUserLists();
+  const { watched, loading: userListsLoading } = useUserLists();
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<AchievementCategory>("all");
   const [selectedStatus, setSelectedStatus] = useState<"all" | "unlocked" | "locked">("all");
+  const [showFullRoadmap, setShowFullRoadmap] = useState(false);
 
   // Sharing Dialog State
   const [sharingAchievement, setSharingAchievement] = useState<AchievementItem | null>(null);
@@ -684,6 +685,22 @@ export default function Achievements() {
     });
   }, [allAchievements, selectedCategory, selectedStatus, searchQuery]);
 
+  const isStarterState =
+    !userListsLoading &&
+    uniqueWatchedEntries.length === 0 &&
+    unlockedAchievements === 0;
+  const starterAchievements = useMemo(
+    () =>
+      allAchievements.filter((item) =>
+        ["watch-first", "rate-first", "genre-5"].includes(item.id),
+      ),
+    [allAchievements],
+  );
+  const displayedAchievements =
+    isStarterState && !showFullRoadmap
+      ? starterAchievements
+      : filteredAchievements;
+
   // Handle clipboard copy sharing text
   const handleCopyShare = async () => {
     if (!sharingAchievement) return;
@@ -806,6 +823,7 @@ Track your cinematic journey on CineTrekker!`;
           </div>
 
           {/* Filtering and Controls Bar */}
+          {!isStarterState || showFullRoadmap ? (
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             {/* Category selection horizontal list */}
             <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
@@ -878,11 +896,37 @@ Track your cinematic journey on CineTrekker!`;
               </Select>
             </div>
           </div>
+          ) : (
+            <div className="ct-panel flex flex-col gap-4 border-primary/20 bg-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+                  {t("profile.startYourWeek", "Start your next watch")}
+                </p>
+                <h2 className="mt-1 text-lg font-semibold text-foreground">
+                  {t("achievements.firstMilestones", "Your first milestones")}
+                </h2>
+                <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+                  {t("achievements.firstMilestonesDesc", "Log a title to unlock your first badge, then explore the full roadmap as your story grows.")}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild>
+                  <Link to="/discover">
+                    {t("watched.discoverTitles", "Discover titles")}
+                    <ArrowLeft className="ml-2 h-4 w-4 rotate-180" />
+                  </Link>
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowFullRoadmap(true)}>
+                  {t("achievements.viewRoadmap", "View full roadmap")}
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Grid Layout Cards */}
-          {filteredAchievements.length > 0 ? (
+          {displayedAchievements.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAchievements.map((item, idx) => {
+              {displayedAchievements.map((item, idx) => {
                 const isUnlocked = item.unlocked;
 
                 // Tier Styling configurations
