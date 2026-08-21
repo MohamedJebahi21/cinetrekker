@@ -2,7 +2,6 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Trophy } from "lucide-react";
 
-import { UnifiedNav } from "@/components/UnifiedNav";
 import { CineQuestHub } from "@/components/quests/CineQuestHub";
 import { SEO } from "@/components/SEO";
 
@@ -12,7 +11,6 @@ export default function Quests() {
   return (
     <>
       <SEO title={t("quests.pageTitle", "Monthly Cine-Quests — CineTrekker")} description={t("quests.pageDescription", "Complete monthly watch challenges and unlock cinematic badges on CineTrekker.")} />
-      <UnifiedNav />
       <main className="page-container min-h-screen pb-28 pt-24 md:pb-16">
         <div className="mx-auto max-w-6xl">
           <Link to="/" className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground transition hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
