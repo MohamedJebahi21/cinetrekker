@@ -17,6 +17,8 @@ test("Search keeps one focused page task surface with international-title suppor
 
 test("Search presents desktop filters through the shared compact utility toolbar without removing filter behavior", () => {
   assert.match(source, /ct-toolbar sticky top-20 z-20 mb-5 justify-between px-3 py-2\.5/);
+  assert.match(source, /initialType !== "all" \|\|[\s\S]*initialStreaming\.length > 0/);
+  assert.doesNotMatch(source, /initialQuery\.length === 0 && initialGenres\.length === 0/);
   assert.match(source, /onClick=\{\(\) => setDesktopFiltersExpanded\(\(current\) => !current\)\}/);
   assert.match(source, /\{desktopFiltersExpanded \? \(/);
   assert.match(source, /const clearFilters = \(\) => \{/);

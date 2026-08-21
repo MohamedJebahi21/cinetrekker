@@ -875,9 +875,13 @@ export default function Search() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const mobileFiltersRef = useRef<HTMLDivElement | null>(null);
   const [desktopFiltersExpanded, setDesktopFiltersExpanded] = useState(
-    initialQuery.length === 0 && initialGenres.length === 0 && !initialYear
-      ? false
-      : true,
+    initialType !== "all" ||
+      initialGenres.length > 0 ||
+      Boolean(initialYear) ||
+      initialLanguages.length > 0 ||
+      initialSort !== "popularity.desc" ||
+      Boolean(initialRuntime) ||
+      initialStreaming.length > 0,
   );
   const [recentSearches, setRecentSearches] = useState<SearchHistoryItem[]>([]);
   const activeFiltersCount = [
