@@ -149,6 +149,8 @@ export default function Watchlist() {
 
   const effectiveStatusFilter = isSharedView ? "all" : statusFilter;
   const isContentLoading = userListsLoading || (listItems.length > 0 && isLoading);
+  const isInitialLibraryLoading =
+    userListsLoading && !isSharedView && listItems.length === 0;
 
   let filteredMedia = mediaDetails.filter((media) => {
     if (
@@ -711,7 +713,22 @@ export default function Watchlist() {
           )}
 
           {isContentLoading ? (
-            <MediaGrid items={[]} isLoading columns="normal" gap="md" />
+            isInitialLibraryLoading ? (
+              <div
+                className="ct-panel flex min-h-44 items-center justify-center px-6 py-10"
+                role="status"
+                aria-label="Loading watchlist"
+                aria-busy="true"
+              >
+                <div className="w-full max-w-sm space-y-3">
+                  <div className="h-3 w-24 rounded-full skeleton-shimmer" />
+                  <div className="h-6 w-3/4 rounded-md skeleton-shimmer" />
+                  <div className="h-4 w-full rounded-md skeleton-shimmer" />
+                </div>
+              </div>
+            ) : (
+              <MediaGrid items={[]} isLoading columns="normal" gap="md" />
+            )
           ) : filteredMedia.length > 0 ? (
             viewMode === "grid" ? (
               <MediaGrid
