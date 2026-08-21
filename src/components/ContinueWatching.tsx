@@ -410,7 +410,7 @@ export function ContinueWatching() {
 
   if (!data || data.length === 0) {
     return (
-      <section className="ct-panel relative min-h-[380px] overflow-hidden border-primary/15 bg-[radial-gradient(circle_at_top_right,rgba(229,9,20,0.12),transparent_34%),linear-gradient(145deg,hsl(var(--card)),hsl(var(--background)))] p-4 md:min-h-[460px] md:p-6">
+      <section className="ct-panel relative min-h-[280px] overflow-hidden border-primary/15 bg-[radial-gradient(circle_at_top_right,rgba(229,9,20,0.12),transparent_34%),linear-gradient(145deg,hsl(var(--card)),hsl(var(--background)))] p-4 md:min-h-[320px] md:p-6">
         <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -430,7 +430,7 @@ export function ContinueWatching() {
           </Button>
         </div>
 
-        <div className="flex h-[320px] items-center justify-center rounded-3xl border border-dashed border-primary/25 bg-background/45 p-6 text-center shadow-inner">
+        <div className="flex h-[220px] items-center justify-center rounded-2xl border border-dashed border-primary/25 bg-background/45 p-6 text-center shadow-inner">
           <div className="max-w-md space-y-3">
             <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary shadow-[0_12px_30px_rgba(229,9,20,0.12)]">
               <Tv className="h-7 w-7" />

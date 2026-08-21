@@ -22,3 +22,10 @@ test("Continue Watching keeps the Details and Mark Next Episode actions", () => 
   assert.match(source, /t\("home\.markNextEpisode", "Mark Next Episode"\)/);
   assert.match(source, /onMarkEpisode\(\{/);
 });
+
+test("Continue Watching zero state remains compact and retains its discovery path", () => {
+  assert.match(source, /min-h-\[280px\].*md:min-h-\[320px\]/);
+  assert.match(source, /h-\[220px\]/);
+  assert.match(source, /t\("home\.findShowToStart", "Find a show to start"\)/);
+  assert.doesNotMatch(source, /md:min-h-\[460px\]/);
+});
