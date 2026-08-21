@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { BookmarkCheck, Cloud, Eye, EyeOff, Info, ShieldCheck, Sparkles } from "lucide-react";
+import { BookmarkCheck, Cloud, Eye, EyeOff, Info, ShieldCheck } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -194,10 +194,9 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
         description={t("auth.seoDescription", "Access your CineTrekker account to sync watchlists, ratings, and recommendations.")}
         canonical="https://cinetrekker.vercel.app/auth"
       />
-      <div className="flex min-h-[100dvh] items-center justify-center bg-[radial-gradient(circle_at_top,hsla(var(--primary)/0.16),transparent_38%),linear-gradient(160deg,hsla(var(--background)/0.96),hsla(var(--card)/0.94))] px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(1rem,env(safe-area-inset-top,0px))]">
-        <div className="grid w-full max-w-5xl overflow-hidden rounded-[2rem] border border-border/70 bg-card/95 shadow-[0_28px_90px_rgba(0,0,0,0.3)] lg:grid-cols-[0.88fr_1.12fr]">
-          <aside className="relative hidden overflow-hidden border-r border-border/60 bg-[radial-gradient(circle_at_top_right,hsla(var(--primary)/0.3),transparent_38%),linear-gradient(160deg,hsla(var(--background)/0.98),hsla(var(--card)/0.94))] p-8 lg:flex lg:flex-col">
-            <div className="absolute -right-16 top-20 h-56 w-56 rounded-full bg-primary/12 blur-3xl" aria-hidden="true" />
+      <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(1rem,env(safe-area-inset-top,0px))]">
+        <div className="grid w-full max-w-5xl overflow-hidden rounded-2xl border border-border bg-card shadow-xl lg:grid-cols-[0.88fr_1.12fr]">
+          <aside className="relative hidden border-r border-border bg-muted/35 p-8 lg:flex lg:flex-col">
             <div className="relative">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary/85">
                 {t("auth.valueEyebrow", "CineTrekker")}
@@ -229,8 +228,8 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
               ].map((point) => {
                 const Icon = point.icon;
                 return (
-                  <li key={point.title} className="flex gap-3 rounded-2xl border border-border/60 bg-background/30 p-3.5">
-                    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary">
+                  <li key={point.title} className="flex gap-3 border-l border-border pl-3 first:border-primary">
+                    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                       <Icon className="h-4.5 w-4.5" aria-hidden="true" />
                     </span>
                     <div>
@@ -247,9 +246,9 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
           </aside>
 
           <Card className="w-full rounded-none border-0 bg-transparent shadow-none">
-          <CardHeader className="px-5 pb-2 pt-6 sm:px-8 sm:pt-8">
-            <div className="flex items-center gap-2 text-primary lg:hidden">
-              <Sparkles className="h-4 w-4" aria-hidden="true" />
+            <CardHeader className="px-5 pb-2 pt-6 sm:px-8 sm:pt-8">
+              <div className="flex items-center gap-2 text-primary lg:hidden">
+                <BookmarkCheck className="h-4 w-4" aria-hidden="true" />
               <span className="text-xs font-semibold uppercase tracking-[0.18em]">{t("auth.appName", "CineTrekker")}</span>
             </div>
             <CardTitle className="mt-2 text-2xl tracking-tight">
