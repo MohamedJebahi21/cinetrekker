@@ -11,3 +11,7 @@ The rebuilt local production bundle was reviewed in a read-only state after the 
 | Local data sources | The local preview did not load live TMDB rails, so existing loading and empty-state paths were shown. This does not alter the routes or their live data behavior. |
 
 No search, title selection, watchlist, watched, notification, profile, language, theme, or preference controls were activated during review.
+
+## CI baseline reconciliation
+
+The Release Quality Gate changed only the desktop homepage screenshot. The CI-rendered result retains the existing hero loading and guest journey information architecture while intentionally removing the previous ambient background glow, multi-icon preferences cluster, and nested red-glow onboarding cards. The quiet surface treatment and consolidated Preferences action match the approved professional product direction, so the CI-rendered actual image is the correct new baseline.
