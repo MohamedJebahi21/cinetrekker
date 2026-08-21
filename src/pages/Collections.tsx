@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { UnifiedNav } from "@/components/UnifiedNav";
 import { MediaGrid } from "@/components/MediaGrid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -384,7 +383,6 @@ function CollectionDetail() {
 export default function Collections() {
   return (
     <ProtectedRoute>
-      <UnifiedNav />
       {useParams<{ collectionId: string }>().collectionId ? <CollectionDetail /> : <CollectionsIndex />}
     </ProtectedRoute>
   );
