@@ -1,4 +1,8 @@
-export function parseNotificationTarget(movieId: string) {
+export function parseNotificationTarget(movieId: string | null | undefined) {
+  if (typeof movieId !== "string") {
+    return null;
+  }
+
   const [mediaType, mediaIdText] = movieId.split("-");
   const mediaId = Number(mediaIdText);
 
@@ -13,7 +17,7 @@ export function parseNotificationTarget(movieId: string) {
   };
 }
 
-export function getNotificationTarget(movieId: string) {
+export function getNotificationTarget(movieId: string | null | undefined) {
   const target = parseNotificationTarget(movieId);
   if (!target) {
     return null;
