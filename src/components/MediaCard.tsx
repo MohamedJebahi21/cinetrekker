@@ -354,7 +354,6 @@ export const MediaCard = React.memo(function MediaCard({
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
           className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-white/5 shadow-card transition-all duration-300 glass-card-hover md:hover:border-primary/20 active:scale-[0.98] active:border-primary/30 focus-ring focus-visible:border-primary/35"
-          aria-label={`${title} - open details`}
           tabIndex={0}
         >
           {/* Poster with gradient overlay for text readability */}

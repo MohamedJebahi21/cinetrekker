@@ -47,3 +47,23 @@ Make the shared notification-target parser accept `string | null | undefined`. I
 | Data safety | No notification is marked read, deleted, created, or updated by parsing/rendering. |
 | Regression coverage | A unit test covers valid, malformed, and null/undefined notification target values. |
 | Release validation | The full unit suite, CI-quality gate, production build, and passive live inbox verification pass. |
+
+## Homepage MediaCard accessible-name mismatch
+
+### Production finding
+
+A read-only desktop Lighthouse audit of the live homepage reported **Accessibility 100** overall but flagged `label-content-name-mismatch` for reusable title cards. Each detail link has an accessible name such as `"Rosebush Pruning - open details"`, while its visible text also contains metadata, rating, and the **Watchlist** and **Watched** action labels. The accessible name does not include that visible text, creating a control-name mismatch for voice-control and assistive-technology users.
+
+### Remediation
+
+Remove the unnecessary `aria-label` from the card-level detail `Link`. The visible card content, including its title and displayed metadata, will supply the accessible name naturally. Individual Watchlist and Watched controls retain their existing explicit labels.
+
+### Acceptance criteria
+
+| Criterion | Expected outcome |
+| --- | --- |
+| Accessible-name source | The MediaCard detail link no longer overrides its visible content with a mismatched `aria-label`. |
+| Action semantics | Individual inline Watchlist and Watched controls retain explicit title-specific accessible labels. |
+| Visual behavior | Card navigation destination, card appearance, and quick-action behavior remain unchanged. |
+| Regression coverage | A focused test asserts the card link has no `aria-label` override and the quick actions remain explicitly labelled. |
+| Validation | Unit suite, release-quality gate, production build, and live Lighthouse retest pass. |
