@@ -19,6 +19,7 @@ import { useCollections } from "@/hooks/useCollections";
 import { useContentPolicy } from "@/contexts/content-policy-context";
 import { applySafetyFilter } from "@/lib/contentFilter";
 import { Media } from "@/types/media";
+import { socialService, type DirectoryProfile } from "@/services/social";
 
 export default function CommandPalette() {
   const [open, setOpen] = useState(false);
@@ -93,8 +94,20 @@ export default function CommandPalette() {
     enabled: query.length >= 2,
     staleTime: 1000 * 60 * 5,
   });
+  const { data: memberResults = [], isFetching: isFetchingMembers } = useQuery({
+    queryKey: ["cmdk-member-search", query],
+    queryFn: () => socialService.listPublicProfiles(query.trim()),
+    enabled: query.trim().length >= 2,
+    staleTime: 1000 * 60,
+  });
   const trimmedQuery = query.trim();
   const hasSearchQuery = trimmedQuery.length >= 2;
+  const isSearching = isFetching || isFetchingMembers;
+
+  const onSelectMember = (profile: DirectoryProfile) => {
+    setOpen(false);
+    navigate(`/user/${profile.user_id}`);
+  };
 
   const onSelectMedia = (item: Media) => {
     setOpen(false);
@@ -115,7 +128,7 @@ export default function CommandPalette() {
           ref={inputRef}
           placeholder={t(
             "commandPalette.placeholder",
-            "Search movies, people, collections... (Cmd/Ctrl+K)",
+            "Search titles, contributors, members, collections... (Cmd/Ctrl+K)",
           )}
           onValueChange={(val: string) => setQuery(val)}
         />
@@ -192,12 +205,22 @@ export default function CommandPalette() {
                 {t("commandPalette.searchHint", "Search titles, people, and collections from here.")}
               </CommandItem>
             )}
-            {hasSearchQuery && isFetching && (
+            {hasSearchQuery && isSearching && (
               <CommandItem disabled>
                 {t("commandPalette.searching", "Searching...")}
               </CommandItem>
             )}
-            {!isFetching &&
+            {!isSearching &&
+              memberResults.slice(0, 3).map((profile) => (
+                <CommandItem
+                  key={`user-${profile.user_id}`}
+                  onSelect={() => onSelectMember(profile)}
+                >
+                  {profile.display_name || "CineTrekker User"}
+                  <CommandShortcut>Member</CommandShortcut>
+                </CommandItem>
+              ))}
+            {!isSearching &&
               searchResults.slice(0, 10).map((r: Media) => (
                 <CommandItem
                   key={`${r.id}-${r.media_type || "m"}`}

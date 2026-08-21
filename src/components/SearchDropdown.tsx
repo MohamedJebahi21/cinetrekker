@@ -25,6 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Image } from "@/components/ui/Image";
 import { useContentPolicy } from "@/contexts/content-policy-context";
 import { applySafetyFilter, type SafetyMedia } from "@/lib/contentFilter";
+import { socialService } from "@/services/social";
 import {
   addToSearchHistory,
   clearSearchHistory,
@@ -46,15 +47,17 @@ function SearchResultSkeleton() {
   );
 }
 
-// Extended type for search results that includes person
+// Extended type for global results, including TMDB contributors and
+// privacy-curated CineTrekker public profiles.
 interface SearchResult {
-  id: number;
-  media_type: "movie" | "tv" | "person";
+  id: number | string;
+  media_type: "movie" | "tv" | "person" | "user";
   person_role?: "actor" | "director";
   title?: string;
   name?: string;
   poster_path?: string | null;
   profile_path?: string | null;
+  avatar_url?: string | null;
   release_date?: string;
   first_air_date?: string;
   vote_average?: number;
@@ -148,11 +151,13 @@ function SearchDropdownComponent({ className, onNavigate }: SearchDropdownProps)
       const q = normalizeSearchQuery(debouncedQuery);
       if (!q) return [] as SearchResult[];
 
-      const [movieResponse, tvResponse, peopleResponse] = await Promise.all([
-        searchMovies(q, 1, language, includeAdult, signal),
-        searchTV(q, 1, language, includeAdult, signal),
-        searchPeople(q, 1, language, signal),
-      ]);
+      const [movieResponse, tvResponse, peopleResponse, profileResponse] =
+        await Promise.all([
+          searchMovies(q, 1, language, includeAdult, signal),
+          searchTV(q, 1, language, includeAdult, signal),
+          searchPeople(q, 1, language, signal),
+          socialService.listPublicProfiles(q),
+        ]);
 
       const movies = ((movieResponse?.results || []) as SearchResult[])
         .slice(0, 4)
@@ -192,8 +197,16 @@ function SearchDropdownComponent({ className, onNavigate }: SearchDropdownProps)
       const directors = peopleWithRole
         .filter((p) => p.person_role === "director")
         .slice(0, 3);
+      const members: SearchResult[] = profileResponse.slice(0, 3).map((profile) => ({
+        id: profile.user_id,
+        media_type: "user" as const,
+        name: profile.display_name || "CineTrekker User",
+        avatar_url: profile.avatar_url,
+      }));
 
-      const merged = [...movies, ...shows, ...actors, ...directors];
+      // Surface CineTrekker members first so a member-name search reaches the
+      // community profile instead of unrelated TMDB credits with the same name.
+      const merged = [...members, ...movies, ...shows, ...actors, ...directors];
       const deduped = merged.filter(
         (item, index, arr) =>
           arr.findIndex(
@@ -249,6 +262,7 @@ function SearchDropdownComponent({ className, onNavigate }: SearchDropdownProps)
   );
 
   const getItemRoute = (item: SearchResult): string => {
+    if (item.media_type === "user") return `/user/${item.id}`;
     if (item.media_type === "person") return `/person/${item.id}`;
     return `/${item.media_type}/${item.id}`;
   };
@@ -343,6 +357,7 @@ function SearchDropdownComponent({ className, onNavigate }: SearchDropdownProps)
   };
 
   const getItemTypeLabel = (item: SearchResult): string => {
+    if (item.media_type === "user") return "member";
     if (item.media_type === "person") {
       if (item.person_role === "director") return "director";
       if (item.person_role === "actor") return "actor";
@@ -351,11 +366,12 @@ function SearchDropdownComponent({ className, onNavigate }: SearchDropdownProps)
     return item.media_type;
   };
 
-  const getItemImage = (item: SearchResult) => {
+  const getItemImage = (item: SearchResult): string | null => {
+    if (item.media_type === "user") return item.avatar_url || null;
     if (item.media_type === "person") {
-      return getImageUrl(item.profile_path || null, "w92");
+      return item.profile_path ? getImageUrl(item.profile_path, "w92") : null;
     }
-    return getImageUrl(item.poster_path || null, "w92");
+    return item.poster_path ? getImageUrl(item.poster_path, "w92") : null;
   };
 
   const getItemTitle = (item: SearchResult): string => {
@@ -363,7 +379,7 @@ function SearchDropdownComponent({ className, onNavigate }: SearchDropdownProps)
   };
 
   const getItemYear = (item: SearchResult): string => {
-    if (item.media_type === "person") return "";
+    if (item.media_type === "person" || item.media_type === "user") return "";
     const date = item.release_date || item.first_air_date;
     return date ? new Date(date).getFullYear().toString() : "";
   };
@@ -488,67 +504,72 @@ function SearchDropdownComponent({ className, onNavigate }: SearchDropdownProps)
             ) : results.length > 0 ? (
               <>
                 <ul className="py-2">
-                  {results.map((item, index) => (
-                    <li key={`${item.media_type}-${item.id}`}>
-                      <button
-                        type="button"
-                        id={`search-option-${item.media_type}-${item.id}`}
-                        onClick={() => handleItemClick(item)}
-                        className={cn(
-                          "w-full flex items-center gap-3 px-4 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
-                          selectedIndex === index
-                            ? "bg-accent"
-                            : "hover:bg-accent/50",
-                        )}
-                      >
-                        {/* Thumbnail */}
-                        <div className="h-14 w-10 flex-shrink-0 overflow-hidden rounded bg-muted">
-                          {getItemImage(item) ? (
-                            <Image
-                              src={
-                                getImageUrl(
-                                  item.poster_path ?? item.profile_path ?? null,
-                                  "w185",
-                                )!
-                              }
-                              srcSet={`${getImageUrl(item.poster_path ?? item.profile_path ?? null, "w92")!} 92w, ${getImageUrl(item.poster_path ?? item.profile_path ?? null, "w185")!} 185w`}
-                              sizes="40px"
-                              width={92}
-                              height={138}
-                              alt=""
-                              className="w-full h-full object-cover bg-muted"
-                              loading="lazy"
-                              showSkeleton
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              {getItemIcon(item)}
-                            </div>
-                          )}
-                        </div>
+                  {results.map((item, index) => {
+                    const itemImage = getItemImage(item);
+                    const isMember = item.media_type === "user";
 
-                        {/* Info */}
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-sm truncate">
-                            {getItemTitle(item)}
-                          </p>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            {getItemIcon(item)}
-                            <span className="capitalize">
-                              {getItemTypeLabel(item)}
-                            </span>
-                            {item.media_type !== "person" &&
-                              getItemYear(item) && (
-                                <>
-                                  <span>•</span>
-                                  <span>{getItemYear(item)}</span>
-                                </>
-                              )}
+                    return (
+                      <li key={`${item.media_type}-${item.id}`}>
+                        <button
+                          type="button"
+                          id={`search-option-${item.media_type}-${item.id}`}
+                          onClick={() => handleItemClick(item)}
+                          className={cn(
+                            "w-full flex items-center gap-3 px-4 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
+                            selectedIndex === index
+                              ? "bg-accent"
+                              : "hover:bg-accent/50",
+                          )}
+                        >
+                          {/* Thumbnail */}
+                          <div className="h-14 w-10 flex-shrink-0 overflow-hidden rounded bg-muted">
+                            {itemImage ? (
+                              <Image
+                                src={itemImage}
+                                srcSet={
+                                  isMember
+                                    ? undefined
+                                    : `${getImageUrl(item.poster_path ?? item.profile_path ?? null, "w92")!} 92w, ${getImageUrl(item.poster_path ?? item.profile_path ?? null, "w185")!} 185w`
+                                }
+                                sizes="40px"
+                                width={92}
+                                height={138}
+                                alt=""
+                                className="w-full h-full object-cover bg-muted"
+                                loading="lazy"
+                                showSkeleton
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                {getItemIcon(item)}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      </button>
-                    </li>
-                  ))}
+
+                          {/* Info */}
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-sm truncate">
+                              {getItemTitle(item)}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              {getItemIcon(item)}
+                              <span className="capitalize">
+                                {getItemTypeLabel(item)}
+                              </span>
+                              {item.media_type !== "person" &&
+                                item.media_type !== "user" &&
+                                getItemYear(item) && (
+                                  <>
+                                    <span>•</span>
+                                    <span>{getItemYear(item)}</span>
+                                  </>
+                                )}
+                            </div>
+                          </div>
+                        </button>
+                      </li>
+                    );
+                  })}
                 </ul>
 
                 {/* View All Results */}
