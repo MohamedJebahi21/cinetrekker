@@ -38,28 +38,29 @@ function getProfileInitials(profile: PublicProfileSummary) {
 }
 
 async function loadCommunityActivity(userId: string, language: string): Promise<ActivityItem[]> {
-  const following = await socialService.getFollowing(userId);
-  const followingIds = Array.from(
-    new Set(following.map((follow) => follow.following_id).filter(Boolean)),
-  ).slice(0, 8);
+  const followingIds = (await socialService.getFollowingIds(userId)).slice(0, 8);
 
   if (followingIds.length === 0) return [];
 
   const profileActivity = await Promise.all(
     followingIds.map(async (followingId) => {
-      const [profile, comments] = await Promise.all([
-        socialService.getPublicProfileSummary(followingId),
-        socialService.getPublicProfileComments(followingId),
-      ]);
+      try {
+        const [profile, comments] = await Promise.all([
+          socialService.getPublicProfileSummary(followingId),
+          socialService.getPublicProfileComments(followingId),
+        ]);
 
-      if (!profile || !profile.is_public) return [] as ActivityItem[];
+        if (!profile || !profile.is_public) return [] as ActivityItem[];
 
-      return comments.slice(0, 4).map((comment) => ({
-        comment,
-        profile,
-        title: `${comment.media_type === "tv" ? "TV" : "Movie"} #${comment.media_id}`,
-        posterPath: null,
-      }));
+        return comments.slice(0, 4).map((comment) => ({
+          comment,
+          profile,
+          title: `${comment.media_type === "tv" ? "TV" : "Movie"} #${comment.media_id}`,
+          posterPath: null,
+        }));
+      } catch {
+        return [] as ActivityItem[];
+      }
     }),
   );
 

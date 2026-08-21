@@ -392,6 +392,25 @@ export const socialService = {
     return (data || []) as Follow[];
   },
 
+  async getFollowingIds(userId: string): Promise<string[]> {
+    const { supabase } = await loadSupabaseModule();
+    const db = asDb(supabase);
+    const { data, error } = await db
+      .from("follows")
+      .select("following_id")
+      .eq("follower_id", userId);
+
+    if (error) throw error;
+
+    return Array.from(
+      new Set(
+        (Array.isArray(data) ? data : [])
+          .map((row) => (isRecord(row) ? readRequiredString(row, "following_id") : null))
+          .filter((followingId): followingId is string => followingId !== null),
+      ),
+    );
+  },
+
   // --- Comment functions ---
   async getComments(
     mediaId: number,
