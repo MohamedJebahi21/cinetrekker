@@ -26,7 +26,7 @@
     "preview": "vite preview",
     "test:security": "node --test tests/security-api.test.mjs",
     "test:privacy": "node --test tests/analytics-consent-gate.test.mjs tests/profile-privacy-rls.test.mjs",
-    "test:unit": "node --experimental-strip-types --test tests/continue-watching.test.mjs tests/discover-results.test.mjs tests/request-reference.test.mjs tests/home-deferred-discovery.test.mjs tests/theme-system.test.mjs tests/movie-tracker-landing.test.mjs tests/indexnow-notification.test.mjs tests/mobile-audit-remediations.test.mjs tests/desktop-audit-remediations.test.mjs tests/deep-desktop-community-pulse.test.mjs tests/movie-tracker-authenticated-cta.test.mjs",
+    "test:unit": "node --experimental-strip-types --test tests/continue-watching.test.mjs tests/discover-results.test.mjs tests/request-reference.test.mjs tests/home-deferred-discovery.test.mjs tests/theme-system.test.mjs tests/movie-tracker-landing.test.mjs tests/indexnow-notification.test.mjs tests/mobile-audit-remediations.test.mjs tests/desktop-audit-remediations.test.mjs tests/deep-desktop-community-pulse.test.mjs tests/movie-tracker-authenticated-cta.test.mjs tests/watched-empty-state-retention.test.mjs",
     "test:smoke": "playwright test tests/smoke.spec.ts --project=chromium",
     "test:analytics-privacy": "playwright test tests/analytics-consent-gate.spec.ts --project=chromium",
     "audit:desktop": "node ./scripts/run-lighthouse-desktop.mjs",

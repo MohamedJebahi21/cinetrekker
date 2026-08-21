@@ -362,6 +362,11 @@ export default function Watched() {
                   "Mark movies and shows as watched to build your history.",
                 )}
               </p>
+              <Button asChild className="mt-6 min-h-11 rounded-xl px-5 font-semibold">
+                <Link to="/discover">
+                  {t("watched.discoverTitles", "Discover titles")}
+                </Link>
+              </Button>
             </div>
           )}
         </div>
