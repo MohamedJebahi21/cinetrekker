@@ -16,7 +16,8 @@ test("movie tracker landing page is routed, indexable, and conversion-ready", as
 
   assert.match(page, /Free Movie & TV Show Tracker/);
   assert.match(page, /to="\/search"/);
-  assert.match(page, /to="\/signup"/);
+  assert.match(page, /"\/signup"/);
+  assert.match(page, /"\/watchlist"/);
   assert.match(page, /toFaqJsonLd\(faqItems\)/);
   assert.match(app, /path="\/movie-tracker"/);
   assert.match(sitemap, /path: "\/movie-tracker"/);

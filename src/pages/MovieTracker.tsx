@@ -10,6 +10,7 @@ import {
   Tv,
 } from "lucide-react";
 import SEO from "@/components/SEO";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { InternalLinksSection } from "@/components/InternalLinksSection";
 import {
@@ -85,6 +86,8 @@ const useCases = [
 
 export default function MovieTracker() {
   const canonical = buildCanonicalUrl("/movie-tracker");
+  const { user } = useAuth();
+  const isAuthenticated = Boolean(user);
 
   return (
     <div className="ct-page-shell min-h-screen">
@@ -142,11 +145,15 @@ export default function MovieTracker() {
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="min-h-11 rounded-xl border-border/80 bg-background/70 px-5 font-semibold hover:bg-accent">
-                  <Link to="/signup">Create a free account</Link>
+                  <Link to={isAuthenticated ? "/watchlist" : "/signup"}>
+                    {isAuthenticated ? "Open your watchlist" : "Create a free account"}
+                  </Link>
                 </Button>
               </div>
               <p className="mt-4 text-sm text-muted-foreground">
-                Browse first. Create an account only when you want your lists and progress to stay with you.
+                {isAuthenticated
+                  ? "Your watchlist and episode progress are ready whenever you return."
+                  : "Browse first. Create an account only when you want your lists and progress to stay with you."}
               </p>
             </div>
 
