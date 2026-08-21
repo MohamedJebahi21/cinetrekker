@@ -661,12 +661,12 @@ export default function Recommendations() {
                 ))}
               </div>
 
-              <Link to="/search">
-                <Button className="gap-2 rounded-full px-6">
+              <Button asChild className="gap-2 rounded-full px-6">
+                <Link to="/search">
                   <TrendingUp className="h-4 w-4" />
                   {t("common.discoverTrending", "Discover Trending")}
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </motion.div>
           </div>
         </div>
