@@ -20,3 +20,9 @@ The page retains its dedicated query input, international-title capability, all 
 | Visual hierarchy | Page task input is primary; filter row is compact and results follow more closely. |
 | Responsive behavior | Mobile keeps the filter drawer and larger mobile task targets. |
 | Data safety | No watchlist, watched, rating, follow, notification, or preference behavior changes. |
+
+## CI visual-baseline reconciliation
+
+The CI diagnostic images confirm that the remaining visual difference is intentional: the prior baseline showed the advanced desktop panel open for `/search?q=yiralti`, while the refined workflow shows the compact toolbar with a **Show Filters** action and brings the loading/result region directly beneath it. The new baseline must therefore be generated from the CI-rendered actual images for both supported viewports.
+
+The corresponding mobile CI comparison preserves the focused Discovery Lab surface and its single prominent **Filters** action. No preference, search history, watchlist, watched-status, rating, social, or notification control was activated while validating the screenshots.
