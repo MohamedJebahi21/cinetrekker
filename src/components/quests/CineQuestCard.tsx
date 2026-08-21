@@ -15,7 +15,13 @@ const ACCENT_STYLES: Record<CineQuest["accent"], { border: string; icon: string;
   emerald: { border: "border-emerald-300/20", icon: "bg-emerald-300/12 text-emerald-300", bar: "from-emerald-500 to-emerald-200" },
 };
 
-export function CineQuestCard({ quest }: { quest: CineQuest }) {
+export function CineQuestCard({
+  quest,
+  showAction = true,
+}: {
+  quest: CineQuest;
+  showAction?: boolean;
+}) {
   const { t } = useTranslation();
   const style = ACCENT_STYLES[quest.accent];
   const progress = Math.round((quest.progress / quest.target) * 100);
@@ -60,10 +66,12 @@ export function CineQuestCard({ quest }: { quest: CineQuest }) {
           </div>
           <div className="mt-4 flex items-center justify-between gap-3">
             <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground"><Flame className="h-3 w-3 text-amber-300" />{quest.completed ? t("quests.rewardUnlocked", "Reward unlocked") : t("quests.keepGoing", "Keep going")}</span>
-            <Link to="/watched" className="inline-flex items-center gap-1 text-xs font-bold text-primary transition hover:text-primary/80">
-              {t("quests.logActivity", "Log activity")}
-              <Star className="h-3.5 w-3.5" />
-            </Link>
+            {showAction ? (
+              <Link to="/watched" className="inline-flex items-center gap-1 text-xs font-bold text-primary transition hover:text-primary/80">
+                {t("quests.logActivity", "Log activity")}
+                <Star className="h-3.5 w-3.5" />
+              </Link>
+            ) : null}
           </div>
         </div>
       </div>

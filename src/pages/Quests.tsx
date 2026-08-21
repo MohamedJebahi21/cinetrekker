@@ -24,7 +24,7 @@ export default function Quests() {
               <h1 className="mt-1 text-3xl font-black tracking-tight text-foreground md:text-5xl">{t("quests.pageHeading", "Cinematic missions")}</h1>
             </div>
           </div>
-          <CineQuestHub />
+          <CineQuestHub showStarterExperience />
         </div>
       </main>
     </>

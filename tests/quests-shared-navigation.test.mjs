@@ -12,6 +12,6 @@ test("Quests inherits one shared navigation from the application shell", async (
 
   assert.doesNotMatch(quests, /import \{ UnifiedNav \} from "@\/components\/UnifiedNav";/);
   assert.doesNotMatch(quests, /<UnifiedNav\s*\/>/);
-  assert.match(quests, /<CineQuestHub\s*\/>/);
+  assert.match(quests, /<CineQuestHub(?:\s+showStarterExperience)?\s*\/>/);
   assert.match(app, /<UnifiedNav\s*\/>/);
 });
