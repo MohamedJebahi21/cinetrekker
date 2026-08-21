@@ -47,6 +47,7 @@ export type ProfileIdentityHeroProps = {
   achievementMilestones: Milestone[];
   userId?: string;
   isEditMode?: boolean;
+  isInactive?: boolean;
 };
 
 export function ProfileIdentityHero({
@@ -70,6 +71,7 @@ export function ProfileIdentityHero({
   achievementMilestones,
   userId,
   isEditMode = false,
+  isInactive = false,
 }: ProfileIdentityHeroProps) {
   const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
     if (event.currentTarget.contains(event.relatedTarget as Node | null)) {
@@ -217,67 +219,87 @@ export function ProfileIdentityHero({
               <Progress value={levelProgress} className="h-1.5" />
             </div>
 
-            <div className="profile-stat-grid mt-5 grid gap-2 sm:grid-cols-3">
-              <div className="profile-stat px-4 py-3">
-                <div className="mb-0.5 flex items-center gap-2">
-                  <Film className="h-3.5 w-3.5 text-muted-foreground" />
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    {text("profile.moviesWatched", "Movies Watched")}
-                  </p>
-                </div>
-                <p className="tabular-nums text-xl font-bold text-foreground">{countMoviesWatched}</p>
-              </div>
-              <div className="profile-stat px-4 py-3">
-                <div className="mb-0.5 flex items-center gap-2">
-                  <Star className="h-3.5 w-3.5 text-muted-foreground" />
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    {text("profile.ratings", "Ratings")}
-                  </p>
-                </div>
-                <p className="tabular-nums text-xl font-bold text-foreground">{countRatings}</p>
-              </div>
-              <div className="profile-stat px-4 py-3">
-                <div className="mb-0.5 flex items-center gap-2">
-                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    {text("profile.watchTime", "Watch Time")}
-                  </p>
-                </div>
-                <p className="tabular-nums text-xl font-bold text-foreground">{totalWatchDaysHoursMinutes}</p>
-              </div>
-            </div>
-
-            <div className="profile-milestone-row mt-5 flex flex-wrap items-center gap-2.5 pt-4">
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                <Award className="h-3.5 w-3.5 text-primary" />
-                {text("profile.milestones", "Milestones")}
-              </span>
-              {achievementMilestones.map((milestone) => {
-                const unlocked = moviesWatched >= milestone.target;
-                return (
-                  <span
-                    key={milestone.target}
-                    className={cn(
-                      "rounded-full border px-2 py-1 text-[10px] font-semibold",
-                      unlocked
-                        ? "border-primary/30 bg-primary/10 text-primary"
-                        : "border-border bg-muted/35 text-muted-foreground",
-                    )}
+            {isInactive ? (
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-4">
+                <p className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                  <Film className="h-4 w-4 text-primary" />
+                  {text("profile.recentRecapEmpty", "Log a title to begin building your personal viewing story.")}
+                </p>
+                {userId ? (
+                  <Link
+                    to={`/user/${userId}`}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary underline-offset-4 transition-colors hover:underline"
                   >
-                    {unlocked ? "✓ " : ""}{milestone.label}
+                    <User className="h-3.5 w-3.5" />
+                    {text("profile.viewPublicProfile", "View public profile")}
+                  </Link>
+                ) : null}
+              </div>
+            ) : (
+              <>
+                <div className="profile-stat-grid mt-5 grid gap-2 sm:grid-cols-3">
+                  <div className="profile-stat px-4 py-3">
+                    <div className="mb-0.5 flex items-center gap-2">
+                      <Film className="h-3.5 w-3.5 text-muted-foreground" />
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        {text("profile.moviesWatched", "Movies Watched")}
+                      </p>
+                    </div>
+                    <p className="tabular-nums text-xl font-bold text-foreground">{countMoviesWatched}</p>
+                  </div>
+                  <div className="profile-stat px-4 py-3">
+                    <div className="mb-0.5 flex items-center gap-2">
+                      <Star className="h-3.5 w-3.5 text-muted-foreground" />
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        {text("profile.ratings", "Ratings")}
+                      </p>
+                    </div>
+                    <p className="tabular-nums text-xl font-bold text-foreground">{countRatings}</p>
+                  </div>
+                  <div className="profile-stat px-4 py-3">
+                    <div className="mb-0.5 flex items-center gap-2">
+                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        {text("profile.watchTime", "Watch Time")}
+                      </p>
+                    </div>
+                    <p className="tabular-nums text-xl font-bold text-foreground">{totalWatchDaysHoursMinutes}</p>
+                  </div>
+                </div>
+
+                <div className="profile-milestone-row mt-5 flex flex-wrap items-center gap-2.5 pt-4">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <Award className="h-3.5 w-3.5 text-primary" />
+                    {text("profile.milestones", "Milestones")}
                   </span>
-                );
-              })}
-              {userId ? (
-                <Link
-                  to={`/user/${userId}`}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary underline-offset-4 transition-colors hover:underline"
-                >
-                  <User className="h-3.5 w-3.5" />
-                  {text("profile.viewPublicProfile", "View public profile")}
-                </Link>
-              ) : null}
-            </div>
+                  {achievementMilestones.map((milestone) => {
+                    const unlocked = moviesWatched >= milestone.target;
+                    return (
+                      <span
+                        key={milestone.target}
+                        className={cn(
+                          "rounded-full border px-2 py-1 text-[10px] font-semibold",
+                          unlocked
+                            ? "border-primary/30 bg-primary/10 text-primary"
+                            : "border-border bg-muted/35 text-muted-foreground",
+                        )}
+                      >
+                        {unlocked ? "✓ " : ""}{milestone.label}
+                      </span>
+                    );
+                  })}
+                  {userId ? (
+                    <Link
+                      to={`/user/${userId}`}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary underline-offset-4 transition-colors hover:underline"
+                    >
+                      <User className="h-3.5 w-3.5" />
+                      {text("profile.viewPublicProfile", "View public profile")}
+                    </Link>
+                  ) : null}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </CardContent>

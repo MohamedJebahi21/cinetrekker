@@ -1162,6 +1162,11 @@ export default function Profile() {
     (item) => typeof item.rating === "number",
   ).length;
 
+  const isProfileInactive =
+    uniqueWatchedEntries.length === 0 &&
+    watchlist.length === 0 &&
+    pinnedFavoriteKeys.length === 0;
+
   const viewingState = useMemo(() => {
     const current = uniqueWatchedEntries.filter(
       (item) => item.status === "watching",
@@ -1963,6 +1968,7 @@ export default function Profile() {
                   achievementMilestones={achievementMilestones}
                   userId={user?.id}
                   isEditMode={isEditMode}
+                  isInactive={isProfileInactive}
                 />
               </motion.section>
 
@@ -2224,16 +2230,18 @@ export default function Profile() {
                           {text("profile.overviewSubtitle", "Your current pace, defining taste, and latest watches in one focused view.")}
                         </p>
                       </div>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        className="w-fit text-xs text-muted-foreground hover:text-foreground"
-                        onClick={() => setActiveProfileTab("taste")}
-                      >
-                        {text("profile.openTasteStats", "Open Taste & Stats")}
-                        <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-                      </Button>
+                      {!isProfileInactive ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          className="w-fit text-xs text-muted-foreground hover:text-foreground"
+                          onClick={() => setActiveProfileTab("taste")}
+                        >
+                          {text("profile.openTasteStats", "Open Taste & Stats")}
+                          <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                        </Button>
+                      ) : null}
                     </div>
 
                     <div className="hidden grid-cols-1 gap-4 md:grid-cols-3">
@@ -2296,8 +2304,10 @@ export default function Profile() {
                       </button>
                     </div>
 
-                    {/* Persona & Level Details row */}
-                    <div className="profile-overview-grid grid grid-cols-1 gap-4 md:grid-cols-2">
+                    {!isProfileInactive ? (
+                      <>
+                        {/* Persona & Level Details row */}
+                        <div className="profile-overview-grid grid grid-cols-1 gap-4 md:grid-cols-2">
                       {/* Persona Card */}
                       {cinephilePersona && (
                         <div className="h-full">
@@ -2384,44 +2394,66 @@ export default function Profile() {
                           </div>
                         </CardContent>
                       </Card>
-                    </div>
-                  </motion.section>
-                  ) : null}
+                        </div>
 
-                  {shouldShowProfileSection("overview") ? (
-                  <motion.section variants={itemVariants} id="profile-weekly-recap">
-                    <Card className="profile-recap-card border border-border bg-card">
-                      <CardContent className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                            <CalendarDays className="h-3.5 w-3.5 text-primary" />
-                            {text("profile.sevenDayRecap", "7-day recap")}
-                          </p>
-                          <h2 className="mt-1 text-base font-semibold text-foreground">
-                            {recentViewingSummary.titlesLogged > 0
-                              ? text("profile.recentRhythm", "Your recent viewing rhythm")
-                              : text("profile.startYourWeek", "Start your next watch")}
-                          </h2>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {recentViewingSummary.titlesLogged > 0
-                              ? t("profile.recentRecapDetail", "{{titles}} title(s) across {{days}} active day(s) and about {{hours}} hour(s).", {
-                                  titles: recentViewingSummary.titlesLogged,
-                                  days: recentViewingSummary.activeDays,
-                                  hours: recentViewingSummary.hours,
-                                })
-                              : text("profile.recentRecapEmpty", "Log a title to begin building your personal viewing story.")}
-                          </p>
-                        </div>
-                        <div className="flex shrink-0 flex-wrap gap-2">
-                          <Button asChild size="sm" variant="outline">
-                            <Link to="/watched">{text("profile.openDiary", "Open history")}</Link>
+                        <motion.section variants={itemVariants} id="profile-weekly-recap">
+                          <Card className="profile-recap-card border border-border bg-card">
+                            <CardContent className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                              <div>
+                                <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                  <CalendarDays className="h-3.5 w-3.5 text-primary" />
+                                  {text("profile.sevenDayRecap", "7-day recap")}
+                                </p>
+                                <h2 className="mt-1 text-base font-semibold text-foreground">
+                                  {recentViewingSummary.titlesLogged > 0
+                                    ? text("profile.recentRhythm", "Your recent viewing rhythm")
+                                    : text("profile.startYourWeek", "Start your next watch")}
+                                </h2>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  {recentViewingSummary.titlesLogged > 0
+                                    ? t("profile.recentRecapDetail", "{{titles}} title(s) across {{days}} active day(s) and about {{hours}} hour(s).", {
+                                        titles: recentViewingSummary.titlesLogged,
+                                        days: recentViewingSummary.activeDays,
+                                        hours: recentViewingSummary.hours,
+                                      })
+                                    : text("profile.recentRecapEmpty", "Log a title to begin building your personal viewing story.")}
+                                </p>
+                              </div>
+                              <div className="flex shrink-0 flex-wrap gap-2">
+                                <Button asChild size="sm" variant="outline">
+                                  <Link to="/watched">{text("profile.openDiary", "Open history")}</Link>
+                                </Button>
+                                <Button asChild size="sm">
+                                  <Link to="/year-in-review">{text("profile.yearInReview", "Year in Review")}</Link>
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.section>
+                      </>
+                    ) : (
+                      <Card className="border border-primary/20 bg-primary/5">
+                        <CardContent className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+                              {text("profile.startYourWeek", "Start your next watch")}
+                            </p>
+                            <h3 className="mt-1 text-lg font-semibold text-foreground">
+                              {text("profile.viewingProfile", "Your screen story")}
+                            </h3>
+                            <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+                              {text("profile.recentRecapEmpty", "Log a title to begin building your personal viewing story.")}
+                            </p>
+                          </div>
+                          <Button asChild className="shrink-0">
+                            <Link to="/discover">
+                              {text("watched.discoverTitles", "Discover titles")}
+                              <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
                           </Button>
-                          <Button asChild size="sm">
-                            <Link to="/year-in-review">{text("profile.yearInReview", "Year in Review")}</Link>
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+                    )}
                   </motion.section>
                   ) : null}
 
