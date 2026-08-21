@@ -344,7 +344,7 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
                         <TooltipTrigger asChild>
                           <button
                             type="button"
-                            className="hidden text-muted-foreground hover:text-foreground transition-colors outline-none md:inline-flex md:items-center"
+                            className="hidden min-h-8 min-w-8 rounded-md text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:inline-flex md:items-center md:justify-center"
                             aria-label={t("auth.passwordRules", "Password requirements")}
                           >
                             <Info className="h-4 w-4" />
@@ -485,9 +485,10 @@ export default function Auth({ initialTab }: { initialTab?: string }) {
 
                 </div>
 
-                <label htmlFor="remember-me" className="flex items-center gap-2 text-base text-muted-foreground">
+                <label htmlFor="remember-me" className="flex min-h-11 cursor-pointer items-center gap-2 text-base text-muted-foreground">
                   <Checkbox
                     id="remember-me"
+                    className="h-5 w-5"
                     checked={rememberMe}
                     onCheckedChange={(checked) => setRememberMe(checked === true)}
                   />

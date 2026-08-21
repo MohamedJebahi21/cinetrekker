@@ -38,14 +38,19 @@ export function CookieConsent() {
   }
 
   return (
-    <div ref={containerRef} className="fixed inset-x-0 bottom-[calc(3.25rem+env(safe-area-inset-bottom,0px)+0.75rem)] z-[80] px-4 pt-4 md:bottom-0" aria-live="polite" aria-atomic="true">
+    <div
+      ref={containerRef}
+      className="fixed inset-x-0 bottom-[calc(3.25rem+env(safe-area-inset-bottom,0px)+0.75rem)] z-[80] px-4 pt-4 md:bottom-0 lg:inset-x-auto lg:bottom-6 lg:right-6 lg:w-[min(28rem,calc(100vw-3rem))] lg:px-0 lg:pt-0"
+      aria-live="polite"
+      aria-atomic="true"
+    >
       <div
         role="region"
         aria-labelledby="cookie-consent-title"
         aria-describedby="cookie-consent-description"
-        className="mx-auto w-full max-w-5xl rounded-3xl border border-border/60 bg-background/95 px-4 py-4 shadow-[0_20px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl md:px-5 md:py-5"
+        className="mx-auto w-full max-w-5xl rounded-3xl border border-border/60 bg-background/95 px-4 py-4 shadow-[0_20px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl md:px-5 md:py-5 lg:rounded-2xl"
       >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-4">
           <div className="space-y-1.5">
             <p id="cookie-consent-title" className="text-sm font-semibold text-foreground">
               {t("cookieConsent.title", "Cookie preferences")}
@@ -58,7 +63,7 @@ export function CookieConsent() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-end">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-start">
             <Button
               type="button"
               variant="outline"
