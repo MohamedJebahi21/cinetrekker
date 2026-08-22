@@ -1321,7 +1321,7 @@ export default function Calendar() {
 
       {/* ────────────────── Active Item Details Modal ────────────────── */}
       <Dialog open={!!selectedItem} onOpenChange={(open) => { if (!open) setSelectedItem(null); }}>
-        <DialogContent className="max-w-xl overflow-hidden rounded-2xl border border-border/50 bg-card/95 p-0 shadow-2xl backdrop-blur-md">
+        <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-xl overflow-hidden rounded-2xl border border-border/50 bg-card/95 p-0 shadow-2xl backdrop-blur-md">
           <DialogHeader>
             <DialogTitle className="sr-only">Release Details</DialogTitle>
           </DialogHeader>
@@ -1330,10 +1330,10 @@ export default function Calendar() {
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             </div>
           ) : detailsData ? (
-            <div className="relative">
+            <div className="relative flex max-h-[calc(100dvh-2rem)] flex-col">
               {/* Cover backdrop image */}
               {detailsData.backdrop_path && (
-                <div className="relative h-48 w-full overflow-hidden">
+                <div className="relative h-48 w-full shrink-0 overflow-hidden">
                   <img
                     src={getBackdropUrl(detailsData.backdrop_path, 'w780') ?? undefined}
                     alt=""
@@ -1343,7 +1343,8 @@ export default function Calendar() {
                 </div>
               )}
 
-              <div className={cn("p-6 space-y-4", !detailsData.backdrop_path && "pt-8")}>
+                              <div className={cn("min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain p-6 pr-4 space-y-4", !detailsData.backdrop_path && "pt-8")}>
+
                 <div className="flex items-start gap-4">
                   <div className="relative aspect-[2/3] w-24 shrink-0 overflow-hidden rounded-xl border border-border/50 shadow-md">
                     <img
