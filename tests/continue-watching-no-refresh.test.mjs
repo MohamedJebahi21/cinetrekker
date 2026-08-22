@@ -29,3 +29,16 @@ test("Continue Watching labels retained data as refreshing and suppresses stale 
   assert.match(componentSource, /Syncing your episode progress/);
   assert.match(componentSource, /isRefreshing=\{isRefreshing\}/);
 });
+
+test("Continue Watching reconciles every episode-active show, including hidden completed-status rows", () => {
+  assert.match(source, /const reconciliationCandidates = useMemo\(/);
+  assert.match(source, /allProgress\.filter\(\(show\) => show\.watchedEpisodeCount > 0\)/);
+  assert.match(source, /const idsHash = hashIds\(reconciliationCandidates\.map/);
+  assert.match(source, /if \(reconciliationCandidates\.length === 0\)/);
+  assert.match(source, /const detailShowIds = reconciliationCandidates\.map/);
+  assert.match(source, /const reconciledProgress = mergeTMDBMetadata\(/);
+  assert.match(source, /getShowsToMarkCompleted\(\s*reconciledProgress,/s);
+  assert.match(source, /getShowsToReopen\(\s*reconciledProgress,/s);
+  assert.match(source, /enabled: reconciliationCandidates\.length > 0/);
+  assert.doesNotMatch(source, /if \(ranked\.length === 0\)/);
+});

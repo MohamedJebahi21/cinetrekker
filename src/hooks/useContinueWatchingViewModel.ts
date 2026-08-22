@@ -157,11 +157,17 @@ export function useContinueWatchingViewModel(): {
     [allProgress, completedShowIds],
   );
 
-  // 2. Rank (pure, no TMDB, excludes completed via isShowDefinitelyCompleted)
+  // 2. Rank visible candidates (pure, no TMDB). Completed-status rows are
+  // deliberately excluded from the rail, but must still be reconciled below:
+  // a completed row can become resumable when new released episodes arrive.
   const ranked = useMemo(() => rankShows(progress, { limit: 50 }), [progress]);
+  const reconciliationCandidates = useMemo(
+    () => allProgress.filter((show) => show.watchedEpisodeCount > 0),
+    [allProgress],
+  );
 
   // 3. Stable hashes for query key — prevents re-fetching on every render
-  const idsHash = hashIds(ranked.map((s) => s.showId));
+  const idsHash = hashIds(reconciliationCandidates.map((s) => s.showId));
   const watchedHash = hashWatched(watchedEpisodes);
   const followedHash = hashIds(followedShows.map((f) => f.show_id));
 
@@ -176,28 +182,35 @@ export function useContinueWatchingViewModel(): {
       [...completedShowIds].sort((a, b) => a - b).join(","),
     ],
     queryFn: async (): Promise<ContinueWatchingQueryResult> => {
-      if (ranked.length === 0) {
+      // Reconcile every show with persisted episode activity, including rows
+      // currently marked completed. The former `ranked.length === 0` fast path
+      // skipped this work entirely, leaving unfinished shows hidden forever when
+      // all active rows happened to carry a stale completed status.
+      if (reconciliationCandidates.length === 0) {
         return { vms: [], toComplete: [], toReopen: [] };
       }
 
-      const reopenCandidates = allProgress.filter(
-        (show) =>
-          show.watchedEpisodeCount > 0 && completedShowIds.has(show.showId),
+      const reopenCandidates = reconciliationCandidates.filter((show) =>
+        completedShowIds.has(show.showId),
       );
-      const detailShowIds = Array.from(
-        new Set([
-          ...ranked.map((show) => show.showId),
-          ...reopenCandidates.map((show) => show.showId),
-        ]),
-      );
+      const detailShowIds = reconciliationCandidates.map((show) => show.showId);
 
       // 4a. Batch-resolve all TV details in a single parallel wave
       const details = await batchResolveTVDetails(detailShowIds, language);
 
       const rankedMerged = mergeTMDBMetadata(ranked, details);
-      const reopenMerged = mergeTMDBMetadata(reopenCandidates, details);
-      const toComplete = getShowsToMarkCompleted(rankedMerged, completedShowIds);
-      const toReopen = getShowsToReopen(reopenMerged, completedShowIds);
+      const reconciledProgress = mergeTMDBMetadata(
+        reconciliationCandidates,
+        details,
+      );
+      const toComplete = getShowsToMarkCompleted(
+        reconciledProgress,
+        completedShowIds,
+      );
+      const toReopen = getShowsToReopen(
+        reconciledProgress,
+        completedShowIds,
+      );
 
       // 4b. Fetch seasons only for top-ranked cards to limit TMDB fan-out
       const seasonFetchTargets = ranked.slice(0, SEASON_FETCH_LIMIT);
@@ -309,7 +322,7 @@ export function useContinueWatchingViewModel(): {
 
       return { vms, toComplete, toReopen };
     },
-    enabled: ranked.length > 0 && !!user && !watchedItemsLoading,
+    enabled: reconciliationCandidates.length > 0 && !!user && !watchedItemsLoading,
     staleTime: 60_000,
     gcTime: 5 * 60_000,
     // Marking an episode changes watchedHash and therefore rekeys this query.
