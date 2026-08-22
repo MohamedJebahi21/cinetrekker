@@ -68,6 +68,7 @@ function ProfileDirectoryCard({ profile }: { profile: DirectoryProfile }) {
   const favoriteCount = Array.isArray(profile.favorite_titles)
     ? profile.favorite_titles.length
     : 0;
+  const isPrivateProfile = !profile.is_public && !isOwnProfile;
 
   return (
     <article className="group relative rounded-2xl border border-border/60 bg-card/70 p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-lg">
@@ -82,33 +83,41 @@ function ProfileDirectoryCard({ profile }: { profile: DirectoryProfile }) {
           >
             {profile.display_name ?? "CineTrekker User"}
           </Link>
-          <p className="mt-1 min-h-10 text-xs leading-5 text-muted-foreground line-clamp-2">
-            {profile.bio || "Building a cinematic life, one title at a time."}
-          </p>
+          {isPrivateProfile ? (
+            <span className="mt-1 inline-flex items-center rounded-full border border-border/70 bg-muted/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              Private profile
+            </span>
+          ) : (
+            <p className="mt-1 min-h-10 text-xs leading-5 text-muted-foreground line-clamp-2">
+              {profile.bio || "Building a cinematic life, one title at a time."}
+            </p>
+          )}
         </div>
       </div>
 
-      <div className="mt-5 flex items-center gap-4 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <Users className="h-3.5 w-3.5" />
-          <strong className="font-semibold text-foreground">{profile.followers_count}</strong> followers
-        </span>
-        <span className="flex items-center gap-1">
-          <MessageSquare className="h-3.5 w-3.5" />
-          <strong className="font-semibold text-foreground">{profile.comments_count}</strong>
-        </span>
-        {favoriteCount > 0 && (
-          <span className="ml-auto text-[10px] uppercase tracking-wide">
-            {favoriteCount} favorites
+      {!isPrivateProfile && (
+        <div className="mt-5 flex items-center gap-4 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Users className="h-3.5 w-3.5" />
+            <strong className="font-semibold text-foreground">{profile.followers_count}</strong> followers
           </span>
-        )}
-      </div>
+          <span className="flex items-center gap-1">
+            <MessageSquare className="h-3.5 w-3.5" />
+            <strong className="font-semibold text-foreground">{profile.comments_count}</strong>
+          </span>
+          {favoriteCount > 0 && (
+            <span className="ml-auto text-[10px] uppercase tracking-wide">
+              {favoriteCount} favorites
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="mt-5 flex gap-2">
         <Button asChild variant="outline" size="sm" className="flex-1">
           <Link to={`/user/${profile.user_id}`}>View profile</Link>
         </Button>
-        {!isOwnProfile && (
+        {!isOwnProfile && !isPrivateProfile && (
           user ? (
             <Button
               size="sm"
@@ -140,8 +149,11 @@ export default function People() {
   const deferredSearch = useDeferredValue(search.trim());
 
   const { data: profiles = [], isLoading } = useQuery({
-    queryKey: ["public-profiles-directory", deferredSearch],
-    queryFn: () => socialService.listPublicProfiles(deferredSearch),
+    queryKey: ["discoverable-profiles-directory", deferredSearch],
+    queryFn: () =>
+      deferredSearch
+        ? socialService.searchDiscoverableProfiles(deferredSearch)
+        : socialService.listPublicProfiles(""),
     staleTime: 1000 * 60,
   });
 
@@ -154,7 +166,7 @@ export default function People() {
     <>
       <SEO
         title="People — CineTrekker"
-        description="Discover public CineTrekker profiles, follow cinephiles, and explore the conversations behind their favorite films and series."
+        description="Find CineTrekker members by name, explore public profiles, and follow fellow cinephiles."
         canonical={buildCanonicalUrl("/people")}
       />
       <main className="page-container pt-24 pb-24 md:pb-12 max-w-6xl">
@@ -165,7 +177,7 @@ export default function People() {
           </div>
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Find people with great taste.</h1>
           <p className="mt-3 text-muted-foreground leading-relaxed">
-            Browse public profiles, follow fellow cinephiles, and find the conversations behind the films and series you love.
+            Find CineTrekker members by name, explore public profiles, and follow fellow cinephiles.
           </p>
         </header>
 
@@ -174,9 +186,9 @@ export default function People() {
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search public profiles…"
+            placeholder="Search CineTrekker members…"
             className="h-11 pl-10 rounded-xl bg-card/70"
-            aria-label="Search public profiles"
+            aria-label="Search CineTrekker members"
           />
         </div>
 
@@ -196,12 +208,12 @@ export default function People() {
           <div className="rounded-2xl border border-dashed border-border bg-muted/20 px-6 py-16 text-center">
             <Users className="h-10 w-10 mx-auto mb-4 text-muted-foreground/50" />
             <h2 className="text-lg font-semibold">
-              {search ? "No public profiles match that search" : "No public profiles to show yet"}
+              {search ? "No members match that search" : "No public profiles to show yet"}
             </h2>
             <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
               {search
                 ? "Try a different name or clear your search."
-                : "Once members make their profiles public, they will appear here for the CineTrekker community to discover."}
+                : "Public profiles appear here to help the CineTrekker community discover new people."}
             </p>
             {user && (
               <Button asChild variant="outline" size="sm" className="mt-5">

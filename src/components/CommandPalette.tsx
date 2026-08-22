@@ -96,7 +96,7 @@ export default function CommandPalette() {
   });
   const { data: memberResults = [], isFetching: isFetchingMembers } = useQuery({
     queryKey: ["cmdk-member-search", query],
-    queryFn: () => socialService.listPublicProfiles(query.trim()),
+    queryFn: () => socialService.searchDiscoverableProfiles(query.trim()),
     enabled: query.trim().length >= 2,
     staleTime: 1000 * 60,
   });

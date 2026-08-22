@@ -13,7 +13,7 @@ const commandPaletteSource = await readFile(
 
 test("global search includes privacy-curated CineTrekker member results", () => {
   assert.match(source, /import \{ socialService \} from "@\/services\/social"/);
-  assert.match(source, /socialService\.listPublicProfiles\(q\)/);
+  assert.match(source, /socialService\.searchDiscoverableProfiles\(q\)/);
   assert.match(source, /media_type: "user" as const/);
   assert.match(source, /const merged = \[\.\.\.members, \.\.\.movies, \.\.\.shows, \.\.\.actors, \.\.\.directors\]/);
 });
@@ -27,7 +27,7 @@ test("global member results use public-profile routes and external avatars", () 
 });
 
 test("command palette includes public members and navigates to their profile route", () => {
-  assert.match(commandPaletteSource, /socialService\.listPublicProfiles\(query\.trim\(\)\)/);
+  assert.match(commandPaletteSource, /socialService\.searchDiscoverableProfiles\(query\.trim\(\)\)/);
   assert.match(commandPaletteSource, /navigate\(`\/user\/\$\{profile\.user_id\}`\)/);
   assert.match(commandPaletteSource, /key=\{`user-\$\{profile\.user_id\}`\}/);
   assert.match(commandPaletteSource, /<CommandShortcut>Member<\/CommandShortcut>/);

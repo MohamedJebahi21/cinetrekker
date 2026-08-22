@@ -242,13 +242,14 @@ export default function UserProfile() {
     queryKey: ["public-profile-summary", userId],
     queryFn: async () => {
       if (!userId) return null;
-      return socialService.getPublicProfileSummary(userId);
+      return socialService.getDiscoverableProfileSummary(userId);
     },
     enabled: !!userId,
   });
 
   const resolvedProfile = profile;
   const isLoading = isLoadingProfile;
+  const canReadProfileDetails = isOwnProfile || profile?.is_public === true;
 
   // ── Follow state ─────────────────────────────────────────────────────────
   const { data: isFollowing } = useQuery({
@@ -257,7 +258,11 @@ export default function UserProfile() {
       if (!userId || !user?.id || user.id === userId) return false;
       return socialService.isFollowing(user.id, userId);
     },
-    enabled: !!userId && !!user?.id && user.id !== userId,
+    enabled:
+      !!userId &&
+      !!user?.id &&
+      user.id !== userId &&
+      canReadProfileDetails,
   });
 
   const followMutation = useMutation({
@@ -286,19 +291,19 @@ export default function UserProfile() {
   const { data: comments = [] } = useQuery({
     queryKey: ["public-profile-comments", userId],
     queryFn: () => socialService.getPublicProfileComments(userId!),
-    enabled: !!userId && activeTab === "activity",
+    enabled: !!userId && canReadProfileDetails && activeTab === "activity",
   });
 
   const { data: followers = [] } = useQuery({
     queryKey: ["public-profile-followers", userId],
     queryFn: () => socialService.getPublicProfileConnections(userId!, "followers"),
-    enabled: !!userId && activeTab === "followers",
+    enabled: !!userId && canReadProfileDetails && activeTab === "followers",
   });
 
   const { data: following = [] } = useQuery({
     queryKey: ["public-profile-following", userId],
     queryFn: () => socialService.getPublicProfileConnections(userId!, "following"),
-    enabled: !!userId && activeTab === "following",
+    enabled: !!userId && canReadProfileDetails && activeTab === "following",
   });
 
   // ── Render states ─────────────────────────────────────────────────────────
@@ -333,6 +338,37 @@ export default function UserProfile() {
   }
 
   const displayName = resolvedProfile.display_name ?? "CineTrekker User";
+  const isPrivateProfile = !resolvedProfile.is_public && !isOwnProfile;
+
+  if (isPrivateProfile) {
+    return (
+      <>
+        <SEO
+          title={`${displayName} — CineTrekker`}
+          description="This CineTrekker member keeps their profile private."
+          canonical={buildCanonicalUrl(`/user/${userId}`)}
+        />
+        <main className="page-container flex min-h-[65vh] items-center justify-center pt-24 pb-24 md:pb-12">
+          <section className="w-full max-w-lg rounded-2xl border border-border/60 bg-card/70 p-8 text-center shadow-sm">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <EyeOff className="h-7 w-7" />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight">{displayName}</h1>
+            <Badge variant="secondary" className="mt-3 text-[10px] uppercase tracking-[0.12em]">
+              Private profile
+            </Badge>
+            <p className="mx-auto mt-5 max-w-sm text-sm leading-6 text-muted-foreground">
+              This member keeps their profile details private.
+            </p>
+            <Button asChild variant="outline" size="sm" className="mt-6">
+              <Link to="/people">Find other people</Link>
+            </Button>
+          </section>
+        </main>
+      </>
+    );
+  }
+
   const favoriteKeys = Array.isArray(resolvedProfile.favorite_titles)
     ? resolvedProfile.favorite_titles.filter(
         (k) => k.startsWith("movie-") || k.startsWith("tv-"),

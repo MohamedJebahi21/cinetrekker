@@ -156,7 +156,7 @@ function SearchDropdownComponent({ className, onNavigate }: SearchDropdownProps)
           searchMovies(q, 1, language, includeAdult, signal),
           searchTV(q, 1, language, includeAdult, signal),
           searchPeople(q, 1, language, signal),
-          socialService.listPublicProfiles(q),
+          socialService.searchDiscoverableProfiles(q),
         ]);
 
       const movies = ((movieResponse?.results || []) as SearchResult[])

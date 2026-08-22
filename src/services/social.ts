@@ -99,7 +99,7 @@ export interface PublicProfileSummary {
   favorite_genres: number[] | null;
   favorite_titles: string[] | null;
   is_public: boolean;
-  created_at: string;
+  created_at: string | null;
   followers_count: number;
   following_count: number;
   comments_count: number;
@@ -136,7 +136,8 @@ export interface DirectoryProfile {
   bio: string | null;
   avatar_url: string | null;
   favorite_titles: string[] | null;
-  created_at: string;
+  is_public: boolean;
+  created_at: string | null;
   followers_count: number;
   comments_count: number;
 }
@@ -203,8 +204,7 @@ function readCount(row: UnknownRecord, key: string): number {
 function parsePublicProfileSummary(value: unknown): PublicProfileSummary | null {
   if (!isRecord(value)) return null;
   const userId = readRequiredString(value, "user_id");
-  const createdAt = readRequiredString(value, "created_at");
-  if (!userId || !createdAt || typeof value.is_public !== "boolean") return null;
+  if (!userId || typeof value.is_public !== "boolean") return null;
 
   return {
     user_id: userId,
@@ -214,7 +214,7 @@ function parsePublicProfileSummary(value: unknown): PublicProfileSummary | null 
     favorite_genres: readNumberArray(value, "favorite_genres"),
     favorite_titles: readStringArray(value, "favorite_titles"),
     is_public: value.is_public,
-    created_at: createdAt,
+    created_at: readNullableString(value, "created_at"),
     followers_count: readCount(value, "followers_count"),
     following_count: readCount(value, "following_count"),
     comments_count: readCount(value, "comments_count"),
@@ -295,18 +295,21 @@ function parsePublicConnectionProfile(
 }
 
 function parseDirectoryProfile(value: unknown): DirectoryProfile | null {
-  const connection = parsePublicConnectionProfile(value);
-  if (!connection || !isRecord(value)) return null;
+  if (!isRecord(value)) return null;
+  const userId = readRequiredString(value, "user_id");
+  if (!userId || typeof value.is_public !== "boolean") return null;
 
+  const isPublic = value.is_public;
   return {
-    user_id: connection.user_id,
-    display_name: connection.display_name,
-    bio: connection.bio,
-    avatar_url: connection.avatar_url,
-    favorite_titles: connection.favorite_titles,
-    created_at: connection.created_at,
-    followers_count: connection.followers_count,
-    comments_count: readCount(value, "comments_count"),
+    user_id: userId,
+    display_name: readNullableString(value, "display_name"),
+    bio: isPublic ? readNullableString(value, "bio") : null,
+    avatar_url: isPublic ? readNullableString(value, "avatar_url") : null,
+    favorite_titles: isPublic ? readStringArray(value, "favorite_titles") : null,
+    is_public: isPublic,
+    created_at: isPublic ? readNullableString(value, "created_at") : null,
+    followers_count: isPublic ? readCount(value, "followers_count") : 0,
+    comments_count: isPublic ? readCount(value, "comments_count") : 0,
   };
 }
 
@@ -582,6 +585,15 @@ export const socialService = {
     return rows.map(parsePublicProfileSummary).find(Boolean) ?? null;
   },
 
+  async getDiscoverableProfileSummary(
+    userId: string,
+  ): Promise<PublicProfileSummary | null> {
+    const rows = await getPublicRpcRows("get_discoverable_profile_summary", {
+      target_user_id: userId,
+    });
+    return rows.map(parsePublicProfileSummary).find(Boolean) ?? null;
+  },
+
   async getPublicProfileComments(userId: string): Promise<PublicProfileComment[]> {
     const rows = await getPublicRpcRows("get_public_profile_comments", {
       target_user_id: userId,
@@ -609,6 +621,20 @@ export const socialService = {
   async listPublicProfiles(searchTerm: string): Promise<DirectoryProfile[]> {
     const rows = await getPublicRpcRows("list_public_profiles", {
       search_term: searchTerm || null,
+      result_limit: 24,
+    });
+    return rows
+      .map((row) => (isRecord(row) ? { ...row, is_public: true } : row))
+      .map(parseDirectoryProfile)
+      .filter((profile): profile is DirectoryProfile => profile !== null);
+  },
+
+  async searchDiscoverableProfiles(searchTerm: string): Promise<DirectoryProfile[]> {
+    const normalizedSearchTerm = searchTerm.trim();
+    if (!normalizedSearchTerm) return [];
+
+    const rows = await getPublicRpcRows("search_discoverable_profiles", {
+      search_term: normalizedSearchTerm,
       result_limit: 24,
     });
     return rows
