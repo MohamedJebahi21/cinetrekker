@@ -1273,11 +1273,11 @@ export default function Details() {
                                     <div className="min-w-0 flex-1">
                                       <div className="flex flex-wrap items-center gap-2">
                                         <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">S{episode.season_number}E{episode.episode_number}</span>
-                                        {isNext && <Badge variant="outline" className="px-1.5 py-0 text-[10px]">Next Up</Badge>}
+                                        {isNext && <Badge variant="outline" className="px-1.5 py-0 text-[10px]">{t("home.upNext", "Up next")}</Badge>}
                                         {episode.vote_average && episode.vote_average > 0 && <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground"><Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />{episode.vote_average.toFixed(1)}</span>}
                                       </div>
                                       <p className="mt-0.5 line-clamp-1 text-sm font-semibold text-foreground">{episode.name}</p>
-                                      <p className="mt-0.5 text-xs text-muted-foreground">{episode.air_date ? new Date(episode.air_date).toLocaleDateString(language) : "TBA"}{episode.runtime ? ` · ${episode.runtime} ${t("details.minutes")}` : ""}</p>
+                                      <p className="mt-0.5 text-xs text-muted-foreground">{episode.air_date ? new Date(episode.air_date).toLocaleDateString(language) : t("details.toBeAnnounced", "To be announced")}{episode.runtime ? ` · ${episode.runtime} ${t("details.minutes")}` : ""}</p>
                                     </div>
                                     <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
                                   </AccordionPrimitive.Trigger>

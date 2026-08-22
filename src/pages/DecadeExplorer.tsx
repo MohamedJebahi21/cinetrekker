@@ -490,9 +490,9 @@ export default function DecadeExplorer() {
           ) : (
             <div className="ct-panel py-20 text-center border-dashed border-border/80">
               <SlidersHorizontal className="mx-auto h-12 w-12 text-muted-foreground/30 mb-4" />
-              <h3 className="text-base font-bold">No Discovery Matches</h3>
+              <h3 className="text-base font-bold">{t("decades.noMatchesTitle", "No discovery matches")}</h3>
               <p className="text-xs text-muted-foreground mt-1">
-                {t("decades.noResults", "No results available for this decade")} Try adjusting filter selections.
+                {t("decades.noResultsDescription", "No results are available for this decade. Try adjusting your filters.")}
               </p>
             </div>
           )}

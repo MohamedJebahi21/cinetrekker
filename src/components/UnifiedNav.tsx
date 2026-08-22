@@ -12,6 +12,7 @@ import Compass from "lucide-react/dist/esm/icons/compass";
 import Film from "lucide-react/dist/esm/icons/film";
 import Bookmark from "lucide-react/dist/esm/icons/bookmark";
 import CheckSquare from "lucide-react/dist/esm/icons/check-square";
+import Check from "lucide-react/dist/esm/icons/check";
 import Trophy from "lucide-react/dist/esm/icons/trophy";
 import Heart from "lucide-react/dist/esm/icons/heart";
 import Search from "lucide-react/dist/esm/icons/search";
@@ -45,7 +46,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { languages } from "@/i18n";
+import { changeLanguage, languages } from "@/i18n";
 
 const SearchDropdown = lazy(() =>
   import("@/components/SearchDropdown").then((mod) => ({
@@ -62,48 +63,52 @@ const RemotionAurora = lazy(() =>
 // Grouped navigation for high-fidelity overlays
 const navigationGroups = [
   {
-    title: "Personal Library",
+    titleKey: "nav.personalLibrary",
+    defaultTitle: "Personal Library",
     links: [
-      { path: "/", labelKey: "nav.home", defaultLabel: "Home", icon: Compass, desc: "Your personal feed and tonight's picks." },
-      { path: "/profile", labelKey: "nav.profile", defaultLabel: "Profile", icon: User, desc: "Manage your account, rank, and stats." },
-      { path: "/watchlist", labelKey: "nav.watchlist", defaultLabel: "Watchlist", icon: Bookmark, desc: "Your list of titles to watch." },
-      { path: "/collections", labelKey: "nav.collections", defaultLabel: "Collections", icon: FolderHeart, desc: "Curate themed lists worth sharing." },
-      { path: "/watched", labelKey: "nav.watched", defaultLabel: "Watched", icon: CheckSquare, desc: "Your logged watch history." },
-      { path: "/following", labelKey: "nav.following", defaultLabel: "Following", icon: User, desc: "Titles you are tracking for updates." },
+      { path: "/", labelKey: "nav.home", defaultLabel: "Home", icon: Compass, descKey: "navDescription.home", defaultDesc: "Your personal feed and tonight's picks." },
+      { path: "/profile", labelKey: "nav.profile", defaultLabel: "Profile", icon: User, descKey: "navDescription.profile", defaultDesc: "Manage your account, rank, and stats." },
+      { path: "/watchlist", labelKey: "nav.watchlist", defaultLabel: "Watchlist", icon: Bookmark, descKey: "navDescription.watchlist", defaultDesc: "Your list of titles to watch." },
+      { path: "/collections", labelKey: "nav.collections", defaultLabel: "Collections", icon: FolderHeart, descKey: "navDescription.collections", defaultDesc: "Curate themed lists worth sharing." },
+      { path: "/watched", labelKey: "nav.watched", defaultLabel: "Watched", icon: CheckSquare, descKey: "navDescription.watched", defaultDesc: "Your logged watch history." },
+      { path: "/following", labelKey: "nav.following", defaultLabel: "Following", icon: User, descKey: "navDescription.following", defaultDesc: "Titles you are tracking for updates." },
     ],
   },
   {
-    title: "Community",
+    titleKey: "nav.community",
+    defaultTitle: "Community",
     links: [
-      { path: "/people", labelKey: "nav.people", defaultLabel: "People", icon: User, desc: "Discover public profiles and follow fellow cinephiles." },
+      { path: "/people", labelKey: "nav.people", defaultLabel: "People", icon: User, descKey: "navDescription.people", defaultDesc: "Discover public profiles and follow fellow cinephiles." },
     ],
   },
   {
-    title: "Discovery & Explore",
+    titleKey: "nav.discoveryExplore",
+    defaultTitle: "Discovery & Explore",
     links: [
-      { path: "/discover", labelKey: "nav.discover", defaultLabel: "Discover", icon: Compass, desc: "Explore recommendations and releases." },
-      { path: "/trending", labelKey: "nav.trending", defaultLabel: "Trending", icon: Film, desc: "What's popular right now." },
-      { path: "/search", labelKey: "nav.search", defaultLabel: "Search", icon: Compass, desc: "Find movies, series, or people." },
-      { path: "/recommendations", labelKey: "nav.recommendations", defaultLabel: "Recommendations", icon: Film, desc: "AI and taste-matching suggestions." },
-      { path: "/genres", labelKey: "nav.genres", defaultLabel: "Genres", icon: Layers, desc: "Browse by specific film categories." },
-      { path: "/decades", labelKey: "nav.decades", defaultLabel: "Decades", icon: CalendarDays, desc: "Travel through cinema history." },
+      { path: "/discover", labelKey: "nav.discover", defaultLabel: "Discover", icon: Compass, descKey: "navDescription.discover", defaultDesc: "Explore recommendations and releases." },
+      { path: "/trending", labelKey: "nav.trending", defaultLabel: "Trending", icon: Film, descKey: "navDescription.trending", defaultDesc: "What's popular right now." },
+      { path: "/search", labelKey: "nav.search", defaultLabel: "Search", icon: Compass, descKey: "navDescription.search", defaultDesc: "Find movies, series, or people." },
+      { path: "/recommendations", labelKey: "nav.recommendations", defaultLabel: "Recommendations", icon: Film, descKey: "navDescription.recommendations", defaultDesc: "Taste-matched suggestions for your next watch." },
+      { path: "/genres", labelKey: "nav.genres", defaultLabel: "Genres", icon: Layers, descKey: "navDescription.genres", defaultDesc: "Browse by specific film categories." },
+      { path: "/decades", labelKey: "nav.decades", defaultLabel: "Decades", icon: CalendarDays, descKey: "navDescription.decades", defaultDesc: "Travel through cinema history." },
     ],
   },
   {
-    title: "Insights & Awards",
+    titleKey: "nav.insightsAwards",
+    defaultTitle: "Insights & Awards",
     links: [
-      { path: "/calendar", labelKey: "nav.calendar", defaultLabel: "Calendar", icon: CalendarDays, desc: "TV schedule and movie release tracker." },
-      { path: "/stats", labelKey: "nav.stats", defaultLabel: "Stats", icon: Award, desc: "Detailed analysis of your viewing habits." },
-      { path: "/achievements", labelKey: "nav.achievements", defaultLabel: "Achievements", icon: Award, desc: "Trophies and milestones unlocked." },
-      { path: "/quests", labelKey: "nav.quests", defaultLabel: "Monthly Quests", icon: Trophy, desc: "Time-limited challenges and rewards." },
-      { path: "/year-in-review", labelKey: "nav.yearInReview", defaultLabel: "Year In Review", icon: Award, desc: "Your personal annual wrapped recap." },
-      { path: "/awards", labelKey: "nav.awards", defaultLabel: "Awards", icon: Award, desc: "Browse award winners and nominees." },
+      { path: "/calendar", labelKey: "nav.calendar", defaultLabel: "Calendar", icon: CalendarDays, descKey: "navDescription.calendar", defaultDesc: "TV schedule and movie release tracker." },
+      { path: "/stats", labelKey: "nav.stats", defaultLabel: "Stats", icon: Award, descKey: "navDescription.stats", defaultDesc: "Detailed analysis of your viewing habits." },
+      { path: "/achievements", labelKey: "nav.achievements", defaultLabel: "Achievements", icon: Award, descKey: "navDescription.achievements", defaultDesc: "Trophies and milestones unlocked." },
+      { path: "/quests", labelKey: "nav.quests", defaultLabel: "Monthly Quests", icon: Trophy, descKey: "navDescription.quests", defaultDesc: "Time-limited challenges and rewards." },
+      { path: "/year-in-review", labelKey: "nav.yearInReview", defaultLabel: "Year In Review", icon: Award, descKey: "navDescription.yearInReview", defaultDesc: "Your personal annual wrapped recap." },
+      { path: "/awards", labelKey: "nav.awards", defaultLabel: "Awards", icon: Award, descKey: "navDescription.awards", defaultDesc: "Browse award winners and nominees." },
     ],
   },
 ];
 
 // Flat menu links kept for backwards compatibility with currentPageLabel
-const primaryNavigationGroups = navigationGroups.filter((group) => group.title !== "Community");
+const primaryNavigationGroups = navigationGroups.filter((group) => group.titleKey !== "nav.community");
 
 const menuLinks = [
   { path: "/profile", labelKey: "nav.profile", defaultLabel: "Profile", icon: User },
@@ -196,6 +201,12 @@ export function UnifiedNav() {
   const activeLanguageCode = i18n.resolvedLanguage ?? i18n.language;
   const activeLanguageLabel =
     languages.find((language) => language.code === activeLanguageCode)?.name ?? "English";
+  const activeThemeLabel =
+    theme === "dark"
+      ? t("nav.themeDark", "Dark")
+      : theme === "light"
+        ? t("nav.themeLight", "Light")
+        : t("nav.themeOled", "OLED");
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -329,7 +340,8 @@ export function UnifiedNav() {
     const [personal, community, discovery, insights] = navigationGroups;
     return [
       {
-        title: t("nav.explore", "Explore"),
+        titleKey: "nav.explore",
+        defaultTitle: "Explore",
         links: [
           personal.links[0],
           ...discovery.links.filter((item) => item.path !== "/recommendations"),
@@ -339,7 +351,7 @@ export function UnifiedNav() {
         ],
       },
     ];
-  }, [t, user]);
+  }, [user]);
 
   return (
     <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
@@ -424,9 +436,9 @@ export function UnifiedNav() {
               className="w-[17.5rem] overflow-hidden rounded-2xl border-border/60 bg-popover p-1.5 shadow-[0_22px_56px_hsl(var(--background)/0.45)]"
             >
               <div className="px-2.5 pb-2 pt-1.5">
-                <p className="text-sm font-bold tracking-tight text-foreground">Quick controls</p>
+                <p className="text-sm font-bold tracking-tight text-foreground">{t("preferences.quickControls", "Quick controls")}</p>
                 <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
-                  Tune your viewing space without leaving this page.
+                  {t("preferences.quickControlsDescription", "Tune your viewing space without leaving this page.")}
                 </p>
               </div>
               <DropdownMenuItem asChild className="min-h-[3.25rem] cursor-pointer rounded-xl px-2.5 py-2 font-medium focus:bg-accent">
@@ -436,13 +448,13 @@ export function UnifiedNav() {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold">{t("nav.settings", "Settings")}</span>
-                    <span className="block truncate text-[11px] font-normal text-muted-foreground">Account, privacy, and notifications</span>
+                    <span className="block truncate text-[11px] font-normal text-muted-foreground">{t("preferences.settingsDescription", "Account, privacy, and notifications")}</span>
                   </span>
                 </Link>
               </DropdownMenuItem>
               <div className="my-1.5 border-t border-border/70" />
               <p className="px-2.5 pb-1 pt-0.5 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                Appearance and language
+                {t("preferences.appearanceAndLanguage", "Appearance and language")}
               </p>
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger className="min-h-11 rounded-xl px-2.5 py-2 focus:bg-accent data-[state=open]:bg-accent">
@@ -455,7 +467,7 @@ export function UnifiedNav() {
                   <p className="px-2.5 pb-1 pt-0.5 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                     {t("nav.changeLanguage", "Language")}
                   </p>
-                  <DropdownMenuRadioGroup value={activeLanguageCode} onValueChange={(code) => void i18n.changeLanguage(code)}>
+                  <DropdownMenuRadioGroup value={activeLanguageCode} onValueChange={(code) => void changeLanguage(code)}>
                     {languages.map((language) => (
                       <DropdownMenuRadioItem key={language.code} value={language.code} className="min-h-10 rounded-xl py-2 text-sm font-medium focus:bg-accent">
                         {language.name}
@@ -468,38 +480,52 @@ export function UnifiedNav() {
                 <DropdownMenuSubTrigger className="min-h-11 rounded-xl px-2.5 py-2 focus:bg-accent data-[state=open]:bg-accent">
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="text-sm font-semibold">{t("nav.changeTheme", "Theme")}</span>
-                    <span className="mt-0.5 text-[11px] font-normal capitalize text-muted-foreground">{theme}</span>
+                    <span className="mt-0.5 text-[11px] font-normal text-muted-foreground">{activeThemeLabel}</span>
                   </span>
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent className="min-w-[15rem] rounded-2xl border-border/60 bg-popover p-1.5 shadow-[0_18px_48px_hsl(var(--background)/0.42)]">
                   <p className="px-2.5 pb-1 pt-0.5 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                     {t("nav.changeTheme", "Theme")}
                   </p>
-                  <DropdownMenuRadioGroup value={theme} onValueChange={(option) => setTheme(option as typeof theme)}>
-                    {(["dark", "light", "oled"] as const).map((option) => (
-                      <DropdownMenuRadioItem key={option} value={option} className="min-h-11 rounded-xl py-2 text-sm font-medium focus:bg-accent">
-                        <span
+                  <div className="space-y-1">
+                    {(["dark", "light", "oled"] as const).map((option) => {
+                      const label =
+                        option === "dark"
+                          ? t("nav.themeDark", "Dark")
+                          : option === "light"
+                            ? t("nav.themeLight", "Light")
+                            : t("nav.themeOled", "OLED");
+                      const description =
+                        option === "dark"
+                          ? t("preferences.themeDarkDescription", "Balanced for low-light viewing")
+                          : option === "light"
+                            ? t("preferences.themeLightDescription", "Bright, high-clarity interface")
+                            : t("preferences.themeOledDescription", "Pure black for OLED displays");
+                      const isSelected = theme === option;
+
+                      return (
+                        <DropdownMenuItem
+                          key={option}
+                          onSelect={() => setTheme(option)}
                           className={cn(
-                            "mr-2 h-4 w-4 shrink-0 rounded-full border shadow-inner",
-                            option === "dark" && "border-white/15 bg-slate-800",
-                            option === "light" && "border-slate-300 bg-white",
-                            option === "oled" && "border-white/20 bg-black",
+                            "min-h-[3.5rem] cursor-pointer rounded-xl px-3 py-2 focus:bg-accent",
+                            isSelected && "bg-primary/10 text-foreground focus:bg-primary/12",
                           )}
-                          aria-hidden="true"
-                        />
-                        <span className="flex-1">
-                          {option === "dark"
-                            ? t("nav.themeDark", "Dark")
-                            : option === "light"
-                              ? t("nav.themeLight", "Light")
-                              : t("nav.themeOled", "OLED")}
-                        </span>
-                        <span className="text-[10px] font-medium text-muted-foreground">
-                          {option === "dark" ? "Cinematic" : option === "light" ? "Daylight" : "Pure black"}
-                        </span>
-                      </DropdownMenuRadioItem>
-                    ))}
-                  </DropdownMenuRadioGroup>
+                        >
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-sm font-semibold">{label}</span>
+                            <span className="mt-0.5 block text-[11px] font-normal leading-4 text-muted-foreground">{description}</span>
+                          </span>
+                          {isSelected && (
+                            <span className="ml-3 inline-flex shrink-0 items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">
+                              <Check className="h-3.5 w-3.5" />
+                              {t("preferences.currentTheme", "Current")}
+                            </span>
+                          )}
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </div>
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
             </DropdownMenuContent>
@@ -558,9 +584,9 @@ export function UnifiedNav() {
                 <div className="desktop-menu-shell mx-auto flex min-h-full max-w-[78rem] items-center">
                   <nav aria-label={t("nav.main", "Main navigation")} className="desktop-menu-grid grid w-full gap-5 md:grid-cols-3">
                     {primaryNavigationGroups.map((group) => (
-                      <section key={group.title} className="desktop-menu-group min-w-0 self-stretch border-t border-border pt-4 first:border-t-0 first:pt-0">
+                      <section key={group.titleKey} className="desktop-menu-group min-w-0 self-stretch border-t border-border pt-4 first:border-t-0 first:pt-0">
                         <div className="mb-2 flex items-center justify-between gap-3">
-                          <h3 className="text-[0.7rem] font-semibold uppercase tracking-[0.17em] text-muted-foreground">{group.title}</h3>
+                          <h3 className="text-[0.7rem] font-semibold uppercase tracking-[0.17em] text-muted-foreground">{t(group.titleKey, group.defaultTitle)}</h3>
                           <span className="text-[10px] font-medium text-muted-foreground">{group.links.length}</span>
                         </div>
                         <motion.div
@@ -594,7 +620,7 @@ export function UnifiedNav() {
                                     <p className={cn("text-sm font-semibold leading-5 text-foreground transition-colors duration-200 group-hover:text-primary", isActive && "text-primary")}>
                                       {t(item.labelKey, item.defaultLabel)}
                                     </p>
-                                    <p className="mt-0.5 line-clamp-1 text-xs font-normal leading-4 text-muted-foreground">{item.desc}</p>
+                                    <p className="mt-0.5 line-clamp-1 text-xs font-normal leading-4 text-muted-foreground">{t(item.descKey, item.defaultDesc)}</p>
                                   </div>
                                 </Link>
                               </motion.div>
@@ -701,9 +727,9 @@ export function UnifiedNav() {
 
               {/* Guest visitors see discovery essentials first; signed-in users retain their full personal workspace. */}
               {mobileNavigationGroups.map((group) => (
-                <div key={group.title} className="space-y-2 border-t border-border pt-4">
+                <div key={group.titleKey} className="space-y-2 border-t border-border pt-4">
                   <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground px-1">
-                    {group.title}
+                    {t(group.titleKey, group.defaultTitle)}
                   </p>
                   <div className="space-y-2">
                     {group.links.map((item) => {

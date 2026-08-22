@@ -11,8 +11,9 @@ test("Preferences exposes compact quick controls with reachable language and the
   await language.hover();
   await expect(page.getByRole("menuitemradio", { name: "English" })).toBeVisible();
 
-  const theme = page.getByRole("menuitem", { name: /Change theme dark/ });
+  const theme = page.getByRole("menuitem", { name: /Change theme/ });
   await theme.hover();
-  await expect(page.getByRole("menuitemradio", { name: /Dark/ })).toBeVisible();
-  await expect(page.getByText("Pure black", { exact: true })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: /Dark.*Balanced/ })).toBeVisible();
+  await expect(page.getByText("Current", { exact: true })).toBeVisible();
+  await expect(page.getByText("Pure black for OLED displays", { exact: true })).toBeVisible();
 });

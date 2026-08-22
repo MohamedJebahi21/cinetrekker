@@ -529,9 +529,9 @@ export default function GenreBrowser() {
             ) : (
               <div className="ct-panel py-20 text-center border-dashed border-border/80">
                 <SlidersHorizontal className="mx-auto h-12 w-12 text-muted-foreground/30 mb-4" />
-                <h3 className="text-base font-bold">No Discovery Matches</h3>
+                <h3 className="text-base font-bold">{t("genres.noMatchesTitle", "No discovery matches")}</h3>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {t("genres.noResults", "No results available for this genre.")} Try adjusting your filter parameters.
+                  {t("genres.noResultsDescription", "No results are available for this genre. Try adjusting your filters.")}
                 </p>
               </div>
             )}
@@ -539,7 +539,7 @@ export default function GenreBrowser() {
         ) : (
           <div className="ct-panel py-24 text-center border-dashed border-border/80">
             <Compass className="mx-auto h-12 w-12 text-muted-foreground/30 mb-4 animate-pulse" />
-            <h3 className="text-base font-bold">Discover Collections</h3>
+            <h3 className="text-base font-bold">{t("genres.discoverCollections", "Discover collections")}</h3>
             <p className="text-xs text-muted-foreground mt-1">
               {t("genres.selectPrompt", "Select a genre above to browse content")}
             </p>

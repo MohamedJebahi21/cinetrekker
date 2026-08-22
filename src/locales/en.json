@@ -100,7 +100,68 @@
     "browse": "Browse",
     "account": "Account",
     "more": "More",
-    "userMenu": "User menu"
+    "userMenu": "User menu",
+    "personalLibrary": "Personal Library",
+    "community": "Community",
+    "discoveryExplore": "Discovery & Explore",
+    "insightsAwards": "Insights & Awards"
+  },
+  "navDescription": {
+    "home": "Your personal feed and tonight's picks.",
+    "profile": "Manage your account, rank, and stats.",
+    "watchlist": "Your list of titles to watch.",
+    "collections": "Curate themed lists worth sharing.",
+    "watched": "Your logged watch history.",
+    "following": "Titles you are tracking for updates.",
+    "people": "Discover public profiles and follow fellow cinephiles.",
+    "discover": "Explore recommendations and releases.",
+    "trending": "What's popular right now.",
+    "search": "Find movies, series, or people.",
+    "recommendations": "Taste-matched suggestions for your next watch.",
+    "genres": "Browse by specific film categories.",
+    "decades": "Travel through cinema history.",
+    "calendar": "TV schedule and movie release tracker.",
+    "stats": "Detailed analysis of your viewing habits.",
+    "achievements": "Trophies and milestones unlocked.",
+    "quests": "Time-limited challenges and rewards.",
+    "yearInReview": "Your personal annual wrapped recap.",
+    "awards": "Browse award winners and nominees."
+  },
+  "preferences": {
+    "quickControls": "Quick controls",
+    "quickControlsDescription": "Tune your viewing space without leaving this page.",
+    "settingsDescription": "Account, privacy, and notifications",
+    "appearanceAndLanguage": "Appearance and language",
+    "themeDarkDescription": "Balanced for low-light viewing",
+    "themeLightDescription": "Bright, high-clarity interface",
+    "themeOledDescription": "Pure black for OLED displays",
+    "currentTheme": "Current"
+  },
+  "notifications": {
+    "open": "Open notifications",
+    "unreadRegion": "Unread notifications",
+    "unreadUpdates_one": "{{count}} unread update",
+    "unreadUpdates_other": "{{count}} unread updates",
+    "new": "New",
+    "openItem": "Open notification: {{message}}",
+    "markRead": "Mark as read",
+    "markReadItem": "Mark notification as read: {{message}}",
+    "moreUnread_one": "View {{count}} more unread update",
+    "moreUnread_other": "View {{count}} more unread updates",
+    "markAllRead": "Mark all as read",
+    "managePreferences": "Manage notification preferences",
+    "emptyBadge": "All clear",
+    "emptyTitle": "Nothing needs your attention",
+    "emptyDescription": "Your watch updates are up to date. We will keep this space ready for new releases and list activity.",
+    "releaseAlertsTitle": "Release alerts",
+    "releaseAlertsDescription": "New episodes and premieres from titles you follow.",
+    "watchlistAlertsTitle": "List activity",
+    "watchlistAlertsDescription": "Updates tied to the films and series you track.",
+    "exploreCalendar": "Explore release calendar",
+    "historyTitle": "Notification history",
+    "historyCount_one": "{{count}} past update is available",
+    "historyCount_other": "{{count}} past updates are available",
+    "viewHistory": "View history"
   },
   "auth": {
     "signIn": "Sign in",
@@ -428,6 +489,7 @@
     "noPublishedEpisodes": "No published episodes are available for this season yet.",
     "releaseDateUnavailable": "Release date unavailable",
     "noEpisodeDescription": "No description is available for this episode yet.",
+    "toBeAnnounced": "To be announced",
     "signInToReview": "Sign In to Review",
     "noRatingYet": "No rating yet",
     "noNoteYet": "No note yet. Add a short review so you remember what stood out.",
@@ -1147,11 +1209,13 @@
     "loadFailed": "Failed to load award contenders."
   },
   "decades": {
-    "seoTitle": "Explore by Decade — CineTrekker",
+    "seoTitle": "Browse Movies by Decade | CineTrekker",
     "seoDescription": "Discover movies and TV shows from different eras",
     "title": "Explore by Decade",
     "intro": "Explore standout movies and TV from each era, then jump directly into details, watchlists, and related titles.",
-    "noResults": "No results available for this decade"
+    "noResults": "No results available for this decade",
+    "noMatchesTitle": "No discovery matches",
+    "noResultsDescription": "No results are available for this decade. Try adjusting your filters."
   },
   "genres": {
     "seoTitle": "Browse by Genre — CineTrekker",
@@ -1159,6 +1223,9 @@
     "title": "Browse by Genre",
     "intro": "Choose a genre to discover popular movies and shows, compare options quickly, and add what you want to watch next.",
     "noResults": "No results available for this genre.",
+    "noMatchesTitle": "No discovery matches",
+    "noResultsDescription": "No results are available for this genre. Try adjusting your filters.",
+    "discoverCollections": "Discover collections",
     "selectPrompt": "Select a genre above to browse content"
   },
   "achievements": {

@@ -1,7 +1,9 @@
-import { Bell, CheckCheck, ChevronRight, Check, X, Settings2 } from "lucide-react";
+import { Bell, CheckCheck, ChevronRight, Check, X, Settings2, CalendarDays, History } from "lucide-react";
 import { memo, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
+import { arSA, de, es, fr, tr } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 import { useNotifications } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,8 +24,11 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
+const relativeTimeLocales = { ar: arSA, de, es, fr, tr };
+
 function NotificationBellComponent() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const { notifications, unreadCount, markRead, markAllRead } =
     useNotifications();
   const [isMobile, setIsMobile] = useState(false);
@@ -44,7 +49,9 @@ function NotificationBellComponent() {
     [notifications],
   );
   const previewNotifications = unreadNotifications.slice(0, 3);
-  const unreadLabel = unreadCount === 1 ? "1 unread update" : `${unreadCount} unread updates`;
+  const languageCode = (i18n.resolvedLanguage ?? i18n.language).split("-")[0] as keyof typeof relativeTimeLocales;
+  const relativeTimeLocale = relativeTimeLocales[languageCode];
+  const unreadLabel = t("notifications.unreadUpdates", { count: unreadCount });
 
   const handleNotificationClick = (id: string, movieId: string) => {
     void markRead(id);
@@ -68,7 +75,7 @@ function NotificationBellComponent() {
         unreadCount > 0 && "border-primary/25 bg-primary/5",
       )}
       type="button"
-      aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
+      aria-label={t("notifications.open", { count: unreadCount })}
     >
       <Bell className={cn("relative h-5 w-5", unreadCount > 0 && "text-primary")} />
       {unreadCount > 0 && (
@@ -80,18 +87,41 @@ function NotificationBellComponent() {
   );
 
   const notificationList = (
-    <section aria-label="Unread notifications">
+    <section aria-label={t("notifications.unreadRegion")}>
       {unreadNotifications.length === 0 ? (
-        <div className="px-6 py-12 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-border/60 bg-muted/45 text-muted-foreground shadow-inner">
-            <Bell className="h-5 w-5" />
+        <div className="px-4 py-6 text-center sm:px-5">
+          <div className="relative mx-auto flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-[1.4rem] border border-primary/20 bg-primary/8 text-primary shadow-[inset_0_1px_hsl(var(--primary)/0.12),0_16px_36px_hsl(var(--background)/0.2)]">
+            <span className="absolute inset-2 rounded-[1rem] border border-primary/15" aria-hidden="true" />
+            <CheckCheck className="relative h-6 w-6" />
           </div>
-          <div className="text-base font-semibold tracking-tight text-foreground">
-            You&apos;re all caught up
+          <span className="mt-4 inline-flex rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-primary">
+            {t("notifications.emptyBadge")}
+          </span>
+          <div className="mt-3 text-lg font-bold tracking-tight text-foreground">
+            {t("notifications.emptyTitle")}
           </div>
-          <div className="mx-auto mt-2 max-w-[16rem] text-sm leading-6 text-muted-foreground">
-            New release and watchlist updates will appear here.
+          <div className="mx-auto mt-1.5 max-w-[19rem] text-sm leading-6 text-muted-foreground">
+            {t("notifications.emptyDescription")}
           </div>
+          <div className="mt-5 grid grid-cols-2 gap-2 text-left">
+            <div className="rounded-xl border border-border/60 bg-background/70 p-3">
+              <CalendarDays className="mb-2 h-4 w-4 text-primary" aria-hidden="true" />
+              <p className="text-xs font-bold text-foreground">{t("notifications.releaseAlertsTitle")}</p>
+              <p className="mt-1 text-[11px] leading-4 text-muted-foreground">{t("notifications.releaseAlertsDescription")}</p>
+            </div>
+            <div className="rounded-xl border border-border/60 bg-background/70 p-3">
+              <Bell className="mb-2 h-4 w-4 text-primary" aria-hidden="true" />
+              <p className="text-xs font-bold text-foreground">{t("notifications.watchlistAlertsTitle")}</p>
+              <p className="mt-1 text-[11px] leading-4 text-muted-foreground">{t("notifications.watchlistAlertsDescription")}</p>
+            </div>
+          </div>
+          <Link
+            to="/calendar"
+            className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-primary/25 bg-primary/8 px-4 text-sm font-bold text-primary transition-colors hover:bg-primary/14 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <CalendarDays className="h-4 w-4" />
+            {t("notifications.exploreCalendar")}
+          </Link>
         </div>
       ) : (
         <div className="max-h-[22rem] space-y-2 overflow-y-auto overscroll-contain p-3">
@@ -104,7 +134,7 @@ function NotificationBellComponent() {
               <button
                 type="button"
                 className="group flex min-w-0 flex-1 items-start gap-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                aria-label={`Open notification: ${notification.message}`}
+                aria-label={t("notifications.openItem", { message: notification.message })}
                 onClick={() =>
                   handleNotificationClick(
                     notification.id,
@@ -126,10 +156,11 @@ function NotificationBellComponent() {
                       <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
                       {formatDistanceToNow(new Date(notification.created_at), {
                         addSuffix: true,
+                        locale: relativeTimeLocale,
                       })}
                     </span>
                     <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">
-                      New
+                      {t("notifications.new")}
                     </span>
                   </span>
                 </span>
@@ -140,8 +171,8 @@ function NotificationBellComponent() {
                 type="button"
                 onClick={() => handleMarkRead(notification.id)}
                 className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-card text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                aria-label={`Mark notification as read: ${notification.message}`}
-                title="Mark as read"
+                aria-label={t("notifications.markReadItem", { message: notification.message })}
+                title={t("notifications.markRead")}
               >
                 <Check className="h-4 w-4" />
               </button>
@@ -152,7 +183,7 @@ function NotificationBellComponent() {
               to="/notifications"
               className="flex min-h-10 items-center justify-center gap-1 rounded-xl border border-dashed border-border/70 bg-background px-4 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary/30 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
-              View {unreadNotifications.length - previewNotifications.length} more unread
+              {t("notifications.moreUnread", { count: unreadNotifications.length - previewNotifications.length })}
               <ChevronRight className="h-4 w-4" />
             </Link>
           ) : null}
@@ -163,33 +194,50 @@ function NotificationBellComponent() {
 
   const notificationFooter = (
     <footer className="border-t border-border/60 bg-muted/15 p-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold text-foreground">
-            {unreadCount > 0 ? unreadLabel : "Your inbox is clear"}
-          </p>
-          <p className="mt-0.5 text-[11px] leading-4 text-muted-foreground">
-            {notifications.length} updates are kept in your notification history.
-          </p>
+      {unreadCount === 0 ? (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-border/55 bg-background/55 px-3 py-2.5">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-card text-muted-foreground">
+              <History className="h-4 w-4" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-xs font-bold text-foreground">{t("notifications.historyTitle")}</span>
+              <span className="block truncate text-[11px] text-muted-foreground">{t("notifications.historyCount", { count: notifications.length })}</span>
+            </span>
+          </div>
+          <Link
+            to="/notifications"
+            className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-bold text-primary transition-colors hover:bg-primary/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            {t("notifications.viewHistory")}
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
-        <Link
-          to="/settings#section-notifications"
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-          aria-label="Manage notification preferences"
-          title="Manage notification preferences"
-        >
-          <Settings2 className="h-4 w-4" />
-        </Link>
-      </div>
-      {unreadCount > 0 && (
-        <button
-          type="button"
-          onClick={() => markAllRead()}
-          className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-border/60 bg-background px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-        >
-          <CheckCheck className="h-4 w-4" />
-          Mark all as read
-        </button>
+      ) : (
+        <>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-foreground">{unreadLabel}</p>
+              <p className="mt-0.5 text-[11px] leading-4 text-muted-foreground">{t("notifications.historyCount", { count: notifications.length })}</p>
+            </div>
+            <Link
+              to="/settings#section-notifications"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              aria-label={t("notifications.managePreferences")}
+              title={t("notifications.managePreferences")}
+            >
+              <Settings2 className="h-4 w-4" />
+            </Link>
+          </div>
+          <button
+            type="button"
+            onClick={() => markAllRead()}
+            className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-border/60 bg-background px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
+            <CheckCheck className="h-4 w-4" />
+            {t("notifications.markAllRead")}
+          </button>
+        </>
       )}
     </footer>
   );

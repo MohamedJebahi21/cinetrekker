@@ -143,6 +143,12 @@ async function ensureLanguageLoaded(code: LanguageCode) {
   loadedLocales.add(code);
 }
 
+export async function changeLanguage(value: string) {
+  const code = normalizeLanguageCode(value);
+  await ensureLanguageLoaded(code);
+  await i18n.changeLanguage(code);
+}
+
 export async function initI18n() {
   const initialLanguage = readStoredLanguage();
   const resources: Record<string, { translation: TranslationTree }> = {
@@ -189,7 +195,6 @@ export async function initI18n() {
   i18n.on("languageChanged", (lng) => {
     const code = normalizeLanguageCode(lng);
     applyDocumentLanguage(code);
-    void ensureLanguageLoaded(code);
   });
 
   applyDocumentLanguage(i18n.language);

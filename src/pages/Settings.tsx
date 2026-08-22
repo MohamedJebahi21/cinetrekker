@@ -45,7 +45,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { logger } from "@/lib/logger";
 import { profileService } from "@/services/profile";
-import { languages } from "@/i18n";
+import { changeLanguage, languages } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { StickySaveBar } from "@/components/StickySaveBar";
 import { Button } from "@/components/ui/button";
@@ -627,7 +627,7 @@ export default function Settings() {
   };
 
   const handleLanguageChange = (langCode: string) => {
-    i18n.changeLanguage(langCode);
+    void changeLanguage(langCode);
     toast({
       title: text("settings.languageUpdated", "Language updated"),
       description: `${text("settings.languageChangedTo", "Language changed to")} ${languages.find((l) => l.code === langCode)?.name}`,
