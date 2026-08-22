@@ -19,6 +19,48 @@ function watchedEpisodesQueryKey(userId: string | undefined) {
 }
 
 const CW_CARD_ENRICH_QUERY_KEY = ['cw-card-enrich'] as const;
+const WATCHED_EPISODES_PAGE_SIZE = 500;
+
+/**
+ * Supabase/PostgREST caps an unpaginated response at 1,000 rows. Episode
+ * histories can exceed that threshold, so Continue Watching must page through
+ * every row before deriving counts, completion, or the next episode.
+ */
+async function fetchAllWatchedEpisodes(userId: string): Promise<WatchedEpisode[]> {
+  const rows: WatchedEpisode[] = [];
+  let offset = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('watched_episodes')
+      .select('*')
+      .eq('user_id', userId)
+      .order('watched_at', { ascending: false })
+      .order('show_id', { ascending: true })
+      .order('season_number', { ascending: true })
+      .order('episode_number', { ascending: true })
+      .range(offset, offset + WATCHED_EPISODES_PAGE_SIZE - 1);
+
+    if (error) throw error;
+
+    const page = (data ?? []) as WatchedEpisode[];
+    rows.push(...page);
+    if (page.length < WATCHED_EPISODES_PAGE_SIZE) break;
+    offset += WATCHED_EPISODES_PAGE_SIZE;
+  }
+
+  // A concurrent mark can move a row between pages. Preserve the canonical
+  // per-user episode identity even in that narrow race rather than counting it
+  // twice and corrupting the derived progress percentage.
+  return Array.from(
+    new Map(
+      rows.map((episode) => [
+        `${episode.show_id}-${episode.season_number}-${episode.episode_number}`,
+        episode,
+      ]),
+    ).values(),
+  );
+}
 
 /** Invalidate derived progress views without touching the episode cache. */
 function invalidateDerivedWatchedProgress(
@@ -217,14 +259,7 @@ export function useWatchedEpisodes(showId?: number) {
     queryFn: async () => {
       if (!user) return [];
       
-      const { data, error } = await supabase
-        .from('watched_episodes')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('watched_at', { ascending: false });
-      
-      if (error) throw error;
-      return data as WatchedEpisode[];
+      return fetchAllWatchedEpisodes(user.id);
     },
     enabled: !!user,
     staleTime: 30_000,
