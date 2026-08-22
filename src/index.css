@@ -177,6 +177,8 @@
 
   html {
     scroll-behavior: smooth;
+    /* Reserve the desktop scrollbar width so scroll-locking overlays never shift the page sideways. */
+    scrollbar-gutter: stable;
     /* 8px grid system base */
     font-size: 16px;
   }
