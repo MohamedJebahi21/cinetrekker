@@ -10,7 +10,7 @@ const styles = await readFile(
 test("overlay interactions preserve a stable desktop viewport width", () => {
   assert.match(
     styles,
-    /html\s*\{[\s\S]*?scrollbar-gutter:\s*stable;/,
+    /@media\s*\(min-width:\s*768px\)\s*\{[\s\S]*?html\s*\{[\s\S]*?scrollbar-gutter:\s*stable;/,
     "The document root must reserve scrollbar space when overlays lock scrolling.",
   );
   assert.match(
