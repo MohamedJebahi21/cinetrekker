@@ -58,6 +58,7 @@ function ContinueWatchingCard({
   item,
   watchedEpisodes,
   markingEpisodeTarget,
+  isRefreshing,
   onMarkEpisode,
 }: {
   item: ContinueWatchingVM;
@@ -67,6 +68,8 @@ function ContinueWatchingCard({
     seasonNumber: number;
     episodeNumber: number;
   } | null;
+  /** The retained card is awaiting a fresh canonical progress snapshot. */
+  isRefreshing: boolean;
   onMarkEpisode: (input: {
     showId: number;
     seasonNumber: number;
@@ -101,6 +104,7 @@ function ContinueWatchingCard({
 
   const nextEpisodeLabel = display.nextEpisodeLabel ?? null;
   const hasNextEpisode =
+    !isRefreshing &&
     display.nextEpisodeSeasonNumber != null &&
     display.nextEpisodeNumber != null &&
     !display.nextEpisodeIsUpcoming;
@@ -154,7 +158,12 @@ function ContinueWatchingCard({
             </div>
 
             <div className="mt-3 min-h-[66px] border-l-2 border-primary/70 pl-3">
-              {enrichment.isFetching && item.needsSeasonEnrichment ? (
+              {isRefreshing ? (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground" aria-live="polite">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                  {t("home.syncingEpisodeProgress", "Syncing your episode progress...")}
+                </div>
+              ) : enrichment.isFetching && item.needsSeasonEnrichment ? (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   {t("home.loadingNextEpisode", "Loading next episode...")}
@@ -196,7 +205,9 @@ function ContinueWatchingCard({
             <div className="mt-3">
               <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
                 <span className="font-medium">{t("home.seriesProgress", "Series progress")}</span>
-                {display.progressPercent != null ? (
+                {isRefreshing ? (
+                  <span>{t("home.progressSyncing", "Episodes saved")}</span>
+                ) : display.progressPercent != null ? (
                   <span className="font-semibold tabular-nums text-foreground">{display.progressPercent}%</span>
                 ) : (
                   <span>{t("home.progressSyncing", "Episodes saved")}</span>
@@ -257,7 +268,7 @@ function ContinueWatchingCard({
 export function ContinueWatching() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { data, isLoading, error, refetch } = useContinueWatchingViewModel();
+  const { data, isLoading, isRefreshing, error, refetch } = useContinueWatchingViewModel();
   const { markEpisodeWatched, markingEpisodeTarget, watchedEpisodes } = useWatchedEpisodes();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollFrameRef = useRef<number | null>(null);
@@ -486,6 +497,7 @@ export function ContinueWatching() {
             item={item}
             watchedEpisodes={watchedEpisodes}
             markingEpisodeTarget={markingEpisodeTarget}
+            isRefreshing={isRefreshing}
             onMarkEpisode={markEpisodeWatched}
           />
         ))}

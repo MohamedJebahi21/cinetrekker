@@ -111,6 +111,8 @@ function hashWatched(
 export function useContinueWatchingViewModel(): {
   data: ContinueWatchingVM[] | undefined;
   isLoading: boolean;
+  /** True while a retained rail is being replaced by freshly reconciled episode progress. */
+  isRefreshing: boolean;
   error: Error | null;
   refetch: () => void;
 } {
@@ -362,6 +364,10 @@ export function useContinueWatchingViewModel(): {
     // Preserve the populated rail during a mutation-driven rekey; initial
     // loading remains visible only when no current or placeholder data exists.
     isLoading: (query.isLoading && !query.data) || watchedItemsLoading,
+    // `keepPreviousData` intentionally retains the rail during a watched-episode
+    // rekey. Surface that retained state so the UI never offers an action based
+    // on the prior episode snapshot while the canonical progress query settles.
+    isRefreshing: query.isPlaceholderData,
     error: query.error ?? null,
     refetch: () => query.refetch(),
   };
