@@ -419,7 +419,7 @@ export function UnifiedNav() {
           )}
 
           <div className="topbar-divider" aria-hidden="true" />
-          <DropdownMenu>
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"

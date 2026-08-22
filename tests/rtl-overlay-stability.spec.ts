@@ -13,11 +13,30 @@ async function geometry(page: import("@playwright/test").Page) {
       bodyWidth: body.width,
       headerLeft: header?.left,
       headerRight: header?.right,
+      scrollLocked: document.body.hasAttribute("data-scroll-locked"),
     };
   });
 }
 
-test("Arabic Preferences overlay keeps the desktop page geometry fixed while scroll locking", async ({ page }) => {
+test("English Preferences overlay stays non-modal and keeps desktop page geometry fixed", async ({ page }) => {
+  await page.setViewportSize({ width: 1365, height: 900 });
+  await page.goto("/");
+
+  await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
+  await expect(page.getByRole("button", { name: "Preferences" })).toBeVisible();
+  const before = await geometry(page);
+
+  await page.getByRole("button", { name: "Preferences" }).click();
+  await expect(page.getByText("Quick controls", { exact: true })).toBeVisible();
+  const after = await geometry(page);
+
+  expect(before.direction).toBe("ltr");
+  expect(before.scrollbarGutter).toBe("stable both-edges");
+  expect(before.scrollLocked).toBe(false);
+  expect(after).toEqual(before);
+});
+
+test("Arabic Preferences overlay stays non-modal and keeps desktop page geometry fixed", async ({ page }) => {
   await page.addInitScript(() => window.localStorage.setItem("i18nextLng", "ar"));
   await page.setViewportSize({ width: 1365, height: 900 });
   await page.goto("/");
@@ -32,5 +51,6 @@ test("Arabic Preferences overlay keeps the desktop page geometry fixed while scr
 
   expect(before.direction).toBe("rtl");
   expect(before.scrollbarGutter).toBe("stable both-edges");
+  expect(before.scrollLocked).toBe(false);
   expect(after).toEqual(before);
 });

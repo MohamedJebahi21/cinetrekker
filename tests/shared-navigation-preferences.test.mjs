@@ -2,20 +2,27 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [navigationSource, notificationSource, settingsSource, i18nSource] = await Promise.all([
+const [navigationSource, notificationSource, settingsSource, i18nSource, dropdownMenuSource] = await Promise.all([
   readFile(new URL("../src/components/UnifiedNav.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/components/NotificationBell.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/pages/Settings.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/i18n.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/components/ui/dropdown-menu.tsx", import.meta.url), "utf8"),
 ]);
 
 const preferencesStart = navigationSource.indexOf('aria-label={t("nav.preferences", "Preferences")}');
 const preferencesEnd = navigationSource.indexOf("topbar-menu-button", preferencesStart);
 const preferencesMenu = navigationSource.slice(preferencesStart, preferencesEnd);
 
+test("ordinary dropdown menus are non-modal by default to preserve document geometry", () => {
+  assert.match(dropdownMenuSource, /modal = false/);
+  assert.match(dropdownMenuSource, /<DropdownMenuPrimitive\.Root modal=\{modal\}/);
+});
+
 test("UnifiedNav keeps Settings visible while nesting language and unambiguous theme controls in compact quick-control submenus", () => {
   assert.ok(preferencesStart >= 0);
   assert.ok(preferencesEnd > preferencesStart);
+  assert.match(navigationSource, /<DropdownMenu modal=\{false\}>/);
   assert.match(preferencesMenu, /preferences\.quickControls/);
   assert.match(preferencesMenu, /<Link to="\/settings"/);
   assert.match(preferencesMenu, /<DropdownMenuSub>/);
