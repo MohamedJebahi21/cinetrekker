@@ -183,8 +183,8 @@
 
   @media (min-width: 768px) {
     html {
-      /* Reserve the desktop scrollbar width so scroll-locking overlays never shift the page sideways. */
-      scrollbar-gutter: stable;
+      /* Reserve equal inline space on both edges so scroll locking cannot shift LTR or RTL layouts when the scrollbar edge is mirrored. */
+      scrollbar-gutter: stable both-edges;
     }
   }
 

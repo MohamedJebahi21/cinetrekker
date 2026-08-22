@@ -37,18 +37,20 @@ test("UnifiedNav keeps focused top-level utilities while removing separate palet
   assert.doesNotMatch(navigationSource, /icons\/globe/);
 });
 
-test("NotificationBell provides a useful localized empty inbox plus concise individual and bulk actions", () => {
+test("NotificationBell provides a simple localized empty inbox plus concise individual and bulk actions", () => {
   assert.match(notificationSource, /const previewNotifications = unreadNotifications\.slice\(0, 3\)/);
   assert.match(notificationSource, /notifications\.emptyTitle/);
-  assert.match(notificationSource, /notifications\.releaseAlertsTitle/);
-  assert.match(notificationSource, /notifications\.watchlistAlertsTitle/);
+  assert.match(notificationSource, /notifications\.emptyDescription/);
   assert.match(notificationSource, /notifications\.exploreCalendar/);
   assert.match(notificationSource, /to="\/calendar"/);
-  assert.match(notificationSource, /notifications\.historyTitle/);
+  assert.match(notificationSource, /notifications\.viewHistory/);
   assert.match(notificationSource, /notifications\.markAllRead/);
   assert.match(notificationSource, /notifications\.managePreferences/);
   assert.match(notificationSource, /<Settings2 className="h-4 w-4"/);
-  assert.doesNotMatch(notificationSource, /View all notifications/);
+  assert.doesNotMatch(notificationSource, /notifications\.releaseAlertsTitle/);
+  assert.doesNotMatch(notificationSource, /notifications\.watchlistAlertsTitle/);
+  assert.doesNotMatch(notificationSource, /notifications\.historyTitle/);
+  assert.doesNotMatch(notificationSource, /grid-cols-2/);
 });
 
 test("language changes load the selected resource bundle before changing the active interface language", () => {
