@@ -17,7 +17,6 @@ import {
   Check,
   Plus,
   Search,
-  Lock,
   Trophy,
   Share2,
   CheckCircle2,
@@ -339,51 +338,6 @@ export default function Profile() {
       setActiveProfileTab("overview");
     }
   }, [activeProfileTab, isEditMode]);
-
-  const profilePrivacyMutation = useMutation({
-    mutationFn: async (nextIsPublic: boolean) => {
-      if (!user?.id) throw new Error("Sign in to change profile privacy");
-      await profileService.saveProfile(user.id, { is_public: nextIsPublic });
-    },
-    onMutate: async (nextIsPublic) => {
-      const previousIsPublic = isPublic;
-      setIsPublic(nextIsPublic);
-      return { previousIsPublic };
-    },
-    onSuccess: (_, nextIsPublic) => {
-      initialStateRef.current = {
-        ...initialStateRef.current,
-        isPublic: nextIsPublic,
-      };
-      void queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
-      window.dispatchEvent(new CustomEvent("profileUpdated"));
-      toast({
-        title: nextIsPublic
-          ? text("profile.publicModeEnabled", "Public profile enabled")
-          : text("profile.privateModeEnabled", "Private profile enabled"),
-        description: nextIsPublic
-          ? text(
-              "profile.publicModeEnabledDesc",
-              "Other members can now view your public profile details.",
-            )
-          : text(
-              "profile.privateModeEnabledDesc",
-              "Your profile details are now hidden from other members.",
-            ),
-      });
-    },
-    onError: (_error, _nextIsPublic, context) => {
-      if (context) setIsPublic(context.previousIsPublic);
-      toast({
-        title: text("profile.privacyUpdateFailed", "Privacy update failed"),
-        description: text(
-          "profile.privacyUpdateFailedDesc",
-          "Your profile visibility could not be changed. Please try again.",
-        ),
-        variant: "destructive",
-      });
-    },
-  });
 
   const optimisticGenresMutation = useMutation({
     mutationFn: async (nextGenres: number[]) => {
@@ -2202,54 +2156,6 @@ export default function Profile() {
                                 <span className={cn(bio.length > 450 && "text-destructive font-semibold")}>{bio.length}</span>/500{" "}
                                 {text("profile.characters", "characters")}
                               </p>
-                            </div>
-
-                            <div className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3">
-                              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <Lock className="h-4 w-4 text-primary" />
-                                    <Label className="text-sm font-semibold text-foreground">
-                                      {text("profile.privateProfile", "Private profile")}
-                                    </Label>
-                                    <Badge variant={isPublic ? "secondary" : "default"} className="text-[10px]">
-                                      {isPublic
-                                        ? text("profile.currentlyPublic", "Currently public")
-                                        : text("profile.currentlyPrivate", "Currently private")}
-                                    </Badge>
-                                  </div>
-                                  <p className="mt-1 max-w-xl text-xs leading-5 text-muted-foreground">
-                                    {isPublic
-                                      ? text(
-                                          "profile.privateProfilePublicHint",
-                                          "Your public profile can show your bio, favorites, and public activity. Your age, private lists, and settings stay protected.",
-                                        )
-                                      : text(
-                                          "profile.privateProfilePrivateHint",
-                                          "People can find your name, but your profile details, favorites, activity, counts, and avatar stay hidden.",
-                                        )}
-                                  </p>
-                                </div>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant={isPublic ? "outline" : "default"}
-                                  onClick={() => profilePrivacyMutation.mutate(!isPublic)}
-                                  disabled={!user?.id || profilePrivacyMutation.isPending}
-                                  className="shrink-0 gap-2"
-                                >
-                                  {profilePrivacyMutation.isPending ? (
-                                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                                  ) : isPublic ? (
-                                    <EyeOff className="h-4 w-4" />
-                                  ) : (
-                                    <Eye className="h-4 w-4" />
-                                  )}
-                                  {isPublic
-                                    ? text("profile.enablePrivateProfile", "Enable private profile")
-                                    : text("profile.disablePrivateProfile", "Disable private profile")}
-                                </Button>
-                              </div>
                             </div>
 
                             <div className="flex gap-3">

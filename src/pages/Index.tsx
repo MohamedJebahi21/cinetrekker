@@ -23,7 +23,6 @@ import { ActivationJourney } from "@/components/home/ActivationJourney";
 import { CommunityActivityFeed } from "@/components/home/CommunityActivityFeed";
 import { DailyCheckInCard } from "@/components/home/DailyCheckInCard";
 import { CineQuestHub } from "@/components/quests/CineQuestHub";
-import { DailyTriviaCard } from "@/components/home/DailyTriviaCard";
 import { MotionRevealSection } from "@/components/motion/MotionRevealSection";
 import { PaginationDots, PaginationDotStatic } from "@/components/ui/pagination-dots";
 import GuestSyncBanner from "@/components/GuestSyncBanner";
@@ -518,9 +517,6 @@ export default function Index() {
             </MotionRevealSection>
             <MotionRevealSection tone="bold" delayClassName="delay-200" accentOpacityClassName="opacity-14">
               <CineQuestHub limit={2} />
-            </MotionRevealSection>
-            <MotionRevealSection tone="bold" delayClassName="delay-250" accentOpacityClassName="opacity-14">
-              <DailyTriviaCard />
             </MotionRevealSection>
             <MotionRevealSection tone="soft" delayClassName="delay-300" accentOpacityClassName="opacity-16">
               {freshDiscoverySection}

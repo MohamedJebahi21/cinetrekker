@@ -26,6 +26,7 @@ import {
   ShieldAlert,
   Type,
   Eye,
+  EyeOff,
   RotateCcw,
   Check,
   Sun,
@@ -332,6 +333,8 @@ export default function Settings() {
     () => getBrowserPushReadiness(),
   );
   const [isUpdatingBrowserPush, setIsUpdatingBrowserPush] = useState(false);
+  const [isPublicProfile, setIsPublicProfile] = useState(false);
+  const [isUpdatingProfilePrivacy, setIsUpdatingProfilePrivacy] = useState(false);
 
   const text = useCallback(
     (key: string, fallback: string) => humanizeUiText(String(t(key, fallback))),
@@ -397,6 +400,7 @@ export default function Settings() {
         void profileService.getProfile(user.id)
           .then((profile) => {
             if (!isMounted || !profile) return;
+            setIsPublicProfile(profile.is_public ?? false);
             apply({ showWatchlist: profile.show_watchlist, showStats: profile.show_stats, allowRecommendations: profile.allow_recommendations });
           })
           .catch((e) => { if (isMounted) logger.error("Error loading settings", e); });
@@ -404,6 +408,7 @@ export default function Settings() {
         if (isMounted) {
           subscription = await profileService.subscribeToProfile(user.id, (p) => {
             if (!isMounted) return;
+            setIsPublicProfile(p.is_public ?? false);
             apply({ showWatchlist: p.show_watchlist, showStats: p.show_stats, allowRecommendations: p.allow_recommendations });
           });
         }
@@ -480,6 +485,56 @@ export default function Settings() {
     });
   };
 
+  const handleProfilePrivacyToggle = async () => {
+    if (!user?.id) {
+      toast({
+        title: text("settings.profilePrivacySignIn", "Sign in to change profile privacy"),
+        description: text(
+          "settings.profilePrivacySignInDesc",
+          "Profile visibility is connected to your CineTrekker account.",
+        ),
+      });
+      return;
+    }
+
+    const previousIsPublic = isPublicProfile;
+    const nextIsPublic = !previousIsPublic;
+    setIsPublicProfile(nextIsPublic);
+    setIsUpdatingProfilePrivacy(true);
+
+    try {
+      await profileService.updateProfile(user.id, { is_public: nextIsPublic });
+      window.dispatchEvent(new CustomEvent("profileUpdated"));
+      toast({
+        title: nextIsPublic
+          ? text("profile.publicModeEnabled", "Public profile enabled")
+          : text("profile.privateModeEnabled", "Private profile enabled"),
+        description: nextIsPublic
+          ? text(
+              "profile.publicModeEnabledDesc",
+              "Other members can now view your public profile details.",
+            )
+          : text(
+              "profile.privateModeEnabledDesc",
+              "Your profile details are now hidden from other members.",
+            ),
+      });
+    } catch (error) {
+      logger.error("Profile privacy update failed", error);
+      setIsPublicProfile(previousIsPublic);
+      toast({
+        title: text("profile.privacyUpdateFailed", "Privacy update failed"),
+        description: text(
+          "profile.privacyUpdateFailedDesc",
+          "Your profile visibility could not be changed. Please try again.",
+        ),
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingProfilePrivacy(false);
+    }
+  };
+
   const updateNotificationPreference = (
     key: keyof NotificationPreferences,
     checked: boolean,
@@ -548,7 +603,6 @@ export default function Settings() {
       localStorage.setItem(profileKey, JSON.stringify({ ...parsed, settings }));
       if (user?.id) {
         await profileService.updateProfile(user.id, {
-          is_public: false,
           show_watchlist: settings.showWatchlist,
           show_stats: settings.showStats,
           allow_recommendations: settings.allowRecommendations,
@@ -1161,6 +1215,52 @@ export default function Settings() {
                   title={text("profile.privacySettings", "Privacy settings")}
                   description={text("settings.privacyDesc", "Control what others can see on your profile.")}
                 >
+                  <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Lock className="h-4 w-4 text-primary" />
+                        <p className="text-sm font-medium text-foreground">
+                          {text("profile.privateProfile", "Private profile")}
+                        </p>
+                        <span className="rounded-full border border-border/70 bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                          {isPublicProfile
+                            ? text("profile.currentlyPublic", "Currently public")
+                            : text("profile.currentlyPrivate", "Currently private")}
+                        </span>
+                      </div>
+                      <p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">
+                        {isPublicProfile
+                          ? text(
+                              "profile.privateProfilePublicHint",
+                              "Your public profile can show your bio, favorites, and public activity. Your age, private lists, and settings stay protected.",
+                            )
+                          : text(
+                              "profile.privateProfilePrivateHint",
+                              "People can find your name, but your profile details, favorites, activity, counts, and avatar stay hidden.",
+                            )}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={isPublicProfile ? "outline" : "default"}
+                      onClick={() => void handleProfilePrivacyToggle()}
+                      disabled={!user?.id || isUpdatingProfilePrivacy}
+                      className="shrink-0 gap-2"
+                    >
+                      {isUpdatingProfilePrivacy ? (
+                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      ) : isPublicProfile ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                      {isPublicProfile
+                        ? text("profile.enablePrivateProfile", "Enable private profile")
+                        : text("profile.disablePrivateProfile", "Disable private profile")}
+                    </Button>
+                  </div>
+                  <Divider />
                   <SettingsSwitchRow
                     id="showWatchlist"
                     icon={Bookmark}
