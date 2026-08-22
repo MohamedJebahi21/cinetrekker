@@ -24,6 +24,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useMotionIntensityPreference } from "@/hooks/useMotionIntensityPreference";
@@ -188,6 +193,9 @@ export function UnifiedNav() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
+  const activeLanguageCode = i18n.resolvedLanguage ?? i18n.language;
+  const activeLanguageLabel =
+    languages.find((language) => language.code === activeLanguageCode)?.name ?? "English";
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -403,50 +411,97 @@ export function UnifiedNav() {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="h-10 gap-2 border-border/70 bg-card/60 px-3 text-xs font-semibold text-foreground hover:bg-accent"
+                className="h-10 gap-2 rounded-xl border-border/70 bg-card/65 px-3 text-xs font-semibold text-foreground shadow-sm transition-[background-color,border-color,box-shadow] hover:border-primary/30 hover:bg-primary/5 hover:shadow-md"
                 aria-label={t("nav.preferences", "Preferences")}
               >
-                <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                <SlidersHorizontal className="h-4 w-4 text-primary" aria-hidden="true" />
                 <span className="hidden lg:inline">{t("nav.preferences", "Preferences")}</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[220px] border-border/50 bg-popover p-1.5">
-              <DropdownMenuItem asChild className="min-h-10 cursor-pointer font-medium">
-                <Link to="/settings">
-                  <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
-                  {t("nav.settings", "Settings")}
+            <DropdownMenuContent
+              align="end"
+              sideOffset={10}
+              className="w-[17.5rem] overflow-hidden rounded-2xl border-border/60 bg-popover p-1.5 shadow-[0_22px_56px_hsl(var(--background)/0.45)]"
+            >
+              <div className="px-2.5 pb-2 pt-1.5">
+                <p className="text-sm font-bold tracking-tight text-foreground">Quick controls</p>
+                <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                  Tune your viewing space without leaving this page.
+                </p>
+              </div>
+              <DropdownMenuItem asChild className="min-h-[3.25rem] cursor-pointer rounded-xl px-2.5 py-2 font-medium focus:bg-accent">
+                <Link to="/settings" className="flex w-full items-center gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-background text-primary">
+                    <Settings className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold">{t("nav.settings", "Settings")}</span>
+                    <span className="block truncate text-[11px] font-normal text-muted-foreground">Account, privacy, and notifications</span>
+                  </span>
                 </Link>
               </DropdownMenuItem>
-              <div className="my-1 border-t border-border/70" />
-              <p className="px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                {t("nav.changeLanguage", "Language")}
+              <div className="my-1.5 border-t border-border/70" />
+              <p className="px-2.5 pb-1 pt-0.5 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                Appearance and language
               </p>
-              {languages.map((lang) => (
-                <DropdownMenuItem
-                  key={lang.code}
-                  onClick={() => i18n.changeLanguage(lang.code)}
-                  className={i18n.language === lang.code ? "bg-accent" : ""}
-                >
-                  {lang.name}
-                </DropdownMenuItem>
-              ))}
-              <div className="my-1 border-t border-border/70" />
-              <p className="px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                {t("nav.changeTheme", "Theme")}
-              </p>
-              {(["dark", "light", "oled"] as const).map((option) => (
-                <DropdownMenuItem
-                  key={option}
-                  onClick={() => setTheme(option)}
-                  className={theme === option ? "bg-accent" : ""}
-                >
-                  {option === "dark"
-                    ? t("nav.themeDark", "Dark")
-                    : option === "light"
-                      ? t("nav.themeLight", "Light")
-                      : t("nav.themeOled", "OLED")}
-                </DropdownMenuItem>
-              ))}
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="min-h-11 rounded-xl px-2.5 py-2 focus:bg-accent data-[state=open]:bg-accent">
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="text-sm font-semibold">{t("nav.changeLanguage", "Language")}</span>
+                    <span className="mt-0.5 text-[11px] font-normal text-muted-foreground">{activeLanguageLabel}</span>
+                  </span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="min-w-[14rem] rounded-2xl border-border/60 bg-popover p-1.5 shadow-[0_18px_48px_hsl(var(--background)/0.42)]">
+                  <p className="px-2.5 pb-1 pt-0.5 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                    {t("nav.changeLanguage", "Language")}
+                  </p>
+                  <DropdownMenuRadioGroup value={activeLanguageCode} onValueChange={(code) => void i18n.changeLanguage(code)}>
+                    {languages.map((language) => (
+                      <DropdownMenuRadioItem key={language.code} value={language.code} className="min-h-10 rounded-xl py-2 text-sm font-medium focus:bg-accent">
+                        {language.name}
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="min-h-11 rounded-xl px-2.5 py-2 focus:bg-accent data-[state=open]:bg-accent">
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="text-sm font-semibold">{t("nav.changeTheme", "Theme")}</span>
+                    <span className="mt-0.5 text-[11px] font-normal capitalize text-muted-foreground">{theme}</span>
+                  </span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="min-w-[15rem] rounded-2xl border-border/60 bg-popover p-1.5 shadow-[0_18px_48px_hsl(var(--background)/0.42)]">
+                  <p className="px-2.5 pb-1 pt-0.5 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                    {t("nav.changeTheme", "Theme")}
+                  </p>
+                  <DropdownMenuRadioGroup value={theme} onValueChange={(option) => setTheme(option as typeof theme)}>
+                    {(["dark", "light", "oled"] as const).map((option) => (
+                      <DropdownMenuRadioItem key={option} value={option} className="min-h-11 rounded-xl py-2 text-sm font-medium focus:bg-accent">
+                        <span
+                          className={cn(
+                            "mr-2 h-4 w-4 shrink-0 rounded-full border shadow-inner",
+                            option === "dark" && "border-white/15 bg-slate-800",
+                            option === "light" && "border-slate-300 bg-white",
+                            option === "oled" && "border-white/20 bg-black",
+                          )}
+                          aria-hidden="true"
+                        />
+                        <span className="flex-1">
+                          {option === "dark"
+                            ? t("nav.themeDark", "Dark")
+                            : option === "light"
+                              ? t("nav.themeLight", "Light")
+                              : t("nav.themeOled", "OLED")}
+                        </span>
+                        <span className="text-[10px] font-medium text-muted-foreground">
+                          {option === "dark" ? "Cinematic" : option === "light" ? "Daylight" : "Pure black"}
+                        </span>
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
             </DropdownMenuContent>
           </DropdownMenu>
 
