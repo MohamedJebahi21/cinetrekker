@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -18,6 +19,7 @@ import { useUserLists } from "@/contexts/UserListsContext";
 import { useContinueWatchingViewModel } from "@/hooks/useContinueWatchingViewModel";
 import { useWatchedEpisodes } from "@/hooks/useFollowedShows";
 import { useDailyReleases } from "@/hooks/useDailyReleases";
+import { useMovieDetails } from "@/hooks/useMovieDetails";
 import { getImageUrl } from "@/services/tmdb";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/Image";
@@ -47,18 +49,12 @@ function episodeCode(item: ContinueWatchingVM) {
 }
 
 export function UpNextCommandCenter() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { watchlist } = useUserLists();
   const continueWatching = useContinueWatchingViewModel();
   const { markEpisodeWatched, markingEpisodeTarget } = useWatchedEpisodes();
   const dailyReleases = useDailyReleases();
-
-  if (!user) return null;
-
-  if (continueWatching.isLoading || dailyReleases.isLoading) {
-    return <UpNextSkeleton />;
-  }
 
   const continuing = continueWatching.data ?? [];
   const readyToResume = continuing.find(
@@ -69,7 +65,35 @@ export function UpNextCommandCenter() {
   );
   const progressFocus = readyToResume ?? continuing[0] ?? null;
   const releaseFocus = dailyReleases.releases[0] ?? null;
+  const queueCandidate = useMemo(
+    () =>
+      watchlist.reduce<typeof watchlist[number] | null>((latest, item) => {
+        if (!latest) return item;
+        return Date.parse(item.addedAt) > Date.parse(latest.addedAt) ? item : latest;
+      }, null),
+    [watchlist],
+  );
+  const shouldResolveQueue =
+    Boolean(user) &&
+    !continueWatching.isLoading &&
+    !dailyReleases.isLoading &&
+    !progressFocus &&
+    !releaseFocus &&
+    Boolean(queueCandidate);
+  const { details: queueDetails, isLoading: queueDetailsLoading } = useMovieDetails(
+    shouldResolveQueue ? queueCandidate?.mediaId : undefined,
+    queueCandidate?.mediaType ?? "movie",
+    i18n.language,
+  );
+  const queueTitle = queueDetails?.title ?? queueDetails?.name ?? null;
+  const isQueueFocus = Boolean(shouldResolveQueue && queueCandidate && queueTitle);
   const primaryFocus = progressFocus ?? releaseFocus;
+
+  if (!user) return null;
+
+  if (continueWatching.isLoading || dailyReleases.isLoading || (shouldResolveQueue && queueDetailsLoading)) {
+    return <UpNextSkeleton />;
+  }
 
   const isProgressFocus = primaryFocus === progressFocus && progressFocus !== null;
   const isReadyEpisode =
@@ -88,12 +112,16 @@ export function UpNextCommandCenter() {
     ? progressFocus.href
     : releaseFocus
       ? `/${releaseFocus.mediaType === "tv" ? "tv" : "movie"}/${releaseFocus.id}`
-      : "/discover";
+      : isQueueFocus && queueCandidate
+        ? `/${queueCandidate.mediaType === "tv" ? "tv" : "movie"}/${queueCandidate.mediaId}`
+        : "/discover";
   const primaryImage = isProgressFocus
     ? getImageUrl(progressFocus.posterPath, "w500")
     : releaseFocus
       ? getImageUrl(releaseFocus.posterPath, "w500")
-      : "";
+      : isQueueFocus
+        ? getImageUrl(queueDetails?.poster_path ?? null, "w500")
+        : "";
 
   const eyebrow = isProgressFocus
     ? isReadyEpisode
@@ -103,13 +131,15 @@ export function UpNextCommandCenter() {
       ? releaseFocus.source === "following"
         ? t("home.upNextReasonFollowRelease", "New today from a show you follow")
         : t("home.upNextReasonWatchlistRelease", "New today from your watchlist")
-      : t("home.upNextReasonQueue", "Your next great watch starts here");
+      : isQueueFocus
+        ? t("home.upNextQueueEyebrow", "Your queue")
+        : t("home.upNextReasonQueue", "Your next great watch starts here");
 
   const primaryTitle = isProgressFocus
     ? progressFocus.title
     : releaseFocus
       ? releaseFocus.title
-      : t("home.upNextEmptyTitle", "Choose something worth watching");
+      : queueTitle ?? t("home.upNextEmptyTitle", "Choose something worth watching");
 
   const primaryMeta = isProgressFocus
     ? nextCode
@@ -119,7 +149,9 @@ export function UpNextCommandCenter() {
       ? releaseFocus.mediaType === "tv" && releaseFocus.seasonNumber && releaseFocus.episodeNumber
         ? `S${releaseFocus.seasonNumber}E${releaseFocus.episodeNumber}${releaseFocus.episodeName ? ` · ${releaseFocus.episodeName}` : ""}`
         : t("home.upNextMovieRelease", "New movie release")
-      : t("home.upNextEmptyMeta", "Search, save, and start building a personal queue.");
+      : isQueueFocus
+        ? t("home.upNextQueueFocusMeta", "Saved to your watchlist and ready when you are.")
+        : t("home.upNextEmptyMeta", "Search, save, and start building a personal queue.");
 
   const secondaryRelease =
     releaseFocus && (!isProgressFocus || releaseFocus.id !== progressFocus.showId)
@@ -171,7 +203,7 @@ export function UpNextCommandCenter() {
             <div className="relative flex min-h-[238px] flex-col justify-between p-4 sm:min-h-[250px] sm:p-5">
               <div className="max-w-[80%] sm:max-w-[72%]">
                 <p className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/12 px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.15em] text-primary">
-                  {isProgressFocus ? <CirclePlay className="h-3.5 w-3.5" aria-hidden="true" /> : <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />}
+                  {isProgressFocus ? <CirclePlay className="h-3.5 w-3.5" aria-hidden="true" /> : isQueueFocus ? <ListChecks className="h-3.5 w-3.5" aria-hidden="true" /> : <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />}
                   {eyebrow}
                 </p>
                 <h3 className="mt-3 line-clamp-2 text-2xl font-bold leading-tight text-white sm:text-3xl">
@@ -250,7 +282,7 @@ export function UpNextCommandCenter() {
               </Link>
             ) : (
               <Link
-                to={watchlist.length > 0 ? "/watchlist" : "/discover"}
+                to={watchlist.length > 0 && !isQueueFocus ? "/watchlist" : "/discover"}
                 className="group flex min-h-[112px] items-center gap-3 rounded-2xl border border-border/60 bg-background/45 p-3 transition duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-background/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
@@ -258,15 +290,19 @@ export function UpNextCommandCenter() {
                 </span>
                 <div className="min-w-0">
                   <p className="text-[0.65rem] font-bold uppercase tracking-[0.14em] text-primary/90">
-                    {watchlist.length > 0 ? t("home.upNextQueueEyebrow", "Your queue") : t("home.upNextDiscoverEyebrow", "Ready when you are")}
+                      {watchlist.length > 0 && !isQueueFocus
+                        ? t("home.upNextQueueEyebrow", "Your queue")
+                        : t("home.upNextDiscoverEyebrow", "Ready when you are")}
                   </p>
                   <p className="mt-1 text-sm font-bold text-foreground group-hover:text-primary">
-                    {watchlist.length > 0
+                    {watchlist.length > 0 && !isQueueFocus
                       ? t("home.upNextQueueTitle", { count: watchlist.length, defaultValue: "{{count}} title waiting in your watchlist" })
                       : t("home.upNextDiscoverTitle", "Find something for tonight")}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {watchlist.length > 0 ? t("home.upNextQueueBody", "Open your saved titles and choose your next watch.") : t("home.upNextDiscoverBody", "Build a queue and CineTrekker will keep it ready.")}
+                    {watchlist.length > 0 && !isQueueFocus
+                      ? t("home.upNextQueueBody", "Open your saved titles and choose your next watch.")
+                      : t("home.upNextDiscoverBody", "Build a queue and CineTrekker will keep it ready.")}
                   </p>
                 </div>
               </Link>

@@ -33,6 +33,18 @@
 - [x] **SEC-01 — CSP hardening:** Tighten overly broad CSP directives where implementation-compatible, add reporting configuration, and preserve required integrations.
 - [x] **SPONSOR-01 — Sponsor readiness:** Add transparent media-kit, sponsorship-labeling, suitability, placement, and reporting-methodology pages. Do not enable advertisements or make audience guarantees.
 
+## P2.5 — Retention, decision quality, and repeated-use improvements
+
+These items extend the original audit after its source-level foundations were completed. Each item is deliberately grounded in the product’s existing activation, Up Next, tracking, discovery, and recommendation flows; duplicate workflows should not be introduced.
+
+- [x] **RET-01 — First-session activation:** Present a localized, dismissible activation journey for signed-in users with no library activity. It already guides users to build a queue, log a watch, follow a series, and shape recommendations without auto-writing data.
+- [x] **RET-02 — Personal next-action foundation:** Surface a single contextual Up Next focus from continue-watching progress, followed/watchlist releases, or discovery when no personal activity exists.
+- [x] **RET-03 — Recommendation transparency:** Explain the basis of personalized recommendation rails with localized context, remove the generic English fallback, and protect accessibility/localization behavior with regression coverage. Released in `9827abf`.
+- [x] **RET-04 — Tonight decision flow:** Extend the existing Up Next priority order with a read-only detail lookup for the newest saved title when there is no resumable episode or relevant daily release. The selected title leads only to Details; it does not mutate any watchlist, history, rating, follow, or progress record.
+- [x] **RET-05 — Low-friction tracking audit:** Confirm existing home/search/watchlist/continue-watching controls retain their tested no-refresh behavior. Harden the active Details controls with explicit `type="button"` behavior and a localized accessible name for the mobile share control; protect the contract with regression coverage.
+- [x] **RET-06 — Queue and list usefulness audit:** Confirm the existing watchlist hierarchy, collections, filters, empty states, calendar pathway, and recent-save context. The Up Next queue fallback makes the most recently saved title actionable without duplicating another list-management workflow.
+- [x] **RET-07 — Discovery and recommendation feedback audit:** Confirm original-title support, provider-language clarity, existing hide/feedback controls, and no-result recovery. Add localized recommendation basis context and remove the English generic fallback in `9827abf`.
+
 ## P3 — External evidence and governance required before large-scale commercial launch
 
 - [ ] **DEPLOY-EXT-01 — Apply notification-scale migration:** Apply `supabase/migrations/20260824190000_notification_scale_and_retention.sql` through the approved Supabase production process before, or atomically with, the notification API/frontend release. Use `supabase/NOTIFICATION_SCALE_DEPLOYMENT_RUNBOOK.md` for schema-only verification. As of 2026-08-24, read-only probes confirm the new worker-state table and server-only batch RPC are not yet present in production.
@@ -43,8 +55,8 @@
 
 ## Verified release evidence — 2026-08-24
 
-The source-level backlog above has passed the full GitHub Release Quality Gate on commits `336cb12` and `a10a6e7`. The stabilized functional desktop matrix passed with 129 checks in Chromium, Firefox, and WebKit; one explicitly skipped authenticated social-boundary test remains per engine. Chromium is the only reviewed visual-baseline engine; generated Firefox/WebKit snapshots are intentionally not adopted. The public health endpoint returned HTTP 200 with coarse healthy dependency indicators, while public status, trust, measurement, and partnership routes returned HTTP 200 during read-only production checks.
+The source-level backlog above has passed the full GitHub Release Quality Gate on commits `336cb12` and `a10a6e7`. Subsequent identity-aligned check-in/quest refinement (`0b6d544`) and localized recommendation-context refinement (`9827abf`) also passed the Release Quality Gate. The stabilized functional desktop matrix passed with 129 checks in Chromium, Firefox, and WebKit; one explicitly skipped authenticated social-boundary test remains per engine. Chromium is the only reviewed visual-baseline engine; generated Firefox/WebKit snapshots are intentionally not adopted. The public health endpoint returned HTTP 200 with coarse healthy dependency indicators, while public status, trust, measurement, and partnership routes returned HTTP 200 during read-only production checks.
 
 ## Completion rules
 
-Every implemented item must include appropriate tests, locale coverage, responsive/RTL review, `git diff --check`, and the full quality gate before release. Database work must be additive/idempotent and must never mutate existing user records as part of deployment. Items marked `EXT` require real production-console access, independent human review, or legal/commercial decisions; they are tracked but cannot truthfully be completed by source-code changes alone.
+Every implemented item must include appropriate tests, locale coverage, responsive/RTL review, `git diff --check`, and the full quality gate before release. Database work must be additive/idempotent and must never mutate existing user records as part of deployment. Items marked `EXT` require real production-console access, independent human review, or legal/commercial decisions; they are tracked but cannot truthfully be completed by source-code changes alone. The `RET` sequence is the implementation queue for user-experience improvements that can be completed safely and independently after each code and interaction audit.
