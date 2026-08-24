@@ -172,12 +172,23 @@ export function BecauseYouLiked() {
   }
 
   const sectionTitle = seed.useGenericHeading
-    ? "Based on Your Recent Activity"
+    ? t("home.basedOnRecentActivity", "Based on Your Recent Activity")
     : t("home.becauseYouLiked", { title: seed.title });
+  const sectionDescription = seed.useGenericHeading
+    ? t(
+      "home.basedOnRecentActivityDesc",
+      "These suggestions reflect your recent saves and watching activity.",
+    )
+    : t(
+      "home.becauseYouLikedContext",
+      "These suggestions build on {{title}} and your recent activity.",
+      { title: seed.title },
+    );
 
   return (
     <MediaCarouselEnhanced
       title={sectionTitle}
+      description={sectionDescription}
       items={filteredResults.map((item) => ({ ...item, media_type: seed.mediaType }))}
       loading={isLoading}
       showMoreLink={`/${seed.mediaType}/${seed.id}`}

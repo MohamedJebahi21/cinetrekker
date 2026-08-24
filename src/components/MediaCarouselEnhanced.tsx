@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight, Film } from "lucide-react";
@@ -21,6 +21,7 @@ type ScrollState = {
 
 interface MediaCarouselProps {
   title: string;
+  description?: string;
   items: Media[];
   loading?: boolean;
   showMoreLink?: string;
@@ -89,6 +90,7 @@ function getPreferredScrollBehavior(): ScrollBehavior {
 
 export function MediaCarouselEnhanced({
   title,
+  description,
   items,
   loading = false,
   showMoreLink,
@@ -113,6 +115,7 @@ export function MediaCarouselEnhanced({
     });
   }
   const { t } = useTranslation();
+  const descriptionId = useId();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollCheckFrameRef = useRef<number | null>(null);
 
@@ -201,9 +204,20 @@ export function MediaCarouselEnhanced({
   const nextText = t("common.next") ? toTitleCaseLabel(t("common.next")) : "Next";
 
   return (
-    <section className="animate-fade-in group/carousel" aria-label={headingText}>
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-xl font-bold md:text-2xl">{headingText}</h2>
+    <section
+      className="animate-fade-in group/carousel"
+      aria-label={headingText}
+      aria-describedby={description ? descriptionId : undefined}
+    >
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h2 className="text-xl font-bold text-foreground md:text-2xl">{headingText}</h2>
+          {description ? (
+            <p id={descriptionId} className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
+              {description}
+            </p>
+          ) : null}
+        </div>
 
         {showMoreLink ? (
           <Link to={showMoreLink}>

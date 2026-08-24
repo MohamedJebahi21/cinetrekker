@@ -326,6 +326,8 @@
     "becauseYouLiked": "Because You Liked {{title}}",
     "recentActivity": "Recent Activity",
     "basedOnRecentActivity": "Based on Your Recent Activity",
+    "basedOnRecentActivityDesc": "These suggestions reflect your recent saves and watching activity.",
+    "becauseYouLikedContext": "These suggestions build on {{title}} and your recent activity.",
     "welcome": "Hey there!",
     "welcomeBack": "Welcome to CineTrekker!",
     "subtitle": "Ready to dive in?",
