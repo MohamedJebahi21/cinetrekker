@@ -1,7 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useUserLists } from "@/contexts/UserListsContext";
 import { enrichMediaItems } from "@/lib/mediaEnrichment";
+import {
+  normalizeWatchedYearRange,
+  type WatchedYearRange,
+} from "@/lib/watchedYearRange";
 import type { EnrichedUserMedia } from "@/types/enriched-media";
 import {
   getEnrichedMediaCountries,
@@ -19,10 +23,11 @@ export function useWatchedFilters(language: string) {
   const [filterLang, setFilterLang] = useState<string>(ALL);
   const [filterType, setFilterType] = useState<string>(ALL);
   const [filterCountry, setFilterCountry] = useState<string>(ALL);
-  const [filterYear, setFilterYear] = useState<[number, number]>([
+  const [filterYear, setFilterYearState] = useState<WatchedYearRange>([
     1900,
     new Date().getFullYear(),
   ]);
+  const hasInitializedYearRange = useRef(false);
 
   const detailsQuery = useQuery({
     queryKey: [
@@ -103,10 +108,28 @@ export function useWatchedFilters(language: string) {
 
   useEffect(() => {
     if (watched.length === 0) {
+      hasInitializedYearRange.current = false;
       return;
     }
-    setFilterYear([filterOptions.minYear, filterOptions.maxYear]);
-  }, [filterOptions.maxYear, filterOptions.minYear, watched.length]);
+
+    setFilterYearState((current) => {
+      if (!hasInitializedYearRange.current) {
+        hasInitializedYearRange.current = true;
+        return [filterOptions.minYear, filterOptions.maxYear];
+      }
+
+      return normalizeWatchedYearRange(current, filterOptions);
+    });
+  }, [filterOptions, watched.length]);
+
+  const setFilterYear = (nextRange: WatchedYearRange) => {
+    setFilterYearState((current) => {
+      const normalized = normalizeWatchedYearRange(nextRange, filterOptions);
+      return normalized[0] === current[0] && normalized[1] === current[1]
+        ? current
+        : normalized;
+    });
+  };
 
   const clearFilters = () => {
     setFilterLang(ALL);

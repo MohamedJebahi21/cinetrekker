@@ -1,5 +1,4 @@
-import { type ReactNode } from "react";
-import { useReducedMotion } from "framer-motion";
+import { type ReactNode, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useInView } from "@/hooks/useInView";
 
@@ -12,10 +11,23 @@ type MotionRevealSectionProps = {
   delayClassName?: string;
 };
 
+function usePrefersReducedMotion() {
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduceMotion(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  return reduceMotion;
+}
+
 /**
- * A quiet viewport reveal for home sections. Product content, not an animated
- * background effect, defines the hierarchy; reduced-motion users see content
- * immediately.
+ * A quiet viewport reveal for home sections. Product content, not a decorative
+ * animation, defines the hierarchy; reduced-motion users see content immediately.
  */
 export function MotionRevealSection({
   children,
@@ -23,7 +35,7 @@ export function MotionRevealSection({
   tone = "standard",
   delayClassName,
 }: MotionRevealSectionProps) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = usePrefersReducedMotion();
   const [ref, inView] = useInView<HTMLElement>({ rootMargin: "160px" });
 
   const toneClasses =
@@ -46,7 +58,12 @@ export function MotionRevealSection({
         "relative",
         reduceMotion
           ? "opacity-100"
-          : cn("transition-[opacity,transform] ease-out", toneClasses.hidden, toneClasses.duration, delayClassName),
+          : cn(
+              "transition-[opacity,transform] ease-out",
+              toneClasses.hidden,
+              toneClasses.duration,
+              delayClassName,
+            ),
         inView && toneClasses.active,
         className,
       )}

@@ -8,7 +8,7 @@ test.describe("profile and social discovery", () => {
       page.getByRole("heading", { name: "Find people with great taste." }),
     ).toBeVisible();
     await expect(
-      page.getByRole("textbox", { name: "Search public profiles" }),
+      page.getByRole("textbox", { name: "Search CineTrekker members" }),
     ).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "No public profiles to show yet" }),

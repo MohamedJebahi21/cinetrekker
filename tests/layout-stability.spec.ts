@@ -26,7 +26,7 @@ test("opening Preferences preserves the desktop header position", async ({ page 
     };
   });
 
-  expect(before.scrollbarGutter).toBe("stable");
+  expect(before.scrollbarGutter).toBe("stable both-edges");
   expect(whileOpen.clientWidth).toBe(before.clientWidth);
   expect(whileOpen.headerLeft).toBe(before.headerLeft);
 });

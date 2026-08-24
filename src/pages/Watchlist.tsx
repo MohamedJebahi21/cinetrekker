@@ -2,7 +2,7 @@ import { useMemo, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Bookmark, CheckSquare, LayoutGrid, List, Printer, Square, Trash2, MoreHorizontal, Share2, Download, Upload } from "lucide-react";
+import { Bookmark, CheckSquare, LayoutGrid, List, Printer, Square, Trash2, MoreHorizontal, Share2, Download, Upload, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUserLists } from "@/contexts/UserListsContext";
 import {
@@ -20,10 +20,6 @@ import { sortMedia, type SortOption } from "@/lib/sortFilter";
 import { RandomPicker } from "@/components/RandomPicker";
 import { MediaGrid } from "@/components/MediaGrid";
 import { WatchlistFilters } from "@/components/WatchlistFilters";
-import {
-  WatchlistStats,
-  WatchlistStatsLine,
-} from "@/components/WatchlistStats";
 import { Image } from "@/components/ui/Image";
 import { enrichMediaItems } from "@/lib/mediaEnrichment";
 import { useAuth } from "@/contexts/AuthContext";
@@ -93,6 +89,7 @@ export default function Watchlist() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [showStaleNudge, setShowStaleNudge] = useState(true);
 
   const sharedParam = searchParams.get("share") || "";
   const sharedItems: SharedListItem[] = sharedParam
@@ -416,13 +413,9 @@ export default function Watchlist() {
                   ? t("watchlistPage.sharedTitle", "Shared Watchlist")
                   : t("watchlist.title")}
               </h1>
-              <WatchlistStatsLine
-                totalCount={statusCounts.all}
-                watchingCount={statusCounts.watching}
-                completedCount={statusCounts.completed}
-                planToWatchCount={statusCounts.plan_to_watch}
-                isLoading={isContentLoading}
-              />
+              <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+                {t("watchlistPage.focusedQueueCopy", "Choose one title for tonight, then keep the rest of your queue calm and organized.")}
+              </p>
             </div>
 
             {listItems.length > 0 && (
@@ -431,7 +424,7 @@ export default function Watchlist() {
                   source="watchlist"
                   variant="outline"
                   size="sm"
-                  label="Random"
+                  label={t("watchlistPage.pickTonight", "Pick tonight")}
                 />
 
                 <div className="ct-toggle-group">
@@ -547,7 +540,7 @@ export default function Watchlist() {
             </div>
           )}
 
-          {!isSharedView && staleQueueKeys.size > 0 && (() => {
+          {!isSharedView && showStaleNudge && staleQueueKeys.size > 0 && (() => {
             // Find the oldest stale item to show its poster
             const staleEntries = mediaDetails.filter(m => staleQueueKeys.has(`${getMediaType(m)}-${m.id}`));
             const oldestStale = staleEntries[0];
@@ -577,41 +570,35 @@ export default function Watchlist() {
                       )}
                     </p>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 border-amber-500/30 text-amber-300 hover:text-white hover:bg-amber-500/25 rounded-full px-4 text-xs shrink-0"
-                    onClick={() => {
-                      const staleList = Array.from(staleQueueKeys);
-                      const randomStale = staleList[Math.floor(Math.random() * staleList.length)];
-                      const [mediaType, mediaId] = randomStale.split("-");
-                      navigate(`/${mediaType}/${mediaId}`);
-                    }}
-                  >
-                    {t("watchlistPage.pickForMe", "Pick For Me")}
-                  </Button>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 rounded-full border-amber-500/30 px-4 text-xs text-amber-300 hover:bg-amber-500/25 hover:text-white"
+                      onClick={() => {
+                        const staleList = Array.from(staleQueueKeys);
+                        const randomStale = staleList[Math.floor(Math.random() * staleList.length)];
+                        const [mediaType, mediaId] = randomStale.split("-");
+                        navigate(`/${mediaType}/${mediaId}`);
+                      }}
+                    >
+                      {t("watchlistPage.pickForMe", "Pick For Me")}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-amber-200/70 hover:bg-amber-500/15 hover:text-amber-100"
+                      onClick={() => setShowStaleNudge(false)}
+                      aria-label={t("common.close", "Close")}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             );
           })()}
 
-
-          {!isSharedView && mediaDetails.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="mb-10"
-            >
-              <WatchlistStats
-                totalCount={statusCounts.all}
-                watchingCount={statusCounts.watching}
-                completedCount={statusCounts.completed}
-                planToWatchCount={statusCounts.plan_to_watch}
-                totalHours={totalHoursEstimate}
-              />
-            </motion.div>
-          )}
 
           {!isSharedView && mediaDetails.length > 0 && (
             <div className="mb-6 rounded-[2rem] border border-border/50 bg-card/45 p-6 shadow-md">

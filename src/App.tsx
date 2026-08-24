@@ -5,10 +5,10 @@ import {
   Routes,
   Route,
   useNavigate,
+  useLocation,
   Navigate,
 } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { UserListsProvider } from "@/contexts/UserListsContext";
@@ -89,6 +89,10 @@ const Feedback = lazy(() => import("./pages/Feedback"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Cookies = lazy(() => import("./pages/Cookies"));
 const AccessibilitySettings = lazy(() => import("./pages/AccessibilitySettings"));
+const ServiceStatus = lazy(() => import("./pages/ServiceStatus"));
+const TrustCenter = lazy(() => import("./pages/TrustCenter"));
+const Partnerships = lazy(() => import("./pages/Partnerships"));
+const Measurement = lazy(() => import("./pages/Measurement"));
 const Calendar = lazy(() => import("./pages/Calendar"));
 const EnhancedStats = lazy(() => import("./pages/EnhancedStats"));
 const GenreBrowser = lazy(() => import("./pages/GenreBrowser"));
@@ -135,15 +139,48 @@ function NetworkMonitor() {
 
 function RouteSpinner() {
   const { t } = useTranslation();
+  const { pathname } = useLocation();
+  const isLibraryRoute = ["/watchlist", "/watched", "/profile", "/stats", "/calendar"].some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+  const isDetailRoute = /^\/(movie|tv|person)\//.test(pathname);
 
   return (
     <div
-      className="page-container flex min-h-[calc(100dvh-4rem)] items-center justify-center pt-20"
+      className="page-container min-h-[calc(100dvh-4rem)] pt-24 pb-24 md:pb-12"
       role="status"
       aria-live="polite"
+      aria-busy="true"
     >
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
       <span className="sr-only">{t("common.loadingPage", "Loading page...")}</span>
+      {isDetailRoute ? (
+        <div className="grid gap-6 lg:grid-cols-[minmax(13rem,20rem)_1fr] lg:items-start">
+          <div className="aspect-[2/3] rounded-2xl bg-card/65 skeleton-shimmer" />
+          <div className="space-y-4 pt-2">
+            <div className="h-4 w-28 rounded-full skeleton-shimmer" />
+            <div className="h-10 max-w-xl rounded-xl skeleton-shimmer" />
+            <div className="h-4 max-w-2xl rounded-full skeleton-shimmer" />
+            <div className="h-4 max-w-xl rounded-full skeleton-shimmer" />
+            <div className="flex gap-3 pt-3"><div className="h-11 w-32 rounded-xl skeleton-shimmer" /><div className="h-11 w-32 rounded-xl skeleton-shimmer" /></div>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-7">
+          <div className="space-y-3">
+            <div className="h-3 w-24 rounded-full skeleton-shimmer" />
+            <div className="h-9 w-56 rounded-xl skeleton-shimmer" />
+            <div className="h-4 max-w-lg rounded-full skeleton-shimmer" />
+          </div>
+          <div className={isLibraryRoute ? "media-grid" : "grid gap-4 sm:grid-cols-2 lg:grid-cols-3"}>
+            {Array.from({ length: isLibraryRoute ? 8 : 6 }).map((_, index) => (
+              <div
+                key={index}
+                className={isLibraryRoute ? "aspect-[2/3] rounded-2xl bg-card/65 skeleton-shimmer" : "h-44 rounded-2xl border border-border/50 bg-card/65 skeleton-shimmer"}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -490,6 +527,38 @@ function AppRoutes() {
             element={
               <Suspense fallback={<RouteSpinner />}>
                 <AccessibilitySettings />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/status"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <ServiceStatus />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/trust"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <TrustCenter />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/partnerships"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Partnerships />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/measurement"
+            element={
+              <Suspense fallback={<RouteSpinner />}>
+                <Measurement />
               </Suspense>
             }
           />

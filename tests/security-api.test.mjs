@@ -6,6 +6,8 @@ import feedbackHandler from "../api/feedback.js";
 import notificationsHandler from "../api/notifications.js";
 import tmdbProxyHandler from "../api/tmdb-proxy.js";
 import cronHandler from "../api/jobs/check-followed-updates.js";
+import healthHandler from "../api/health.js";
+import clientErrorsHandler from "../api/client-errors.js";
 import {
   ensureRequestId,
   isAllowedOrigin,
@@ -17,6 +19,7 @@ import {
   setAuthUserResolverForTests,
 } from "../api/_lib/supabaseAdmin.js";
 import { resetSecurityAlertsForTests } from "../api/_lib/securityMonitor.js";
+import { resetOperationalAlertsForTests } from "../api/_lib/operationalMonitor.js";
 
 function createMockReq({
   method = "GET",
@@ -63,6 +66,7 @@ beforeEach(() => {
   resetRequestSecurityStateForTests();
   resetAuthUserResolverForTests();
   resetSecurityAlertsForTests();
+  resetOperationalAlertsForTests();
   delete process.env.TURNSTILE_SECRET_KEY;
   delete process.env.RECAPTCHA_SECRET_KEY;
   delete process.env.VITE_TURNSTILE_SITE_KEY;
@@ -75,6 +79,7 @@ afterEach(() => {
   resetRequestSecurityStateForTests();
   resetAuthUserResolverForTests();
   resetSecurityAlertsForTests();
+  resetOperationalAlertsForTests();
 });
 
 test("rejects unauthorized user_id mismatch", async () => {
@@ -517,4 +522,154 @@ test("TMDB proxy includes the safe request identifier on early validation failur
   assert.equal(res.statusCode, 405);
   assert.equal(res.headers["X-Request-Id"], "proxy_validation_2026");
   assert.equal(res.headers.Allow, "GET");
+});
+
+
+test("health endpoint reports only coarse dependency readiness and never configuration values", async () => {
+  const snapshot = {
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    TMDB_API_KEY: process.env.TMDB_API_KEY,
+    CRON_SECRET: process.env.CRON_SECRET,
+    UPSTASH_REDIS_REST_KV_REST_API_URL:
+      process.env.UPSTASH_REDIS_REST_KV_REST_API_URL,
+    UPSTASH_REDIS_REST_KV_REST_API_TOKEN:
+      process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN,
+  };
+
+  try {
+    process.env.SUPABASE_URL = "https://project.supabase.test";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-secret";
+    process.env.TMDB_API_KEY = "tmdb-secret";
+    process.env.CRON_SECRET = "cron-secret";
+    process.env.UPSTASH_REDIS_REST_KV_REST_API_URL = "https://redis.test";
+    process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN = "redis-secret";
+
+    const req = createMockReq({
+      method: "GET",
+      headers: { "x-request-id": "health_check_2026" },
+      url: "/api/health",
+    });
+    const res = createMockRes();
+
+    await healthHandler(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.status, "ok");
+    assert.deepEqual(res.body.dependencies, {
+      database: true,
+      contentProvider: true,
+      scheduledJobs: true,
+      rateLimiting: true,
+    });
+    assert.equal(res.body.requestId, "health_check_2026");
+    assert.equal(res.headers["Cache-Control"], "no-store, max-age=0");
+    assert.equal(JSON.stringify(res.body).includes("secret"), false);
+  } finally {
+    for (const [key, value] of Object.entries(snapshot)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+});
+
+test("health endpoint is cache-safe and reports degraded status without secret names", async () => {
+  const snapshot = {
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    TMDB_API_KEY: process.env.TMDB_API_KEY,
+    CRON_SECRET: process.env.CRON_SECRET,
+    UPSTASH_REDIS_REST_KV_REST_API_URL:
+      process.env.UPSTASH_REDIS_REST_KV_REST_API_URL,
+    UPSTASH_REDIS_REST_KV_REST_API_TOKEN:
+      process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN,
+  };
+
+  try {
+    delete process.env.SUPABASE_URL;
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    delete process.env.TMDB_API_KEY;
+    delete process.env.CRON_SECRET;
+    delete process.env.UPSTASH_REDIS_REST_KV_REST_API_URL;
+    delete process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN;
+
+    const req = createMockReq({ method: "GET", url: "/api/health" });
+    const res = createMockRes();
+    await healthHandler(req, res);
+
+    assert.equal(res.statusCode, 503);
+    assert.equal(res.body.status, "degraded");
+    assert.equal(res.body.dependencies.scheduledJobs, false);
+    assert.equal(res.body.dependencies.rateLimiting, false);
+    assert.equal(JSON.stringify(res.body).includes("SUPABASE"), false);
+  } finally {
+    for (const [key, value] of Object.entries(snapshot)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+});
+
+test("client incident endpoint accepts only coarse, allowed telemetry", async () => {
+  const req = createMockReq({
+    method: "POST",
+    headers: {
+      origin: "http://localhost:8080",
+      "x-request-id": "client_incident_2026",
+    },
+    body: {
+      event: "react_boundary",
+      route: "profile",
+      fingerprint: "typeerror",
+      release: "release_2026_08",
+      stack: "user@example.com should never be sent",
+    },
+    url: "/api/client-errors",
+  });
+  const res = createMockRes();
+
+  await clientErrorsHandler(req, res);
+
+  assert.equal(res.statusCode, 202);
+  assert.deepEqual(res.body, {
+    accepted: true,
+    requestId: "client_incident_2026",
+  });
+});
+
+test("client incident endpoint rejects raw or malformed event payloads", async () => {
+  const req = createMockReq({
+    method: "POST",
+    headers: { origin: "http://localhost:8080" },
+    body: {
+      event: "unexpected_server_error",
+      route: "/user/01234567-89ab-cdef-0123-456789abcdef",
+      fingerprint: "message with unsafe whitespace",
+    },
+    url: "/api/client-errors",
+  });
+  const res = createMockRes();
+
+  await clientErrorsHandler(req, res);
+
+  assert.equal(res.statusCode, 400);
+  assert.match(res.body.error, /invalid client incident event/i);
+});
+
+test("client incident endpoint preserves method and origin protection", async () => {
+  const methodReq = createMockReq({ method: "GET", url: "/api/client-errors" });
+  const methodRes = createMockRes();
+  await clientErrorsHandler(methodReq, methodRes);
+  assert.equal(methodRes.statusCode, 405);
+  assert.equal(methodRes.headers.Allow, "POST");
+
+  const originReq = createMockReq({
+    method: "POST",
+    headers: { origin: "https://attacker.example" },
+    body: { event: "runtime_error", route: "home", fingerprint: "error" },
+    url: "/api/client-errors",
+  });
+  const originRes = createMockRes();
+  await clientErrorsHandler(originReq, originRes);
+  assert.equal(originRes.statusCode, 403);
 });

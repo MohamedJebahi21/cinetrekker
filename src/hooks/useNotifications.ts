@@ -9,6 +9,9 @@ export interface AppNotification {
   user_id: string;
   movie_id: string;
   event_key?: string | null;
+  group_key?: string | null;
+  expires_at?: string | null;
+  archived_at?: string | null;
   type: string;
   message: string;
   created_at: string;
@@ -201,8 +204,10 @@ export function useNotifications() {
       if (!user) return [];
       const { data, error } = await supabase
         .from("notifications")
-        .select("id,user_id,movie_id,event_key,type,message,created_at,is_read")
+        .select("id,user_id,movie_id,event_key,group_key,expires_at,archived_at,type,message,created_at,is_read")
         .eq("user_id", user.id)
+        .is("archived_at", null)
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
         .order("created_at", { ascending: false })
         .limit(50);
 
@@ -321,7 +326,7 @@ export function useNotifications() {
     },
   });
 
-  const deleteMutation = useMutation({
+  const archiveMutation = useMutation({
     mutationFn: async (id: string) => {
       if (!user) {
         const next = writeGuestNotifications(
@@ -335,7 +340,7 @@ export function useNotifications() {
 
       const { error } = await supabase
         .from("notifications")
-        .delete()
+        .update({ archived_at: new Date().toISOString(), is_read: true })
         .eq("id", id)
         .eq("user_id", user.id);
       if (error) throw error;
@@ -374,6 +379,6 @@ export function useNotifications() {
     isLoading: user ? isLoading : false,
     markRead: markReadMutation.mutate,
     markAllRead: markAllReadMutation.mutate,
-    deleteNotification: deleteMutation.mutate,
+    archiveNotification: archiveMutation.mutate,
   };
 }

@@ -13,3 +13,15 @@ test("Calendar deduplicates exact scheduled releases before deriving desktop pla
   assert.match(source, /\(!existing \|\| \(!existing\.isFollowed && item\.isFollowed\)\)/);
   assert.match(source, /return deduplicateCalendarItems\(items\);/);
 });
+
+
+test("Calendar communicates release-data freshness and uses one contextual save action", () => {
+  assert.match(source, /dataUpdatedAt: moviesUpdatedAt/);
+  assert.match(source, /dataUpdatedAt: tvUpdatedAt/);
+  assert.match(source, /calendarTimeZone/);
+  assert.match(source, /calendar\.dataFreshness/);
+  assert.match(source, /function|const handleCalendarSaveToggle/);
+  assert.match(source, /calendar\.removeFromPlan/);
+  assert.match(source, /calendar\.addToWatchlist/);
+  assert.match(source, /calendar\.followShow/);
+});

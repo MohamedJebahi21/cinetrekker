@@ -51,6 +51,33 @@ type WebVitalProps = {
   value_bucket: string;
 };
 
+type ProductFeature =
+  | "calendar"
+  | "notification_center"
+  | "statistics"
+  | "watchlist"
+  | "recommendations";
+
+type FeatureViewedProps = {
+  feature: ProductFeature;
+  surface: "public" | "account";
+};
+
+type FeatureActionProps = {
+  feature: ProductFeature;
+  action: "save_toggle" | "review_history" | "open_details";
+};
+
+type NotificationActionProps = {
+  action: "opened" | "marked_read" | "archived";
+  source: "inbox";
+};
+
+type ReliabilitySignalProps = {
+  signal: "client_error" | "dependency_degraded" | "worker_failure";
+  source: "client" | "server";
+};
+
 type AnalyticsEvents = {
   web_vital: WebVitalProps;
   signup_intent: SignupIntentProps;
@@ -60,7 +87,39 @@ type AnalyticsEvents = {
   activation_completed: ActivationCompletedProps;
   activation_dismissed: ActivationDismissedProps;
   activation_step_opened: ActivationStepOpenedProps;
+  feature_viewed: FeatureViewedProps;
+  feature_action: FeatureActionProps;
+  notification_action: NotificationActionProps;
+  reliability_signal: ReliabilitySignalProps;
 };
+
+const allowedEventProperties: Record<keyof AnalyticsEvents, readonly string[]> = {
+  web_vital: ["metric", "route", "rating", "value_bucket"],
+  signup_intent: ["entry_surface"],
+  account_created: ["auth_method"],
+  first_title_saved: ["media_kind"],
+  first_progress_recorded: ["media_kind", "progress_mode"],
+  activation_completed: ["completed_required_steps", "optional_taste_complete"],
+  activation_dismissed: ["completed_required_steps"],
+  activation_step_opened: ["step"],
+  feature_viewed: ["feature", "surface"],
+  feature_action: ["feature", "action"],
+  notification_action: ["action", "source"],
+  reliability_signal: ["signal", "source"],
+};
+
+function hasSafeAnalyticsProperties(eventName: keyof AnalyticsEvents, props: Record<string, unknown>) {
+  const allowedKeys = allowedEventProperties[eventName];
+  const keys = Object.keys(props);
+
+  return (
+    keys.length === allowedKeys.length &&
+    keys.every((key) => allowedKeys.includes(key)) &&
+    Object.values(props).every(
+      (value) => typeof value === "string" && value.length <= 64 && /^[a-z0-9_+.-]+$/i.test(value),
+    )
+  );
+}
 
 type UmamiWindow = Window & {
   umami?: {
@@ -89,6 +148,10 @@ export function trackProductEvent<K extends keyof AnalyticsEvents>(
     !hasAcceptedCookieConsent() ||
     doNotTrackEnabled()
   ) {
+    return;
+  }
+
+  if (!hasSafeAnalyticsProperties(eventName, props)) {
     return;
   }
 

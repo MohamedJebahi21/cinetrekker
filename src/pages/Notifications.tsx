@@ -5,22 +5,54 @@ import {
   ChevronRight,
   Filter,
   Inbox,
-  Trash2,
+  Archive,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { formatDistanceToNow } from "date-fns";
+import { ar, de, es, fr, tr } from "date-fns/locale";
 import { useNotifications } from "@/hooks/useNotifications";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyStates";
 import { cn } from "@/lib/utils";
 import { getNotificationTarget } from "@/lib/notificationLinks";
+import { trackProductEvent } from "@/lib/analytics";
 import { NotificationMediaThumb } from "@/components/NotificationMediaThumb";
 
 type NotificationFilter = "all" | "unread" | "read";
 
+type DisplayNotification = ReturnType<typeof useNotifications>["notifications"][number] & {
+  groupedCount: number;
+};
+
+function groupNotifications(notifications: ReturnType<typeof useNotifications>["notifications"]): DisplayNotification[] {
+  const grouped = new Map<string, DisplayNotification>();
+
+  for (const notification of notifications) {
+    const key = notification.group_key || notification.id;
+    const existing = grouped.get(key);
+    if (!existing) {
+      grouped.set(key, { ...notification, groupedCount: 1 });
+      continue;
+    }
+
+    existing.groupedCount += 1;
+    if (new Date(notification.created_at).getTime() > new Date(existing.created_at).getTime()) {
+      grouped.set(key, { ...notification, groupedCount: existing.groupedCount });
+    }
+  }
+
+  return Array.from(grouped.values()).sort(
+    (left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime(),
+  );
+}
+
+const dateLocales = { ar, de, es, fr, tr } as const;
+
 export default function Notifications() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const [filter, setFilter] = useState<NotificationFilter>("all");
   const {
     notifications,
@@ -28,10 +60,16 @@ export default function Notifications() {
     isLoading,
     markRead,
     markAllRead,
-    deleteNotification,
+    archiveNotification,
   } = useNotifications();
 
   const readCount = notifications.length - unreadCount;
+  const dateLocale = dateLocales[i18n.language.split('-')[0] as keyof typeof dateLocales];
+  const currentState = isLoading
+    ? t("notifications.currentStateLoading", "Checking your inbox…")
+    : unreadCount > 0
+      ? t("notifications.currentStateUnread", "{{count}} update needs your attention.", { count: unreadCount })
+      : t("notifications.currentStateClear", "You are all caught up.");
   const renderCount = (value: number) =>
     isLoading ? (
       <span
@@ -54,11 +92,21 @@ export default function Notifications() {
     return notifications;
   }, [filter, notifications]);
 
+  const visibleNotifications = useMemo(
+    () => groupNotifications(filteredNotifications),
+    [filteredNotifications],
+  );
+
   const handleNotificationClick = (
     id: string,
     movieId: string,
     isRead: boolean,
   ) => {
+    trackProductEvent("notification_action", {
+      action: isRead ? "opened" : "marked_read",
+      source: "inbox",
+    });
+
     if (!isRead) {
       void markRead(id);
     }
@@ -67,6 +115,11 @@ export default function Notifications() {
     if (target) {
       navigate(target);
     }
+  };
+
+  const handleArchive = (id: string) => {
+    trackProductEvent("notification_action", { action: "archived", source: "inbox" });
+    archiveNotification(id);
   };
 
   return (
@@ -83,13 +136,16 @@ export default function Notifications() {
               <div className="min-w-0">
                 <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                   <Bell className="h-3.5 w-3.5 text-primary" />
-                  Notification center
+                  {t("notifications.centerEyebrow", "Notification center")}
                 </div>
                 <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-[2.75rem]">
-                  Notifications
+                  {t("notifications.title", "Notifications")}
                 </h1>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                  A focused inbox for releases, new episodes, and updates from titles you follow.
+                  {t("notifications.centerDescription", "A focused inbox for releases, new episodes, and updates from titles you follow.")}
+                </p>
+                <p className="mt-2 text-sm font-medium text-foreground" role="status">
+                  {currentState}
                 </p>
               </div>
 
@@ -102,7 +158,7 @@ export default function Notifications() {
                     className="min-h-11 w-full gap-2 rounded-2xl border-primary/25 bg-primary/10 font-semibold text-primary hover:bg-primary/15 sm:w-auto"
                   >
                     <CheckCheck className="h-4 w-4" />
-                    Mark all read
+                    {t("notifications.markAllRead", "Mark all as read")}
                   </Button>
                 )}
                 <Button
@@ -112,7 +168,7 @@ export default function Notifications() {
                   className="min-h-11 w-full gap-2 rounded-2xl border border-border/60 bg-background font-semibold sm:w-auto"
                 >
                   <Filter className="h-4 w-4" />
-                  Reset filters
+                  {t("notifications.resetFilters", "Reset filters")}
                 </Button>
               </div>
             </div>
@@ -120,7 +176,7 @@ export default function Notifications() {
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-2xl border border-border/60 bg-background px-4 py-3.5 shadow-inner">
                 <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                  Total
+                  {t("notifications.total", "Total")}
                 </div>
                 <div className="mt-2 text-2xl font-semibold text-foreground">
                   {renderCount(notifications.length)}
@@ -128,7 +184,7 @@ export default function Notifications() {
               </div>
               <div className="rounded-2xl border border-primary/25 bg-primary/10 px-4 py-3.5 shadow-[0_14px_36px_hsl(var(--primary)/0.07)]">
                 <div className="text-xs uppercase tracking-[0.18em] text-primary/80">
-                  Unread
+                  {t("notifications.unread", "Unread")}
                 </div>
                 <div className="mt-2 text-2xl font-semibold text-foreground">
                   {renderCount(unreadCount)}
@@ -136,7 +192,7 @@ export default function Notifications() {
               </div>
               <div className="rounded-2xl border border-border/60 bg-background px-4 py-3.5 shadow-inner">
                 <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                  Read
+                  {t("notifications.read", "Read")}
                 </div>
                 <div className="mt-2 text-2xl font-semibold text-foreground">
                   {renderCount(readCount)}
@@ -149,10 +205,10 @@ export default function Notifications() {
                 const active = filter === option;
                 const label =
                   option === "all"
-                    ? "All"
+                    ? t("notifications.all", "All")
                     : option === "unread"
-                      ? "Unread"
-                      : "Read";
+                      ? t("notifications.unread", "Unread")
+                      : t("notifications.read", "Read");
                 const count =
                   option === "all"
                     ? notifications.length
@@ -212,36 +268,40 @@ export default function Notifications() {
         ) : notifications.length === 0 ? (
           <EmptyState
             icon={Inbox}
-            title="No notifications yet"
-            description="Follow movies and series to get notified about new episodes, season changes, releases, and more."
+            title={t("notifications.noNotificationsYet", "No notifications yet")}
+            description={t("notifications.noNotificationsDescription", "Follow movies and series to get notified about new episodes, season changes, releases, and more.")}
             action={{
-              label: "Browse titles",
+              label: t("notifications.browseTitles", "Browse titles"),
               onClick: () => {
                 navigate("/");
               },
             }}
           />
-        ) : filteredNotifications.length === 0 ? (
+        ) : visibleNotifications.length === 0 ? (
           <EmptyState
             icon={Filter}
             title={
               filter === "all"
-                ? "No notifications to show"
-                : `No ${filter} notifications`
+                ? t("notifications.noNotificationsToShow", "No notifications to show")
+                : t("notifications.noFilteredNotifications", "No {{filter}} notifications", {
+                    filter: filter === "unread"
+                      ? t("notifications.unread", "Unread").toLowerCase()
+                      : t("notifications.read", "Read").toLowerCase(),
+                  })
             }
             description={
               filter === "unread"
-                ? "Everything is caught up. Switch back to all notifications or wait for new updates."
-                : "There are no read notifications to show yet."
+                ? t("notifications.caughtUpDescription", "Everything is caught up. Switch back to all notifications or wait for new updates.")
+                : t("notifications.noReadDescription", "There are no read notifications to show yet.")
             }
             action={{
-              label: "Show all notifications",
+              label: t("notifications.showAll", "Show all notifications"),
               onClick: () => setFilter("all"),
             }}
           />
         ) : (
           <ul className="space-y-3">
-            {filteredNotifications.map((n) => (
+            {visibleNotifications.map((n) => (
               <li
                 key={n.id}
                 className={cn(
@@ -255,7 +315,7 @@ export default function Notifications() {
                   type="button"
                   className="flex min-w-0 flex-1 items-start gap-4 rounded-2xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   onClick={() => handleNotificationClick(n.id, n.movie_id, n.is_read)}
-                  aria-label={`Open notification: ${n.message}`}
+                  aria-label={t("notifications.openItem", "Open notification: {{message}}", { message: n.message })}
                 >
                   <NotificationMediaThumb
                     movieId={n.movie_id}
@@ -274,7 +334,12 @@ export default function Notifications() {
                       </p>
                       {!n.is_read && (
                         <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
-                          New
+                          {t("notifications.new", "New")}
+                        </span>
+                      )}
+                      {n.groupedCount > 1 && (
+                        <span className="inline-flex items-center rounded-full border border-border/70 bg-muted/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          {t("notifications.groupedUpdates", "{{count}} updates", { count: n.groupedCount })}
                         </span>
                       )}
                     </div>
@@ -282,10 +347,11 @@ export default function Notifications() {
                       <span>
                         {formatDistanceToNow(new Date(n.created_at), {
                           addSuffix: true,
+                          locale: dateLocale,
                         })}
                       </span>
                       <span className="inline-flex h-1 w-1 rounded-full bg-muted-foreground/50" />
-                      <span>{n.is_read ? "Read" : "Unread"}</span>
+                      <span>{n.is_read ? t("notifications.read", "Read") : t("notifications.unread", "Unread")}</span>
                     </div>
                   </div>
                   <ChevronRight className="mt-2 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
@@ -293,11 +359,12 @@ export default function Notifications() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="min-h-11 min-w-11 shrink-0 rounded-2xl border border-transparent text-muted-foreground opacity-70 transition-all hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100"
-                  aria-label={`Delete notification: ${n.message}`}
-                  onClick={() => deleteNotification(n.id)}
+                  className="min-h-11 min-w-11 shrink-0 rounded-2xl border border-transparent text-muted-foreground opacity-70 transition-all hover:border-border hover:bg-muted hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100"
+                  aria-label={t("notifications.archiveItem", "Archive notification: {{message}}", { message: n.message })}
+                  onClick={() => handleArchive(n.id)}
+                  title={t("notifications.archiveFromInbox", "Archive from inbox")}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Archive className="h-4 w-4" />
                 </Button>
               </li>
             ))}

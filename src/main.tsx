@@ -20,9 +20,14 @@ import { scheduleIdleTask } from "@/lib/idleCallback";
 import { createLogger } from "@/lib/logger";
 import { registerCineTrekkerServiceWorker } from "@/lib/browserPush";
 import { getTrending } from "@/services/tmdb";
+import {
+  installClientIncidentReporting,
+  reportClientIncident,
+} from "@/lib/operationalReporting";
 
-// Install chunk error handlers BEFORE React renders
+// Install recovery and privacy-safe incident handlers BEFORE React renders.
 installChunkErrorHandlers();
+installClientIncidentReporting();
 applyThemeToDocument(readStoredTheme());
 
 const logger = createLogger("bootstrap");
@@ -73,6 +78,7 @@ function renderFatalError(err: unknown) {
   }
 
   logger.error("Fatal error during React render:", err);
+  reportClientIncident("bootstrap_failure", err);
 
   const container = document.createElement("div");
   container.setAttribute("role", "alert");

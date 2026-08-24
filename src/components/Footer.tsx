@@ -70,6 +70,15 @@ export function Footer() {
               <Link to="/feedback" className="-mx-1 inline-flex min-h-8 items-center break-words rounded-md px-1 text-[0.92rem] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                 {t("footer.feedback", "Feedback")}
               </Link>
+              <Link to="/status" className="-mx-1 inline-flex min-h-8 items-center break-words rounded-md px-1 text-[0.92rem] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                {t("footer.serviceStatus", "Service status")}
+              </Link>
+              <Link to="/trust" className="-mx-1 inline-flex min-h-8 items-center break-words rounded-md px-1 text-[0.92rem] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                {t("footer.trustCenter", "Trust center")}
+              </Link>
+              <Link to="/partnerships" className="-mx-1 inline-flex min-h-8 items-center break-words rounded-md px-1 text-[0.92rem] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                {t("footer.partnershipPrinciples", "Partnership principles")}
+              </Link>
             </nav>
           </div>
 

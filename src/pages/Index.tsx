@@ -14,16 +14,12 @@ import { useUserLists } from "@/contexts/UserListsContext";
 import { useHomePageData } from "@/hooks/useHomePageData";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { HomeSectionState } from "@/components/home/HomeSectionState";
-import { HomeStatsSnapshot } from "@/components/home/HomeStatsSnapshot";
 import { HomeWatchlistSkeleton } from "@/components/home/HomeWatchlistSkeleton";
-import { SuggestedPeopleRail } from "@/components/home/SuggestedPeopleRail";
 import { UpNextCommandCenter } from "@/components/home/UpNextCommandCenter";
 import { ContinueWatching } from "@/components/ContinueWatching";
 import { ActivationJourney } from "@/components/home/ActivationJourney";
-import { CommunityActivityFeed } from "@/components/home/CommunityActivityFeed";
-import { DailyCheckInCard } from "@/components/home/DailyCheckInCard";
-import { CineQuestHub } from "@/components/quests/CineQuestHub";
 import { MotionRevealSection } from "@/components/motion/MotionRevealSection";
+import { DeferredSection } from "@/components/DeferredSection";
 import { PaginationDots, PaginationDotStatic } from "@/components/ui/pagination-dots";
 import GuestSyncBanner from "@/components/GuestSyncBanner";
 import { trackProductEvent } from "@/lib/analytics";
@@ -36,6 +32,32 @@ import {
 const BecauseYouLiked = lazy(() =>
   import("@/components/BecauseYouLiked").then((mod) => ({
     default: mod.BecauseYouLiked,
+  })),
+);
+
+const DailyCheckInCard = lazy(() =>
+  import("@/components/home/DailyCheckInCard").then((mod) => ({
+    default: mod.DailyCheckInCard,
+  })),
+);
+const CineQuestHub = lazy(() =>
+  import("@/components/quests/CineQuestHub").then((mod) => ({
+    default: mod.CineQuestHub,
+  })),
+);
+const CommunityActivityFeed = lazy(() =>
+  import("@/components/home/CommunityActivityFeed").then((mod) => ({
+    default: mod.CommunityActivityFeed,
+  })),
+);
+const SuggestedPeopleRail = lazy(() =>
+  import("@/components/home/SuggestedPeopleRail").then((mod) => ({
+    default: mod.SuggestedPeopleRail,
+  })),
+);
+const HomeStatsSnapshot = lazy(() =>
+  import("@/components/home/HomeStatsSnapshot").then((mod) => ({
+    default: mod.HomeStatsSnapshot,
   })),
 );
 
@@ -512,11 +534,19 @@ export default function Index() {
                   <ActivationJourney />
                 </MotionRevealSection>
               ) : null}
-              <MotionRevealSection tone="bold" delayClassName="delay-150" accentOpacityClassName="opacity-16">
-              <DailyCheckInCard />
+            <MotionRevealSection tone="bold" delayClassName="delay-150" accentOpacityClassName="opacity-16">
+              <DeferredSection>
+                <Suspense fallback={null}>
+                  <DailyCheckInCard />
+                </Suspense>
+              </DeferredSection>
             </MotionRevealSection>
             <MotionRevealSection tone="bold" delayClassName="delay-200" accentOpacityClassName="opacity-14">
-              <CineQuestHub limit={2} />
+              <DeferredSection>
+                <Suspense fallback={null}>
+                  <CineQuestHub limit={2} />
+                </Suspense>
+              </DeferredSection>
             </MotionRevealSection>
             <MotionRevealSection tone="soft" delayClassName="delay-300" accentOpacityClassName="opacity-16">
               {freshDiscoverySection}
@@ -535,14 +565,26 @@ export default function Index() {
               {discoveryHubSection}
             </MotionRevealSection>
             <MotionRevealSection tone="bold" delayClassName="delay-300" accentOpacityClassName="opacity-20">
-              <CommunityActivityFeed />
+              <DeferredSection>
+                <Suspense fallback={null}>
+                  <CommunityActivityFeed />
+                </Suspense>
+              </DeferredSection>
             </MotionRevealSection>
             <MotionRevealSection tone="soft" delayClassName="delay-300" accentOpacityClassName="opacity-18">
-              <SuggestedPeopleRail />
+              <DeferredSection>
+                <Suspense fallback={null}>
+                  <SuggestedPeopleRail />
+                </Suspense>
+              </DeferredSection>
             </MotionRevealSection>
             {hasLibraryActivity ? (
               <MotionRevealSection tone="soft" delayClassName="delay-250" accentOpacityClassName="opacity-18">
-                <HomeStatsSnapshot watched={watched} watchlist={watchlist} />
+                <DeferredSection>
+                  <Suspense fallback={null}>
+                    <HomeStatsSnapshot watched={watched} watchlist={watchlist} />
+                  </Suspense>
+                </DeferredSection>
               </MotionRevealSection>
             ) : null}
           </>
@@ -563,7 +605,11 @@ export default function Index() {
               {discoveryHubSection}
             </MotionRevealSection>
             <MotionRevealSection tone="soft" delayClassName="delay-250" accentOpacityClassName="opacity-18">
-              <SuggestedPeopleRail />
+              <DeferredSection>
+                <Suspense fallback={null}>
+                  <SuggestedPeopleRail />
+                </Suspense>
+              </DeferredSection>
             </MotionRevealSection>
             {watchlistSection ? (
               <MotionRevealSection tone="soft" delayClassName="delay-250" accentOpacityClassName="opacity-22">
@@ -577,12 +623,16 @@ export default function Index() {
             )}
             {hasListActivity ? (
               <MotionRevealSection tone="soft" delayClassName="delay-300" accentOpacityClassName="opacity-16">
-                <HomeStatsSnapshot
-                  watched={watched}
-                  watchlist={watchlist}
-                  ctaHref="/signup"
-                  ctaLabel={t("home.syncToAccount", "Sync with Free Account")}
-                />
+                <DeferredSection>
+                  <Suspense fallback={null}>
+                    <HomeStatsSnapshot
+                      watched={watched}
+                      watchlist={watchlist}
+                      ctaHref="/signup"
+                      ctaLabel={t("home.syncToAccount", "Sync with Free Account")}
+                    />
+                  </Suspense>
+                </DeferredSection>
               </MotionRevealSection>
             ) : null}
           </>

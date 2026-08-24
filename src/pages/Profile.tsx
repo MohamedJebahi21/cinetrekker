@@ -127,6 +127,10 @@ type PinnedFavoriteRef = {
   mediaType: "movie" | "tv";
 };
 
+type PendingFavoriteRemoval = PinnedFavoriteRef & {
+  title: string;
+};
+
 type CarouselState = {
   canScrollLeft: boolean;
   canScrollRight: boolean;
@@ -241,6 +245,7 @@ export default function Profile() {
   const [isAvatarDragActive, setIsAvatarDragActive] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [isFavoritesPickerOpen, setIsFavoritesPickerOpen] = useState(false);
+  const [pendingFavoriteRemoval, setPendingFavoriteRemoval] = useState<PendingFavoriteRemoval | null>(null);
   const [activeProfileTab, setActiveProfileTab] = useState<
     "overview" | "favorites" | "taste" | "edit"
   >("overview");
@@ -1890,6 +1895,13 @@ export default function Profile() {
     [persistPinnedFavorites, setPinnedFavoriteKeys, t, toast],
   );
 
+  const requestFavoriteRemoval = useCallback(
+    (mediaId: number, mediaType: "movie" | "tv", title: string) => {
+      setPendingFavoriteRemoval({ mediaId, mediaType, title });
+    },
+    [],
+  );
+
   const unpinFavorite = useCallback(
     (mediaId: number, mediaType: "movie" | "tv", title: string) => {
       const key = `${mediaType}-${mediaId}`;
@@ -2718,7 +2730,7 @@ export default function Profile() {
                                     type="button"
                                     className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background/95 text-foreground/75 shadow-sm transition-all hover:bg-destructive hover:text-destructive-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                     onClick={() =>
-                                      unpinFavorite(
+                                      requestFavoriteRemoval(
                                         item.mediaId,
                                         item.mediaType,
                                         preview.title,
@@ -2907,7 +2919,7 @@ export default function Profile() {
                                     type="button"
                                     className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background/95 text-foreground/75 shadow-sm transition-all hover:bg-destructive hover:text-destructive-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                     onClick={() =>
-                                      unpinFavorite(
+                                      requestFavoriteRemoval(
                                         item.mediaId,
                                         item.mediaType,
                                         preview.title,
@@ -2998,6 +3010,47 @@ export default function Profile() {
                     ) : null}
                   </motion.section>
                   ) : null}
+
+                  <Dialog
+                    open={Boolean(pendingFavoriteRemoval)}
+                    onOpenChange={(open) => {
+                      if (!open) setPendingFavoriteRemoval(null);
+                    }}
+                  >
+                    <DialogContent className="max-w-md border-border bg-card text-foreground">
+                      <DialogHeader>
+                        <DialogTitle>{text("profile.confirmFavoriteRemovalTitle", "Remove from favorites?")}</DialogTitle>
+                        <DialogDescription>
+                          {pendingFavoriteRemoval
+                            ? text(
+                                "profile.confirmFavoriteRemovalDescription",
+                                "{{title}} will be removed from your favorites shelf. You can add it back anytime.",
+                              ).replace("{{title}}", pendingFavoriteRemoval.title)
+                            : ""}
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="mt-2 flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setPendingFavoriteRemoval(null)}>
+                          {text("common.cancel", "Cancel")}
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={() => {
+                            if (pendingFavoriteRemoval) {
+                              unpinFavorite(
+                                pendingFavoriteRemoval.mediaId,
+                                pendingFavoriteRemoval.mediaType,
+                                pendingFavoriteRemoval.title,
+                              );
+                            }
+                            setPendingFavoriteRemoval(null);
+                          }}
+                        >
+                          {text("profile.removeFavorite", "Remove favorite")}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
 
                   <Dialog
                     open={isFavoritesPickerOpen}
@@ -3133,7 +3186,7 @@ export default function Profile() {
                                     className="min-w-[80px]"
                                     onClick={() =>
                                       isPinned
-                                        ? unpinFavorite(
+                                        ? requestFavoriteRemoval(
                                             result.id,
                                             result.mediaType,
                                             result.title,
@@ -3167,7 +3220,28 @@ export default function Profile() {
                   </Dialog>
 
                   {shouldShowProfileSection("taste") ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                      <motion.section variants={itemVariants} className="md:col-span-2">
+                        <Card className="border-primary/20 bg-primary/[0.045]">
+                          <CardContent className="flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="max-w-2xl">
+                              <p className="text-sm font-semibold text-foreground">
+                                {text("profile.tasteMethodTitle", "How your Taste & Stats are calculated")}
+                              </p>
+                              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                                {text(
+                                  "profile.tasteMethodCopy",
+                                  "These insights reflect the titles you log, the ratings you give, and the genres and favorites you choose. They are personal summaries, not recommendations or objective scores.",
+                                )}
+                              </p>
+                            </div>
+                            <Button asChild size="sm" variant="outline" className="shrink-0">
+                              <Link to="/watched">{text("profile.reviewHistory", "Review history")}</Link>
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      </motion.section>
+
                       {/* Left Column: Genres & Decades */}
                       <div className="space-y-6">
                         <motion.section variants={itemVariants} className="space-y-3">

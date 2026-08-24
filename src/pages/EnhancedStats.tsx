@@ -58,6 +58,7 @@ import {
   getEnrichedMediaYear,
 } from "@/types/enriched-media";
 import { cn } from "@/lib/utils";
+import { trackProductEvent } from "@/lib/analytics";
 
 const CINEMATIC_CHART_COLORS = [
   "hsl(var(--primary))",
@@ -99,6 +100,19 @@ export default function EnhancedStats() {
     totalHours,
     genreStats,
   } = useEnhancedStatsData(language);
+
+  const filteredTitleCount = totalMovies + totalTV;
+  const leadingGenre = genreStats[0]?.name;
+  const insightHeadline = leadingGenre
+    ? t("stats.insightWithGenre", "{{count}} logged titles and {{hours}} hours, with {{genre}} leading this view.", {
+        count: filteredTitleCount,
+        hours: Math.round(totalHours),
+        genre: leadingGenre,
+      })
+    : t("stats.insightWithoutGenre", "{{count}} logged titles and {{hours}} hours in this view.", {
+        count: filteredTitleCount,
+        hours: Math.round(totalHours),
+      });
 
   // 1. Ratings Distribution Stats
   const ratingsStats = useMemo(() => {
@@ -369,6 +383,36 @@ export default function EnhancedStats() {
             </Select>
           </div>
         </div>
+
+        <Card className="border-primary/20 bg-primary/[0.045] shadow-[0_18px_50px_hsl(var(--primary)/0.06)]">
+          <CardContent className="flex flex-col gap-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+                <Sparkles className="h-4 w-4" />
+                {t("stats.insightEyebrow", "Your viewing insight")}
+              </div>
+              <h2 className="mt-2 text-lg font-semibold text-foreground sm:text-xl">{insightHeadline}</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+                {t(
+                  "stats.methodologyCopy",
+                  "These statistics reflect titles you logged and the filters above. They are personal summaries, not recommendations or objective scores.",
+                )}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11 shrink-0 gap-2 rounded-xl"
+              onClick={() => {
+                trackProductEvent("feature_action", { feature: "statistics", action: "review_history" });
+                setActiveTab("history");
+              }}
+            >
+              <History className="h-4 w-4" />
+              {t("stats.reviewFilteredHistory", "Review history")}
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Dashboard Tabs switcher */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

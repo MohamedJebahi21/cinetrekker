@@ -83,6 +83,9 @@ export type Database = {
           user_id: string;
           movie_id: string;
           event_key: string | null;
+          group_key: string | null;
+          expires_at: string | null;
+          archived_at: string | null;
           type: string;
           message: string;
           created_at: string;
@@ -93,6 +96,9 @@ export type Database = {
           user_id: string;
           movie_id: string;
           event_key?: string | null;
+          group_key?: string | null;
+          expires_at?: string | null;
+          archived_at?: string | null;
           type: string;
           message: string;
           created_at?: string;
@@ -103,6 +109,9 @@ export type Database = {
           user_id?: string;
           movie_id?: string;
           event_key?: string | null;
+          group_key?: string | null;
+          expires_at?: string | null;
+          archived_at?: string | null;
           type?: string;
           message?: string;
           created_at?: string;

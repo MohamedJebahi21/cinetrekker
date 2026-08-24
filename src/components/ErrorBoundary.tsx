@@ -3,6 +3,7 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { createLogger } from "@/lib/logger";
+import { reportClientIncident } from "@/lib/operationalReporting";
 
 const logger = createLogger("error-boundary");
 
@@ -51,6 +52,7 @@ export class ErrorBoundary extends Component<Props, State> {
       error,
       errorInfo,
     });
+    reportClientIncident("react_boundary", error);
   }
 
   private handleRetry = async () => {

@@ -9,6 +9,7 @@ const ENDPOINT_LIMITS = {
   recommend: { windowMs: 60 * 1000, ipMaxRequests: 15 },
   "tmdb-proxy": { windowMs: 60 * 1000, ipMaxRequests: 60 },
   feedback: { windowMs: 10 * 60 * 1000, ipMaxRequests: 3 },
+  "client-errors": { windowMs: 60 * 1000, ipMaxRequests: 8 },
   follow: { windowMs: 60 * 1000, ipMaxRequests: 12, userMaxRequests: 20 },
   unfollow: { windowMs: 60 * 1000, ipMaxRequests: 12, userMaxRequests: 20 },
   "notifications-mark-read": {

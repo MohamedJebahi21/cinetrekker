@@ -18,7 +18,6 @@ import Heart from "lucide-react/dist/esm/icons/heart";
 import Search from "lucide-react/dist/esm/icons/search";
 import FolderHeart from "lucide-react/dist/esm/icons/folder-heart";
 import { useQuery } from "@tanstack/react-query";
-import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -133,59 +132,28 @@ const menuLinks = [
 
 function BurgerIcon({ isOpen }: { isOpen: boolean }) {
   return (
-    <div className="relative h-5 w-5 flex items-center justify-center">
-      <motion.span
-        animate={isOpen ? { rotate: 45, y: 0, top: "9px" } : { rotate: 0, y: 0, top: "4px" }}
-        transition={{ duration: 0.2, ease: "easeInOut" }}
-        className="absolute left-0 right-0 h-0.5 rounded bg-foreground"
+    <div className="relative flex h-5 w-5 items-center justify-center">
+      <span
+        className={cn(
+          "absolute left-0 right-0 h-0.5 rounded bg-foreground transition-[top,transform] duration-200",
+          isOpen ? "top-[9px] rotate-45" : "top-[4px]",
+        )}
       />
-      <motion.span
-        animate={isOpen ? { opacity: 0, x: -10 } : { opacity: 1, x: 0 }}
-        transition={{ duration: 0.15, ease: "easeInOut" }}
-        className="absolute left-0 right-0 top-[9px] h-0.5 rounded bg-foreground"
+      <span
+        className={cn(
+          "absolute left-0 right-0 top-[9px] h-0.5 rounded bg-foreground transition-[opacity,transform] duration-150",
+          isOpen ? "-translate-x-2 opacity-0" : "opacity-100",
+        )}
       />
-      <motion.span
-        animate={isOpen ? { rotate: -45, y: 0, top: "9px" } : { rotate: 0, y: 0, top: "14px" }}
-        transition={{ duration: 0.2, ease: "easeInOut" }}
-        className="absolute left-0 right-0 h-0.5 rounded bg-foreground"
+      <span
+        className={cn(
+          "absolute left-0 right-0 h-0.5 rounded bg-foreground transition-[top,transform] duration-200",
+          isOpen ? "top-[9px] -rotate-45" : "top-[14px]",
+        )}
       />
     </div>
   );
 }
-
-const desktopMenuGridVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.03,
-      delayChildren: 0.05,
-    },
-  },
-};
-
-const menuItemVariants: Variants = {
-  hidden: { opacity: 0, y: 8 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.22,
-      ease: "easeOut" as const,
-    },
-  },
-};
-
-const mobileMenuListVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.03,
-      delayChildren: 0.05,
-    },
-  },
-};
 
 export function UnifiedNav() {
   const { t, i18n } = useTranslation();
@@ -193,7 +161,6 @@ export function UnifiedNav() {
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
   const { watched } = useUserLists();
-  const reduceMotion = useReducedMotion();
   const motionIntensity = useMotionIntensityPreference();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
@@ -575,12 +542,7 @@ export function UnifiedNav() {
                 onClick={() => setIsDesktopMenuOpen(false)}
               />
 
-              <motion.div
-                className="relative z-20 h-full w-full overflow-y-auto border-t border-border bg-background px-4 py-6 shadow-none sm:px-6 sm:py-8"
-                initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.994 }}
-                animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: reduceMotion ? 0.16 : 0.32, ease: [0.22, 1, 0.36, 1] }}
-              >
+              <div className="relative z-20 h-full w-full overflow-y-auto border-t border-border bg-background px-4 py-6 shadow-none motion-safe:animate-fade-in sm:px-6 sm:py-8">
                 <div className="desktop-menu-shell mx-auto flex min-h-full max-w-[78rem] items-center">
                   <nav aria-label={t("nav.main", "Main navigation")} className="desktop-menu-grid grid w-full gap-5 md:grid-cols-3">
                     {primaryNavigationGroups.map((group) => (
@@ -589,18 +551,12 @@ export function UnifiedNav() {
                           <h3 className="text-[0.7rem] font-semibold uppercase tracking-[0.17em] text-muted-foreground">{t(group.titleKey, group.defaultTitle)}</h3>
                           <span className="text-[10px] font-medium text-muted-foreground">{group.links.length}</span>
                         </div>
-                        <motion.div
-                          className="flex flex-col gap-2"
-                          variants={desktopMenuGridVariants}
-                          initial="hidden"
-                          animate="visible"
-                          transition={reduceMotion ? { delayChildren: 0.01, staggerChildren: 0.01 } : undefined}
-                        >
+                        <div className="flex flex-col gap-2">
                           {group.links.map((item) => {
                             const Icon = item.icon;
                             const isActive = pathname === item.path;
                             return (
-                              <motion.div key={item.path} variants={menuItemVariants}>
+                              <div key={item.path} className="motion-safe:animate-slide-up">
                                 <Link
                                   to={item.path}
                                   onClick={() => setIsDesktopMenuOpen(false)}
@@ -623,15 +579,15 @@ export function UnifiedNav() {
                                     <p className="mt-0.5 line-clamp-1 text-xs font-normal leading-4 text-muted-foreground">{t(item.descKey, item.defaultDesc)}</p>
                                   </div>
                                 </Link>
-                              </motion.div>
+                              </div>
                             );
                           })}
-                        </motion.div>
+                        </div>
                       </section>
                     ))}
                   </nav>
                 </div>
-              </motion.div>
+              </div>
             </div>,
             document.body,
           )
@@ -644,12 +600,7 @@ export function UnifiedNav() {
           overlayClassName="top-[calc(4rem+env(safe-area-inset-top,0px))]"
           className="safe-area-insets top-[calc(4rem+env(safe-area-inset-top,0px))] h-[calc(100dvh-4rem-env(safe-area-inset-top,0px))] w-full max-w-none overflow-y-auto border-l-0 bg-background px-0 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-4 sm:w-[24rem] sm:border-l sm:pt-[max(1rem,env(safe-area-inset-top,0px))]"
         >
-          <motion.div
-            className="relative z-10 px-4 sm:px-5 pb-8"
-            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
-            animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-            transition={{ duration: reduceMotion ? 0.14 : 0.24, ease: [0.22, 1, 0.36, 1] }}
-          >
+          <div className="relative z-10 px-4 pb-8 motion-safe:animate-fade-in sm:px-5">
             <SheetHeader className="border-b border-border px-1 pb-4 text-left">
               <SheetTitle className="text-xl">{t("nav.menu", "Menu")}</SheetTitle>
               <p className="text-sm text-muted-foreground">
@@ -658,19 +609,10 @@ export function UnifiedNav() {
             </SheetHeader>
 
             <nav aria-label={t("nav.main", "Main navigation")}>
-              <motion.div
-                className="mt-5 space-y-5"
-              variants={mobileMenuListVariants}
-              initial="hidden"
-              animate="visible"
-              transition={reduceMotion ? { delayChildren: 0.01, staggerChildren: 0.01 } : undefined}
-            >
+              <div className="mt-5 space-y-5">
               {/* User Profile Progress Card inside Mobile Menu */}
               {user && (
-                <motion.div
-                  variants={menuItemVariants}
-                  className="rounded-lg border border-border bg-card p-4 relative overflow-hidden"
-                >
+                <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4 motion-safe:animate-slide-up">
                   <div className="flex items-center gap-3 relative z-10">
                     {profileImageUrl ? (
                       <img
@@ -703,15 +645,12 @@ export function UnifiedNav() {
                       />
                     </div>
                   </div>
-                </motion.div>
+                </div>
               )}
 
               {/* Guest CTA card */}
               {!user && (
-                <motion.div
-                  variants={menuItemVariants}
-                  className="rounded-lg border border-border bg-muted/30 p-4 relative overflow-hidden text-center"
-                >
+                <div className="relative overflow-hidden rounded-lg border border-border bg-muted/30 p-4 text-center motion-safe:animate-slide-up">
                   <h4 className="text-sm font-bold text-foreground">{t("home.makeEveryVisitPersonal", "Make every visit personal")}</h4>
                   <p className="text-xs text-muted-foreground mt-1">{t("home.createAccountSyncDesc", "Create a free account to sync watchlist & ratings.")}</p>
                   <div className="mt-3 flex gap-2 justify-center">
@@ -722,7 +661,7 @@ export function UnifiedNav() {
                       <Link to="/login" onClick={() => setIsMobileSheetOpen(false)}>{t("nav.signIn", "Sign In")}</Link>
                     </Button>
                   </div>
-                </motion.div>
+                </div>
               )}
 
               {/* Guest visitors see discovery essentials first; signed-in users retain their full personal workspace. */}
@@ -736,11 +675,7 @@ export function UnifiedNav() {
                       const Icon = item.icon;
                       const isActive = pathname === item.path;
                       return (
-                        <motion.div
-                          key={item.path}
-                          variants={menuItemVariants}
-                          transition={reduceMotion ? { duration: 0.12 } : { duration: 0.2, ease: "easeOut" }}
-                        >
+                        <div key={item.path} className="motion-safe:animate-slide-up">
                           <Link
                             to={item.path}
                             onClick={() => setIsMobileSheetOpen(false)}
@@ -756,7 +691,7 @@ export function UnifiedNav() {
                               </p>
                             </div>
                           </Link>
-                        </motion.div>
+                        </div>
                       );
                     })}
                   </div>
@@ -779,7 +714,7 @@ export function UnifiedNav() {
                 <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground px-1 mb-2">
                   System
                 </p>
-                <motion.div variants={menuItemVariants}>
+                <div className="motion-safe:animate-slide-up">
                   <Link
                     to="/settings"
                     onClick={() => setIsMobileSheetOpen(false)}
@@ -788,9 +723,9 @@ export function UnifiedNav() {
                     <Settings className="h-4 w-4 shrink-0 text-muted-foreground" />
                     {t("nav.settings", "Settings")}
                   </Link>
-                </motion.div>
+                </div>
                 {user ? (
-                  <motion.div variants={menuItemVariants}>
+                  <div className="motion-safe:animate-slide-up">
                     <button
                       type="button"
                       onClick={() => {
@@ -802,9 +737,9 @@ export function UnifiedNav() {
                       <User className="h-4 w-4 shrink-0" />
                       {t("nav.signOut", "Sign Out")}
                     </button>
-                  </motion.div>
+                  </div>
                 ) : (
-                  <motion.div variants={menuItemVariants}>
+                  <div className="motion-safe:animate-slide-up">
                     <Link
                       to="/login"
                       onClick={() => setIsMobileSheetOpen(false)}
@@ -813,12 +748,12 @@ export function UnifiedNav() {
                       <User className="h-4 w-4 shrink-0" />
                       {t("nav.signIn", "Sign In")}
                     </Link>
-                  </motion.div>
+                  </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           </nav>
-          </motion.div>
+          </div>
         </SheetContent>
       </header>
     </Sheet>

@@ -232,6 +232,7 @@ const cspPlugin = (): Plugin => {
 
 // Ces fragments restent chargés à la demande afin de protéger le premier rendu.
 const deferredModulePreloadPatterns = [
+  /vendor-motion/i,
   /vendor-charts/i,
   /EnhancedStats/i,
   /YearInReview/i,

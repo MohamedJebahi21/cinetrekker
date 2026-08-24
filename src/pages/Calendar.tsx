@@ -79,6 +79,7 @@ import { getReleaseTimeInfo, formatReleaseDateTime } from '@/lib/timeUtils';
 import { useLoadingTimeout } from '@/hooks/useLoadingTimeout';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { trackProductEvent } from '@/lib/analytics';
 
 interface CalendarItem {
   id: number;
@@ -158,6 +159,7 @@ export default function Calendar() {
     isError: moviesError,
     error: moviesErrorValue,
     refetch: refetchMovies,
+    dataUpdatedAt: moviesUpdatedAt,
   } = useQuery({
     queryKey: ['upcoming-movies-premium', i18n.language],
     queryFn: async () => {
@@ -177,6 +179,7 @@ export default function Calendar() {
     isError: tvError,
     error: tvErrorValue,
     refetch: refetchTV,
+    dataUpdatedAt: tvUpdatedAt,
   } = useQuery<CalendarTVItem[]>({
     queryKey: ['on-air-tv-premium', i18n.language],
     queryFn: async () => {
@@ -402,6 +405,19 @@ export default function Calendar() {
   const isLoading = loadingMovies || loadingTV || loadingFollowedDetails;
   const calendarLoadingTimedOut = useLoadingTimeout(isLoading, 14000);
   const hasCalendarError = moviesError || tvError;
+  const calendarTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  const latestContentRefresh = Math.max(moviesUpdatedAt || 0, tvUpdatedAt || 0);
+  const calendarFreshness = latestContentRefresh
+    ? t('calendar.dataFreshness', 'Last refreshed {{time}} · Release times shown in {{timeZone}}.', {
+        time: new Intl.DateTimeFormat(i18n.language, {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        }).format(new Date(latestContentRefresh)),
+        timeZone: calendarTimeZone,
+      })
+    : t('calendar.dataFreshnessPending', 'Release times are shown in {{timeZone}}. Data freshness will appear once the calendar loads.', {
+        timeZone: calendarTimeZone,
+      });
 
   const weekRange = useMemo(() => {
     const start = startOfWeek(currentDate, { weekStartsOn: 1 });
@@ -501,6 +517,20 @@ export default function Calendar() {
     [followedShowIds, followShow, unfollowShow]
   );
 
+  const isCalendarItemSaved = (item: CalendarItem) =>
+    item.type === 'movie' ? watchlistMovieIds.has(item.id) : followedShowIds.has(item.id);
+
+  const handleCalendarSaveToggle = (e: React.MouseEvent, item: CalendarItem) => {
+    trackProductEvent('feature_action', { feature: 'calendar', action: 'save_toggle' });
+
+    if (item.type === 'movie') {
+      handleWatchlistToggle(e, item);
+      return;
+    }
+
+    handleFollowToggle(e, item);
+  };
+
   // Keyboard activation for clickable (non-button) card elements: Enter or Space
   // fires the same action as a click, matching native button behavior. Space is
   // prevented from scrolling the page.
@@ -533,9 +563,12 @@ export default function Calendar() {
                 <p className="ct-kicker mb-1">{t('calendar.releaseTimeline', 'Release Timeline')}</p>
                 <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl">{t('calendar.title')}</h1>
                 <p className="mt-1 text-sm text-muted-foreground">{t('calendar.subtitle')}</p>
+                <p className="mt-2 text-xs text-muted-foreground" role="status">
+                  {calendarFreshness}
+                </p>
                 {!user && (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Sign in to track followed shows and sync your list. Browsing the calendar stays public.
+                    {t('calendar.signInTracking', 'Sign in to track followed shows and sync your list. Browsing the calendar stays public.')}
                   </p>
                 )}
               </div>
@@ -665,26 +698,20 @@ export default function Calendar() {
                       className="rounded-full gap-1.5"
                     >
                       <Info className="h-4 w-4" />
-                      View Details
+                      {t('calendar.viewDetails', 'View details')}
                     </Button>
 
-                    {spotlightItem.type === 'movie' ? (
-                      <Button
-                        variant={watchlistMovieIds.has(spotlightItem.id) ? 'destructive' : 'secondary'}
-                        onClick={(e) => handleWatchlistToggle(e, spotlightItem)}
-                        className="rounded-full"
-                      >
-                        {watchlistMovieIds.has(spotlightItem.id) ? 'Remove Watchlist' : 'Add Watchlist'}
-                      </Button>
-                    ) : (
-                      <Button
-                        variant={followedShowIds.has(spotlightItem.id) ? 'destructive' : 'secondary'}
-                        onClick={(e) => handleFollowToggle(e, spotlightItem)}
-                        className="rounded-full"
-                      >
-                        {followedShowIds.has(spotlightItem.id) ? 'Unfollow Show' : 'Follow Show'}
-                      </Button>
-                    )}
+                    <Button
+                      variant={isCalendarItemSaved(spotlightItem) ? 'outline' : 'secondary'}
+                      onClick={(e) => handleCalendarSaveToggle(e, spotlightItem)}
+                      className="rounded-full"
+                    >
+                      {isCalendarItemSaved(spotlightItem)
+                        ? t('calendar.removeFromPlan', 'Remove from plan')
+                        : spotlightItem.type === 'movie'
+                          ? t('calendar.addToWatchlist', 'Add to watchlist')
+                          : t('calendar.followShow', 'Follow show')}
+                    </Button>
                   </div>
                 </div>
               </div>

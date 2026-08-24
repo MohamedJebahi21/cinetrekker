@@ -9,12 +9,12 @@ test.describe("mobile profile and social compatibility", () => {
       page.getByRole("heading", { name: "Find people with great taste." }),
     ).toBeVisible({ timeout: 15_000 });
 
-    const search = page.getByRole("textbox", { name: "Search public profiles" });
+    const search = page.getByRole("textbox", { name: "Search CineTrekker members" });
     await expect(search).toBeVisible();
 
     const metrics = await page.evaluate(() => {
       const input = document.querySelector<HTMLInputElement>(
-        'input[aria-label="Search public profiles"]',
+        'input[aria-label="Search CineTrekker members"]',
       );
       const inputBounds = input?.getBoundingClientRect();
       return {

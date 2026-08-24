@@ -1,4 +1,3 @@
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Bookmark, Check, Info, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -14,6 +13,20 @@ import { buildMediaPath } from "@/lib/seo";
 const SWIPE_THRESHOLD = 42;
 
 type TouchPoint = { x: number; y: number };
+
+function usePrefersReducedMotion() {
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduceMotion(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  return reduceMotion;
+}
 
 function HeroSectionSkeleton({ isMobileViewport }: { isMobileViewport: boolean }) {
   if (isMobileViewport) {
@@ -60,7 +73,7 @@ export function HeroSection() {
   } = useUserLists();
   const { strictFiltering, moderateFiltering } = useContentPolicy();
   const includeAdult = !(strictFiltering || moderateFiltering);
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = usePrefersReducedMotion();
   const language = i18n.language;
 
   const [activeIndex, setActiveIndex] = useState(0);
@@ -145,8 +158,6 @@ export function HeroSection() {
     setIsPaused(false);
   };
 
-  const td = prefersReducedMotion ? 0 : 0.5;
-
   return (
     <section
       className="w-full border-b border-border/30 bg-background"
@@ -160,36 +171,31 @@ export function HeroSection() {
       {!isMobileViewport && (
       <div className="relative min-h-[520px] lg:min-h-[560px] w-full overflow-hidden">
         {/* Animated backdrop */}
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={`hero-bg-${activeItem.id}`}
-            src={heroImage}
-            alt=""
-            aria-hidden="true"
-            loading="eager"
-            fetchPriority="high"
-            className="absolute inset-0 h-full w-full object-cover"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: td }}
-          />
-        </AnimatePresence>
+        <img
+          key={`hero-bg-${activeItem.id}`}
+          src={heroImage}
+          alt=""
+          aria-hidden="true"
+          loading="eager"
+          fetchPriority="high"
+          className={cn(
+            "absolute inset-0 h-full w-full object-cover",
+            !prefersReducedMotion && "animate-fade-in",
+          )}
+        />
 
         {/* Gradient overlays for text readability */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/40 to-transparent z-10" />
         <div className="ct-hero-bottom-scrim absolute inset-0 z-10" />
 
         {/* Content anchored to middle-left */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`hero-content-${activeItem.id}`}
-            className="absolute inset-y-0 left-0 flex flex-col justify-center p-8 lg:p-16 z-20 max-w-[700px] mt-8"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: td, ease: "easeOut" }}
-          >
+        <div
+          key={`hero-content-${activeItem.id}`}
+          className={cn(
+            "absolute inset-y-0 left-0 z-20 mt-8 flex max-w-[700px] flex-col justify-center p-8 lg:p-16",
+            !prefersReducedMotion && "animate-slide-up",
+          )}
+        >
             {/* Kicker */}
             <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-primary">
               {t("home.topWatchedThisWeekKicker", "Weekly Spotlight")}
@@ -252,8 +258,7 @@ export function HeroSection() {
                 {inWatched ? t("actions.watched", "Watched") : t("actions.markAsWatched", "Mark as Watched")}
               </Button>
             </div>
-          </motion.div>
-        </AnimatePresence>
+        </div>
 
         {/* Floating poster carousel in bottom right */}
         <div className="absolute bottom-8 right-8 lg:bottom-12 lg:right-16 z-20 flex items-center gap-3">
@@ -337,21 +342,18 @@ export function HeroSection() {
         <div className="relative overflow-hidden bg-background">
           {/* Backdrop */}
           <div className="relative min-h-[54svh] sm:min-h-[60svh]">
-            <AnimatePresence mode="wait">
-              <motion.img
-                key={`hero-mob-bg-${activeItem.id}`}
-                src={heroImage}
-                alt=""
-                aria-hidden="true"
-                loading="eager"
-                fetchPriority="high"
-                className="absolute inset-0 h-full w-full object-cover object-center"
-                initial={{ opacity: 0, scale: 1.04 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: td }}
-              />
-            </AnimatePresence>
+            <img
+              key={`hero-mob-bg-${activeItem.id}`}
+              src={heroImage}
+              alt=""
+              aria-hidden="true"
+              loading="eager"
+              fetchPriority="high"
+              className={cn(
+                "absolute inset-0 h-full w-full object-cover object-center",
+                !prefersReducedMotion && "animate-fade-in",
+              )}
+            />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(247,37,37,0.14),transparent_36%),linear-gradient(180deg,rgba(0,0,0,0.12)_0%,rgba(0,0,0,0.4)_45%,rgba(8,8,10,0.94)_100%)]" />
 
             <div className="absolute inset-x-4 top-4 flex items-center justify-between">
@@ -397,15 +399,10 @@ export function HeroSection() {
         </div>
 
         {/* Text content */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`hero-mob-content-${activeItem.id}`}
-            className="px-4 pb-4 pt-3"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: td }}
-          >
+        <div
+          key={`hero-mob-content-${activeItem.id}`}
+          className={cn("px-4 pb-4 pt-3", !prefersReducedMotion && "animate-slide-up")}
+        >
             <div className="ct-hero-mobile-card rounded-2xl border p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
@@ -474,8 +471,7 @@ export function HeroSection() {
                 </Button>
               </div>
             </div>
-          </motion.div>
-        </AnimatePresence>
+        </div>
 
         {activeItem.overview && (
             <div className="px-4 pb-2 pt-0.5">
