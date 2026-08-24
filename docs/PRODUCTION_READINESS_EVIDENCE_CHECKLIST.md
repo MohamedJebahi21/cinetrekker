@@ -18,6 +18,16 @@ This checklist records the **evidence** required to close production operations 
 | Human accessibility review | Not verified in this repository | Reviewer, assistive technologies, viewport/zoom coverage, findings, remediation owner, and follow-up date | Run independent keyboard, screen-reader, zoom/reflow, and reduced-motion review. |
 | Legal and commercial governance | Not verified in this repository | Qualified reviewer, decision date, approved markets/terms, commercial owner, and next-review date | Obtain professional review before sponsorship, advertising, or large-scale commercial rollout. |
 
+## Current Read-Only Evidence
+
+The following checks are safe public observations, not a substitute for owner-controlled evidence or a completed migration.
+
+| Date (UTC) | Scope | Coarse result | Boundary |
+|---|---|---|---|
+| 2026-08-24 | `GET /api/health` | HTTP 200; database, content provider, scheduled jobs, and rate limiting reported healthy | Public, read-only health response; no user records queried. |
+| 2026-08-24 | Public routes | `/status`, `/trust`, `/measurement`, `/partnerships`, and `/notifications` returned HTTP 200 | Public, read-only route checks only. |
+| 2026-08-24 | Notification migration access | Not applied; managed Supabase migration connector remained disabled and browser handoff rendered unusably | No production SQL, worker invocation, notification action, or user-data mutation occurred. |
+
 ## Evidence Record Template
 
 Add one record per completed external activity. Keep references private if they reveal organization or personal information.
