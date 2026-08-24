@@ -26,7 +26,7 @@ The following checks are safe public observations, not a substitute for owner-co
 |---|---|---|---|
 | 2026-08-24 | `GET /api/health` | HTTP 200; database, content provider, scheduled jobs, and rate limiting reported healthy | Public, read-only health response; no user records queried. |
 | 2026-08-24 | Public routes | `/status`, `/trust`, `/measurement`, `/partnerships`, and `/notifications` returned HTTP 200 | Public, read-only route checks only. |
-| 2026-08-24 | Notification migration access | Not applied; managed Supabase migration connector remained disabled and browser handoff rendered unusably | No production SQL, worker invocation, notification action, or user-data mutation occurred. |
+| 2026-08-24 | Notification migration access | Not applied; the managed connector remained disabled, browser handoff rendered unusably, and a final connection attempt failed with an OAuth state/user mismatch | No production SQL, worker invocation, notification action, or user-data mutation occurred. The migration requires an owner-controlled Supabase session with matching authentication state. |
 
 ## Evidence Record Template
 
