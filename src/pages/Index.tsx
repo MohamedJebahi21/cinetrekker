@@ -506,7 +506,7 @@ export default function Index() {
   return (
     <div className="ct-page-shell min-h-screen">
       <SEO
-        title="Movie & TV Show Tracker — Watchlist and Progress | CineTrekker"
+        title="CineTrekker"
         description="Track movies and TV shows, build a watchlist you will actually use, log your progress, and discover what to watch next with CineTrekker."
         canonical={buildCanonicalUrl("/")}
         keywords="movie tracker, TV show tracker, watchlist app, track movies, track TV shows, movie watchlist, TV show watchlist, what to watch next"

@@ -1,6 +1,6 @@
 {
   "id": "/",
-  "name": "CineTrekker — Movie & TV Tracker",
+  "name": "CineTrekker",
   "short_name": "CineTrekker",
   "description": "Track movies and TV shows, build a watchlist, log progress, and decide what to watch next.",
   "start_url": "/",
