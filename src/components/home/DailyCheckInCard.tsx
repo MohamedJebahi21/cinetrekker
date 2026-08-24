@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { format, subDays } from "date-fns";
 import { useTranslation } from "react-i18next";
-import { ArrowRight, Check, Flame, LockKeyhole, Sparkles } from "lucide-react";
+import { ArrowRight, CalendarCheck2, CalendarDays, Check, LockKeyhole } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { useEngagementLoop } from "@/hooks/useEngagementLoop";
@@ -63,14 +63,14 @@ export function DailyCheckInCard() {
 
   return (
     <section
-      className="relative overflow-hidden rounded-[1.75rem] border border-amber-300/20 bg-[radial-gradient(circle_at_top_right,rgba(251,191,36,0.16),transparent_42%),linear-gradient(135deg,hsla(var(--card)/0.98),hsla(var(--background)/0.94))] p-5 shadow-[0_20px_60px_rgba(251,191,36,0.08)] md:p-6"
+      className="relative overflow-hidden rounded-[1.75rem] border border-primary/20 bg-[radial-gradient(circle_at_top_right,hsla(var(--primary)/0.16),transparent_42%),linear-gradient(135deg,hsla(var(--card)/0.98),hsla(var(--background)/0.94))] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)] md:p-6"
       aria-labelledby="daily-check-in-title"
     >
       <div aria-hidden="true" className="pointer-events-none absolute -bottom-20 -left-16 h-48 w-48 rounded-full bg-primary/8 blur-3xl" />
       <div className="relative grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.72fr)] lg:items-center">
         <div>
-          <div className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-amber-300/90">
-            <Sparkles className="h-4 w-4" aria-hidden="true" />
+          <div className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+            <CalendarCheck2 className="h-4 w-4" aria-hidden="true" />
             {t("home.dailyCheckInEyebrow", "Daily check-in")}
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -80,7 +80,7 @@ export function DailyCheckInCard() {
                 : t("home.dailyCheckInTitle", "Keep your watch streak alive")}
             </h2>
             {celebrated && (
-              <span className="animate-fade-in rounded-full bg-amber-300/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-300">
+              <span className="animate-fade-in rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
                 {t("home.dailyCheckInSaved", "Saved for today")}
               </span>
             )}
@@ -88,10 +88,10 @@ export function DailyCheckInCard() {
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{toneCopy}</p>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
-            <div className="inline-flex items-center gap-2 rounded-2xl border border-amber-300/20 bg-amber-300/10 px-3 py-2">
-              <Flame className="h-5 w-5 fill-amber-300 text-amber-300" aria-hidden="true" />
+            <div className="inline-flex items-center gap-2 rounded-2xl border border-primary/20 bg-primary/[0.055] px-3 py-2">
+              <CalendarDays className="h-5 w-5 text-primary" aria-hidden="true" />
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-amber-300/80">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-primary/80">
                   {t("home.currentStreak", "Current streak")}
                 </p>
                 <p className="text-lg font-black leading-none text-foreground">
@@ -112,7 +112,7 @@ export function DailyCheckInCard() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border/60 bg-background/30 p-4">
+        <div className="rounded-2xl border border-primary/15 bg-background/45 p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
@@ -122,13 +122,13 @@ export function DailyCheckInCard() {
                 {nextRank ? nextRank.name : rank.name}
               </p>
             </div>
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-amber-300/12 text-amber-300">
+            <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
               {nextRank ? <LockKeyhole className="h-5 w-5" aria-hidden="true" /> : <Check className="h-5 w-5" aria-hidden="true" />}
             </div>
           </div>
           <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted/60">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-200 transition-[width] duration-300"
+              className="h-full rounded-full bg-primary transition-[width] duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -151,7 +151,7 @@ export function DailyCheckInCard() {
                     className={cn(
                       "inline-flex h-7 w-7 items-center justify-center rounded-full border text-[10px] font-bold",
                       isFilled
-                        ? "border-amber-300/50 bg-amber-300 text-black"
+                        ? "border-primary/40 bg-primary text-primary-foreground"
                         : "border-border/60 bg-background/40 text-muted-foreground",
                     )}
                     title={format(day, "MMM d")}
