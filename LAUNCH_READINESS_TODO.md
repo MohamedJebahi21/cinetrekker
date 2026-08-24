@@ -35,10 +35,15 @@
 
 ## P3 — External evidence and governance required before large-scale commercial launch
 
+- [ ] **DEPLOY-EXT-01 — Apply notification-scale migration:** Apply `supabase/migrations/20260824190000_notification_scale_and_retention.sql` through the approved Supabase production process before, or atomically with, the notification API/frontend release. Use `supabase/NOTIFICATION_SCALE_DEPLOYMENT_RUNBOOK.md` for schema-only verification. As of 2026-08-24, read-only probes confirm the new worker-state table and server-only batch RPC are not yet present in production.
 - [ ] **OPS-EXT-01 — Production operations evidence:** Verify production secret inventory/rotation, Upstash connectivity, Supabase backup-and-restore drill, cron-health alert routing, quotas, and ownership. Requires deployment-console access and/or operator confirmation.
 - [ ] **A11Y-EXT-01 — Human accessibility validation:** Perform independent keyboard, screen-reader, zoom/reflow, and assistive-technology evaluation.
 - [ ] **LEGAL-EXT-01 — Legal/commercial review:** Obtain qualified review of privacy, data retention, sponsor contracts, labeling, and regional obligations before commercial rollout.
 - [ ] **SPONSOR-EXT-01 — Commercial governance:** Establish partner approval, brand suitability review, campaign reporting sign-off, and an accountable commercial owner before accepting sponsor commitments.
+
+## Verified release evidence — 2026-08-24
+
+The source-level backlog above has passed the full GitHub Release Quality Gate on commits `336cb12` and `a10a6e7`. The stabilized functional desktop matrix passed with 129 checks in Chromium, Firefox, and WebKit; one explicitly skipped authenticated social-boundary test remains per engine. Chromium is the only reviewed visual-baseline engine; generated Firefox/WebKit snapshots are intentionally not adopted. The public health endpoint returned HTTP 200 with coarse healthy dependency indicators, while public status, trust, measurement, and partnership routes returned HTTP 200 during read-only production checks.
 
 ## Completion rules
 
