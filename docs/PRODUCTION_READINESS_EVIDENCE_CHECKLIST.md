@@ -10,7 +10,7 @@ This checklist records the **evidence** required to close production operations 
 
 | Gate | Current status | Required evidence to close | Owner-controlled action |
 |---|---|---|---|
-| Notification-scale schema | Blocked by unavailable authenticated Supabase session | Migration recorded as applied; schema-only verification output shows three columns, worker-state table, server-only RPC, and no client execute permission | Apply `20260824190000_notification_scale_and_retention.sql` in one transaction using `supabase/NOTIFICATION_SCALE_DEPLOYMENT_RUNBOOK.md`. |
+| Notification-scale schema | Complete on 2026-08-24 | Migration applied as one transaction; schema-only verification confirmed three notification columns, worker-state table, server-only `DEFINER` RPC, and no `anon` or `authenticated` execute permission | Continue routine operational observation; do not invoke the worker solely as a deployment test. |
 | Production secret inventory | Not verified in this repository | Dated secret inventory review, rotation owner, and next-review date; no secret values | Review Vercel, Supabase, Upstash, TMDB, Google OAuth, and alert-webhook configuration in their owner consoles. |
 | Alert routing | Not verified in this repository | Test alert receipt for a non-sensitive provider test event or documented dry-run; destination owner and escalation path | Configure and verify Vercel 5xx, security webhook, Supabase Auth, Upstash, and independent uptime alert routing. |
 | Backup and recovery | Not verified in this repository | Date, operator, isolated restore target, coarse success/failure, recovery duration, and follow-up item | Complete a non-production backup/restore drill; never restore a production dump into a shared environment. |
@@ -26,7 +26,7 @@ The following checks are safe public observations, not a substitute for owner-co
 |---|---|---|---|
 | 2026-08-24 | `GET /api/health` | HTTP 200; database, content provider, scheduled jobs, and rate limiting reported healthy | Public, read-only health response; no user records queried. |
 | 2026-08-24 | Public routes | `/status`, `/trust`, `/measurement`, `/partnerships`, and `/notifications` returned HTTP 200 | Public, read-only route checks only. |
-| 2026-08-24 | Notification migration access | Not applied; the managed connector remained disabled, browser handoff rendered unusably, and a final connection attempt failed with an OAuth state/user mismatch | No production SQL, worker invocation, notification action, or user-data mutation occurred. The migration requires an owner-controlled Supabase session with matching authentication state. |
+| 2026-08-24 | Notification migration | Applied successfully through a fresh owner-authenticated Supabase Dashboard session after project identity verification | The complete migration ran once as a SQL Editor batch. Schema-only verification passed; no worker invocation, user notification action, or user-data mutation occurred. The migration’s intended operational checkpoint was the only inserted row. |
 
 ## Evidence Record Template
 
