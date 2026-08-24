@@ -12,7 +12,7 @@ This packet makes the remaining launch gates reviewable by the appropriate peopl
 |---|---|---|---|
 | Accessibility | Keyboard, target size, focus, reduced-motion, RTL, zoom/reflow, mobile/desktop, and cross-browser automated checks | Independent assistive-technology review with real screen readers and keyboard-only journeys | Reviewer, date, devices/browsers, findings, remediation owner, retest result |
 | Localization | Strict key parity and localized regression checks for English, Arabic, French, Turkish, Spanish, and German | Native-speaker clarity and cultural-quality review of high-traffic routes | Reviewer, locale, routes, issue log, corrected/retested date |
-| Notifications | Preference enforcement, privacy boundaries, UI lifecycle, worker architecture, and schema migration runbook | Apply migration; observe the first normal scheduled run from owner logs | Safe deployment record and coarse first-run telemetry only |
+| Notifications | Preference enforcement, privacy boundaries, UI lifecycle, worker architecture, and the production schema migration | Observe the first normal scheduled run from owner logs; do not invoke it solely as a deployment test | Safe deployment record and coarse first-run telemetry only |
 | Production operations | Health/status route, privacy-safe incident reporting, recovery and observability runbooks | Secret inventory, alert routing, quota review, isolated restore drill | `docs/PRODUCTION_READINESS_EVIDENCE_CHECKLIST.md` record |
 | Privacy and commercial governance | Privacy/trust/measurement/sponsor guidance routes and product labeling guardrails | Legal review, partnership approval process, commercial owner, reporting sign-off | Qualified reviewer and accountable owner records |
 
@@ -39,7 +39,7 @@ Review the following high-traffic routes in **Arabic, French, Turkish, Spanish, 
 
 Use `docs/PRODUCTION_READINESS_EVIDENCE_CHECKLIST.md` to record only coarse, non-sensitive evidence for:
 
-1. Supabase notification-scale migration and schema-only verification.
+1. The completed Supabase notification-scale migration and its schema-only verification; observe future normal scheduled operation without manually invoking the worker as a test.
 2. Vercel/Supabase/Upstash/TMDB/Google OAuth secret inventory and accountable rotation owner.
 3. Vercel 5xx, security, independent uptime, Supabase Auth, and Upstash alert routing.
 4. Provider quota and spending-protection review.

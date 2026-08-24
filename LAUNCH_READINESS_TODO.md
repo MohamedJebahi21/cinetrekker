@@ -53,6 +53,19 @@ These items extend the original audit after its source-level foundations were co
 - [ ] **LEGAL-EXT-01 — Legal/commercial review:** Obtain qualified review of privacy, data retention, sponsor contracts, labeling, and regional obligations before commercial rollout.
 - [ ] **SPONSOR-EXT-01 — Commercial governance:** Establish partner approval, brand suitability review, campaign reporting sign-off, and an accountable commercial owner before accepting sponsor commitments.
 
+### Final external execution checklist
+
+- [x] **OPS-EXT-01a — Public health and status evidence:** `GET /api/health` is healthy and the public status, notification, trust, measurement, and partnership routes return successfully after the production notification migration.
+- [ ] **OPS-EXT-01b — Secret inventory and ownership:** In the Vercel, Supabase, Upstash, TMDB, Google OAuth, and alerting-provider consoles, record a rotation owner and next-review date without recording any secret value in the repository.
+- [ ] **OPS-EXT-01c — Alert delivery:** Confirm an accountable destination and a safe test/dry-run for Vercel function errors, security events, Supabase Auth, Upstash reachability, and independent uptime monitoring.
+- [ ] **OPS-EXT-01d — Quota and cost safeguards:** Review quota/spend limits and escalation ownership for all production providers.
+- [ ] **OPS-EXT-01e — Isolated backup and recovery drill:** Restore only an approved non-personal fixture into an isolated non-production environment; record the coarse result and recovery duration.
+- [x] **A11Y-EXT-01a — Automated coverage:** Keyboard, focus, touch targets, reduced motion, RTL, zoom/reflow, mobile/desktop, and cross-browser automated coverage has passed.
+- [ ] **A11Y-EXT-01b — Independent assistive-technology review:** Complete keyboard-only and screen-reader review on real desktop and mobile environments, log findings, and retest fixes.
+- [ ] **I18N-EXT-01 — Native-language review:** Have native reviewers assess high-traffic routes in Arabic, French, Turkish, Spanish, and German for meaning, grammar, tone, truncation, metadata clarity, and Arabic RTL quality.
+- [ ] **LEGAL-EXT-01 — Legal/commercial review:** Obtain qualified review of privacy, retention, sponsor contracts, labeling, and regional obligations before commercial rollout.
+- [ ] **SPONSOR-EXT-01 — Commercial governance:** Assign the accountable commercial owner and approve partner suitability, placement labels, campaign reporting, and escalation process before accepting sponsor commitments.
+
 ## Verified release evidence — 2026-08-24
 
 The source-level backlog above has passed the full GitHub Release Quality Gate on commits `336cb12` and `a10a6e7`. Subsequent identity-aligned check-in/quest refinement (`0b6d544`) and localized recommendation-context refinement (`9827abf`) also passed the Release Quality Gate. The stabilized functional desktop matrix passed with 129 checks in Chromium, Firefox, and WebKit; one explicitly skipped authenticated social-boundary test remains per engine. Chromium is the only reviewed visual-baseline engine; generated Firefox/WebKit snapshots are intentionally not adopted. The public health endpoint returned HTTP 200 with coarse healthy dependency indicators, while public status, trust, measurement, and partnership routes returned HTTP 200 during read-only production checks.
