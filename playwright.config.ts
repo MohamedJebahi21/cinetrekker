@@ -16,6 +16,7 @@ export default defineConfig({
     actionTimeout: 10000,
     ignoreHTTPSErrors: true,
     storageState: "./tests/playwright-guest-state.json",
+    serviceWorkers: "block",
   },
   webServer: {
     command: "npm run preview -- --host 127.0.0.1 --port 4173",

@@ -32,7 +32,8 @@
     "test:analytics-privacy": "playwright test tests/analytics-consent-gate.spec.ts --project=chromium",
     "audit:desktop": "node ./scripts/run-lighthouse-desktop.mjs",
     "audit:desktop:full": "npm run build && npm run audit:desktop",
-    "test:e2e:desktop": "playwright test --project=chromium --project=firefox --project=webkit",
+    "test:e2e:desktop": "playwright test --grep-invert 'CineTrekker visual regression' --project=chromium --workers=2 && playwright test --grep-invert 'CineTrekker visual regression' --project=firefox --workers=1 && playwright test --grep-invert 'CineTrekker visual regression' --project=webkit --workers=1",
+    "test:e2e:visual:chromium": "playwright test tests/visual-regression.spec.ts --project=chromium --workers=2",
     "test:e2e:mobile:search-regressions": "playwright test tests/mobile-features.spec.ts --project=mobile-safari --grep \"slash shortcuts do not open a second search dialog\""
   },
   "dependencies": {

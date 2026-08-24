@@ -26,6 +26,7 @@ async function removeMotionForScreenshot(page: Page) {
 const recoveryProfilePath = "/user/00000000-0000-0000-0000-000000000000";
 
 test.describe("CineTrekker visual regression — desktop", () => {
+  test.skip(({ browserName }) => browserName !== "chromium", "Visual baselines are reviewed and maintained for Chromium only.");
   test.use({ viewport: { width: 1440, height: 900 }, colorScheme: "dark" });
 
   test("home discovery shell remains visually stable", async ({ page }) => {
@@ -73,6 +74,7 @@ test.describe("CineTrekker visual regression — desktop", () => {
 });
 
 test.describe("CineTrekker visual regression — mobile", () => {
+  test.skip(({ browserName }) => browserName !== "chromium", "Visual baselines are reviewed and maintained for Chromium only.");
   test.use({ viewport: { width: 390, height: 844 }, colorScheme: "dark", isMobile: true });
 
   test("mobile home shell and bottom navigation remain visually stable", async ({ page }) => {
