@@ -27,6 +27,7 @@ The following checks are safe public observations, not a substitute for owner-co
 | 2026-08-24 | `GET /api/health` | HTTP 200; database, content provider, scheduled jobs, and rate limiting reported healthy | Public, read-only health response; no user records queried. |
 | 2026-08-24 | Public routes | `/status`, `/trust`, `/measurement`, `/partnerships`, and `/notifications` returned HTTP 200 | Public, read-only route checks only. |
 | 2026-08-24 | Notification migration | Applied successfully through a fresh owner-authenticated Supabase Dashboard session after project identity verification | The complete migration ran once as a SQL Editor batch. Schema-only verification passed; no worker invocation, user notification action, or user-data mutation occurred. The migration’s intended operational checkpoint was the only inserted row. |
+| 2026-08-24 | Vercel operations access | Not verified in this session; managed Vercel authorization failed with an OAuth state/user mismatch | No deployment, environment, alert, secret, or project setting was changed. Complete secret, alert, quota, and ownership evidence in an owner-controlled Vercel session. |
 
 ## Evidence Record Template
 
