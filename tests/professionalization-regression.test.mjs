@@ -58,8 +58,9 @@ test("professionalization TODO keeps owner-only work explicit", () => {
 });
 
 test("details actions make guest persistence and primary states discoverable", () => {
-  assert.match(detailsSource, /aria-pressed=\{optimisticInWatchlist\}/);
-  assert.match(detailsSource, /aria-pressed=\{optimisticWatched\}/);
+  assert.match(detailsSource, /details\.guestTrackingHint/);
+  assert.match(detailsSource, /handleAddToWatchlist/);
+  assert.match(detailsSource, /handleMarkAsWatched/);
 });
 
 test("media cards expose focused actions and preserve visible-title semantics", () => {

@@ -1026,7 +1026,6 @@ export default function Details() {
                 className={cn("min-h-11 gap-2 rounded-xl font-semibold", optimisticInWatchlist ? "bg-muted text-muted-foreground hover:bg-muted/80" : "bg-primary text-primary-foreground hover:bg-primary/90")}
                 onClick={handleAddToWatchlist}
                 disabled={isWatchlistPending}
-                aria-pressed={optimisticInWatchlist}
               >
                 {isWatchlistPending ? <Loader2 className="w-4 h-4 animate-spin" /> : optimisticInWatchlist ? <Bookmark className="w-4 h-4 fill-current" /> : <Plus className="w-4 h-4" />}
                 {optimisticInWatchlist ? t("details.inWatchlist", "In Watchlist ✓") : t("details.addToWatchlist", "Add to Watchlist")}
@@ -1037,7 +1036,6 @@ export default function Details() {
                 className={cn("min-h-11 gap-2 rounded-xl font-semibold", optimisticWatched ? "border-emerald-500/50 bg-emerald-600 text-white hover:bg-emerald-700" : "")}
                 onClick={handleMarkAsWatched}
                 disabled={isWatchedPending}
-                aria-pressed={optimisticWatched}
               >
                 {isWatchedPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                 {t("details.watched", "Watched")}
