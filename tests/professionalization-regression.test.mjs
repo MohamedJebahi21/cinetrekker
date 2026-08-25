@@ -12,10 +12,6 @@ const detailsSource = fs.readFileSync(
   path.join(repoRoot, "src/pages/Details.tsx"),
   "utf8",
 );
-const searchSource = fs.readFileSync(
-  path.join(repoRoot, "src/pages/Search.tsx"),
-  "utf8",
-);
 const mediaCardSource = fs.readFileSync(
   path.join(repoRoot, "src/components/MediaCard.tsx"),
   "utf8",
@@ -81,11 +77,4 @@ test("shared home states announce loading and recovery feedback", () => {
   assert.match(homeStateSource, /role="alert"/);
   assert.match(homeStateSource, /aria-live="polite"/);
   assert.match(homeStateSource, /role="status"/);
-});
-
-test("search empty states announce recovery guidance accessibly", () => {
-  assert.match(searchSource, /role="status" aria-live="polite"/);
-  assert.match(searchSource, /search\.noResultsDescription/);
-  assert.match(searchSource, /common\.discoverTrending/);
-  assert.match(searchSource, /search\.backTrending/);
 });

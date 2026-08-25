@@ -1493,7 +1493,7 @@ export default function Search() {
           gap="md"
         />
       ) : (
-        <div className="text-center py-20 max-w-md mx-auto" role="status" aria-live="polite">
+        <div className="text-center py-20 max-w-md mx-auto">
           <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
             <SearchIcon className="w-12 h-12 text-primary" />
           </div>

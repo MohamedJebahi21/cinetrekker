@@ -28,15 +28,15 @@
 - [ ] Move recommendations, quests, statistics, awards, community, trust, support, and legal pages into contextual or secondary navigation.
 - [ ] Add consistent active-route treatment and a clear mobile navigation hierarchy.
 - [~] Standardize media-card poster ratios, title wrapping, metadata, rating badge, action controls, image fallback, and loading skeletons. Shared cards now expose accessible names and pressed states; route-specific variants and richer focus affordances remain.
-- [ ] Add explicit card variants for discovery, watchlist, compact rail, and profile/community contexts instead of relying on ad hoc classes. This remains open while the strict initial-entry bundle budget is prioritized.
+- [ ] Add explicit card variants for discovery, watchlist, compact rail, and profile/community contexts instead of relying on ad hoc classes.
 - [ ] Add a clear card hover/focus preview affordance without introducing heavy modal navigation. This remains open so the current strict initial-entry bundle budget is not weakened.
 - [ ] Ensure content density remains comfortable at 320px, 375px, 768px, 1024px, and wide desktop widths.
 
 ## Phase 3 — Discovery and conversion
 
-- [~] Turn Search into a polished workspace with a dominant input, applied-filter chips, visible result count, sort persistence, and a clean mobile filter drawer. The current workspace has these foundations and now includes clearer status and recovery copy; density and cross-device review remain.
-- [~] Provide stronger cold-start suggestions and recent-search affordances without recording sensitive search text in analytics. Recent searches are available locally; richer cold-start suggestions remain.
-- [~] Improve no-result recovery with spelling alternatives, filter reset, trending escape routes, and clear provider-data limitations. The existing empty state keeps clear Trending, Discover Trending, and Home recovery actions; spelling alternatives and provider limitations remain.
+- [ ] Turn Search into a polished workspace with a dominant input, applied-filter chips, visible result count, sort persistence, and a clean mobile filter drawer.
+- [ ] Provide stronger cold-start suggestions and recent-search affordances without recording sensitive search text in analytics.
+- [ ] Improve no-result recovery with spelling alternatives, filter reset, trending escape routes, and clear provider-data limitations.
 - [~] Improve Details pages around one decision hierarchy: identify → understand → choose action → discover related titles. The hero and action bar now make the primary next move and guest-local persistence hint clearer; deeper provider/related-content refinement remains.
 - [ ] Make providers, release status, genres, runtime, rating, progress, and follow/watchlist/watched actions consistent across movie and TV details.
 - [ ] Add concise account-value messaging after the first save or watch, without blocking exploration.
