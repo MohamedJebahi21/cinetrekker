@@ -249,7 +249,7 @@ export function HeroSection() {
               <Button
                 variant="outline"
                 className={cn(
-                  "h-11 rounded-lg border-white/20 bg-black/55 px-4 font-semibold text-white hover:bg-white/10",
+                  "h-11 rounded-lg border-white/15 bg-transparent px-3 font-medium text-white/75 hover:bg-white/10 hover:text-white",
                   inWatched && "border-green-400/40 bg-green-900/20 text-green-300"
                 )}
                 onClick={() => { void (inWatched ? removeFromWatched(activeItem.id, activeMediaType) : addToWatched(activeItem.id, activeMediaType, undefined, undefined, "completed")); }}
@@ -259,6 +259,29 @@ export function HeroSection() {
               </Button>
             </div>
         </div>
+
+        {/* Supporting poster treatment keeps the desktop hero balanced without competing with the primary title action. */}
+        {activeItem.poster_path ? (
+          <div className="ct-hero-supporting-poster">
+            <div className="ct-hero-supporting-poster-card">
+              <img
+                src={getImageUrl(activeItem.poster_path, "w342") || ""}
+                alt=""
+                aria-hidden="true"
+                width={342}
+                height={513}
+                loading="lazy"
+                className="ct-hero-supporting-poster-image"
+              />
+              <div className="ct-hero-supporting-poster-label">
+                <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-primary">
+                  {t("home.topWatchedThisWeekKicker", "Weekly Spotlight")}
+                </p>
+                <p className="mt-0.5 truncate text-xs font-semibold text-white">{activeTitle}</p>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {/* Floating poster carousel in bottom right */}
         <div className="absolute bottom-8 right-8 lg:bottom-12 lg:right-16 z-20 flex items-center gap-3">

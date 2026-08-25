@@ -72,6 +72,7 @@ The source-level backlog above has passed the full GitHub Release Quality Gate o
 
 - [x] **OPS-INT-01 — Repeatable public readiness probe:** `scripts/check-public-readiness.mjs` checks only the public health endpoint and approved public routes, emits coarse status metadata, and performs no writes or user-data queries. Its safety contract is covered by `npm run test:readiness`.
 - [x] **OPS-INT-02 — Vercel release identity remediation:** Corrected the repository-local Git author/committer identity to the verified GitHub account ID format after Vercel blocked two newer production deployments for an unmatched commit identity. No personal email, credential, or secret value is recorded in this checklist; the follow-up commit verifies whether Vercel now accepts the release.
+- [x] **UX-INT-01 — Professionalization backlog:** Added `docs/PROFESSIONALIZATION_TODO.md` with the full visual, UX, quality, scale, governance, and owner-only backlog. Implemented a balanced desktop hero poster treatment, compact desktop primary navigation, shared styling classes, and regression coverage; remaining items are intentionally tracked as open or owner-only.
 
 ## Completion rules
 

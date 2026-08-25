@@ -347,6 +347,29 @@ export function UnifiedNav() {
           </span>
         </div>
 
+        <nav aria-label={t("nav.primary", "Primary navigation")} className="hidden shrink-0 items-center gap-1 xl:flex">
+          {[
+            { path: "/discover", labelKey: "nav.discover", defaultLabel: "Discover" },
+            { path: "/watchlist", labelKey: "nav.watchlist", defaultLabel: "Watchlist" },
+            { path: "/watched", labelKey: "nav.watched", defaultLabel: "Watched" },
+          ].map((item) => {
+            const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "ct-primary-nav-link",
+                  isActive && "ct-primary-nav-link-active",
+                )}
+              >
+                {t(item.labelKey, item.defaultLabel)}
+              </Link>
+            );
+          })}
+        </nav>
+
         <div className={cn("topbar-search hidden min-w-0 flex-1 sm:block", pathname === "/search" && "hidden md:block")}>
           <Suspense fallback={searchFallback}>
             <SearchDropdown />
