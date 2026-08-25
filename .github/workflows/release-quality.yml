@@ -48,6 +48,13 @@ jobs:
       - name: Unit checks
         run: npm run test:unit
 
+      - name: Production readiness safety checks
+        run: npm run test:readiness
+
+      - name: Public production readiness probe
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: npm run readiness:public
+
       - name: Analytics privacy browser regressions
         run: npm run test:analytics-privacy
 

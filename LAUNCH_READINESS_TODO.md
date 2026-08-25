@@ -48,14 +48,14 @@ These items extend the original audit after its source-level foundations were co
 ## P3 — External evidence and governance required before large-scale commercial launch
 
 - [x] **DEPLOY-EXT-01 — Apply notification-scale migration:** Applied `supabase/migrations/20260824190000_notification_scale_and_retention.sql` to the CineTrekker production Supabase project on 2026-08-24 as one SQL Editor transaction. The runbook schema-only checks confirmed notification retention/grouping columns, `notification_worker_state`, the `DEFINER` batch RPC, and no `anon` or `authenticated` execute permission. The approved guest/public post-change checks passed. The notification worker was not invoked and no user notification, profile, list, history, rating, follow, or settings data was changed during verification.
-- [ ] **OPS-EXT-01 — Production operations evidence:** Verify production secret inventory/rotation, Upstash connectivity, Supabase backup-and-restore drill, cron-health alert routing, quotas, and ownership. Requires deployment-console access and/or operator confirmation.
+- [ ] **OPS-EXT-01 — Production operations evidence:** Verify production secret inventory/rotation, Upstash connectivity, Supabase backup-and-restore drill, cron-health alert routing, quotas, and ownership. Requires deployment-console access and/or operator confirmation. The complete execution plan is tracked in `docs/THOUSANDS_USER_LAUNCH_TODO.md`.
 - [ ] **A11Y-EXT-01 — Human accessibility validation:** Perform independent keyboard, screen-reader, zoom/reflow, and assistive-technology evaluation.
 - [ ] **LEGAL-EXT-01 — Legal/commercial review:** Obtain qualified review of privacy, data retention, sponsor contracts, labeling, and regional obligations before commercial rollout.
 - [ ] **SPONSOR-EXT-01 — Commercial governance:** Establish partner approval, brand suitability review, campaign reporting sign-off, and an accountable commercial owner before accepting sponsor commitments.
 
 ### Final external execution checklist
 
-- [x] **OPS-EXT-01a — Public health and status evidence:** `GET /api/health` is healthy and the public status, notification, trust, measurement, and partnership routes return successfully after the production notification migration.
+- [x] **OPS-EXT-01a — Public health and status evidence:** `GET /api/health` is healthy and the public status, notification, trust, measurement, and partnership routes return successfully after the production notification migration. A repeatable read-only probe is available as `npm run readiness:public`.
 - [ ] **OPS-EXT-01b — Secret inventory and ownership:** In the Vercel, Supabase, Upstash, TMDB, Google OAuth, and alerting-provider consoles, record a rotation owner and next-review date without recording any secret value in the repository.
 - [ ] **OPS-EXT-01c — Alert delivery:** Confirm an accountable destination and a safe test/dry-run for Vercel function errors, security events, Supabase Auth, Upstash reachability, and independent uptime monitoring.
 - [ ] **OPS-EXT-01d — Quota and cost safeguards:** Review quota/spend limits and escalation ownership for all production providers.
@@ -69,6 +69,8 @@ These items extend the original audit after its source-level foundations were co
 ## Verified release evidence — 2026-08-24
 
 The source-level backlog above has passed the full GitHub Release Quality Gate on commits `336cb12` and `a10a6e7`. Subsequent identity-aligned check-in/quest refinement (`0b6d544`) and localized recommendation-context refinement (`9827abf`) also passed the Release Quality Gate. The stabilized functional desktop matrix passed with 129 checks in Chromium, Firefox, and WebKit; one explicitly skipped authenticated social-boundary test remains per engine. Chromium is the only reviewed visual-baseline engine; generated Firefox/WebKit snapshots are intentionally not adopted. The public health endpoint returned HTTP 200 with coarse healthy dependency indicators, while public status, trust, measurement, and partnership routes returned HTTP 200 during read-only production checks.
+
+- [x] **OPS-INT-01 — Repeatable public readiness probe:** `scripts/check-public-readiness.mjs` checks only the public health endpoint and approved public routes, emits coarse status metadata, and performs no writes or user-data queries. Its safety contract is covered by `npm run test:readiness`.
 
 ## Completion rules
 

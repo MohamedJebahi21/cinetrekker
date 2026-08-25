@@ -19,6 +19,12 @@ Protected API endpoints create or preserve a safe request identifier and return 
 
 When a user reports a failure, ask for the approximate time, feature name, visible client error reference if present, and `X-Request-Id` from the failed API response. Search the Vercel function logs around that time using the request identifier before making changes.
 
+## Safe public readiness probe
+
+Before a controlled release, run `npm run readiness:public` from a clean checkout. The probe performs only `GET` requests to `/api/health`, `/status`, `/notifications`, `/trust`, `/measurement`, and `/partnerships`. It records only HTTP status, elapsed time, coarse health state, and dependency booleans for `/api/health`; it does not authenticate, mutate data, invoke the notification worker, store response bodies, or send alerts. Use `CINETREKKER_PUBLIC_URL` to point the same probe at an explicitly approved non-production environment.
+
+A successful probe is evidence that the public routes responded, not evidence that secrets, provider quotas, alert delivery, backup recovery, or authenticated user workflows are ready. Those gates remain governed by the production evidence checklist and the owner-controlled review packet.
+
 ## Monitoring Checklist
 
 | Signal | Where to inspect | Alert condition | First response |

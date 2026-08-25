@@ -47,3 +47,15 @@ test("the public status route and localized support label remain available", () 
     assert.match(translations, /"serviceStatus"\s*:/);
   }
 });
+
+test("the public readiness probe checks only safe read-only routes", () => {
+  const probe = read("scripts/check-public-readiness.mjs");
+
+  for (const route of ["/api/health", "/status", "/notifications", "/trust", "/measurement", "/partnerships"]) {
+    assert.match(probe, new RegExp(route));
+  }
+  assert.match(probe, /readOnly: true/);
+  assert.match(probe, /redirect: "manual"/);
+  assert.doesNotMatch(probe, /supabase|service.role|authorization|insert|update|delete/i);
+  assert.doesNotMatch(probe, /console\.log\(.*text/);
+});

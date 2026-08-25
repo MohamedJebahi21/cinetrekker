@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This checklist records the **evidence** required to close production operations gates without placing credentials, raw user data, or private provider logs in the repository. It supplements the incident, observability, backup, and notification migration runbooks; it does not replace their technical procedures.
+This checklist records the **evidence** required to close production operations gates without placing credentials, raw user data, or private provider logs in the repository. It supplements the incident, observability, backup, and notification migration runbooks; it does not replace their technical procedures. The prioritized execution plan for a broad launch is maintained in [`docs/THOUSANDS_USER_LAUNCH_TODO.md`](THOUSANDS_USER_LAUNCH_TODO.md).
 
 > **Safety boundary:** Do not paste API keys, service-role keys, OAuth secrets, database dumps, email addresses, IP addresses, profile records, watch history, ratings, watchlists, or notification content into this document. Record only an owner, date, provider console location, coarse outcome, and a safe reference link or ticket identifier.
 
@@ -28,6 +28,7 @@ The following checks are safe public observations, not a substitute for owner-co
 | 2026-08-24 | Public routes | `/status`, `/trust`, `/measurement`, `/partnerships`, and `/notifications` returned HTTP 200 | Public, read-only route checks only. |
 | 2026-08-24 | Notification migration | Applied successfully through a fresh owner-authenticated Supabase Dashboard session after project identity verification | The complete migration ran once as a SQL Editor batch. Schema-only verification passed; no worker invocation, user notification action, or user-data mutation occurred. The migration’s intended operational checkpoint was the only inserted row. |
 | 2026-08-25 | Vercel operations access | Partial read-only review completed in the verified `cinetrekker` production project; current deployment was Ready, recent observability showed 0% function error and 0% timeout, and the signed-in team member was visibly `Owner` | Private Vercel owner-console reference: project Overview, Deployments, Logs, Observability, Alerts, Usage, and Team Settings > Billing/Members. No secrets, raw logs, request bodies, email addresses, or settings were recorded. Vercel anomaly alerts were not available on the active Hobby plan and no alert destination was visible. | Owner to complete secret inventory, alert delivery, cross-provider quota/spend review, and backup drill; review by 2026-11-25. |
+| 2026-08-25 | Read-only public readiness probe | Passed — `/api/health` returned HTTP 200 with all four coarse dependencies healthy, and `/status`, `/notifications`, `/trust`, `/measurement`, and `/partnerships` returned HTTP 200 | Command: `npm run readiness:public`; no response bodies, user records, or generated artifacts were stored | Re-run before each broad-release promotion and after material infrastructure changes; next review 2026-11-25. |
 
 ## Evidence Record Template
 
