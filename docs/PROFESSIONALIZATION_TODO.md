@@ -17,7 +17,7 @@
 - [~] Rebalance the desktop hero so the artwork, title, metadata, and actions form one visual composition rather than leaving an unstructured empty side. Added a supporting poster treatment and preserved the existing hero contract; CTA simplification and fallback-art work remain.
 - [ ] Reduce the hero to one dominant primary action, one secondary action, and one quieter tracking control.
 - [ ] Add a stable hero fallback for missing or low-contrast TMDB backdrops.
-- [ ] Make the guest homepage follow one clear narrative: Discover → Save → Track.
+- [x] Make the guest homepage follow one clear narrative: Discover → Save → Track. The public home now leads with an explicit guest journey, discovery rails, and account-sync messaging while preserving local guest behavior.
 - [ ] Reduce first-visit density by deferring secondary community, quests, statistics, and recommendation surfaces until after the primary discovery path.
 - [ ] Standardize headline, section-title, body, metadata, caption, and button typography across all routes.
 - [ ] Standardize border opacity, radius, shadow, hover, pressed, focus, and disabled states across shared components.
@@ -27,9 +27,9 @@
 - [x] Make Home, Search, Watchlist, Watched, and Calendar the clear primary destinations. Added compact desktop links for Discover, Watchlist, and Watched while retaining the full contextual menu and mobile navigation.
 - [ ] Move recommendations, quests, statistics, awards, community, trust, support, and legal pages into contextual or secondary navigation.
 - [ ] Add consistent active-route treatment and a clear mobile navigation hierarchy.
-- [ ] Standardize media-card poster ratios, title wrapping, metadata, rating badge, action controls, image fallback, and loading skeletons.
+- [~] Standardize media-card poster ratios, title wrapping, metadata, rating badge, action controls, image fallback, and loading skeletons. Shared cards now expose accessible names, pressed/busy states, and keyboard-visible action affordances; route-specific variants remain.
 - [ ] Add explicit card variants for discovery, watchlist, compact rail, and profile/community contexts instead of relying on ad hoc classes.
-- [ ] Add a clear card hover/focus preview affordance without introducing heavy modal navigation.
+- [~] Add a clear card hover/focus preview affordance without introducing heavy modal navigation. Keyboard focus now reveals the same lightweight action affordance as desktop hover; a richer preview is still open.
 - [ ] Ensure content density remains comfortable at 320px, 375px, 768px, 1024px, and wide desktop widths.
 
 ## Phase 3 — Discovery and conversion
@@ -37,14 +37,14 @@
 - [ ] Turn Search into a polished workspace with a dominant input, applied-filter chips, visible result count, sort persistence, and a clean mobile filter drawer.
 - [ ] Provide stronger cold-start suggestions and recent-search affordances without recording sensitive search text in analytics.
 - [ ] Improve no-result recovery with spelling alternatives, filter reset, trending escape routes, and clear provider-data limitations.
-- [ ] Improve Details pages around one decision hierarchy: identify → understand → choose action → discover related titles.
+- [~] Improve Details pages around one decision hierarchy: identify → understand → choose action → discover related titles. The hero and action bar now make the primary next move and guest account-sync path clearer; deeper provider/related-content refinement remains.
 - [ ] Make providers, release status, genres, runtime, rating, progress, and follow/watchlist/watched actions consistent across movie and TV details.
 - [ ] Add concise account-value messaging after the first save or watch, without blocking exploration.
 - [ ] Preserve guest-local behavior and explain what synchronizes after account creation.
 
 ## Phase 4 — Feedback, trust, and retention
 
-- [ ] Make loading, error, retry, empty, partial-data, and offline states visually consistent and action-oriented.
+- [~] Make loading, error, retry, empty, partial-data, and offline states visually consistent and action-oriented. Shared home sections now announce loading and recovery feedback accessibly; a full cross-route state system remains.
 - [ ] Add data-freshness context to trending, releases, calendar, and notifications.
 - [ ] Make status, trust, privacy, measurement, and support surfaces easy to reach without competing with product navigation.
 - [ ] Keep the signed-in home centered on Up Next, Continue Watching, Watchlist, and relevant recommendations.

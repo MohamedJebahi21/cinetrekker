@@ -29,7 +29,7 @@ function HomeSectionFallback({
   requestReference?: string | null;
 }) {
   return (
-    <section className="home-section-shell">
+    <section className="home-section-shell" role="alert" aria-live="polite">
       <div className="ct-panel min-h-[420px] p-6 text-center sm:min-h-[520px]">
         <h2 className="text-lg font-semibold text-foreground">{title}</h2>
         <p className="mt-2 text-sm text-muted-foreground">{description}</p>
@@ -91,7 +91,7 @@ export function HomeSectionState({
 
   if (loading) {
     return (
-      <section className="home-section-shell" aria-busy="true" aria-label={`Loading ${title}`}>
+      <section className="home-section-shell" role="status" aria-live="polite" aria-busy="true" aria-label={`Loading ${title}`}>
         {skeleton ?? <div className="min-h-[420px] sm:min-h-[520px]" />}
       </section>
     );

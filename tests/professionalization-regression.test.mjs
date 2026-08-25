@@ -8,6 +8,18 @@ const heroSource = fs.readFileSync(
   path.join(repoRoot, "src/components/HeroSection.tsx"),
   "utf8",
 );
+const detailsSource = fs.readFileSync(
+  path.join(repoRoot, "src/pages/Details.tsx"),
+  "utf8",
+);
+const mediaCardSource = fs.readFileSync(
+  path.join(repoRoot, "src/components/MediaCard.tsx"),
+  "utf8",
+);
+const homeStateSource = fs.readFileSync(
+  path.join(repoRoot, "src/components/home/HomeSectionState.tsx"),
+  "utf8",
+);
 const navSource = fs.readFileSync(
   path.join(repoRoot, "src/components/UnifiedNav.tsx"),
   "utf8",
@@ -43,4 +55,28 @@ test("professionalization TODO keeps owner-only work explicit", () => {
   assert.match(todoSource, /backup-and-recovery drill/);
   assert.match(todoSource, /independent keyboard and screen-reader review/i);
   assert.match(todoSource, /qualified privacy, regional-compliance, sponsorship, commercial, and legal approval/i);
+});
+
+test("details actions make guest persistence and primary states discoverable", () => {
+  assert.match(detailsSource, /details\.createAccountToSync/);
+  assert.match(detailsSource, /aria-pressed=\{optimisticInWatchlist\}/);
+  assert.match(detailsSource, /aria-pressed=\{optimisticWatched\}/);
+  assert.match(detailsSource, /aria-busy=\{isWatchlistPending\}/);
+});
+
+test("media cards expose focused actions and preserve visible-title semantics", () => {
+  const detailLink = mediaCardSource.match(
+    /<Link\s+[\s\S]*?to=\{buildMediaPath\(mediaType, media\.id, title\)\}[\s\S]*?>/,
+  )?.[0];
+  assert.ok(detailLink, "expected the MediaCard detail Link");
+  assert.doesNotMatch(detailLink, /aria-label=/);
+  assert.match(mediaCardSource, /group-focus-within:opacity-100/);
+  assert.match(mediaCardSource, /aria-pressed=\{optimisticInWatchlist\}/);
+  assert.match(mediaCardSource, /aria-pressed=\{optimisticWatched\}/);
+});
+
+test("shared home states announce loading and recovery feedback", () => {
+  assert.match(homeStateSource, /role="alert"/);
+  assert.match(homeStateSource, /aria-live="polite"/);
+  assert.match(homeStateSource, /role="status"/);
 });
