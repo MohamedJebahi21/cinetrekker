@@ -12,6 +12,10 @@ const detailsSource = fs.readFileSync(
   path.join(repoRoot, "src/pages/Details.tsx"),
   "utf8",
 );
+const searchSource = fs.readFileSync(
+  path.join(repoRoot, "src/pages/Search.tsx"),
+  "utf8",
+);
 const mediaCardSource = fs.readFileSync(
   path.join(repoRoot, "src/components/MediaCard.tsx"),
   "utf8",
@@ -77,4 +81,17 @@ test("shared home states announce loading and recovery feedback", () => {
   assert.match(homeStateSource, /role="alert"/);
   assert.match(homeStateSource, /aria-live="polite"/);
   assert.match(homeStateSource, /role="status"/);
+});
+
+test("search empty states offer accessible recovery routes", () => {
+  assert.match(searchSource, /role="status" aria-live="polite"/);
+  assert.match(searchSource, /to="\/discover"/);
+  assert.match(searchSource, /to="\/genres"/);
+  assert.match(searchSource, /to="\/search\?sort=vote_average\.desc"/);
+});
+
+test("rail media cards use a denser presentation and suppress inline actions", () => {
+  assert.match(mediaCardSource, /const isRail = interactionMode === "rail"/);
+  assert.match(mediaCardSource, /const showInlineActions = !isRail/);
+  assert.match(mediaCardSource, /isRail && "min-h-\[4\.25rem\] p-2\.5"/);
 });
