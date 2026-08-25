@@ -273,12 +273,6 @@ export function HeroSection() {
                 loading="lazy"
                 className="ct-hero-supporting-poster-image"
               />
-              <div className="ct-hero-supporting-poster-label">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-primary">
-                  {t("home.topWatchedThisWeekKicker", "Weekly Spotlight")}
-                </p>
-                <p className="mt-0.5 truncate text-xs font-semibold text-white">{activeTitle}</p>
-              </div>
             </div>
           </div>
         ) : null}
