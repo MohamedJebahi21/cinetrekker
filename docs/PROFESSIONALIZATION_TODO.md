@@ -37,7 +37,7 @@
 - [ ] Turn Search into a polished workspace with a dominant input, applied-filter chips, visible result count, sort persistence, and a clean mobile filter drawer.
 - [ ] Provide stronger cold-start suggestions and recent-search affordances without recording sensitive search text in analytics.
 - [ ] Improve no-result recovery with spelling alternatives, filter reset, trending escape routes, and clear provider-data limitations.
-- [~] Improve Details pages around one decision hierarchy: identify → understand → choose action → discover related titles. The hero and action bar now make the primary next move and guest account-sync path clearer; deeper provider/related-content refinement remains.
+- [~] Improve Details pages around one decision hierarchy: identify → understand → choose action → discover related titles. The hero and action bar now make the primary next move and guest-local persistence hint clearer; deeper provider/related-content refinement remains.
 - [ ] Make providers, release status, genres, runtime, rating, progress, and follow/watchlist/watched actions consistent across movie and TV details.
 - [ ] Add concise account-value messaging after the first save or watch, without blocking exploration.
 - [ ] Preserve guest-local behavior and explain what synchronizes after account creation.

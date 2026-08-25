@@ -385,7 +385,6 @@ export const MediaCard = React.memo(function MediaCard({
                   )}
                   onClick={(event) => void handleWatchlistClick(event)}
                   aria-pressed={optimisticInWatchlist}
-                  aria-busy={isWatchlistPending}
                   aria-label={
                     optimisticInWatchlist
                       ? t("mediaCard.removeFromWatchlist", "Remove {{title}} from watchlist", { title })
@@ -411,7 +410,6 @@ export const MediaCard = React.memo(function MediaCard({
                   )}
                   onClick={(event) => void handleWatchedClick(event)}
                   aria-pressed={optimisticWatched}
-                  aria-busy={isWatchedPending}
                   aria-label={
                     optimisticWatched
                       ? t("mediaCard.markUnwatched", "Mark {{title}} as not watched", { title })

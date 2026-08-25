@@ -1014,17 +1014,10 @@ export default function Details() {
         {/* ─── ACTION BAR ─────────────────────────────────────── */}
         <Reveal className="mt-8">
           <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-            <div className="flex flex-col gap-3 mb-4">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{t("details.primaryActions", "Your Next Move")}</p>
-                  {!user && <p className="text-xs text-muted-foreground mt-1">{t("details.guestTrackingHint", "Guest actions save locally — create an account later for sync.")}</p>}
-                </div>
-                {!user ? (
-                  <Button asChild variant="ghost" size="sm" className="min-h-10 justify-start px-0 text-primary hover:bg-transparent hover:text-primary/80 sm:justify-end sm:px-3">
-                    <Link to="/signup">{t("details.createAccountToSync", "Create a free account to sync")}</Link>
-                  </Button>
-                ) : null}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{t("details.primaryActions", "Your Next Move")}</p>
+                {!user && <p className="text-xs text-muted-foreground mt-1">{t("details.guestTrackingHint", "Guest actions save locally — create an account later for sync.")}</p>}
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -1034,7 +1027,6 @@ export default function Details() {
                 onClick={handleAddToWatchlist}
                 disabled={isWatchlistPending}
                 aria-pressed={optimisticInWatchlist}
-                aria-busy={isWatchlistPending}
               >
                 {isWatchlistPending ? <Loader2 className="w-4 h-4 animate-spin" /> : optimisticInWatchlist ? <Bookmark className="w-4 h-4 fill-current" /> : <Plus className="w-4 h-4" />}
                 {optimisticInWatchlist ? t("details.inWatchlist", "In Watchlist ✓") : t("details.addToWatchlist", "Add to Watchlist")}
@@ -1046,7 +1038,6 @@ export default function Details() {
                 onClick={handleMarkAsWatched}
                 disabled={isWatchedPending}
                 aria-pressed={optimisticWatched}
-                aria-busy={isWatchedPending}
               >
                 {isWatchedPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                 {t("details.watched", "Watched")}
