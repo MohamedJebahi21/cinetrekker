@@ -8,7 +8,7 @@ const readProjectFile = (path) => readFile(new URL(path, root), "utf8");
 test("movie tracker landing page is routed, indexable, and conversion-ready", async () => {
   const [page, app, sitemap, vercelConfig, edgeMeta] = await Promise.all([
     readProjectFile("src/pages/MovieTracker.tsx"),
-    readProjectFile("src/App.tsx"),
+    readProjectFile("src/AppRoutes.tsx"),
     readProjectFile("api/sitemap.js"),
     readProjectFile("vercel.json"),
     readProjectFile("api/edge-meta.js"),

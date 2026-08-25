@@ -8,7 +8,7 @@ const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 
 test("measurement methodology is public, consent-aware, and excludes personal viewing data", () => {
   const page = read("src/pages/Measurement.tsx");
-  const app = read("src/App.tsx");
+  const app = read("src/AppRoutes.tsx");
   const trustCenter = read("src/pages/TrustCenter.tsx");
 
   assert.match(page, /useCookieConsent/);

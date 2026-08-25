@@ -8,7 +8,7 @@ const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 
 test("public trust guidance is indexable while unknown routes render crawler-safe noindex metadata", () => {
   const sitemap = read("api/sitemap.js");
-  const app = read("src/App.tsx");
+  const app = read("src/AppRoutes.tsx");
   const fallback = read("src/pages/TitleStatus.tsx");
 
   assert.match(sitemap, /\{ path: "\/trust", changefreq: "monthly", priority: "0\.4" \}/);

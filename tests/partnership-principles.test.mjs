@@ -8,7 +8,7 @@ const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 
 test("partnership principles preserve transparent, non-committal commercial governance", () => {
   const page = read("src/pages/Partnerships.tsx");
-  const app = read("src/App.tsx");
+  const app = read("src/AppRoutes.tsx");
   const footer = read("src/components/Footer.tsx");
 
   assert.match(page, /No active sponsorship program/);

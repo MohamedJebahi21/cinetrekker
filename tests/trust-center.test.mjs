@@ -8,7 +8,7 @@ const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 
 test("trust center links the core public control and support resources", () => {
   const page = read("src/pages/TrustCenter.tsx");
-  const app = read("src/App.tsx");
+  const app = read("src/AppRoutes.tsx");
   const footer = read("src/components/Footer.tsx");
 
   for (const route of ["/privacy", "/cookies", "/accessibility", "/status", "/terms", "/feedback"]) {

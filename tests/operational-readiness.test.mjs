@@ -34,7 +34,7 @@ test("client incident reporting excludes raw errors, stacks, identifiers, and ro
 });
 
 test("the public status route and localized support label remain available", () => {
-  const app = read("src/App.tsx");
+  const app = read("src/AppRoutes.tsx");
   const footer = read("src/components/Footer.tsx");
 
   assert.match(app, /path="\/status"/);

@@ -58,6 +58,7 @@
 - [ ] Complete independent keyboard and screen-reader review across primary journeys.
 - [ ] Complete native-language review for Arabic, French, Turkish, Spanish, and German, including RTL, truncation, tone, pluralization, and provider metadata.
 - [ ] Run authorized staging load and dependency-degradation tests at the target traffic profile.
+- [x] Split the application route table and homepage into lazy-loaded modules with an accessible route skeleton; the local application entry now measures approximately 399.8 KiB before Vercel’s byte-level accounting.
 - [ ] Measure real-user performance after traffic exists; track mobile and desktop LCP, CLS, INP, error rate, and route-level latency.
 - [ ] Practice non-production rollback and document release-freeze criteria.
 - [ ] Complete independent security review for OAuth redirects, RLS, service-role isolation, webhook/cron authentication, rate limiting, dependency risk, and public API exposure.

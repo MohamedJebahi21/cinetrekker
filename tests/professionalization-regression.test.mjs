@@ -4,6 +4,14 @@ import fs from "node:fs";
 import path from "node:path";
 
 const repoRoot = path.resolve(new URL("..", import.meta.url).pathname);
+const appSource = fs.readFileSync(
+  path.join(repoRoot, "src/App.tsx"),
+  "utf8",
+);
+const routesSource = fs.readFileSync(
+  path.join(repoRoot, "src/AppRoutes.tsx"),
+  "utf8",
+);
 const heroSource = fs.readFileSync(
   path.join(repoRoot, "src/components/HeroSection.tsx"),
   "utf8",
@@ -32,6 +40,13 @@ const todoSource = fs.readFileSync(
   path.join(repoRoot, "docs/PROFESSIONALIZATION_TODO.md"),
   "utf8",
 );
+
+test("homepage route stays lazy-loaded behind the accessible route fallback", () => {
+  assert.match(appSource, /const AppRoutes = lazy\(\(\) => import\("\.\/AppRoutes"\)\)/);
+  assert.match(routesSource, /const Index = lazy\(\(\) => import\("\.\/pages\/Index"\)\)/);
+  assert.ok(routesSource.includes('path="/"'));
+  assert.ok(routesSource.includes("<Suspense fallback={<RouteSpinner />}>") && routesSource.includes("<Index />"));
+});
 
 test("hero keeps one primary content composition and accessible spotlight controls", () => {
   assert.match(heroSource, /home\.heroValueProp/);
