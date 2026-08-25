@@ -27,9 +27,9 @@
 - [x] Make Home, Search, Watchlist, Watched, and Calendar the clear primary destinations. Added compact desktop links for Discover, Watchlist, and Watched while retaining the full contextual menu and mobile navigation.
 - [ ] Move recommendations, quests, statistics, awards, community, trust, support, and legal pages into contextual or secondary navigation.
 - [ ] Add consistent active-route treatment and a clear mobile navigation hierarchy.
-- [~] Standardize media-card poster ratios, title wrapping, metadata, rating badge, action controls, image fallback, and loading skeletons. Shared cards now expose accessible names, pressed/busy states, and keyboard-visible action affordances; route-specific variants remain.
+- [~] Standardize media-card poster ratios, title wrapping, metadata, rating badge, action controls, image fallback, and loading skeletons. Shared cards now expose accessible names and pressed states; route-specific variants and richer focus affordances remain.
 - [ ] Add explicit card variants for discovery, watchlist, compact rail, and profile/community contexts instead of relying on ad hoc classes.
-- [~] Add a clear card hover/focus preview affordance without introducing heavy modal navigation. Keyboard focus now reveals the same lightweight action affordance as desktop hover; a richer preview is still open.
+- [ ] Add a clear card hover/focus preview affordance without introducing heavy modal navigation. This remains open so the current strict initial-entry bundle budget is not weakened.
 - [ ] Ensure content density remains comfortable at 320px, 375px, 768px, 1024px, and wide desktop widths.
 
 ## Phase 3 — Discovery and conversion

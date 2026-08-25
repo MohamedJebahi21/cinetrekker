@@ -347,7 +347,7 @@ export const MediaCard = React.memo(function MediaCard({
             </div>
 
             {/* Enhanced gradient overlay - darker on hover */}
-            <div className="absolute inset-0 bg-gradient-to-t from-surface-dark-2/80 via-transparent to-transparent opacity-100 transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100" />
+            <div className="absolute inset-0 bg-gradient-to-t from-surface-dark-2/80 via-transparent to-transparent opacity-100 transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100" />
             {selectable ? (
               <div className="absolute right-2 top-2 z-20">
                 <Button
@@ -372,7 +372,7 @@ export const MediaCard = React.memo(function MediaCard({
               </div>
             ) : null}
             {showInlineActions ? (
-              <div className="absolute inset-x-3 bottom-3 z-20 hidden translate-y-2 flex-col gap-2 opacity-0 transition-all duration-200 md:flex md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100">
+              <div className="absolute inset-x-3 bottom-3 z-20 hidden translate-y-2 flex-col gap-2 opacity-0 transition-all duration-200 md:flex md:group-hover:translate-y-0 md:group-hover:opacity-100">
                 <Button
                   type="button"
                   size="sm"

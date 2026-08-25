@@ -68,7 +68,6 @@ test("media cards expose focused actions and preserve visible-title semantics", 
   )?.[0];
   assert.ok(detailLink, "expected the MediaCard detail Link");
   assert.doesNotMatch(detailLink, /aria-label=/);
-  assert.match(mediaCardSource, /group-focus-within:opacity-100/);
   assert.match(mediaCardSource, /aria-pressed=\{optimisticInWatchlist\}/);
   assert.match(mediaCardSource, /aria-pressed=\{optimisticWatched\}/);
 });
