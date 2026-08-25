@@ -172,8 +172,7 @@ export const MediaCard = React.memo(function MediaCard({
   const watched = isWatched(media.id, mediaType);
   const watchStatus = media.watchStatus;
   const rating = media.vote_average;
-  const isRail = interactionMode === "rail";
-  const showInlineActions = !isRail;
+  const showInlineActions = true;
   const mediaLabel = useMemo(
     () => (mediaType === "movie" ? t("common.movie") : t("common.tvShow")),
     [mediaType, t],
@@ -317,17 +316,11 @@ export const MediaCard = React.memo(function MediaCard({
       <div className="h-full">
         <Link
           to={buildMediaPath(mediaType, media.id, title)}
-          className={cn(
-            "group relative flex h-full flex-col overflow-hidden rounded-xl border border-white/5 shadow-card transition-all duration-300 glass-card-hover md:hover:border-primary/20 active:scale-[0.98] active:border-primary/30 focus-ring focus-visible:border-primary/35",
-            isRail && "rounded-lg",
-          )}
+          className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-white/5 shadow-card transition-all duration-300 glass-card-hover md:hover:border-primary/20 active:scale-[0.98] active:border-primary/30 focus-ring focus-visible:border-primary/35"
           tabIndex={0}
         >
           {/* Poster with gradient overlay for text readability */}
-          <div className={cn(
-              "aspect-[2/3] relative overflow-hidden rounded-t-xl bg-surface-dark-3",
-              isRail && "rounded-t-lg",
-            )}>
+          <div className="aspect-[2/3] relative overflow-hidden rounded-t-xl bg-surface-dark-3">
             <PosterImage posterPath={media.poster_path} alt={posterAlt} />
 
             {/* Social Engagement Badges */}
@@ -548,14 +541,8 @@ export const MediaCard = React.memo(function MediaCard({
           </div>
 
           {/* Info */}
-          <div className={cn(
-            "flex min-h-[4.75rem] flex-col p-3",
-            isRail && "min-h-[4.25rem] p-2.5",
-          )}>
-            <h3 className={cn(
-              "min-h-[2.75rem] line-clamp-2 text-base font-semibold tracking-tight text-foreground transition-colors group-hover:text-primary md:text-lg",
-              isRail && "min-h-[2.5rem] text-sm md:text-base",
-            )}>
+          <div className="flex min-h-[4.75rem] flex-col p-3">
+            <h3 className="min-h-[2.75rem] line-clamp-2 text-base font-semibold tracking-tight text-foreground transition-colors group-hover:text-primary md:text-lg">
               <bdi dir="auto">{title}</bdi>
             </h3>
             <div className="mt-auto pt-1 space-y-1.5">

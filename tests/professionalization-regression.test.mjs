@@ -89,9 +89,3 @@ test("search empty states announce recovery guidance accessibly", () => {
   assert.match(searchSource, /common\.discoverTrending/);
   assert.match(searchSource, /search\.backTrending/);
 });
-
-test("rail media cards use a denser presentation and suppress inline actions", () => {
-  assert.match(mediaCardSource, /const isRail = interactionMode === "rail"/);
-  assert.match(mediaCardSource, /const showInlineActions = !isRail/);
-  assert.match(mediaCardSource, /isRail && "min-h-\[4\.25rem\] p-2\.5"/);
-});
