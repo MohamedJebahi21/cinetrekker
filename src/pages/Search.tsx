@@ -1534,22 +1534,6 @@ export default function Search() {
               <Link to="/">{t("search.backHome", "Back to home")}</Link>
             </Button>
           </div>
-          <div className="mt-7 rounded-2xl border border-border/60 bg-card/55 p-4 text-left">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              {t("search.recoveryTitle", "Try another route")}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button asChild size="sm" variant="secondary">
-                <Link to="/discover">{t("search.recoveryDiscover", "Open Discover")}</Link>
-              </Button>
-              <Button asChild size="sm" variant="secondary">
-                <Link to="/genres">{t("search.recoveryGenres", "Browse genres")}</Link>
-              </Button>
-              <Button asChild size="sm" variant="secondary">
-                <Link to="/search?sort=vote_average.desc">{t("search.recoveryTopRated", "See top rated")}</Link>
-              </Button>
-            </div>
-          </div>
         </div>
       )}
     </div>

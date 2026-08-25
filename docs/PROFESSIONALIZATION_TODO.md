@@ -34,9 +34,9 @@
 
 ## Phase 3 — Discovery and conversion
 
-- [~] Turn Search into a polished workspace with a dominant input, applied-filter chips, visible result count, sort persistence, and a clean mobile filter drawer. The current workspace has these foundations and now includes clearer recovery routes; density and cross-device review remain.
+- [~] Turn Search into a polished workspace with a dominant input, applied-filter chips, visible result count, sort persistence, and a clean mobile filter drawer. The current workspace has these foundations and now includes clearer status and recovery copy; density and cross-device review remain.
 - [~] Provide stronger cold-start suggestions and recent-search affordances without recording sensitive search text in analytics. Recent searches are available locally; richer cold-start suggestions remain.
-- [~] Improve no-result recovery with spelling alternatives, filter reset, trending escape routes, and clear provider-data limitations. Empty states now provide Discover, Genres, and Top Rated escape routes; spelling alternatives and provider limitations remain.
+- [~] Improve no-result recovery with spelling alternatives, filter reset, trending escape routes, and clear provider-data limitations. The existing empty state keeps clear Trending, Discover Trending, and Home recovery actions; spelling alternatives and provider limitations remain.
 - [~] Improve Details pages around one decision hierarchy: identify → understand → choose action → discover related titles. The hero and action bar now make the primary next move and guest-local persistence hint clearer; deeper provider/related-content refinement remains.
 - [ ] Make providers, release status, genres, runtime, rating, progress, and follow/watchlist/watched actions consistent across movie and TV details.
 - [ ] Add concise account-value messaging after the first save or watch, without blocking exploration.

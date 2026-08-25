@@ -83,11 +83,11 @@ test("shared home states announce loading and recovery feedback", () => {
   assert.match(homeStateSource, /role="status"/);
 });
 
-test("search empty states offer accessible recovery routes", () => {
+test("search empty states announce recovery guidance accessibly", () => {
   assert.match(searchSource, /role="status" aria-live="polite"/);
-  assert.match(searchSource, /to="\/discover"/);
-  assert.match(searchSource, /to="\/genres"/);
-  assert.match(searchSource, /to="\/search\?sort=vote_average\.desc"/);
+  assert.match(searchSource, /search\.noResultsDescription/);
+  assert.match(searchSource, /common\.discoverTrending/);
+  assert.match(searchSource, /search\.backTrending/);
 });
 
 test("rail media cards use a denser presentation and suppress inline actions", () => {
