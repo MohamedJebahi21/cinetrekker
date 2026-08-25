@@ -27,7 +27,7 @@ The following checks are safe public observations, not a substitute for owner-co
 | 2026-08-24 | `GET /api/health` | HTTP 200; database, content provider, scheduled jobs, and rate limiting reported healthy | Public, read-only health response; no user records queried. |
 | 2026-08-24 | Public routes | `/status`, `/trust`, `/measurement`, `/partnerships`, and `/notifications` returned HTTP 200 | Public, read-only route checks only. |
 | 2026-08-24 | Notification migration | Applied successfully through a fresh owner-authenticated Supabase Dashboard session after project identity verification | The complete migration ran once as a SQL Editor batch. Schema-only verification passed; no worker invocation, user notification action, or user-data mutation occurred. The migration’s intended operational checkpoint was the only inserted row. |
-| 2026-08-24 | Vercel operations access | Not verified in this session; managed Vercel authorization failed with an OAuth state/user mismatch | No deployment, environment, alert, secret, or project setting was changed. Complete secret, alert, quota, and ownership evidence in an owner-controlled Vercel session. |
+| 2026-08-25 | Vercel operations access | Partial read-only review completed in the verified `cinetrekker` production project; current deployment was Ready, recent observability showed 0% function error and 0% timeout, and the signed-in team member was visibly `Owner` | Private Vercel owner-console reference: project Overview, Deployments, Logs, Observability, Alerts, Usage, and Team Settings > Billing/Members. No secrets, raw logs, request bodies, email addresses, or settings were recorded. Vercel anomaly alerts were not available on the active Hobby plan and no alert destination was visible. | Owner to complete secret inventory, alert delivery, cross-provider quota/spend review, and backup drill; review by 2026-11-25. |
 
 ## Evidence Record Template
 
@@ -35,6 +35,7 @@ Add one record per completed external activity. Keep references private if they 
 
 | Date (UTC) | Gate | Operator/owner | Coarse outcome | Safe evidence reference | Follow-up / due date |
 |---|---|---|---|---|---|
+| 2026-08-25 | Vercel production operations | Vercel team/project owner | Partial — deployment and coarse health/usage evidence visible; alert rules/destinations unavailable or not shown on Hobby; no configuration changed | Private Vercel owner console: `cinetrekker` Overview, Deployments, Logs, Observability, Alerts, Usage, Team Settings > Billing/Members | Owner-only secret inventory, alert test/delivery, quota/spend safeguards, and isolated recovery drill; next review 2026-11-25. |
 | _YYYY-MM-DD_ | _Example: backup and recovery_ | _Role, not a secret_ | _Passed / failed / partial_ | _Private ticket or console artifact reference_ | _Action and date_ |
 
 ## Approved Read-Only Post-Change Checks
