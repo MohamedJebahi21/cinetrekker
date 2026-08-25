@@ -260,23 +260,6 @@ export function HeroSection() {
             </div>
         </div>
 
-        {/* Supporting poster treatment keeps the desktop hero balanced without competing with the primary title action. */}
-        {activeItem.poster_path ? (
-          <div className="ct-hero-supporting-poster">
-            <div className="ct-hero-supporting-poster-card">
-              <img
-                src={getImageUrl(activeItem.poster_path, "w342") || ""}
-                alt=""
-                aria-hidden="true"
-                width={342}
-                height={513}
-                loading="lazy"
-                className="ct-hero-supporting-poster-image"
-              />
-            </div>
-          </div>
-        ) : null}
-
         {/* Floating poster carousel in bottom right */}
         <div className="absolute bottom-8 right-8 lg:bottom-12 lg:right-16 z-20 flex items-center gap-3">
           {topWeekly.map((item, index) => {

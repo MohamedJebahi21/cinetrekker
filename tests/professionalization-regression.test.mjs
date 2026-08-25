@@ -33,12 +33,11 @@ const todoSource = fs.readFileSync(
   "utf8",
 );
 
-test("hero includes a supporting desktop poster treatment without exposing duplicate content", () => {
-  assert.match(heroSource, /Supporting poster treatment/);
-  assert.match(heroSource, /aria-hidden=\"true\"/);
-  assert.match(heroSource, /getImageUrl\(activeItem\.poster_path/);
-  assert.match(heroSource, /ct-hero-supporting-poster/);
-  assert.match(stylesSource, /\.ct-hero-supporting-poster-card/);
+test("hero keeps one primary content composition and accessible spotlight controls", () => {
+  assert.match(heroSource, /home\.heroValueProp/);
+  assert.match(heroSource, /<Link to=\{activeMediaPath\}>/);
+  assert.match(heroSource, /topWeekly\.map/);
+  assert.match(heroSource, /aria-pressed=\{isActive\}/);
 });
 
 test("desktop navigation exposes the core discovery and library destinations", () => {

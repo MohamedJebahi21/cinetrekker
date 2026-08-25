@@ -14,7 +14,7 @@
 - [x] Define a consistent cinematic design direction: warm off-white or charcoal surfaces, restrained red accent, readable display typography, 8px spacing rhythm, and one semantic elevation system.
 - [x] Add a repeatable public health/readiness probe and keep it in the release workflow.
 - [x] Pin the Node.js runtime to the version validated in CI and Vercel.
-- [~] Rebalance the desktop hero so the artwork, title, metadata, and actions form one visual composition rather than leaving an unstructured empty side. Added a supporting poster treatment and preserved the existing hero contract; CTA simplification and fallback-art work remain.
+- [~] Rebalance the desktop hero so the artwork, title, metadata, and actions form one visual composition rather than leaving an unstructured empty side. The stable primary composition and spotlight controls are retained; the optional supporting-poster treatment remains deferred to protect the initial-entry bundle budget.
 - [ ] Reduce the hero to one dominant primary action, one secondary action, and one quieter tracking control.
 - [ ] Add a stable hero fallback for missing or low-contrast TMDB backdrops.
 - [x] Make the guest homepage follow one clear narrative: Discover → Save → Track. The public home now leads with an explicit guest journey, discovery rails, and account-sync messaging while preserving local guest behavior.
