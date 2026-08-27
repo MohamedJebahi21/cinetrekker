@@ -93,6 +93,35 @@ const LANGUAGES = [
   { code: "ru", key: "search.langOptions.russian", fallback: "Russian" },
 ];
 
+// Country options (TMDB ISO 3166-1 country codes)
+const COUNTRIES: MultiSelectOption[] = [
+  { id: "AR", label: "Argentina" },
+  { id: "AU", label: "Australia" },
+  { id: "BE", label: "Belgium" },
+  { id: "BR", label: "Brazil" },
+  { id: "CA", label: "Canada" },
+  { id: "CN", label: "China" },
+  { id: "DK", label: "Denmark" },
+  { id: "FR", label: "France" },
+  { id: "DE", label: "Germany" },
+  { id: "HK", label: "Hong Kong" },
+  { id: "IN", label: "India" },
+  { id: "IE", label: "Ireland" },
+  { id: "IT", label: "Italy" },
+  { id: "JP", label: "Japan" },
+  { id: "MX", label: "Mexico" },
+  { id: "NL", label: "Netherlands" },
+  { id: "NZ", label: "New Zealand" },
+  { id: "NO", label: "Norway" },
+  { id: "KR", label: "South Korea" },
+  { id: "ES", label: "Spain" },
+  { id: "SE", label: "Sweden" },
+  { id: "TW", label: "Taiwan" },
+  { id: "TR", label: "Turkey" },
+  { id: "GB", label: "United Kingdom" },
+  { id: "US", label: "United States" },
+];
+
 // Runtime options
 const RUNTIMES = [
   {
@@ -176,6 +205,15 @@ function normalizeSortBy(value: string): SearchSortOption {
 function getMediaYear(item: Media): string {
   const date = item.release_date || item.first_air_date;
   return typeof date === "string" && date.length >= 4 ? date.slice(0, 4) : "";
+}
+
+function getMediaCountries(item: Media): string[] {
+  return Array.from(
+    new Set([
+      ...(item.origin_country ?? []),
+      ...(item.production_countries?.map((country) => country.iso_3166_1) ?? []),
+    ]),
+  );
 }
 
 function getMediaDateValue(item: Media): number {
@@ -420,6 +458,7 @@ export default function Search() {
   const initialGenres = parseMultiValue(searchParams.get("genre"));
   const initialYear = searchParams.get("year") || "";
   const initialLanguages = parseMultiValue(searchParams.get("lang"));
+  const initialCountries = parseMultiValue(searchParams.get("country"));
   const initialSort = normalizeSortBy(
     searchParams.get("sort") || "popularity.desc",
   );
@@ -442,6 +481,8 @@ export default function Search() {
   const [yearFilter, setYearFilter] = useState<string>(initialYear);
   const [languageFilters, setLanguageFilters] =
     useState<string[]>(initialLanguages);
+  const [countryFilters, setCountryFilters] =
+    useState<string[]>(initialCountries);
   const [sortBy, setSortBy] = useState<SearchSortOption>(initialSort);
   const [runtimeFilter, setRuntimeFilter] = useState<string>(initialRuntime);
   const [streamingFilters, setStreamingFilters] =
@@ -461,6 +502,7 @@ export default function Search() {
     const nextGenres = parseMultiValue(params.get("genre"));
     const nextYear = params.get("year") || "";
     const nextLanguages = parseMultiValue(params.get("lang"));
+    const nextCountries = parseMultiValue(params.get("country"));
     const nextSort = normalizeSortBy(
       params.get("sort") || "popularity.desc",
     );
@@ -475,6 +517,9 @@ export default function Search() {
     if (nextYear !== yearFilter) setYearFilter(nextYear);
     if (nextLanguages.join("|") !== languageFilters.join("|")) {
       setLanguageFilters(nextLanguages);
+    }
+    if (nextCountries.join("|") !== countryFilters.join("|")) {
+      setCountryFilters(nextCountries);
     }
     if (nextSort !== sortBy) setSortBy(nextSort);
     if (nextRuntime !== runtimeFilter) setRuntimeFilter(nextRuntime);
@@ -527,6 +572,9 @@ export default function Search() {
     if (languageFilters.length > 0) {
       params.lang = serializeMultiValue(languageFilters);
     }
+    if (countryFilters.length > 0) {
+      params.country = serializeMultiValue(countryFilters);
+    }
     if (sortBy !== "popularity.desc") params.sort = sortBy;
     if (runtimeFilter) params.runtime = runtimeFilter;
     if (streamingFilters.length > 0) {
@@ -544,6 +592,7 @@ export default function Search() {
     genreFilters,
     yearFilter,
     languageFilters,
+    countryFilters,
     sortBy,
     runtimeFilter,
     streamingFilters,
@@ -589,6 +638,7 @@ export default function Search() {
     genreFilters.length > 0 ||
     !!yearFilter ||
     languageFilters.length > 0 ||
+    countryFilters.length > 0 ||
     !!runtimeFilter ||
     streamingFilters.length > 0;
   const useDiscoverMode = normalizedQuery.length === 0 && hasFilters;
@@ -620,6 +670,7 @@ export default function Search() {
       genreFilters.join("|"),
       yearFilter,
       languageFilters.join("|"),
+      countryFilters.join("|"),
       sortBy,
       runtimeConfig?.gte,
       runtimeConfig?.lte,
@@ -635,6 +686,8 @@ export default function Search() {
         with_runtime_lte: runtimeConfig?.lte,
         with_watch_providers: effectiveStreaming,
         watch_region: effectiveStreaming ? "US" : undefined,
+        with_origin_country:
+          countryFilters.length > 0 ? countryFilters.join("|") : undefined,
       };
 
       const selectedLanguages = effectiveLanguages.length > 0 ? effectiveLanguages : [undefined];
@@ -820,6 +873,12 @@ export default function Search() {
         );
       }
 
+      if (countryFilters.length > 0) {
+        filtered = filtered.filter((item) =>
+          countryFilters.some((country) => getMediaCountries(item).includes(country)),
+        );
+      }
+
       return sortClientResults(
         applySafetyFilter(filtered, strictFiltering, moderateFiltering),
         sortBy,
@@ -848,6 +907,7 @@ export default function Search() {
     genreFilters,
     yearFilter,
     languageFilters,
+    countryFilters,
     sortBy,
     strictFiltering,
     moderateFiltering,
@@ -858,6 +918,7 @@ export default function Search() {
     setGenreFilters([]);
     setYearFilter("");
     setLanguageFilters([]);
+    setCountryFilters([]);
     setSortBy("popularity.desc");
     setRuntimeFilter("");
     setStreamingFilters([]);
@@ -879,6 +940,7 @@ export default function Search() {
       initialGenres.length > 0 ||
       Boolean(initialYear) ||
       initialLanguages.length > 0 ||
+      initialCountries.length > 0 ||
       initialSort !== "popularity.desc" ||
       Boolean(initialRuntime) ||
       initialStreaming.length > 0,
@@ -889,6 +951,7 @@ export default function Search() {
     genreFilters.length > 0,
     yearFilter,
     languageFilters.length > 0,
+    countryFilters.length > 0,
     runtimeFilter,
     streamingFilters.length > 0,
   ].filter(Boolean).length;
@@ -948,9 +1011,13 @@ export default function Search() {
     id: genre.id.toString(),
     label: genre.name,
   }));
-  const languageOptions = LANGUAGES.map((lang) => ({
+    const languageOptions = LANGUAGES.map((lang) => ({
     id: lang.code,
     label: t(lang.key, lang.fallback),
+  }));
+  const countryOptions = COUNTRIES.map((country) => ({
+    id: country.id,
+    label: country.label,
   }));
   const streamingOptions = STREAMING_SERVICES.map((service) => ({
     id: service.id,
@@ -988,6 +1055,12 @@ export default function Search() {
       label: languageOptions.find((option) => option.id === lang)?.label ?? lang.toUpperCase(),
       ariaLabel: t("search.removeLanguageFilter", "Remove language filter"),
       clear: () => setLanguageFilters((current) => current.filter((item) => item !== lang)),
+    })),
+    ...countryFilters.map((country) => ({
+      key: `country-${country}`,
+      label: countryOptions.find((option) => option.id === country)?.label ?? country,
+      ariaLabel: t("search.removeCountryFilter", "Remove country filter"),
+      clear: () => setCountryFilters((current) => current.filter((item) => item !== country)),
     })),
     runtimeFilter
       ? {
@@ -1141,6 +1214,16 @@ export default function Search() {
           options={languageOptions}
           selectedValues={languageFilters}
           onChange={setLanguageFilters}
+          allLabel={t("common.all")}
+          t={t}
+        />
+
+        {/* Country Filter */}
+        <SearchMultiSelect
+          label={t("filters.country", "Country")}
+          options={countryOptions}
+          selectedValues={countryFilters}
+          onChange={setCountryFilters}
           allLabel={t("common.all")}
           t={t}
         />

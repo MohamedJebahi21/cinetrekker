@@ -635,6 +635,7 @@ export type DiscoverMovieParams = {
   with_runtime_lte?: string;
   with_watch_providers?: string;
   watch_region?: string;
+  with_origin_country?: string;
   include_adult?: string;
 };
 
@@ -651,6 +652,7 @@ export type DiscoverTVParams = {
   with_runtime_lte?: string;
   with_watch_providers?: string;
   watch_region?: string;
+  with_origin_country?: string;
   include_adult?: string;
 };
 
@@ -681,6 +683,8 @@ export const discoverMovies = async (
   if (params.with_watch_providers)
     queryParams.with_watch_providers = params.with_watch_providers;
   if (params.watch_region) queryParams.watch_region = params.watch_region;
+  if (params.with_origin_country)
+    queryParams.with_origin_country = params.with_origin_country;
   if (params.include_adult) queryParams.include_adult = params.include_adult;
   return fetchTMDB(`/discover/movie`, language, queryParams);
 };
@@ -711,6 +715,8 @@ export const discoverTV = async (
   if (params.with_watch_providers)
     queryParams.with_watch_providers = params.with_watch_providers;
   if (params.watch_region) queryParams.watch_region = params.watch_region;
+  if (params.with_origin_country)
+    queryParams.with_origin_country = params.with_origin_country;
   if (params.include_adult) queryParams.include_adult = params.include_adult;
   return fetchTMDB(`/discover/tv`, language, queryParams);
 };
