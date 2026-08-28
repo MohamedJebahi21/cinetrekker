@@ -15,7 +15,6 @@ import CheckSquare from "lucide-react/dist/esm/icons/check-square";
 import Check from "lucide-react/dist/esm/icons/check";
 import Trophy from "lucide-react/dist/esm/icons/trophy";
 import Heart from "lucide-react/dist/esm/icons/heart";
-import Search from "lucide-react/dist/esm/icons/search";
 import FolderHeart from "lucide-react/dist/esm/icons/folder-heart";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -370,22 +369,11 @@ export function UnifiedNav() {
           })}
         </nav>
 
-        <div className={cn("topbar-search hidden min-w-0 flex-1 sm:block", pathname === "/search" && "hidden md:block")}>
+        <div className={cn("topbar-search min-w-0 flex-1", pathname === "/search" && "hidden md:block")}>
           <Suspense fallback={searchFallback}>
             <SearchDropdown />
           </Suspense>
         </div>
-
-        {pathname !== "/search" && (
-          <Link
-            to="/search"
-            className="inline-flex h-11 min-w-11 items-center justify-center gap-2 rounded-xl border border-border/70 bg-card/70 px-3 text-sm font-semibold text-foreground shadow-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:hidden"
-            aria-label={t("nav.search", "Search")}
-          >
-            <Search className="h-5 w-5" aria-hidden="true" />
-            <span className="sr-only">{t("nav.search", "Search")}</span>
-          </Link>
-        )}
 
         <div className="topbar-actions ml-auto hidden items-center md:flex">
           {user ? (
@@ -625,10 +613,14 @@ export function UnifiedNav() {
         >
           <div className="relative z-10 px-4 pb-8 motion-safe:animate-fade-in sm:px-5">
             <SheetHeader className="border-b border-border px-1 pb-4 text-left">
-              <SheetTitle className="text-xl">{t("nav.menu", "Menu")}</SheetTitle>
-              <p className="text-sm text-muted-foreground">
-                {t("nav.mobileSubtitle", "Browse tools and extra pages live here.")}
-              </p>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <SheetTitle className="text-xl">{t("nav.menu", "Menu")}</SheetTitle>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {t("nav.mobileSubtitle", "Browse tools and extra pages live here.")}
+                  </p>
+                </div>
+              </div>
             </SheetHeader>
 
             <nav aria-label={t("nav.main", "Main navigation")}>

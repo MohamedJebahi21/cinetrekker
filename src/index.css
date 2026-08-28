@@ -1679,6 +1679,7 @@ button:active,
 
 @media (max-width: 767px) {
   .topbar-inner { gap: 0.5rem; }
+  .topbar-brand { min-width: auto; }
   .topbar-search { margin-inline: 0; }
 }
 
@@ -1774,6 +1775,86 @@ footer .container { max-width: var(--ct-content-width); }
   .ct-toolbar { align-items: stretch; }
   .ct-list-row { padding: 1rem; }
   .section-title { font-size: 1.5rem; }
+  .details-hero {
+    min-height: auto;
+    overflow-x: clip;
+  }
+  .details-hero-backdrop {
+    height: 21rem !important;
+    inset: 0 0 auto !important;
+  }
+  .details-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      linear-gradient(180deg, hsl(var(--background) / 0.1) 0%, hsl(var(--background) / 0.74) 18rem, hsl(var(--background)) 28rem),
+      linear-gradient(90deg, hsl(var(--background) / 0.76), transparent 55%, hsl(var(--background) / 0.42));
+  }
+  .details-hero-content {
+    position: relative;
+    inset: auto;
+  }
+  .details-hero-container {
+    padding-top: 5.25rem;
+    padding-bottom: 1.5rem;
+  }
+  .details-hero-layout {
+    gap: 1.25rem;
+  }
+  .details-hero-poster {
+    margin-left: auto;
+    margin-right: auto;
+    filter: drop-shadow(0 1.125rem 2.25rem hsl(var(--background) / 0.72));
+  }
+  .details-hero-poster img {
+    width: min(9.75rem, 45vw);
+    border-radius: 0.875rem;
+  }
+  .details-hero-copy {
+    border-top: 1px solid hsl(var(--border) / 0.45);
+    padding-top: 1.125rem;
+  }
+  .details-hero-copy h1 {
+    font-size: clamp(2rem, 11vw, 2.75rem);
+    text-wrap: balance;
+  }
+  .details-hero-meta > span {
+    min-height: 1.5rem;
+  }
+  .details-hero-facts > span {
+    max-width: 100%;
+  }
+  .details-main {
+    max-width: 100vw;
+    overflow-x: clip;
+  }
+  .details-main > * {
+    min-width: 0;
+  }
+  .details-panel {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+  .details-panel :where(p, dd, dt, h2, span, a, button) {
+    min-width: 0;
+  }
+  .details-panel dl > div {
+    align-items: flex-start;
+  }
+  .details-panel dd {
+    max-width: 65%;
+  }
+  .details-progress-grid {
+    grid-template-columns: 1fr;
+  }
+  .details-media-section {
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
 }
 
 /* Sticky footer animations and styling */

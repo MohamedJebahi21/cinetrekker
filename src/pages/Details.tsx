@@ -170,7 +170,7 @@ function VideoCard({ video, onPlay, featured }: { video: MediaVideoResult; onPla
       onClick={() => onPlay(video.key)}
       className={cn(
         "group relative flex-shrink-0 rounded-2xl overflow-hidden border border-white/10 hover:border-primary/50 transition-all duration-300 hover:scale-[1.02] active:scale-95 focus-visible:ring-2 focus-visible:ring-primary shadow-lg",
-        featured ? "w-72 md:w-80" : "w-48 md:w-56"
+        featured ? "w-[calc(100vw-2rem)] max-w-80 md:w-80" : "w-52 md:w-56"
       )}
       aria-label={`Play ${video.name}`}
     >
@@ -390,11 +390,25 @@ export default function Details() {
   });
 
   const detailsLoadingTimedOut = useLoadingTimeout(isLoading, 15000);
+  const todayDateKey = new Date().toISOString().slice(0, 10);
+  const isSelectedSeasonAvailable =
+    mediaType === "tv" &&
+    !!selectedSeason &&
+    !!details &&
+    (
+      details.seasons?.some((season) =>
+        season.season_number === selectedSeason &&
+        season.season_number > 0 &&
+        (!season.air_date || season.air_date <= todayDateKey),
+      ) ??
+      selectedSeason <= (details.number_of_seasons ?? 0)
+    );
 
   const { data: seasonDetails } = useQuery({
     queryKey: ["season-details", mediaId, selectedSeason, language],
     queryFn: () => getTVSeasonDetails(mediaId, selectedSeason!, language),
-    enabled: !!selectedSeason && mediaType === "tv",
+    enabled: isSelectedSeasonAvailable,
+    retry: false,
   });
 
   const { data: watchProviders } = useQuery({
@@ -412,7 +426,6 @@ export default function Details() {
   });
 
   const title = toDisplayTitle(details?.title || details?.name || "");
-  const todayDateKey = new Date().toISOString().slice(0, 10);
 
   const isBlockedByPolicy =
     !!details && ((details as { blocked_by_policy?: boolean }).blocked_by_policy === true ||
@@ -823,9 +836,9 @@ export default function Details() {
       {/* ══════════════════════════════════════════════
           CINEMATIC HERO — full bleed with parallax
       ══════════════════════════════════════════════ */}
-      <div ref={heroRef} className="relative overflow-hidden" style={{ minHeight: "clamp(420px, 68vh, 740px)" }}>
+      <div ref={heroRef} className="details-hero relative overflow-hidden md:min-h-[clamp(420px,68vh,740px)]">
         {/* Parallax backdrop */}
-        <div ref={backdropRef} className="absolute will-change-transform" style={{ inset: "-15% 0 0 0", height: "130%" }}>
+        <div ref={backdropRef} className="details-hero-backdrop absolute will-change-transform" style={{ inset: "-15% 0 0 0", height: "130%" }}>
           {backdropUrl ? (
             <Image src={backdropUrl} srcSet={backdropSrcSet || undefined} sizes="100vw" alt={getMediaAltText(title, mediaType, "backdrop")} width={1280} height={720} fetchPriority="high" loading="eager" priority className="w-full h-full object-cover" />
           ) : (
@@ -843,12 +856,12 @@ export default function Details() {
         </Link>
 
         {/* Hero content */}
-        <div className="absolute bottom-0 left-0 right-0 z-10">
-          <div className="page-container pb-8 pt-16 md:pb-10">
-            <div className="flex flex-col md:flex-row md:items-end gap-6 lg:gap-8">
+        <div className="details-hero-content absolute bottom-0 left-0 right-0 z-10">
+          <div className="details-hero-container page-container pb-8 pt-16 md:pb-10">
+            <div className="details-hero-layout flex flex-col md:flex-row md:items-end gap-6 lg:gap-8">
 
               {/* Poster — large and prominent in the hero */}
-              <div className="flex-shrink-0 mx-auto md:mx-0 relative group">
+              <div className="details-hero-poster flex-shrink-0 mx-auto md:mx-0 relative group">
                 <div className="relative">
                   {details.poster_path ? (
                     <Image
@@ -873,7 +886,7 @@ export default function Details() {
               </div>
 
               {/* Title and metadata */}
-              <div className="flex-1 space-y-3 md:pb-1">
+              <div className="details-hero-copy min-w-0 flex-1 space-y-3 md:pb-1">
                 {/* Primary metadata */}
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-white/70">
                   <span className="uppercase tracking-[0.16em] text-primary">{mediaType === "movie" ? t("common.movie") : t("common.tvShow")}</span>
@@ -885,17 +898,17 @@ export default function Details() {
                 </div>
 
                 {/* Title */}
-                <h1 className="max-w-4xl text-3xl font-black leading-[0.95] text-white drop-shadow-lg md:text-5xl lg:text-6xl tracking-tight">
+                <h1 className="max-w-4xl text-3xl font-black leading-[1.03] text-white drop-shadow-lg md:text-5xl md:leading-[0.98] lg:text-6xl tracking-tight">
                   {title}
                 </h1>
 
                 {/* Tagline */}
                 {details.tagline && (
-                  <p className="text-sm italic text-white/55 md:text-base">"{details.tagline}"</p>
+                  <p className="max-w-[58ch] text-sm italic leading-6 text-white/62 md:text-base">"{details.tagline}"</p>
                 )}
 
                 {/* Meta row */}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-white/62">
+                <div className="details-hero-meta flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-white/68">
                   {runtime && (
                     <span className="inline-flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5" />
@@ -924,13 +937,13 @@ export default function Details() {
 
                 {/* Genres */}
                 {details.genres && details.genres.length > 0 && (
-                  <p className="text-sm text-white/70">{details.genres.map((g: { id: number; name: string }) => g.name).join(" · ")}</p>
+                  <p className="text-sm leading-6 text-white/72">{details.genres.map((g: { id: number; name: string }) => g.name).join(" · ")}</p>
                 )}
 
                 {watchedItem || heroFacts.length > 0 ? (
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="details-hero-facts flex min-w-0 flex-wrap items-center gap-2">
                     {watchedItem && (
-                      <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs text-white/80 backdrop-blur-sm">
+                      <span className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs text-white/80 backdrop-blur-sm">
                         <span className="font-semibold uppercase tracking-[0.16em] text-white/55">
                           {t("details.yourLibrary", "Your library")}
                         </span>
@@ -955,7 +968,7 @@ export default function Details() {
                       return (
                         <span
                           key={fact.label}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-medium text-white/78 backdrop-blur-sm"
+                          className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-medium text-white/78 backdrop-blur-sm"
                         >
                           <Icon className="h-3.5 w-3.5 text-white/55" />
                           <span>{fact.value}</span>
@@ -994,7 +1007,7 @@ export default function Details() {
                   key={n.id}
                   onClick={() => scrollTo(n.id)}
                   className={cn(
-                    "whitespace-nowrap rounded-lg px-4 py-1.5 text-sm font-medium transition-colors duration-150",
+                    "min-h-11 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-150 sm:px-4",
                     activeSection === n.id
                       ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -1009,11 +1022,11 @@ export default function Details() {
       {/* ══════════════════════════════════════════════
           MAIN CONTENT
       ══════════════════════════════════════════════ */}
-      <div className="page-container pb-28 md:pb-12 space-y-0">
+      <div className="details-main page-container pb-28 md:pb-12 space-y-0">
 
         {/* ─── ACTION BAR ─────────────────────────────────────── */}
         <Reveal className="mt-8">
-          <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <div className="details-panel rounded-2xl border border-border bg-card p-5 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{t("details.primaryActions", "Your Next Move")}</p>
@@ -1110,11 +1123,11 @@ export default function Details() {
         <div
           ref={el => { if (el) sectionRefs.current.overview = el; }}
           id="section-overview"
-          className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1.75fr)_minmax(280px,1fr)]"
+          className="mt-8 grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.75fr)_minmax(280px,1fr)]"
         >
           {/* Overview + Keywords */}
-          <Reveal>
-            <div className="self-start rounded-2xl border border-white/8 bg-card/40 p-5 backdrop-blur-sm sm:p-6">
+              <Reveal>
+            <div className="details-panel min-w-0 self-start rounded-2xl border border-white/8 bg-card/40 p-5 backdrop-blur-sm sm:p-6">
               <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground mb-4">{t("details.overview", "Overview")}</p>
 
               {/* Director/Creator quick line */}
@@ -1133,7 +1146,7 @@ export default function Details() {
 
               <p
                 id="details-overview-text"
-                className={cn("text-sm leading-7 text-foreground/75 md:text-[15px] whitespace-pre-line", !showFullOverview && shouldTruncateOverview && "line-clamp-3")}
+                className={cn("max-w-[65ch] whitespace-pre-line break-words text-base leading-7 text-foreground/78", !showFullOverview && shouldTruncateOverview && "sm:line-clamp-3")}
               >
                 {overview}
               </p>
@@ -1167,9 +1180,9 @@ export default function Details() {
                       </button>
                     ) : null}
                   </div>
-                  <div id="details-tags" className="flex flex-wrap gap-1.5">
+                  <div id="details-tags" className="flex max-w-full flex-wrap gap-1.5">
                     {(showAllKeywords ? keywords : keywords.slice(0, 8)).map(kw => (
-                      <span key={kw.id} className="rounded-full border border-white/8 bg-white/5 px-2 py-0.5 text-[11px] text-foreground/60 transition-colors hover:border-primary/30 hover:text-foreground">
+                      <span key={kw.id} className="max-w-full break-words rounded-full border border-white/8 bg-white/5 px-2 py-0.5 text-[11px] text-foreground/65 transition-colors hover:border-primary/30 hover:text-foreground">
                         {kw.name}
                       </span>
                     ))}
@@ -1184,9 +1197,9 @@ export default function Details() {
                       <h2 className="text-base font-bold text-foreground">{t("details.availableEpisodes", "Available Episodes")}</h2>
                       <p className="mt-1 text-sm leading-6 text-muted-foreground">{t("details.availableEpisodesDescription", "Browse published episodes and read summaries.")}</p>
                     </div>
-                    <div className="min-w-0 space-y-2 xl:pt-0.5">
+                    <div className="min-w-0 max-w-full space-y-2 xl:pt-0.5">
                       {user && (
-                        <div className="flex flex-wrap gap-2 xl:justify-end">
+                        <div className="flex max-w-full flex-wrap gap-2 xl:justify-end">
                           <Button variant="outline" size="sm" className="rounded-xl gap-1 shrink-0" onClick={() => {
                             if (!selectedSeason || !seasonDetails) return;
                             markSeasonWatched({ showId: mediaId, seasonNumber: selectedSeason!, episodes: publishedEpisodes.map(ep => ({ episode_number: ep.episode_number, name: ep.name, air_date: ep.air_date ?? undefined })), showName: details?.name, posterPath: details?.poster_path });
@@ -1195,10 +1208,13 @@ export default function Details() {
                           </Button>
                           <Button variant="outline" size="sm" className="rounded-xl gap-1 shrink-0" onClick={async () => {
                             if (!availableSeasonNumbers.length) return;
-                            const allSeasonData = await Promise.all(availableSeasonNumbers.map(n => getTVSeasonDetails(mediaId, n, language)));
-                            const allEpisodes = allSeasonData.flatMap((sd, i) =>
+                            const allSeasonResults = await Promise.allSettled(availableSeasonNumbers.map(n => getTVSeasonDetails(mediaId, n, language)));
+                            const allSeasonData = allSeasonResults.flatMap((result, i) =>
+                              result.status === "fulfilled" ? [{ seasonNumber: availableSeasonNumbers[i], details: result.value }] : []
+                            );
+                            const allEpisodes = allSeasonData.flatMap(({ seasonNumber, details: sd }) =>
                               (sd?.episodes ?? []).filter((ep: { air_date?: string | null }) => ep.air_date && ep.air_date <= todayDateKey).map((ep: { episode_number: number; name: string; air_date?: string | null }) => ({
-                                season_number: availableSeasonNumbers[i],
+                                season_number: seasonNumber,
                                 episode_number: ep.episode_number,
                                 name: ep.name,
                                 air_date: ep.air_date ?? undefined,
@@ -1211,7 +1227,7 @@ export default function Details() {
                           </Button>
                         </div>
                       )}
-                      <div className="flex flex-wrap gap-1.5 pb-1 xl:justify-end">
+                      <div className="flex max-w-full flex-wrap gap-1.5 pb-1 xl:justify-end">
                         {(availableSeasonNumbers.length > 0 ? availableSeasonNumbers : seasons.slice().reverse()).map(n => {
                           const prog = seasonProgress[n];
                           const seasonInfo = details.seasons?.find((s: { season_number: number }) => s.season_number === n);
@@ -1302,7 +1318,7 @@ export default function Details() {
           </Reveal>
 
           {/* Sidebar */}
-          <div className="space-y-4">
+          <div className="min-w-0 space-y-4">
             {details.credits?.cast && details.credits.cast.length > 0 && (
               <Reveal>
                 <div className="rounded-2xl border border-white/8 bg-card/40 p-5 backdrop-blur-sm">
@@ -1313,7 +1329,7 @@ export default function Details() {
                     </div>
                     <button type="button" onClick={() => scrollTo("cast")} className="shrink-0 text-xs font-semibold text-primary transition-colors hover:text-primary/80">View all</button>
                   </div>
-                  <div ref={castPreviewScrollRef} className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2">
+                  <div ref={castPreviewScrollRef} className="hide-scrollbar -mx-1 flex max-w-full snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2">
                     {details.credits.cast.slice(0, 8).map((person: { id: number; name: string; character?: string; profile_path?: string | null }) => (
                       <Link key={`sidebar-cast-${person.id}`} to={buildPersonPath(person.id, person.name)} className="group/cast w-20 shrink-0 snap-start">
                         <div className="aspect-[2/3] overflow-hidden rounded-xl border border-white/8 bg-muted/50 transition-colors group-hover/cast:border-primary/40">
@@ -1333,7 +1349,7 @@ export default function Details() {
             )}
             {/* Watch options */}
             <Reveal>
-              <div className="rounded-2xl border border-white/8 bg-card/40 backdrop-blur-sm p-5">
+              <div className="details-panel rounded-2xl border border-white/8 bg-card/40 backdrop-blur-sm p-5">
                 <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground mb-4">{t("details.whereToWatch", "Where to Watch")}</p>
                 {flatrateProviders.length > 0 || rentProviders.length > 0 || buyProviders.length > 0 ? (
                   <div className="space-y-3">
@@ -1365,11 +1381,11 @@ export default function Details() {
 
             {/* Facts */}
             <Reveal>
-              <div className="rounded-2xl border border-white/8 bg-card/40 backdrop-blur-sm p-5">
+              <div className="details-panel rounded-2xl border border-white/8 bg-card/40 backdrop-blur-sm p-5">
                 <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground mb-4">Details</p>
                 <dl className="space-y-2.5 text-sm">
                   {details.status && statusConfig && (
-                    <div className="flex justify-between gap-2 items-center">
+                    <div className="flex min-w-0 justify-between gap-2 items-center">
                       <dt className="text-muted-foreground">Status</dt>
                       <dd className={cn("flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border", statusConfig.cls)}>
                         <span className={cn("w-1.5 h-1.5 rounded-full", statusConfig.dot)} />{details.status}
@@ -1377,27 +1393,27 @@ export default function Details() {
                     </div>
                   )}
                   {releaseDate && (
-                    <div className="flex justify-between gap-2">
+                    <div className="flex min-w-0 justify-between gap-2">
                       <dt className="text-muted-foreground">{mediaType === "movie" ? "Released" : "First aired"}</dt>
-                      <dd className="font-medium text-right text-sm">{new Date(releaseDate).toLocaleDateString(language, { year: "numeric", month: "long", day: "numeric" })}</dd>
+                      <dd className="min-w-0 break-words font-medium text-right text-sm">{new Date(releaseDate).toLocaleDateString(language, { year: "numeric", month: "long", day: "numeric" })}</dd>
                     </div>
                   )}
                   {runtime && (
-                    <div className="flex justify-between gap-2">
+                    <div className="flex min-w-0 justify-between gap-2">
                       <dt className="text-muted-foreground">Runtime</dt>
                       <dd className="font-medium">{Math.floor(runtime / 60) > 0 ? `${Math.floor(runtime / 60)}h ` : ""}{runtime % 60 > 0 ? `${runtime % 60}m` : ""}</dd>
                     </div>
                   )}
                   {details.original_language && (
-                    <div className="flex justify-between gap-2">
+                    <div className="flex min-w-0 justify-between gap-2">
                       <dt className="text-muted-foreground">Language</dt>
-                      <dd className="font-medium flex items-center gap-1"><Globe className="w-3 h-3 opacity-60" />{new Intl.DisplayNames([language], { type: "language" }).of(details.original_language) || details.original_language}</dd>
+                      <dd className="flex min-w-0 items-center gap-1 break-words font-medium"><Globe className="w-3 h-3 shrink-0 opacity-60" />{new Intl.DisplayNames([language], { type: "language" }).of(details.original_language) || details.original_language}</dd>
                     </div>
                   )}
                   {details.production_countries && details.production_countries.length > 0 && (
-                    <div className="flex justify-between gap-2">
+                    <div className="flex min-w-0 justify-between gap-2">
                       <dt className="text-muted-foreground">Country</dt>
-                      <dd className="font-medium text-right">{details.production_countries.slice(0, 2).map((c: { name: string }) => c.name).join(", ")}</dd>
+                      <dd className="min-w-0 break-words font-medium text-right">{details.production_countries.slice(0, 2).map((c: { name: string }) => c.name).join(", ")}</dd>
                     </div>
                   )}
                   {mediaType === "movie" && (details.budget ?? 0) > 0 && (
@@ -1413,9 +1429,9 @@ export default function Details() {
                     </div>
                   )}
                   {details.production_companies && details.production_companies.length > 0 && (
-                    <div className="flex justify-between gap-2">
+                    <div className="flex min-w-0 justify-between gap-2">
                       <dt className="text-muted-foreground shrink-0">Studio</dt>
-                      <dd className="font-medium text-right text-xs leading-relaxed">{details.production_companies.slice(0, 3).map((c: { name: string }) => c.name).join(" · ")}</dd>
+                      <dd className="min-w-0 break-words font-medium text-right text-xs leading-relaxed">{details.production_companies.slice(0, 3).map((c: { name: string }) => c.name).join(" · ")}</dd>
                     </div>
                   )}
                 </dl>
@@ -1440,9 +1456,9 @@ export default function Details() {
             {/* TV personal stats */}
             {user && personalStats && mediaType === "tv" && (
               <Reveal>
-                <div className="rounded-2xl border border-white/8 bg-card/40 backdrop-blur-sm p-5">
+                <div className="details-panel rounded-2xl border border-white/8 bg-card/40 backdrop-blur-sm p-5">
                   <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground mb-4">{t("details.yourStats", "Your Progress")}</p>
-                  <div className="grid grid-cols-3 gap-3 mb-4">
+                  <div className="details-progress-grid grid grid-cols-3 gap-3 mb-4">
                     <div className="text-center rounded-xl bg-white/5 p-3">
                       <p className="text-xl font-black text-foreground">{personalStats.episodesWatched}</p>
                       <p className="text-[10px] text-muted-foreground mt-0.5">Episodes</p>
@@ -1468,7 +1484,7 @@ export default function Details() {
         {/* ─── VIDEO GALLERY ──────────────────────────────────── */}
         {orderedVideos.length > 0 && (
           <Reveal>
-            <section ref={el => { if (el) sectionRefs.current.videos = el; }} id="section-videos" className="mt-12">
+            <section ref={el => { if (el) sectionRefs.current.videos = el; }} id="section-videos" className="details-media-section mt-12">
               <div className="mb-5 flex items-center justify-between gap-3">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground">Watch preview</p>
@@ -1624,10 +1640,11 @@ export default function Details() {
         </Reveal>
 
         {/* ── mobile floating bottom bar ── */}
-        <div className="fixed bottom-20 left-4 right-4 z-40 md:hidden">
-          <div className="flex gap-2 bg-background/90 backdrop-blur-xl border border-white/10 rounded-2xl p-3 shadow-2xl">
+        {isStickyNavVisible && (
+        <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-3 right-3 z-40 md:hidden">
+          <div className="flex gap-2 rounded-2xl border border-white/10 bg-background/95 p-2.5 shadow-2xl backdrop-blur-xl">
             <Button
-              className={cn("flex-1 gap-1.5 rounded-xl text-sm font-semibold", optimisticInWatchlist ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground")}
+              className={cn("min-h-11 flex-1 gap-1.5 rounded-xl text-xs font-semibold", optimisticInWatchlist ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground")}
               onClick={handleAddToWatchlist} disabled={isWatchlistPending} size="sm"
               aria-label={
                 optimisticInWatchlist
@@ -1639,7 +1656,7 @@ export default function Details() {
               {optimisticInWatchlist ? t("details.listed", "Listed") : t("details.watchlist", "Watchlist")}
             </Button>
             <Button
-              className={cn("flex-1 gap-1.5 rounded-xl text-sm font-semibold", optimisticWatched ? "bg-emerald-600 text-white" : "border border-white/15 bg-white/5 text-foreground")}
+              className={cn("min-h-11 flex-1 gap-1.5 rounded-xl text-xs font-semibold", optimisticWatched ? "bg-emerald-600 text-white" : "border border-white/15 bg-white/5 text-foreground")}
               onClick={handleMarkAsWatched} disabled={isWatchedPending} size="sm" variant="outline"
               aria-label={
                 optimisticWatched
@@ -1663,6 +1680,7 @@ export default function Details() {
             )}
           </div>
         </div>
+        )}
       </div>
     </>
   );

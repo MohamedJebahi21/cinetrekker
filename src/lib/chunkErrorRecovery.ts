@@ -335,11 +335,6 @@ export function installChunkErrorHandlers(): void {
     (typeof process !== "undefined" &&
       process.env?.VITE_CHUNK_ERROR_DEBUG === "true");
 
-  // In dev this mostly catches extension/runtime noise; keep opt-in via debug flag.
-  if (isDev && !chunkDebugEnabled) {
-    return;
-  }
-
   // Avoid duplicate global listeners across HMR/module reloads.
   if (handlersInstalled) {
     return;
@@ -352,6 +347,11 @@ export function installChunkErrorHandlers(): void {
     (event) => {
       if (isExtensionConnectionNoise(event.reason)) {
         event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
+
+      if (isDev && !chunkDebugEnabled) {
         return;
       }
 
@@ -372,6 +372,11 @@ export function installChunkErrorHandlers(): void {
     (event) => {
       if (isExtensionConnectionNoiseFromErrorEvent(event)) {
         event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
+
+      if (isDev && !chunkDebugEnabled) {
         return;
       }
 
@@ -390,6 +395,6 @@ export function installChunkErrorHandlers(): void {
   });
 
   if (isDev && chunkDebugEnabled) {
-    logger.debug("✅ Chunk error recovery handlers installed");
+    logger.debug("Chunk error recovery handlers installed");
   }
 }

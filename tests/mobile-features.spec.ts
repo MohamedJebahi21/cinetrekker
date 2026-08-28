@@ -69,6 +69,7 @@ test.describe("Mobile navigation", () => {
     await expect(
       mobileDialog.getByRole("navigation", { name: /main navigation/i }),
     ).toBeVisible();
+    await expect(page.getByRole("button", { name: /^close$/i })).toHaveCount(1);
     await expect(mobileDialog.getByRole("link", { name: /^search$/i })).toBeVisible();
 
     await mobileDialog.getByRole("link", { name: /^search$/i }).click();
@@ -77,14 +78,24 @@ test.describe("Mobile navigation", () => {
 
   test("bottom navigation routes to search and protected destinations", async ({ page }) => {
     const mobileNav = page.locator("nav.mobile-nav-safe");
-
+    await expect(mobileNav.getByRole("button", { name: /^discover$/i })).toBeVisible();
     await expect(mobileNav.getByRole("button", { name: /^search$/i })).toBeVisible();
+    await expect(mobileNav.getByRole("button", { name: /^watchlist$/i })).toBeVisible();
     await mobileNav.getByRole("button", { name: /^search$/i }).click();
     await expect(page).toHaveURL(/\/search$/);
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await mobileNav.getByRole("button", { name: /sign in/i }).click();
     await expect(page).toHaveURL(/\/login$/);
+  });
+
+  test("top search stays inline on mobile and does not redirect while typing", async ({ page }) => {
+    const searchInput = page.locator('header input[name="searchInput"]');
+
+    await expect(searchInput).toBeVisible();
+    await searchInput.fill("inception");
+    await expect(searchInput).toHaveValue("inception");
+    await expect(page).toHaveURL(/\/$/);
   });
 
   test("slash shortcuts do not open a second search dialog", async ({ page }) => {
