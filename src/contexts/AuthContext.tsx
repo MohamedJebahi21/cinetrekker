@@ -249,27 +249,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    if (!isSupabaseConfigured()) {
-      return;
-    }
-
+    const signedOutUserId = session?.user?.id;
     try {
-      const { supabase } = await loadSupabaseModule();
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        throw error;
+      if (isSupabaseConfigured()) {
+        const { supabase } = await loadSupabaseModule();
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          throw error;
+        }
       }
-
-      const signedOutUserId = session?.user?.id;
+    } catch (error) {
+      logger.warn("Sign out failed on the auth server; clearing the local session.", toAuthError(error));
+    } finally {
       if (signedOutUserId && typeof window !== "undefined") {
         window.localStorage.removeItem(`cinetrekker_profile_${signedOutUserId}`);
       }
 
       setSession(null);
       setUser(null);
-      window.dispatchEvent(new Event("cinetrekker:sign-out"));
-    } catch (error) {
-      logger.warn("Sign out failed.", toAuthError(error));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("cinetrekker:sign-out"));
+      }
     }
   }, [session?.user?.id]);
 

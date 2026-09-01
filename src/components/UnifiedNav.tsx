@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Settings from "lucide-react/dist/esm/icons/settings";
 import SlidersHorizontal from "lucide-react/dist/esm/icons/sliders-horizontal";
@@ -157,7 +157,8 @@ function BurgerIcon({ isOpen }: { isOpen: boolean }) {
 export function UnifiedNav() {
   const { t, i18n } = useTranslation();
   const { pathname } = useLocation();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { watched } = useUserLists();
   const motionIntensity = useMotionIntensityPreference();
@@ -743,9 +744,10 @@ export function UnifiedNav() {
                   <div className="motion-safe:animate-slide-up">
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={async () => {
                         setIsMobileSheetOpen(false);
-                        window.dispatchEvent(new Event("cinetrekker:sign-out"));
+                        await signOut();
+                        navigate("/", { replace: true });
                       }}
                       className="flex min-h-[44px] w-full items-center gap-3 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-2 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
                     >
