@@ -1,7 +1,7 @@
 # CineTrekker Project Context & System Map
 
 > **Canonical Current-State Specification**  
-> *Last Updated: 2026-09-16*  
+> *Last Updated: 2026-09-24*  
 > This file describes the actual operational state, architecture, database schemas, business rules, design tokens, security boundaries, and navigation map for CineTrekker.
 
 ---
@@ -9,7 +9,7 @@
 ## 1. Project Overview
 
 - **Product Identity**: CineTrekker is a responsive movie, TV, and cinema tracking web platform.
-- **Core Value Proposition**: Rapid search and catalog discovery across TMDB, local-first watchlists and watch history (operable immediately without signing in), follow-based release notifications, TV season/episode tracking with persistent progress cursors, personalized rating-based recommendations, and privacy-shielded public social profiles.
+- **Core Value Proposition**: Rapid search and catalog discovery across TMDB, multi-source ratings enrichment (OMDb: Rotten Tomatoes, Metacritic, IMDb; TVMaze: broadcast schedules), local-first watchlists and watch history (operable immediately without signing in), follow-based release notifications, TV season/episode tracking with persistent progress cursors, personalized rating-based recommendations, and privacy-shielded public social profiles.
 - **Target Audience**: Cinephiles, casual moviegoers, binge watchers, and cinema communities.
 - **Current Operational Status**: Production-grade, deployed to Vercel with Supabase backend. Automated release gates (`test:security`, `test:privacy`, `i18n:verify`, `lint`, `type-check`) are passing.
 
@@ -29,7 +29,7 @@ Verified directly from repository manifests (`package.json`, `vite.config.ts`, `
 | **UI Component System** | Radix UI primitives (`@radix-ui/react-*`), Lucide Icons (`lucide-react@^0.462.0`) | Accessible unstyled primitives, dialogs, dropdowns, tooltips |
 | **Styling Engine** | Tailwind CSS v3.4.19 (`tailwindcss@^3.4.19`), PostCSS 8.5.6 | Utility-first styling with HSL CSS custom properties |
 | **Backend & Auth** | Supabase (`@supabase/supabase-js@^2.90.1`, GoTrue Auth, Postgres 15) | Auth sessions, relational data, RLS, Definer RPCs, storage |
-| **Serverless Functions**| Node.js 22 ES Modules (`api/*.js` deployed on Vercel) | Secret TMDB proxying, rate limiting, cron workers, health probes |
+| **Serverless Functions**| Node.js 22 ES Modules (`api/*.ts`, `api/*.js` on Vercel) | TMDB proxying, OMDb/TVMaze enrichment, rate limiting, cron, health (Max 12 functions on Hobby plan) |
 | **Distributed Cache** | Upstash Redis REST API (`@upstash/redis` compatible via REST fetch) | Sliding-window IP/user rate limiting across serverless instances |
 | **Internationalization**| `i18next@^25.7.4`, `react-i18next@^16.5.2` | Multi-locale support (`en`, `ar`, `de`, `es`, `fr`, `tr`) with strict audits |
 | **Testing** | Node.js Test Runner (`node --test`), Playwright (`@playwright/test@^1.58.2`) | API security unit tests, privacy tests, E2E browser tests |
@@ -41,8 +41,8 @@ Verified directly from repository manifests (`package.json`, `vite.config.ts`, `
 
 ```
 cinetrekker/
-├── api/                           # Vercel Serverless Endpoints (Node.js 22 runtime)
-│   ├── _lib/                      # Server helpers: env.js, http.js, logger.js,
+├── api/                           # Vercel Serverless Endpoints (Node.js 22 runtime; max 12 functions)
+│   ├── _lib/                      # Server helpers: env.js, http.js, logger.js, types.ts,
 │   │                              # requestSecurity.js (rate limiting), supabaseAdmin.js,
 │   │                              # securityMonitor.js, operationalMonitor.js
 │   ├── jobs/                      # Background cron workers
@@ -50,8 +50,9 @@ cinetrekker/
 │   ├── user/                      # Authenticated user endpoints (followed.js)
 │   ├── client-errors.js           # Privacy-scrubbed client incident collector
 │   ├── edge-meta.js               # Crawler SSR meta tag & JSON-LD injection
+│   ├── enrichment.ts              # Multi-source ratings (OMDb) & TV schedules (TVMaze)
 │   ├── feedback.js                # Turnstile/Honeypot protected feedback via Resend
-│   ├── follow.js / unfollow.js    # Follow/unfollow server actions
+│   ├── follow.ts                  # Follow (POST) & unfollow (DELETE via rewrite) server action
 │   ├── health.js                  # Coarse dependency readiness probe (safe; no secrets)
 │   ├── notifications.js           # Consolidated list, unread-count, and mark-read actions
 │   ├── recommend.js               # AI & heuristic personalized recommendation generator
@@ -59,6 +60,9 @@ cinetrekker/
 │   └── tmdb-proxy.js              # Cached & rate-limited proxy to api.themoviedb.org
 ├── docs/                          # Runbooks, audit logs, recovery plans, and history (121 files)
 ├── public/                        # Static assets, favicon, manifest, robots.txt
+│   ├── boot-watchdog.js           # 12s startup recovery timer with self-healing cache purge
+│   ├── sw.js                      # PWA Service Worker (v2, network-first navigations, skipWaiting)
+│   └── offline.html               # Offline fallback shell
 ├── scripts/                       # CI/CD integrity scripts (check-bundle-budget, check-i18n-keys)
 ├── src/                           # Client Application Code
 │   ├── components/                # UI presentation components
@@ -73,11 +77,15 @@ cinetrekker/
 │   │   ├── ThemeContext.tsx       # Dark/light theme engine & localStorage persistence
 │   │   └── content-policy-context.tsx # Maturity filtering & content rating preferences
 │   ├── hooks/                     # Custom React Hooks
+│   │   ├── useEnrichedRatings.ts  # TanStack query for OMDb scores (Rotten Tomatoes, Metacritic, IMDb)
+│   │   ├── useTVSchedule.ts       # TanStack query for TVMaze next episode broadcast countdown
 │   │   ├── useGuestMediaLists.ts  # Local-first localStorage watchlist & watched manager
 │   │   ├── useWatchlistQueries.ts # TanStack Query mutations for user_watchlist
 │   │   ├── useWatchedQueries.ts   # TanStack Query mutations for user_watched
 │   │   └── useMediaDetails.ts     # Media detail retrieval with fallback handling
 │   ├── lib/                       # Core client utilities
+│   │   ├── schemas/               # Shared Zod contracts & TypeScript types (apiContracts.ts)
+│   │   ├── chunkErrorRecovery.ts  # Post-deploy chunk load error auto-recovery with cache buster
 │   │   ├── mediaEnrichment.ts     # Resilient TMDB hydration and fallback synthesis
 │   │   ├── mediaFallback.ts       # Fallback object factory for offline/failed TMDB titles
 │   │   ├── envValidation.ts       # Browser env checks (VITE_SUPABASE_URL, etc.)
@@ -205,10 +213,12 @@ Defined in `tailwind.config.ts` and `src/index.css`:
 
 - **Rate Limits (`api/_lib/requestSecurity.js`)**:
   - `tmdb-proxy`: 60 requests / minute per IP
+  - `enrichment`: 60 requests / minute per IP (OMDb ratings & TVMaze schedule)
   - `feedback`: 3 requests / 10 minutes per IP
   - `follow` / `unfollow`: 12 / min (IP), 20 / min (User)
   - `notifications-list`: 20 / min (IP), 45 / min (User)
   - `client-errors`: 8 / min per IP
+- **Serverless Function Budget**: Vercel Hobby strictly caps deployments at **12 Serverless Functions**. All backend endpoints must remain consolidated (e.g. `api/enrichment.ts` handles ratings and schedules via `?action=`; `api/follow.ts` handles POST follow and DELETE unfollow via rewrite).
 - **Bot Protection**: Feedback endpoint requires Cloudflare Turnstile verification or Google reCAPTCHA, supplemented with hidden honeypot fields.
 - **Error Scrubbing**: `api/client-errors.js` and `src/lib/errorScrubber.ts` strip query strings, tokens, passwords, and PII before dispatching to Sentry or webhooks.
 
@@ -220,10 +230,12 @@ Defined in `tailwind.config.ts` and `src/index.css`:
 |---|---|
 | **Watchlist / Watched tracking** | `src/contexts/UserListsContext.tsx`, `src/contexts/AuthenticatedUserListsProvider.tsx`, `src/hooks/useGuestMediaLists.ts`, `src/hooks/useWatchlistQueries.ts`, `src/hooks/useWatchedQueries.ts` |
 | **TV Episode Tracking** | `supabase/migrations/20260729140000_tv_episode_progress_rpc.sql`, `src/components/tv/`, `src/pages/Details.tsx` |
+| **Ratings & Schedules Enrichment** | `api/enrichment.ts`, `src/hooks/useEnrichedRatings.ts`, `src/hooks/useTVSchedule.ts`, `src/lib/schemas/apiContracts.ts`, `src/pages/Details.tsx` |
 | **TMDB API integration** | `api/tmdb-proxy.js`, `src/services/tmdb.ts`, `src/lib/mediaEnrichment.ts`, `src/lib/mediaFallback.ts` |
 | **Authentication & Auth flow** | `src/contexts/AuthContext.tsx`, `src/components/ProtectedRoute.tsx`, `src/pages/Auth.tsx`, `src/pages/AuthCallback.tsx` |
-| **Follow & Notification jobs** | `api/jobs/check-followed-updates.js`, `api/notifications.js`, `supabase/migrations/20260824190000_notification_scale_and_retention.sql` |
+| **Follow & Notification jobs** | `api/follow.ts`, `api/jobs/check-followed-updates.js`, `api/notifications.js`, `supabase/migrations/20260824190000_notification_scale_and_retention.sql` |
 | **Social, Profiles & Privacy** | `src/services/social.ts`, `src/services/profile.ts`, `supabase/migrations/20260814190000_add_public_social_profile_rpc.sql`, `supabase/migrations/20260820215500_harden_private_profile_select_rls.sql` |
+| **PWA, Boot & Service Worker** | `public/sw.js`, `public/boot-watchdog.js`, `src/lib/chunkErrorRecovery.ts`, `index.html` |
 | **Design tokens & UI styling** | `src/index.css`, `tailwind.config.ts`, `src/components/ui/` |
 | **Routes & Page Loading** | `src/AppRoutes.tsx`, `src/App.tsx`, `src/components/ErrorBoundary.tsx` |
 | **Security & Rate Limiting** | `api/_lib/requestSecurity.js`, `api/_lib/supabaseAdmin.js`, `tests/security-api.test.mjs` |

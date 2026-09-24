@@ -23,6 +23,10 @@
   - Added inline loading skeleton styles to `index.html` to eliminate the unstyled fallback flash ("CT CineTrekker").
   - Added self-healing cache purge and timestamped reload to `public/boot-watchdog.js` and `src/lib/chunkErrorRecovery.ts`.
   - Fixed cross-platform path resolution in `tests/professionalization-regression.test.mjs`.
+- **Vercel Hobby Plan 12-Function Budget Compliance:**
+  - Consolidated `ratings.ts` and `tv-schedule.ts` into a unified `api/enrichment.ts` (`action=ratings|tv-schedule`).
+  - Unified `follow.ts` and `unfollow.ts` into `api/follow.ts` supporting both `POST` and `DELETE`, with `/api/unfollow` rewritten in `vercel.json`.
+  - Restored total serverless function count to exactly 12, satisfying Vercel Hobby deployment constraints.
 
 ### Tests & Verification
 - `npm run type-check`: Passed (0 errors).
