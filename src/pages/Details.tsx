@@ -1305,41 +1305,49 @@ export default function Details() {
                           }}
                         >
                           <SelectTrigger
-                            className="w-56 gap-2 rounded-xl border-white/15 bg-background/60 backdrop-blur-sm transition-all hover:border-white/30 hover:bg-white/8 focus:ring-primary/40 data-[state=open]:border-primary/50 data-[state=open]:bg-primary/8"
-                            aria-label="Select season"
+                            className="h-11 w-full sm:w-64 gap-2.5 rounded-xl border border-white/15 bg-card/60 px-3 py-1.5 text-sm backdrop-blur-md transition-all hover:border-white/30 hover:bg-white/8 focus:ring-2 focus:ring-primary/40 focus:ring-offset-0 data-[state=open]:border-primary/60 data-[state=open]:bg-white/8 [&>span]:flex [&>span]:items-center [&>span]:gap-2.5 [&>span]:line-clamp-none [&>span]:min-w-0 [&>span]:flex-1"
+                            aria-label={t("details.selectSeason", "Select Season")}
                           >
-                            {selectedSeason != null ? (() => {
-                              const prog = seasonProgress[selectedSeason];
-                              const seasonInfo = details.seasons?.find((s: { season_number: number }) => s.season_number === selectedSeason);
-                              return (
-                                <span className="flex min-w-0 flex-1 items-center gap-2.5">
-                                  {seasonInfo?.poster_path && (
-                                    <img
-                                      src={getImageUrl(seasonInfo.poster_path, "w92") || ""}
-                                      alt=""
-                                      className="h-7 w-5 shrink-0 rounded-md object-cover opacity-90 shadow-sm"
-                                    />
-                                  )}
-                                  <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                                    {t("episodes.season")} {selectedSeason}
-                                  </span>
-                                  {prog && prog.total > 0 && (
-                                    <span className={cn(
-                                      "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
-                                      prog.watched === prog.total
-                                        ? "bg-emerald-500/20 text-emerald-400"
-                                        : "bg-white/8 text-muted-foreground"
-                                    )}>
-                                      {prog.watched}/{prog.total}
+                            <SelectValue placeholder={t("details.selectSeasonPrompt", "Select a season…")}>
+                              {selectedSeason != null ? (() => {
+                                const prog = seasonProgress[selectedSeason];
+                                const seasonInfo = details.seasons?.find((s: { season_number: number }) => s.season_number === selectedSeason);
+                                const isComplete = prog && prog.total > 0 && prog.watched === prog.total;
+                                return (
+                                  <span className="flex min-w-0 flex-1 items-center gap-2.5">
+                                    {seasonInfo?.poster_path ? (
+                                      <img
+                                        src={getImageUrl(seasonInfo.poster_path, "w92") || ""}
+                                        alt=""
+                                        className="h-7 w-5 shrink-0 rounded object-cover shadow-sm border border-white/10"
+                                      />
+                                    ) : (
+                                      <span className="flex h-7 w-5 shrink-0 items-center justify-center rounded bg-white/10 text-[10px] font-bold text-muted-foreground border border-white/10">
+                                        S{selectedSeason}
+                                      </span>
+                                    )}
+                                    <span className="min-w-0 truncate text-sm font-semibold text-foreground">
+                                      {t("episodes.season")} {selectedSeason}
                                     </span>
-                                  )}
-                                </span>
-                              );
-                            })() : <SelectValue placeholder={t("details.selectSeasonPrompt", "Select a season…")} />}
+                                    {prog && prog.total > 0 && (
+                                      <span className={cn(
+                                        "ml-auto shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums border",
+                                        isComplete
+                                          ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
+                                          : "bg-white/10 border-white/10 text-muted-foreground"
+                                      )}>
+                                        {prog.watched}/{prog.total}
+                                      </span>
+                                    )}
+                                  </span>
+                                );
+                              })() : undefined}
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent
-                            className="rounded-xl border-white/12 bg-background/95 backdrop-blur-xl"
+                            align="end"
                             sideOffset={6}
+                            className="w-[18rem] rounded-xl border border-white/15 bg-popover/95 p-1.5 shadow-2xl backdrop-blur-xl"
                           >
                             {(availableSeasonNumbers.length > 0 ? availableSeasonNumbers : seasons.slice().reverse()).map(n => {
                               const prog = seasonProgress[n];
@@ -1349,46 +1357,52 @@ export default function Details() {
                                 <SelectItem
                                   key={`season-opt-${n}`}
                                   value={n.toString()}
-                                  className="cursor-pointer rounded-lg px-3 py-2.5 focus:bg-white/8 data-[highlighted]:bg-white/8"
+                                  className="cursor-pointer rounded-lg py-2 pl-9 pr-3 transition-colors focus:bg-white/10 focus:text-foreground data-[highlighted]:bg-white/10 data-[highlighted]:text-foreground"
                                 >
-                                  <span className="flex items-center gap-3">
+                                  <span className="flex items-center gap-3 w-full">
                                     {seasonInfo?.poster_path ? (
                                       <img
                                         src={getImageUrl(seasonInfo.poster_path, "w92") || ""}
                                         alt=""
-                                        className="h-8 w-5.5 shrink-0 rounded-md object-cover opacity-90 shadow-sm"
+                                        className="h-9 w-6 shrink-0 rounded object-cover shadow-sm border border-white/10"
                                       />
                                     ) : (
-                                      <span className="flex h-8 w-5.5 shrink-0 items-center justify-center rounded-md bg-white/6 text-[10px] font-bold text-muted-foreground">
+                                      <span className="flex h-9 w-6 shrink-0 items-center justify-center rounded bg-white/10 text-[10px] font-bold text-muted-foreground border border-white/10">
                                         S{n}
                                       </span>
                                     )}
-                                    <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                                      <span className="text-sm font-semibold leading-tight">
+                                    <span className="flex min-w-0 flex-1 flex-col justify-center">
+                                      <span className="text-sm font-semibold leading-tight text-foreground truncate">
                                         {t("episodes.season")} {n}
                                       </span>
-                                      {prog && prog.total > 0 && (
-                                        <span className="flex items-center gap-1.5">
-                                          <span className="h-1 w-16 overflow-hidden rounded-full bg-white/10">
-                                            <span
+                                      {prog && prog.total > 0 ? (
+                                        <div className="flex items-center gap-2 mt-1">
+                                          <div className="h-1.5 w-16 overflow-hidden rounded-full bg-white/10 shrink-0">
+                                            <div
                                               className={cn(
-                                                "block h-full rounded-full transition-all duration-500",
-                                                isComplete ? "bg-emerald-500" : "bg-primary"
+                                                "h-full rounded-full transition-all duration-300",
+                                                isComplete ? "bg-emerald-400" : "bg-primary"
                                               )}
                                               style={{ width: `${Math.round((prog.watched / prog.total) * 100)}%` }}
                                             />
-                                          </span>
+                                          </div>
                                           <span className={cn(
-                                            "text-[10px] font-medium tabular-nums",
+                                            "text-[10px] font-medium tabular-nums shrink-0",
                                             isComplete ? "text-emerald-400" : "text-muted-foreground"
                                           )}>
                                             {prog.watched}/{prog.total}
                                           </span>
+                                        </div>
+                                      ) : seasonInfo?.episode_count ? (
+                                        <span className="text-[11px] text-muted-foreground mt-0.5">
+                                          {seasonInfo.episode_count} {t("details.episodes", "episodes")}
                                         </span>
-                                      )}
+                                      ) : null}
                                     </span>
                                     {isComplete && (
-                                      <span className="ml-auto shrink-0 text-emerald-400" aria-hidden="true">✓</span>
+                                      <span className="ml-auto shrink-0 rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400 border border-emerald-500/30">
+                                        Done
+                                      </span>
                                     )}
                                   </span>
                                 </SelectItem>
