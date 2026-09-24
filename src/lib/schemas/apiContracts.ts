@@ -137,3 +137,80 @@ export const tvScheduleSchema = z.object({
 });
 
 export type TVSchedule = z.infer<typeof tvScheduleSchema>;
+
+// ── TVmaze TV Details & Episodes ────────────────────────────────────────────
+
+export const tvBroadcastScheduleSchema = z.object({
+  network: z.string().nullable(),
+  networkCountry: z.string().nullable().optional(),
+  webChannel: z.string().nullable(),
+  days: z.array(z.string()),
+  time: z.string().nullable(),
+  timezone: z.string().nullable().optional(),
+});
+
+export type TVBroadcastSchedule = z.infer<typeof tvBroadcastScheduleSchema>;
+
+export const tvNextOrPrevEpisodeSchema = z.object({
+  id: z.number().nullable().optional(),
+  name: z.string(),
+  season: z.number().int().nonnegative(),
+  number: z.number().int().nonnegative(),
+  airdate: z.string(),
+  airtime: z.string().nullable().optional(),
+  summary: z.string().nullable().optional(),
+});
+
+export type TVNextOrPrevEpisode = z.infer<typeof tvNextOrPrevEpisodeSchema>;
+
+export const tvSeasonSummarySchema = z.object({
+  seasonNumber: z.number().int().nonnegative(),
+  name: z.string(),
+  overview: z.string().nullable(),
+  episodeCount: z.number().int().nonnegative(),
+  airDate: z.string().nullable(),
+  posterPath: z.string().nullable(),
+});
+
+export type TVSeasonSummary = z.infer<typeof tvSeasonSummarySchema>;
+
+export const tvDetailsResponseSchema = z.object({
+  found: z.boolean(),
+  imdbId: z.string().optional(),
+  tvmazeId: z.number().optional().nullable(),
+  tvdbId: z.number().optional().nullable(),
+  broadcastSchedule: tvBroadcastScheduleSchema.optional(),
+  nextEpisode: tvNextOrPrevEpisodeSchema.nullable().optional(),
+  previousEpisode: tvNextOrPrevEpisodeSchema.nullable().optional(),
+  totalSeasons: z.number().int().nonnegative().optional(),
+  totalEpisodes: z.number().int().nonnegative().optional(),
+  status: z.string().nullable().optional(),
+  seasons: z.array(tvSeasonSummarySchema).optional(),
+});
+
+export type TVDetailsResponse = z.infer<typeof tvDetailsResponseSchema>;
+
+export const normalizedEpisodeSchema = z.object({
+  id: z.union([z.number(), z.string()]).optional(),
+  seasonNumber: z.number().int().nonnegative(),
+  episodeNumber: z.number().int().nonnegative(),
+  name: z.string(),
+  overview: z.string().nullable(),
+  airDate: z.string().nullable(),
+  airTime: z.string().nullable().optional(),
+  runtime: z.number().nullable().optional(),
+  stillPath: z.string().nullable().optional(),
+  voteAverage: z.number().nullable().optional(),
+  isSpecial: z.boolean(),
+  tvmazeUrl: z.string().nullable().optional(),
+});
+
+export type NormalizedEpisodeSchema = z.infer<typeof normalizedEpisodeSchema>;
+
+export const tvEpisodesResponseSchema = z.object({
+  found: z.boolean(),
+  tvmazeShowId: z.number().optional(),
+  episodes: z.array(normalizedEpisodeSchema),
+});
+
+export type TVEpisodesResponse = z.infer<typeof tvEpisodesResponseSchema>;

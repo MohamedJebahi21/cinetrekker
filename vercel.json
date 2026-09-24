@@ -30,6 +30,14 @@
       "destination": "/api/enrichment?action=tv-schedule"
     },
     {
+      "source": "/api/enrichment/tv-details",
+      "destination": "/api/enrichment?action=tv-details"
+    },
+    {
+      "source": "/api/enrichment/tv-episodes",
+      "destination": "/api/enrichment?action=tv-episodes"
+    },
+    {
       "source": "/api/notifications/unread-count",
       "destination": "/api/notifications?action=unread-count"
     },

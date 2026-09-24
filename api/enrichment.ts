@@ -8,11 +8,32 @@ import {
   type TVSchedule,
 } from "../src/lib/schemas/apiContracts.ts";
 
+// ── Provider Layer Imports ────────────────────────────────────────────────────
+// These live in api/_lib/metadata/ and do NOT count toward Vercel's 12-function cap.
+import {
+  getShowByImdbId,
+  getShowDetails,
+  getEpisodes,
+  normalizeTVmazeShow,
+  type TVmazeShow,
+} from "./_lib/metadata/providers/tvmaze.ts";
+import { getRatingsByImdbId } from "./_lib/metadata/providers/omdb.ts";
+
+// ── In-Memory Caches ─────────────────────────────────────────────────────────
+
 const ratingsCache = new Map<string, { expiresAt: number; data: EnrichedRatings }>();
 const RATINGS_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 const tvScheduleCache = new Map<string, { expiresAt: number; data: TVSchedule }>();
 const TV_SCHEDULE_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+
+const tvDetailsCache = new Map<string, { expiresAt: number; data: unknown }>();
+const TV_DETAILS_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+
+const tvEpisodesCache = new Map<string, { expiresAt: number; data: unknown[] }>();
+const TV_EPISODES_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+
+// ── Handler: Ratings (OMDb → authoritative for IMDb/RT/Metacritic) ───────────
 
 async function handleRatings(
   imdbId: string,
@@ -25,92 +46,17 @@ async function handleRatings(
     return json(res, 200, cached.data);
   }
 
-  const omdbApiKey = getServerEnv("OMDB_API_KEY");
-  if (!omdbApiKey) {
-    const fallback: EnrichedRatings = {
-      imdbRating: null,
-      imdbVotes: null,
-      rottenTomatoes: null,
-      metascore: null,
-      awards: null,
-      boxOffice: null,
-    };
-    return json(res, 200, fallback);
-  }
+  const result = await getRatingsByImdbId(imdbId);
 
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 6000);
+  ratingsCache.set(imdbId, {
+    expiresAt: Date.now() + RATINGS_CACHE_TTL_MS,
+    data: result,
+  });
 
-    const omdbUrl = `https://www.omdbapi.com/?i=${encodeURIComponent(imdbId)}&apikey=${encodeURIComponent(omdbApiKey)}`;
-    const omdbRes = await fetch(omdbUrl, {
-      signal: controller.signal,
-      headers: { "User-Agent": "CineTrekker/1.0" },
-    });
-    clearTimeout(timeout);
-
-    if (!omdbRes.ok) {
-      return json(res, 200, {
-        imdbRating: null,
-        imdbVotes: null,
-        rottenTomatoes: null,
-        metascore: null,
-        awards: null,
-        boxOffice: null,
-      });
-    }
-
-    const data = await omdbRes.json() as Record<string, unknown>;
-    if (data.Response === "False") {
-      return json(res, 200, {
-        imdbRating: null,
-        imdbVotes: null,
-        rottenTomatoes: null,
-        metascore: null,
-        awards: null,
-        boxOffice: null,
-      });
-    }
-
-    let rottenTomatoes: string | null = null;
-    if (Array.isArray(data.Ratings)) {
-      const rtEntry = data.Ratings.find(
-        (r: unknown) =>
-          typeof r === "object" &&
-          r !== null &&
-          (r as Record<string, unknown>).Source === "Rotten Tomatoes",
-      ) as Record<string, unknown> | undefined;
-      if (rtEntry && typeof rtEntry.Value === "string") {
-        rottenTomatoes = rtEntry.Value;
-      }
-    }
-
-    const ratingsResult: EnrichedRatings = {
-      imdbRating: typeof data.imdbRating === "string" && data.imdbRating !== "N/A" ? data.imdbRating : null,
-      imdbVotes: typeof data.imdbVotes === "string" && data.imdbVotes !== "N/A" ? data.imdbVotes : null,
-      rottenTomatoes,
-      metascore: typeof data.Metascore === "string" && data.Metascore !== "N/A" ? data.Metascore : null,
-      awards: typeof data.Awards === "string" && data.Awards !== "N/A" ? data.Awards : null,
-      boxOffice: typeof data.BoxOffice === "string" && data.BoxOffice !== "N/A" ? data.BoxOffice : null,
-    };
-
-    ratingsCache.set(imdbId, {
-      expiresAt: Date.now() + RATINGS_CACHE_TTL_MS,
-      data: ratingsResult,
-    });
-
-    return json(res, 200, ratingsResult);
-  } catch {
-    return json(res, 200, {
-      imdbRating: null,
-      imdbVotes: null,
-      rottenTomatoes: null,
-      metascore: null,
-      awards: null,
-      boxOffice: null,
-    });
-  }
+  return json(res, 200, result);
 }
+
+// ── Handler: TV Schedule (TVmaze → broadcast schedule + next episode) ─────────
 
 async function handleTvSchedule(
   imdbId: string,
@@ -131,46 +77,30 @@ async function handleTvSchedule(
   };
 
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 6000);
-
-    const tvmazeUrl = `https://api.tvmaze.com/lookup/shows?imdb=${encodeURIComponent(imdbId)}`;
-    const tvmazeRes = await fetch(tvmazeUrl, {
-      signal: controller.signal,
-      headers: { "User-Agent": "CineTrekker/1.0" },
-    });
-    clearTimeout(timeout);
-
-    if (!tvmazeRes.ok) {
+    const show = await getShowByImdbId(imdbId);
+    if (!show) {
       return json(res, 200, fallback);
     }
 
-    const show = await tvmazeRes.json() as Record<string, unknown>;
-    const schedule = typeof show.schedule === "object" && show.schedule !== null
-      ? (show.schedule as Record<string, unknown>)
-      : {};
+    const schedule = show.schedule || { time: "", days: [] };
     const days = Array.isArray(schedule.days)
-      ? (schedule.days.filter((d): d is string => typeof d === "string"))
+      ? schedule.days.filter((d): d is string => typeof d === "string")
       : [];
-    const time = typeof schedule.time === "string" && schedule.time ? schedule.time : null;
+    const time = typeof schedule.time === "string" && schedule.time.trim() !== "" ? schedule.time : null;
 
     let network: string | null = null;
-    if (typeof show.network === "object" && show.network !== null) {
-      const net = show.network as Record<string, unknown>;
-      if (typeof net.name === "string") network = net.name;
-    } else if (typeof show.webChannel === "object" && show.webChannel !== null) {
-      const web = show.webChannel as Record<string, unknown>;
-      if (typeof web.name === "string") network = web.name;
+    if (show.network?.name) {
+      network = show.network.name;
+    } else if (show.webChannel?.name) {
+      network = show.webChannel.name;
     }
 
     let nextEpisode: TVSchedule["nextEpisode"] = null;
-    const links = typeof show._links === "object" && show._links !== null
-      ? (show._links as Record<string, unknown>)
-      : {};
+    const links = show._links || {};
 
     if (
+      links.nextepisode &&
       typeof links.nextepisode === "object" &&
-      links.nextepisode !== null &&
       typeof (links.nextepisode as Record<string, unknown>).href === "string"
     ) {
       try {
@@ -204,12 +134,7 @@ async function handleTvSchedule(
       }
     }
 
-    const result: TVSchedule = {
-      network,
-      days,
-      time,
-      nextEpisode,
-    };
+    const result: TVSchedule = { network, days, time, nextEpisode };
 
     tvScheduleCache.set(imdbId, {
       expiresAt: Date.now() + TV_SCHEDULE_CACHE_TTL_MS,
@@ -221,6 +146,98 @@ async function handleTvSchedule(
     return json(res, 200, fallback);
   }
 }
+
+// ── Handler: TV Details (full normalized show via TVmaze) ─────────────────────
+
+async function handleTvDetails(
+  imdbId: string,
+  res: ApiServerResponse,
+): Promise<ApiServerResponse> {
+  res.setHeader("Cache-Control", "public, s-maxage=43200, stale-while-revalidate=3600");
+
+  const cached = tvDetailsCache.get(imdbId);
+  if (cached && cached.expiresAt > Date.now()) {
+    return json(res, 200, cached.data);
+  }
+
+  const fallback = { found: false, imdbId };
+
+  try {
+    const show: TVmazeShow | null = await getShowByImdbId(imdbId);
+    if (!show) {
+      return json(res, 200, fallback);
+    }
+
+    // Fetch with embedded seasons, next/prev episode — episodes fetched separately to limit payload
+    const detailed = await getShowDetails(show.id, ["seasons", "nextepisode", "previousepisode"]);
+    const target = detailed || show;
+    const normalized = normalizeTVmazeShow(target);
+
+    const result = {
+      found: true,
+      tvmazeId: normalized.externalIds.tvmazeId,
+      imdbId: normalized.externalIds.imdbId,
+      tvdbId: normalized.externalIds.tvdbId,
+      broadcastSchedule: normalized.broadcastSchedule,
+      nextEpisode: normalized.nextEpisode,
+      previousEpisode: normalized.previousEpisode,
+      totalSeasons: normalized.totalSeasons,
+      totalEpisodes: normalized.totalEpisodes,
+      status: normalized.status,
+      seasons: normalized.seasons?.map((s) => ({
+        seasonNumber: s.seasonNumber,
+        name: s.name,
+        overview: s.overview,
+        episodeCount: s.episodeCount,
+        airDate: s.airDate,
+        posterPath: s.posterPath,
+      })),
+    };
+
+    tvDetailsCache.set(imdbId, {
+      expiresAt: Date.now() + TV_DETAILS_CACHE_TTL_MS,
+      data: result,
+    });
+
+    return json(res, 200, result);
+  } catch {
+    return json(res, 200, fallback);
+  }
+}
+
+// ── Handler: TV Episodes (all episodes for a show, including specials) ─────────
+
+async function handleTvEpisodes(
+  imdbId: string,
+  res: ApiServerResponse,
+): Promise<ApiServerResponse> {
+  res.setHeader("Cache-Control", "public, s-maxage=21600, stale-while-revalidate=3600");
+
+  const cached = tvEpisodesCache.get(imdbId);
+  if (cached && cached.expiresAt > Date.now()) {
+    return json(res, 200, { found: true, episodes: cached.data });
+  }
+
+  try {
+    const show = await getShowByImdbId(imdbId);
+    if (!show) {
+      return json(res, 200, { found: false, episodes: [] });
+    }
+
+    const episodes = await getEpisodes(show.id, /* includeSpecials */ true);
+
+    tvEpisodesCache.set(imdbId, {
+      expiresAt: Date.now() + TV_EPISODES_CACHE_TTL_MS,
+      data: episodes,
+    });
+
+    return json(res, 200, { found: true, tvmazeShowId: show.id, episodes });
+  } catch {
+    return json(res, 200, { found: false, episodes: [] });
+  }
+}
+
+// ── Main Handler ──────────────────────────────────────────────────────────────
 
 export default async function handler(
   req: ApiServerRequest,
@@ -247,11 +264,22 @@ export default async function handler(
   }
 
   const imdbId = parseResult.data;
-  const action = req.query?.action || req.query?.type;
+  const action = Array.isArray(req.query?.action)
+    ? req.query?.action[0]
+    : (req.query?.action || req.query?.type);
 
   if (action === "tv-schedule" || action === "schedule") {
     return handleTvSchedule(imdbId, res);
   }
 
+  if (action === "tv-details") {
+    return handleTvDetails(imdbId, res);
+  }
+
+  if (action === "tv-episodes") {
+    return handleTvEpisodes(imdbId, res);
+  }
+
+  // Default: ratings (backward-compatible)
   return handleRatings(imdbId, res);
 }

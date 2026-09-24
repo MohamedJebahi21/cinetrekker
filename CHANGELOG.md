@@ -5,7 +5,33 @@
 
 ---
 
+## 2026-09-24 — TVmaze Metadata Provider Layer
+
+### Added
+- **Provider-Agnostic Metadata Architecture (`api/_lib/metadata/`)**:
+  - `api/_lib/metadata/types.ts`: Normalized domain models for `NormalizedTVSeries`, `NormalizedEpisode`, `NormalizedSeason`, `TVBroadcastSchedule`, `NormalizedExternalIds`, `EnrichedRatingsSummary`, and a `StreamingProvider` interface placeholder for future Watchmode integration.
+  - `api/_lib/metadata/providers/tvmaze.ts`: Full TVmaze client with token-bucket rate limiting (20 req/10s), in-memory caching (12h shows, 6h episodes), exponential backoff on 429s, 6s AbortController timeouts, and HTML-stripping. Supports show lookup by IMDb ID, TheTVDB ID, or TVmaze ID; episode catalog with specials/Season 0; and `normalizeTVmazeShow()`.
+  - `api/_lib/metadata/providers/omdb.ts`: Extracted OMDb client from `enrichment.ts` into a dedicated reusable module with caching (7 days) and fail-soft behavior.
+  - `api/_lib/metadata/idMatcher.ts`: Multi-stage deterministic cross-provider ID resolution (Exact TVmaze ID → IMDb ID → TheTVDB ID → Title+Year bigram similarity → reject below 0.65 confidence).
+  - `api/_lib/metadata/normalizer.ts`: Field-by-field precedence merger (`mergeTVSeriesMetadata`, `mergeSeasonEpisodes`) enforcing: TMDB primary for catalog/poster/backdrop; TVmaze authoritative for broadcast schedule/network/airtimes/specials/next-prev episode; OMDb authoritative for external ratings.
+- **New Enrichment Actions (`api/enrichment.ts`)**:
+  - `action=tv-details` → full show info: network, broadcast schedule, seasons list, next/prev episode (12h cache).
+  - `action=tv-episodes` → complete episode catalog incl. specials with exact air times (6h cache).
+  - Existing `action=ratings` and `action=tv-schedule` remain 100% backward-compatible (no breaking changes).
+  - Function count stays at **12** (helper modules in `_lib/` are not counted by Vercel).
+- **`vercel.json` rewrites**: Added `/api/enrichment/tv-details` and `/api/enrichment/tv-episodes` path rewrites.
+- **Frontend Hooks (`src/hooks/useEnrichedTVDetails.ts`)**: `useEnrichedTVDetails` and `useEnrichedTVEpisodes` React Query hooks — fail-soft, disabled for movies/missing IMDb IDs.
+- **New Zod Schemas & Types (`src/lib/schemas/apiContracts.ts`)**: `TVDetailsResponse`, `TVEpisodesResponse`, `TVBroadcastSchedule`, `TVNextOrPrevEpisode`, `TVSeasonSummary`, `NormalizedEpisodeSchema` added.
+- **Developer Documentation (`docs/metadata-providers.md`)**: Architecture diagram, provider responsibility table, API endpoint reference, ID resolution strategy, caching/rate-limiting spec, fail-soft guarantees, and a step-by-step guide for adding Watchmode.
+
+### Changed
+- `api/enrichment.ts` refactored to use `api/_lib/metadata/providers/omdb.ts` for ratings and `api/_lib/metadata/providers/tvmaze.ts` for TV schedule — no behavior change, improved testability and separation.
+- `PROJECT_CONTEXT.md` updated: `_lib/metadata/` subtree documented, enrichment navigation row updated.
+
+---
+
 ## 2026-09-24 — Content Enrichment, Follow Pilot TS Migration & Boot Resilience
+
 
 ### Added
 - **External Multi-Source Content Enrichment:**

@@ -43,14 +43,21 @@ Verified directly from repository manifests (`package.json`, `vite.config.ts`, `
 cinetrekker/
 ├── api/                           # Vercel Serverless Endpoints (Node.js 22 runtime; max 12 functions)
 │   ├── _lib/                      # Server helpers: env.js, http.js, logger.js, types.ts,
-│   │                              # requestSecurity.js (rate limiting), supabaseAdmin.js,
-│   │                              # securityMonitor.js, operationalMonitor.js
+│   │   │                          # requestSecurity.js (rate limiting), supabaseAdmin.js,
+│   │   │                          # securityMonitor.js, operationalMonitor.js
+│   │   └── metadata/              # Provider-agnostic metadata layer (NOT counted as functions)
+│   │       ├── types.ts           # Normalized domain models (NormalizedTVSeries, NormalizedEpisode, etc.)
+│   │       ├── idMatcher.ts       # Multi-stage cross-provider ID resolution (IMDb→TVmaze→title+year)
+│   │       ├── normalizer.ts      # Precedence merger (TMDB+TVmaze+OMDb → unified output)
+│   │       └── providers/
+│   │           ├── tvmaze.ts      # TVmaze client: schedule, episodes, specials, rate-limit backoff
+│   │           └── omdb.ts        # OMDb client: IMDb/RT/Metacritic ratings
 │   ├── jobs/                      # Background cron workers
 │   │   └── check-followed-updates.js # Cursor-driven follower update checker
 │   ├── user/                      # Authenticated user endpoints (followed.js)
 │   ├── client-errors.js           # Privacy-scrubbed client incident collector
 │   ├── edge-meta.js               # Crawler SSR meta tag & JSON-LD injection
-│   ├── enrichment.ts              # Multi-source ratings (OMDb) & TV schedules (TVMaze)
+│   ├── enrichment.ts              # Multi-action enrichment: ratings (OMDb), tv-schedule, tv-details, tv-episodes (TVmaze)
 │   ├── feedback.js                # Turnstile/Honeypot protected feedback via Resend
 │   ├── follow.ts                  # Follow (POST) & unfollow (DELETE via rewrite) server action
 │   ├── health.js                  # Coarse dependency readiness probe (safe; no secrets)
@@ -230,7 +237,7 @@ Defined in `tailwind.config.ts` and `src/index.css`:
 |---|---|
 | **Watchlist / Watched tracking** | `src/contexts/UserListsContext.tsx`, `src/contexts/AuthenticatedUserListsProvider.tsx`, `src/hooks/useGuestMediaLists.ts`, `src/hooks/useWatchlistQueries.ts`, `src/hooks/useWatchedQueries.ts` |
 | **TV Episode Tracking** | `supabase/migrations/20260729140000_tv_episode_progress_rpc.sql`, `src/components/tv/`, `src/pages/Details.tsx` |
-| **Ratings & Schedules Enrichment** | `api/enrichment.ts`, `src/hooks/useEnrichedRatings.ts`, `src/hooks/useTVSchedule.ts`, `src/lib/schemas/apiContracts.ts`, `src/pages/Details.tsx` |
+| **Ratings & Schedules Enrichment** | `api/enrichment.ts`, `api/_lib/metadata/` (types, idMatcher, normalizer, providers/tvmaze.ts, providers/omdb.ts), `src/hooks/useEnrichedRatings.ts`, `src/hooks/useTVSchedule.ts`, `src/hooks/useEnrichedTVDetails.ts`, `src/lib/schemas/apiContracts.ts`, `docs/metadata-providers.md` |
 | **TMDB API integration** | `api/tmdb-proxy.js`, `src/services/tmdb.ts`, `src/lib/mediaEnrichment.ts`, `src/lib/mediaFallback.ts` |
 | **Authentication & Auth flow** | `src/contexts/AuthContext.tsx`, `src/components/ProtectedRoute.tsx`, `src/pages/Auth.tsx`, `src/pages/AuthCallback.tsx` |
 | **Follow & Notification jobs** | `api/follow.ts`, `api/jobs/check-followed-updates.js`, `api/notifications.js`, `supabase/migrations/20260824190000_notification_scale_and_retention.sql` |
