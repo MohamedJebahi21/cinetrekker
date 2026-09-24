@@ -63,6 +63,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -1283,38 +1290,118 @@ export default function Details() {
                           </Button>
                         </div>
                       )}
-                      <div className="flex max-w-full flex-wrap gap-1.5 pb-1 xl:justify-end">
-                        {(availableSeasonNumbers.length > 0 ? availableSeasonNumbers : seasons.slice().reverse()).map(n => {
-                          const prog = seasonProgress[n];
-                          const seasonInfo = details.seasons?.find((s: { season_number: number }) => s.season_number === n);
-                          return (
-                            <button
-                              key={`sc-${n}`} type="button"
-                              onClick={() => {
-                                setSelectedSeason(n);
-                                setSearchParams(prev => { const next = new URLSearchParams(prev); next.set("season", String(n)); return next; }, { replace: true });
-                              }}
-                              className={cn(
-                                "flex items-center gap-1.5 whitespace-nowrap rounded-xl border px-2.5 py-1 text-xs font-medium transition-all duration-200",
-                                selectedSeason === n
-                                  ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                                  : "border-white/10 bg-background/50 hover:border-white/20 hover:bg-white/8"
-                              )}
-                            >
-                              {seasonInfo?.poster_path && (
-                                <img src={getImageUrl(seasonInfo.poster_path, "w92") || ""} alt={`Season ${n}`} className="h-6 w-4 rounded object-cover opacity-90" />
-                              )}
-                              S{n}
-                              {prog && prog.total > 0 && <span className={cn("text-[10px]", selectedSeason === n ? "opacity-80" : "text-muted-foreground")}>{prog.watched}/{prog.total}</span>}
-                            </button>
-                          );
-                        })}
+                      {/* Season Dropdown */}
+                      <div className="flex items-center gap-3 xl:justify-end">
+                        <Select
+                          value={selectedSeason?.toString() ?? ""}
+                          onValueChange={(val) => {
+                            const n = parseInt(val, 10);
+                            setSelectedSeason(n);
+                            setSearchParams(prev => {
+                              const next = new URLSearchParams(prev);
+                              next.set("season", String(n));
+                              return next;
+                            }, { replace: true });
+                          }}
+                        >
+                          <SelectTrigger
+                            className="w-56 gap-2 rounded-xl border-white/15 bg-background/60 backdrop-blur-sm transition-all hover:border-white/30 hover:bg-white/8 focus:ring-primary/40 data-[state=open]:border-primary/50 data-[state=open]:bg-primary/8"
+                            aria-label="Select season"
+                          >
+                            {selectedSeason != null ? (() => {
+                              const prog = seasonProgress[selectedSeason];
+                              const seasonInfo = details.seasons?.find((s: { season_number: number }) => s.season_number === selectedSeason);
+                              return (
+                                <span className="flex min-w-0 flex-1 items-center gap-2.5">
+                                  {seasonInfo?.poster_path && (
+                                    <img
+                                      src={getImageUrl(seasonInfo.poster_path, "w92") || ""}
+                                      alt=""
+                                      className="h-7 w-5 shrink-0 rounded-md object-cover opacity-90 shadow-sm"
+                                    />
+                                  )}
+                                  <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                                    {t("episodes.season")} {selectedSeason}
+                                  </span>
+                                  {prog && prog.total > 0 && (
+                                    <span className={cn(
+                                      "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+                                      prog.watched === prog.total
+                                        ? "bg-emerald-500/20 text-emerald-400"
+                                        : "bg-white/8 text-muted-foreground"
+                                    )}>
+                                      {prog.watched}/{prog.total}
+                                    </span>
+                                  )}
+                                </span>
+                              );
+                            })() : <SelectValue placeholder={t("details.selectSeasonPrompt", "Select a season…")} />}
+                          </SelectTrigger>
+                          <SelectContent
+                            className="rounded-xl border-white/12 bg-background/95 backdrop-blur-xl"
+                            sideOffset={6}
+                          >
+                            {(availableSeasonNumbers.length > 0 ? availableSeasonNumbers : seasons.slice().reverse()).map(n => {
+                              const prog = seasonProgress[n];
+                              const seasonInfo = details.seasons?.find((s: { season_number: number }) => s.season_number === n);
+                              const isComplete = prog && prog.total > 0 && prog.watched === prog.total;
+                              return (
+                                <SelectItem
+                                  key={`season-opt-${n}`}
+                                  value={n.toString()}
+                                  className="cursor-pointer rounded-lg px-3 py-2.5 focus:bg-white/8 data-[highlighted]:bg-white/8"
+                                >
+                                  <span className="flex items-center gap-3">
+                                    {seasonInfo?.poster_path ? (
+                                      <img
+                                        src={getImageUrl(seasonInfo.poster_path, "w92") || ""}
+                                        alt=""
+                                        className="h-8 w-5.5 shrink-0 rounded-md object-cover opacity-90 shadow-sm"
+                                      />
+                                    ) : (
+                                      <span className="flex h-8 w-5.5 shrink-0 items-center justify-center rounded-md bg-white/6 text-[10px] font-bold text-muted-foreground">
+                                        S{n}
+                                      </span>
+                                    )}
+                                    <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                      <span className="text-sm font-semibold leading-tight">
+                                        {t("episodes.season")} {n}
+                                      </span>
+                                      {prog && prog.total > 0 && (
+                                        <span className="flex items-center gap-1.5">
+                                          <span className="h-1 w-16 overflow-hidden rounded-full bg-white/10">
+                                            <span
+                                              className={cn(
+                                                "block h-full rounded-full transition-all duration-500",
+                                                isComplete ? "bg-emerald-500" : "bg-primary"
+                                              )}
+                                              style={{ width: `${Math.round((prog.watched / prog.total) * 100)}%` }}
+                                            />
+                                          </span>
+                                          <span className={cn(
+                                            "text-[10px] font-medium tabular-nums",
+                                            isComplete ? "text-emerald-400" : "text-muted-foreground"
+                                          )}>
+                                            {prog.watched}/{prog.total}
+                                          </span>
+                                        </span>
+                                      )}
+                                    </span>
+                                    {isComplete && (
+                                      <span className="ml-auto shrink-0 text-emerald-400" aria-hidden="true">✓</span>
+                                    )}
+                                  </span>
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>
 
                   {!selectedSeason ? (
-                    <p className="text-sm text-muted-foreground">{t("details.selectSeasonPrompt", "Select a season above.")}</p>
+                    <p className="text-sm text-muted-foreground">{t("details.selectSeasonPrompt", "Choose a season from the dropdown to browse episodes.")}</p>
                   ) : !seasonDetails ? (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />{t("details.loadingSeasonEpisodes", "Loading...")}</div>
                   ) : publishedEpisodes.length === 0 ? (
