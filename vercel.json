@@ -18,6 +18,18 @@
       "destination": "/api/sitemap"
     },
     {
+      "source": "/api/unfollow",
+      "destination": "/api/follow"
+    },
+    {
+      "source": "/api/enrichment/ratings",
+      "destination": "/api/enrichment?action=ratings"
+    },
+    {
+      "source": "/api/enrichment/tv-schedule",
+      "destination": "/api/enrichment?action=tv-schedule"
+    },
+    {
       "source": "/api/notifications/unread-count",
       "destination": "/api/notifications?action=unread-count"
     },

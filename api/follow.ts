@@ -36,11 +36,13 @@ function validatePayload(payload: unknown): { ok: true; userId: string; movieId:
 }
 
 export default async function handler(req: ApiServerRequest, res: ApiServerResponse) {
-  if (req.method !== "POST") {
+  if (req.method !== "POST" && req.method !== "DELETE") {
     return json(res, 405, { error: "Method Not Allowed" });
   }
 
-  const security = await enforceRequestSecurity(req, res, "follow");
+  const scope = req.method === "DELETE" ? "unfollow" : "follow";
+
+  const security = await enforceRequestSecurity(req, res, scope);
   if (!security.ok) {
     return json(res, security.status, { error: security.error });
   }
@@ -53,7 +55,7 @@ export default async function handler(req: ApiServerRequest, res: ApiServerRespo
   const authedSecurity = await enforceAuthenticatedRequestSecurity(
     req,
     res,
-    "follow",
+    scope,
     auth.userId,
   );
   if (!authedSecurity.ok) {
@@ -70,8 +72,8 @@ export default async function handler(req: ApiServerRequest, res: ApiServerRespo
     await reportSecurityEvent({
       event: "auth_user_id_mismatch",
       severity: "warning",
-      scope: "follow",
-      message: "Rejected follow request due to user_id mismatch.",
+      scope,
+      message: `Rejected ${scope} request due to user_id mismatch.`,
       req,
       details: {
         authenticatedUserId: auth.userId,
@@ -84,6 +86,29 @@ export default async function handler(req: ApiServerRequest, res: ApiServerRespo
 
   try {
     const supabase = getSupabaseAdminClient();
+
+    if (req.method === "DELETE") {
+      const { data, error } = await supabase
+        .from("movie_followers")
+        .delete()
+        .eq("user_id", validation.userId)
+        .eq("movie_id", validation.movieId)
+        .select("id, user_id, movie_id, created_at");
+
+      if (error) {
+        return json(res, 500, { error: "Failed to unfollow movie/series." });
+      }
+
+      if (!Array.isArray(data) || data.length === 0) {
+        return json(res, 404, { error: "Follow record not found." });
+      }
+
+      return json(res, 200, {
+        ok: true,
+        message: "Successfully unfollowed movie/series.",
+        data: data[0],
+      });
+    }
 
     const { data, error } = await supabase
       .from("movie_followers")
@@ -107,7 +132,7 @@ export default async function handler(req: ApiServerRequest, res: ApiServerRespo
       data,
     });
   } catch (error) {
-    console.error("POST /api/follow error", error);
+    console.error(`${req.method} /api/follow error`, error);
     return json(res, 500, { error: "Internal server error." });
   }
 }
