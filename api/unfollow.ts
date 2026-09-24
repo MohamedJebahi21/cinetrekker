@@ -5,18 +5,21 @@ import {
   enforceRequestSecurity,
 } from "./_lib/requestSecurity.js";
 import { reportSecurityEvent } from "./_lib/securityMonitor.js";
+import type { ApiServerRequest, ApiServerResponse } from "./_lib/types.ts";
+import { followRequestSchema } from "../src/lib/schemas/apiContracts.ts";
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const MOVIE_ID_REGEX = /^[a-zA-Z0-9:_-]{1,128}$/;
 
-function normalizeString(value) {
-  return typeof value === "string" ? value.trim() : "";
-}
+function validatePayload(payload: unknown): { ok: true; userId: string; movieId: string } | { ok: false; error: string } {
+  const result = followRequestSchema.safeParse(payload);
+  if (result.success) {
+    return { ok: true, userId: result.data.user_id, movieId: result.data.movie_id };
+  }
 
-function validatePayload(payload) {
-  const userId = normalizeString(payload?.user_id);
-  const movieId = normalizeString(payload?.movie_id);
+  const raw = (payload && typeof payload === "object") ? (payload as Record<string, unknown>) : {};
+  const userId = typeof raw.user_id === "string" ? raw.user_id.trim() : "";
+  const movieId = typeof raw.movie_id === "string" ? raw.movie_id.trim() : "";
 
   if (!userId || !movieId) {
     return { ok: false, error: "user_id and movie_id are required." };
@@ -26,35 +29,31 @@ function validatePayload(payload) {
     return { ok: false, error: "user_id must be a valid UUID." };
   }
 
-  if (!MOVIE_ID_REGEX.test(movieId)) {
-    return {
-      ok: false,
-      error: "movie_id format is invalid. Use 1-128 chars: letters, numbers, :, _, -",
-    };
-  }
-
-  return { ok: true, userId, movieId };
+  return {
+    ok: false,
+    error: "movie_id format is invalid. Use 1-128 chars: letters, numbers, :, _, -",
+  };
 }
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
+export default async function handler(req: ApiServerRequest, res: ApiServerResponse) {
+  if (req.method !== "DELETE") {
     return json(res, 405, { error: "Method Not Allowed" });
   }
 
-  const security = await enforceRequestSecurity(req, res, "follow");
+  const security = await enforceRequestSecurity(req, res, "unfollow");
   if (!security.ok) {
     return json(res, security.status, { error: security.error });
   }
 
   const auth = await authenticateRequest(req);
-  if (!auth.ok) {
-    return json(res, auth.status, { error: auth.error });
+  if (!auth.ok || !auth.userId) {
+    return json(res, auth.status || 401, { error: auth.error });
   }
 
   const authedSecurity = await enforceAuthenticatedRequestSecurity(
     req,
     res,
-    "follow",
+    "unfollow",
     auth.userId,
   );
   if (!authedSecurity.ok) {
@@ -71,8 +70,8 @@ export default async function handler(req, res) {
     await reportSecurityEvent({
       event: "auth_user_id_mismatch",
       severity: "warning",
-      scope: "follow",
-      message: "Rejected follow request due to user_id mismatch.",
+      scope: "unfollow",
+      message: "Rejected unfollow request due to user_id mismatch.",
       req,
       details: {
         authenticatedUserId: auth.userId,
@@ -88,27 +87,26 @@ export default async function handler(req, res) {
 
     const { data, error } = await supabase
       .from("movie_followers")
-      .insert({
-        user_id: validation.userId,
-        movie_id: validation.movieId,
-      })
-      .select("id, user_id, movie_id, created_at")
-      .single();
+      .delete()
+      .eq("user_id", validation.userId)
+      .eq("movie_id", validation.movieId)
+      .select("id, user_id, movie_id, created_at");
 
     if (error) {
-      if (error.code === "23505") {
-        return json(res, 409, { error: "You already follow this movie/series." });
-      }
-      return json(res, 500, { error: "Failed to follow movie/series." });
+      return json(res, 500, { error: "Failed to unfollow movie/series." });
     }
 
-    return json(res, 201, {
+    if (!Array.isArray(data) || data.length === 0) {
+      return json(res, 404, { error: "Follow record not found." });
+    }
+
+    return json(res, 200, {
       ok: true,
-      message: "Successfully followed movie/series.",
-      data,
+      message: "Successfully unfollowed movie/series.",
+      data: data[0],
     });
   } catch (error) {
-    console.error("POST /api/follow error", error);
+    console.error("DELETE /api/unfollow error", error);
     return json(res, 500, { error: "Internal server error." });
   }
 }

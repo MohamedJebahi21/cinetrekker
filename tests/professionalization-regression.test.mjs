@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 
-const repoRoot = path.resolve(new URL("..", import.meta.url).pathname);
+import { fileURLToPath } from "node:url";
+
+const repoRoot = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
 const appSource = fs.readFileSync(
   path.join(repoRoot, "src/App.tsx"),
   "utf8",

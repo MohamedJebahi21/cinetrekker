@@ -9,6 +9,7 @@
     "allowJs": true,
     "lib": ["dom", "dom.iterable", "esnext"],
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "incremental": true,
     "module": "esnext",
     "esModuleInterop": true,

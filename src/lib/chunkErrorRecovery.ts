@@ -291,7 +291,12 @@ class ChunkErrorRecovery {
       "transition:transform 0.2s",
     ].join(";");
     button.textContent = "Refresh Now";
-    button.addEventListener("click", () => window.location.reload());
+    button.addEventListener("click", () => {
+      this.reset();
+      const url = new URL(window.location.href);
+      url.searchParams.set("_cb", Date.now().toString());
+      window.location.replace(url.toString());
+    });
     button.addEventListener("mouseover", () => {
       button.style.transform = "scale(1.05)";
     });

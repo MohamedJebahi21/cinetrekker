@@ -39,6 +39,8 @@ import { useUserLists } from "@/contexts/UserListsContext";
 import { useWatchedEpisodes } from "@/hooks/useFollowedShows";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLastViewed } from "@/hooks/useLastViewed";
+import { useEnrichedRatings } from "@/hooks/useEnrichedRatings";
+import { useTVSchedule } from "@/hooks/useTVSchedule";
 import { addToRecentlyViewed } from "@/lib/recentlyViewed";
 import { MovieRouteError } from "@/components/details/MovieRouteError";
 import { TitleUnavailable } from "@/components/details/TitleUnavailable";
@@ -424,6 +426,10 @@ export default function Details() {
     enabled: !!mediaId,
     retry: 3,
   });
+
+  const currentImdbId = details?.imdb_id ?? details?.external_ids?.imdb_id;
+  const { data: enrichedRatings } = useEnrichedRatings(currentImdbId);
+  const { data: tvSchedule } = useTVSchedule(currentImdbId, mediaType === "tv");
 
   const title = toDisplayTitle(details?.title || details?.name || "");
 
@@ -975,6 +981,56 @@ export default function Details() {
                         </span>
                       );
                     })}
+                  </div>
+                ) : null}
+
+                {/* Multi-API Enriched Ratings (Rotten Tomatoes, Metacritic, IMDb) */}
+                {enrichedRatings && (enrichedRatings.rottenTomatoes || enrichedRatings.metascore || enrichedRatings.imdbRating) ? (
+                  <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                    {enrichedRatings.rottenTomatoes && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-950/50 px-3 py-1 text-xs font-semibold text-red-300 shadow-sm backdrop-blur-sm">
+                        <span aria-hidden="true">🍅</span>
+                        <span>{enrichedRatings.rottenTomatoes} Rotten Tomatoes</span>
+                      </span>
+                    )}
+                    {enrichedRatings.metascore && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-950/50 px-3 py-1 text-xs font-semibold text-emerald-300 shadow-sm backdrop-blur-sm">
+                        <span aria-hidden="true">Ⓜ️</span>
+                        <span>{enrichedRatings.metascore} Metascore</span>
+                      </span>
+                    )}
+                    {enrichedRatings.imdbRating && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-950/50 px-3 py-1 text-xs font-semibold text-amber-300 shadow-sm backdrop-blur-sm">
+                        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                        <span>{enrichedRatings.imdbRating}/10 IMDb</span>
+                      </span>
+                    )}
+                    {enrichedRatings.boxOffice && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs font-medium text-white/75 backdrop-blur-sm">
+                        <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
+                        <span>{enrichedRatings.boxOffice}</span>
+                      </span>
+                    )}
+                  </div>
+                ) : null}
+
+                {/* TV Broadcast Schedule & Next Episode Countdown (TVMaze) */}
+                {tvSchedule && (tvSchedule.network || tvSchedule.nextEpisode) ? (
+                  <div className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-xl border border-primary/25 bg-primary/10 px-3.5 py-1.5 text-xs text-white/90 shadow-sm backdrop-blur-sm">
+                    <Tv className="h-3.5 w-3.5 text-primary shrink-0" />
+                    {tvSchedule.network && (
+                      <span className="font-semibold text-primary">{tvSchedule.network}</span>
+                    )}
+                    {tvSchedule.days.length > 0 && tvSchedule.time && (
+                      <span className="text-white/70">
+                        {tvSchedule.days.join(", ")} at {tvSchedule.time}
+                      </span>
+                    )}
+                    {tvSchedule.nextEpisode && (
+                      <span className="rounded-md bg-black/40 px-2 py-0.5 font-medium text-white/90">
+                        Next: S{tvSchedule.nextEpisode.season}E{tvSchedule.nextEpisode.number} &ldquo;{tvSchedule.nextEpisode.name}&rdquo; ({tvSchedule.nextEpisode.airdate})
+                      </span>
+                    )}
                   </div>
                 ) : null}
 

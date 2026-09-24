@@ -1,7 +1,7 @@
 import test, { afterEach, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 
-import followHandler from "../api/follow.js";
+import followHandler from "../api/follow.ts";
 import feedbackHandler from "../api/feedback.js";
 import notificationsHandler from "../api/notifications.js";
 import tmdbProxyHandler from "../api/tmdb-proxy.js";

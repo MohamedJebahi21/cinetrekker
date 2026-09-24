@@ -1,65 +1,13 @@
-const CACHE_NAME = "cinetrekker-public-shell-v1";
+const CACHE_NAME = "cinetrekker-shell-v2";
 const OFFLINE_FALLBACK = "/offline.html";
-const PUBLIC_NAVIGATION_PATHS = new Set([
-  "/",
-  "/search",
-  "/trending",
-  "/discover",
-  "/people",
-  "/genres",
-  "/decades",
-  "/awards",
-  "/calendar",
-  "/about",
-  "/privacy",
-  "/terms",
-  "/cookies",
-  "/accessibility",
-]);
 const DEFAULT_ICON = "/apple-touch-icon.png";
 const DEFAULT_BADGE = "/favicon-32x32.png";
 
-function isPublicNavigation(url) {
-  return PUBLIC_NAVIGATION_PATHS.has(url.pathname);
-}
-
-function isCacheableStaticAsset(request, url) {
-  if (request.method !== "GET" || url.origin !== self.location.origin) return false;
-  if (url.pathname.startsWith("/api/")) return false;
-  return ["script", "style", "font", "image"].includes(request.destination);
-}
-
-async function cachePublicNavigation(request) {
-  const cache = await caches.open(CACHE_NAME);
-  try {
-    const response = await fetch(request);
-    if (response.ok && response.type === "basic") {
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch {
-    return (await cache.match(request)) || (await cache.match(OFFLINE_FALLBACK));
-  }
-}
-
-async function cacheStaticAsset(request) {
-  const cache = await caches.open(CACHE_NAME);
-  const cached = await cache.match(request);
-  if (cached) return cached;
-
-  try {
-    const response = await fetch(request);
-    if (response.ok && response.type === "basic") {
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch {
-    return cached || Response.error();
-  }
-}
-
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.add(OFFLINE_FALLBACK)));
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.add(OFFLINE_FALLBACK)),
+  );
 });
 
 self.addEventListener("activate", (event) => {
@@ -69,7 +17,7 @@ self.addEventListener("activate", (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((key) => key.startsWith("cinetrekker-public-") && key !== CACHE_NAME)
+            .filter((key) => key !== CACHE_NAME)
             .map((key) => caches.delete(key)),
         ),
       )
@@ -82,13 +30,18 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
-  if (request.mode === "navigate" && url.origin === self.location.origin && isPublicNavigation(url)) {
-    event.respondWith(cachePublicNavigation(request));
-    return;
-  }
 
-  if (isCacheableStaticAsset(request, url)) {
-    event.respondWith(cacheStaticAsset(request));
+  // For HTML navigations, always fetch from network first.
+  // Only if the network fails completely (offline) do we serve the offline fallback.
+  // Never cache HTML responses in CacheStorage to prevent stale chunk mismatches across deploys.
+  if (request.mode === "navigate" && url.origin === self.location.origin) {
+    event.respondWith(
+      fetch(request).catch(async () => {
+        const cache = await caches.open(CACHE_NAME);
+        return (await cache.match(OFFLINE_FALLBACK)) || Response.error();
+      }),
+    );
+    return;
   }
 });
 

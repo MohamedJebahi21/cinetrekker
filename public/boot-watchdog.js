@@ -59,7 +59,27 @@
       "color:#fff",
       "font-weight:700",
       "text-decoration:none",
+      "cursor:pointer",
     ].join(";");
+    reload.addEventListener("click", async (e) => {
+      e.preventDefault();
+      try {
+        if ("caches" in window) {
+          const keys = await window.caches.keys();
+          await Promise.all(keys.map((k) => window.caches.delete(k)));
+        }
+        if ("serviceWorker" in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map((reg) => reg.update()));
+        }
+        window.sessionStorage.removeItem("cinetrekker_chunk_retry_count");
+      } catch (_) {
+        // ignore storage/cleanup errors
+      }
+      const url = new URL(window.location.href);
+      url.searchParams.set("_cb", Date.now().toString());
+      window.location.replace(url.toString());
+    });
 
     content.append(title, message, reload);
     panel.append(content);

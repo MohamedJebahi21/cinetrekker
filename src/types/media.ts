@@ -174,6 +174,7 @@ export interface MediaDetails extends Media {
   external_ids?: ExternalIds;
   videos?: { results: MediaVideoResult[] };
   images?: MediaImages;
+  "watch/providers"?: WatchProviders;
 }
 
 export interface Season {

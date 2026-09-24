@@ -513,7 +513,7 @@ export const getMovieDetails = async (
   language: string = "en",
 ): Promise<MediaDetails> => {
   return fetchTMDB(`/movie/${id}`, language, {
-    append_to_response: "credits,similar,recommendations,release_dates,videos,keywords,external_ids,images",
+    append_to_response: "credits,similar,recommendations,release_dates,videos,keywords,external_ids,images,watch/providers",
   });
 };
 
@@ -522,7 +522,7 @@ export const getTVDetails = async (
   language: string = "en",
 ): Promise<MediaDetails> => {
   return fetchTMDB(`/tv/${id}`, language, {
-    append_to_response: "credits,similar,recommendations,content_ratings,videos,keywords,external_ids,images",
+    append_to_response: "credits,similar,recommendations,content_ratings,videos,keywords,external_ids,images,watch/providers",
   });
 };
 

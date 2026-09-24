@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { followRequestSchema } from '@/lib/schemas/apiContracts';
 
 export interface MovieFollower {
   id: string;
@@ -33,9 +34,10 @@ export function useMovieFollowers() {
   const followMutation = useMutation({
     mutationFn: async (movieId: string) => {
       if (!user) throw new Error('Not authenticated');
+      const payload = followRequestSchema.parse({ user_id: user.id, movie_id: movieId });
       const { error } = await supabase
         .from('movie_followers')
-        .insert({ user_id: user.id, movie_id: movieId });
+        .insert({ user_id: payload.user_id, movie_id: payload.movie_id });
 
       if (error) throw error;
     },
@@ -51,11 +53,12 @@ export function useMovieFollowers() {
   const unfollowMutation = useMutation({
     mutationFn: async (movieId: string) => {
       if (!user) throw new Error('Not authenticated');
+      const payload = followRequestSchema.parse({ user_id: user.id, movie_id: movieId });
       const { error } = await supabase
         .from('movie_followers')
         .delete()
-        .eq('user_id', user.id)
-        .eq('movie_id', movieId);
+        .eq('user_id', payload.user_id)
+        .eq('movie_id', payload.movie_id);
 
       if (error) throw error;
     },

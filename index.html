@@ -104,6 +104,21 @@
       href="https://nvssyuxghwlubxklvgrn.supabase.co"
       crossorigin
     />
+    <style>
+      body { background: #0a0a0a; color: #fafafa; font-family: system-ui, -apple-system, sans-serif; }
+      .app-shell { display: flex; flex-direction: column; min-height: 100vh; }
+      .loading-header { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1.5rem; }
+      .loading-logo { font-size: 1.5rem; font-weight: 900; color: #e50914; }
+      .loading-title { font-size: 1.125rem; font-weight: 700; }
+      .loading-content { flex: 1; padding: 2rem; }
+      .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 0.75rem; }
+      .text-skeleton { height: 1rem; margin-bottom: 0.75rem; }
+      .text-skeleton-title { width: 60%; height: 2rem; }
+      .text-skeleton-subtitle { width: 40%; }
+      .loading-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; margin-top: 2rem; }
+      .card-skeleton { aspect-ratio: 2/3; }
+      @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    </style>
     <!-- <script defer src="%VITE_ANALYTICS_ENDPOINT%" data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script> -->
   </head>
 
