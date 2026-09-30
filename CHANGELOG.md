@@ -5,6 +5,23 @@
 
 ---
 
+## 2026-09-24 — TV Season Navigation Redesign & Alignment Fixes
+
+### Added
+- **Accessible TV Season Select Dropdown (`src/pages/Details.tsx`)**:
+  - Replaced cramped horizontal season pill buttons (`S1`, `S2`) with a consolidated Radix `Select` dropdown.
+  - Trigger displays active season poster thumbnail, season label, and a watched/total progress badge (emerald pill when complete, muted otherwise).
+  - Dropdown options display season poster thumbnail (`h-9 w-6`), bold season title, mini watch progress bar, and completion badges.
+  - Synchronizes selection with URL query parameter (`?season=N`) via `setSearchParams(..., { replace: true })` for seamless deep linking.
+
+### Fixed
+- **Season Select Dropdown Trigger Layout & Indicator Clearance**:
+  - Overrode default Radix `[&>span]:line-clamp-1` constraint on `SelectTrigger` by applying `[&>span]:line-clamp-none` and `[&>span]:flex [&>span]:items-center [&>span]:gap-2.5 [&>span]:min-w-0 [&>span]:flex-1`, preventing `-webkit-box` line breakage that previously caused the poster to stack vertically above the title and clip outside the top border.
+  - Added `pl-9` (36px left padding) clearance on `SelectItem` to eliminate overlap between Radix UI's `<Check>` selection indicator and the season poster thumbnail.
+  - Standardized poster thumbnail dimensions to `h-9 w-6` with subtle borders and shadows.
+
+---
+
 ## 2026-09-24 — TVmaze Metadata Provider Layer
 
 ### Added

@@ -122,7 +122,7 @@ cinetrekker/
 | `/search` | `Search` | Public | Multi-filter search (movie/tv/person), genre selector, sort filters, pagination. |
 | `/trending` | `Trending` | Public | Trending media across day/week windows. |
 | `/movie/:slug` | `Details` | Public | Movie synopsis, trailers, cast/crew, streaming providers, release dates, reviews, watch controls. |
-| `/tv/:slug` | `Details` | Public | TV series overview, season selector, episode list, episode progress tracker, follow toggle. |
+| `/tv/:slug` | `Details` | Public | TV series overview, season Select dropdown (poster + title + progress), episode list, episode progress tracker, TVmaze broadcast schedule badges, follow toggle. |
 | `/person/:slug` | `Person` | Public | Biography, known-for titles, acting/directing filmography. |
 | `/discover` | `Discover` | Public | Parametric catalog filtering (year ranges, ratings, genres, certifications). |
 | `/movie-tracker`| `MovieTracker` | Public | Visual landing presentation of tracking capabilities and features. |
@@ -196,6 +196,10 @@ cinetrekker/
 4. **Followed Title State & 90-Day Notification Compaction**:
    - TV airings or movie release shifts generate notifications grouped by `group_key` and tagged with `expires_at = now() + 90 days`.
    - Superseded duplicate notifications are merged using `event_key`.
+5. **Multi-Provider Metadata Layer & TV Season Presentation**:
+   - CineTrekker combines TMDB (catalog discovery, posters, backdrops), OMDb (external IMDb/RT/Metacritic ratings), and TVmaze (broadcast schedules, networks, episode catalog with specials/Season 0, exact air times).
+   - All server-side enrichment requests flow through `api/enrichment.ts` backed by helper modules in `api/_lib/metadata/` without expanding beyond Vercel Hobby's 12-function cap.
+   - On `/tv/:slug`, TV seasons are rendered via an accessible Radix `Select` dropdown. Trigger includes poster thumbnail, season label, and watched/total progress badge. Trigger layout uses `[&>span]:line-clamp-none` to prevent Radix from breaking flex row alignment; items use `pl-9` clearance so the selection indicator never collides with the poster thumbnail. Deep linking is preserved with `?season=N`.
 
 ---
 

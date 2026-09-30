@@ -157,6 +157,26 @@ Both hooks are **fail-soft** — they return `null` if TVmaze is unavailable, an
 
 ---
 
+## TV Series Season Navigation & Episode UI (`Details.tsx`)
+
+In `src/pages/Details.tsx`, multi-season navigation uses an accessible Radix `Select` dropdown in place of legacy horizontal button rails.
+
+### Component Design & Layout Rules
+
+1. **Trigger (`SelectTrigger`)**:
+   - Contains `<SelectValue>` displaying the active season poster thumbnail (`h-7 w-5`), season label (`Season N`), and watched/total progress badge (`X/Y`, styled emerald when 100% complete).
+   - **Critical CSS Override**: `[&>span]:flex [&>span]:items-center [&>span]:gap-2.5 [&>span]:line-clamp-none [&>span]:min-w-0 [&>span]:flex-1`.
+   - *Rationale*: The base Radix `SelectTrigger` applies `[&>span]:line-clamp-1` (`display: -webkit-box`), which breaks horizontal `flex` and stacks multi-element composites vertically. The override preserves the single-line flex row and prevents the thumbnail from clipping outside the top border.
+
+2. **Dropdown Items (`SelectItem`)**:
+   - Displays season poster thumbnail (`h-9 w-6`), season title, mini progress bar, and completion badge.
+   - **Padding Clearance**: Uses `pl-9` (36px left padding) to prevent collision with Radix UI's `<Check>` selection indicator (positioned at `left-2.5`).
+
+3. **URL Synchronization**:
+   - Selection immediately syncs with the browser search parameter (`?season=N`) via `setSearchParams(..., { replace: true })`, preserving deep links and bookmarkability.
+
+---
+
 ## Fail-Soft Guarantees
 
 - If **TVmaze is unreachable** → enrichment endpoints return `{ found: false }` or `{ episodes: [] }`. TMDB + OMDb continue normally.

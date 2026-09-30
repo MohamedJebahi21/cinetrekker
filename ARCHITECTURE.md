@@ -141,7 +141,7 @@ Save to localStorage                         Insert into Supabase
        └── 7. Save updated checkpoint cursor in public.notification_worker_state
 ```
 
-### E. Multi-Source Content Enrichment Flow (OMDb & TVMaze)
+### E. Multi-Source Metadata Provider Architecture & Enrichment Flow
 
 ```
 [User Navigates to Title Details: Details.tsx]
@@ -150,18 +150,58 @@ Save to localStorage                         Insert into Supabase
        │
        ├──► TanStack Query: useEnrichedRatings(imdbId)
        │    └── GET /api/enrichment?action=ratings&imdb_id=tt0137523
+       │        ├── Route: vercel.json rewrite from /api/enrichment/ratings
+       │        ├── Provider: api/_lib/metadata/providers/omdb.ts
        │        ├── In-memory 7-day TTL cache check
        │        ├── Fetch OMDb API: https://omdbapi.com/?i=tt0137523&apikey=...
        │        ├── Fail-soft fallback if OMDB_API_KEY unset (HTTP 200 with null values)
        │        └── Returns { imdbRating, rottenTomatoes, metascore, awards, boxOffice }
        │
-       └──► TanStack Query (isTV only): useTVSchedule(imdbId)
-            └── GET /api/enrichment?action=tv-schedule&imdb_id=tt0137523
-                ├── In-memory 6-hour TTL cache check
-                ├── Fetch TVMaze API: https://api.tvmaze.com/lookup/shows?imdb=tt0137523
-                ├── Lookup next episode link if available
-                └── Returns { network, days, time, nextEpisode: { name, season, number, airdate } }
+       ├──► TanStack Query (isTV only): useTVSchedule(imdbId)
+       │    └── GET /api/enrichment?action=tv-schedule&imdb_id=tt0137523
+       │        ├── Route: vercel.json rewrite from /api/enrichment/tv-schedule
+       │        ├── Provider: api/_lib/metadata/providers/tvmaze.ts
+       │        ├── Rate Limiter: Token Bucket (20 calls / 10s window)
+       │        ├── In-memory 6-hour TTL cache check
+       │        ├── Fetch TVmaze API: https://api.tvmaze.com/lookup/shows?imdb=tt0137523
+       │        └── Returns { network, days, time, nextEpisode: { name, season, number, airdate } }
+       │
+       ├──► TanStack Query (isTV only): useEnrichedTVDetails(imdbId)
+       │    └── GET /api/enrichment?action=tv-details&imdb_id=tt0137523
+       │        ├── Route: vercel.json rewrite from /api/enrichment/tv-details
+       │        ├── Provider: api/_lib/metadata/providers/tvmaze.ts
+       │        ├── Fetches show with embedded seasons, next/prev episodes
+       │        └── Returns normalized series metadata (12h TTL cache)
+       │
+       └──► TanStack Query (isTV only): useEnrichedTVEpisodes(imdbId)
+            └── GET /api/enrichment?action=tv-episodes&imdb_id=tt0137523
+                ├── Route: vercel.json rewrite from /api/enrichment/tv-episodes
+                ├── Provider: api/_lib/metadata/providers/tvmaze.ts
+                ├── Fetches full episode catalog including specials / Season 0 (specials=1)
+                └── Returns normalized episode list with exact airtimes & descriptions (6h TTL cache)
 ```
+
+#### Deterministic Source Precedence Matrix
+
+| Data Domain | Authoritative Provider | Secondary / Fallback | Rationale |
+|---|---|---|---|
+| Catalog discovery, base metadata | **TMDB** | TVmaze | Comprehensive global catalog, multi-language synopses |
+| Posters & Backdrops | **TMDB** (image.tmdb.org) | TVmaze | High-resolution assets with standard aspect ratios |
+| External Scores & Awards | **OMDb** | — | Authoritative IMDb votes/ratings, Rotten Tomatoes, Metacritic |
+| TV Broadcast Schedule | **TVmaze** | — | Precise broadcast network, web channel, air days/time |
+| Next / Previous Episodes | **TVmaze** | TMDB | Accurate broadcast countdowns and episode pointers |
+| Episode Catalog & Specials | **TVmaze** | TMDB | Full coverage including Season 0 / specials and exact airtimes |
+| Episode Descriptions & Images | **TMDB** | TVmaze | Fallback to TVmaze when TMDB episode overview is blank |
+| Streaming Availability *(Future)* | **Watchmode** *(contract ready)* | TMDB watch/providers | Normalized `StreamingProvider` interface in `types.ts` |
+
+#### Multi-Stage ID Matching Pipeline (`idMatcher.ts`)
+
+Cross-provider resolution follows a deterministic 5-stage pipeline:
+1. **Exact Provider ID**: Direct lookup if TVmaze ID is already known (Confidence: `1.0`)
+2. **IMDb ID Match**: Authoritative bridge e.g. `/lookup/shows?imdb=tt...` (Confidence: `1.0`)
+3. **TheTVDB ID Match**: Cross-reference via `/lookup/shows?thetvdb=...` (Confidence: `0.95`)
+4. **Normalized Title + Year Search**: Bigram similarity (Dice coefficient) on diacritic-stripped, article-trimmed titles with premiere year window ±1 (Confidence: `0.75 - 0.92`)
+5. **Safe Rejection**: Any candidate below `0.65` confidence is rejected to prevent false matches.
 
 ### F. PWA Boot, Service Worker Lifecycle & Watchdog Self-Healing Flow
 
@@ -190,6 +230,33 @@ Save to localStorage                         Insert into Supabase
                ├── window.dispatchEvent(new Event("cinetrekker:mounted"))
                └── Watchdog cleared; interactive UI rendered
 ```
+
+### G. TV Season Selector & Episode Presentation Invariants (`Details.tsx`)
+
+To support multi-season TV shows without visual clutter, the season navigation on `/tv/:slug` uses a consolidated Radix `Select` dropdown in place of legacy horizontal button rails.
+
+```
+[SelectTrigger: h-11 w-64]
+├── [Poster: h-7 w-5] ──► [Season Label: "Season N"] ──► [Progress Badge: "X/Y" (emerald if 100%)] ──► [ChevronDown]
+│
+▼ [SelectContent: w-[18rem] align="end" backdrop-blur-xl]
+├── [SelectItem: S1] ──► [Check Indicator] ──► [Poster: h-9 w-6] ──► [Title + Progress Bar + "X/Y"] ──► [Done Badge]
+├── [SelectItem: S2] ──► [Check Indicator] ──► [Poster: h-9 w-6] ──► [Title + Progress Bar + "X/Y"]
+└── ...
+```
+
+#### Critical CSS & Layout Invariants:
+1. **Line-Clamp Flex Override on `SelectTrigger`**:
+   - The base Shadcn / Radix `SelectTrigger` applies `[&>span]:line-clamp-1`. Because `line-clamp-1` enforces `display: -webkit-box; -webkit-box-orient: vertical`, any multi-element composite inside `<SelectValue>` (such as `<img>` + title text + progress badge) is treated as separate vertical lines. This previously caused the poster to stack above the title and poke outside the top border.
+   - **Rule**: `SelectTrigger` must explicitly include `[&>span]:flex [&>span]:items-center [&>span]:gap-2.5 [&>span]:line-clamp-none [&>span]:min-w-0 [&>span]:flex-1`.
+2. **ItemIndicator Clearance on `SelectItem`**:
+   - Radix UI's `SelectItem` positions its `<SelectPrimitive.ItemIndicator>` at `absolute left-2.5`.
+   - **Rule**: Do not apply generic `px-3` or `pl-3` to `SelectItem`. Always preserve `pl-9` (36px left padding) so the checkmark indicator never overlaps the season poster thumbnail.
+3. **Poster Thumbnail Dimensions**:
+   - Trigger thumbnail: standard `h-7 w-5` (20x28px, 1:1.4 aspect ratio) with `border border-white/10` and `shrink-0`.
+   - Dropdown item thumbnail: standard `h-9 w-6` (24x36px, 1:1.5 aspect ratio). Avoid non-standard classes like `w-5.5` or `w-6.5`.
+4. **Deep-Linking Parameter Synchronization**:
+   - Season selection immediately synchronizes with the URL search param `?season=N` via `setSearchParams(..., { replace: true })`, preserving deep links and back-forward navigation without pushing redundant history entries.
 
 ---
 

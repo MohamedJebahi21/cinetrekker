@@ -8,6 +8,7 @@ Before making any changes or recommendations, you must load and respect the cano
 2. **[PROJECT_CONTEXT.md](file:///f:/My%20Own%20Games/CineTrekker/cinetrekker/PROJECT_CONTEXT.md)**: Current system state, technology stack, route catalog, business rules, design system, and project map.
 3. **[ARCHITECTURE.md](file:///f:/My%20Own%20Games/CineTrekker/cinetrekker/ARCHITECTURE.md)**: Technical runtime model, data flow, rate-limiting, and security invariants.
 4. **[DEFINITION_OF_DONE.md](file:///f:/My%20Own%20Games/CineTrekker/cinetrekker/DEFINITION_OF_DONE.md)**: Reusable delivery checklist required for every completed task.
+5. **[docs/metadata-providers.md](file:///f:/My%20Own%20Games/CineTrekker/cinetrekker/docs/metadata-providers.md)**: Multi-provider metadata layer (TMDB, OMDb, TVmaze, Watchmode placeholder).
 
 ---
 
