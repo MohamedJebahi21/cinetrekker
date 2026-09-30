@@ -395,6 +395,7 @@ export default function Details() {
     queryKey: ["details", mediaType, mediaId, language],
     queryFn: () => mediaType === "movie" ? getMovieDetails(mediaId, language) : getTVDetails(mediaId, language),
     enabled: isValidId && !!mediaType,
+    staleTime: 1000 * 60 * 5, // 5 minutes — metadata stable within a browsing session
     retry: 3,
   });
 
@@ -417,6 +418,7 @@ export default function Details() {
     queryKey: ["season-details", mediaId, selectedSeason, language],
     queryFn: () => getTVSeasonDetails(mediaId, selectedSeason!, language),
     enabled: isSelectedSeasonAvailable,
+    staleTime: 1000 * 60 * 60 * 24, // 24 hours — season episode lists rarely change
     retry: false,
   });
 
@@ -424,6 +426,7 @@ export default function Details() {
     queryKey: ["watch-providers", mediaType, mediaId, language],
     queryFn: () => getWatchProviders(mediaType, mediaId),
     enabled: !!mediaId,
+    staleTime: 1000 * 60 * 60 * 6, // 6 hours — streaming availability changes slowly
     retry: 3,
   });
 
@@ -431,6 +434,7 @@ export default function Details() {
     queryKey: ["similar-titles", mediaType, mediaId, language],
     queryFn: () => getSimilar(mediaType, mediaId, language),
     enabled: !!mediaId,
+    staleTime: 1000 * 60 * 60, // 1 hour — similar list is stable
     retry: 3,
   });
 
@@ -519,14 +523,21 @@ export default function Details() {
 
   const seasonProgress = useMemo(() => {
     if (!seasonDetails?.episodes || mediaType !== "tv") return {} as Record<number, { watched: number; total: number; percentage: number }>;
+    // Group the loaded episodes by season_number. TMDB returns one season at a time,
+    // so this map typically has a single key. Only seasons with loaded data show progress.
+    const bySeasonNumber = new Map<number, typeof seasonDetails.episodes>();
+    for (const ep of seasonDetails.episodes) {
+      if (!bySeasonNumber.has(ep.season_number)) bySeasonNumber.set(ep.season_number, []);
+      bySeasonNumber.get(ep.season_number)!.push(ep);
+    }
     const p: Record<number, { watched: number; total: number; percentage: number }> = {};
-    seasons.forEach(n => {
-      const eps = seasonDetails.episodes.filter(e => e.season_number === n && e.air_date && e.air_date <= todayDateKey);
-      const w = eps.filter(e => isEpisodeWatched(mediaId, e.season_number, e.episode_number)).length;
-      p[n] = { watched: w, total: eps.length, percentage: eps.length > 0 ? Math.round(w / eps.length * 100) : 0 };
-    });
+    for (const [n, eps] of bySeasonNumber) {
+      const aired = eps.filter(e => e.air_date && e.air_date <= todayDateKey);
+      const w = aired.filter(e => isEpisodeWatched(mediaId, e.season_number, e.episode_number)).length;
+      p[n] = { watched: w, total: aired.length, percentage: aired.length > 0 ? Math.round(w / aired.length * 100) : 0 };
+    }
     return p;
-  }, [seasonDetails?.episodes, seasons, mediaType, isEpisodeWatched, mediaId, todayDateKey]);
+  }, [seasonDetails, mediaType, isEpisodeWatched, mediaId, todayDateKey]);
 
   useEffect(() => {
     if (mediaType !== "tv" || !seasonDetails?.episodes) return;

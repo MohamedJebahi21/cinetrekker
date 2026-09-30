@@ -5,6 +5,27 @@
 
 ---
 
+## 2026-09-30 — Post-Audit Quality Fixes
+
+### Fixed
+- **Incorrect OpenAI model name (`api/recommend.js`)**: Changed hard-coded `"gpt-5-mini"` (non-existent model ID) to `getServerEnv("OPENAI_MODEL", "gpt-4o-mini")`. Every recommendation call previously reached OpenAI with an unknown model name.
+- **Dead variable re-declaration removed (`api/recommend.js`)**: The inner `const openaiBase` re-declaration inside the try block shadowed the outer variable. Removed.
+- **Structured logging in `api/notifications.js` and `api/follow.ts`**: Replaced three raw `console.error(...)` calls with `logger.error(...)` from `createServerLogger`. Errors now emit with `[notifications]` / `[follow]` scope prefixes, consistent with the rest of the API layer.
+- **Missing `staleTime` on 4 core queries in `src/pages/Details.tsx`**: Default `staleTime: 0` caused unnecessary TMDB refetches on every mount/focus. Added per-query policies: 5 min (details), 24 h (season-details), 6 h (watch-providers), 1 h (similar-titles).
+- **`seasonProgress` computed against unloaded season data (`src/pages/Details.tsx`)**: The memo previously iterated all season numbers against a single loaded season's episodes, producing `0/0` for every other season. Now groups only loaded episodes so unloaded seasons show no progress bar at all.
+
+### Added
+- **`OPENAI_MODEL` / `OPENAI_API_BASE` environment variables (`.env.example`)**: Operators can now target `gpt-4o`, Azure OpenAI, or a local Ollama proxy without a code change.
+
+### Verified
+- `npm run lint` → 0 errors / 0 warnings
+- `npm run type-check` → 0 errors
+- `npm run test:security` → 18/18
+- `npm run test:unit` → 110/110
+- `npm run build` → clean, 1 127.9 KiB preload graph
+
+---
+
 ## 2026-09-30 — Dependency hygiene & build warning cleanup
 
 ### Fixed

@@ -109,7 +109,7 @@ export default async function handler(req, res) {
   try {
     const system = `You are a helpful film expert. Given a short user prompt, return a strict JSON object with two keys: "summary" (a short 1-2 sentence summary as a film critic, no more than ~140 characters) and "suggestions" (an array of up to ${normalizedLimit} items). Each suggestion must be an object with keys: "title" (string), optionally "year" (number), and "media_type" which must be either "movie" or "tv". Do NOT include adult content. Output MUST be valid JSON and contain only the JSON object.`;
 
-    const openaiBase = getServerEnv("OPENAI_API_BASE", "https://api.openai.com/v1");
+    // openaiBase is already resolved above; no need to re-declare it here.
     const openaiRes = await fetch(
       `${openaiBase}/chat/completions`,
       {
@@ -119,7 +119,7 @@ export default async function handler(req, res) {
           Authorization: `Bearer ${openAiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-5-mini",
+          model: getServerEnv("OPENAI_MODEL", "gpt-4o-mini"),
           messages: [
             { role: "system", content: system },
             { role: "user", content: normalizedPrompt },

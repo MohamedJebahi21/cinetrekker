@@ -4,6 +4,9 @@ import {
   enforceAuthenticatedRequestSecurity,
   enforceRequestSecurity,
 } from "./_lib/requestSecurity.js";
+import { createServerLogger } from "./_lib/logger.js";
+
+const logger = createServerLogger("notifications");
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 20;
@@ -93,7 +96,7 @@ async function listNotifications(req, res) {
       },
     });
   } catch (error) {
-    console.error("GET /api/notifications error", error);
+    logger.error("GET /api/notifications error", error);
     return json(res, 500, { error: "Internal server error." });
   }
 }
@@ -125,7 +128,7 @@ async function getUnreadCount(req, res) {
       unreadCount: Number(count ?? 0),
     });
   } catch (error) {
-    console.error("GET /api/notifications/unread-count error", error);
+    logger.error("GET /api/notifications/unread-count error", error);
     return json(res, 500, { error: "Internal server error." });
   }
 }
@@ -174,7 +177,7 @@ async function markNotificationRead(req, res) {
       data,
     });
   } catch (error) {
-    console.error("POST /api/notifications/mark-read error", error);
+    logger.error("POST /api/notifications/mark-read error", error);
     return json(res, 500, { error: "Internal server error." });
   }
 }

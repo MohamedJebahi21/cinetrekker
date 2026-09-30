@@ -5,8 +5,11 @@ import {
   enforceRequestSecurity,
 } from "./_lib/requestSecurity.js";
 import { reportSecurityEvent } from "./_lib/securityMonitor.js";
+import { createServerLogger } from "./_lib/logger.js";
 import type { ApiServerRequest, ApiServerResponse } from "./_lib/types.ts";
 import { followRequestSchema } from "../src/lib/schemas/apiContracts.ts";
+
+const logger = createServerLogger("follow");
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -132,7 +135,7 @@ export default async function handler(req: ApiServerRequest, res: ApiServerRespo
       data,
     });
   } catch (error) {
-    console.error(`${req.method} /api/follow error`, error);
+    logger.error(`${req.method} /api/follow error`, error);
     return json(res, 500, { error: "Internal server error." });
   }
 }
