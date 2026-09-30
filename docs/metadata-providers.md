@@ -175,6 +175,10 @@ In `src/pages/Details.tsx`, multi-season navigation uses an accessible Radix `Se
 3. **URL Synchronization**:
    - Selection immediately syncs with the browser search parameter (`?season=N`) via `setSearchParams(..., { replace: true })`, preserving deep links and bookmarkability.
 
+4. **Episode Card Enrichment**:
+   - `useEnrichedTVEpisodes` creates an in-memory `S{season}E{episode}` map in `Details.tsx`.
+   - Episode cards render TVmaze exact air times (e.g. `2024-05-12 · 21:00`) alongside broadcast dates, and use TVmaze runtime as fallback when TMDB runtime is absent.
+
 ---
 
 ## Fail-Soft Guarantees

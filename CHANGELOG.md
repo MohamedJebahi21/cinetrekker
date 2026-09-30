@@ -15,13 +15,15 @@
 - **`seasonProgress` computed against unloaded season data (`src/pages/Details.tsx`)**: The memo previously iterated all season numbers against a single loaded season's episodes, producing `0/0` for every other season. Now groups only loaded episodes so unloaded seasons show no progress bar at all.
 
 ### Added
+- **TVmaze episode air time & runtime enrichment (`src/pages/Details.tsx`)**: Wired `useEnrichedTVEpisodes` into the episode list and mapped TVmaze-provided exact air times (e.g. `22:00`) alongside broadcast dates, as well as fallback runtimes when TMDB has missing episode durations.
+- **TVmaze provider unit test suite (`tests/tvmaze-provider.test.mjs`)**: Added 6 tests covering broadcast schedule extraction (networks and web channels), next/previous episode extraction with HTML stripping, normalized series/seasons/specials assembly, and graceful fail-soft handling when embedded data is absent. Included in `npm run test:unit` (now 116 tests total).
 - **`OPENAI_MODEL` / `OPENAI_API_BASE` environment variables (`.env.example`)**: Operators can now target `gpt-4o`, Azure OpenAI, or a local Ollama proxy without a code change.
 
 ### Verified
 - `npm run lint` → 0 errors / 0 warnings
 - `npm run type-check` → 0 errors
 - `npm run test:security` → 18/18
-- `npm run test:unit` → 110/110
+- `npm run test:unit` → 116/116
 - `npm run build` → clean, 1 127.9 KiB preload graph
 
 ---

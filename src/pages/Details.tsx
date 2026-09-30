@@ -41,6 +41,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLastViewed } from "@/hooks/useLastViewed";
 import { useEnrichedRatings } from "@/hooks/useEnrichedRatings";
 import { useTVSchedule } from "@/hooks/useTVSchedule";
+import { useEnrichedTVEpisodes } from "@/hooks/useEnrichedTVDetails";
 import { addToRecentlyViewed } from "@/lib/recentlyViewed";
 import { MovieRouteError } from "@/components/details/MovieRouteError";
 import { TitleUnavailable } from "@/components/details/TitleUnavailable";
@@ -441,6 +442,20 @@ export default function Details() {
   const currentImdbId = details?.imdb_id ?? details?.external_ids?.imdb_id;
   const { data: enrichedRatings } = useEnrichedRatings(currentImdbId);
   const { data: tvSchedule } = useTVSchedule(currentImdbId, mediaType === "tv");
+  // TVmaze enriches episode air times and runtime — supplementary to TMDB data
+  const { data: tvEpisodesData } = useEnrichedTVEpisodes(currentImdbId, mediaType === "tv");
+  // Build a O(1) lookup map: "S{n}E{n}" → TVmaze episode enrichment
+  const tvmazeEpisodeMap = useMemo(() => {
+    const map = new Map<string, { airTime: string | null; runtime: number | null }>();
+    if (!tvEpisodesData?.episodes) return map;
+    for (const ep of tvEpisodesData.episodes) {
+      map.set(`S${ep.seasonNumber}E${ep.episodeNumber}`, {
+        airTime: ep.airTime ?? null,
+        runtime: ep.runtime ?? null,
+      });
+    }
+    return map;
+  }, [tvEpisodesData?.episodes]);
 
   const title = toDisplayTitle(details?.title || details?.name || "");
 
@@ -1437,6 +1452,9 @@ export default function Details() {
                         {publishedEpisodes.map((episode, index) => {
                           const ew = isEpisodeWatched(mediaId, episode.season_number, episode.episode_number);
                           const isNext = !ew && publishedEpisodes.slice(0, index).every(prev => isEpisodeWatched(mediaId, prev.season_number, prev.episode_number));
+                          const enrichedEp = tvmazeEpisodeMap.get(`S${episode.season_number}E${episode.episode_number}`);
+                          const effectiveRuntime = episode.runtime || enrichedEp?.runtime;
+                          const airTime = enrichedEp?.airTime;
                           return (
                             <AccordionItem key={`ep-${episode.id}`} value={`ep-${episode.id}`} className={cn("border-b border-white/6 last:border-0", isNext && "bg-primary/5 ring-1 ring-inset ring-primary/20")}>
                               <div className="flex w-full items-center gap-3 py-3">
@@ -1463,7 +1481,7 @@ export default function Details() {
                                         {episode.vote_average && episode.vote_average > 0 && <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground"><Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />{episode.vote_average.toFixed(1)}</span>}
                                       </div>
                                       <p className="mt-0.5 line-clamp-1 text-sm font-semibold text-foreground">{episode.name}</p>
-                                      <p className="mt-0.5 text-xs text-muted-foreground">{episode.air_date ? new Date(episode.air_date).toLocaleDateString(language) : t("details.toBeAnnounced", "To be announced")}{episode.runtime ? ` · ${episode.runtime} ${t("details.minutes")}` : ""}</p>
+                                      <p className="mt-0.5 text-xs text-muted-foreground">{episode.air_date ? `${new Date(episode.air_date).toLocaleDateString(language)}${airTime ? ` · ${airTime}` : ""}` : t("details.toBeAnnounced", "To be announced")}{effectiveRuntime ? ` · ${effectiveRuntime} ${t("details.minutes")}` : ""}</p>
                                     </div>
                                     <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
                                   </AccordionPrimitive.Trigger>
