@@ -1,7 +1,7 @@
 # CineTrekker Project Context & System Map
 
 > **Canonical Current-State Specification**  
-> *Last Updated: 2026-09-24*  
+> *Last Updated: 2026-09-30*  
 > This file describes the actual operational state, architecture, database schemas, business rules, design tokens, security boundaries, and navigation map for CineTrekker.
 
 ---
@@ -11,7 +11,7 @@
 - **Product Identity**: CineTrekker is a responsive movie, TV, and cinema tracking web platform.
 - **Core Value Proposition**: Rapid search and catalog discovery across TMDB, multi-source ratings enrichment (OMDb: Rotten Tomatoes, Metacritic, IMDb; TVMaze: broadcast schedules), local-first watchlists and watch history (operable immediately without signing in), follow-based release notifications, TV season/episode tracking with persistent progress cursors, personalized rating-based recommendations, and privacy-shielded public social profiles.
 - **Target Audience**: Cinephiles, casual moviegoers, binge watchers, and cinema communities.
-- **Current Operational Status**: Production-grade, deployed to Vercel with Supabase backend. Automated release gates (`test:security`, `test:privacy`, `i18n:verify`, `lint`, `type-check`) are passing.
+- **Current Operational Status**: Production-grade, deployed to Vercel with Supabase backend. Automated release gates (`test:security`, `test:privacy`, `i18n:verify`, `lint`, `type-check`) are passing. Dependency audit is clean (`npm audit --audit-level=moderate` → 0 vulnerabilities as of 2026-09-30).
 
 ---
 

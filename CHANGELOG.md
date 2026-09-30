@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-09-30 — Dependency hygiene & build warning cleanup
+
+### Fixed
+- **Production build noise (`index.html`)**: Removed the commented Umami placeholder script that still contained `%VITE_ANALYTICS_*%` tokens. Vite was warning on every build even though analytics load only through the consent-gated `UmamiAnalytics` component.
+- **Dependency vulnerabilities (`package-lock.json`)**: Ran `npm audit fix` to resolve eight moderate/high transitive advisories (including `brace-expansion`, `browserslist`, `joi`, `nanoid`, and `undici`). `npm audit --audit-level=moderate` now reports zero vulnerabilities.
+
+### Verified
+- `npm run test:ci`, `npm run build`, and `npm run test:smoke` pass after the lockfile refresh.
+
+---
+
 ## 2026-09-24 — TV Season Navigation Redesign & Alignment Fixes
 
 ### Added
