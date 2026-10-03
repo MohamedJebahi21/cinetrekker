@@ -1,7 +1,30 @@
-# CineTrekker Engineering Changelog
+# Changelog
 
-> **Chronological Engineering History**  
-> All meaningful architectural, functional, security, and repository workflow changes are documented here.
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+- **Open-source governance**: Added root `LICENSE` (MIT), `SECURITY.md` (vulnerability disclosure policy), `CODE_OF_CONDUCT.md` (Contributor Covenant v2.1), and `CONTRIBUTING.md` (branching, quality gates, and Vercel Hobby invariants).
+- **GitHub community templates**: Added `.github/ISSUE_TEMPLATE/` (bug report, feature request), `.github/PULL_REQUEST_TEMPLATE.md`, and `.github/dependabot.yml` (weekly updates for npm and GitHub Actions).
+- **Environment & Node pinning**: Added `.nvmrc` pinning Node 22; standardized `engines` in `package.json` on `node: 22.x` and `npm: >=10.0.0`.
+- **Issue drafts backlog**: Converted completed launch backlog and external action items into `docs/issue-drafts.md` with credential rotation and security follow-ups.
+- **Design context**: Relocated brand personality and aesthetic principles to `docs/design-context.md`.
+
+### Changed
+- **Canonical documentation structure**: Consolidated canonical guides (`AI_RULES.md`, `PROJECT_CONTEXT.md`, `ARCHITECTURE.md`, `DEFINITION_OF_DONE.md`) in `docs/` and updated links across `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, and `README.md`.
+- **Package metadata**: Renamed package from generic `vite_react_shadcn_ts` to `cinetrekker` and added description, author, repository, homepage, bug tracker, keywords, and license fields.
+- **README rewrite**: Comprehensive overhaul with status badges, live demo link, architecture overview with Mermaid diagram, complete environment variables reference table, testing guide, and TMDB/OMDb/TVmaze attribution.
+- **Test configuration relocation**: Moved `lighthouserc.desktop.json` to `tests/config/`.
+
+### Removed
+- **Tracked build caches & archives**: Removed `.pnpm-store/` (123 files), `tsconfig.tsbuildinfo`, `cinetrekker.tar.gz` (14.8 MB), stray `.tgz` archives, and empty `supabase_dump_data.sql`.
+- **Stray scripts & local logs**: Removed `server.cjs`, `scratch/` (containing hardcoded Supabase test tokens), `audit-artifacts/`, `.homepage-engagement-verification.md`, and `vite-localhost.log`.
+- **Generated test outputs**: Removed stale `playwright-*-matrix.json` and `.last-run.json` from root.
+- **Untracked Vercel metadata**: Untracked `.vercel/` link metadata from git via `git rm --cached` while preserving local links on disk.
 
 ---
 

@@ -1,9 +1,36 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "cinetrekker",
   "private": true,
   "version": "1.0.0",
+  "description": "A modern, cinematic movie and TV tracking web application designed for exploration, personal library management, and episode tracking.",
+  "author": "Mohamed Jebahi <mohamed.jebahi21@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://cinetrekker.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MohamedJebahi21/cinetrekker.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MohamedJebahi21/cinetrekker/issues"
+  },
+  "keywords": [
+    "react",
+    "react19",
+    "typescript",
+    "vite",
+    "supabase",
+    "tmdb",
+    "tvmaze",
+    "omdb",
+    "movies",
+    "tv-shows",
+    "tracker",
+    "watchlist",
+    "cinetrekker"
+  ],
   "engines": {
-    "node": "22.x"
+    "node": "22.x",
+    "npm": ">=10.0.0"
   },
   "type": "module",
   "scripts": {
