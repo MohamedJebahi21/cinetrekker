@@ -44,11 +44,13 @@ CineTrekker is a movie and TV tracking web app focused on discovery, personalize
 - `supabase/` - edge functions and SQL migrations
 - `tests/` - Playwright and security tests
 - `docs/` - operational and architectural documentation
+  - `docs/AI_RULES.md` - absolute engineering guidelines and verification gates
+  - `docs/PROJECT_CONTEXT.md` - current system status, routes, schemas, and maps
+  - `docs/ARCHITECTURE.md` - runtime model, security boundaries, and data flows
+  - `docs/DEFINITION_OF_DONE.md` - quality and delivery checklist
   - `docs/metadata-providers.md` - comprehensive metadata provider layer guide
 - `AGENTS.md` - canonical entry point for all AI coding agents
-- `AI_RULES.md` - absolute engineering guidelines and verification gates
-- `PROJECT_CONTEXT.md` - current system status, routes, schemas, and maps
-- `ARCHITECTURE.md` - runtime model, security boundaries, and data flows
+- `CLAUDE.md` - agent instructions for Claude Code
 
 ## Quality Gates
 

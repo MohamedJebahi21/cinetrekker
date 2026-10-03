@@ -18,10 +18,11 @@
 ## 2. Mandatory Context Loading
 
 Before undertaking any non-trivial task, every AI agent MUST read:
-1. `AI_RULES.md` (this file)
-2. `PROJECT_CONTEXT.md` (current state, stack, features, known issues)
-3. `ARCHITECTURE.md` (technical flows, boundaries, constraints)
-4. `DEFINITION_OF_DONE.md` (reusable delivery checklist)
+1. `docs/AI_RULES.md` (this file)
+2. `docs/PROJECT_CONTEXT.md` (current state, stack, features, known issues)
+3. `docs/ARCHITECTURE.md` (technical flows, boundaries, constraints)
+4. `docs/DEFINITION_OF_DONE.md` (reusable delivery checklist)
+5. `docs/metadata-providers.md` (multi-provider metadata architecture)
 
 After reading these documents, inspect the specific source files, migrations, and tests relevant to your task.
 
