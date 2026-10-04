@@ -78,7 +78,8 @@ Before writing a new component, hook, utility, service method, or database funct
 1. **Smallest correct change**: Touch only the lines and files required to solve the task.
 2. **Do not refactor arbitrarily**: Do not reformat unrelated files, rewrite functional components to classes, reorder imports, or modernize syntax in untouched files.
 3. **Do not swap dependencies**: Do not replace TanStack Query, Radix UI, Tailwind CSS, Lucide icons, or Vitest/Node test runner without explicit authorization.
-4. **Document discovered problems**: If you find bugs or tech debt outside your scope, log them in `PROJECT_CONTEXT.md` under **Known Issues** rather than unilaterally fixing them.
+4. **Vercel 12-function cap invariant**: Vercel Hobby strictly limits deployments to **12 Serverless Functions** in `api/`. Never create new top-level `api/*.js` or `api/*.ts` files that exceed this limit. Consolidate operations via query actions or HTTP methods, and place shared utilities in `api/_lib/` (which Vercel does not count).
+5. **Document discovered problems**: If you find bugs or tech debt outside your scope, log them in `PROJECT_CONTEXT.md` under **Known Issues** rather than unilaterally fixing them.
 
 ---
 
@@ -88,6 +89,7 @@ Before writing a new component, hook, utility, service method, or database funct
 2. **Guest mode continuity**: CineTrekker supports a local-first guest mode (`useGuestMediaLists.ts`). Do not break guest functionality or the guest-to-authenticated sync flow.
 3. **Case sensitivity**: File imports must exactly match disk casing (important on Linux CI / Vercel builds).
 4. **i18n integrity**: All user-visible strings must use `react-i18next` (`t(...)`) with keys registered across supported locales (`en`, `fr`, `ar`, `es`, `de`, `tr`). Run `npm run i18n:verify`.
+5. **Deployment resilience & chunk recovery**: Preserve the post-deployment chunk error recovery mechanisms (`src/lib/chunkErrorRecovery.ts` and `src/components/ErrorBoundary.tsx`). Never remove cache-purging recovery logic or `vite:preloadError` handling.
 
 ---
 
