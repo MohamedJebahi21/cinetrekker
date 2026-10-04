@@ -29,8 +29,8 @@ import {
   getEpisodes,
   normalizeTVmazeShow,
   type TVmazeShow,
-} from "./_lib/metadata/providers/tvmaze.ts";
-import { getRatingsByImdbId } from "./_lib/metadata/providers/omdb.ts";
+} from "./_lib/metadata/providers/tvmaze.js";
+import { getRatingsByImdbId } from "./_lib/metadata/providers/omdb.js";
 
 // ── In-Memory Caches ─────────────────────────────────────────────────────────
 
