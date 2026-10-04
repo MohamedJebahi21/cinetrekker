@@ -172,7 +172,7 @@ const App = () => {
   const { handlers, containerRef } = usePullToRefresh({
     onRefresh: async () => {
       await queryClient.invalidateQueries({
-        predicate: (query: any) => {
+        predicate: (query: { queryKey: readonly unknown[] }) => {
           const head = query.queryKey[0];
           const key = typeof head === "string" ? head : "";
           return refreshableQueryKeys.has(key);
@@ -185,7 +185,7 @@ const App = () => {
 
   const handleBoundaryRetry = async () => {
     await queryClient.invalidateQueries({
-      predicate: (query: any) => {
+      predicate: (query: { queryKey: readonly unknown[] }) => {
         const head = query.queryKey[0];
         const key = typeof head === "string" ? head : "";
         return refreshableQueryKeys.has(key);
@@ -194,7 +194,7 @@ const App = () => {
 
     await queryClient.refetchQueries({
       type: "active",
-      predicate: (query: any) => {
+      predicate: (query: { queryKey: readonly unknown[] }) => {
         const head = query.queryKey[0];
         const key = typeof head === "string" ? head : "";
         return refreshableQueryKeys.has(key);

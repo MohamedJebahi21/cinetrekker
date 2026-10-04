@@ -173,3 +173,37 @@ test("getShowsToReopen finds completed shows with new episodes", () => {
 
   assert.deepEqual(reopen, [2]);
 });
+
+test("getPublishedEpisodeTotal excludes special season 0 and unreleased future seasons", () => {
+  const now = new Date("2024-01-01").getTime();
+  const total = getPublishedEpisodeTotal(
+    {
+      number_of_episodes: 25,
+      seasons: [
+        { season_number: 0, episode_count: 5, air_date: "2020-01-01" }, // specials (ignored)
+        { season_number: 1, episode_count: 10, air_date: "2021-01-01" }, // aired season 1
+        { season_number: 2, episode_count: 10, air_date: "2025-01-01" }, // future season 2 (ignored)
+      ],
+    },
+    now,
+  );
+
+  assert.equal(total, 10);
+});
+
+test("getPublishedEpisodeTotal falls back to number_of_episodes if seasons array is empty", () => {
+  const total = getPublishedEpisodeTotal({
+    number_of_episodes: 8,
+    seasons: [],
+  });
+
+  assert.equal(total, 8);
+});
+
+test("isDefinitelyCompleted handles non-positive and zero totals correctly", () => {
+  assert.equal(isDefinitelyCompleted({ watchedEpisodesCount: 5, totalEpisodes: 0 }), false);
+  assert.equal(isDefinitelyCompleted({ watchedEpisodesCount: 5, totalEpisodes: -1 }), false);
+  assert.equal(isDefinitelyCompleted({ watchedEpisodesCount: 5, totalEpisodes: null }), false);
+  assert.equal(isDefinitelyCompleted({ watchedEpisodesCount: 10, totalEpisodes: 10 }), true);
+  assert.equal(isDefinitelyCompleted({ watchedEpisodesCount: 12, totalEpisodes: 10 }), true);
+});
