@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { createLogger } from "@/lib/logger";
 import { reportClientIncident } from "@/lib/operationalReporting";
+import { chunkErrorRecovery } from "@/lib/chunkErrorRecovery";
 
 const logger = createLogger("error-boundary");
 
@@ -53,9 +54,23 @@ export class ErrorBoundary extends Component<Props, State> {
       errorInfo,
     });
     reportClientIncident("react_boundary", error);
+
+    // If this is a chunk or dynamic import failure, automatically trigger recovery
+    if (chunkErrorRecovery.isChunkError(error)) {
+      chunkErrorRecovery.handleError(error);
+    }
   }
 
   private handleRetry = async () => {
+    // If the error was a chunk or dynamic import failure, re-rendering within
+    // React will re-throw the cached rejected promise. Instead, trigger a fresh
+    // cache-clearing page reload.
+    if (this.state.error && chunkErrorRecovery.isChunkError(this.state.error)) {
+      chunkErrorRecovery.reset();
+      void chunkErrorRecovery.purgeCachesAndReload();
+      return;
+    }
+
     this.setState({ isRetrying: true });
 
     try {
@@ -78,12 +93,26 @@ export class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
+      const isChunk = Boolean(
+        this.state.error && chunkErrorRecovery.isChunkError(this.state.error),
+      );
+
       return (
         <div className="min-h-[400px] flex items-center justify-center p-8">
             <div className="w-full max-w-md mx-auto">
               <ErrorBanner
-                message="Something went wrong. Please try again."
-                actionLabel={this.state.isRetrying ? "Retrying..." : "Retry"}
+                message={
+                  isChunk
+                    ? "A new version of CineTrekker is available or an update is needed."
+                    : "Something went wrong. Please try again."
+                }
+                actionLabel={
+                  this.state.isRetrying
+                    ? "Updating..."
+                    : isChunk
+                      ? "Update & Reload"
+                      : "Retry"
+                }
                 onAction={this.handleRetry}
                 className="mb-4"
               >

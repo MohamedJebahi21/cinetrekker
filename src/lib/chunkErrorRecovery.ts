@@ -91,20 +91,37 @@ class ChunkErrorRecovery {
     return ChunkErrorRecovery.instance;
   }
 
-  public handleError(error: Error | ErrorEvent): boolean {
+  public isChunkError(error: Error | ErrorEvent | string | unknown): boolean {
     const errorMessage =
-      error instanceof Error ? error.message : error.message || "";
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+          ? error
+          : (error as ErrorEvent)?.message || "";
 
-    // Check if this is a chunk load error
-    const isChunkError =
-      errorMessage.includes("ChunkLoadError") ||
-      errorMessage.includes("Loading chunk") ||
-      errorMessage.includes("Failed to fetch dynamically imported module") ||
-      errorMessage.includes("Importing a module script failed");
+    const lower = errorMessage.toLowerCase();
+    return (
+      lower.includes("chunkloaderror") ||
+      lower.includes("loading chunk") ||
+      lower.includes("failed to fetch dynamically imported module") ||
+      lower.includes("importing a module script failed") ||
+      lower.includes("error loading dynamically imported module") ||
+      lower.includes("err_cache_read_failure") ||
+      lower.includes("failed to fetch module script")
+    );
+  }
 
-    if (!isChunkError) {
-      return false; // Not a chunk error, let other handlers deal with it
+  public handleError(error: Error | ErrorEvent | string | unknown): boolean {
+    if (!this.isChunkError(error)) {
+      return false;
     }
+
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+          ? error
+          : (error as ErrorEvent)?.message || "";
 
     console.warn("🔄 Chunk load error detected:", errorMessage);
 
@@ -127,6 +144,24 @@ class ChunkErrorRecovery {
     return true;
   }
 
+  public async purgeCachesAndReload(): Promise<void> {
+    try {
+      if (typeof window !== "undefined" && "caches" in window) {
+        const keys = await window.caches.keys();
+        await Promise.all(keys.map((k) => window.caches.delete(k)));
+      }
+      if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((reg) => reg.update()));
+      }
+    } catch {
+      // Ignore cache clearing errors
+    }
+    const url = new URL(window.location.href);
+    url.searchParams.set("_cb", Date.now().toString());
+    window.location.replace(url.toString());
+  }
+
   private performReload(): void {
     this.isReloading = true;
     this.retryCount++;
@@ -139,12 +174,9 @@ class ChunkErrorRecovery {
     // Show user-friendly notification
     this.showReloadNotification();
 
-    // Delay reload slightly to allow notification to render
+    // Delay reload slightly to allow notification to render, then purge caches and reload
     setTimeout(() => {
-      // Cache-busting reload so stale app shells don't keep requesting deleted chunks.
-      const url = new URL(window.location.href);
-      url.searchParams.set("_cb", Date.now().toString());
-      window.location.replace(url.toString());
+      void this.purgeCachesAndReload();
     }, this.retryDelay);
   }
 
@@ -345,6 +377,14 @@ export function installChunkErrorHandlers(): void {
     return;
   }
   handlersInstalled = true;
+
+  // Vite-specific dynamic import preload failure listener
+  window.addEventListener("vite:preloadError", (event) => {
+    logger.warn("🔄 Vite preload error detected:", event);
+    chunkErrorRecovery.handleError(
+      new Error("Failed to fetch dynamically imported module"),
+    );
+  });
 
   // Handle unhandled promise rejections (common for dynamic imports)
   window.addEventListener(
