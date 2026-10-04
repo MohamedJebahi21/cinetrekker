@@ -2,11 +2,24 @@ import { json } from "./_lib/http.js";
 import { enforceRequestSecurity } from "./_lib/requestSecurity.js";
 import { getServerEnv } from "./_lib/env.js";
 import type { ApiServerRequest, ApiServerResponse } from "./_lib/types.ts";
-import {
-  imdbIdSchema,
-  type EnrichedRatings,
-  type TVSchedule,
-} from "../src/lib/schemas/apiContracts.ts";
+import type {
+  EnrichedRatingsSummary as EnrichedRatings,
+} from "./_lib/metadata/types.ts";
+
+export interface TVSchedule {
+  network: string | null;
+  days: string[];
+  time: string | null;
+  nextEpisode: {
+    name: string;
+    airdate: string;
+    airtime?: string | null;
+    season: number;
+    number: number;
+  } | null;
+}
+
+const IMDB_ID_REGEX = /^tt\d{5,10}$/;
 
 // ── Provider Layer Imports ────────────────────────────────────────────────────
 // These live in api/_lib/metadata/ and do NOT count toward Vercel's 12-function cap.
@@ -256,14 +269,13 @@ export default async function handler(
     ? req.query?.imdb_id[0]
     : req.query?.imdb_id;
 
-  const parseResult = imdbIdSchema.safeParse(rawImdbId);
-  if (!parseResult.success) {
+  if (typeof rawImdbId !== "string" || !IMDB_ID_REGEX.test(rawImdbId.trim())) {
     return json(res, 400, {
       error: "Invalid or missing imdb_id parameter. Format should be e.g. tt0137523",
     });
   }
 
-  const imdbId = parseResult.data;
+  const imdbId = rawImdbId.trim();
   const action = Array.isArray(req.query?.action)
     ? req.query?.action[0]
     : (req.query?.action || req.query?.type);
