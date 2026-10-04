@@ -7,7 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Dependabot dependency groups**: Configured `.github/dependabot.yml` with grouped dependency updates to batch PRs instead of 1 PR per package; reduced `open-pull-requests-limit` to 5 (npm) and 3 (actions).
+- **Dependabot ignore rules**: Added `ignore` conditions for `zod` major versions (v4+ breaks schema layer), `react-dom` minor/major (must be upgraded with `react`), and `tailwindcss` major versions to prevent failing PR storms.
+- **GitHub Actions v7 upgrades**: Updated all workflows to use `actions/checkout@v7`, `actions/setup-node@v7`, `actions/upload-artifact@v7` (Dependabot PRs #34, #35, #36).
+
+### Security
+- **DOMPurify XSS fix**: Bumped `dompurify` (transitive via `isomorphic-dompurify`) from 3.4.13 → 3.4.16; fixes `GHSA-p98j-92pf-mc4p` (DOM XSS via `IN_PLACE` afterSanitize hook) (PR #49).
+- **Axios security patches**: Bumped `axios` (dev-only via `wait-on`) from 1.18.1 → 1.20.0; resolves 12 CVEs including prototype pollution, ReDoS, and HTTP/2 adapter vulnerabilities (PR #48).
+- **Runtime audit clean**: `npm audit --omit=dev --audit-level=high` reports **0 vulnerabilities** in the production dependency tree.
+
 ### Changed
+- **Dependency consolidation**: Batched 14 Dependabot PRs (#34–#46, #48, #49) into a single verified commit after confirming all had green CI + Vercel previews. Packages updated: `@radix-ui/react-context-menu` 2.2.15→2.3.7, `@radix-ui/react-dropdown-menu` 2.1.16→2.1.24, `@radix-ui/react-hover-card` 1.1.14→1.1.23, `@radix-ui/react-progress` 1.1.7→1.1.16, `@types/lodash` 4.17.24→4.17.25, `eslint` 10.8.0→10.11.0, `react-hook-form` 7.61.1→7.89.0, `react-i18next` 16.5.2→17.0.15, `react-router-dom` 7.11.0→7.18.4.
+- **Stale PR cleanup**: Closed PR #33 (Devin — `buildMediaPath` import already merged to main), PR #40 (react-dom only bump without matching react), PR #47 (Zod v4 breaking major).
 - **Documentation synchronization**: Updated `docs/PROJECT_CONTEXT.md`, `docs/ARCHITECTURE.md`, `docs/AI_RULES.md`, `AGENTS.md`, `CLAUDE.md`, and `.github/copilot-instructions.md` with detailed architecture, chunk load error recovery system, deployment caching policies, branch protection rules, and npm standards so all AI agents have complete, synchronized context.
 
 ---
