@@ -15,7 +15,7 @@ import {
   getShowDetails,
   searchShows,
   type TVmazeShow,
-} from "./providers/tvmaze.ts";
+} from "./providers/tvmaze.js";
 import type { NormalizedExternalIds } from "./types.ts";
 
 export interface MatchCandidate {
