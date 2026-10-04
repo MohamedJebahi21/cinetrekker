@@ -145,12 +145,13 @@ class ChunkErrorRecovery {
   }
 
   public async purgeCachesAndReload(): Promise<void> {
-    // IMPORTANT: Reset the retry counter BEFORE navigating away.
-    // If we don't, the next page load reads retryCount >= maxRetries and
-    // immediately shows the "Update Required" modal again — causing an
-    // infinite loop that "Refresh Now" cannot escape.
-    this.reset();
-
+    // NOTE: Do NOT call this.reset() here. This function is called by both:
+    //   (a) performReload() — the auto-retry path, which already incremented
+    //       retryCount and needs it to persist in sessionStorage so the next
+    //       page load knows an auto-retry already happened.
+    //   (b) The "Refresh Now" button — which calls reset() itself before
+    //       calling this function, making it a controlled clean-slate reload.
+    // Resetting here would break (a) and cause an infinite auto-reload loop.
     try {
       if (typeof window !== "undefined" && "caches" in window) {
         const keys = await window.caches.keys();
@@ -332,6 +333,9 @@ class ChunkErrorRecovery {
     button.addEventListener("click", () => {
       button.disabled = true;
       button.textContent = "Refreshing…";
+      // Reset counter first so the next load starts with retryCount = 0,
+      // then purge stale caches and navigate with a cache-busting URL.
+      this.reset();
       void this.purgeCachesAndReload();
     });
     button.addEventListener("mouseover", () => {
