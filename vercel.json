@@ -15,7 +15,7 @@
   "rewrites": [
     {
       "source": "/sitemap.xml",
-      "destination": "/api/sitemap"
+      "destination": "/api/sitemap.js"
     },
     {
       "source": "/api/unfollow",
