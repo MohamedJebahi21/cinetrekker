@@ -131,7 +131,7 @@
     "react-hook-form": "^7.61.1",
     "react-i18next": "^16.5.2",
     "react-resizable-panels": "^2.1.9",
-    "react-router-dom": "^7.11.0",
+    "react-router-dom": "^7.18.4",
     "recharts": "^2.15.4",
     "scheduler": "^0.27.0",
     "sonner": "^1.7.4",
