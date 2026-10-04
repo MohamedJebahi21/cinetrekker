@@ -2,11 +2,11 @@
 
 Before working on CineTrekker, you must read and follow the canonical repository engineering guidelines:
 
-1. [AI_RULES.md](file:///f:/My%20Own%20Games/CineTrekker/cinetrekker/AI_RULES.md) (Mandatory engineering rules & workflows)
-2. [PROJECT_CONTEXT.md](file:///f:/My%20Own%20Games/CineTrekker/cinetrekker/PROJECT_CONTEXT.md) (Current system status, stack, and project map)
-3. [ARCHITECTURE.md](file:///f:/My%20Own%20Games/CineTrekker/cinetrekker/ARCHITECTURE.md) (Runtime architecture and security boundaries)
-4. [DEFINITION_OF_DONE.md](file:///f:/My%20Own%20Games/CineTrekker/cinetrekker/DEFINITION_OF_DONE.md) (Quality and delivery checklist)
-5. [docs/metadata-providers.md](file:///f:/My%20Own%20Games/CineTrekker/cinetrekker/docs/metadata-providers.md) (Multi-provider metadata architecture: TMDB, OMDb, TVmaze, Watchmode placeholder)
+1. [docs/AI_RULES.md](docs/AI_RULES.md) (Mandatory engineering rules & workflows)
+2. [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) (Current system status, stack, and project map)
+3. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (Runtime architecture and security boundaries)
+4. [docs/DEFINITION_OF_DONE.md](docs/DEFINITION_OF_DONE.md) (Quality and delivery checklist)
+5. [docs/metadata-providers.md](docs/metadata-providers.md) (Multi-provider metadata architecture: TMDB, OMDb, TVmaze, Watchmode placeholder)
 
 ### Key Instructions:
 - Follow `UNDERSTAND -> INVESTIGATE -> PLAN -> IMPLEMENT -> TEST -> VERIFY -> DOCUMENT`.

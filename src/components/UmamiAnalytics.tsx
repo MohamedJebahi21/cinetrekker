@@ -52,6 +52,10 @@ export function UmamiAnalytics() {
     script.dataset.excludeSearch = "true";
     script.dataset.doNotTrack = "true";
     script.dataset.performance = "false";
+    script.onerror = () => {
+      // Cleanly remove script if blocked by an ad-blocker or client extension
+      script.remove();
+    };
 
     document.head.appendChild(script);
   }, [hasAcceptedConsent]);

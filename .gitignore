@@ -1,18 +1,63 @@
-# Temp / cache
+# ── Build output ─────────────────────────────────────────────────────────────
+dist
+dist-ssr
+.next
+
+# ── Dependencies ──────────────────────────────────────────────────────────────
+node_modules
+
+# ── Package manager caches / stores ──────────────────────────────────────────
+.pnpm-store
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# ── Downloaded package tarballs (should never be committed) ──────────────────
+*.tgz
+*.tar.gz
+
+# ── TypeScript incremental build cache ───────────────────────────────────────
+*.tsbuildinfo
+
+# ── Environment / secrets ─────────────────────────────────────────────────────
+# Keep .env.example; ignore everything else
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+.env*
+!.env.example
+!supabase/functions/.env.example
+
+# ── Vercel local project link (do NOT commit; re-link with `vercel link`) ────
+.vercel
+
+# ── Supabase ──────────────────────────────────────────────────────────────────
+.supabase
+supabase/.temp
+supabase/functions/.env
+
+# ── Temp / scratch / one-off scripts ─────────────────────────────────────────
+scratch
 .tmp
+audit-artifacts
+
+# ── Lighthouse reports ────────────────────────────────────────────────────────
 lighthouse-desktop-report
 lighthouse-accessibility-report.html
-playwright-report
-supabase/.temp
 *.report.html
 
-# Dev server logs
-dev.log
-dev-full.log
-devserver.err.log
-devserver.out.log
+# ── Playwright / test artifacts ───────────────────────────────────────────────
+playwright-report
+test-results
+tests/playwright-artifacts
 
-# Logs
+# ── Coverage ──────────────────────────────────────────────────────────────────
+coverage
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
 logs
 *.log
 npm-debug.log*
@@ -20,36 +65,26 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+dev.log
+dev-full.log
+devserver.err.log
+devserver.out.log
 
-node_modules
-dist
-dist-ssr
-.next
-test-results
-*.local
+# ── Generated reports (re-created by scripts) ─────────────────────────────────
 i18n-coverage-report.md
 
-# Environment files
-.env
-.env.local
-.env.*.local
-.env.production
-.env.development
-
-# Supabase
-.supabase
-supabase/functions/.env
-
-# Editor directories and files
+# ── OS / editor artifacts ─────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj*
 *.sln
 *.sw?
-.vercel
-.env*
+
+# ── Misc IDE / agent caches ──────────────────────────────────────────────────
+.kilo
