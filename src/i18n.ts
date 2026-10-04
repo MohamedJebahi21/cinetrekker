@@ -1,4 +1,4 @@
-﻿import i18n from "i18next";
+import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 
@@ -166,7 +166,6 @@ export async function initI18n() {
     resources,
     lng: initialLanguage,
     debug: i18nDebugEnabled,
-    showSupportNotice: false,
     fallbackLng: "en",
     supportedLngs: languages.map((l) => l.code),
     load: "languageOnly",

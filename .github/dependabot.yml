@@ -16,13 +16,12 @@ updates:
           - "minor"
           - "patch"
     ignore:
-      # Ignore breaking major version upgrades that require dedicated architectural migrations
-      - dependency-name: "zod"
+      # Ignore all breaking semver-major updates to prevent unexpected runtime breaks
+      - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # React and react-dom must be upgraded together
       - dependency-name: "react-dom"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
-      - dependency-name: "tailwindcss"
-        update-types: ["version-update:semver-major"]
+        update-types: ["version-update:semver-minor"]
     labels:
       - "dependencies"
       - "javascript"
