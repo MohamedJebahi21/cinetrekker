@@ -396,11 +396,10 @@ export default defineConfig(({ mode }) => {
             }
 
             if (
-              id.includes("node_modules/mapbox-gl") ||
-              id.includes("/src/components/FilmingLocationsMap.tsx") ||
-              id.includes("/src/pages/LocationDetails.tsx")
+              id.includes("node_modules/recharts") ||
+              id.includes("node_modules/d3-")
             ) {
-              return "location-map";
+              return "vendor-charts";
             }
 
             return undefined;

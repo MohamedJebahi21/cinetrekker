@@ -340,7 +340,17 @@ export default async function handler(req, res) {
     let notificationsCreated = 0;
     let errors = 0;
 
-    for (const parsed of parsedTitles) {
+    const FUNCTION_DEADLINE_MS = 8000;
+    const workerStartedAt = Date.now();
+    let deadlineReached = false;
+
+    for (let i = 0; i < parsedTitles.length; i++) {
+      if (Date.now() - workerStartedAt > FUNCTION_DEADLINE_MS) {
+        deadlineReached = true;
+        logger.warn("Approaching function execution deadline; stopping title batch early.");
+        break;
+      }
+      const parsed = parsedTitles[i];
       try {
         notificationsCreated += await processTitle({
           supabase,
@@ -356,7 +366,9 @@ export default async function handler(req, res) {
       }
     }
 
-    const nextCursor = movieIds.length >= batchSize ? movieIds[movieIds.length - 1] : null;
+    const nextCursor = deadlineReached
+      ? parsedTitles[Math.max(0, notificationsCreated > 0 ? notificationsCreated - 1 : 0)]?.movieKey || movieIds[0]
+      : (movieIds.length >= batchSize ? movieIds[movieIds.length - 1] : null);
     await writeWorkerState(supabase, {
       cursor_movie_id: nextCursor,
       last_completed_at: nextCursor ? null : new Date().toISOString(),
