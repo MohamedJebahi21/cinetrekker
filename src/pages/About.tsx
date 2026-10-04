@@ -137,12 +137,58 @@ export default function About() {
               {safeT(t, "about.dataSources", "Data Sources and Accounts")}
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-muted-foreground leading-relaxed">
-            {safeT(
-              t,
-              "about.dataSourcesDesc",
-              "Movie and TV metadata, artwork, and related information are provided by TMDB. If you create an account, your lists and preferences are saved so your experience is available across sessions and devices.",
-            )}
+          <CardContent className="space-y-4 text-muted-foreground leading-relaxed">
+            <p>
+              {safeT(
+                t,
+                "about.dataSourcesDesc",
+                "Movie and TV metadata, artwork, and related information are provided by TMDB. If you create an account, your lists and preferences are saved so your experience is available across sessions and devices.",
+              )}
+            </p>
+            <ul className="space-y-3 text-sm">
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5 h-4 w-4 shrink-0 rounded-sm bg-primary/15 inline-flex items-center justify-center text-[10px] font-bold text-primary">T</span>
+                <span>
+                  <a
+                    href="https://www.themoviedb.org/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-foreground hover:underline"
+                  >
+                    The Movie Database (TMDB)
+                  </a>
+                  {safeT(t, "about.tmdbCredit", " — primary source for movie and TV metadata, images, cast, crew, ratings, and trailers. This product uses the TMDB API but is not endorsed or certified by TMDB.")}
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5 h-4 w-4 shrink-0 rounded-sm bg-primary/15 inline-flex items-center justify-center text-[10px] font-bold text-primary">O</span>
+                <span>
+                  <a
+                    href="https://www.omdbapi.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-foreground hover:underline"
+                  >
+                    OMDb API
+                  </a>
+                  {safeT(t, "about.omdbCredit", " — supplemental ratings data including IMDb, Rotten Tomatoes, and Metacritic scores. OMDb data is © 2013–present by Brian Fritz.")}
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5 h-4 w-4 shrink-0 rounded-sm bg-primary/15 inline-flex items-center justify-center text-[10px] font-bold text-primary">V</span>
+                <span>
+                  <a
+                    href="https://www.tvmaze.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-foreground hover:underline"
+                  >
+                    TVmaze
+                  </a>
+                  {safeT(t, "about.tvmazeCredit", " — TV episode air dates and schedule data. TV schedule and episode data is provided by TVmaze.com.")}
+                </span>
+              </li>
+            </ul>
           </CardContent>
         </Card>
 
