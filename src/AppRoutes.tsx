@@ -368,6 +368,10 @@ export default function AppRoutes() {
             element={<Navigate to="/stats" replace />}
           />
           <Route
+            path="/statistics"
+            element={<Navigate to="/stats" replace />}
+          />
+          <Route
             path="/achievements"
             element={
               <ProtectedRoute>
