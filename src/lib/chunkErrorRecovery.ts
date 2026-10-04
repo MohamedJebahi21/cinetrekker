@@ -77,9 +77,18 @@ class ChunkErrorRecovery {
     this.retryDelay = config.retryDelay ?? 1000;
     this.storageKey = config.storageKey ?? "cinetrekker_chunk_retry_count";
 
-    // Load retry count from sessionStorage (persists across reloads)
+        // Load retry count from sessionStorage with a 45-second expiry decay
     const stored = sessionStorage.getItem(this.storageKey);
-    this.retryCount = stored ? parseInt(stored, 10) : 0;
+    const storedTime = sessionStorage.getItem(`${this.storageKey}_time`);
+    const now = Date.now();
+    if (stored && storedTime && now - parseInt(storedTime, 10) > 45000) {
+      sessionStorage.removeItem(this.storageKey);
+    sessionStorage.removeItem(`${this.storageKey}_time`);
+      sessionStorage.removeItem(`${this.storageKey}_time`);
+      this.retryCount = 0;
+    } else {
+      this.retryCount = stored ? parseInt(stored, 10) : 0;
+    }
   }
 
   public static getInstance(
@@ -173,6 +182,7 @@ class ChunkErrorRecovery {
     this.isReloading = true;
     this.retryCount++;
     sessionStorage.setItem(this.storageKey, this.retryCount.toString());
+    sessionStorage.setItem(`${this.storageKey}_time`, Date.now().toString());
 
     logger.error(
       `🔄 Reloading page to fetch latest chunks (attempt ${this.retryCount}/${this.maxRetries})...`,
@@ -272,7 +282,7 @@ class ChunkErrorRecovery {
     document.body.appendChild(notification);
   }
 
-  private showManualRefreshPrompt(): void {
+    private showManualRefreshPrompt(): void {
     // Prevent duplicate prompts
     const existing = document.getElementById("chunk-error-prompt");
     if (existing) return;
@@ -280,10 +290,23 @@ class ChunkErrorRecovery {
     const prompt = document.createElement("div");
     prompt.id = "chunk-error-prompt";
 
-    // Backdrop
+    const closePrompt = () => {
+      prompt.remove();
+      this.reset();
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closePrompt();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Backdrop with click to dismiss
     const backdrop = document.createElement("div");
     backdrop.style.cssText =
-      "position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99998;";
+      "position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99998;cursor:pointer;";
+    backdrop.title = "Click to dismiss";
+    backdrop.addEventListener("click", closePrompt);
 
     // Dialog container
     const dialog = document.createElement("div");
@@ -294,61 +317,81 @@ class ChunkErrorRecovery {
       "transform:translate(-50%,-50%)",
       "z-index:99999",
       "background:white",
-      "padding:32px",
+      "padding:32px 28px 24px 28px",
       "border-radius:16px",
-      "box-shadow:0 20px 60px rgba(0,0,0,0.3)",
-      "max-width:400px",
+      "box-shadow:0 20px 60px rgba(0,0,0,0.35)",
+      "max-width:420px",
+      "width:90%",
       "text-align:center",
       "font-family:system-ui,-apple-system,sans-serif",
     ].join(";");
 
+    // Close button (X)
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "✕";
+    closeBtn.setAttribute("aria-label", "Close");
+    closeBtn.style.cssText =
+      "position:absolute;top:12px;right:14px;background:none;border:none;font-size:18px;color:#888;cursor:pointer;padding:6px;line-height:1;";
+    closeBtn.addEventListener("click", closePrompt);
+
     const icon = document.createElement("div");
-    icon.style.cssText = "font-size:48px;margin-bottom:16px;";
+    icon.style.cssText = "font-size:44px;margin-bottom:12px;";
     icon.textContent = "🔄";
 
     const heading = document.createElement("h2");
     heading.style.cssText =
-      "font-size:20px;font-weight:600;margin-bottom:12px;color:#1a1a1a;";
+      "font-size:20px;font-weight:600;margin-bottom:8px;color:#1a1a1a;";
     heading.textContent = "Update Required";
 
     const message = document.createElement("p");
-    message.style.cssText = "color:#666;margin-bottom:24px;line-height:1.5;";
+    message.style.cssText = "color:#555;margin-bottom:20px;line-height:1.45;font-size:14px;";
     message.textContent =
       "A new version of CineTrekker is available. Please refresh the page to continue.";
 
+    // Primary refresh button
     const button = document.createElement("button");
     button.style.cssText = [
       "background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)",
       "color:white",
       "border:none",
-      "padding:12px 32px",
+      "padding:12px 24px",
       "border-radius:8px",
-      "font-size:16px",
+      "font-size:15px",
       "font-weight:600",
       "cursor:pointer",
       "width:100%",
-      "transition:transform 0.2s",
+      "margin-bottom:10px",
     ].join(";");
     button.textContent = "Refresh Now";
     button.addEventListener("click", () => {
       button.disabled = true;
       button.textContent = "Refreshing…";
-      // Reset counter first so the next load starts with retryCount = 0,
-      // then purge stale caches and navigate with a cache-busting URL.
       this.reset();
       void this.purgeCachesAndReload();
     });
-    button.addEventListener("mouseover", () => {
-      button.style.transform = "scale(1.05)";
-    });
-    button.addEventListener("mouseout", () => {
-      button.style.transform = "scale(1)";
-    });
 
+    // Secondary dismiss button
+    const dismissBtn = document.createElement("button");
+    dismissBtn.style.cssText = [
+      "background:#f1f5f9",
+      "color:#475569",
+      "border:none",
+      "padding:10px 20px",
+      "border-radius:8px",
+      "font-size:14px",
+      "font-weight:500",
+      "cursor:pointer",
+      "width:100%",
+    ].join(";");
+    dismissBtn.textContent = "Dismiss & Continue";
+    dismissBtn.addEventListener("click", closePrompt);
+
+    dialog.appendChild(closeBtn);
     dialog.appendChild(icon);
     dialog.appendChild(heading);
     dialog.appendChild(message);
     dialog.appendChild(button);
+    dialog.appendChild(dismissBtn);
     prompt.appendChild(dialog);
     prompt.appendChild(backdrop);
     document.body.appendChild(prompt);
@@ -357,6 +400,7 @@ class ChunkErrorRecovery {
   public reset(): void {
     this.retryCount = 0;
     sessionStorage.removeItem(this.storageKey);
+    sessionStorage.removeItem(`${this.storageKey}_time`);
   }
 }
 

@@ -282,7 +282,10 @@ async function applyRateLimit(req, res, prefix, key, limitKind, limit) {
 export async function enforceRequestSecurity(req, res, prefix) {
   ensureRequestId(req, res);
   const origin = req?.headers?.origin;
-  if (!isAllowedOrigin(origin, req?.method)) {
+  const secFetchSite = req?.headers?.["sec-fetch-site"];
+    if (secFetchSite === "same-origin") {
+      // Allow same-origin navigation/subresources
+    } else if (!isAllowedOrigin(origin, req?.method)) {
     await reportSecurityEvent({
       event: "forbidden_origin",
       severity: "warning",
