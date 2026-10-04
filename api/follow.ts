@@ -7,19 +7,15 @@ import {
 import { reportSecurityEvent } from "./_lib/securityMonitor.js";
 import { createServerLogger } from "./_lib/logger.js";
 import type { ApiServerRequest, ApiServerResponse } from "./_lib/types.ts";
-import { followRequestSchema } from "../src/lib/schemas/apiContracts.ts";
 
 const logger = createServerLogger("follow");
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-function validatePayload(payload: unknown): { ok: true; userId: string; movieId: string } | { ok: false; error: string } {
-  const result = followRequestSchema.safeParse(payload);
-  if (result.success) {
-    return { ok: true, userId: result.data.user_id, movieId: result.data.movie_id };
-  }
+const MOVIE_ID_REGEX = /^[a-zA-Z0-9:_-]{1,128}$/;
 
+function validatePayload(payload: unknown): { ok: true; userId: string; movieId: string } | { ok: false; error: string } {
   const raw = (payload && typeof payload === "object") ? (payload as Record<string, unknown>) : {};
   const userId = typeof raw.user_id === "string" ? raw.user_id.trim() : "";
   const movieId = typeof raw.movie_id === "string" ? raw.movie_id.trim() : "";
@@ -32,10 +28,14 @@ function validatePayload(payload: unknown): { ok: true; userId: string; movieId:
     return { ok: false, error: "user_id must be a valid UUID." };
   }
 
-  return {
-    ok: false,
-    error: "movie_id format is invalid. Use 1-128 chars: letters, numbers, :, _, -",
-  };
+  if (!MOVIE_ID_REGEX.test(movieId)) {
+    return {
+      ok: false,
+      error: "movie_id format is invalid. Use 1-128 chars: letters, numbers, :, _, -",
+    };
+  }
+
+  return { ok: true, userId, movieId };
 }
 
 export default async function handler(req: ApiServerRequest, res: ApiServerResponse) {
