@@ -15,7 +15,6 @@ import { useHomePageData } from "@/hooks/useHomePageData";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { HomeSectionState } from "@/components/home/HomeSectionState";
 import { HomeWatchlistSkeleton } from "@/components/home/HomeWatchlistSkeleton";
-import { UpNextCommandCenter } from "@/components/home/UpNextCommandCenter";
 import { ContinueWatching } from "@/components/ContinueWatching";
 import { ActivationJourney } from "@/components/home/ActivationJourney";
 import { MotionRevealSection } from "@/components/motion/MotionRevealSection";
@@ -38,11 +37,6 @@ const BecauseYouLiked = lazy(() =>
 const DailyCheckInCard = lazy(() =>
   import("@/components/home/DailyCheckInCard").then((mod) => ({
     default: mod.DailyCheckInCard,
-  })),
-);
-const CineQuestHub = lazy(() =>
-  import("@/components/quests/CineQuestHub").then((mod) => ({
-    default: mod.CineQuestHub,
   })),
 );
 const CommunityActivityFeed = lazy(() =>
@@ -523,9 +517,6 @@ export default function Index() {
           <AuthHomeSkeleton />
         ) : user ? (
           <>
-            <MotionRevealSection tone="standard" delayClassName="delay-75" accentOpacityClassName="opacity-25">
-              <UpNextCommandCenter />
-            </MotionRevealSection>
             <MotionRevealSection tone="soft" delayClassName="delay-100" accentOpacityClassName="opacity-22">
               <ContinueWatching />
             </MotionRevealSection>
@@ -538,13 +529,6 @@ export default function Index() {
               <DeferredSection>
                 <Suspense fallback={null}>
                   <DailyCheckInCard />
-                </Suspense>
-              </DeferredSection>
-            </MotionRevealSection>
-            <MotionRevealSection tone="bold" delayClassName="delay-200" accentOpacityClassName="opacity-14">
-              <DeferredSection>
-                <Suspense fallback={null}>
-                  <CineQuestHub limit={2} />
                 </Suspense>
               </DeferredSection>
             </MotionRevealSection>
