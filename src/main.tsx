@@ -183,7 +183,17 @@ void initI18n()
       // Defer non-critical Speed Insights script to avoid competing with initial paint.
       const injectInsights = () => {
         import("@vercel/speed-insights")
-          .then((mod) => (mod as unknown as { default: () => void }).default())
+          .then((mod) => {
+            const runner =
+              typeof mod.injectSpeedInsights === "function"
+                ? mod.injectSpeedInsights
+                : typeof (mod as unknown as { default?: { injectSpeedInsights?: () => void } }).default?.injectSpeedInsights === "function"
+                  ? (mod as unknown as { default: { injectSpeedInsights: () => void } }).default.injectSpeedInsights
+                  : typeof (mod as unknown as { default?: () => void }).default === "function"
+                    ? (mod as unknown as { default: () => void }).default
+                    : null;
+            if (runner) runner();
+          })
           .catch(() => undefined);
       };
 

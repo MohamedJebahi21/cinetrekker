@@ -434,6 +434,15 @@ export function installChunkErrorHandlers(): void {
   // Vite-specific dynamic import preload failure listener
   window.addEventListener("vite:preloadError", (event) => {
     logger.warn("🔄 Vite preload error detected:", event);
+    const payload = (event as unknown as { payload?: unknown })?.payload;
+    if (payload instanceof Error) {
+      if (!chunkErrorRecovery.isChunkError(payload)) {
+        logger.warn("Ignoring non-chunk error in vite:preloadError:", payload.message);
+        return;
+      }
+      chunkErrorRecovery.handleError(payload);
+      return;
+    }
     chunkErrorRecovery.handleError(
       new Error("Failed to fetch dynamically imported module"),
     );
@@ -486,11 +495,16 @@ export function installChunkErrorHandlers(): void {
   );
 
   // Reset retry count when app successfully loads
-  window.addEventListener("load", () => {
+  const scheduleReset = () => {
     setTimeout(() => {
       chunkErrorRecovery.reset();
-    }, 2000); // Reset after 2 seconds of successful load
-  });
+    }, 2000);
+  };
+  if (typeof document !== "undefined" && document.readyState === "complete") {
+    scheduleReset();
+  } else {
+    window.addEventListener("load", scheduleReset, { once: true });
+  }
 
   if (isDev && chunkDebugEnabled) {
     logger.debug("Chunk error recovery handlers installed");
