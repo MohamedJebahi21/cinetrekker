@@ -7,12 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Documentation synchronization**: Updated `docs/PROJECT_CONTEXT.md`, `docs/ARCHITECTURE.md`, `docs/AI_RULES.md`, `AGENTS.md`, `CLAUDE.md`, and `.github/copilot-instructions.md` with detailed architecture, chunk load error recovery system, deployment caching policies, branch protection rules, and npm standards so all AI agents have complete, synchronized context.
+
+---
+
+## [1.0.0] - 2026-10-04
+
 ### Added
 - **Open-source governance**: Added root `LICENSE` (MIT), `SECURITY.md` (vulnerability disclosure policy), `CODE_OF_CONDUCT.md` (Contributor Covenant v2.1), and `CONTRIBUTING.md` (branching, quality gates, and Vercel Hobby invariants).
 - **GitHub community templates**: Added `.github/ISSUE_TEMPLATE/` (bug report, feature request), `.github/PULL_REQUEST_TEMPLATE.md`, and `.github/dependabot.yml` (weekly updates for npm and GitHub Actions).
 - **Environment & Node pinning**: Added `.nvmrc` pinning Node 22; standardized `engines` in `package.json` on `node: 22.x` and `npm: >=10.0.0`.
 - **Issue drafts backlog**: Converted completed launch backlog and external action items into `docs/issue-drafts.md` with credential rotation and security follow-ups.
 - **Design context**: Relocated brand personality and aesthetic principles to `docs/design-context.md`.
+- **Multi-source attribution on About page**: Added dedicated provider links and attribution for TMDB, OMDb API, and TVmaze on `/about` (`src/pages/About.tsx`).
+- **GitHub repository security**: Enabled Dependabot alerts, automated security updates, secret scanning, secret scanning push protection, and branch protection on `main`.
+
+### Fixed
+- **Deployment chunk load error auto-recovery**: Implemented 4-tier chunk recovery system across `src/lib/chunkErrorRecovery.ts` and `src/components/ErrorBoundary.tsx` with `vite:preloadError` listener, regex matching for `ERR_CACHE_READ_FAILURE` and missing dynamic imports, cache purging (`window.caches`), service worker update, and automatic timestamped reload (`?_cb=`).
+- **Blocked analytics error handling**: Added silent `script.onerror` handler in `src/components/UmamiAnalytics.tsx` to eliminate console noise when ad blockers block analytics scripts.
+- **Vercel Cache-Control headers**: Added uncacheable header for `/sw.js` (`no-cache, no-store, must-revalidate`) and `stale-while-revalidate` for app icons and manifests to prevent 304 cache-read failure loops.
 
 ### Changed
 - **Canonical documentation structure**: Consolidated canonical guides (`AI_RULES.md`, `PROJECT_CONTEXT.md`, `ARCHITECTURE.md`, `DEFINITION_OF_DONE.md`) in `docs/` and updated links across `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, and `README.md`.

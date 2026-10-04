@@ -1,7 +1,7 @@
 # CineTrekker Project Context & System Map
 
 > **Canonical Current-State Specification**  
-> *Last Updated: 2026-09-30*  
+> *Last Updated: 2026-10-04*  
 > This file describes the actual operational state, architecture, database schemas, business rules, design tokens, security boundaries, and navigation map for CineTrekker.
 
 ---
@@ -11,7 +11,7 @@
 - **Product Identity**: CineTrekker is a responsive movie, TV, and cinema tracking web platform.
 - **Core Value Proposition**: Rapid search and catalog discovery across TMDB, multi-source ratings enrichment (OMDb: Rotten Tomatoes, Metacritic, IMDb; TVMaze: broadcast schedules), local-first watchlists and watch history (operable immediately without signing in), follow-based release notifications, TV season/episode tracking with persistent progress cursors, personalized rating-based recommendations, and privacy-shielded public social profiles.
 - **Target Audience**: Cinephiles, casual moviegoers, binge watchers, and cinema communities.
-- **Current Operational Status**: Production-grade, deployed to Vercel with Supabase backend. Automated release gates (`test:security`, `test:privacy`, `i18n:verify`, `lint`, `type-check`) are passing. Dependency audit is clean (`npm audit --audit-level=moderate` → 0 vulnerabilities as of 2026-09-30).
+- **Current Operational Status**: Production-grade (v1.0.0, MIT License). Open-source repository with full governance (LICENSE, SECURITY.md, CODE_OF_CONDUCT.md, CONTRIBUTING.md, issue/PR templates, Dependabot). Branch protection active on `main` (strict status checks, no force-pushes). Automated release gates (`npm run test:ci`: `test:security`, `test:privacy`, `test:professionalization`, `i18n:verify`, `lint`, `type-check`) pass 100%. Node 22 pinned via `.nvmrc`; standardized on npm.
 
 ---
 
@@ -200,6 +200,23 @@ cinetrekker/
    - CineTrekker combines TMDB (catalog discovery, posters, backdrops), OMDb (external IMDb/RT/Metacritic ratings), and TVmaze (broadcast schedules, networks, episode catalog with specials/Season 0, exact air times).
    - All server-side enrichment requests flow through `api/enrichment.ts` backed by helper modules in `api/_lib/metadata/` without expanding beyond Vercel Hobby's 12-function cap.
    - On `/tv/:slug`, TV seasons are rendered via an accessible Radix `Select` dropdown. Trigger includes poster thumbnail, season label, and watched/total progress badge. Trigger layout uses `[&>span]:line-clamp-none` to prevent Radix from breaking flex row alignment; items use `pl-9` clearance so the selection indicator never collides with the poster thumbnail. Deep linking is preserved with `?season=N`.
+6. **Chunk Error Recovery & Deployment Resilience**:
+   - When new deployments occur on Vercel, client browsers holding stale bundles may fail to fetch newly hashed lazy chunks (e.g. `ERR_CACHE_READ_FAILURE` or `Failed to fetch dynamically imported module`).
+   - The application employs a 3-layer recovery system:
+     1. `installChunkErrorHandlers()` in `src/main.tsx` listens to `unhandledrejection`, `error`, and Vite's `vite:preloadError` event.
+     2. `src/components/ErrorBoundary.tsx` catches errors via `componentDidCatch`, detects chunk failures via `chunkErrorRecovery.isChunkError(error)`, and routes retry attempts to `purgeCachesAndReload()`.
+     3. `purgeCachesAndReload()` deletes stale browser caches (`window.caches`), triggers service worker update (`navigator.serviceWorker.getRegistrations()`), and navigates with a cache-busting timestamp parameter (`?_cb=Date.now()`).
+     4. A session-scoped counter in `sessionStorage` limits automatic reloads to 1 attempt to prevent reload loops. If retries are exhausted, a clear "Update Required" dialog with a manual reload button is displayed.
+7. **Cache-Control & Asset Header Policy (`vercel.json`)**:
+   - Service worker (`/sw.js`): `no-cache, no-store, must-revalidate` (always fetches fresh).
+   - Icons, favicons, manifests (`/(apple-touch-icon.*|favicon.*|manifest.*|og-image.*)`): `public, max-age=86400, stale-while-revalidate=604800` (prevents 304 cache-read failure loops).
+   - Build assets (`/assets/*`, `/static/*`): `public, max-age=31536000, immutable`.
+   - Dynamic HTML and API routes: `no-store, no-cache, must-revalidate, proxy-revalidate`.
+8. **Multi-Source Metadata Attribution**:
+   - Both the footer (`src/components/Footer.tsx`) and the About page (`src/pages/About.tsx`) display required attributions:
+     - **TMDB**: Primary catalog, posters, backdrops, ratings, trailers. Required disclaimer: *"This product uses the TMDB API but is not endorsed or certified by TMDB."*
+     - **OMDb API**: Supplemental external scores (IMDb, Rotten Tomatoes, Metacritic), box office, and awards data.
+     - **TVmaze**: TV broadcast schedules, episode air dates, and Season 0/specials catalog.
 
 ---
 
@@ -232,6 +249,10 @@ Defined in `tailwind.config.ts` and `src/index.css`:
 - **Serverless Function Budget**: Vercel Hobby strictly caps deployments at **12 Serverless Functions**. All backend endpoints must remain consolidated (e.g. `api/enrichment.ts` handles ratings and schedules via `?action=`; `api/follow.ts` handles POST follow and DELETE unfollow via rewrite).
 - **Bot Protection**: Feedback endpoint requires Cloudflare Turnstile verification or Google reCAPTCHA, supplemented with hidden honeypot fields.
 - **Error Scrubbing**: `api/client-errors.js` and `src/lib/errorScrubber.ts` strip query strings, tokens, passwords, and PII before dispatching to Sentry or webhooks.
+- **GitHub Repository Security & Branch Protection**:
+  - `main` branch protection requires passing status checks (`CI / lint-and-typecheck`, `CI / build`), conversation resolution, and blocks force-pushes and branch deletions.
+  - Dependabot vulnerability alerts and automated security updates are enabled.
+  - GitHub secret scanning and secret scanning push protection are actively enabled.
 
 ---
 

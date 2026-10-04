@@ -9,9 +9,12 @@ Before working on CineTrekker, you must read and follow the canonical repository
 5. [docs/metadata-providers.md](docs/metadata-providers.md) (Multi-provider metadata architecture: TMDB, OMDb, TVmaze, Watchmode placeholder)
 
 ### Key Instructions:
-- Follow `UNDERSTAND -> INVESTIGATE -> PLAN -> IMPLEMENT -> TEST -> VERIFY -> DOCUMENT`.
+- Follow `UNDERSTAND -> INVESTIGATE -> BRANCH -> PLAN -> IMPLEMENT -> TEST -> VERIFY -> DOCUMENT`.
+- Branch protection: `main` is protected. Always work on a new branch (`feat/...`, `fix/...`, `chore/...`, `docs/...`).
 - Verify all assumptions against existing code; do not guess APIs or database columns.
 - Serverless constraint: Strictly maximum 12 Serverless Functions in `api/` on Vercel Hobby. Helper modules must live in `api/_lib/`.
+- Package manager: Standardized on `npm` (Node 22 pinned in `.nvmrc`). Never commit pnpm-lock.yaml or yarn.lock.
+- Client resilience: Preserve `src/lib/chunkErrorRecovery.ts` and `src/components/ErrorBoundary.tsx` deployment error auto-recovery.
 - Reuse existing primitives in `src/lib/`, `src/contexts/`, and `src/components/ui/`.
-- Run tests: `npm run test:security`, `npm run test:privacy`, `npm run lint`, `npm run type-check`, `npm run i18n:verify`.
-- Always update `PROJECT_CONTEXT.md` and append an entry in `CHANGELOG.md` upon task completion.
+- Run tests: `npm run test:security`, `npm run test:privacy`, `npm run test:professionalization`, `npm run lint`, `npm run type-check`, `npm run i18n:verify`, `npm run build`.
+- Always update `docs/PROJECT_CONTEXT.md` and append an entry in `CHANGELOG.md` upon task completion.
