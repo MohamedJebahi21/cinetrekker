@@ -44,8 +44,8 @@ function getSpaShellTemplate() {
       "utf8",
     );
   } catch (error) {
-    logger.error("[edge-meta] Failed to read SPA shell:", error?.message || error);
-    spaShellTemplateCache = "";
+    logger.warn("[edge-meta] dist/index.html not found on serverless disk, using fallback HTML shell:", error?.message || error);
+    spaShellTemplateCache = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/></head><body><div id="root"></div></body></html>`;
   }
 
   return spaShellTemplateCache;
