@@ -145,6 +145,12 @@ class ChunkErrorRecovery {
   }
 
   public async purgeCachesAndReload(): Promise<void> {
+    // IMPORTANT: Reset the retry counter BEFORE navigating away.
+    // If we don't, the next page load reads retryCount >= maxRetries and
+    // immediately shows the "Update Required" modal again — causing an
+    // infinite loop that "Refresh Now" cannot escape.
+    this.reset();
+
     try {
       if (typeof window !== "undefined" && "caches" in window) {
         const keys = await window.caches.keys();
@@ -324,10 +330,9 @@ class ChunkErrorRecovery {
     ].join(";");
     button.textContent = "Refresh Now";
     button.addEventListener("click", () => {
-      this.reset();
-      const url = new URL(window.location.href);
-      url.searchParams.set("_cb", Date.now().toString());
-      window.location.replace(url.toString());
+      button.disabled = true;
+      button.textContent = "Refreshing…";
+      void this.purgeCachesAndReload();
     });
     button.addEventListener("mouseover", () => {
       button.style.transform = "scale(1.05)";
@@ -436,7 +441,7 @@ export function installChunkErrorHandlers(): void {
   window.addEventListener("load", () => {
     setTimeout(() => {
       chunkErrorRecovery.reset();
-    }, 5000); // Reset after 5 seconds of successful operation
+    }, 2000); // Reset after 2 seconds of successful load
   });
 
   if (isDev && chunkDebugEnabled) {
