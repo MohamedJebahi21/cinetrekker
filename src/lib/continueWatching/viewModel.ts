@@ -88,10 +88,13 @@ export function buildContinueWatchingVM(params: {
     ? `S${nextEpisode.season_number}E${nextEpisode.episode_number}`
     : null;
   const isFinished = Boolean(
-    details &&
+    (details &&
       !nextResult &&
       !details.in_production &&
-      ["ended", "canceled"].includes(details.status?.toLowerCase() ?? ""),
+      ["ended", "canceled"].includes(details.status?.toLowerCase() ?? "")) ||
+      (releasedEpisodeCount != null &&
+        releasedEpisodeCount > 0 &&
+        progress.watchedEpisodeCount >= releasedEpisodeCount),
   );
 
   // Slug-based href — deep-link to next episode season when available
