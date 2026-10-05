@@ -7,8 +7,8 @@ const REQUEST_ID_PROPERTY = "__cinetrekkerRequestId";
 const ENDPOINT_LIMITS = {
   default: { windowMs: 60 * 1000, ipMaxRequests: 30 },
   recommend: { windowMs: 60 * 1000, ipMaxRequests: 15 },
-  "tmdb-proxy": { windowMs: 60 * 1000, ipMaxRequests: 60 },
-  enrichment: { windowMs: 60 * 1000, ipMaxRequests: 60 },
+  "tmdb-proxy": { windowMs: 60 * 1000, ipMaxRequests: 240 },
+  enrichment: { windowMs: 60 * 1000, ipMaxRequests: 240 },
   feedback: { windowMs: 10 * 60 * 1000, ipMaxRequests: 3 },
   "client-errors": { windowMs: 60 * 1000, ipMaxRequests: 8 },
   follow: { windowMs: 60 * 1000, ipMaxRequests: 12, userMaxRequests: 20 },
