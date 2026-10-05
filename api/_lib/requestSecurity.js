@@ -216,7 +216,11 @@ async function isRateLimitedDistributed(key, config, limit) {
     }
 
     const payload = await response.json();
-    const result = Array.isArray(payload?.result) ? payload.result : [];
+    const result = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.result)
+        ? payload.result
+        : [];
     const count = Number(result?.[0]?.result ?? 0);
     const ttl = Number(result?.[2]?.result ?? windowSeconds);
 
@@ -279,8 +283,30 @@ async function applyRateLimit(req, res, prefix, key, limitKind, limit) {
   };
 }
 
-export async function enforceRequestSecurity(req, res, prefix) {
+export async function enforceRequestSecurity(req, res, prefixOrOptions) {
   ensureRequestId(req, res);
+  const options =
+    typeof prefixOrOptions === "object" && prefixOrOptions !== null
+      ? prefixOrOptions
+      : {};
+  const prefix =
+    typeof prefixOrOptions === "string"
+      ? prefixOrOptions
+      : (options.rateLimitPrefix || options.prefix || "default");
+
+  if (Array.isArray(options.allowedMethods) && options.allowedMethods.length > 0) {
+    if (!options.allowedMethods.includes(req?.method)) {
+      if (typeof res?.setHeader === "function") {
+        res.setHeader("Allow", options.allowedMethods.join(", "));
+      }
+      return {
+        ok: false,
+        status: 405,
+        error: `Method ${req?.method} not allowed.`,
+      };
+    }
+  }
+
   const origin = req?.headers?.origin;
   const secFetchSite = req?.headers?.["sec-fetch-site"];
     if (secFetchSite === "same-origin") {
