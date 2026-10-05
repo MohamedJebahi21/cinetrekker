@@ -128,7 +128,11 @@ function applyServerSideSafetyFilter(data, maturityRating) {
         maturityRating,
       )
     ) {
-      return { ...payload, blocked_by_policy: true };
+      return {
+        id: payload.id,
+        error: "This content is blocked by maturity rating policy.",
+        blocked_by_policy: true,
+      };
     }
   }
 
