@@ -503,6 +503,12 @@ export default function Calendar() {
     (e: React.MouseEvent, item: CalendarItem) => {
       e.stopPropagation();
       e.preventDefault();
+      if (!user) {
+        toast.error(
+          t("calendar.signInTracking", "Sign in to track followed shows and sync your list. Browsing the calendar stays public.")
+        );
+        return;
+      }
       const isFollow = followedShowIds.has(item.id);
       if (isFollow) {
         unfollowShow(item.id);
@@ -514,7 +520,7 @@ export default function Calendar() {
         });
       }
     },
-    [followedShowIds, followShow, unfollowShow]
+    [followedShowIds, followShow, unfollowShow, user, t]
   );
 
   const isCalendarItemSaved = (item: CalendarItem) =>
