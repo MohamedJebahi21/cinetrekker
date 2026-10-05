@@ -111,6 +111,9 @@ export function AuthenticatedUserListsProvider({
         const guestWatchlistItems = readGuestWatchlist();
         const guestWatchedItems = readGuestWatched();
 
+        let watchlistSyncOk = true;
+        let watchedSyncOk = true;
+
         if (guestWatchlistItems.length > 0) {
           const rows = guestWatchlistItems.map((item) => ({
             user_id: user.id,
@@ -124,9 +127,11 @@ export function AuthenticatedUserListsProvider({
               .from("user_watchlist")
               .upsert(rows, { onConflict: "user_id,media_id,media_type" });
             if (error) {
+              watchlistSyncOk = false;
               logger.error("Error upserting watchlist during sync.", error);
             }
           } catch (error) {
+            watchlistSyncOk = false;
             logger.error("Watchlist sync failed.", error);
           }
         }
@@ -148,15 +153,21 @@ export function AuthenticatedUserListsProvider({
               .from("user_watched")
               .upsert(rows, { onConflict: "user_id,media_id,media_type" });
             if (error) {
+              watchedSyncOk = false;
               logger.error("Error upserting watched during sync.", error);
             }
           } catch (error) {
+            watchedSyncOk = false;
             logger.error("Watched sync failed.", error);
           }
         }
 
-        clearGuestWatchlist();
-        clearGuestWatched();
+        if (watchlistSyncOk) {
+          clearGuestWatchlist();
+        }
+        if (watchedSyncOk) {
+          clearGuestWatched();
+        }
         await queryClient.invalidateQueries({
           queryKey: ["watchlist", user.id],
         });
