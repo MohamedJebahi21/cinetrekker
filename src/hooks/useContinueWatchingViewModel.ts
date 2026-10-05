@@ -151,7 +151,7 @@ export function useContinueWatchingViewModel(): {
     () =>
       allProgress.filter(
         (show) =>
-          show.watchedEpisodeCount > 0 &&
+          (show.isFollowed || show.watchedEpisodeCount > 0) &&
           !completedShowIds.has(show.showId),
       ),
     [allProgress, completedShowIds],
@@ -162,7 +162,7 @@ export function useContinueWatchingViewModel(): {
   // a completed row can become resumable when new released episodes arrive.
   const ranked = useMemo(() => rankShows(progress, { limit: 50 }), [progress]);
   const reconciliationCandidates = useMemo(
-    () => allProgress.filter((show) => show.watchedEpisodeCount > 0),
+    () => allProgress.filter((show) => show.isFollowed || show.watchedEpisodeCount > 0),
     [allProgress],
   );
 
@@ -240,7 +240,7 @@ export function useContinueWatchingViewModel(): {
       // 4c. Merge TMDB metadata into progress (totals only, NO status re-derivation)
       const mergedProgress = rankedMerged.filter(
         (show) =>
-          show.watchedEpisodeCount > 0 &&
+          (show.isFollowed || show.watchedEpisodeCount > 0) &&
           !isShowDefinitelyCompleted(show) &&
           !completedShowIds.has(show.showId),
       );
@@ -310,14 +310,17 @@ export function useContinueWatchingViewModel(): {
             needsSeasonEnrichment: !hasSeasonData,
           };
         })
-        // 4e. Episode-driven inclusion:
-        //     - Require at least one watched episode
-        //     - Exclude anything already completed by episode totals or explicit status
+        // 4e. Continue Watching inclusion rules:
+        //     - Show is followed OR has at least one watched episode
+        //     - Exclude completed shows (by explicit status or all released episodes watched)
+        //     - Must have one or more episodes not watched (exclude caught-up shows with no next episode)
         .filter(
           (vm) =>
-            vm.watchedEpisodeCount > 0 &&
+            (vm.isFollowed || vm.watchedEpisodeCount > 0) &&
             !completedShowIds.has(vm.showId) &&
-            !vm.isFinished,
+            !vm.isFinished &&
+            (vm.releasedEpisodeCount == null || vm.watchedEpisodeCount < vm.releasedEpisodeCount) &&
+            (vm.needsSeasonEnrichment || vm.nextEpisodeLabel != null),
         );
 
       return { vms, toComplete, toReopen };
