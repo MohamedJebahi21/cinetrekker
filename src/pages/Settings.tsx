@@ -697,6 +697,12 @@ export default function Settings() {
         const results = await Promise.all([
           supabase.from("user_watchlist").delete().eq("user_id", user.id),
           supabase.from("user_watched").delete().eq("user_id", user.id),
+          supabase.from("followed_shows").delete().eq("user_id", user.id),
+          supabase.from("watched_episodes").delete().eq("user_id", user.id),
+          supabase.from("movie_followers").delete().eq("user_id", user.id),
+          supabase.from("notifications").delete().eq("user_id", user.id),
+          supabase.from("collections").delete().eq("user_id", user.id),
+          supabase.from("push_subscriptions").delete().eq("user_id", user.id),
           supabase.from("profiles").delete().eq("user_id", user.id),
         ]);
         const err = results.find((r) => r.error)?.error;
