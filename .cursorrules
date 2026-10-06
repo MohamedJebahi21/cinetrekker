@@ -4,7 +4,7 @@
 - Project: CineTrekker (movie & TV tracking platform built with React 19, TypeScript 5.9, Vite 8, Tailwind CSS, Supabase, Vercel Serverless).
 - Canonical documentation: Follow `docs/AI_RULES.md`, `docs/PROJECT_CONTEXT.md`, and `docs/ARCHITECTURE.md`.
 - Vercel Serverless Function Limit: Strictly maximum 12 Serverless Functions in `api/` on Vercel Hobby plan. Any new helper must live in `api/_lib/` or `api/metadata/`.
-- Distributed Rate Limiting: Managed via Upstash Redis REST. Sliding window configuration in `api/_lib/requestSecurity.js`. Current limits: 240 req/min for `tmdb-proxy` and `enrichment`.
+- Rate Limiting: In-memory sliding window configuration in `api/_lib/requestSecurity.js`. Current limits: 240 req/min for `tmdb-proxy` and `enrichment`.
 - Database Tables (Supabase Postgres):
   - User lists: `public.user_watchlist` and `public.user_watched` (unique constraint on `(user_id, media_id, media_type)`).
   - TV tracking: `public.followed_shows` and `public.watched_episodes`.

@@ -36,40 +36,7 @@ const ENDPOINT_LIMITS = {
 };
 
 const requestStore = new Map();
-let runtimeFetch = globalThis.fetch;
-
-/**
- * Vercel's managed Upstash integration uses a project-prefix contract that
- * differs from the legacy application variables. Prefer the managed REST
- * aliases whenever present so a rotated or provisioned store takes effect
- * without copying secrets through a browser or source control.
- */
-function getUpstashRestCredentials() {
-  return {
-    url:
-      process.env.UPSTASH_REDIS_REST_KV_REST_API_URL ||
-      process.env.UPSTASH_REDIS_REST_URL,
-    token:
-      process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN ||
-      process.env.UPSTASH_REDIS_REST_TOKEN,
-  };
-}
-
-let { url: upstashRedisRestUrl, token: upstashRedisRestToken } =
-  getUpstashRestCredentials();
 let lastCleanupAt = 0;
-
-function isProductionRuntime() {
-  return process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
-}
-
-function rateLimitUnavailable(retryAfter = 60) {
-  return {
-    limited: false,
-    unavailable: true,
-    retryAfter,
-  };
-}
 
 function getEndpointConfig(prefix) {
   return ENDPOINT_LIMITS[prefix] || ENDPOINT_LIMITS.default;
@@ -181,81 +148,9 @@ function isRateLimitedInMemory(key, config, limit) {
   return { limited: false, retryAfter: 0 };
 }
 
-async function isRateLimitedDistributed(key, config, limit) {
-  if (typeof runtimeFetch !== "function") {
-    return isProductionRuntime()
-      ? rateLimitUnavailable()
-      : isRateLimitedInMemory(key, config, limit);
-  }
-
-  if (!upstashRedisRestUrl || !upstashRedisRestToken) {
-    return isProductionRuntime()
-      ? rateLimitUnavailable()
-      : isRateLimitedInMemory(key, config, limit);
-  }
-
-  try {
-    const windowSeconds = Math.ceil(config.windowMs / 1000);
-    const response = await runtimeFetch(`${upstashRedisRestUrl}/pipeline`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${upstashRedisRestToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify([
-        ["INCR", key],
-        ["EXPIRE", key, windowSeconds, "NX"],
-        ["TTL", key],
-      ]),
-    });
-
-    if (!response.ok) {
-      return isProductionRuntime()
-        ? rateLimitUnavailable()
-        : isRateLimitedInMemory(key, config, limit);
-    }
-
-    const payload = await response.json();
-    const result = Array.isArray(payload)
-      ? payload
-      : Array.isArray(payload?.result)
-        ? payload.result
-        : [];
-    const count = Number(result?.[0]?.result ?? 0);
-    const ttl = Number(result?.[2]?.result ?? windowSeconds);
-
-    return {
-      limited: count > limit,
-      retryAfter: ttl > 0 ? ttl : windowSeconds,
-    };
-  } catch {
-    return isProductionRuntime()
-      ? rateLimitUnavailable()
-      : isRateLimitedInMemory(key, config, limit);
-  }
-}
-
 async function applyRateLimit(req, res, prefix, key, limitKind, limit) {
   const config = getEndpointConfig(prefix);
-  const limitCheck = await isRateLimitedDistributed(key, config, limit);
-
-  if (limitCheck.unavailable) {
-    res.setHeader("Retry-After", String(limitCheck.retryAfter));
-    await reportSecurityEvent({
-      event: "rate_limit_unavailable",
-      severity: "error",
-      scope: prefix,
-      message: "Distributed rate limiting is unavailable; request was blocked.",
-      req,
-      details: { limitKind },
-      shouldAlert: true,
-    });
-    return {
-      ok: false,
-      status: 503,
-      error: "Request protection is temporarily unavailable. Please try again shortly.",
-    };
-  }
+  const limitCheck = isRateLimitedInMemory(key, config, limit);
 
   if (!limitCheck.limited) {
     return { ok: true };
@@ -309,9 +204,9 @@ export async function enforceRequestSecurity(req, res, prefixOrOptions) {
 
   const origin = req?.headers?.origin;
   const secFetchSite = req?.headers?.["sec-fetch-site"];
-    if (secFetchSite === "same-origin") {
-      // Allow same-origin navigation/subresources
-    } else if (!isAllowedOrigin(origin, req?.method)) {
+  if (secFetchSite === "same-origin") {
+    // Allow same-origin navigation/subresources
+  } else if (!isAllowedOrigin(origin, req?.method)) {
     await reportSecurityEvent({
       event: "forbidden_origin",
       severity: "warning",
@@ -352,18 +247,11 @@ export async function enforceAuthenticatedRequestSecurity(
   );
 }
 
-export function setRateLimitDependenciesForTests({ fetch, url, token } = {}) {
-  const credentials = getUpstashRestCredentials();
-  runtimeFetch = fetch ?? globalThis.fetch;
-  upstashRedisRestUrl = url ?? credentials.url;
-  upstashRedisRestToken = token ?? credentials.token;
+export function setRateLimitDependenciesForTests() {
+  // Maintained for backward compatibility with test suites
 }
 
 export function resetRequestSecurityStateForTests() {
-  const credentials = getUpstashRestCredentials();
   requestStore.clear();
   lastCleanupAt = 0;
-  runtimeFetch = globalThis.fetch;
-  upstashRedisRestUrl = credentials.url;
-  upstashRedisRestToken = credentials.token;
 }

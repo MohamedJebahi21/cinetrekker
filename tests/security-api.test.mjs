@@ -174,14 +174,22 @@ test("production permits origin-less safe reads but rejects origin-less writes",
   }
 });
 
-test("production blocks protected requests when distributed rate limiting is unavailable", async () => {
+test("production protects requests with built-in in-memory rate limiting without requiring Upstash", async () => {
   const previousNodeEnv = process.env.NODE_ENV;
-  const previousVercelEnv = process.env.VERCEL_ENV;
+  const previousTmdbKey = process.env.TMDB_API_KEY;
+  const originalFetch = global.fetch;
 
   try {
     process.env.NODE_ENV = "production";
-    delete process.env.VERCEL_ENV;
-    setRateLimitDependenciesForTests({ url: "", token: "" });
+    process.env.TMDB_API_KEY = "test-tmdb-key";
+    resetRequestSecurityStateForTests();
+
+    global.fetch = async () => ({
+      ok: true,
+      async json() {
+        return { results: [] };
+      },
+    });
 
     const req = createMockReq({
       method: "GET",
@@ -193,124 +201,56 @@ test("production blocks protected requests when distributed rate limiting is una
 
     await tmdbProxyHandler(req, res);
 
-    assert.equal(res.statusCode, 503);
-    assert.match(res.body.error, /protection is temporarily unavailable/i);
-    assert.equal(res.headers["Retry-After"], "60");
-  } finally {
-    if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
-    else process.env.NODE_ENV = previousNodeEnv;
-    if (previousVercelEnv === undefined) delete process.env.VERCEL_ENV;
-    else process.env.VERCEL_ENV = previousVercelEnv;
-  }
-});
-
-test("managed Upstash REST aliases take precedence over stale legacy credentials", async () => {
-  const previousNodeEnv = process.env.NODE_ENV;
-  const previousTmdbKey = process.env.TMDB_API_KEY;
-  const previousManagedUrl = process.env.UPSTASH_REDIS_REST_KV_REST_API_URL;
-  const previousManagedToken = process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN;
-  const previousLegacyUrl = process.env.UPSTASH_REDIS_REST_URL;
-  const previousLegacyToken = process.env.UPSTASH_REDIS_REST_TOKEN;
-  const originalFetch = global.fetch;
-  const requests = [];
-
-  try {
-    process.env.NODE_ENV = "test";
-    process.env.TMDB_API_KEY = "test-tmdb-key";
-    process.env.UPSTASH_REDIS_REST_KV_REST_API_URL = "https://managed-redis.test";
-    process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN = "managed-token";
-    process.env.UPSTASH_REDIS_REST_URL = "https://stale-redis.test";
-    process.env.UPSTASH_REDIS_REST_TOKEN = "stale-token";
-
-    const fetchStub = async (url, options = {}) => {
-      requests.push({ url: String(url), authorization: options.headers?.Authorization });
-      if (String(url).endsWith("/pipeline")) {
-        return {
-          ok: true,
-          async json() {
-            return { result: [{ result: 1 }, { result: 1 }, { result: 60 }] };
-          },
-        };
-      }
-      return {
-        ok: true,
-        async json() {
-          return { results: [] };
-        },
-      };
-    };
-    global.fetch = fetchStub;
-    setRateLimitDependenciesForTests({ fetch: fetchStub });
-
-    const req = createMockReq({
-      method: "GET",
-      headers: { origin: "http://localhost:8080" },
-      query: { endpoint: "/movie/1" },
-      url: "/api/tmdb-proxy",
-    });
-    const res = createMockRes();
-
-    await tmdbProxyHandler(req, res);
-
     assert.equal(res.statusCode, 200);
-    assert.deepEqual(requests[0], {
-      url: "https://managed-redis.test/pipeline",
-      authorization: "Bearer managed-token",
-    });
-  } finally {
-    const restore = (key, value) => {
-      if (value === undefined) delete process.env[key];
-      else process.env[key] = value;
-    };
-    restore("NODE_ENV", previousNodeEnv);
-    restore("TMDB_API_KEY", previousTmdbKey);
-    restore("UPSTASH_REDIS_REST_KV_REST_API_URL", previousManagedUrl);
-    restore("UPSTASH_REDIS_REST_KV_REST_API_TOKEN", previousManagedToken);
-    restore("UPSTASH_REDIS_REST_URL", previousLegacyUrl);
-    restore("UPSTASH_REDIS_REST_TOKEN", previousLegacyToken);
-    global.fetch = originalFetch;
-  }
-});
-
-test("TMDB proxy rejects an exhausted distributed request budget", async () => {
-  const previousNodeEnv = process.env.NODE_ENV;
-  const previousTmdbKey = process.env.TMDB_API_KEY;
-  const fetchStub = async () => ({
-    ok: true,
-    async json() {
-      return {
-        result: [{ result: 241 }, { result: 1 }, { result: 60 }],
-      };
-    },
-  });
-
-  try {
-    process.env.NODE_ENV = "test";
-    process.env.TMDB_API_KEY = "test-tmdb-key";
-    setRateLimitDependenciesForTests({
-      fetch: fetchStub,
-      url: "https://redis.test",
-      token: "redis-token",
-    });
-
-    const req = createMockReq({
-      method: "GET",
-      headers: { origin: "http://localhost:8080" },
-      query: { endpoint: "/movie/1" },
-      url: "/api/tmdb-proxy",
-    });
-    const res = createMockRes();
-
-    await tmdbProxyHandler(req, res);
-
-    assert.equal(res.statusCode, 429);
-    assert.match(res.body.error, /too many requests/i);
-    assert.equal(res.headers["Retry-After"], "60");
   } finally {
     if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
     else process.env.NODE_ENV = previousNodeEnv;
     if (previousTmdbKey === undefined) delete process.env.TMDB_API_KEY;
     else process.env.TMDB_API_KEY = previousTmdbKey;
+    global.fetch = originalFetch;
+    resetRequestSecurityStateForTests();
+  }
+});
+
+test("TMDB proxy rejects an exhausted in-memory request budget", async () => {
+  const previousNodeEnv = process.env.NODE_ENV;
+  const previousTmdbKey = process.env.TMDB_API_KEY;
+  const originalFetch = global.fetch;
+
+  try {
+    process.env.NODE_ENV = "test";
+    process.env.TMDB_API_KEY = "test-tmdb-key";
+    resetRequestSecurityStateForTests();
+
+    global.fetch = async () => ({
+      ok: true,
+      async json() {
+        return { results: [] };
+      },
+    });
+
+    let lastRes;
+    for (let i = 0; i < 241; i++) {
+      const req = createMockReq({
+        method: "GET",
+        headers: { origin: "http://localhost:8080" },
+        query: { endpoint: "/movie/1" },
+        url: "/api/tmdb-proxy",
+      });
+      lastRes = createMockRes();
+      await tmdbProxyHandler(req, lastRes);
+    }
+
+    assert.equal(lastRes.statusCode, 429);
+    assert.match(lastRes.body.error, /too many requests/i);
+    assert.equal(lastRes.headers["Retry-After"], "60");
+  } finally {
+    if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previousNodeEnv;
+    if (previousTmdbKey === undefined) delete process.env.TMDB_API_KEY;
+    else process.env.TMDB_API_KEY = previousTmdbKey;
+    global.fetch = originalFetch;
+    resetRequestSecurityStateForTests();
   }
 });
 
@@ -322,17 +262,6 @@ test("TMDB proxy consults rate limiting and does not expose upstream diagnostics
 
   const fetchStub = async (url) => {
     requests.push(String(url));
-    if (String(url).startsWith("https://redis.test/pipeline")) {
-      return {
-        ok: true,
-        async json() {
-          return {
-            result: [{ result: 1 }, { result: 1 }, { result: 60 }],
-          };
-        },
-      };
-    }
-
     return {
       ok: false,
       status: 500,
@@ -365,7 +294,7 @@ test("TMDB proxy consults rate limiting and does not expose upstream diagnostics
     assert.equal(res.statusCode, 502);
     assert.equal(res.body.error, "Content data is temporarily unavailable.");
     assert.equal(Object.hasOwn(res.body, "details"), false);
-    assert.equal(requests.some((url) => url.startsWith("https://redis.test/pipeline")), true);
+    assert.equal(requests.length > 0, true);
   } finally {
     global.fetch = originalFetch;
     if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
@@ -531,10 +460,6 @@ test("health endpoint reports only coarse dependency readiness and never configu
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     TMDB_API_KEY: process.env.TMDB_API_KEY,
     CRON_SECRET: process.env.CRON_SECRET,
-    UPSTASH_REDIS_REST_KV_REST_API_URL:
-      process.env.UPSTASH_REDIS_REST_KV_REST_API_URL,
-    UPSTASH_REDIS_REST_KV_REST_API_TOKEN:
-      process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN,
   };
 
   try {
@@ -542,8 +467,6 @@ test("health endpoint reports only coarse dependency readiness and never configu
     process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-secret";
     process.env.TMDB_API_KEY = "tmdb-secret";
     process.env.CRON_SECRET = "cron-secret";
-    process.env.UPSTASH_REDIS_REST_KV_REST_API_URL = "https://redis.test";
-    process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN = "redis-secret";
 
     const req = createMockReq({
       method: "GET",
@@ -579,10 +502,6 @@ test("health endpoint is cache-safe and reports degraded status without secret n
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     TMDB_API_KEY: process.env.TMDB_API_KEY,
     CRON_SECRET: process.env.CRON_SECRET,
-    UPSTASH_REDIS_REST_KV_REST_API_URL:
-      process.env.UPSTASH_REDIS_REST_KV_REST_API_URL,
-    UPSTASH_REDIS_REST_KV_REST_API_TOKEN:
-      process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN,
   };
 
   try {
@@ -590,8 +509,6 @@ test("health endpoint is cache-safe and reports degraded status without secret n
     delete process.env.SUPABASE_SERVICE_ROLE_KEY;
     delete process.env.TMDB_API_KEY;
     delete process.env.CRON_SECRET;
-    delete process.env.UPSTASH_REDIS_REST_KV_REST_API_URL;
-    delete process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN;
 
     const req = createMockReq({ method: "GET", url: "/api/health" });
     const res = createMockRes();
@@ -600,7 +517,7 @@ test("health endpoint is cache-safe and reports degraded status without secret n
     assert.equal(res.statusCode, 503);
     assert.equal(res.body.status, "degraded");
     assert.equal(res.body.dependencies.scheduledJobs, false);
-    assert.equal(res.body.dependencies.rateLimiting, false);
+    assert.equal(res.body.dependencies.rateLimiting, true);
     assert.equal(JSON.stringify(res.body).includes("SUPABASE"), false);
   } finally {
     for (const [key, value] of Object.entries(snapshot)) {

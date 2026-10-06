@@ -94,7 +94,7 @@ Verified from source code routes (`src/AppRoutes.tsx`) and application component
 | **Database & Auth** | [Supabase](https://supabase.com/) | PostgreSQL 15+, GoTrue JWT authentication, Row Level Security (RLS) |
 | **Metadata Providers** | [TMDB API](https://www.themoviedb.org/documentation/api), [OMDb API](https://www.omdbapi.com/), [TVmaze API](https://www.tvmaze.com/api) | Multi-source catalog, ratings, schedules, and episode data |
 | **Monitoring & Telemetry**| [Sentry](https://sentry.io/), Vercel Analytics, Speed Insights, Umami Analytics | Error tracking, Web Vitals monitoring, and privacy-conscious analytics |
-| **Abuse & Bot Protection**| [Cloudflare Turnstile](https://www.cloudflare.com/products/turnstile/), Upstash Redis REST | Rate limiting on public endpoints and bot-safe feedback submissions |
+| **Abuse & Bot Protection**| [Cloudflare Turnstile](https://www.cloudflare.com/products/turnstile/) | In-memory sliding-window rate limiting on public endpoints and bot-safe feedback submissions |
 
 ---
 
@@ -117,7 +117,6 @@ flowchart TD
         OMDb["OMDb API (IMDb & Rotten Tomatoes)"]
         TVmaze["TVmaze API (Schedules & Episode Guides)"]
         Turnstile["Cloudflare Turnstile (Bot Verification)"]
-        Upstash["Upstash Redis (Distributed Rate Limiting)"]
     end
     
     subgraph SupabaseCloud["Supabase Managed Cloud"]
@@ -132,7 +131,6 @@ flowchart TD
     
     EdgeMeta -->|Injects Page Meta into dist/index.html| Client
     APILayer -->|Bot Validation| Turnstile
-    APILayer -->|Sliding Window Quota Checks| Upstash
     APILayer -->|Cached Catalog Requests| TMDB
     APILayer -->|Ratings Lookup| OMDb
     APILayer -->|Schedule Sync| TVmaze
@@ -251,8 +249,6 @@ The build compiles assets into `dist/` and runs a bundle-budget gate check.
 | `OPENAI_API_KEY` | Server | Optional | API key for AI-driven recommendation queries (`/api/recommend`) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server | Optional | Admin key for background cron jobs and worker state (keep secret) |
 | `CRON_SECRET` | Server | Optional | Bearer authentication secret protecting `/api/jobs/*` endpoints |
-| `UPSTASH_REDIS_REST_URL` | Server | Optional | Upstash Redis URL for distributed sliding-window rate limiting |
-| `UPSTASH_REDIS_REST_TOKEN` | Server | Optional | Upstash Redis REST access token |
 | `TURNSTILE_SECRET_KEY` | Server | Optional | Cloudflare Turnstile secret key for server-side captcha verification |
 | `VITE_TURNSTILE_SITE_KEY` | Client | Optional | Public Cloudflare Turnstile widget site key |
 | `VITE_SENTRY_DSN` | Client | Optional | Sentry DSN for client-side crash and error reporting |

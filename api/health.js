@@ -10,24 +10,13 @@ const REQUIRED_DEPENDENCIES = [
   "CRON_SECRET",
 ];
 
-function isRateLimitConfigured() {
-  const redisUrl =
-    getServerEnv("UPSTASH_REDIS_REST_KV_REST_API_URL") ||
-    getServerEnv("UPSTASH_REDIS_REST_URL");
-  const redisToken =
-    getServerEnv("UPSTASH_REDIS_REST_KV_REST_API_TOKEN") ||
-    getServerEnv("UPSTASH_REDIS_REST_TOKEN");
-
-  return Boolean(redisUrl && redisToken);
-}
-
 function buildDependencies() {
   const missing = new Set(getMissingServerEnv(REQUIRED_DEPENDENCIES));
   return {
     database: !missing.has("SUPABASE_URL") && !missing.has("SUPABASE_SERVICE_ROLE_KEY"),
     contentProvider: !missing.has("TMDB_API_KEY"),
     scheduledJobs: !missing.has("CRON_SECRET"),
-    rateLimiting: isRateLimitConfigured(),
+    rateLimiting: true,
   };
 }
 

@@ -11,7 +11,7 @@ Before working on CineTrekker, you must read and follow the canonical repository
 ### Key Architectural Invariants & Constraints:
 - Workflow: Follow `UNDERSTAND -> INVESTIGATE -> BRANCH -> PLAN -> IMPLEMENT -> TEST -> VERIFY -> DOCUMENT`.
 - Serverless constraint: Strictly maximum 12 Serverless Functions in `api/` on Vercel Hobby. Helper modules must live in `api/_lib/` or `api/metadata/`.
-- Distributed Rate Limiting: Upstash Redis REST in `api/_lib/requestSecurity.js`. Rate limits are set to 240 req/min for `tmdb-proxy` and `enrichment`.
+- Rate Limiting: In-memory sliding window in `api/_lib/requestSecurity.js`. Rate limits are set to 240 req/min for `tmdb-proxy` and `enrichment`.
 - Database Tables:
   - Lists: `user_watchlist` and `user_watched` (unique `(user_id, media_id, media_type)`).
   - TV Tracking: `followed_shows` and `watched_episodes`.
