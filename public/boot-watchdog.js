@@ -1,4 +1,37 @@
 (() => {
+  async function triggerImmediateRecovery() {
+    if (sessionStorage.getItem("cinetrekker_boot_recovery_attempted")) return;
+    sessionStorage.setItem("cinetrekker_boot_recovery_attempted", "1");
+    try {
+      if ("caches" in window) {
+        const keys = await window.caches.keys();
+        await Promise.all(keys.map((k) => window.caches.delete(k)));
+      }
+      if ("serviceWorker" in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((reg) => reg.update()));
+      }
+      window.sessionStorage.removeItem("cinetrekker_chunk_retry_count");
+    } catch (_) {}
+    const url = new URL(window.location.href);
+    url.searchParams.set("_cb", Date.now().toString());
+    window.location.replace(url.toString());
+  }
+
+  window.addEventListener(
+    "error",
+    (e) => {
+      if (document.documentElement.dataset.cinetrekkerMounted === "true") return;
+      const target = e.target;
+      if (
+        target &&
+        (target.tagName === "SCRIPT" || target.tagName === "LINK")
+      ) {
+        triggerImmediateRecovery();
+      }
+    },
+    true
+  );
   const root = document.getElementById("root");
   if (!root) return;
 
