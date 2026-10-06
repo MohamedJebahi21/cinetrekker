@@ -13,6 +13,7 @@ export interface Collection {
   name: string;
   description: string | null;
   items: unknown[];
+  itemCount?: number;
   created_at: string;
   updated_at: string;
 }
@@ -47,12 +48,22 @@ function normalizeCollection(value: unknown): Collection | null {
   if (!Number.isInteger(id) || id <= 0) return null;
   if (typeof row.user_id !== "string" || typeof row.name !== "string") return null;
 
+  const countObj = Array.isArray(row.collection_items) && row.collection_items[0]
+    ? (row.collection_items[0] as Record<string, unknown>)
+    : null;
+  const rawCount = typeof countObj?.count === "number"
+    ? countObj.count
+    : Array.isArray(row.items)
+      ? row.items.length
+      : 0;
+
   return {
     id,
     user_id: row.user_id,
     name: row.name,
     description: typeof row.description === "string" ? row.description : null,
     items: Array.isArray(row.items) ? row.items : [],
+    itemCount: rawCount,
     created_at: typeof row.created_at === "string" ? row.created_at : new Date(0).toISOString(),
     updated_at: typeof row.updated_at === "string" ? row.updated_at : new Date(0).toISOString(),
   };
@@ -70,7 +81,7 @@ export const useCollections = () => {
       try {
         const { data, error } = await supabase
           .from("collections")
-          .select("id, name, description, created_at, updated_at, user_id, items")
+          .select("id, name, description, created_at, updated_at, user_id, items, collection_items(count)")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
 
