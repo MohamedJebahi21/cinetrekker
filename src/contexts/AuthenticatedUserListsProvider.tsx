@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { HiddenRecommendation, UserMediaItem } from "@/types/media";
 import { useAuth } from "@/contexts/AuthContext";
