@@ -136,7 +136,7 @@ function CollectionFormDialog({
 function CollectionCard({ collection }: { collection: Collection }) {
   const { t } = useTranslation();
   const deleteCollection = useDeleteCollection();
-  const itemCount = Array.isArray(collection.items) ? collection.items.length : 0;
+  const itemCount = typeof collection.itemCount === "number" ? collection.itemCount : (Array.isArray(collection.items) ? collection.items.length : 0);
 
   return (
     <article className="group relative overflow-hidden rounded-3xl border border-border/60 bg-card/60 p-5 shadow-[0_16px_45px_hsl(var(--background)/0.25)] transition duration-200 hover:-translate-y-1 hover:border-primary/30 hover:bg-card/80">
