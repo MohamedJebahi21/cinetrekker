@@ -1,0 +1,27 @@
+# Cursor Rules for CineTrekker
+
+## System Architecture & Context
+- Project: CineTrekker (movie & TV tracking platform built with React 19, TypeScript 5.9, Vite 8, Tailwind CSS, Supabase, Vercel Serverless).
+- Canonical documentation: Follow `docs/AI_RULES.md`, `docs/PROJECT_CONTEXT.md`, and `docs/ARCHITECTURE.md`.
+- Vercel Serverless Function Limit: Strictly maximum 12 Serverless Functions in `api/` on Vercel Hobby plan. Any new helper must live in `api/_lib/` or `api/metadata/`.
+- Distributed Rate Limiting: Managed via Upstash Redis REST. Sliding window configuration in `api/_lib/requestSecurity.js`. Current limits: 240 req/min for `tmdb-proxy` and `enrichment`.
+- Database Tables (Supabase Postgres):
+  - User lists: `public.user_watchlist` and `public.user_watched` (unique constraint on `(user_id, media_id, media_type)`).
+  - TV tracking: `public.followed_shows` and `public.watched_episodes`.
+  - Collections: `public.collections` and `public.collection_items`.
+  - Always enforce Row Level Security (RLS) policies.
+
+## Development & Code Standards
+- Workflow: Follow `UNDERSTAND -> INVESTIGATE -> BRANCH -> PLAN -> IMPLEMENT -> TEST -> VERIFY -> DOCUMENT`.
+- Package Manager: Strictly `npm` (Node 22 pinned via `.nvmrc`). Never commit yarn.lock or pnpm-lock.yaml.
+- Client Resilience:
+  - Preserve `public/boot-watchdog.js` for early subresource load failure recovery and stale asset purging.
+  - Preserve `src/lib/chunkErrorRecovery.ts` and `src/components/ErrorBoundary.tsx`.
+- Localization: All user-facing strings must use `react-i18next` across supported locales (`en`, `ar`, `de`, `es`, `fr`, `tr`). Run `npm run i18n:verify` before committing.
+- Testing Gates:
+  - `npm run test:security` (API endpoints, origin verification, token auth, rate limiting)
+  - `npm run test:privacy` (Umami analytics consent gate, zero-PII data, private profile RLS)
+  - `npm run test:professionalization` (UI regression, lazy routes, layout stability)
+  - `npm run test:unit` (Continue watching pipeline, provider normalizers, helpers)
+  - `npm run type-check` (`tsc --noEmit`)
+  - `npm run lint` (`eslint .`)

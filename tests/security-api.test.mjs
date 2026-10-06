@@ -279,7 +279,7 @@ test("TMDB proxy rejects an exhausted distributed request budget", async () => {
     ok: true,
     async json() {
       return {
-        result: [{ result: 61 }, { result: 1 }, { result: 60 }],
+        result: [{ result: 241 }, { result: 1 }, { result: 60 }],
       };
     },
   });

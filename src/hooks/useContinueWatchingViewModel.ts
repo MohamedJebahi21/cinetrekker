@@ -162,7 +162,7 @@ export function useContinueWatchingViewModel(): {
   // a completed row can become resumable when new released episodes arrive.
   const ranked = useMemo(() => rankShows(progress, { limit: 50 }), [progress]);
   const reconciliationCandidates = useMemo(
-    () => allProgress.filter((show) => show.isFollowed || show.watchedEpisodeCount > 0),
+    () => allProgress.filter((show) => show.watchedEpisodeCount > 0),
     [allProgress],
   );
 
