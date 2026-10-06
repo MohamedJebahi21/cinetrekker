@@ -53,6 +53,54 @@ function RouteSpinner() {
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
   const isDetailRoute = /^\/(movie|tv|person)\//.test(pathname);
+  const isHomeRoute = pathname === "/";
+
+  if (isHomeRoute) {
+    return (
+      <div
+        className="w-full"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <span className="sr-only">{t("common.loadingPage", "Loading page...")}</span>
+        {/* Desktop & responsive Hero Spotlight skeleton */}
+        <section className="w-full border-b border-border/30 bg-background" aria-busy="true">
+          <div className="relative min-h-[54svh] overflow-hidden bg-card/45 skeleton-shimmer sm:min-h-[60svh] md:min-h-[550px] lg:min-h-[600px]">
+            <div className="absolute inset-y-0 left-0 flex w-full max-w-[700px] flex-col justify-end p-6 sm:justify-center sm:p-8 lg:p-16">
+              <div className="h-4 w-32 rounded-md skeleton-shimmer" />
+              <div className="mt-5 h-8 w-4/5 rounded-md skeleton-shimmer lg:h-12" />
+              <div className="mt-5 h-4 w-full rounded-md skeleton-shimmer" />
+              <div className="mt-3 h-4 w-3/4 rounded-md skeleton-shimmer" />
+              <div className="mt-7 h-11 w-40 rounded-full skeleton-shimmer" />
+            </div>
+          </div>
+        </section>
+        {/* Home content rail skeleton matching desktop poster aspect ratios */}
+        <div className="page-container space-y-6 pb-24 pt-6 sm:pt-7 md:space-y-8 md:pb-0 md:pt-8">
+          <section className="ct-panel min-h-[420px] p-4 md:min-h-[520px] md:p-6">
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-2">
+                <div className="h-6 w-48 rounded-md skeleton-shimmer" />
+                <div className="h-4 w-72 rounded-md skeleton-shimmer" />
+              </div>
+              <div className="h-9 w-24 rounded-full skeleton-shimmer" />
+            </div>
+            <div className="flex gap-4 overflow-hidden">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="min-w-[calc(50vw-1rem)] sm:min-w-[180px] md:min-w-[200px] lg:min-w-[220px] xl:min-w-[240px]"
+                >
+                  <div className="aspect-[2/3] rounded-xl border border-border/50 bg-card/50 skeleton-shimmer" />
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

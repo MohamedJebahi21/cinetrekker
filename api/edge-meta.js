@@ -222,16 +222,25 @@ function buildLegacyHeadHtml({ title, description, image, canonical, type, relea
   <style>
     body { background: #0a0a0a; color: #fafafa; font-family: system-ui, -apple-system, sans-serif; }
     .app-shell { display: flex; flex-direction: column; min-height: 100vh; }
-    .loading-header { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1.5rem; }
+    .loading-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 1rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
     .loading-logo { font-size: 1.5rem; font-weight: 900; color: #e50914; }
     .loading-title { font-size: 1.125rem; font-weight: 700; }
-    .loading-content { flex: 1; padding: 2rem; }
+    .loading-hero { width: 100%; height: 550px; background: rgba(255,255,255,0.03); position: relative; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    @media (max-width: 767px) {
+      .loading-hero { height: 54vh; }
+    }
+    .loading-hero-content { position: absolute; bottom: 2.5rem; left: 1.5rem; right: 1.5rem; max-width: 700px; }
+    .loading-content { flex: 1; padding: 2rem 1.5rem; max-width: 1400px; margin: 0 auto; width: 100%; box-sizing: border-box; }
     .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 0.75rem; }
     .text-skeleton { height: 1rem; margin-bottom: 0.75rem; }
-    .text-skeleton-title { width: 60%; height: 2rem; }
+    .text-skeleton-title { width: 60%; height: 2.5rem; }
     .text-skeleton-subtitle { width: 40%; }
-    .loading-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; margin-top: 2rem; }
-    .card-skeleton { aspect-ratio: 2/3; }
+    .loading-grid { display: flex; gap: 1rem; overflow: hidden; margin-top: 1.5rem; }
+    .card-skeleton { aspect-ratio: 2/3; flex-shrink: 0; width: calc(50vw - 1.5rem); border-radius: 1rem; }
+    @media (min-width: 640px) { .card-skeleton { width: 180px; } }
+    @media (min-width: 768px) { .card-skeleton { width: 200px; } }
+    @media (min-width: 1024px) { .card-skeleton { width: 220px; } }
+    @media (min-width: 1280px) { .card-skeleton { width: 240px; } }
     @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
   </style>
 </head>
@@ -242,10 +251,19 @@ function buildLegacyHeadHtml({ title, description, image, canonical, type, relea
         <div class="loading-logo" aria-hidden="true">CT</div>
         <div class="loading-title">CineTrekker</div>
       </header>
+      <div class="loading-hero skeleton">
+        <div class="loading-hero-content">
+          <div class="text-skeleton skeleton" style="width: 120px; height: 1.25rem;"></div>
+          <div class="text-skeleton text-skeleton-title skeleton" style="margin-top: 1rem;"></div>
+          <div class="text-skeleton text-skeleton-subtitle skeleton"></div>
+        </div>
+      </div>
       <main class="loading-content">
-        <div class="text-skeleton text-skeleton-title skeleton"></div>
-        <div class="text-skeleton text-skeleton-subtitle skeleton"></div>
+        <div class="text-skeleton skeleton" style="width: 160px; height: 1.5rem; margin-bottom: 0.5rem;"></div>
+        <div class="text-skeleton skeleton" style="width: 240px; height: 1rem;"></div>
         <div class="loading-grid" role="status" aria-label="Loading content">
+          <div class="card-skeleton skeleton" aria-hidden="true"></div>
+          <div class="card-skeleton skeleton" aria-hidden="true"></div>
           <div class="card-skeleton skeleton" aria-hidden="true"></div>
           <div class="card-skeleton skeleton" aria-hidden="true"></div>
           <div class="card-skeleton skeleton" aria-hidden="true"></div>

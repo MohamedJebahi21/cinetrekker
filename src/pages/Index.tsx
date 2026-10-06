@@ -90,40 +90,32 @@ function TrendingSectionSkeleton() {
 function AuthHomeSkeleton() {
   return (
     <div className="space-y-6 md:space-y-8">
-      <section className="ct-panel min-h-[460px] p-5 md:min-h-[520px] md:p-6">
-        <div className="mb-5 space-y-2">
-          <div className="h-7 w-56 rounded-md skeleton-shimmer" />
-          <div className="h-4 w-80 rounded-md skeleton-shimmer" />
+      <section className="ct-panel p-4 md:p-6">
+        <div className="mb-4 space-y-2">
+          <div className="h-7 w-48 rounded-md skeleton-shimmer" />
+          <div className="h-4 w-72 rounded-md skeleton-shimmer" />
         </div>
-        <div className="hide-scrollbar -mx-1 flex gap-4 overflow-x-auto px-1 pb-2">
-          {Array.from({ length: 3 }).map((_, index) => (
+        <div className="hide-scrollbar -mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
+          {Array.from({ length: 6 }).map((_, index) => (
             <div
               key={index}
-              className="h-[440px] w-[min(82vw,360px)] shrink-0 rounded-3xl border border-border/60 bg-card/60 skeleton-shimmer sm:h-[420px] sm:w-[320px] md:w-[360px]"
+              className="h-[420px] w-[calc(50vw-1.5rem)] shrink-0 rounded-[1.5rem] border border-border/60 bg-card/60 skeleton-shimmer sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
             />
           ))}
         </div>
+        <PaginationDots className="justify-center">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <PaginationDotStatic
+              key={`auth-skeleton-dot-${index}`}
+              onClick={() => {}}
+              active={index === 0}
+              aria-hidden="true"
+            />
+          ))}
+        </PaginationDots>
       </section>
 
       <TrendingSectionSkeleton />
-
-      <section className="ct-panel min-h-[220px] p-5 md:p-6">
-        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-2">
-            <div className="h-6 w-48 rounded-md skeleton-shimmer" />
-            <div className="h-4 w-72 rounded-md skeleton-shimmer" />
-          </div>
-          <div className="h-9 w-28 rounded-full skeleton-shimmer" />
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div
-              key={index}
-              className="h-28 rounded-2xl border border-border/60 bg-card/60 skeleton-shimmer"
-            />
-          ))}
-        </div>
-      </section>
     </div>
   );
 }
