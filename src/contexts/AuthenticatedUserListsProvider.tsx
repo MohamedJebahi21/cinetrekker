@@ -103,10 +103,17 @@ export function AuthenticatedUserListsProvider({
     localStorage.setItem(storageKey, JSON.stringify(hiddenRecommendations));
   }, [hiddenRecommendations, user]);
 
+  const syncedUserIdRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      syncedUserIdRef.current = null;
+      return;
+    }
+    if (syncedUserIdRef.current === user.id) return;
 
     const syncLocalToServer = async () => {
+      syncedUserIdRef.current = user.id;
       try {
         const guestWatchlistItems = readGuestWatchlist();
         const guestWatchedItems = readGuestWatched();

@@ -326,7 +326,7 @@ export function useContinueWatchingViewModel(): {
       return { vms, toComplete, toReopen };
     },
     enabled: reconciliationCandidates.length > 0 && !!user && !watchedItemsLoading,
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
     gcTime: 5 * 60_000,
     // Marking an episode changes watchedHash and therefore rekeys this query.
     // Keep the current rail mounted while the updated view model resolves.
