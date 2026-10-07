@@ -17,6 +17,7 @@ import { HomeSectionState } from "@/components/home/HomeSectionState";
 import { HomeWatchlistSkeleton } from "@/components/home/HomeWatchlistSkeleton";
 import { ContinueWatching } from "@/components/ContinueWatching";
 import { ActivationJourney } from "@/components/home/ActivationJourney";
+import { OnboardingQuickStart } from "@/components/OnboardingQuickStart";
 import { MotionRevealSection } from "@/components/motion/MotionRevealSection";
 import { DeferredSection } from "@/components/DeferredSection";
 import { PaginationDots, PaginationDotStatic } from "@/components/ui/pagination-dots";
@@ -503,6 +504,7 @@ export default function Index() {
       />
 
       <HeroSection />
+      <OnboardingQuickStart />
 
       <section className="page-container space-y-5 pb-24 pt-6 sm:pt-7 md:space-y-8 md:pb-0 md:pt-8">
         {authLoading ? (

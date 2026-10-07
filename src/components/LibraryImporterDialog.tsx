@@ -19,13 +19,22 @@ import { toast } from "sonner";
 
 interface LibraryImporterDialogProps {
   children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function LibraryImporterDialog({ children }: LibraryImporterDialogProps) {
+export function LibraryImporterDialog(props: LibraryImporterDialogProps) {
+  const { children } = props;
   const { t } = useTranslation();
   const { addToWatched, addToWatchlist } = useUserLists();
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = props.open !== undefined;
+  const isOpen = isControlled ? Boolean(props.open) : internalOpen;
+  const setIsOpen = (next: boolean) => {
+    if (!isControlled) setInternalOpen(next);
+    props.onOpenChange?.(next);
+  };
   const [file, setFile] = useState<File | null>(null);
   const [parseResult, setParseResult] = useState<ImportParseResult | null>(null);
   const [isImporting, setIsImporting] = useState(false);

@@ -79,6 +79,9 @@ type ReliabilitySignalProps = {
 };
 
 type AnalyticsEvents = {
+  onboarding_quickstart_viewed: { is_authenticated: "yes" | "no" };
+  onboarding_title_picked: { media_id: string; media_type: "movie" | "tv" };
+  onboarding_quickstart_completed: { titles_selected: string };
   web_vital: WebVitalProps;
   signup_intent: SignupIntentProps;
   account_created: AccountCreatedProps;
@@ -94,6 +97,9 @@ type AnalyticsEvents = {
 };
 
 const allowedEventProperties: Record<keyof AnalyticsEvents, readonly string[]> = {
+  onboarding_quickstart_viewed: ["is_authenticated"],
+  onboarding_title_picked: ["media_id", "media_type"],
+  onboarding_quickstart_completed: ["titles_selected"],
   web_vital: ["metric", "route", "rating", "value_bucket"],
   signup_intent: ["entry_surface"],
   account_created: ["auth_method"],

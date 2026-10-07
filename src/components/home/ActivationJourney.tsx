@@ -18,6 +18,8 @@ import { useUserLists } from "@/contexts/UserListsContext";
 import { useTitleFollows } from "@/hooks/useTitleFollows";
 import { usePinnedFavorites } from "@/hooks/usePinnedFavorites";
 import { Button } from "@/components/ui/button";
+import { LibraryImporterDialog } from "@/components/LibraryImporterDialog";
+import { UploadCloud } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { trackProductEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
@@ -144,6 +146,16 @@ export function ActivationJourney() {
       <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
       <div className="relative">
         <div className="flex gap-3 sm:items-start sm:justify-between">
+          <LibraryImporterDialog>
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden sm:inline-flex items-center gap-1.5 border-primary/30 text-primary hover:bg-primary/10 text-xs font-semibold mr-2"
+            >
+              <UploadCloud className="h-3.5 w-3.5" />
+              <span>{t("common.import", "Import")}</span>
+            </Button>
+          </LibraryImporterDialog>
           <div className="min-w-0">
             <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary/90">
               <Sparkles className="h-4 w-4" aria-hidden="true" />
