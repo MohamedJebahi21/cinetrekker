@@ -204,6 +204,18 @@ function SpotlightHero({ items }: { items: Media[] }) {
 }
 
 // ── Category quick-nav cards ─────────────────────────────────────────────────
+
+const STREAMING_PROVIDERS = [
+  { id: "8", label: "Netflix", border: "border-red-500/25 hover:border-red-500/50 hover:bg-red-500/10", text: "text-red-400" },
+  { id: "9", label: "Amazon Prime", border: "border-blue-500/25 hover:border-blue-500/50 hover:bg-blue-500/10", text: "text-blue-400" },
+  { id: "337", label: "Disney+", border: "border-sky-500/25 hover:border-sky-500/50 hover:bg-sky-500/10", text: "text-sky-300" },
+  { id: "1899", label: "Max", border: "border-purple-500/25 hover:border-purple-500/50 hover:bg-purple-500/10", text: "text-purple-300" },
+  { id: "350", label: "Apple TV+", border: "border-neutral-500/25 hover:border-neutral-400/50 hover:bg-neutral-500/10", text: "text-neutral-200" },
+  { id: "15", label: "Hulu", border: "border-emerald-500/25 hover:border-emerald-500/50 hover:bg-emerald-500/10", text: "text-emerald-400" },
+  { id: "531", label: "Paramount+", border: "border-indigo-500/25 hover:border-indigo-500/50 hover:bg-indigo-500/10", text: "text-indigo-400" },
+  { id: "387", label: "Peacock", border: "border-amber-500/25 hover:border-amber-500/50 hover:bg-amber-500/10", text: "text-amber-400" },
+];
+
 const CATEGORIES = [
   { icon: Flame,     label: "Trending",     to: "/trending",              color: "text-orange-400", bg: "from-orange-500/15 to-orange-600/5",  border: "border-orange-500/20" },
   { icon: Film,      label: "Movies",       to: "/search?type=movie",     color: "text-blue-400",   bg: "from-blue-500/15 to-blue-600/5",      border: "border-blue-500/20" },
@@ -364,6 +376,35 @@ export default function Discover() {
             <Sparkles className="h-4 w-4" />
             Mood picks
           </Button>
+        </section>
+
+        
+        {/* ── Streaming Providers Rail ── */}
+        <section className="ct-panel px-4 py-3 sm:px-5" aria-label="Stream by provider">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2">
+              <Tv className="h-4 w-4 text-primary" />
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t("discover.streamOn", "Stream On Your Services")}
+              </p>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0" aria-label="Filter by streaming service">
+              {STREAMING_PROVIDERS.map((provider) => (
+                <Link
+                  key={provider.id}
+                  to={`/search?streaming=${provider.id}`}
+                  className={cn(
+                    "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border bg-card/40 px-3 text-xs font-medium transition-all duration-200",
+                    provider.border,
+                    provider.text
+                  )}
+                >
+                  <Play className="h-3 w-3 fill-current" />
+                  {provider.label}
+                </Link>
+              ))}
+            </div>
+          </div>
         </section>
 
         {/* ── Mood / Vibe filter ── */}

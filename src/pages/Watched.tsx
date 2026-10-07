@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Check, Star, X } from "lucide-react";
+import { Check, Star, X, CheckSquare, Bookmark, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getImageUrl, getMediaTitle } from "@/services/tmdb";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import SEO from "@/components/SEO";
 import { Image } from "@/components/ui/Image";
 import { useWatchedFilters } from "@/hooks/useWatchedFilters";
+import { useUserLists } from "@/contexts/UserListsContext";
 import { getEnrichedMediaType } from "@/types/enriched-media";
 import {
   Select,
@@ -19,9 +20,19 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 
+
+function getSafeType(media: Parameters<typeof getEnrichedMediaType>[0]): "movie" | "tv" {
+  return getEnrichedMediaType(media) === "tv" ? "tv" : "movie";
+}
+
 export default function Watched() {
   const { t, i18n } = useTranslation();
   const language = i18n.language;
+  const { removeFromWatched, addToWatchlist } = useUserLists();
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [isBulkOperating, setIsBulkOperating] = useState(false);
+
   const {
     ALL,
     filterLang,
@@ -81,6 +92,67 @@ export default function Watched() {
     return Array.from(map.entries()).sort((a, b) => b[0].localeCompare(a[0]));
   }, [filteredMedia]);
 
+  const toggleSelect = (mediaId: number, mediaType: "movie" | "tv") => {
+    const key = `${mediaType}-${mediaId}`;
+    setSelectedKeys((current) => {
+      const next = new Set(current);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    const allKeys = new Set(filteredMedia.map((m) => `${getSafeType(m)}-${m.id}`));
+    setSelectedKeys(allKeys);
+  };
+
+  const clearSelection = () => {
+    setSelectedKeys(new Set());
+    setSelectionMode(false);
+  };
+
+  const handleBulkMoveToWatchlist = async () => {
+    setIsBulkOperating(true);
+    try {
+      const selectedItems = filteredMedia.filter((m) =>
+        selectedKeys.has(`${getSafeType(m)}-${m.id}`)
+      );
+      await Promise.all(
+        selectedItems.map(async (item) => {
+          const type = getSafeType(item);
+          await addToWatchlist(item.id, type);
+          await removeFromWatched(item.id, type);
+        })
+      );
+      clearSelection();
+    } finally {
+      setIsBulkOperating(false);
+    }
+  };
+
+  const handleBulkRemoveFromWatched = async () => {
+    setIsBulkOperating(true);
+    try {
+      const selectedItems = filteredMedia.filter((m) =>
+        selectedKeys.has(`${getSafeType(m)}-${m.id}`)
+      );
+      await Promise.all(
+        selectedItems.map(async (item) => {
+          const type = getSafeType(item);
+          await removeFromWatched(item.id, type);
+        })
+      );
+      clearSelection();
+    } finally {
+      setIsBulkOperating(false);
+    }
+  };
+
+
   return (
     <>
       <SEO
@@ -101,18 +173,81 @@ export default function Watched() {
               </p>
               <h1 className="section-title mb-0">{t("watched.title", "Watched")}</h1>
             </div>
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearFilters}
-                className="gap-2"
-              >
-                <X className="h-4 w-4" />
-                {t("search.clearFilters", "Clear Filters")}
-              </Button>
-            )}
+                        <div className="flex items-center gap-2">
+              {filteredMedia.length > 0 && (
+                <Button
+                  variant={selectionMode ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    if (selectionMode) {
+                      clearSelection();
+                    } else {
+                      setSelectionMode(true);
+                    }
+                  }}
+                  className="gap-2"
+                >
+                  <CheckSquare className="h-4 w-4" />
+                  {selectionMode ? t("common.done", "Done") : t("watchedPage.bulkSelect", "Bulk Select")}
+                </Button>
+              )}
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="gap-2"
+                >
+                  <X className="h-4 w-4" />
+                  {t("search.clearFilters", "Clear Filters")}
+                </Button>
+              )}
+            </div>
           </div>
+
+          
+          {/* ── Bulk Actions Floating / Fixed Bar ── */}
+          {selectionMode && filteredMedia.length > 0 && (
+            <div className="ct-panel mb-6 flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between border-primary/20 bg-card/90 backdrop-blur-md">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold">
+                  {selectedKeys.size === 0
+                    ? t("watchedPage.selectItemsHint", "Select titles to manage")
+                    : t("watchedPage.selectedCount", "{{count}} selected", { count: selectedKeys.size })}
+                </span>
+                <Button variant="ghost" size="sm" onClick={selectAll} className="text-xs text-primary">
+                  {t("common.selectAll", "Select All")}
+                </Button>
+                {selectedKeys.size > 0 && (
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedKeys(new Set())} className="text-xs text-muted-foreground">
+                    {t("common.deselectAll", "Deselect All")}
+                  </Button>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={selectedKeys.size === 0 || isBulkOperating}
+                  onClick={handleBulkMoveToWatchlist}
+                  className="gap-2 text-xs"
+                >
+                  <Bookmark className="h-3.5 w-3.5" />
+                  {t("watchedPage.moveToWatchlist", "Move to Watchlist")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  disabled={selectedKeys.size === 0 || isBulkOperating}
+                  onClick={handleBulkRemoveFromWatched}
+                  className="gap-2 text-xs"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  {t("watchedPage.removeFromWatched", "Remove from Watched")}
+                </Button>
+              </div>
+            </div>
+          )}
 
           {hasWatchedItems || hasActiveFilters ? (
             <div className="ct-panel mb-8 p-4 md:p-5">
@@ -301,12 +436,50 @@ export default function Watched() {
                         media.release_date || media.first_air_date
                       )?.slice(0, 4);
 
+                      const mType = getSafeType(media);
+                      const isSelected = selectedKeys.has(`${mType}-${media.id}`);
+
                       return (
-                        <Link
-                          key={`${getEnrichedMediaType(media)}-${media.id}`}
-                          to={`/${getEnrichedMediaType(media)}/${media.id}`}
-                          className="group relative block overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1"
+                        <div
+                          key={`${mType}-${media.id}`}
+                          onClick={() => {
+                            if (selectionMode) {
+                              toggleSelect(media.id, mType);
+                            }
+                          }}
+                          className={cn(
+                            "group relative block overflow-hidden rounded-2xl transition-all duration-300",
+                            selectionMode ? "cursor-pointer" : "hover:-translate-y-1",
+                            isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                          )}
                         >
+                          {selectionMode && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleSelect(media.id, mType);
+                              }}
+                              className={cn(
+                                "absolute top-3 left-3 z-30 flex h-6 w-6 items-center justify-center rounded-md border shadow-md transition-colors",
+                                isSelected
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : "border-white/40 bg-black/60 text-transparent hover:border-white"
+                              )}
+                              aria-label={isSelected ? t("common.deselect", "Deselect") : t("common.select", "Select")}
+                            >
+                              <Check className="h-4 w-4" />
+                            </button>
+                          )}
+                          <Link
+                            to={selectionMode ? "#" : `/${mType}/${media.id}`}
+                            onClick={(e) => {
+                              if (selectionMode) {
+                                e.preventDefault();
+                              }
+                            }}
+                            className="block"
+                          >
                           {posterUrl ? (
                             <Image
                               src={posterUrl}
@@ -361,7 +534,8 @@ export default function Watched() {
                               </div>
                             ) : null}
                           </div>
-                        </Link>
+                          </Link>
+                        </div>
                       );
                     })}
                   </div>
