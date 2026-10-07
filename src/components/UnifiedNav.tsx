@@ -558,12 +558,12 @@ export function UnifiedNav() {
                 <div className="desktop-menu-shell mx-auto flex min-h-full max-w-[78rem] items-center">
                   <nav aria-label={t("nav.main", "Main navigation")} className="desktop-menu-grid grid w-full gap-5 md:grid-cols-3">
                     {primaryNavigationGroups.map((group) => (
-                      <section key={group.titleKey} className="desktop-menu-group min-w-0 self-stretch border-t border-border pt-4 first:border-t-0 first:pt-0">
-                        <div className="mb-2 flex items-center justify-between gap-3">
-                          <h3 className="text-[0.7rem] font-semibold uppercase tracking-[0.17em] text-muted-foreground">{t(group.titleKey, group.defaultTitle)}</h3>
-                          <span className="text-[10px] font-medium text-muted-foreground">{group.links.length}</span>
+                      <section key={group.titleKey} className="desktop-menu-group min-w-0 self-stretch rounded-2xl border border-border/60 bg-card/75 p-5 shadow-sm backdrop-blur-md transition-all">
+                        <div className="mb-3.5 flex items-center justify-between gap-3 border-b border-border/50 pb-2.5">
+                          <h3 className="text-[0.7rem] font-bold uppercase tracking-[0.17em] text-primary">{t(group.titleKey, group.defaultTitle)}</h3>
+                          <span className="rounded-full bg-muted/80 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">{group.links.length}</span>
                         </div>
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-1.5">
                           {group.links.map((item) => {
                             const Icon = item.icon;
                             const isActive = pathname === item.path;
@@ -574,13 +574,13 @@ export function UnifiedNav() {
                                   onClick={() => setIsDesktopMenuOpen(false)}
                                   aria-current={isActive ? "page" : undefined}
                                   className={cn(
-                                    "group relative flex min-h-[3.5rem] items-start gap-3 rounded-lg border border-transparent px-2.5 py-2.5 text-sm transition-[background-color,border-color,color] duration-150 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                                    isActive && "border-primary/25 bg-primary/8 text-primary"
+                                    "group relative flex min-h-[3.5rem] items-start gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm transition-all duration-150 hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                                    isActive && "border-primary/25 bg-primary/10 text-primary shadow-sm"
                                   )}
                                 >
                                   <div className={cn(
-                                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-colors duration-150 group-hover:bg-primary/10 group-hover:text-primary",
-                                    isActive && "bg-primary/12 text-primary"
+                                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground transition-all duration-150 group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-sm",
+                                    isActive && "bg-primary text-primary-foreground shadow-sm"
                                   )}>
                                     <Icon className="h-4 w-4" aria-hidden="true" />
                                   </div>
@@ -613,13 +613,20 @@ export function UnifiedNav() {
           className="safe-area-insets top-[calc(4rem+env(safe-area-inset-top,0px))] h-[calc(100dvh-4rem-env(safe-area-inset-top,0px))] w-full max-w-none overflow-y-auto border-l-0 bg-background px-0 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-4 sm:w-[24rem] sm:border-l sm:pt-[max(1rem,env(safe-area-inset-top,0px))]"
         >
           <div className="relative z-10 px-4 pb-8 motion-safe:animate-fade-in sm:px-5">
-            <SheetHeader className="border-b border-border px-1 pb-4 text-left">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <SheetTitle className="text-xl">{t("nav.menu", "Menu")}</SheetTitle>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {t("nav.mobileSubtitle", "Browse tools and extra pages live here.")}
-                  </p>
+            <SheetHeader className="border-b border-border/60 px-1 pb-4 text-left">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <img
+                    src="/apple-touch-icon.png"
+                    alt="CineTrekker"
+                    className="h-8 w-8 rounded-xl object-cover shadow-sm ring-1 ring-white/10 shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <SheetTitle className="text-lg font-bold tracking-tight">{t("nav.menu", "Menu")}</SheetTitle>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {t("nav.mobileSubtitle", "Browse tools and extra pages live here.")}
+                    </p>
+                  </div>
                 </div>
               </div>
             </SheetHeader>
@@ -628,52 +635,85 @@ export function UnifiedNav() {
               <div className="mt-5 space-y-5">
               {/* User Profile Progress Card inside Mobile Menu */}
               {user && (
-                <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4 motion-safe:animate-slide-up">
+                <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-card via-card/90 to-primary/[0.04] p-4 shadow-sm backdrop-blur-md motion-safe:animate-slide-up">
                   <div className="flex items-center gap-3 relative z-10">
-                    {profileImageUrl ? (
-                      <img
-                        src={profileImageUrl}
-                        alt="Avatar"
-                        className="h-10 w-10 rounded-full object-cover border border-border"
-                      />
-                    ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted border border-border text-muted-foreground">
-                        <User className="h-5 w-5" />
-                      </div>
-                    )}
+                    <div className="relative shrink-0">
+                      {profileImageUrl ? (
+                        <img
+                          src={profileImageUrl}
+                          alt="Avatar"
+                          className="h-11 w-11 rounded-full object-cover ring-2 ring-primary/20 shadow-sm"
+                        />
+                      ) : (
+                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-muted/80 ring-2 ring-border text-muted-foreground">
+                          <User className="h-5 w-5" />
+                        </div>
+                      )}
+                      <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-background" />
+                    </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">{t("profile.cinephileMilestones", "Trek Progress")}</p>
+                      <p className="text-[10px] text-primary font-bold uppercase tracking-wider">{t("profile.cinephileMilestones", "Trek Progress")}</p>
                       <h4 className="text-sm font-bold text-foreground truncate">{profile?.display_name || user.email}</h4>
                     </div>
-                    <span className="rounded border border-border bg-muted px-2 py-0.5 text-[9px] font-semibold uppercase text-muted-foreground tracking-wider shrink-0">
+                    <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-[9px] font-bold uppercase text-primary tracking-wider shrink-0">
                       {levelInfo.name}
                     </span>
                   </div>
                   <div className="mt-3 relative z-10">
-                    <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+                    <div className="flex justify-between text-[11px] text-muted-foreground mb-1.5 font-medium">
                       <span>{moviesWatchedCount} {moviesWatchedCount === 1 ? "movie" : "movies"}</span>
                       <span>Next milestone: {levelInfo.nextMilestone}</span>
                     </div>
-                    <div className="h-1.5 w-full bg-muted rounded overflow-hidden border border-border">
+                    <div className="h-2 w-full bg-muted/80 rounded-full overflow-hidden border border-border/40 p-[1px]">
                       <div
-                        className="h-full bg-primary transition-all duration-300"
+                        className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-300"
                         style={{ width: `${levelInfo.progress}%` }}
                       />
                     </div>
+                  </div>
+                  {/* Quick shortcuts to Watchlist, Watched, and Profile */}
+                  <div className="mt-3.5 pt-3 border-t border-border/50 grid grid-cols-3 gap-1.5 relative z-10">
+                    <Link
+                      to="/watchlist"
+                      onClick={() => setIsMobileSheetOpen(false)}
+                      className="flex flex-col items-center justify-center rounded-xl bg-background/50 hover:bg-background/90 py-1.5 px-1 text-center transition-colors border border-border/40"
+                    >
+                      <Bookmark className="h-3.5 w-3.5 text-primary mb-0.5" />
+                      <span className="text-[10px] font-semibold text-foreground">{t("nav.watchlist", "Watchlist")}</span>
+                    </Link>
+                    <Link
+                      to="/watched"
+                      onClick={() => setIsMobileSheetOpen(false)}
+                      className="flex flex-col items-center justify-center rounded-xl bg-background/50 hover:bg-background/90 py-1.5 px-1 text-center transition-colors border border-border/40"
+                    >
+                      <CheckSquare className="h-3.5 w-3.5 text-primary mb-0.5" />
+                      <span className="text-[10px] font-semibold text-foreground">{t("nav.watched", "Watched")}</span>
+                    </Link>
+                    <Link
+                      to="/profile"
+                      onClick={() => setIsMobileSheetOpen(false)}
+                      className="flex flex-col items-center justify-center rounded-xl bg-background/50 hover:bg-background/90 py-1.5 px-1 text-center transition-colors border border-border/40"
+                    >
+                      <User className="h-3.5 w-3.5 text-primary mb-0.5" />
+                      <span className="text-[10px] font-semibold text-foreground">{t("nav.profile", "Profile")}</span>
+                    </Link>
                   </div>
                 </div>
               )}
 
               {/* Guest CTA card */}
               {!user && (
-                <div className="relative overflow-hidden rounded-lg border border-border bg-muted/30 p-4 text-center motion-safe:animate-slide-up">
+                <div className="relative overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/[0.08] via-card to-card p-4 text-center shadow-sm motion-safe:animate-slide-up">
+                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/15 text-primary mb-2.5">
+                    <Compass className="h-5 w-5" />
+                  </div>
                   <h4 className="text-sm font-bold text-foreground">{t("home.makeEveryVisitPersonal", "Make every visit personal")}</h4>
-                  <p className="text-xs text-muted-foreground mt-1">{t("home.createAccountSyncDesc", "Create a free account to sync watchlist & ratings.")}</p>
-                  <div className="mt-3 flex gap-2 justify-center">
-                    <Button asChild size="sm" className="text-[10px] h-8 px-4">
+                  <p className="text-xs text-muted-foreground mt-1 max-w-[17rem] mx-auto leading-relaxed">{t("home.createAccountSyncDesc", "Create a free account to sync watchlist & ratings.")}</p>
+                  <div className="mt-3.5 flex gap-2 justify-center">
+                    <Button asChild size="sm" className="h-9 px-4 rounded-xl font-semibold text-xs shadow-sm">
                       <Link to="/signup" onClick={() => setIsMobileSheetOpen(false)}>{t("home.createFreeAccount", "Register")}</Link>
                     </Button>
-                    <Button asChild size="sm" variant="outline" className="text-[10px] h-8 px-4 bg-transparent border-border hover:bg-accent">
+                    <Button asChild size="sm" variant="outline" className="h-9 px-4 rounded-xl font-semibold text-xs border-border/70 hover:bg-accent">
                       <Link to="/login" onClick={() => setIsMobileSheetOpen(false)}>{t("nav.signIn", "Sign In")}</Link>
                     </Button>
                   </div>
@@ -682,11 +722,16 @@ export function UnifiedNav() {
 
               {/* Guest visitors see discovery essentials first; signed-in users retain their full personal workspace. */}
               {mobileNavigationGroups.map((group) => (
-                <div key={group.titleKey} className="space-y-2 border-t border-border pt-4">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground px-1">
-                    {t(group.titleKey, group.defaultTitle)}
-                  </p>
-                  <div className="space-y-2">
+                <div key={group.titleKey} className="space-y-2 border-t border-border/60 pt-4">
+                  <div className="flex items-center justify-between px-1">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                      {t(group.titleKey, group.defaultTitle)}
+                    </p>
+                    <span className="rounded-full bg-muted/60 px-2 py-0.5 text-[9px] font-semibold text-muted-foreground">
+                      {group.links.length}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
                     {group.links.map((item) => {
                       const Icon = item.icon;
                       const isActive = pathname === item.path;
@@ -696,16 +741,30 @@ export function UnifiedNav() {
                             to={item.path}
                             onClick={() => setIsMobileSheetOpen(false)}
                             className={cn(
-                              "flex items-center gap-3 rounded-lg border border-transparent px-3 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted",
-                              isActive && "bg-primary/8 text-primary"
+                              "group relative flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-semibold transition-all duration-150 hover:bg-muted/70",
+                              isActive
+                                ? "border-primary/25 bg-primary/10 text-primary shadow-sm"
+                                : "text-foreground hover:text-foreground",
                             )}
                           >
-                            <Icon className={cn("h-4 w-4 shrink-0 text-muted-foreground", isActive && "text-primary")} />
+                            <div
+                              className={cn(
+                                "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
+                                isActive
+                                  ? "bg-primary text-primary-foreground shadow-sm"
+                                  : "bg-muted/80 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary",
+                              )}
+                            >
+                              <Icon className="h-4 w-4" />
+                            </div>
                             <div className="flex-1 min-w-0">
-                              <p className={cn("text-sm font-semibold text-foreground", isActive && "text-primary")}>
+                              <p className={cn("text-sm font-semibold truncate", isActive ? "text-primary" : "text-foreground")}>
                                 {t(item.labelKey, item.defaultLabel)}
                               </p>
                             </div>
+                            {isActive && (
+                              <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" aria-hidden="true" />
+                            )}
                           </Link>
                         </div>
                       );
@@ -715,8 +774,8 @@ export function UnifiedNav() {
               ))}
 
               {!user && (
-                <section className="space-y-2 border-t border-border pt-4" aria-label={t("nav.accountOnly", "Your account")}>
-                  <p className="px-1 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
+                <section className="space-y-2 border-t border-border/60 pt-4" aria-label={t("nav.accountOnly", "Your account")}>
+                  <p className="px-1 text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
                     {t("nav.accountOnly", "Your account")}
                   </p>
                   <p className="px-1 text-xs leading-5 text-muted-foreground">
@@ -725,23 +784,64 @@ export function UnifiedNav() {
                 </section>
               )}
 
-              {/* Settings & Auth Section */}
-              <div className="space-y-2 border-t border-border pt-4">
-                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground px-1 mb-2">
-                  System
+              {/* Quick Controls, Theme, Language & Settings Section */}
+              <div className="space-y-3 border-t border-border/60 pt-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground px-1">
+                  {t("preferences.quickControls", "Quick controls")}
                 </p>
+
+                {/* Mobile Theme Switcher */}
+                <div className="rounded-xl border border-border/60 bg-muted/30 p-2.5">
+                  <div className="flex items-center justify-between mb-2 px-1">
+                    <span className="text-xs font-semibold text-foreground">{t("nav.changeTheme", "Theme")}</span>
+                    <span className="text-[10px] text-muted-foreground font-medium">{activeThemeLabel}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {(["dark", "light", "oled"] as const).map((option) => {
+                      const isSelected = theme === option;
+                      const label =
+                        option === "dark"
+                          ? t("nav.themeDark", "Dark")
+                          : option === "light"
+                            ? t("nav.themeLight", "Light")
+                            : t("nav.themeOled", "OLED");
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => setTheme(option)}
+                          className={cn(
+                            "flex items-center justify-center gap-1.5 rounded-lg py-1.5 px-2 text-xs font-semibold transition-all",
+                            isSelected
+                              ? "border border-primary/30 bg-primary/15 text-primary shadow-sm"
+                              : "border border-transparent bg-background/60 text-muted-foreground hover:bg-background hover:text-foreground",
+                          )}
+                        >
+                          {isSelected && <Check className="h-3 w-3 text-primary shrink-0" />}
+                          <span>{label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <div className="motion-safe:animate-slide-up">
                   <Link
                     to="/settings"
                     onClick={() => setIsMobileSheetOpen(false)}
-                    className="flex min-h-[44px] items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+                    className="flex min-h-[44px] items-center gap-3 rounded-xl border border-border/60 bg-card px-3.5 py-2.5 text-sm font-semibold text-foreground shadow-sm transition-all hover:bg-muted"
                   >
-                    <Settings className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    {t("nav.settings", "Settings")}
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                      <Settings className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold leading-tight">{t("nav.settings", "Settings")}</p>
+                      <p className="truncate text-[11px] font-normal text-muted-foreground mt-0.5">{t("preferences.settingsDescription", "Account, privacy, and notifications")}</p>
+                    </div>
                   </Link>
                 </div>
                 {user ? (
-                  <div className="motion-safe:animate-slide-up">
+                  <div className="motion-safe:animate-slide-up pt-1">
                     <button
                       type="button"
                       onClick={async () => {
@@ -749,18 +849,18 @@ export function UnifiedNav() {
                         await signOut();
                         navigate("/", { replace: true });
                       }}
-                      className="flex min-h-[44px] w-full items-center gap-3 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-2 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
+                      className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-destructive/25 bg-destructive/10 px-4 py-2.5 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/15"
                     >
                       <User className="h-4 w-4 shrink-0" />
                       {t("nav.signOut", "Sign Out")}
                     </button>
                   </div>
                 ) : (
-                  <div className="motion-safe:animate-slide-up">
+                  <div className="motion-safe:animate-slide-up pt-1">
                     <Link
                       to="/login"
                       onClick={() => setIsMobileSheetOpen(false)}
-                      className="flex min-h-[44px] items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+                      className="flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-primary/25 bg-primary/10 px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/15"
                     >
                       <User className="h-4 w-4 shrink-0" />
                       {t("nav.signIn", "Sign In")}

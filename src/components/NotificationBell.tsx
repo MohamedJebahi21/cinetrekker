@@ -71,15 +71,15 @@ function NotificationBellComponent() {
       variant="ghost"
       size="icon"
       className={cn(
-        "relative !h-11 !min-h-11 !w-11 !min-w-11 overflow-visible rounded-full border border-border/40 bg-foreground/5 text-foreground/90 backdrop-blur transition-colors duration-200 hover:bg-foreground/10 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/50 md:!h-9 md:!min-h-9 md:!w-9 md:!min-w-9",
-        unreadCount > 0 && "border-primary/25 bg-primary/5",
+        "relative !h-11 !min-h-11 !w-11 !min-w-11 overflow-visible rounded-full border border-border/40 bg-foreground/5 text-foreground/90 backdrop-blur transition-all duration-200 hover:bg-foreground/10 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/50 md:!h-9 md:!min-h-9 md:!w-9 md:!min-w-9",
+        unreadCount > 0 && "border-primary/30 bg-primary/10 text-primary shadow-[0_0_14px_hsl(var(--primary)/0.15)]",
       )}
       type="button"
       aria-label={t("notifications.open", { count: unreadCount })}
     >
       <Bell className={cn("relative h-5 w-5", unreadCount > 0 && "text-primary")} />
       {unreadCount > 0 && (
-        <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-card bg-primary px-1 text-[10px] font-black text-primary-foreground">
+        <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-background bg-primary px-1 text-[10px] font-black text-primary-foreground shadow-sm">
           {unreadCount > 9 ? "9+" : unreadCount}
         </span>
       )}
