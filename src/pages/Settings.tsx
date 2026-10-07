@@ -1,3 +1,4 @@
+import { LibraryImporterDialog } from "@/components/LibraryImporterDialog";
 import { useTranslation } from "react-i18next";
 import {
   useEffect,
@@ -1381,19 +1382,22 @@ export default function Settings() {
                         </p>
                       </div>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="shrink-0 gap-2"
-                      onClick={() => void exportData()}
-                      disabled={isExportingData}
-                    >
+                    <div className="flex items-center gap-2">
+                      <LibraryImporterDialog />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="shrink-0 gap-2"
+                        onClick={() => void exportData()}
+                        disabled={isExportingData}
+                      >
                       <Download className="h-3.5 w-3.5" />
                       {isExportingData
                         ? text("settings.preparingExport", "Preparing…")
                         : text("settings.exportData", "Export data")}
                     </Button>
+                    </div>
                   </div>
 
                   <Divider />
