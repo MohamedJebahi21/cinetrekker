@@ -755,6 +755,29 @@ export default function Settings() {
 
       <div className="page-container ct-page-shell max-w-5xl pt-20 pb-28 md:pb-12">
 
+        {/* ── Mobile Sticky Category Rail ──────────────────────────────── */}
+        <div className="sticky top-14 z-20 -mx-4 mb-6 flex items-center gap-1.5 overflow-x-auto border-b border-border/60 bg-background/95 px-4 py-2.5 backdrop-blur-md scrollbar-none lg:hidden">
+          {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
+            const active = activeSection === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => scrollTo(id)}
+                className={cn(
+                  "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                  active
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                <Icon className="h-3 w-3" />
+                {label}
+              </button>
+            );
+          })}
+        </div>
+
         {/* ── Page heading ──────────────────────────────────────────────── */}
         <motion.div
           variants={rowVariants}
@@ -809,13 +832,16 @@ export default function Settings() {
                     type="button"
                     onClick={() => scrollTo(id)}
                     className={cn(
-                      "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150",
+                      "group flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 relative",
                       active
-                        ? "bg-accent text-foreground"
+                        ? "bg-primary/10 text-primary font-semibold shadow-xs"
                         : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
                     )}
                   >
-                    <Icon className="h-4 w-4 shrink-0" />
+                    {active && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 rounded-r-full bg-primary" />
+                    )}
+                    <Icon className={cn("h-4 w-4 shrink-0 transition-colors", active ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
                     {label}
                   </button>
                 );

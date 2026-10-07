@@ -88,7 +88,7 @@ export function ProfileIdentityHero({
   };
 
   return (
-    <Card className="profile-identity-card profile-premium-hero relative overflow-hidden">
+    <Card className="profile-identity-card profile-premium-hero relative overflow-hidden border border-border/70 bg-gradient-to-br from-card/95 via-card/85 to-muted/30 backdrop-blur-md shadow-xl">
       <CardContent className="p-5 sm:p-7 lg:p-8">
         <div className="profile-identity-layout flex items-start gap-4 sm:gap-7 lg:gap-8">
           <div className="flex w-20 shrink-0 flex-col items-center sm:w-[9.5rem] sm:min-w-[9.5rem]">
@@ -103,7 +103,7 @@ export function ProfileIdentityHero({
             >
               <div
                 className={cn(
-                  "profile-avatar-frame relative h-20 w-20 overflow-hidden rounded-2xl border-2 border-border bg-muted shadow-lg sm:h-32 sm:w-32",
+                  "profile-avatar-frame relative h-20 w-20 overflow-hidden rounded-2xl border-2 border-border/80 bg-muted/60 shadow-[0_8px_30px_rgb(0,0,0,0.12)] ring-4 ring-primary/5 sm:h-32 sm:w-32 transition-transform duration-300 group-hover:scale-[1.02]",
                   isAvatarDragActive && "border-primary scale-[1.02]",
                 )}
               >
@@ -238,7 +238,7 @@ export function ProfileIdentityHero({
             ) : (
               <>
                 <div className="profile-stat-grid mt-5 grid gap-2 sm:grid-cols-3">
-                  <div className="profile-stat px-4 py-3">
+                  <div className="profile-stat rounded-xl border border-border/50 bg-background/50 px-4 py-3 transition-colors hover:border-primary/30 hover:bg-background/80">
                     <div className="mb-0.5 flex items-center gap-2">
                       <Film className="h-3.5 w-3.5 text-muted-foreground" />
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -247,7 +247,7 @@ export function ProfileIdentityHero({
                     </div>
                     <p className="tabular-nums text-xl font-bold text-foreground">{countMoviesWatched}</p>
                   </div>
-                  <div className="profile-stat px-4 py-3">
+                  <div className="profile-stat rounded-xl border border-border/50 bg-background/50 px-4 py-3 transition-colors hover:border-primary/30 hover:bg-background/80">
                     <div className="mb-0.5 flex items-center gap-2">
                       <Star className="h-3.5 w-3.5 text-muted-foreground" />
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -256,7 +256,7 @@ export function ProfileIdentityHero({
                     </div>
                     <p className="tabular-nums text-xl font-bold text-foreground">{countRatings}</p>
                   </div>
-                  <div className="profile-stat px-4 py-3">
+                  <div className="profile-stat rounded-xl border border-border/50 bg-background/50 px-4 py-3 transition-colors hover:border-primary/30 hover:bg-background/80">
                     <div className="mb-0.5 flex items-center gap-2">
                       <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">

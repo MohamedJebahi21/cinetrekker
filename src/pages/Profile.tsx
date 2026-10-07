@@ -1991,20 +1991,20 @@ export default function Profile() {
                     setIsEditMode(nextTab === "edit");
                   }}
                 >
-                  <TabsList className="profile-tabs h-auto w-full justify-start gap-1 overflow-x-auto p-1">
-                    <TabsTrigger value="overview" className="shrink-0 rounded-md px-4 py-2 gap-2 text-sm font-medium transition-colors">
+                  <TabsList className="profile-tabs h-auto w-full justify-start gap-1.5 overflow-x-auto rounded-xl border border-border/60 bg-card/60 p-1.5 backdrop-blur-md scrollbar-none">
+                    <TabsTrigger value="overview" className="shrink-0 rounded-lg px-4 py-2 gap-2 text-sm font-medium transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
                       <BarChart3 className="h-3.5 w-3.5" />
                       {text("profile.overview", "Overview")}
                     </TabsTrigger>
-                    <TabsTrigger value="favorites" className="shrink-0 rounded-md px-4 py-2 gap-2 text-sm font-medium transition-colors">
+                    <TabsTrigger value="favorites" className="shrink-0 rounded-lg px-4 py-2 gap-2 text-sm font-medium transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
                       <Star className="h-3.5 w-3.5" />
                       {text("profile.favorites", "Favorites")}
                     </TabsTrigger>
-                    <TabsTrigger value="taste" className="shrink-0 rounded-md px-4 py-2 gap-2 text-sm font-medium transition-colors">
+                    <TabsTrigger value="taste" className="shrink-0 rounded-lg px-4 py-2 gap-2 text-sm font-medium transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
                       <Sparkles className="h-3.5 w-3.5" />
                       {text("profile.tasteAndStats", "Taste & Stats")}
                     </TabsTrigger>
-                    <TabsTrigger value="edit" className="shrink-0 rounded-md px-4 py-2 gap-2 text-sm font-medium transition-colors">
+                    <TabsTrigger value="edit" className="shrink-0 rounded-lg px-4 py-2 gap-2 text-sm font-medium transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
                       <User className="h-3.5 w-3.5" />
                       {text("profile.editProfile", "Edit Profile")}
                     </TabsTrigger>
