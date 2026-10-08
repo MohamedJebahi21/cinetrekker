@@ -783,12 +783,14 @@ export default function Settings() {
           variants={rowVariants}
           initial="hidden"
           animate="visible"
-          className="mb-8 flex items-center justify-between"
+          className="mb-6 flex items-center justify-between"
         >
           <div className="flex items-center gap-3">
-            <SettingsIcon className="h-5 w-5 text-muted-foreground" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 text-primary shadow-xs">
+              <SettingsIcon className="h-5 w-5" />
+            </div>
             <div>
-              <h1 className="text-xl font-semibold text-foreground">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
                 {text("nav.settings", "Settings")}
               </h1>
               <p className="text-sm text-muted-foreground">
@@ -804,14 +806,37 @@ export default function Settings() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="hidden items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground sm:flex"
+                className="hidden items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-semibold text-emerald-400 sm:flex"
               >
-                <Check className="h-3 w-3 text-emerald-500" />
+                <Check className="h-3.5 w-3.5 text-emerald-400" />
                 All changes saved
               </motion.div>
             )}
           </AnimatePresence>
         </motion.div>
+
+        {/* ── Prominent Segmented Category Rail (visible across all screens) ─ */}
+        <div className="mb-8 flex w-full items-center gap-2 overflow-x-auto rounded-2xl border border-border/80 bg-card/90 p-2 shadow-lg backdrop-blur-xl ring-1 ring-white/10 scrollbar-none">
+          {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
+            const active = activeSection === id;
+            return (
+              <button
+                key={id}
+                type=button
+                onClick={() => scrollTo(id)}
+                className={cn(
+                  "flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all duration-150",
+                  active
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "text-muted-foreground hover:bg-accent/80 hover:text-foreground",
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </button>
+            );
+          })}
+        </div>
 
         {/* ── Layout ─────────────────────────────────────────────────────── */}
         <div className="flex gap-10 lg:items-start">
@@ -855,7 +880,7 @@ export default function Settings() {
               {Array.from({ length: 4 }).map((_, index) => (
                 <section
                   key={index}
-                  className="rounded-2xl border border-border/60 bg-card p-5 shadow-[0_14px_40px_hsl(var(--background)/0.14)]"
+                  className="rounded-2xl border border-border/80 bg-card/95 p-6 shadow-xl backdrop-blur-md ring-1 ring-white/5 transition-all duration-200 hover:border-primary/30"
                 >
                   <div className="flex items-start gap-3">
                     <span className="mt-0.5 h-5 w-5 shrink-0 animate-pulse rounded-md bg-muted" />
