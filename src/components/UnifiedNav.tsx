@@ -279,7 +279,7 @@ export function UnifiedNav() {
     <div aria-hidden="true" className="h-11 w-full rounded-xl border border-border/50 bg-card/40" />
   );
 
-  const currentPageLabel = useMemo(() => {
+  const currentPageLabel = (() => {
     if (pathname === "/") return t("nav.home", "Home");
 
     const routeLabels: Array<{ path: string; label: string }> = [
@@ -299,7 +299,7 @@ export function UnifiedNav() {
     const segment = pathname.split("/").filter(Boolean)[0];
     if (!segment) return t("nav.home", "Home");
     return segment.charAt(0).toUpperCase() + segment.slice(1);
-  }, [pathname, t]);
+  })();
 
   const mobileNavigationGroups = useMemo(() => {
     if (user) return primaryNavigationGroups;
