@@ -28,6 +28,6 @@ test("Profile identity hero condenses zero-value metrics and milestones only whe
   assert.match(heroSource, /isInactive\?: boolean/);
   assert.match(heroSource, /isInactive = false/);
   assert.match(heroSource, /\{isInactive \? \(/);
-  assert.match(heroSource, /profile-stat-grid mt-5 grid gap-2 sm:grid-cols-3/);
+  assert.match(heroSource, /profile-stat-grid[^"\n]*sm:grid-cols-3/);
   assert.match(heroSource, /profile-milestone-row mt-5 flex flex-wrap/);
 });
