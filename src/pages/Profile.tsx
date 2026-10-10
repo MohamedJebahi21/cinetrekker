@@ -1930,7 +1930,7 @@ export default function Profile() {
         canonical="https://cinetrekker.vercel.app/profile"
       />
       <motion.div
-        className="profile-page page-container ct-page-shell relative mx-auto max-w-[82rem] overflow-x-hidden pb-24 pt-20 md:pb-12"
+        className="profile-page page-container ct-page-shell relative mx-auto max-w-6xl overflow-x-hidden px-4 sm:px-6 lg:px-8 pb-24 pt-20 md:pb-12"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -1991,21 +1991,21 @@ export default function Profile() {
                     setIsEditMode(nextTab === "edit");
                   }}
                 >
-                  <TabsList className="profile-tabs h-auto w-full justify-start gap-2 overflow-x-auto rounded-2xl border border-border/80 bg-card/90 p-2 shadow-lg backdrop-blur-xl ring-1 ring-white/10 scrollbar-none">
-                    <TabsTrigger value="overview" className="shrink-0 rounded-xl px-5 py-2.5 gap-2 text-sm font-semibold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                      <BarChart3 className="h-4 w-4" />
+                  <TabsList className="profile-tabs h-auto w-full justify-start gap-1 overflow-x-auto rounded-xl border border-border/70 bg-card/50 p-1 backdrop-blur-md scrollbar-none">
+                    <TabsTrigger value="overview" className="shrink-0 rounded-lg px-3.5 py-1.5 gap-2 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
+                      <BarChart3 className="h-3.5 w-3.5" />
                       {text("profile.overview", "Overview")}
                     </TabsTrigger>
-                    <TabsTrigger value="favorites" className="shrink-0 rounded-xl px-5 py-2.5 gap-2 text-sm font-semibold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                      <Star className="h-4 w-4" />
+                    <TabsTrigger value="favorites" className="shrink-0 rounded-lg px-3.5 py-1.5 gap-2 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
+                      <Star className="h-3.5 w-3.5" />
                       {text("profile.favorites", "Favorites")}
                     </TabsTrigger>
-                    <TabsTrigger value="taste" className="shrink-0 rounded-xl px-5 py-2.5 gap-2 text-sm font-semibold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                      <Sparkles className="h-4 w-4" />
+                    <TabsTrigger value="taste" className="shrink-0 rounded-lg px-3.5 py-1.5 gap-2 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
+                      <Sparkles className="h-3.5 w-3.5" />
                       {text("profile.tasteAndStats", "Taste & Stats")}
                     </TabsTrigger>
-                    <TabsTrigger value="edit" className="shrink-0 rounded-xl px-5 py-2.5 gap-2 text-sm font-semibold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                      <User className="h-4 w-4" />
+                    <TabsTrigger value="edit" className="shrink-0 rounded-lg px-3.5 py-1.5 gap-2 text-xs sm:text-sm font-medium transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
+                      <User className="h-3.5 w-3.5" />
                       {text("profile.editProfile", "Edit Profile")}
                     </TabsTrigger>
                   </TabsList>

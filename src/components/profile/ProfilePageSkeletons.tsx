@@ -29,7 +29,7 @@ export function PrivateProfileSkeleton() {
       <section className="ct-panel overflow-hidden p-5 md:p-7">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
           <div className="flex shrink-0 justify-center sm:justify-start">
-            <Skeleton className="h-24 w-24 rounded-full md:h-28 md:w-28" />
+            <Skeleton className="h-20 w-20 rounded-2xl sm:h-28 sm:w-28" />
           </div>
           <div className="min-w-0 flex-1 space-y-5">
             <div className="space-y-2">

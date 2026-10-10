@@ -88,15 +88,28 @@ export function ProfileIdentityHero({
   };
 
   return (
-    <Card className="profile-identity-card profile-premium-hero relative overflow-hidden border border-border/80 bg-gradient-to-br from-card/95 via-card/90 to-background/95 backdrop-blur-xl shadow-2xl ring-1 ring-white/10">
-      {/* Cinematic ambient background glow */}
-      <div className="pointer-events-none absolute -left-20 -top-20 h-72 w-72 rounded-full bg-primary/20 blur-3xl" />
-      <div className="pointer-events-none absolute -right-20 top-1/2 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
-      <CardContent className="relative z-10 p-5 sm:p-7 lg:p-8">
+    <Card className="profile-identity-card profile-premium-hero relative overflow-hidden border border-border/70 bg-card/65 backdrop-blur-xl shadow-xl ring-1 ring-white/5">
+      {/* Subtle top edge highlight */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+      <CardContent className="relative z-10 p-5 sm:p-6 lg:p-7">
         <div className="profile-identity-layout flex items-start gap-4 sm:gap-7 lg:gap-8">
-          <div className="flex w-20 shrink-0 flex-col items-center sm:w-[9.5rem] sm:min-w-[9.5rem]">
+          <div className="flex w-20 shrink-0 flex-col items-center sm:w-28 sm:min-w-[7rem]">
             <div
-              className="relative group"
+              className={cn("relative group", isEditMode && "cursor-pointer")}
+              tabIndex={isEditMode ? 0 : undefined}
+              role={isEditMode ? "button" : undefined}
+              aria-label={isEditMode ? text("profile.avatarUploadHint", "Click or drop an image to update your avatar") : undefined}
+              onKeyDown={(e) => {
+                if (isEditMode && (e.key === "Enter" || e.key === " ")) {
+                  e.preventDefault();
+                  profilePhotoInputRef.current?.click();
+                }
+              }}
+              onClick={() => {
+                if (isEditMode) {
+                  profilePhotoInputRef.current?.click();
+                }
+              }}
               onDragOver={(event) => {
                 event.preventDefault();
                 onAvatarDragActiveChange(true);
@@ -106,8 +119,9 @@ export function ProfileIdentityHero({
             >
               <div
                 className={cn(
-                  "profile-avatar-frame relative h-20 w-20 overflow-hidden rounded-2xl border-2 border-primary/40 bg-muted/80 shadow-[0_12px_40px_rgba(0,0,0,0.4)] ring-4 ring-primary/20 sm:h-32 sm:w-32 transition-all duration-300 group-hover:scale-[1.03] group-hover:ring-primary/40",
-                  isAvatarDragActive && "border-primary ring-primary/60 scale-[1.03]",
+                  "profile-avatar-frame relative h-20 w-20 overflow-hidden rounded-2xl border border-border/80 bg-muted/80 shadow-md ring-1 ring-white/10 sm:h-28 sm:w-28 transition-all duration-200",
+                  isEditMode && "ring-2 ring-primary/30 group-hover:ring-primary/60 focus-visible:ring-2 focus-visible:ring-primary",
+                  isAvatarDragActive && "border-primary ring-2 ring-primary scale-[1.02]",
                 )}
               >
                 {profilePhoto ? (
@@ -241,43 +255,43 @@ export function ProfileIdentityHero({
             ) : (
               <>
                 <div className="profile-stat-grid mt-5 grid gap-3 sm:grid-cols-3">
-                  <div className="profile-stat rounded-xl border border-primary/20 bg-background/70 px-4 py-3.5 backdrop-blur-md shadow-sm transition-all duration-200 hover:border-primary/50 hover:bg-background/90 hover:shadow-md">
+                  <div className="profile-stat rounded-xl border border-border/70 bg-card/40 px-4 py-3 backdrop-blur-sm transition-colors hover:border-border hover:bg-card/60">
                     <div className="mb-1 flex items-center gap-2">
-                      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-primary">
                         <Film className="h-3.5 w-3.5" />
                       </div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                         {text("profile.moviesWatched", "Movies Watched")}
                       </p>
                     </div>
-                    <p className="tabular-nums text-2xl font-extrabold tracking-tight text-foreground">{countMoviesWatched}</p>
+                    <p className="tabular-nums text-2xl font-bold tracking-tight text-foreground">{countMoviesWatched}</p>
                   </div>
-                  <div className="profile-stat rounded-xl border border-amber-500/20 bg-background/70 px-4 py-3.5 backdrop-blur-md shadow-sm transition-all duration-200 hover:border-amber-500/50 hover:bg-background/90 hover:shadow-md">
+                  <div className="profile-stat rounded-xl border border-border/70 bg-card/40 px-4 py-3 backdrop-blur-sm transition-colors hover:border-border hover:bg-card/60">
                     <div className="mb-1 flex items-center gap-2">
-                      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/15 text-amber-500">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-500/10 text-amber-400">
                         <Star className="h-3.5 w-3.5" />
                       </div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                         {text("profile.ratings", "Ratings")}
                       </p>
                     </div>
-                    <p className="tabular-nums text-2xl font-extrabold tracking-tight text-foreground">{countRatings}</p>
+                    <p className="tabular-nums text-2xl font-bold tracking-tight text-foreground">{countRatings}</p>
                   </div>
-                  <div className="profile-stat rounded-xl border border-blue-500/20 bg-background/70 px-4 py-3.5 backdrop-blur-md shadow-sm transition-all duration-200 hover:border-blue-500/50 hover:bg-background/90 hover:shadow-md">
+                  <div className="profile-stat rounded-xl border border-border/70 bg-card/40 px-4 py-3 backdrop-blur-sm transition-colors hover:border-border hover:bg-card/60">
                     <div className="mb-1 flex items-center gap-2">
-                      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/15 text-blue-500">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-500/10 text-blue-400">
                         <Clock className="h-3.5 w-3.5" />
                       </div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                         {text("profile.watchTime", "Watch Time")}
                       </p>
                     </div>
-                    <p className="tabular-nums text-2xl font-extrabold tracking-tight text-foreground">{totalWatchDaysHoursMinutes}</p>
+                    <p className="tabular-nums text-2xl font-bold tracking-tight text-foreground">{totalWatchDaysHoursMinutes}</p>
                   </div>
                 </div>
 
-                <div className="profile-milestone-row mt-5 flex flex-wrap items-center gap-2.5 pt-4">
-                  <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <div className="profile-milestone-row mt-5 flex flex-wrap items-center gap-2 pt-3 border-t border-border/50">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     <Award className="h-3.5 w-3.5 text-primary" />
                     {text("profile.milestones", "Milestones")}
                   </span>
@@ -287,10 +301,10 @@ export function ProfileIdentityHero({
                       <span
                         key={milestone.target}
                         className={cn(
-                          "rounded-full border px-2 py-1 text-[10px] font-semibold",
+                          "rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition-colors",
                           unlocked
-                            ? "border-primary/30 bg-primary/10 text-primary"
-                            : "border-border bg-muted/35 text-muted-foreground",
+                            ? "border-primary/20 bg-primary/10 text-primary"
+                            : "border-border/60 bg-muted/20 text-muted-foreground",
                         )}
                       >
                         {unlocked ? "✓ " : ""}{milestone.label}
@@ -300,7 +314,7 @@ export function ProfileIdentityHero({
                   {userId ? (
                     <Link
                       to={`/user/${userId}`}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary underline-offset-4 transition-colors hover:underline"
+                      className="ml-auto inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground underline-offset-4 transition-colors hover:underline"
                     >
                       <User className="h-3.5 w-3.5" />
                       {text("profile.viewPublicProfile", "View public profile")}
