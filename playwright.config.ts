@@ -5,9 +5,10 @@ import { resolve } from "node:path";
 const isWindows = process.platform === "win32";
 const edgeExecutable = process.env.PLAYWRIGHT_EDGE_EXECUTABLE ??
   "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
-const useEdge = process.env.PLAYWRIGHT_CHANNEL === "msedge" ||
-  (process.env.PLAYWRIGHT_CHANNEL !== "chromium" && isWindows && existsSync(edgeExecutable));
-const browserChannel = process.env.PLAYWRIGHT_CHANNEL === "msedge" || useEdge ? "msedge" : undefined;
+const configuredChannel = process.env.PLAYWRIGHT_CHANNEL;
+const browserChannel = configuredChannel === "chromium"
+  ? undefined
+  : configuredChannel ?? (isWindows && existsSync(edgeExecutable) ? "msedge" : undefined);
 const executablePath = process.env.PLAYWRIGHT_EXECUTABLE_PATH
   ? resolve(process.env.PLAYWRIGHT_EXECUTABLE_PATH)
   : undefined;
