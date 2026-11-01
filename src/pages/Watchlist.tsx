@@ -398,7 +398,7 @@ export default function Watchlist() {
         canonical="https://cinetrekker.vercel.app/watchlist"
       />
 
-      <div className="ct-page-shell min-h-screen">
+      <div className={!isContentLoading && filteredMedia.length === 0 ? "ct-page-shell min-h-0 md:min-h-screen" : "ct-page-shell min-h-screen"}>
         <div className="page-container max-w-7xl pt-20 pb-24 md:pb-10">
           {!user ? <GuestSyncBanner /> : null}
           <motion.div

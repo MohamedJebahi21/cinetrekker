@@ -92,7 +92,7 @@ export default function Watched() {
         canonical="https://cinetrekker.vercel.app/watched"
       />
 
-      <div className="ct-page-shell min-h-screen">
+      <div className={cn("ct-page-shell", !isLoading && filteredMedia.length === 0 ? "min-h-0 md:min-h-screen" : "min-h-screen")}>
         <div className="page-container pt-20 pb-24 md:pb-10">
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>

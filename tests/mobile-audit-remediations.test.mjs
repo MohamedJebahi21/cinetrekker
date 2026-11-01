@@ -64,3 +64,18 @@ test("mobile audit remediations preserve navigation position, form access, and c
   assert.match(details, /isStickyNavVisible && \(\s*<div className="fixed bottom-\[calc\(4\.5rem\+/);
   assert.match(carousel, /<span>Swipe<\/span>/);
 });
+
+test("mobile content reserves the bottom navigation and list empty pages can collapse on phones", async () => {
+  const [app, watchlist, watched, discover] = await Promise.all([
+    source("src/App.tsx"),
+    source("src/pages/Watchlist.tsx"),
+    source("src/pages/Watched.tsx"),
+    source("src/pages/Discover.tsx"),
+  ]);
+
+  assert.match(app, /pb-\[calc\(4rem\+env\(safe-area-inset-bottom,0px\)\)\]/);
+  assert.match(watchlist, /!isContentLoading && filteredMedia\.length === 0 \? "ct-page-shell min-h-0 md:min-h-screen"/);
+  assert.match(watched, /!isLoading && filteredMedia\.length === 0 \? "min-h-0 md:min-h-screen"/);
+  assert.match(discover, /title="Trending Today"\s+icon=\{Flame\}/);
+  assert.doesNotMatch(discover, /title="[🔥📺🎬🗓️📈⭐🎥]/u);
+});
