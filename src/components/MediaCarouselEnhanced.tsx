@@ -6,10 +6,11 @@ import { Media } from "@/types/media";
 import { MediaCard, MediaCardSkeleton } from "@/components/MediaCard";
 import { useMediaEngagement } from "@/hooks/useMediaEngagement";
 import { Button } from "@/components/ui/button";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
+import { AsyncSectionMessage } from "@/components/AsyncSectionMessage";
 import {
   PaginationDotButton,
   PaginationDots,
-  PaginationDotStatic,
 } from "@/components/ui/pagination-dots";
 
 type ScrollState = {
@@ -28,6 +29,8 @@ interface MediaCarouselProps {
   showMoreLabel?: string;
   emptyMessage?: string;
   showManualNav?: boolean;
+  error?: unknown;
+  onRetry?: () => void;
 }
 
 const DEFAULT_SCROLL_STATE: ScrollState = {
@@ -97,6 +100,8 @@ export function MediaCarouselEnhanced({
   showMoreLabel,
   emptyMessage,
   showManualNav = true,
+  error = null,
+  onRetry,
 }: MediaCarouselProps) {
   const engagementQuery = useMediaEngagement(
     items.map((item) => ({
@@ -120,6 +125,7 @@ export function MediaCarouselEnhanced({
   const scrollCheckFrameRef = useRef<number | null>(null);
 
   const [scrollState, setScrollState] = useState<ScrollState>(DEFAULT_SCROLL_STATE);
+  const loadingTimedOut = useLoadingTimeout(loading, 12_000);
 
   const syncScrollState = useCallback(() => {
     const container = scrollContainerRef.current;
@@ -203,6 +209,8 @@ export function MediaCarouselEnhanced({
     : "Previous";
   const nextText = t("common.next") ? toTitleCaseLabel(t("common.next")) : "Next";
 
+  if (!loading && !error && !loadingTimedOut && items.length === 0) return null;
+
   return (
     <section
       className="animate-fade-in group/carousel"
@@ -229,8 +237,14 @@ export function MediaCarouselEnhanced({
         ) : null}
       </div>
 
-      {loading ? (
-        <div className="min-h-[420px] sm:min-h-[520px]">
+      {(error || loadingTimedOut) && items.length === 0 ? (
+        <AsyncSectionMessage
+          title={t("common.error", "An error occurred")}
+          description={t("search.loadError", "We couldn't load these titles. Try again.")}
+          onRetry={onRetry}
+        />
+      ) : loading ? (
+        <div aria-busy="true" aria-label={t("common.loadingSection", "Loading titles")} role="status">
           <div className="hide-scrollbar flex gap-3 overflow-hidden px-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))]">
             {Array.from({ length: 6 }).map((_, index) => (
               <div
@@ -242,17 +256,6 @@ export function MediaCarouselEnhanced({
             ))}
           </div>
 
-          <div className="mt-4 flex justify-center">
-            <PaginationDots>
-              {Array.from({ length: 4 }).map((_, index) => (
-                <PaginationDotStatic
-                  key={index}
-                  active={index === 0}
-                  aria-hidden="true"
-                />
-              ))}
-            </PaginationDots>
-          </div>
         </div>
       ) : items.length > 0 ? (
         <div className="group/scroll relative pb-8">
@@ -287,7 +290,7 @@ export function MediaCarouselEnhanced({
             {items.map((item) => (
               <div
                 key={`${item.id}-${item.media_type || "unknown"}`}
-                className="w-[calc(50vw-1.5rem)] flex-shrink-0 snap-start [content-visibility:auto] [contain-intrinsic-size:220px_420px] sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
+                className="w-[calc(50vw-1.5rem)] flex-shrink-0 snap-start [content-visibility:auto] [contain-intrinsic-size:auto_220px_420px] sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
               >
                 <MediaCard
                   media={item}
@@ -322,7 +325,7 @@ export function MediaCarouselEnhanced({
           ) : null}
         </div>
       ) : (
-        <div className="flex min-h-[320px] items-center justify-center sm:min-h-[420px]">
+        <div className="flex items-center justify-center">
           <div className="mx-4 flex max-w-md flex-col items-center rounded-[2rem] border border-border/60 bg-card/45 px-6 py-10 text-center shadow-[0_18px_60px_hsl(var(--background)/0.22)] backdrop-blur-sm">
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/15 bg-primary/10 text-primary">
               <Film className="h-7 w-7" aria-hidden="true" />

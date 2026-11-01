@@ -45,6 +45,7 @@ import { useEnrichedTVEpisodes } from "@/hooks/useEnrichedTVDetails";
 import { addToRecentlyViewed } from "@/lib/recentlyViewed";
 import { MovieRouteError } from "@/components/details/MovieRouteError";
 import { TitleUnavailable } from "@/components/details/TitleUnavailable";
+import { AsyncSectionMessage } from "@/components/AsyncSectionMessage";
 import SEO from "@/components/SEO";
 import useDocumentTitle from "@/hooks/useDocumentTitle";
 import MovieSchema from "@/components/MovieSchema";
@@ -244,13 +245,15 @@ export default function Details() {
       selectedSeason <= (details.number_of_seasons ?? 0)
     );
 
-  const { data: seasonDetails } = useQuery({
+  const [seasonRetryVersion, setSeasonRetryVersion] = useState(0);
+  const { data: seasonDetails, isLoading: seasonLoading, isError: seasonError, refetch: retrySeasonDetails } = useQuery({
     queryKey: ["season-details", mediaId, selectedSeason, language],
     queryFn: () => getTVSeasonDetails(mediaId, selectedSeason!, language),
     enabled: isSelectedSeasonAvailable,
     staleTime: 1000 * 60 * 60 * 24, // 24 hours — season episode lists rarely change
-    retry: false,
+    retry: 1,
   });
+  const seasonLoadingTimedOut = useLoadingTimeout(seasonLoading, 12_000, seasonRetryVersion);
 
   const { data: watchProviders } = useQuery({
     queryKey: ["watch-providers", mediaType, mediaId, language],
@@ -1271,8 +1274,29 @@ export default function Details() {
 
                   {!selectedSeason ? (
                     <p className="text-sm text-muted-foreground">{t("details.selectSeasonPrompt", "Choose a season from the dropdown to browse episodes.")}</p>
+                  ) : seasonError || seasonLoadingTimedOut ? (
+                    <AsyncSectionMessage
+                      title={t("common.error", "An error occurred")}
+                      description={t("details.seasonLoadError", "Season episodes could not be loaded.")}
+                      onRetry={() => {
+                        setSeasonRetryVersion((version) => version + 1);
+                        void retrySeasonDetails();
+                      }}
+                    />
+                  ) : seasonLoading ? (
+                    <div className="flex min-h-16 items-center gap-2 rounded-xl border border-border/50 bg-card/30 px-4 text-sm text-muted-foreground" role="status" aria-busy="true">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {t("details.loadingSeasonEpisodes", "Loading season episodes...")}
+                    </div>
                   ) : !seasonDetails ? (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />{t("details.loadingSeasonEpisodes", "Loading...")}</div>
+                    <AsyncSectionMessage
+                      title={t("common.error", "An error occurred")}
+                      description={t("details.seasonUnavailable", "Season episode details are unavailable right now.")}
+                      onRetry={() => {
+                        setSeasonRetryVersion((version) => version + 1);
+                        void retrySeasonDetails();
+                      }}
+                    />
                   ) : publishedEpisodes.length === 0 ? (
                     <div className="rounded-xl border border-white/8 bg-white/3 px-4 py-5 text-sm text-muted-foreground">{t("details.noPublishedEpisodes", "No published episodes available for this season yet.")}</div>
                   ) : (

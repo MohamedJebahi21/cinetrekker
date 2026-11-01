@@ -12,6 +12,8 @@ interface MediaSectionProps {
   title: string;
   items: Media[];
   loading?: boolean;
+  error?: unknown;
+  onRetry?: () => void;
   showMoreLink?: string;
   emptyMessage?: string;
   children?: ReactNode;
@@ -22,6 +24,8 @@ export const MediaSection = React.memo(function MediaSection({
   title, 
   items, 
   loading = false, 
+  error = null,
+  onRetry,
   showMoreLink,
   emptyMessage,
 }: MediaSectionProps) {
@@ -36,6 +40,8 @@ export const MediaSection = React.memo(function MediaSection({
       title={title}
       items={memoizedItems}
       loading={loading}
+      error={error}
+      onRetry={onRetry}
       showMoreLink={showMoreLink}
       emptyMessage={emptyMessage}
     />
