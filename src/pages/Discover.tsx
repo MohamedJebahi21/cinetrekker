@@ -128,9 +128,9 @@ function SpotlightHero({ items }: { items: Media[] }) {
           </div>
 
           {/* Title */}
-          <h2 className="max-w-xl text-3xl font-semibold leading-[1.04] tracking-[-0.04em] text-white drop-shadow-lg sm:text-4xl lg:text-5xl">
+          <p className="max-w-xl text-3xl font-semibold leading-[1.04] tracking-[-0.04em] text-white drop-shadow-lg sm:text-4xl lg:text-5xl">
             {item.title || item.name}
-          </h2>
+          </p>
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-medium text-white/75">
             {releaseYear && <span>{releaseYear}</span>}
