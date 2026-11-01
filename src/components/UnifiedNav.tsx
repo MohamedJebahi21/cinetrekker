@@ -1,21 +1,12 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Settings from "lucide-react/dist/esm/icons/settings";
 import SlidersHorizontal from "lucide-react/dist/esm/icons/sliders-horizontal";
-import Layers from "lucide-react/dist/esm/icons/layers";
-import CalendarDays from "lucide-react/dist/esm/icons/calendar-days";
-import Award from "lucide-react/dist/esm/icons/award";
 import User from "lucide-react/dist/esm/icons/user";
-import Compass from "lucide-react/dist/esm/icons/compass";
-import Film from "lucide-react/dist/esm/icons/film";
-import Bookmark from "lucide-react/dist/esm/icons/bookmark";
-import CheckSquare from "lucide-react/dist/esm/icons/check-square";
 import Check from "lucide-react/dist/esm/icons/check";
-import Trophy from "lucide-react/dist/esm/icons/trophy";
-import Heart from "lucide-react/dist/esm/icons/heart";
-import FolderHeart from "lucide-react/dist/esm/icons/folder-heart";
+import { desktopTopRoutes, menuLinks, navigationGroups, primaryNavigationGroups } from "@/navigation/routes";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -58,77 +49,6 @@ const RemotionAurora = lazy(() =>
   })),
 );
 
-// Grouped navigation for high-fidelity overlays
-const navigationGroups = [
-  {
-    titleKey: "nav.personalLibrary",
-    defaultTitle: "Personal Library",
-    links: [
-      { path: "/", labelKey: "nav.home", defaultLabel: "Home", icon: Compass, descKey: "navDescription.home", defaultDesc: "Your personal feed and tonight's picks." },
-      { path: "/profile", labelKey: "nav.profile", defaultLabel: "Profile", icon: User, descKey: "navDescription.profile", defaultDesc: "Manage your account, rank, and stats." },
-      { path: "/watchlist", labelKey: "nav.watchlist", defaultLabel: "Watchlist", icon: Bookmark, descKey: "navDescription.watchlist", defaultDesc: "Your list of titles to watch." },
-      { path: "/collections", labelKey: "nav.collections", defaultLabel: "Collections", icon: FolderHeart, descKey: "navDescription.collections", defaultDesc: "Curate themed lists worth sharing." },
-      { path: "/watched", labelKey: "nav.watched", defaultLabel: "Watched", icon: CheckSquare, descKey: "navDescription.watched", defaultDesc: "Your logged watch history." },
-      { path: "/following", labelKey: "nav.following", defaultLabel: "Following", icon: User, descKey: "navDescription.following", defaultDesc: "Titles you are tracking for updates." },
-    ],
-  },
-  {
-    titleKey: "nav.community",
-    defaultTitle: "Community",
-    links: [
-      { path: "/people", labelKey: "nav.people", defaultLabel: "People", icon: User, descKey: "navDescription.people", defaultDesc: "Discover public profiles and follow fellow cinephiles." },
-    ],
-  },
-  {
-    titleKey: "nav.discoveryExplore",
-    defaultTitle: "Discovery & Explore",
-    links: [
-      { path: "/discover", labelKey: "nav.discover", defaultLabel: "Discover", icon: Compass, descKey: "navDescription.discover", defaultDesc: "Explore recommendations and releases." },
-      { path: "/trending", labelKey: "nav.trending", defaultLabel: "Trending", icon: Film, descKey: "navDescription.trending", defaultDesc: "What's popular right now." },
-      { path: "/search", labelKey: "nav.search", defaultLabel: "Search", icon: Compass, descKey: "navDescription.search", defaultDesc: "Find movies, series, or people." },
-      { path: "/recommendations", labelKey: "nav.recommendations", defaultLabel: "Recommendations", icon: Film, descKey: "navDescription.recommendations", defaultDesc: "Taste-matched suggestions for your next watch." },
-      { path: "/genres", labelKey: "nav.genres", defaultLabel: "Genres", icon: Layers, descKey: "navDescription.genres", defaultDesc: "Browse by specific film categories." },
-      { path: "/decades", labelKey: "nav.decades", defaultLabel: "Decades", icon: CalendarDays, descKey: "navDescription.decades", defaultDesc: "Travel through cinema history." },
-    ],
-  },
-  {
-    titleKey: "nav.insightsAwards",
-    defaultTitle: "Insights & Awards",
-    links: [
-      { path: "/calendar", labelKey: "nav.calendar", defaultLabel: "Calendar", icon: CalendarDays, descKey: "navDescription.calendar", defaultDesc: "TV schedule and movie release tracker." },
-      { path: "/stats", labelKey: "nav.stats", defaultLabel: "Stats", icon: Award, descKey: "navDescription.stats", defaultDesc: "Detailed analysis of your viewing habits." },
-      { path: "/achievements", labelKey: "nav.achievements", defaultLabel: "Achievements", icon: Award, descKey: "navDescription.achievements", defaultDesc: "Trophies and milestones unlocked." },
-      { path: "/quests", labelKey: "nav.quests", defaultLabel: "Monthly Quests", icon: Trophy, descKey: "navDescription.quests", defaultDesc: "Time-limited challenges and rewards." },
-      { path: "/year-in-review", labelKey: "nav.yearInReview", defaultLabel: "Year In Review", icon: Award, descKey: "navDescription.yearInReview", defaultDesc: "Your personal annual wrapped recap." },
-      { path: "/awards", labelKey: "nav.awards", defaultLabel: "Awards", icon: Award, descKey: "navDescription.awards", defaultDesc: "Browse award winners and nominees." },
-    ],
-  },
-];
-
-// Flat menu links kept for backwards compatibility with currentPageLabel
-const primaryNavigationGroups = navigationGroups.filter((group) => group.titleKey !== "nav.community");
-
-const menuLinks = [
-  { path: "/profile", labelKey: "nav.profile", defaultLabel: "Profile", icon: User },
-  { path: "/discover", labelKey: "nav.discover", defaultLabel: "Discover", icon: Compass },
-  { path: "/watchlist", labelKey: "nav.watchlist", defaultLabel: "Watchlist", icon: Bookmark },
-  { path: "/collections", labelKey: "nav.collections", defaultLabel: "Collections", icon: FolderHeart },
-  { path: "/watched", labelKey: "nav.watched", defaultLabel: "Watched", icon: CheckSquare },
-  { path: "/trending", labelKey: "nav.trending", defaultLabel: "Trending", icon: Film },
-  { path: "/search", labelKey: "nav.search", defaultLabel: "Search", icon: Compass },
-  { path: "/recommendations", labelKey: "nav.recommendations", defaultLabel: "Recommendations", icon: Film },
-  { path: "/calendar", labelKey: "nav.calendar", defaultLabel: "Calendar", icon: CalendarDays },
-  { path: "/stats", labelKey: "nav.stats", defaultLabel: "Stats", icon: Award },
-  { path: "/achievements", labelKey: "nav.achievements", defaultLabel: "Achievements", icon: Award },
-  { path: "/quests", labelKey: "nav.quests", defaultLabel: "Monthly Quests", icon: Trophy },
-  { path: "/genres", labelKey: "nav.genres", defaultLabel: "Genres", icon: Layers },
-  { path: "/decades", labelKey: "nav.decades", defaultLabel: "Decades", icon: CalendarDays },
-  { path: "/awards", labelKey: "nav.awards", defaultLabel: "Awards", icon: Award },
-  { path: "/year-in-review", labelKey: "nav.yearInReview", defaultLabel: "Year In Review", icon: Award },
-  { path: "/following", labelKey: "nav.following", defaultLabel: "Following", icon: User },
-  { path: "/people", labelKey: "nav.people", defaultLabel: "People", icon: User },
-];
-
 function BurgerIcon({ isOpen }: { isOpen: boolean }) {
   return (
     <div className="relative flex h-5 w-5 items-center justify-center">
@@ -165,6 +85,11 @@ export function UnifiedNav() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
+  const desktopMenuTriggerRef = useRef<HTMLButtonElement>(null);
+  const closeDesktopMenu = () => {
+    setIsDesktopMenuOpen(false);
+    desktopMenuTriggerRef.current?.focus();
+  };
   const activeLanguageCode = i18n.resolvedLanguage ?? i18n.language;
   const activeLanguageLabel =
     languages.find((language) => language.code === activeLanguageCode)?.name ?? "English";
@@ -261,6 +186,34 @@ export function UnifiedNav() {
   }, [pathname]);
 
   useEffect(() => {
+    if (!isDesktopMenuOpen) return;
+    const overlay = document.getElementById("desktop-menu-overlay");
+    const focusable = overlay?.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    );
+    focusable?.[1]?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeDesktopMenu();
+        return;
+      }
+      if (event.key !== "Tab" || !focusable?.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isDesktopMenuOpen]);
+
+  useEffect(() => {
     const handleOpen = () => {
       if (window.innerWidth >= 768) {
         setIsMobileSheetOpen(false);
@@ -287,6 +240,7 @@ export function UnifiedNav() {
       { path: "/login", label: t("nav.signIn", "Sign In") },
       { path: "/signup", label: t("nav.signUp", "Sign Up") },
       { path: "/accessibility", label: t("accessibility.title", "Accessibility Settings") },
+      { path: "/search", label: t("nav.search", "Search") },
       ...menuLinks.map(item => ({ path: item.path, label: t(item.labelKey, item.defaultLabel) })),
     ];
 
@@ -302,22 +256,11 @@ export function UnifiedNav() {
   }, [pathname, t]);
 
   const mobileNavigationGroups = useMemo(() => {
-    if (user) return primaryNavigationGroups;
-
-    const [personal, community, discovery, insights] = navigationGroups;
-    return [
-      {
-        titleKey: "nav.explore",
-        defaultTitle: "Explore",
-        links: [
-          personal.links[0],
-          ...discovery.links.filter((item) => item.path !== "/recommendations"),
-          insights.links[0],
-          insights.links[5],
-          ...community.links,
-        ],
-      },
-    ];
+    const visibleGroups = user ? primaryNavigationGroups : navigationGroups;
+    return visibleGroups.map((group) => ({
+      ...group,
+      links: group.links.filter((item) => item.showOnMobile && (user || !item.authRequired)),
+    })).filter((group) => group.links.length > 0);
   }, [user]);
 
   return (
@@ -348,11 +291,7 @@ export function UnifiedNav() {
         </div>
 
         <nav aria-label={t("nav.primary", "Primary navigation")} className="hidden shrink-0 items-center gap-1 xl:flex">
-          {[
-            { path: "/discover", labelKey: "nav.discover", defaultLabel: "Discover" },
-            { path: "/watchlist", labelKey: "nav.watchlist", defaultLabel: "Watchlist" },
-            { path: "/watched", labelKey: "nav.watched", defaultLabel: "Watched" },
-          ].map((item) => {
+          {desktopTopRoutes.map((item) => {
             const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
             return (
               <Link
@@ -511,6 +450,7 @@ export function UnifiedNav() {
           </DropdownMenu>
 
           <Button
+            ref={desktopMenuTriggerRef}
             variant="outline"
             size="icon"
             className="topbar-menu-button relative"
@@ -551,7 +491,7 @@ export function UnifiedNav() {
                 type="button"
                 className="absolute inset-0 z-10 bg-black/40"
                 aria-label={t("common.close", "Close")}
-                onClick={() => setIsDesktopMenuOpen(false)}
+                onClick={closeDesktopMenu}
               />
 
               <div className="relative z-20 h-full w-full overflow-y-auto border-t border-border bg-background px-4 py-6 shadow-none motion-safe:animate-fade-in sm:px-6 sm:py-8">
@@ -571,7 +511,7 @@ export function UnifiedNav() {
                               <div key={item.path} className="motion-safe:animate-slide-up">
                                 <Link
                                   to={item.path}
-                                  onClick={() => setIsDesktopMenuOpen(false)}
+                                  onClick={closeDesktopMenu}
                                   aria-current={isActive ? "page" : undefined}
                                   className={cn(
                                     "group relative flex min-h-[3.5rem] items-start gap-3 rounded-lg border border-transparent px-2.5 py-2.5 text-sm transition-[background-color,border-color,color] duration-150 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
