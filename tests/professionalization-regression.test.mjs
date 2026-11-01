@@ -34,6 +34,10 @@ const navSource = fs.readFileSync(
   path.join(repoRoot, "src/components/UnifiedNav.tsx"),
   "utf8",
 );
+const navRoutesSource = fs.readFileSync(
+  path.join(repoRoot, "src/navigation/routes.ts"),
+  "utf8",
+);
 const stylesSource = fs.readFileSync(
   path.join(repoRoot, "src/index.css"),
   "utf8",
@@ -59,9 +63,9 @@ test("hero keeps one primary content composition and accessible spotlight contro
 
 test("desktop navigation exposes the core discovery and library destinations", () => {
   assert.match(navSource, /aria-label=\{t\("nav\.primary", "Primary navigation"\)\}/);
-  assert.match(navSource, /path: \"\/discover\"/);
-  assert.match(navSource, /path: \"\/watchlist\"/);
-  assert.match(navSource, /path: \"\/watched\"/);
+  assert.match(navRoutesSource, /path: \"\/discover\"/);
+  assert.match(navRoutesSource, /path: \"\/watchlist\"/);
+  assert.match(navRoutesSource, /path: \"\/watched\"/);
   assert.match(navSource, /aria-current=\{isActive \? \"page\" : undefined\}/);
 });
 
