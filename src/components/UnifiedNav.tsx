@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -165,6 +165,7 @@ export function UnifiedNav() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
+  const desktopMenuTriggerRef = useRef<HTMLButtonElement>(null);
   const activeLanguageCode = i18n.resolvedLanguage ?? i18n.language;
   const activeLanguageLabel =
     languages.find((language) => language.code === activeLanguageCode)?.name ?? "English";
@@ -259,6 +260,40 @@ export function UnifiedNav() {
   useEffect(() => {
     setIsDesktopMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!isDesktopMenuOpen) return;
+
+    const getMenuLinks = () => Array.from(
+      document.querySelectorAll<HTMLAnchorElement>("#desktop-menu-overlay .desktop-menu-grid a[href]"),
+    );
+    getMenuLinks()[0]?.focus();
+
+    const handleMenuKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setIsDesktopMenuOpen(false);
+        desktopMenuTriggerRef.current?.focus();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+      const links = getMenuLinks();
+      if (links.length === 0) return;
+      const first = links[0];
+      const last = links[links.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleMenuKeyDown, true);
+    return () => document.removeEventListener("keydown", handleMenuKeyDown, true);
+  }, [isDesktopMenuOpen]);
 
   useEffect(() => {
     const handleOpen = () => {
@@ -511,6 +546,7 @@ export function UnifiedNav() {
           </DropdownMenu>
 
           <Button
+            ref={desktopMenuTriggerRef}
             variant="outline"
             size="icon"
             className="topbar-menu-button relative"
