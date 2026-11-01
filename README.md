@@ -236,6 +236,15 @@ This compiles client assets into `dist/` and runs an automated bundle-budget gat
 
 CineTrekker maintains strict automated test coverage across multiple dimensions:
 
+Playwright's Chromium project uses the bundled Chromium when it is installed. If it is not available, the configuration checks for Edge and then an installed Chrome, Chromium, or Brave executable. Override the selection with `PLAYWRIGHT_CHANNEL` (for example, `msedge` or `chromium`) or provide a specific executable with `PLAYWRIGHT_EXECUTABLE_PATH`. On Windows, `PLAYWRIGHT_EDGE_EXECUTABLE` can point to a non-standard Edge installation. No extra browser package is installed by this project.
+
+PowerShell example for an explicit browser executable:
+
+```powershell
+$env:PLAYWRIGHT_EXECUTABLE_PATH = "C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe"
+npm run test:smoke
+```
+
 - **Security & Authorization**: `npm run test:security` validates that serverless API endpoints reject forged requests, unauthorized cron invocations, and parameter tampering.
 - **Privacy & Telemetry**: `npm run test:privacy` confirms that external analytics remain inert until explicit cookie consent is granted and no user identifiers or search queries leak.
 - **End-to-End & Cross-Browser**: Playwright tests cover desktop (Chromium, Firefox, WebKit) and mobile (Pixel 7, iPhone 14) viewports. Run `npm run test:e2e:desktop`.
