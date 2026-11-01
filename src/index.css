@@ -1519,7 +1519,7 @@ button:active,
 .topbar-brand { min-width: 9.25rem; }
 .topbar-context { min-width: 6.5rem; max-width: 9rem; }
 .topbar-search { max-width: 34rem; margin-inline: auto; }
-.topbar-search input::placeholder { color: hsl(var(--muted-foreground)) !important; opacity: 1; }
+.topbar-search input::placeholder { color: hsl(var(--muted-foreground)); opacity: 1; }
 .topbar-actions { gap: 0.25rem; }
 .topbar-action-group {
   display: inline-flex;
