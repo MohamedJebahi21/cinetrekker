@@ -20,7 +20,6 @@ import { ContinueWatching } from "@/components/ContinueWatching";
 import { ActivationJourney } from "@/components/home/ActivationJourney";
 import { MotionRevealSection } from "@/components/motion/MotionRevealSection";
 import { DeferredSection } from "@/components/DeferredSection";
-import { PaginationDots, PaginationDotStatic } from "@/components/ui/pagination-dots";
 import GuestSyncBanner from "@/components/GuestSyncBanner";
 import { trackProductEvent } from "@/lib/analytics";
 import {
@@ -84,11 +83,6 @@ function TrendingSectionSkeleton() {
           </div>
         ))}
       </div>
-      <PaginationDots>
-        {Array.from({ length: 4 }).map((_, index) => (
-          <PaginationDotStatic key={index} active={index === 0} aria-hidden="true" />
-        ))}
-      </PaginationDots>
     </section>
   );
 }
