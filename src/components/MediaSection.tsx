@@ -7,6 +7,7 @@ import { MediaCard, MediaCardSkeleton } from './MediaCard';
 import { MediaCarouselEnhanced } from './MediaCarouselEnhanced';
 import { useContentPolicy } from '@/contexts/content-policy-context';
 import { applySafetyFilter } from '@/lib/contentFilter';
+import type { LucideIcon } from 'lucide-react';
 
 interface MediaSectionProps {
   title: string;
@@ -14,6 +15,7 @@ interface MediaSectionProps {
   loading?: boolean;
   error?: unknown;
   onRetry?: () => void;
+  icon?: LucideIcon;
   showMoreLink?: string;
   emptyMessage?: string;
   children?: ReactNode;
@@ -26,6 +28,7 @@ export const MediaSection = React.memo(function MediaSection({
   loading = false, 
   error = null,
   onRetry,
+  icon,
   showMoreLink,
   emptyMessage,
 }: MediaSectionProps) {
@@ -42,6 +45,7 @@ export const MediaSection = React.memo(function MediaSection({
       loading={loading}
       error={error}
       onRetry={onRetry}
+      icon={icon}
       showMoreLink={showMoreLink}
       emptyMessage={emptyMessage}
     />

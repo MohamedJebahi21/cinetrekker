@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ChevronLeft, ChevronRight, Film } from "lucide-react";
+import { ChevronLeft, ChevronRight, Film, type LucideIcon } from "lucide-react";
 import { Media } from "@/types/media";
 import { MediaCard, MediaCardSkeleton } from "@/components/MediaCard";
 import { useMediaEngagement } from "@/hooks/useMediaEngagement";
@@ -31,6 +31,7 @@ interface MediaCarouselProps {
   showManualNav?: boolean;
   error?: unknown;
   onRetry?: () => void;
+  icon?: LucideIcon;
 }
 
 const DEFAULT_SCROLL_STATE: ScrollState = {
@@ -102,6 +103,7 @@ export function MediaCarouselEnhanced({
   showManualNav = true,
   error = null,
   onRetry,
+  icon: TitleIcon,
 }: MediaCarouselProps) {
   const engagementQuery = useMediaEngagement(
     items.map((item) => ({
@@ -219,7 +221,10 @@ export function MediaCarouselEnhanced({
     >
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-xl font-bold text-foreground md:text-2xl">{headingText}</h2>
+          <h2 className="flex items-center gap-2 text-xl font-bold text-foreground md:text-2xl">
+            {TitleIcon ? <TitleIcon className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" /> : null}
+            {headingText}
+          </h2>
           {description ? (
             <p id={descriptionId} className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
               {description}

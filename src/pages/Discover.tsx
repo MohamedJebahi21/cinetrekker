@@ -126,9 +126,9 @@ function SpotlightHero({ items }: { items: Media[] }) {
           </div>
 
           {/* Title */}
-          <h2 className="max-w-xl text-3xl font-semibold leading-[1.04] tracking-[-0.04em] text-white drop-shadow-lg sm:text-4xl lg:text-5xl">
+          <p className="max-w-xl text-3xl font-semibold leading-[1.04] tracking-[-0.04em] text-white drop-shadow-lg sm:text-4xl lg:text-5xl">
             {item.title || item.name}
-          </h2>
+          </p>
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-medium text-white/75">
             {releaseYear && <span>{releaseYear}</span>}
@@ -464,7 +464,8 @@ export default function Discover() {
 
         {/* ── Trending Today ── */}
         <MediaSection
-          title="🔥 Trending Today"
+          title="Trending Today"
+          icon={Flame}
           items={trendingNow?.results || []}
           loading={trendingNowLoading}
           error={trendingNowError}
@@ -477,7 +478,8 @@ export default function Discover() {
           <>
         {/* ── Airing on TV Today ── */}
         <MediaSection
-          title="📺 Airing on TV Today"
+          title="Airing on TV Today"
+          icon={Tv}
           items={airingTodayTV?.results || []}
           loading={airingTodayTVLoading}
           error={airingTodayTVError}
@@ -488,7 +490,8 @@ export default function Discover() {
 
         {/* ── Now Playing in Cinemas ── */}
         <MediaSection
-          title="🎬 Now Playing in Cinemas"
+          title="Now Playing in Cinemas"
+          icon={Film}
           items={nowPlayingMovies?.results || []}
           loading={nowPlayingMoviesLoading}
           error={nowPlayingMoviesError}
@@ -499,7 +502,8 @@ export default function Discover() {
 
         {/* ── Upcoming Movies ── */}
         <MediaSection
-          title="🗓️ Coming Soon"
+          title="Coming Soon"
+          icon={Clock}
           items={upcomingMovies?.results || []}
           loading={upcomingMoviesLoading}
           error={upcomingMoviesError}
@@ -510,7 +514,8 @@ export default function Discover() {
 
         {/* ── Trending This Week ── */}
         <MediaSection
-          title="📈 Trending This Week"
+          title="Trending This Week"
+          icon={TrendingUp}
           items={trendingWeek?.results || []}
           loading={trendingWeekLoading}
           error={trendingWeekError}
@@ -521,7 +526,8 @@ export default function Discover() {
 
         {/* ── Currently Airing TV ── */}
         <MediaSection
-          title="📡 Currently Airing Shows"
+          title="Currently Airing Shows"
+          icon={Tv}
           items={onTheAirTV?.results || []}
           loading={onTheAirTVLoading}
           error={onTheAirTVError}
@@ -532,7 +538,8 @@ export default function Discover() {
 
         {/* ── Top Rated Movies ── */}
         <MediaSection
-          title="⭐ Top Rated Movies of All Time"
+          title="Top Rated Movies of All Time"
+          icon={Star}
           items={topRatedMovies?.results || []}
           loading={topRatedMoviesLoading}
           error={topRatedMoviesError}
@@ -543,7 +550,8 @@ export default function Discover() {
 
         {/* ── Top Rated TV ── */}
         <MediaSection
-          title="⭐ Top Rated TV Shows"
+          title="Top Rated TV Shows"
+          icon={Star}
           items={topRatedTV?.results || []}
           loading={topRatedTVLoading}
           error={topRatedTVError}
@@ -554,7 +562,8 @@ export default function Discover() {
 
         {/* ── Popular Movies ── */}
         <MediaSection
-          title="🎥 Popular Movies"
+          title="Popular Movies"
+          icon={Film}
           items={popularMovies?.results || []}
           loading={popularMoviesLoading}
           error={popularMoviesError}
@@ -565,7 +574,8 @@ export default function Discover() {
 
         {/* ── Popular TV ── */}
         <MediaSection
-          title="📺 Popular TV Shows"
+          title="Popular TV Shows"
+          icon={Tv}
           items={popularTV?.results || []}
           loading={popularTVLoading}
           error={popularTVError}
