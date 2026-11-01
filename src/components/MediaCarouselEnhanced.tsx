@@ -292,7 +292,7 @@ export function MediaCarouselEnhanced({
             {items.map((item) => (
               <div
                 key={`${item.id}-${item.media_type || "unknown"}`}
-                className="w-[calc(50vw-1.5rem)] flex-shrink-0 snap-start [content-visibility:auto] [contain-intrinsic-size:220px_420px] sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
+                className="w-[calc(50vw-1.5rem)] flex-shrink-0 snap-start [content-visibility:auto] [contain-intrinsic-size:auto_220px_420px] sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
               >
                 <MediaCard
                   media={item}
