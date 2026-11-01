@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ChevronLeft, ChevronRight, Film } from "lucide-react";
+import { ChevronLeft, ChevronRight, Film, type LucideIcon } from "lucide-react";
 import { Media } from "@/types/media";
 import { MediaCard, MediaCardSkeleton } from "@/components/MediaCard";
 import { useMediaEngagement } from "@/hooks/useMediaEngagement";
 import { Button } from "@/components/ui/button";
-import {
-  PaginationDotButton,
-  PaginationDots,
-  PaginationDotStatic,
-} from "@/components/ui/pagination-dots";
+import { PaginationDotButton, PaginationDots } from "@/components/ui/pagination-dots";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
+import { AsyncSectionMessage } from "@/components/AsyncSectionMessage";
 
 type ScrollState = {
   canScrollLeft: boolean;
@@ -28,6 +26,9 @@ interface MediaCarouselProps {
   showMoreLabel?: string;
   emptyMessage?: string;
   showManualNav?: boolean;
+  error?: unknown;
+  onRetry?: () => void;
+  icon?: LucideIcon;
 }
 
 const DEFAULT_SCROLL_STATE: ScrollState = {
@@ -97,6 +98,9 @@ export function MediaCarouselEnhanced({
   showMoreLabel,
   emptyMessage,
   showManualNav = true,
+  error = null,
+  onRetry,
+  icon: TitleIcon,
 }: MediaCarouselProps) {
   const engagementQuery = useMediaEngagement(
     items.map((item) => ({
@@ -120,6 +124,7 @@ export function MediaCarouselEnhanced({
   const scrollCheckFrameRef = useRef<number | null>(null);
 
   const [scrollState, setScrollState] = useState<ScrollState>(DEFAULT_SCROLL_STATE);
+  const loadingTimedOut = useLoadingTimeout(loading, 12_000);
 
   const syncScrollState = useCallback(() => {
     const container = scrollContainerRef.current;
@@ -203,6 +208,8 @@ export function MediaCarouselEnhanced({
     : "Previous";
   const nextText = t("common.next") ? toTitleCaseLabel(t("common.next")) : "Next";
 
+  if (!loading && !error && items.length === 0) return null;
+
   return (
     <section
       className="animate-fade-in group/carousel"
@@ -211,7 +218,10 @@ export function MediaCarouselEnhanced({
     >
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-xl font-bold text-foreground md:text-2xl">{headingText}</h2>
+          <h2 className="flex items-center gap-2 text-xl font-bold text-foreground md:text-2xl">
+            {TitleIcon ? <TitleIcon className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" /> : null}
+            {headingText}
+          </h2>
           {description ? (
             <p id={descriptionId} className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
               {description}
@@ -229,8 +239,14 @@ export function MediaCarouselEnhanced({
         ) : null}
       </div>
 
-      {loading ? (
-        <div className="min-h-[420px] sm:min-h-[520px]">
+      {(error || loadingTimedOut) && items.length === 0 ? (
+        <AsyncSectionMessage
+          title={t("common.error", "An error occurred")}
+          description={t("search.loadError", "We couldn't load these titles. Try again.")}
+          onRetry={onRetry}
+        />
+      ) : loading ? (
+        <div aria-busy="true" aria-label={t("common.loadingSection", "Loading titles")} role="status">
           <div className="hide-scrollbar flex gap-3 overflow-hidden px-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))]">
             {Array.from({ length: 6 }).map((_, index) => (
               <div
@@ -242,17 +258,6 @@ export function MediaCarouselEnhanced({
             ))}
           </div>
 
-          <div className="mt-4 flex justify-center">
-            <PaginationDots>
-              {Array.from({ length: 4 }).map((_, index) => (
-                <PaginationDotStatic
-                  key={index}
-                  active={index === 0}
-                  aria-hidden="true"
-                />
-              ))}
-            </PaginationDots>
-          </div>
         </div>
       ) : items.length > 0 ? (
         <div className="group/scroll relative pb-8">
@@ -322,7 +327,7 @@ export function MediaCarouselEnhanced({
           ) : null}
         </div>
       ) : (
-        <div className="flex min-h-[320px] items-center justify-center sm:min-h-[420px]">
+        <div className="flex items-center justify-center">
           <div className="mx-4 flex max-w-md flex-col items-center rounded-[2rem] border border-border/60 bg-card/45 px-6 py-10 text-center shadow-[0_18px_60px_hsl(var(--background)/0.22)] backdrop-blur-sm">
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/15 bg-primary/10 text-primary">
               <Film className="h-7 w-7" aria-hidden="true" />

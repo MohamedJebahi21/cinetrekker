@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
-import { RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { getRequestReference } from "@/lib/requestReference";
+import { AsyncSectionMessage } from "@/components/AsyncSectionMessage";
 
 type HomeSectionStateProps = {
   title: string;
@@ -19,37 +18,21 @@ function HomeSectionFallback({
   title,
   description,
   onRetry,
-  retryLabel = "Try again",
   requestReference,
 }: {
   title: string;
   description: string;
   onRetry?: () => void;
-  retryLabel?: string;
   requestReference?: string | null;
 }) {
   return (
     <section className="home-section-shell" role="alert" aria-live="polite">
-      <div className="ct-panel min-h-[420px] p-6 text-center sm:min-h-[520px]">
-        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-        {requestReference ? (
-          <p className="mt-2 text-xs text-muted-foreground">
-            Reference: {requestReference}
-          </p>
-        ) : null}
-        {onRetry ? (
-          <Button
-            type="button"
-            variant="outline"
-            className="mt-4 gap-2"
-            onClick={onRetry}
-          >
-            <RefreshCw className="h-4 w-4" />
-            {retryLabel}
-          </Button>
-        ) : null}
-      </div>
+      <AsyncSectionMessage
+        title={title}
+        description={description}
+        onRetry={onRetry}
+        requestReference={requestReference}
+      />
     </section>
   );
 }
@@ -84,7 +67,6 @@ export function HomeSectionState({
         title={title}
         description="This section is still loading. Try again in a moment."
         onRetry={onRetry}
-        retryLabel="Try again"
       />
     );
   }
@@ -92,7 +74,7 @@ export function HomeSectionState({
   if (loading) {
     return (
       <section className="home-section-shell" role="status" aria-live="polite" aria-busy="true" aria-label={`Loading ${title}`}>
-        {skeleton ?? <div className="min-h-[420px] sm:min-h-[520px]" />}
+        {skeleton ?? <div className="min-h-40" />}
       </section>
     );
   }

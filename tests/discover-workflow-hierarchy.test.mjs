@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 
 const source = readFileSync(new URL("../src/pages/Discover.tsx", import.meta.url), "utf8");
+const carouselSource = readFileSync(new URL("../src/components/MediaCarouselEnhanced.tsx", import.meta.url), "utf8");
 
 test("Discover keeps category browsing compact and reveals mood picks on demand", () => {
   assert.match(source, /const \[moodPickerOpen, setMoodPickerOpen\] = useState\(false\)/);
@@ -31,4 +32,27 @@ test("Discover preserves all category destinations and mood-result links", () =>
 
   assert.match(source, /Link to=\{`\/search\?genre=\$\{MOODS\[activeMood\]\.genre\}&sort=\$\{MOODS\[activeMood\]\.sort\}`\}/);
   assert.match(source, /Showing <span className="font-semibold text-foreground">\{MOODS\[activeMood\]\.label\}<\/span> picks/);
+});
+
+test("data shelves expose loading and retry states without empty carousel space", () => {
+  for (const shelf of [
+    "trendingNow",
+    "airingTodayTV",
+    "nowPlayingMovies",
+    "upcomingMovies",
+    "trendingWeek",
+    "onTheAirTV",
+    "topRatedMovies",
+    "topRatedTV",
+    "popularMovies",
+    "popularTV",
+  ]) {
+    assert.ok(source.includes(`loading={${shelf}Loading}`), `${shelf} exposes loading state`);
+    assert.ok(source.includes(`error={${shelf}Error}`), `${shelf} exposes error state`);
+    assert.ok(source.includes(`retry${shelf[0].toUpperCase()}${shelf.slice(1)}`), `${shelf} exposes retry`);
+  }
+
+  assert.match(carouselSource, /if \(!loading && !error && items\.length === 0\) return null/);
+  assert.match(carouselSource, /loadingTimedOut/);
+  assert.doesNotMatch(carouselSource, /PaginationDotStatic/);
 });

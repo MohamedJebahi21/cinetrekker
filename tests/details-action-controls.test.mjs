@@ -15,3 +15,13 @@ test("detail-page tracking controls are form-safe and mobile share is named", as
   assert.match(source, /mobile-nav-safe/);
   assert.match(source, /min-h-11/);
 });
+
+test("season episode failures and long waits provide a bounded retry state", async () => {
+  const source = await readFile(new URL("src/pages/Details.tsx", root), "utf8");
+
+  assert.match(source, /isError: seasonError/);
+  assert.match(source, /useLoadingTimeout\(seasonLoading, 12_000, seasonRetryVersion\)/);
+  assert.match(source, /seasonError \|\| seasonLoadingTimedOut/);
+  assert.match(source, /setSeasonRetryVersion\(\(version\) => version \+ 1\)/);
+  assert.match(source, /seasonUnavailable/);
+});

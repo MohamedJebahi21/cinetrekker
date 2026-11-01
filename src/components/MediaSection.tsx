@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { Media } from '@/types/media';
 import { MediaCard, MediaCardSkeleton } from './MediaCard';
 import { MediaCarouselEnhanced } from './MediaCarouselEnhanced';
@@ -15,6 +16,9 @@ interface MediaSectionProps {
   showMoreLink?: string;
   emptyMessage?: string;
   children?: ReactNode;
+  error?: unknown;
+  onRetry?: () => void;
+  icon?: LucideIcon;
 }
 
 import React, { useMemo } from 'react';
@@ -24,6 +28,9 @@ export const MediaSection = React.memo(function MediaSection({
   loading = false, 
   showMoreLink,
   emptyMessage,
+  error,
+  onRetry,
+  icon,
 }: MediaSectionProps) {
   const { t } = useTranslation();
   const { strictFiltering, moderateFiltering } = useContentPolicy();
@@ -38,6 +45,9 @@ export const MediaSection = React.memo(function MediaSection({
       loading={loading}
       showMoreLink={showMoreLink}
       emptyMessage={emptyMessage}
+      error={error}
+      onRetry={onRetry}
+      icon={icon}
     />
   );
 });
