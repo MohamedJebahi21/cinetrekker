@@ -1025,7 +1025,32 @@ export default function Details() {
                                   );
                                 })}
                               </div>
-                            ) : <div className="py-4 text-center text-muted-foreground text-sm">{t("common.loading")}</div>}
+                            ) : !selectedSeason ? (
+                              <p className="py-4 text-center text-muted-foreground text-sm">{t("details.selectSeasonPrompt", "Choose a season from the dropdown to browse episodes.")}</p>
+                            ) : seasonError || seasonLoadingTimedOut ? (
+                              <AsyncSectionMessage
+                                title={t("common.error", "An error occurred")}
+                                description={t("details.seasonLoadError", "Season episodes could not be loaded.")}
+                                onRetry={() => {
+                                  setSeasonRetryVersion((version) => version + 1);
+                                  void retrySeasonDetails();
+                                }}
+                              />
+                            ) : seasonLoading ? (
+                              <div className="flex min-h-16 items-center justify-center gap-2 py-4 text-muted-foreground text-sm" role="status" aria-busy="true">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                {t("details.loadingSeasonEpisodes", "Loading season episodes...")}
+                              </div>
+                            ) : (
+                              <AsyncSectionMessage
+                                title={t("common.error", "An error occurred")}
+                                description={t("details.seasonUnavailable", "Season episode details are unavailable right now.")}
+                                onRetry={() => {
+                                  setSeasonRetryVersion((version) => version + 1);
+                                  void retrySeasonDetails();
+                                }}
+                              />
+                            )}
                           </AccordionContent>
                         </AccordionItem>
                       ))}
