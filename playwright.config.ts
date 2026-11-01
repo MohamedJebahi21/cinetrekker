@@ -64,6 +64,8 @@ function resolveChromiumOptions() {
 }
 
 const chromiumOptions = resolveChromiumOptions();
+const previewPort = process.env.PLAYWRIGHT_PREVIEW_PORT || "4181";
+const previewUrl = `http://127.0.0.1:${previewPort}`;
 
 export default defineConfig({
   testDir: "./tests",
@@ -73,7 +75,7 @@ export default defineConfig({
   retries: 0,
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
-    baseURL: "http://localhost:4173",
+    baseURL: previewUrl,
     headless: true,
     viewport: { width: 1280, height: 720 },
     actionTimeout: 10000,
@@ -82,9 +84,9 @@ export default defineConfig({
     serviceWorkers: "block",
   },
   webServer: {
-    command: "npm run preview -- --host 127.0.0.1 --port 4173",
-    url: "http://localhost:4173",
-    reuseExistingServer: true,
+    command: `npm run preview -- --host 127.0.0.1 --port ${previewPort} --strictPort`,
+    url: previewUrl,
+    reuseExistingServer: false,
     timeout: 120_000,
   },
   projects: [

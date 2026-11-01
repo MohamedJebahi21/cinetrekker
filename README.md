@@ -236,7 +236,7 @@ This compiles client assets into `dist/` and runs an automated bundle-budget gat
 
 CineTrekker maintains strict automated test coverage across multiple dimensions:
 
-Playwright's Chromium project uses the bundled Chromium when it is installed. If it is not available, the configuration checks for Edge and then an installed Chrome, Chromium, or Brave executable. Override the selection with `PLAYWRIGHT_CHANNEL` (for example, `msedge` or `chromium`) or provide a specific executable with `PLAYWRIGHT_EXECUTABLE_PATH`. On Windows, `PLAYWRIGHT_EDGE_EXECUTABLE` can point to a non-standard Edge installation. No extra browser package is installed by this project.
+Playwright's Chromium project uses the bundled Chromium when it is installed. If it is not available, the configuration checks for Edge and then an installed Chrome, Chromium, or Brave executable. Override the selection with `PLAYWRIGHT_CHANNEL` (for example, `msedge` or `chromium`) or provide a specific executable with `PLAYWRIGHT_EXECUTABLE_PATH`. On Windows, `PLAYWRIGHT_EDGE_EXECUTABLE` can point to a non-standard Edge installation. The preview server uses strict port `4181` to avoid attaching to a stale app; set `PLAYWRIGHT_PREVIEW_PORT` if that port is already in use. No extra browser package is installed by this project.
 
 PowerShell example for an explicit browser executable:
 
