@@ -1,0 +1,14 @@
+# Component consistency audit
+
+Scope: shared primitives and the global navigation menu checked during the Phase 2b cleanup. This is a code audit, not a claim of assistive-technology testing.
+
+| Component | Existing contract | Finding | Change / recommendation |
+|---|---|---|---|
+| Buttons | `src/components/ui/button-variants.ts` uses the shared 40px default, 36px small, 44px large and icon sizes; all variants share a 2px token focus ring, rounded-lg corners, and disabled opacity. | Guest actions in the mobile menu overrode the shared small size to 32px and 10px type, making the targets too small. | Removed the 32px override; those two actions now use a 44px minimum target and 12px type while retaining the shared button focus/disabled/hover behavior. |
+| Inputs | `src/components/ui/input.tsx` uses 40px height, rounded-lg, token border/focus ring and disabled state; text is 16px on mobile to avoid iOS zoom. | The base contract is coherent. Page-specific field overrides still require route-level review. | No global change. Prefer the Input primitive and existing tokens for new forms. |
+| Badges | `src/components/ui/badge-variants.ts` centralizes shape and semantic variants. | Badge elements are `div`s, so they should remain descriptive/non-interactive; use a button or link for actionable chips. | No change. Keep media/status badges visually distinct from controls. |
+| Dialogs and sheets | `src/components/ui/dialog.tsx` uses Radix dialog behavior, shared overlay/focus treatment and viewport-safe scrolling; sheets are separate primitives. | Dialog close affordance is visually small (16px icon) despite a larger clickable hit area; sheet variants are not fully standardized to the dialog corner treatment. | No broad refactor: the primitives have different placement roles. Verify trigger return, Escape and scroll lock per overlay before changing shared behavior. |
+| Menus | Radix menu primitives in `src/components/ui/dropdown-menu.tsx`; navigation menu uses explicit visible focus rings and 44px navigation rows. | Guest mobile sign-in actions were undersized (fixed above). Authenticated menu routes are filtered from both desktop and mobile groups using the same predicate. | Retain shared token focus treatment and 44px minimum row targets; keep public and account navigation group semantics distinct. |
+| Media vs information cards | Poster/media components use fixed media ratios and image fallbacks; informational panels use the shared card surface. | These are different content types and should not be forced into one generic card treatment. | Preserve poster aspect ratio, image fallback, and separate info-panel surface rather than unifying their radius/layout wholesale. |
+
+The audit found no reason to add a UI dependency. Shared control tokens are already present; the concrete inconsistency addressed here was the mobile navigation CTA override.
