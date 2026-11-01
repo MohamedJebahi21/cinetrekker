@@ -67,7 +67,7 @@ export const navigationGroups: NavigationGroup[] = groupMetadata.map((group) => 
   links: routeDefinitions.filter((route) => route.group === group.id),
 }));
 
-export const primaryNavigationGroups = navigationGroups.filter((group) => group.id !== "community");
+export const primaryNavigationGroups = navigationGroups;
 export const menuLinks = routeDefinitions;
 export const mobileBottomRoutes = routeDefinitions.filter((route) => route.bottomNav);
 export const desktopTopRoutes = routeDefinitions.filter((route) => route.topLevel);
