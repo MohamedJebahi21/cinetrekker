@@ -38,7 +38,7 @@ test("mobile audit remediations preserve navigation position, form access, and c
   assert.match(nav, /mobileNavigationGroups/);
   assert.match(nav, /nav\.accountOnlyDescription/);
   assert.match(nav, /topbar-search min-w-0 flex-1/);
-  assert.match(nav, /path: "\/search"/);
+  assert.match(nav, /@\/navigation\/routes/);
   assert.doesNotMatch(nav, /className="inline-flex h-11 min-w-11[\s\S]*sm:hidden/);
   assert.doesNotMatch(nav, /SheetClose/);
   assert.doesNotMatch(nav, /lucide-react\/dist\/esm\/icons\/x/);
