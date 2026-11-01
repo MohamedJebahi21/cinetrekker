@@ -8,7 +8,8 @@ const hookSource = await readFile(new URL("../src/hooks/useWatchedFilters.ts", i
 test("Watched defers filters for an empty history and keeps an accessible compact loading state", () => {
   assert.match(pageSource, /hasWatchedItems \|\| hasActiveFilters \? \(/);
   assert.match(pageSource, /aria-label="Loading watched history"/);
-  assert.match(pageSource, /ct-panel flex min-h-44 items-center justify-center/);
+  assert.match(pageSource, /ct-panel flex min-h-32 items-center justify-center px-6 py-6 sm:min-h-44 sm:py-10/);
+  assert.match(pageSource, /!isLoading && filteredMedia\.length === 0 \? "min-h-0 md:min-h-screen"/);
   assert.match(pageSource, /hasWatchedItems \? \(\s*<div className="media-grid">/);
 });
 

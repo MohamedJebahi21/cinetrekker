@@ -216,9 +216,13 @@ export default async function handler(req, res) {
   }
 
   const tmdbUrl = `${TMDB_BASE_URL}${endpoint}?${tmdbParams.toString()}`;
+  const upstreamStartedAt = Date.now();
+  const upstreamController = new AbortController();
+  const upstreamTimeout = setTimeout(() => upstreamController.abort(), 8_000);
 
   try {
     const response = await fetch(tmdbUrl, {
+      signal: upstreamController.signal,
       headers: isV4Token
         ? {
             Authorization: `Bearer ${tmdbApiKey}`,
@@ -231,6 +235,7 @@ export default async function handler(req, res) {
       logger.warn("TMDB upstream error.", {
         endpoint,
         status: response.status,
+        durationMs: Date.now() - upstreamStartedAt,
       });
       return json(res, response.status === 404 ? 404 : 502, {
         error:
@@ -247,9 +252,18 @@ export default async function handler(req, res) {
     res.setHeader("Cache-Control", getCacheControlHeader(endpoint));
     return json(res, 200, data);
   } catch (error) {
-    logger.error("Failed to reach TMDB.", error);
-    return json(res, 502, {
+    const timedOut = upstreamController.signal.aborted;
+    logger.error("Failed to reach TMDB.", {
+      endpoint,
+      status: null,
+      durationMs: Date.now() - upstreamStartedAt,
+      timedOut,
+      error,
+    });
+    return json(res, timedOut ? 504 : 502, {
       error: "Content data is temporarily unavailable.",
     });
+  } finally {
+    clearTimeout(upstreamTimeout);
   }
 }

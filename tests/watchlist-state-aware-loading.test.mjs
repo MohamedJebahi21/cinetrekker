@@ -9,7 +9,8 @@ test("Watchlist uses a compact accessible loading shell before an empty personal
   assert.match(source, /isInitialLibraryLoading \? \(/);
   assert.match(source, /role="status"/);
   assert.match(source, /aria-label="Loading watchlist"/);
-  assert.match(source, /ct-panel flex min-h-44 items-center justify-center/);
+  assert.match(source, /ct-panel flex min-h-32 items-center justify-center px-6 py-6 sm:min-h-44 sm:py-10/);
+  assert.match(source, /isContentLoading \|\| filteredMedia\.length > 0 \? "ct-page-shell min-h-screen"/);
 });
 
 test("Watchlist retains its poster-grid loading shell for populated or shared content", () => {

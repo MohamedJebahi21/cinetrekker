@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 export function useLoadingTimeout(
   isLoading: boolean,
   timeoutMs: number = 12_000,
+  resetKey?: string | number,
 ) {
   const [timedOut, setTimedOut] = useState(false);
 
@@ -12,6 +13,7 @@ export function useLoadingTimeout(
       return;
     }
 
+    setTimedOut(false);
     const timeoutId = window.setTimeout(() => {
       setTimedOut(true);
     }, timeoutMs);
@@ -19,7 +21,7 @@ export function useLoadingTimeout(
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [isLoading, timeoutMs]);
+  }, [isLoading, timeoutMs, resetKey]);
 
   return timedOut;
 }

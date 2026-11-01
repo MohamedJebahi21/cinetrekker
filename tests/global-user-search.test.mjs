@@ -32,3 +32,20 @@ test("command palette includes public members and navigates to their profile rou
   assert.match(commandPaletteSource, /key=\{`user-\$\{profile\.user_id\}`\}/);
   assert.match(commandPaletteSource, /<CommandShortcut>Member<\/CommandShortcut>/);
 });
+
+test("global search no-results copy interpolates the query in every locale", async () => {
+  assert.match(
+    source,
+    /"search\.noResults",[\s\S]{0,140}query:\s*debouncedQuery/,
+  );
+
+  for (const locale of ["en", "fr", "de", "es", "ar", "tr"]) {
+    const messages = JSON.parse(
+      await readFile(new URL(`../src/locales/${locale}.json`, import.meta.url), "utf8"),
+    );
+    assert.match(messages.search.noResults, /\{\{query\}\}/, `${locale} keeps the query placeholder`);
+    const rendered = messages.search.noResults.replace("{{query}}", "qzxv-no-such-title");
+    assert.match(rendered, /qzxv-no-such-title/);
+    assert.doesNotMatch(rendered, /\{\{query\}\}/);
+  }
+});

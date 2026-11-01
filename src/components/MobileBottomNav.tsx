@@ -1,20 +1,10 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import House from "lucide-react/dist/esm/icons/house";
-import Search from "lucide-react/dist/esm/icons/search";
 import User from "lucide-react/dist/esm/icons/user";
-import Compass from "lucide-react/dist/esm/icons/compass";
-import Bookmark from "lucide-react/dist/esm/icons/bookmark";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-
-const NAV_ITEMS = [
-  { path: "/", key: "nav.home", fallback: "Home", icon: House, exact: true as const },
-  { path: "/discover", key: "nav.discover", fallback: "Discover", icon: Compass, exact: false as const },
-  { path: "/search", key: "nav.search", fallback: "Search", icon: Search, exact: false as const },
-  { path: "/watchlist", key: "nav.watchlist", fallback: "Watchlist", icon: Bookmark, exact: false as const },
-];
+import { mobileBottomRoutes } from "@/navigation/routes";
 
 export function MobileBottomNav() {
   const { t } = useTranslation();
@@ -55,8 +45,8 @@ export function MobileBottomNav() {
       aria-label={t("nav.main", "Main navigation")}
     >
       <div className="mx-auto flex min-h-[4rem] w-full max-w-lg items-stretch px-1">
-        {NAV_ITEMS.map(({ path, key, fallback, icon: Icon, exact }) => {
-          const isActive = exact ? pathname === path : pathname.startsWith(path);
+        {mobileBottomRoutes.map(({ path, labelKey, defaultLabel, icon: Icon }) => {
+          const isActive = path === "/" ? pathname === path : pathname === path || pathname.startsWith(`${path}/`);
 
           return (
             <button
@@ -67,11 +57,11 @@ export function MobileBottomNav() {
                 "flex min-h-[4rem] min-w-11 flex-1 flex-col items-center justify-center gap-1 rounded-xl py-2 text-[0.7rem] font-semibold leading-none transition-colors active:scale-[0.97]",
                 isActive ? "bg-primary/10 text-primary" : "text-muted-foreground",
               )}
-              aria-label={t(key, fallback)}
+              aria-label={t(labelKey, defaultLabel)}
               aria-current={isActive ? "page" : undefined}
             >
               <Icon className={cn("h-5 w-5 transition-transform", isActive && "scale-110")} strokeWidth={isActive ? 2.5 : 2} />
-              <span>{t(key, fallback)}</span>
+              <span>{t(labelKey, defaultLabel)}</span>
             </button>
           );
         })}

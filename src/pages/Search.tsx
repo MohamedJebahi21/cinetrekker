@@ -1541,9 +1541,9 @@ export default function Search() {
         </div>
       ) : isError || loadingTimedOut ? (
         <div className="text-center py-20 max-w-md mx-auto">
-          <h3 className="text-2xl font-bold mb-3 title-display">
+          <h2 className="text-2xl font-bold mb-3 title-display">
             {t("search.errorTitle", "Search unavailable")}
-          </h3>
+          </h2>
           <p className="text-muted-foreground mb-6 leading-relaxed">
             {searchErrorMessage}
           </p>
@@ -1580,11 +1580,11 @@ export default function Search() {
           <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
             <SearchIcon className="w-12 h-12 text-primary" />
           </div>
-          <h3 className="text-2xl font-bold mb-3 title-display">
+          <h2 className="text-2xl font-bold mb-3 title-display">
             {normalizedQuery
               ? t("search.noResultsTitle", "No results available")
               : t("search.startJourney", "Your Journey Starts Here")}
-          </h3>
+          </h2>
           <p className="text-muted-foreground mb-6 leading-relaxed">
             {normalizedQuery
               ? t(

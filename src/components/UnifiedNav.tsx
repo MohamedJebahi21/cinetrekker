@@ -1,21 +1,14 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Settings from "lucide-react/dist/esm/icons/settings";
 import SlidersHorizontal from "lucide-react/dist/esm/icons/sliders-horizontal";
-import Layers from "lucide-react/dist/esm/icons/layers";
-import CalendarDays from "lucide-react/dist/esm/icons/calendar-days";
-import Award from "lucide-react/dist/esm/icons/award";
 import User from "lucide-react/dist/esm/icons/user";
 import Compass from "lucide-react/dist/esm/icons/compass";
-import Film from "lucide-react/dist/esm/icons/film";
 import Bookmark from "lucide-react/dist/esm/icons/bookmark";
 import CheckSquare from "lucide-react/dist/esm/icons/check-square";
 import Check from "lucide-react/dist/esm/icons/check";
-import Trophy from "lucide-react/dist/esm/icons/trophy";
-import Heart from "lucide-react/dist/esm/icons/heart";
-import FolderHeart from "lucide-react/dist/esm/icons/folder-heart";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -45,6 +38,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { changeLanguage, languages } from "@/i18n";
+import { menuLinks, navigationGroups, primaryNavigationGroups } from "@/navigation/routes";
 
 const SearchDropdown = lazy(() =>
   import("@/components/SearchDropdown").then((mod) => ({
@@ -57,77 +51,6 @@ const RemotionAurora = lazy(() =>
     default: mod.RemotionAurora,
   })),
 );
-
-// Grouped navigation for high-fidelity overlays
-const navigationGroups = [
-  {
-    titleKey: "nav.personalLibrary",
-    defaultTitle: "Personal Library",
-    links: [
-      { path: "/", labelKey: "nav.home", defaultLabel: "Home", icon: Compass, descKey: "navDescription.home", defaultDesc: "Your personal feed and tonight's picks." },
-      { path: "/profile", labelKey: "nav.profile", defaultLabel: "Profile", icon: User, descKey: "navDescription.profile", defaultDesc: "Manage your account, rank, and stats." },
-      { path: "/watchlist", labelKey: "nav.watchlist", defaultLabel: "Watchlist", icon: Bookmark, descKey: "navDescription.watchlist", defaultDesc: "Your list of titles to watch." },
-      { path: "/collections", labelKey: "nav.collections", defaultLabel: "Collections", icon: FolderHeart, descKey: "navDescription.collections", defaultDesc: "Curate themed lists worth sharing." },
-      { path: "/watched", labelKey: "nav.watched", defaultLabel: "Watched", icon: CheckSquare, descKey: "navDescription.watched", defaultDesc: "Your logged watch history." },
-      { path: "/following", labelKey: "nav.following", defaultLabel: "Following", icon: User, descKey: "navDescription.following", defaultDesc: "Titles you are tracking for updates." },
-    ],
-  },
-  {
-    titleKey: "nav.community",
-    defaultTitle: "Community",
-    links: [
-      { path: "/people", labelKey: "nav.people", defaultLabel: "People", icon: User, descKey: "navDescription.people", defaultDesc: "Discover public profiles and follow fellow cinephiles." },
-    ],
-  },
-  {
-    titleKey: "nav.discoveryExplore",
-    defaultTitle: "Discovery & Explore",
-    links: [
-      { path: "/discover", labelKey: "nav.discover", defaultLabel: "Discover", icon: Compass, descKey: "navDescription.discover", defaultDesc: "Explore recommendations and releases." },
-      { path: "/trending", labelKey: "nav.trending", defaultLabel: "Trending", icon: Film, descKey: "navDescription.trending", defaultDesc: "What's popular right now." },
-      { path: "/search", labelKey: "nav.search", defaultLabel: "Search", icon: Compass, descKey: "navDescription.search", defaultDesc: "Find movies, series, or people." },
-      { path: "/recommendations", labelKey: "nav.recommendations", defaultLabel: "Recommendations", icon: Film, descKey: "navDescription.recommendations", defaultDesc: "Taste-matched suggestions for your next watch." },
-      { path: "/genres", labelKey: "nav.genres", defaultLabel: "Genres", icon: Layers, descKey: "navDescription.genres", defaultDesc: "Browse by specific film categories." },
-      { path: "/decades", labelKey: "nav.decades", defaultLabel: "Decades", icon: CalendarDays, descKey: "navDescription.decades", defaultDesc: "Travel through cinema history." },
-    ],
-  },
-  {
-    titleKey: "nav.insightsAwards",
-    defaultTitle: "Insights & Awards",
-    links: [
-      { path: "/calendar", labelKey: "nav.calendar", defaultLabel: "Calendar", icon: CalendarDays, descKey: "navDescription.calendar", defaultDesc: "TV schedule and movie release tracker." },
-      { path: "/stats", labelKey: "nav.stats", defaultLabel: "Stats", icon: Award, descKey: "navDescription.stats", defaultDesc: "Detailed analysis of your viewing habits." },
-      { path: "/achievements", labelKey: "nav.achievements", defaultLabel: "Achievements", icon: Award, descKey: "navDescription.achievements", defaultDesc: "Trophies and milestones unlocked." },
-      { path: "/quests", labelKey: "nav.quests", defaultLabel: "Monthly Quests", icon: Trophy, descKey: "navDescription.quests", defaultDesc: "Time-limited challenges and rewards." },
-      { path: "/year-in-review", labelKey: "nav.yearInReview", defaultLabel: "Year In Review", icon: Award, descKey: "navDescription.yearInReview", defaultDesc: "Your personal annual wrapped recap." },
-      { path: "/awards", labelKey: "nav.awards", defaultLabel: "Awards", icon: Award, descKey: "navDescription.awards", defaultDesc: "Browse award winners and nominees." },
-    ],
-  },
-];
-
-// Flat menu links kept for backwards compatibility with currentPageLabel
-const primaryNavigationGroups = navigationGroups.filter((group) => group.titleKey !== "nav.community");
-
-const menuLinks = [
-  { path: "/profile", labelKey: "nav.profile", defaultLabel: "Profile", icon: User },
-  { path: "/discover", labelKey: "nav.discover", defaultLabel: "Discover", icon: Compass },
-  { path: "/watchlist", labelKey: "nav.watchlist", defaultLabel: "Watchlist", icon: Bookmark },
-  { path: "/collections", labelKey: "nav.collections", defaultLabel: "Collections", icon: FolderHeart },
-  { path: "/watched", labelKey: "nav.watched", defaultLabel: "Watched", icon: CheckSquare },
-  { path: "/trending", labelKey: "nav.trending", defaultLabel: "Trending", icon: Film },
-  { path: "/search", labelKey: "nav.search", defaultLabel: "Search", icon: Compass },
-  { path: "/recommendations", labelKey: "nav.recommendations", defaultLabel: "Recommendations", icon: Film },
-  { path: "/calendar", labelKey: "nav.calendar", defaultLabel: "Calendar", icon: CalendarDays },
-  { path: "/stats", labelKey: "nav.stats", defaultLabel: "Stats", icon: Award },
-  { path: "/achievements", labelKey: "nav.achievements", defaultLabel: "Achievements", icon: Award },
-  { path: "/quests", labelKey: "nav.quests", defaultLabel: "Monthly Quests", icon: Trophy },
-  { path: "/genres", labelKey: "nav.genres", defaultLabel: "Genres", icon: Layers },
-  { path: "/decades", labelKey: "nav.decades", defaultLabel: "Decades", icon: CalendarDays },
-  { path: "/awards", labelKey: "nav.awards", defaultLabel: "Awards", icon: Award },
-  { path: "/year-in-review", labelKey: "nav.yearInReview", defaultLabel: "Year In Review", icon: Award },
-  { path: "/following", labelKey: "nav.following", defaultLabel: "Following", icon: User },
-  { path: "/people", labelKey: "nav.people", defaultLabel: "People", icon: User },
-];
 
 function BurgerIcon({ isOpen }: { isOpen: boolean }) {
   return (
@@ -165,6 +88,7 @@ export function UnifiedNav() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
+  const desktopMenuTriggerRef = useRef<HTMLButtonElement>(null);
   const activeLanguageCode = i18n.resolvedLanguage ?? i18n.language;
   const activeLanguageLabel =
     languages.find((language) => language.code === activeLanguageCode)?.name ?? "English";
@@ -259,6 +183,40 @@ export function UnifiedNav() {
   useEffect(() => {
     setIsDesktopMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!isDesktopMenuOpen) return;
+
+    const getMenuLinks = () => Array.from(
+      document.querySelectorAll<HTMLAnchorElement>("#desktop-menu-overlay .desktop-menu-grid a[href]"),
+    );
+    getMenuLinks()[0]?.focus();
+
+    const handleMenuKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setIsDesktopMenuOpen(false);
+        desktopMenuTriggerRef.current?.focus();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+      const links = getMenuLinks();
+      if (links.length === 0) return;
+      const first = links[0];
+      const last = links[links.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleMenuKeyDown, true);
+    return () => document.removeEventListener("keydown", handleMenuKeyDown, true);
+  }, [isDesktopMenuOpen]);
 
   useEffect(() => {
     const handleOpen = () => {
@@ -511,6 +469,7 @@ export function UnifiedNav() {
           </DropdownMenu>
 
           <Button
+            ref={desktopMenuTriggerRef}
             variant="outline"
             size="icon"
             className="topbar-menu-button relative"

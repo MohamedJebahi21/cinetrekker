@@ -126,9 +126,9 @@ function SpotlightHero({ items }: { items: Media[] }) {
           </div>
 
           {/* Title */}
-          <h2 className="max-w-xl text-3xl font-semibold leading-[1.04] tracking-[-0.04em] text-white drop-shadow-lg sm:text-4xl lg:text-5xl">
+          <p className="max-w-xl text-3xl font-semibold leading-[1.04] tracking-[-0.04em] text-white drop-shadow-lg sm:text-4xl lg:text-5xl">
             {item.title || item.name}
-          </h2>
+          </p>
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-medium text-white/75">
             {releaseYear && <span>{releaseYear}</span>}
@@ -242,60 +242,60 @@ export default function Discover() {
     return () => window.clearTimeout(timer);
   }, []);
 
-  const { data: trendingNow } = useQuery({
+  const { data: trendingNow, isLoading: trendingNowLoading, error: trendingNowError, refetch: retryTrendingNow } = useQuery({
     queryKey: ["discover", "trending-day", language, includeAdult],
     queryFn: () => getTrending("all", "day", language, 1, includeAdult),
   });
 
-  const { data: trendingWeek } = useQuery({
+  const { data: trendingWeek, isLoading: trendingWeekLoading, error: trendingWeekError, refetch: retryTrendingWeek } = useQuery({
     queryKey: ["discover", "trending-week", language, includeAdult],
     queryFn: () => getTrending("all", "week", language, 1, includeAdult),
     enabled: deferredDiscoveryReady,
   });
 
-  const { data: popularMovies } = useQuery({
+  const { data: popularMovies, isLoading: popularMoviesLoading, error: popularMoviesError, refetch: retryPopularMovies } = useQuery({
     queryKey: ["discover", "popular-movies", language, includeAdult],
     queryFn: () => getPopularMovies(1, language, includeAdult),
     enabled: deferredDiscoveryReady,
   });
 
-  const { data: popularTV } = useQuery({
+  const { data: popularTV, isLoading: popularTVLoading, error: popularTVError, refetch: retryPopularTV } = useQuery({
     queryKey: ["discover", "popular-tv", language, includeAdult],
     queryFn: () => getPopularTV(1, language, includeAdult),
     enabled: deferredDiscoveryReady,
   });
 
-  const { data: topRatedMovies } = useQuery({
+  const { data: topRatedMovies, isLoading: topRatedMoviesLoading, error: topRatedMoviesError, refetch: retryTopRatedMovies } = useQuery({
     queryKey: ["discover", "top-rated-movies", language, includeAdult],
     queryFn: () => getTopRatedMovies(1, language, includeAdult),
     enabled: deferredDiscoveryReady,
   });
 
-  const { data: topRatedTV } = useQuery({
+  const { data: topRatedTV, isLoading: topRatedTVLoading, error: topRatedTVError, refetch: retryTopRatedTV } = useQuery({
     queryKey: ["discover", "top-rated-tv", language, includeAdult],
     queryFn: () => getTopRatedTV(1, language, includeAdult),
     enabled: deferredDiscoveryReady,
   });
 
-  const { data: nowPlayingMovies } = useQuery({
+  const { data: nowPlayingMovies, isLoading: nowPlayingMoviesLoading, error: nowPlayingMoviesError, refetch: retryNowPlayingMovies } = useQuery({
     queryKey: ["discover", "now-playing", language, includeAdult],
     queryFn: () => getNowPlayingMovies(1, language, includeAdult),
     enabled: deferredDiscoveryReady,
   });
 
-  const { data: upcomingMovies } = useQuery({
+  const { data: upcomingMovies, isLoading: upcomingMoviesLoading, error: upcomingMoviesError, refetch: retryUpcomingMovies } = useQuery({
     queryKey: ["discover", "upcoming", language, includeAdult],
     queryFn: () => getUpcomingMovies(1, language, includeAdult),
     enabled: deferredDiscoveryReady,
   });
 
-  const { data: airingTodayTV } = useQuery({
+  const { data: airingTodayTV, isLoading: airingTodayTVLoading, error: airingTodayTVError, refetch: retryAiringTodayTV } = useQuery({
     queryKey: ["discover", "airing-today", language, includeAdult],
     queryFn: () => getAiringTodayTV(1, language, includeAdult),
     enabled: deferredDiscoveryReady,
   });
 
-  const { data: onTheAirTV } = useQuery({
+  const { data: onTheAirTV, isLoading: onTheAirTVLoading, error: onTheAirTVError, refetch: retryOnTheAirTV } = useQuery({
     queryKey: ["discover", "on-the-air", language, includeAdult],
     queryFn: () => getOnTheAirTV(1, language, includeAdult),
     enabled: deferredDiscoveryReady,
@@ -464,8 +464,12 @@ export default function Discover() {
 
         {/* ── Trending Today ── */}
         <MediaSection
-          title="🔥 Trending Today"
+          title="Trending Today"
+          icon={Flame}
           items={trendingNow?.results || []}
+          loading={trendingNowLoading}
+          error={trendingNowError}
+          onRetry={() => void retryTrendingNow()}
           showMoreLink="/trending"
           emptyMessage="Trending titles will appear shortly."
         />
@@ -474,72 +478,108 @@ export default function Discover() {
           <>
         {/* ── Airing on TV Today ── */}
         <MediaSection
-          title="📺 Airing on TV Today"
+          title="Airing on TV Today"
+          icon={Tv}
           items={airingTodayTV?.results || []}
+          loading={airingTodayTVLoading}
+          error={airingTodayTVError}
+          onRetry={() => void retryAiringTodayTV()}
           showMoreLink="/search?type=tv"
           emptyMessage="Today's airing shows will appear shortly."
         />
 
         {/* ── Now Playing in Cinemas ── */}
         <MediaSection
-          title="🎬 Now Playing in Cinemas"
+          title="Now Playing in Cinemas"
+          icon={Film}
           items={nowPlayingMovies?.results || []}
+          loading={nowPlayingMoviesLoading}
+          error={nowPlayingMoviesError}
+          onRetry={() => void retryNowPlayingMovies()}
           showMoreLink="/search?type=movie&sort=release_date.desc"
           emptyMessage="Now playing movies will appear shortly."
         />
 
         {/* ── Upcoming Movies ── */}
         <MediaSection
-          title="🗓️ Coming Soon"
+          title="Coming Soon"
+          icon={Clock}
           items={upcomingMovies?.results || []}
+          loading={upcomingMoviesLoading}
+          error={upcomingMoviesError}
+          onRetry={() => void retryUpcomingMovies()}
           showMoreLink="/search?type=movie&sort=release_date.asc"
           emptyMessage="Upcoming movies will appear shortly."
         />
 
         {/* ── Trending This Week ── */}
         <MediaSection
-          title="📈 Trending This Week"
+          title="Trending This Week"
+          icon={TrendingUp}
           items={trendingWeek?.results || []}
+          loading={trendingWeekLoading}
+          error={trendingWeekError}
+          onRetry={() => void retryTrendingWeek()}
           showMoreLink="/trending"
           emptyMessage="Weekly trending will appear shortly."
         />
 
         {/* ── Currently Airing TV ── */}
         <MediaSection
-          title="📡 Currently Airing Shows"
+          title="Currently Airing Shows"
+          icon={Tv}
           items={onTheAirTV?.results || []}
+          loading={onTheAirTVLoading}
+          error={onTheAirTVError}
+          onRetry={() => void retryOnTheAirTV()}
           showMoreLink="/search?type=tv"
           emptyMessage="On the air shows will appear shortly."
         />
 
         {/* ── Top Rated Movies ── */}
         <MediaSection
-          title="⭐ Top Rated Movies of All Time"
+          title="Top Rated Movies of All Time"
+          icon={Star}
           items={topRatedMovies?.results || []}
+          loading={topRatedMoviesLoading}
+          error={topRatedMoviesError}
+          onRetry={() => void retryTopRatedMovies()}
           showMoreLink="/search?type=movie&sort=vote_average.desc"
           emptyMessage="Top rated movies will appear shortly."
         />
 
         {/* ── Top Rated TV ── */}
         <MediaSection
-          title="⭐ Top Rated TV Shows"
+          title="Top Rated TV Shows"
+          icon={Star}
           items={topRatedTV?.results || []}
+          loading={topRatedTVLoading}
+          error={topRatedTVError}
+          onRetry={() => void retryTopRatedTV()}
           showMoreLink="/search?type=tv&sort=vote_average.desc"
           emptyMessage="Top rated TV shows will appear shortly."
         />
 
         {/* ── Popular Movies ── */}
         <MediaSection
-          title="🎥 Popular Movies"
+          title="Popular Movies"
+          icon={Film}
           items={popularMovies?.results || []}
+          loading={popularMoviesLoading}
+          error={popularMoviesError}
+          onRetry={() => void retryPopularMovies()}
           showMoreLink="/search?type=movie"
           emptyMessage="Popular movies will appear shortly."
         />
 
         {/* ── Popular TV ── */}
         <MediaSection
-          title="📺 Popular TV Shows"
+          title="Popular TV Shows"
+          icon={Tv}
           items={popularTV?.results || []}
+          loading={popularTVLoading}
+          error={popularTVError}
+          onRetry={() => void retryPopularTV()}
           showMoreLink="/search?type=tv"
           emptyMessage="Popular TV shows will appear shortly."
         />
