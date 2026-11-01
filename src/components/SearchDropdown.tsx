@@ -589,7 +589,8 @@ function SearchDropdownComponent({ className, onNavigate }: SearchDropdownProps)
                 <p className="text-sm text-muted-foreground mb-2">
                   {t(
                     "search.noResults",
-                    `No results available for "${debouncedQuery}"`,
+                    'No results available for "{{query}}"',
+                    { query: debouncedQuery },
                   )}
                 </p>
                 <p className="text-xs text-muted-foreground/60">
