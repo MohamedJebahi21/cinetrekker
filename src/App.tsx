@@ -255,7 +255,7 @@ const App = () => {
                     ref={containerRef}
                     className={`flex-1 ${
                       hasAcceptedConsent
-                        ? "pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] md:pb-10"
+                        ? "pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-10"
                         : "pb-[max(10rem,var(--ct-cookie-consent-offset,10rem))] md:pb-10"
                     }`}
                     {...handlers}
