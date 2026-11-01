@@ -1547,11 +1547,6 @@ export default function Search() {
           <p className="text-muted-foreground mb-6 leading-relaxed">
             {searchErrorMessage}
           </p>
-          {import.meta.env.DEV && activeError?.message && (
-            <p className="mb-6 rounded-2xl border border-border/60 bg-muted/40 px-4 py-3 text-left text-xs text-muted-foreground">
-              {activeError.message}
-            </p>
-          )}
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Button onClick={() => void activeQuery.refetch()}>
               {t("common.tryAgain", "Try again")}

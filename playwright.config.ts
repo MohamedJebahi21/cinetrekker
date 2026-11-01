@@ -1,6 +1,20 @@
 import { defineConfig, devices } from "@playwright/test";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 
 const isWindows = process.platform === "win32";
+const edgeExecutable = process.env.PLAYWRIGHT_EDGE_EXECUTABLE ??
+  "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
+const useEdge = process.env.PLAYWRIGHT_CHANNEL === "msedge" ||
+  (process.env.PLAYWRIGHT_CHANNEL !== "chromium" && isWindows && existsSync(edgeExecutable));
+const browserChannel = process.env.PLAYWRIGHT_CHANNEL === "msedge" || useEdge ? "msedge" : undefined;
+const executablePath = process.env.PLAYWRIGHT_EXECUTABLE_PATH
+  ? resolve(process.env.PLAYWRIGHT_EXECUTABLE_PATH)
+  : undefined;
+const chromiumOptions = {
+  ...(browserChannel ? { channel: browserChannel } : {}),
+  ...(executablePath ? { launchOptions: { executablePath } } : {}),
+};
 
 export default defineConfig({
   testDir: "./tests",
@@ -29,7 +43,7 @@ export default defineConfig({
       name: "chromium",
       use: {
         ...devices["Desktop Chrome"],
-        ...(isWindows ? { channel: "msedge" } : {}),
+        ...chromiumOptions,
       },
     },
     { name: "firefox", use: { ...devices["Desktop Firefox"] } },
@@ -38,7 +52,7 @@ export default defineConfig({
       name: "mobile-chrome",
       use: {
         ...devices["Pixel 7"],
-        ...(isWindows ? { channel: "msedge" } : {}),
+        ...chromiumOptions,
       },
     },
     { name: "mobile-safari", use: { ...devices["iPhone 14"] } },

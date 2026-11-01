@@ -24,6 +24,7 @@ const VERCEL_PREVIEW_PATTERN =
   /^https:\/\/cinetrekker-[a-z0-9-]+\.vercel\.app$/;
 const LOCAL_ORIGIN_PATTERN =
   /^https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])(?::\d{1,5})?$/i;
+const TMDB_REQUEST_TIMEOUT_MS = 12_000;
 
 function getCorsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get("origin") || "";
@@ -313,19 +314,29 @@ serve(async (req) => {
     const tmdbUrl = `${TMDB_BASE_URL}${endpoint}?${tmdbParams.toString()}`;
 
     // 3. Fetch from TMDB
-    const response = await fetch(tmdbUrl, {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TMDB_REQUEST_TIMEOUT_MS);
+    let response: Response;
+    try {
+      response = await fetch(tmdbUrl, {
       headers: isV4Token
         ? {
             Authorization: `Bearer ${TMDB_API_ID}`,
             "Content-Type": "application/json",
           }
         : { "Content-Type": "application/json" },
-    });
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`TMDB API error: ${response.status} - ${errorText}`);
-      throw new Error(`TMDB API error: ${response.status}`);
+      console.error(`TMDB API returned status ${response.status}`);
+      return new Response(JSON.stringify({ error: "Content data is temporarily unavailable." }), {
+        status: response.status === 429 ? 429 : response.status === 404 ? 404 : 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const data = applyServerSideSafetyFilter(
@@ -345,8 +356,9 @@ serve(async (req) => {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
     console.error("Error in tmdb-proxy:", errorMessage);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
+    const isTimeout = error instanceof DOMException && error.name === "AbortError";
+    return new Response(JSON.stringify({ error: "Content data is temporarily unavailable." }), {
+      status: isTimeout ? 504 : 502,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
