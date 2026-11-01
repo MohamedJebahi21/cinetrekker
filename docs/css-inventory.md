@@ -22,7 +22,7 @@ These are token-pair checks, not a claim that every third-party image overlay or
 
 ## Cascade and `!important` inventory
 
-There are 38 `!important` declarations in the reviewed stylesheet. They cluster in the following selectors; these are retained pending component-level regression checks because several override utility classes, third-party styles, or reduced-motion behavior:
+There are 37 `!important` declarations in the current `src/index.css` (counted with `rg -o "!important" src --glob "*.css"`). No declarations were removed in this pass: the inventoried rules either preserve accessibility/reduced-motion behavior, override vendor-generated styles, or participate in theme/legacy cascade compatibility; none was confirmed safe to remove without a computed-style visual regression check. The rules cluster in the following selectors:
 
 | Selector / area | Uses and rationale | Follow-up |
 |---|---|---|
