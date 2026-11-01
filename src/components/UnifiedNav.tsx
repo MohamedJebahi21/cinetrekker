@@ -6,7 +6,7 @@ import Settings from "lucide-react/dist/esm/icons/settings";
 import SlidersHorizontal from "lucide-react/dist/esm/icons/sliders-horizontal";
 import User from "lucide-react/dist/esm/icons/user";
 import Check from "lucide-react/dist/esm/icons/check";
-import { desktopTopRoutes, menuLinks, navigationGroups, primaryNavigationGroups } from "@/navigation/routes";
+import { desktopTopRoutes, menuLinks, navigationGroups } from "@/navigation/routes";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -256,8 +256,7 @@ export function UnifiedNav() {
   }, [pathname, t]);
 
   const mobileNavigationGroups = useMemo(() => {
-    const visibleGroups = user ? primaryNavigationGroups : navigationGroups;
-    return visibleGroups.map((group) => ({
+    return navigationGroups.map((group) => ({
       ...group,
       links: group.links.filter((item) => item.showOnMobile && (user || !item.authRequired)),
     })).filter((group) => group.links.length > 0);
@@ -497,7 +496,7 @@ export function UnifiedNav() {
               <div className="relative z-20 h-full w-full overflow-y-auto border-t border-border bg-background px-4 py-6 shadow-none motion-safe:animate-fade-in sm:px-6 sm:py-8">
                 <div className="desktop-menu-shell mx-auto flex min-h-full max-w-[78rem] items-center">
                   <nav aria-label={t("nav.main", "Main navigation")} className="desktop-menu-grid grid w-full gap-5 md:grid-cols-3">
-                    {primaryNavigationGroups.map((group) => (
+                    {mobileNavigationGroups.map((group) => (
                       <section key={group.titleKey} className="desktop-menu-group min-w-0 self-stretch border-t border-border pt-4 first:border-t-0 first:pt-0">
                         <div className="mb-2 flex items-center justify-between gap-3">
                           <h3 className="text-[0.7rem] font-semibold uppercase tracking-[0.17em] text-muted-foreground">{t(group.titleKey, group.defaultTitle)}</h3>
@@ -610,10 +609,10 @@ export function UnifiedNav() {
                   <h4 className="text-sm font-bold text-foreground">{t("home.makeEveryVisitPersonal", "Make every visit personal")}</h4>
                   <p className="text-xs text-muted-foreground mt-1">{t("home.createAccountSyncDesc", "Create a free account to sync watchlist & ratings.")}</p>
                   <div className="mt-3 flex gap-2 justify-center">
-                    <Button asChild size="sm" className="text-[10px] h-8 px-4">
+                    <Button asChild size="sm" className="min-h-11 h-auto px-4 text-xs">
                       <Link to="/signup" onClick={() => setIsMobileSheetOpen(false)}>{t("home.createFreeAccount", "Register")}</Link>
                     </Button>
-                    <Button asChild size="sm" variant="outline" className="text-[10px] h-8 px-4 bg-transparent border-border hover:bg-accent">
+                    <Button asChild size="sm" variant="outline" className="min-h-11 h-auto px-4 text-xs bg-transparent border-border hover:bg-accent">
                       <Link to="/login" onClick={() => setIsMobileSheetOpen(false)}>{t("nav.signIn", "Sign In")}</Link>
                     </Button>
                   </div>
