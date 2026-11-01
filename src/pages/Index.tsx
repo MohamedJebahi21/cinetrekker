@@ -510,7 +510,7 @@ export default function Index() {
         ]}
       />
 
-      <HeroSection />
+      {!user ? <HeroSection /> : null}
 
       <section className="page-container space-y-5 pb-24 pt-6 sm:pt-7 md:space-y-8 md:pb-0 md:pt-8">
         {authLoading ? (
@@ -522,6 +522,9 @@ export default function Index() {
             </MotionRevealSection>
             <MotionRevealSection tone="soft" delayClassName="delay-100" accentOpacityClassName="opacity-22">
               <ContinueWatching />
+            </MotionRevealSection>
+            <MotionRevealSection tone="soft" delayClassName="delay-150" accentOpacityClassName="opacity-18">
+              <HeroSection />
             </MotionRevealSection>
               {!hasLibraryActivity ? (
                 <MotionRevealSection tone="soft" delayClassName="delay-150">
