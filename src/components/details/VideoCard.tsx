@@ -1,9 +1,10 @@
 import React from "react";
-import { PlayCircle } from "lucide-react";
+import { Film, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MediaVideoResult } from "@/types/media";
 
 export function VideoCard({ video, onPlay, featured }: { video: MediaVideoResult; onPlay: (k: string) => void; featured?: boolean }) {
+  const [thumbnailFailed, setThumbnailFailed] = React.useState(false);
   const thumb = `https://img.youtube.com/vi/${video.key}/${featured ? "hqdefault" : "mqdefault"}.jpg`;
   return (
     <button
@@ -16,7 +17,13 @@ export function VideoCard({ video, onPlay, featured }: { video: MediaVideoResult
       aria-label={`Play ${video.name}`}
     >
       <div className="aspect-video relative">
-        <img src={thumb} alt={video.name} className="w-full h-full object-cover" loading="lazy" />
+        {thumbnailFailed ? (
+          <div className="flex h-full w-full items-center justify-center bg-muted" aria-hidden="true">
+            <Film className="h-8 w-8 text-muted-foreground" />
+          </div>
+        ) : (
+          <img src={thumb} alt={video.name} onError={() => setThumbnailFailed(true)} className="w-full h-full object-cover" loading="lazy" />
+        )}
         <div className="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition-colors" />
         <div className="absolute inset-0 flex items-center justify-center">
           <div className={cn(
