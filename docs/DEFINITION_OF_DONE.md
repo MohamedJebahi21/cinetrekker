@@ -28,6 +28,7 @@ Use this checklist for all production-facing changes.
 - [ ] No secrets were added to source control.
 - [ ] Input validation and authorization checks are in place where needed.
 - [ ] New API paths include abuse/rate-limit considerations.
+- [ ] Any dependency audit exception is scoped to one advisory, tested, documented with a review date, and does not suppress other high or critical findings.
 - [ ] Data flow respects user privacy and existing security docs.
 
 ## 5) Delivery Readiness
