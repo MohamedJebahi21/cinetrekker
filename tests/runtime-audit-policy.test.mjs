@@ -2,6 +2,16 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { evaluateRuntimeAudit } from "../scripts/runtime-audit-policy.mjs";
 
+const sampleExceptions = [
+  {
+    packageName: "zod",
+    advisoryId: "GHSA-mrhx-c7xc-m3w5",
+    severity: "high",
+    expiresAt: "2026-12-02",
+    reason: "Documented test exception",
+  },
+];
+
 function reportFor(name, severity, advisoryId) {
   return {
     metadata: { vulnerabilities: { high: severity === "high" ? 1 : 0, critical: severity === "critical" ? 1 : 0 } },
@@ -18,6 +28,7 @@ test("accepts only the documented Zod advisory before its review date", () => {
   const result = evaluateRuntimeAudit(
     reportFor("zod", "high", "GHSA-mrhx-c7xc-m3w5"),
     new Date("2026-11-15T12:00:00.000Z"),
+    sampleExceptions,
   );
 
   assert.equal(result.accepted.length, 1);
@@ -28,6 +39,7 @@ test("blocks Zod when its accepted exception has expired", () => {
   const result = evaluateRuntimeAudit(
     reportFor("zod", "high", "GHSA-mrhx-c7xc-m3w5"),
     new Date("2026-12-03T00:00:00.000Z"),
+    sampleExceptions,
   );
 
   assert.equal(result.accepted.length, 0);
@@ -38,6 +50,7 @@ test("blocks a different high-severity Zod advisory", () => {
   const result = evaluateRuntimeAudit(
     reportFor("zod", "high", "GHSA-xxxx-xxxx-xxxx"),
     new Date("2026-11-15T12:00:00.000Z"),
+    sampleExceptions,
   );
 
   assert.equal(result.accepted.length, 0);
@@ -48,6 +61,7 @@ test("blocks critical severity even when the advisory id is accepted for high se
   const result = evaluateRuntimeAudit(
     reportFor("zod", "critical", "GHSA-mrhx-c7xc-m3w5"),
     new Date("2026-11-15T12:00:00.000Z"),
+    sampleExceptions,
   );
 
   assert.equal(result.accepted.length, 0);
@@ -78,8 +92,15 @@ test("does not fail the runtime gate on moderate advisories", () => {
   const result = evaluateRuntimeAudit(
     reportFor("some-package", "moderate", "GHSA-aaaa-bbbb-cccc"),
     new Date("2026-11-15T12:00:00.000Z"),
+    sampleExceptions,
   );
 
   assert.equal(result.accepted.length, 0);
   assert.equal(result.blocked.length, 0);
+});
+
+test("has zero active runtime audit exceptions in production configuration", () => {
+  import("../scripts/runtime-audit-policy.mjs").then(({ RUNTIME_AUDIT_EXCEPTIONS }) => {
+    assert.equal(RUNTIME_AUDIT_EXCEPTIONS.length, 0);
+  });
 });

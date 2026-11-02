@@ -1,12 +1,6 @@
-export const RUNTIME_AUDIT_EXCEPTIONS = [
-  {
-    packageName: "zod",
-    advisoryId: "GHSA-mrhx-c7xc-m3w5",
-    severity: "high",
-    expiresAt: "2026-12-02",
-    reason: "Zod 3 is currently used by client-side schemas; the patched Zod 4 release requires a breaking schema migration.",
-  },
-];
+// Active exceptions for high or critical production runtime vulnerabilities.
+// Must be documented in docs/security-exceptions.md with an expiration date and remediation plan.
+export const RUNTIME_AUDIT_EXCEPTIONS = [];
 
 const severityRank = { low: 0, moderate: 1, high: 2, critical: 3 };
 
@@ -21,7 +15,7 @@ function getAdvisoryIds(vulnerability) {
     });
 }
 
-export function evaluateRuntimeAudit(report, now = new Date()) {
+export function evaluateRuntimeAudit(report, now = new Date(), exceptions = RUNTIME_AUDIT_EXCEPTIONS) {
   if (!report || !report.metadata?.vulnerabilities || !report.vulnerabilities) {
     throw new TypeError("npm audit returned an invalid report.");
   }
@@ -33,7 +27,7 @@ export function evaluateRuntimeAudit(report, now = new Date()) {
     if ((severityRank[vulnerability.severity] ?? -1) < severityRank.high) continue;
 
     const advisoryIds = [...new Set(getAdvisoryIds(vulnerability))];
-    const exception = RUNTIME_AUDIT_EXCEPTIONS.find((candidate) =>
+    const exception = exceptions.find((candidate) =>
       candidate.packageName === packageName &&
       vulnerability.severity === candidate.severity &&
       advisoryIds.includes(candidate.advisoryId) &&

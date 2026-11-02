@@ -145,7 +145,7 @@ export function validateReview(input: unknown): ReviewInput {
   const result = reviewSchema.safeParse(input);
   if (!result.success) {
     console.warn('Review validation failed:', result.error.message);
-    throw new Error(result.error.errors[0].message);
+    throw new Error(result.error.issues[0]?.message || 'Validation failed');
   }
   return result.data;
 }

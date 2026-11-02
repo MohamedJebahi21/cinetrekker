@@ -1,18 +1,18 @@
 # Dependency security exceptions
 
-## Active exception
+## Active exceptions
 
-| Package | Advisory | Severity | Scope | Review by | Reason |
+There are currently no active dependency security exceptions. All runtime dependencies pass `npm run audit:runtime` with zero unaccepted high or critical production advisories.
+
+## Resolved exceptions
+
+| Package | Advisory | Severity | Scope | Resolved | Resolution |
 |---|---|---:|---|---|---|
-| `zod` 3.25.x | `GHSA-mrhx-c7xc-m3w5` | High | Runtime dependency used by client-side schemas | 2026-12-02 | The advisory's patched release is Zod 4, which requires a breaking migration of the current schema layer. |
+| `zod` | `GHSA-mrhx-c7xc-m3w5` | High | Runtime dependency used by client-side schemas | 2026-11-02 | Upgraded to `zod@^4.6.7`. Migrated `result.error.errors` to `result.error.issues` contract in `src/lib/validation.ts`. Isolated into cached `vendor-validation` bundle chunk to preserve budget. |
 
-The exception applies only to this package and advisory identifier. `npm run audit:runtime` continues to fail for every other high or critical production advisory. The policy test verifies the package, advisory, severity threshold, and expiry behavior. On or after the review date, the exception stops applying and the gate fails until the migration is completed or maintainers deliberately renew a documented exception.
+## Exception policy
 
-## Remediation plan
-
-1. Inventory Zod schemas and their call sites.
-2. Migrate to a patched major version in a separate reviewed change, preserving validation behavior and API error contracts.
-3. Run the complete build, lint, type-check, unit, security, privacy, i18n, readiness, and browser suites.
-4. Remove the exception and its policy tests once the vulnerable version is no longer installed.
-
-The development-only `minimatch` and nested `postcss-selector-parser` advisories are handled through exact npm overrides in `package.json`; they are not exempted from audit output.
+When an unfixable high or critical runtime vulnerability is discovered without an immediate safe patch:
+1. Document the package, advisory ID, severity, scope, review-by date, and rationale in this document.
+2. Add a time-limited entry to `RUNTIME_AUDIT_EXCEPTIONS` in `scripts/runtime-audit-policy.mjs`.
+3. The exception is enforced by `npm run audit:runtime` and validated by unit tests. On or after the review date, the gate strictly fails until remediated or deliberately renewed.

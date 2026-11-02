@@ -320,11 +320,11 @@ export default defineConfig(({ mode }) => {
     ].filter(Boolean),
     resolve: {
       alias: {
-        "@": path.resolve(__dirname, "./src"),
-        react: path.resolve(__dirname, "node_modules/react"),
-        "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+        "@": path.resolve(import.meta.dirname, "./src"),
+        react: path.resolve(import.meta.dirname, "node_modules/react"),
+        "react-dom": path.resolve(import.meta.dirname, "node_modules/react-dom"),
         "react-dom/client": path.resolve(
-          __dirname,
+          import.meta.dirname,
           "node_modules/react-dom/client",
         ),
       },
@@ -382,6 +382,10 @@ export default defineConfig(({ mode }) => {
 
             if (id.includes("node_modules/lucide-react")) {
               return "vendor-icons";
+            }
+
+            if (id.includes("node_modules/zod")) {
+              return "vendor-validation";
             }
 
             if (
