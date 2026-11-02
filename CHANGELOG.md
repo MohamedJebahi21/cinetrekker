@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Runtime dependency gate**: Added a policy-tested, expiring exception for only the accepted Zod advisory; every other high or critical production advisory continues to fail the gate.
+- **Development dependency advisories**: Override vulnerable transitive `minimatch` and typography parser versions with patched releases; update `@types/react-dom` to 19.3.0.
+
+### Security
+- **Audit exception tracking**: Documented the Zod advisory, reason, and 2026-12-02 review deadline in `docs/security-exceptions.md`.
+- **Workflow supply chain**: Pin checkout, setup-node, and upload-artifact actions to verified commit SHAs.
+
+### Changed
+- **Visual snapshot workflow**: Restrict snapshot generation to `main` and open a pull request for review rather than pushing generated baselines directly to the protected branch.
+
 ### Added
 - **Dependabot dependency groups**: Configured `.github/dependabot.yml` with grouped dependency updates to batch PRs instead of 1 PR per package; reduced `open-pull-requests-limit` to 5 (npm) and 3 (actions).
 - **Dependabot ignore rules**: Added `ignore` conditions for `zod` major versions (v4+ breaks schema layer), `react-dom` minor/major (must be upgraded with `react`), and `tailwindcss` major versions to prevent failing PR storms.
@@ -15,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - **DOMPurify XSS fix**: Bumped `dompurify` (transitive via `isomorphic-dompurify`) from 3.4.13 → 3.4.16; fixes `GHSA-p98j-92pf-mc4p` (DOM XSS via `IN_PLACE` afterSanitize hook) (PR #49).
 - **Axios security patches**: Bumped `axios` (dev-only via `wait-on`) from 1.18.1 → 1.20.0; resolves 12 CVEs including prototype pollution, ReDoS, and HTTP/2 adapter vulnerabilities (PR #48).
-- **Runtime audit clean**: `npm audit --omit=dev --audit-level=high` reports **0 vulnerabilities** in the production dependency tree.
+- **Runtime audit status**: one high Zod advisory remains temporarily accepted under the expiring exception documented in `docs/security-exceptions.md`; the production tree is not vulnerability-free.
 
 ### Changed
 - **Peer dependency alignment**: Upgraded `i18next` from `^25.7.4` to `^26.4.2` to satisfy `react-i18next@17.0.15`'s peer requirement (`i18next >= 26.2.0`), resolving runtime peer dependency warnings without requiring `legacy-peer-deps`.

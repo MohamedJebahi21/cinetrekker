@@ -1,7 +1,7 @@
 # CineTrekker Project Context & System Map
 
 > **Canonical Current-State Specification**  
-> *Last Updated: 2026-10-04*  
+> *Last Updated: 2026-11-02*
 > This file describes the actual operational state, architecture, database schemas, business rules, design tokens, security boundaries, and navigation map for CineTrekker.
 
 ---
@@ -11,7 +11,7 @@
 - **Product Identity**: CineTrekker is a responsive movie, TV, and cinema tracking web platform.
 - **Core Value Proposition**: Rapid search and catalog discovery across TMDB, multi-source ratings enrichment (OMDb: Rotten Tomatoes, Metacritic, IMDb; TVMaze: broadcast schedules), local-first watchlists and watch history (operable immediately without signing in), follow-based release notifications, TV season/episode tracking with persistent progress cursors, personalized rating-based recommendations, and privacy-shielded public social profiles.
 - **Target Audience**: Cinephiles, casual moviegoers, binge watchers, and cinema communities.
-- **Current Operational Status**: Production-grade (v1.0.0, MIT License). Open-source repository with full governance (LICENSE, SECURITY.md, CODE_OF_CONDUCT.md, CONTRIBUTING.md, issue/PR templates, Dependabot). Branch protection active on `main` (strict status checks, no force-pushes). Automated release gates (`npm run test:ci`: `test:security`, `test:privacy`, `test:professionalization`, `i18n:verify`, `lint`, `type-check`) pass 100%. Node 22 pinned via `.nvmrc`; standardized on npm.
+- **Current Operational Status**: Production application (v1.0.0, MIT License). Open-source repository with governance files, issue/PR templates, and Dependabot. GitHub marks `main` protected; required status-check details are maintained in repository settings. The release gate covers security, privacy, readiness, build, unit, browser, mobile, and visual checks. Node 22 is pinned via `.nvmrc`; standardized on npm.
 
 ---
 
@@ -22,18 +22,18 @@ Verified directly from repository manifests (`package.json`, `vite.config.ts`, `
 | Domain | Selected Stack & Version | Purpose in CineTrekker |
 |---|---|---|
 | **Language & Typing** | TypeScript 5.9.3 (`typescript@^5.9.3`), Node.js 22 (`engines.node: "22.x"`) | Strict type checking across client and scripts |
-| **Client UI Framework** | React 19.2.4 (`react@^19.2.4`, `react-dom@^19.2.4`) | Component rendering and concurrency |
-| **Bundler & Build** | Vite 8.0.16 (`vite@^8.0.16`), `@vitejs/plugin-react-swc@^4.3.1` | Fast HMR dev server & optimized rollup production builds |
-| **Routing** | React Router v7 (`react-router-dom@^7.11.0`) | Client-side routing with lazy-loaded code-split chunks |
-| **Server State / Cache**| TanStack Query v5 (`@tanstack/react-query@^5.83.0`) | Async caching, mutation lifecycles, and cache invalidation |
-| **UI Component System** | Radix UI primitives (`@radix-ui/react-*`), Lucide Icons (`lucide-react@^0.462.0`) | Accessible unstyled primitives, dialogs, dropdowns, tooltips |
-| **Styling Engine** | Tailwind CSS v3.4.19 (`tailwindcss@^3.4.19`), PostCSS 8.5.6 | Utility-first styling with HSL CSS custom properties |
-| **Backend & Auth** | Supabase (`@supabase/supabase-js@^2.90.1`, GoTrue Auth, Postgres 15) | Auth sessions, relational data, RLS, Definer RPCs, storage |
+| **Client UI Framework** | React 19.3.1 (`react@^19.3.1`, `react-dom@^19.3.1`) | Component rendering and concurrency |
+| **Bundler & Build** | Vite 8.3.5 (`vite@^8.3.5`), `@vitejs/plugin-react-swc@^4.3.3` | Fast HMR dev server & optimized production builds |
+| **Routing** | React Router v7 (`react-router-dom@^7.18.5`) | Client-side routing with lazy-loaded code-split chunks |
+| **Server State / Cache**| TanStack Query v5 (`@tanstack/react-query@^5.105.1`) | Async caching, mutation lifecycles, and cache invalidation |
+| **UI Component System** | Radix UI primitives (`@radix-ui/react-*`), Lucide Icons (`lucide-react@^0.577.0`) | Accessible unstyled primitives, dialogs, dropdowns, tooltips |
+| **Styling Engine** | Tailwind CSS v3.4.19 (`tailwindcss@^3.4.19`), PostCSS 8.5.32 | Utility-first styling with HSL CSS custom properties |
+| **Backend & Auth** | Supabase (`@supabase/supabase-js@^2.118.0`, GoTrue Auth, Postgres 15) | Auth sessions, relational data, RLS, Definer RPCs, storage |
 | **Serverless Functions**| Node.js 22 ES Modules (`api/*.ts`, `api/*.js` on Vercel) | TMDB proxying, OMDb/TVMaze enrichment, rate limiting, cron, health (Max 12 functions on Hobby plan) |
 | **Distributed Cache** | Upstash Redis REST API (`@upstash/redis` compatible via REST fetch) | Sliding-window IP/user rate limiting across serverless instances |
-| **Internationalization**| `i18next@^25.7.4`, `react-i18next@^16.5.2` | Multi-locale support (`en`, `ar`, `de`, `es`, `fr`, `tr`) with strict audits |
-| **Testing** | Node.js Test Runner (`node --test`), Playwright (`@playwright/test@^1.58.2`) | API security unit tests, privacy tests, E2E browser tests |
-| **Telemetry & Alerts** | Sentry React/Node (`@sentry/react@^10.70.0`), Webhook alerts | Error scrubbing, incident webhook alerting, zero-PII metrics |
+| **Internationalization**| `i18next@^26.7.1`, `react-i18next@^17.1.11` | Multi-locale support (`en`, `ar`, `de`, `es`, `fr`, `tr`) with strict audits |
+| **Testing** | Node.js Test Runner (`node --test`), Playwright (`@playwright/test@^1.64.1`) | API security unit tests, privacy tests, E2E browser tests |
+| **Telemetry & Alerts** | Sentry React/Node (`@sentry/react@^10.78.0`), Webhook alerts | Error scrubbing, incident webhook alerting, zero-PII metrics |
 
 ---
 
@@ -250,9 +250,13 @@ Defined in `tailwind.config.ts` and `src/index.css`:
 - **Bot Protection**: Feedback endpoint requires Cloudflare Turnstile verification or Google reCAPTCHA, supplemented with hidden honeypot fields.
 - **Error Scrubbing**: `api/client-errors.js` and `src/lib/errorScrubber.ts` strip query strings, tokens, passwords, and PII before dispatching to Sentry or webhooks.
 - **GitHub Repository Security & Branch Protection**:
-  - `main` branch protection requires passing status checks (`CI / lint-and-typecheck`, `CI / build`), conversation resolution, and blocks force-pushes and branch deletions.
+  - GitHub marks `main` as protected. Inspect the current branch rules in repository settings; the unauthenticated GitHub API does not expose the required-check configuration.
   - Dependabot vulnerability alerts and automated security updates are enabled.
   - GitHub secret scanning and secret scanning push protection are actively enabled.
+- **Dependency audit policy**:
+  - `npm run audit:runtime` runs the production dependency audit and blocks every unaccepted high or critical advisory.
+  - The exact Zod advisory `GHSA-mrhx-c7xc-m3w5` has a time-limited exception through 2026-12-02 while the Zod 3 schema layer is reviewed for a breaking Zod 4 migration.
+  - `minimatch@11.0.1` and the `@tailwindcss/typography`-scoped `postcss-selector-parser@6.1.5` overrides pin patched development transitive dependencies.
 
 ---
 
