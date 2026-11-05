@@ -146,8 +146,9 @@ export function SuggestedPeopleRail() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { data: profiles = [], isLoading } = useQuery({
-    queryKey: ["public-profiles-directory", "suggested"],
-    queryFn: () => socialService.listPublicProfiles(""),
+    queryKey: ["suggested-profiles-by-watched", user?.id],
+    queryFn: () => socialService.listSuggestedProfiles(),
+    enabled: Boolean(user?.id),
     staleTime: 1000 * 60,
   });
 
@@ -155,15 +156,12 @@ export function SuggestedPeopleRail() {
     () =>
       profiles
         .filter((profile) => profile.user_id !== user?.id)
-        .sort((left, right) => {
-          const leftScore = left.followers_count * 2 + left.comments_count;
-          const rightScore = right.followers_count * 2 + right.comments_count;
-          return rightScore - leftScore;
-        })
+        .filter((profile) => (profile.common_watches ?? 0) > 0)
         .slice(0, 6),
     [profiles, user?.id],
   );
 
+  if (!user) return null;
   if (!isLoading && suggestedProfiles.length === 0) return null;
 
   return (

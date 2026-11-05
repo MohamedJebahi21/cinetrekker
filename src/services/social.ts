@@ -142,6 +142,10 @@ export interface DirectoryProfile {
   comments_count: number;
 }
 
+export interface SuggestedProfile extends DirectoryProfile {
+  common_watches: number;
+}
+
 export interface MediaEngagement {
   media_id: number;
   media_type: string;
@@ -310,6 +314,18 @@ function parseDirectoryProfile(value: unknown): DirectoryProfile | null {
     created_at: isPublic ? readNullableString(value, "created_at") : null,
     followers_count: isPublic ? readCount(value, "followers_count") : 0,
     comments_count: isPublic ? readCount(value, "comments_count") : 0,
+  };
+}
+
+function parseSuggestedProfile(value: unknown): SuggestedProfile | null {
+  if (!isRecord(value)) return null;
+
+  const profile = parseDirectoryProfile({ ...value, is_public: true });
+  if (!profile) return null;
+
+  return {
+    ...profile,
+    common_watches: readCount(value, "common_watches"),
   };
 }
 
@@ -627,6 +643,15 @@ export const socialService = {
       .map((row) => (isRecord(row) ? { ...row, is_public: true } : row))
       .map(parseDirectoryProfile)
       .filter((profile): profile is DirectoryProfile => profile !== null);
+  },
+
+  async listSuggestedProfiles(): Promise<SuggestedProfile[]> {
+    const rows = await getPublicRpcRows("get_suggested_profiles_by_watched", {
+      result_limit: 6,
+    });
+    return rows
+      .map(parseSuggestedProfile)
+      .filter((profile): profile is SuggestedProfile => profile !== null);
   },
 
   async searchDiscoverableProfiles(searchTerm: string): Promise<DirectoryProfile[]> {

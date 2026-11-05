@@ -582,13 +582,6 @@ export default function Index() {
             <MotionRevealSection tone="soft" delayClassName="delay-150" accentOpacityClassName="opacity-20">
               {discoveryHubSection}
             </MotionRevealSection>
-            <MotionRevealSection tone="soft" delayClassName="delay-250" accentOpacityClassName="opacity-18">
-              <DeferredSection>
-                <Suspense fallback={null}>
-                  <SuggestedPeopleRail />
-                </Suspense>
-              </DeferredSection>
-            </MotionRevealSection>
             {watchlistSection ? (
               <MotionRevealSection tone="soft" delayClassName="delay-250" accentOpacityClassName="opacity-22">
                 {watchlistSection}

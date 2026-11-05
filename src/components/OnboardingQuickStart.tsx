@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Sparkles, UploadCloud, Check, Plus, Film, Tv, X, ArrowRight } from "lucide-react";
+import { Sparkles, Check, Film, Tv, ArrowRight } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { useUserLists } from "@/contexts/UserListsContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { LibraryImporterDialog } from "@/components/LibraryImporterDialog";
 import { trackProductEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +45,6 @@ export function OnboardingQuickStart() {
   const { watchlist, watched, addToWatched } = useUserLists();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [isImporterOpen, setIsImporterOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
@@ -107,38 +105,10 @@ export function OnboardingQuickStart() {
             <DialogDescription className="text-sm text-muted-foreground">
               {t(
                 "onboarding.quickstartDesc",
-                "Your library is empty. Bring over your tracking history or tap a few favorites you love to calibrate recommendations."
+                "Your library is empty. Tap a few favorites you love to calibrate recommendations."
               )}
             </DialogDescription>
           </DialogHeader>
-
-          {/* Quick Import Card */}
-          <div className="my-2 rounded-xl border border-primary/20 bg-primary/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-primary/10 text-primary">
-                <UploadCloud className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground">
-                  {t("onboarding.importOptionTitle", "Already use Letterboxd or Trakt?")}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {t("onboarding.importOptionDesc", "Import your watched, ratings, and watchlist CSV files in seconds.")}
-                </p>
-              </div>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-primary/40 text-primary hover:bg-primary/10 shrink-0 w-full sm:w-auto"
-              onClick={() => {
-                setIsOpen(false);
-                setIsImporterOpen(true);
-              }}
-            >
-              {t("onboarding.importAction", "Import Library")}
-            </Button>
-          </div>
 
           {/* Quick Pick Starter Titles */}
           <div className="space-y-3 pt-2">
@@ -205,14 +175,6 @@ export function OnboardingQuickStart() {
         </DialogContent>
       </Dialog>
 
-      {/* Controlled Importer Dialog */}
-      <LibraryImporterDialog
-        open={isImporterOpen}
-        onOpenChange={(open) => {
-          setIsImporterOpen(open);
-          if (!open) handleDismiss();
-        }}
-      />
     </>
   );
 }

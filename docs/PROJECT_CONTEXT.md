@@ -118,7 +118,7 @@ cinetrekker/
 
 | Route Path | Component | Auth Required | Purpose & Behavior |
 |---|---|---|---|
-| `/` | `Index` | Public | Homepage: Hero carousel, Trending rails, Continue Watching, Up Next focus, personalized discovery. |
+| `/` | `Index` | Public | Homepage: Hero carousel, Trending rails, Continue Watching, Up Next focus, and personalized discovery. The community "Suggested for You" rail is authenticated-only and ranks public profiles by shared watched titles via a privacy-safe RPC; library import remains in Settings. |
 | `/search` | `Search` | Public | Multi-filter search (movie/tv/person), genre selector, sort filters, pagination. |
 | `/trending` | `Trending` | Public | Trending media across day/week windows. |
 | `/movie/:slug` | `Details` | Public | Movie synopsis, trailers, cast/crew, streaming providers, release dates, reviews, watch controls. |

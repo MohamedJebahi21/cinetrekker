@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Workflow supply chain**: Pin checkout, setup-node, and upload-artifact actions to verified commit SHAs.
 
 ### Changed
+- **Home personalization**: Removed library-import prompts from home onboarding and setup; importing remains available in Settings. The home "Suggested for You" rail is now authenticated-only and ranks public profiles by shared watched titles through the privacy-safe `get_suggested_profiles_by_watched` RPC.
 - **Visual snapshot workflow**: Restrict snapshot generation to `main` and open a pull request for review rather than pushing generated baselines directly to the protected branch.
 
 ### Added
