@@ -539,9 +539,7 @@ export default function Index() {
                 {personalizedSection}
               </MotionRevealSection>
             )}
-            <MotionRevealSection tone="soft" delayClassName="delay-250" accentOpacityClassName="opacity-22">
-              {discoveryHubSection}
-            </MotionRevealSection>
+
             <MotionRevealSection tone="bold" delayClassName="delay-300" accentOpacityClassName="opacity-20">
               <DeferredSection>
                 <Suspense fallback={null}>
@@ -556,15 +554,7 @@ export default function Index() {
                 </Suspense>
               </DeferredSection>
             </MotionRevealSection>
-            {hasLibraryActivity ? (
-              <MotionRevealSection tone="soft" delayClassName="delay-250" accentOpacityClassName="opacity-18">
-                <DeferredSection>
-                  <Suspense fallback={null}>
-                    <HomeStatsSnapshot watched={watched} watchlist={watchlist} />
-                  </Suspense>
-                </DeferredSection>
-              </MotionRevealSection>
-            ) : null}
+
           </>
         ) : (
           <>
@@ -592,20 +582,7 @@ export default function Index() {
                 {personalizedSection}
               </MotionRevealSection>
             )}
-            {hasListActivity ? (
-              <MotionRevealSection tone="soft" delayClassName="delay-300" accentOpacityClassName="opacity-16">
-                <DeferredSection>
-                  <Suspense fallback={null}>
-                    <HomeStatsSnapshot
-                      watched={watched}
-                      watchlist={watchlist}
-                      ctaHref="/signup"
-                      ctaLabel={t("home.syncToAccount", "Sync with Free Account")}
-                    />
-                  </Suspense>
-                </DeferredSection>
-              </MotionRevealSection>
-            ) : null}
+
           </>
         )}
       </section>

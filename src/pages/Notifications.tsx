@@ -101,6 +101,7 @@ export default function Notifications() {
     id: string,
     movieId: string,
     isRead: boolean,
+    type?: string,
   ) => {
     trackProductEvent("notification_action", {
       action: isRead ? "opened" : "marked_read",
@@ -111,7 +112,7 @@ export default function Notifications() {
       void markRead(id);
     }
 
-    const target = getNotificationTarget(movieId);
+    const target = getNotificationTarget(movieId, type);
     if (target) {
       navigate(target);
     }
@@ -332,7 +333,7 @@ export default function Notifications() {
                 <button
                   type="button"
                   className="flex min-w-0 flex-1 items-start gap-3.5 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:gap-4"
-                  onClick={() => handleNotificationClick(n.id, n.movie_id, n.is_read)}
+                  onClick={() => handleNotificationClick(n.id, n.movie_id, n.is_read, n.type)}
                   aria-label={t("notifications.openItem", "Open notification: {{message}}", { message: n.message })}
                 >
                   <div className="relative shrink-0">

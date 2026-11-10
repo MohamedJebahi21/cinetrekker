@@ -289,7 +289,7 @@ export function MediaComments({ mediaId, mediaType }: MediaCommentsProps) {
     mutationFn: async ({ text, parentId }: { text: string; parentId: string }) => {
       if (!user?.id) throw new Error("Not logged in");
       setIsSubmittingReply(true);
-      return await socialService.addComment(user.id, mediaId, mediaType, text, parentId);
+      return socialService.addComment(user.id, mediaId, mediaType, text, parentId);
     },
     onSuccess: () => {
       setReplyContent("");
@@ -419,7 +419,7 @@ export function MediaComments({ mediaId, mediaType }: MediaCommentsProps) {
     : null;
 
   return (
-    <div className="space-y-6">
+    <div id="comments" className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-foreground">
           {t("comments.title", "Comments")}

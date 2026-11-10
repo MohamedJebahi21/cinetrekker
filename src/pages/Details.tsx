@@ -219,6 +219,20 @@ export default function Details() {
     return () => obs.disconnect();
   }, []);
 
+  // Scroll to comments section if navigated with #comments hash
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.hash === "#comments") {
+      const timer = setTimeout(() => {
+        const el = document.getElementById("comments");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [mediaId, mediaType]);
+
   const { isEpisodeWatched, markEpisodeWatched, removeEpisodeWatched, watchedEpisodes, markSeasonWatched, markAllSeasonsWatched } = useWatchedEpisodes(mediaId);
   const { saveLastViewed } = useLastViewed();
 

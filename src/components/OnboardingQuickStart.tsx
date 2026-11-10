@@ -53,19 +53,37 @@ export function OnboardingQuickStart() {
     // Trigger only if user has an empty library and hasn't dismissed yet
     const isEmptyLibrary = watchlist.length === 0 && watched.length === 0;
     if (!dismissed && isEmptyLibrary) {
+      window.dispatchEvent(
+        new CustomEvent("cinetrekker:quickstart-state", {
+          detail: { open: true },
+        }),
+      );
       const timer = setTimeout(() => {
         setIsOpen(true);
         trackProductEvent("onboarding_quickstart_viewed", {
           is_authenticated: user ? "yes" : "no",
         });
       }, 1200);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+      };
+    } else {
+      window.dispatchEvent(
+        new CustomEvent("cinetrekker:quickstart-state", {
+          detail: { open: false },
+        }),
+      );
     }
   }, [watchlist.length, watched.length, user]);
 
   const handleDismiss = () => {
     localStorage.setItem(ONBOARDING_QUICKSTART_KEY, "true");
     setIsOpen(false);
+    window.dispatchEvent(
+      new CustomEvent("cinetrekker:quickstart-state", {
+        detail: { open: false },
+      }),
+    );
   };
 
   const togglePick = (item: StarterTitle) => {

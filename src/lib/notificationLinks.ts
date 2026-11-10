@@ -1,4 +1,7 @@
-export function parseNotificationTarget(movieId: string | null | undefined) {
+export function parseNotificationTarget(
+  movieId: string | null | undefined,
+  type?: string | null,
+) {
   if (typeof movieId !== "string") {
     return null;
   }
@@ -10,15 +13,20 @@ export function parseNotificationTarget(movieId: string | null | undefined) {
     return null;
   }
 
+  const hash = type === "reply" || type === "comment" ? "#comments" : "";
+
   return {
     mediaType,
     mediaId,
-    path: `/${mediaType}/${mediaId}`,
+    path: `/${mediaType}/${mediaId}${hash}`,
   };
 }
 
-export function getNotificationTarget(movieId: string | null | undefined) {
-  const target = parseNotificationTarget(movieId);
+export function getNotificationTarget(
+  movieId: string | null | undefined,
+  type?: string | null,
+) {
+  const target = parseNotificationTarget(movieId, type);
   if (!target) {
     return null;
   }

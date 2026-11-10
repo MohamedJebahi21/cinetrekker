@@ -48,15 +48,14 @@ function NotificationBellComponent() {
     () => notifications.filter((notification) => !notification.is_read),
     [notifications],
   );
-  const previewNotifications = unreadNotifications.slice(0, 3);
   const languageCode = (i18n.resolvedLanguage ?? i18n.language).split("-")[0] as keyof typeof relativeTimeLocales;
   const relativeTimeLocale = relativeTimeLocales[languageCode];
   const unreadLabel = t("notifications.unreadUpdates", { count: unreadCount });
 
-  const handleNotificationClick = (id: string, movieId: string) => {
+  const handleNotificationClick = (id: string, movieId: string, type?: string) => {
     void markRead(id);
 
-    const target = getNotificationTarget(movieId);
+    const target = getNotificationTarget(movieId, type);
     if (target) {
       navigate(target);
     }
@@ -117,8 +116,8 @@ function NotificationBellComponent() {
           </div>
         </div>
       ) : (
-        <div className="max-h-[22rem] space-y-2 overflow-y-auto overscroll-contain p-3">
-          {previewNotifications.map((notification) => (
+        <div className="max-h-[22rem] sm:max-h-[28rem] space-y-2 overflow-y-auto overscroll-contain p-3">
+          {unreadNotifications.map((notification) => (
             <div
               key={notification.id}
               className="group/notification relative flex items-start gap-2 rounded-2xl border border-border/60 bg-background p-2.5 shadow-sm transition-[background-color,border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/28 hover:bg-card"
@@ -132,6 +131,7 @@ function NotificationBellComponent() {
                   handleNotificationClick(
                     notification.id,
                     notification.movie_id,
+                    notification.type,
                   )
                 }
               >
@@ -171,15 +171,6 @@ function NotificationBellComponent() {
               </button>
             </div>
           ))}
-          {unreadNotifications.length > previewNotifications.length ? (
-            <Link
-              to="/notifications"
-              className="flex min-h-10 items-center justify-center gap-1 rounded-xl border border-dashed border-border/70 bg-background px-4 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary/30 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              {t("notifications.moreUnread", { count: unreadNotifications.length - previewNotifications.length })}
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          ) : null}
         </div>
       )}
     </section>
@@ -187,8 +178,15 @@ function NotificationBellComponent() {
 
   const notificationFooter = unreadCount > 0 ? (
     <footer className="border-t border-border/60 bg-muted/15 p-3">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-semibold text-foreground">{unreadLabel}</p>
+      <div className="flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => markAllRead()}
+          className="inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-background px-3 text-xs font-semibold text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        >
+          <CheckCheck className="h-3.5 w-3.5" />
+          {t("notifications.markAllRead")}
+        </button>
         <Link
           to="/settings#section-notifications"
           className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
@@ -198,14 +196,6 @@ function NotificationBellComponent() {
           <Settings2 className="h-4 w-4" />
         </Link>
       </div>
-      <button
-        type="button"
-        onClick={() => markAllRead()}
-        className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-border/60 bg-background px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-      >
-        <CheckCheck className="h-4 w-4" />
-        {t("notifications.markAllRead")}
-      </button>
     </footer>
   ) : null;
 
@@ -225,36 +215,38 @@ function NotificationBellComponent() {
                   <Bell className="h-4 w-4" />
                 </div>
                 <div className="min-w-0">
-                  <SheetTitle className="text-lg">{t("notifications.title", "Notifications")}</SheetTitle>
+                  <div className="flex items-center gap-2">
+                    <SheetTitle className="text-lg">{t("notifications.title", "Notifications")}</SheetTitle>
+                    {unreadCount > 0 && (
+                      <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </div>
                   <SheetDescription className="mt-0.5 text-sm text-muted-foreground">
                     {unreadCount > 0 ? unreadLabel : t("notifications.emptyTitle")}
                   </SheetDescription>
                 </div>
               </div>
-              <SheetClose asChild>
-                <button
-                  type="button"
-                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border/60 bg-background text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                  aria-label={t("notifications.close", "Close notifications")}
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </SheetClose>
-            </div>
-            {unreadCount > 0 && (
-              <div className="mt-3 flex items-center gap-2">
-                <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-                  {unreadLabel}
-                </span>
+              <div className="flex items-center gap-2">
                 <Link
                   to="/notifications"
-                  className="ml-auto inline-flex min-h-9 items-center gap-1 rounded-xl px-2 text-xs font-bold text-primary transition-colors hover:bg-primary/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="inline-flex min-h-9 items-center gap-1 rounded-xl px-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   {t("notifications.viewAll", "View all")}
                   <ChevronRight className="h-3.5 w-3.5" />
                 </Link>
+                <SheetClose asChild>
+                  <button
+                    type="button"
+                    className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-full border border-border/60 bg-background text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    aria-label={t("notifications.close", "Close notifications")}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </SheetClose>
               </div>
-            )}
+            </div>
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto overscroll-contain">
@@ -281,8 +273,15 @@ function NotificationBellComponent() {
                 <Bell className="h-4 w-4" />
               </div>
               <div className="min-w-0">
-                <div className="text-base font-bold tracking-tight text-foreground">
-                  {t("notifications.title", "Notifications")}
+                <div className="flex items-center gap-2">
+                  <div className="text-base font-bold tracking-tight text-foreground">
+                    {t("notifications.title", "Notifications")}
+                  </div>
+                  {unreadCount > 0 && (
+                    <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                      {unreadCount}
+                    </span>
+                  )}
                 </div>
                 <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
                   {unreadCount > 0 ? unreadLabel : t("notifications.emptyTitle")}
@@ -297,13 +296,6 @@ function NotificationBellComponent() {
               <ChevronRight className="h-3.5 w-3.5" />
             </Link>
           </div>
-          {unreadCount > 0 && (
-            <div className="mt-3">
-              <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-                {unreadLabel}
-              </span>
-            </div>
-          )}
         </div>
         {notificationList}
         {notificationFooter}

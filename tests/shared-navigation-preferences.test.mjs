@@ -45,7 +45,7 @@ test("UnifiedNav keeps focused top-level utilities while removing separate palet
 });
 
 test("NotificationBell provides a simple localized empty inbox plus concise individual and bulk actions", () => {
-  assert.match(notificationSource, /const previewNotifications = unreadNotifications\.slice\(0, 3\)/);
+  assert.match(notificationSource, /unreadNotifications/);
   assert.match(notificationSource, /notifications\.emptyTitle/);
   assert.match(notificationSource, /notifications\.emptyDescription/);
   assert.match(notificationSource, /notifications\.exploreCalendar/);

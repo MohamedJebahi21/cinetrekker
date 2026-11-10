@@ -87,6 +87,9 @@ import {
 const ActorMatchesSection = lazy(
   () => import("@/components/profile/ActorMatchesSection"),
 );
+const HomeStatsSnapshot = lazy(
+  () => import("@/components/home/HomeStatsSnapshot").then((m) => ({ default: m.HomeStatsSnapshot })),
+);
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -2231,6 +2234,17 @@ export default function Profile() {
                         </Button>
                       ) : null}
                     </div>
+
+                    {!isProfileInactive ? (
+                      <Suspense fallback={null}>
+                        <HomeStatsSnapshot
+                          watched={watched}
+                          watchlist={watchlist}
+                          ctaHref="#taste"
+                          ctaLabel={text("profile.openTasteStats", "Open Taste & Stats")}
+                        />
+                      </Suspense>
+                    ) : null}
 
                     <div className="hidden grid-cols-1 gap-4 md:grid-cols-3">
                       {/* Movies Watched Card */}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { format, subDays } from "date-fns";
 import { useTranslation } from "react-i18next";
-import { ArrowRight, CalendarCheck2, CalendarDays, Check, LockKeyhole } from "lucide-react";
+import { ArrowRight, CalendarCheck2, CalendarDays, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { useEngagementLoop } from "@/hooks/useEngagementLoop";
@@ -63,14 +63,13 @@ export function DailyCheckInCard() {
 
   return (
     <section
-      className="relative overflow-hidden rounded-[1.75rem] border border-primary/20 bg-[radial-gradient(circle_at_top_right,hsla(var(--primary)/0.16),transparent_42%),linear-gradient(135deg,hsla(var(--card)/0.98),hsla(var(--background)/0.94))] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)] md:p-6"
+      className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/60 p-5 shadow-sm backdrop-blur-sm md:p-6"
       aria-labelledby="daily-check-in-title"
     >
-      <div aria-hidden="true" className="pointer-events-none absolute -bottom-20 -left-16 h-48 w-48 rounded-full bg-primary/8 blur-3xl" />
       <div className="relative grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.72fr)] lg:items-center">
         <div>
-          <div className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-            <CalendarCheck2 className="h-4 w-4" aria-hidden="true" />
+          <div className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+            <CalendarCheck2 className="h-3.5 w-3.5" aria-hidden="true" />
             {t("home.dailyCheckInEyebrow", "Daily check-in")}
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -80,79 +79,71 @@ export function DailyCheckInCard() {
                 : t("home.dailyCheckInTitle", "Keep your watch streak alive")}
             </h2>
             {celebrated && (
-              <span className="animate-fade-in rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
+              <span className="animate-fade-in rounded-full border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
                 {t("home.dailyCheckInSaved", "Saved for today")}
               </span>
             )}
           </div>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{toneCopy}</p>
+          <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">{toneCopy}</p>
 
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <div className="inline-flex items-center gap-2 rounded-2xl border border-primary/20 bg-primary/[0.055] px-3 py-2">
-              <CalendarDays className="h-5 w-5 text-primary" aria-hidden="true" />
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <div className="inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/[0.04] px-3 py-1.5">
+              <CalendarDays className="h-4 w-4 text-primary" aria-hidden="true" />
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-primary/80">
-                  {t("home.currentStreak", "Current streak")}
-                </p>
-                <p className="text-lg font-black leading-none text-foreground">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mr-1.5">
+                  {t("home.currentStreak", "Current streak")}:
+                </span>
+                <span className="text-sm font-bold text-foreground">
                   {streakDays} {t("home.days", "days")}
-                </p>
+                </span>
               </div>
             </div>
-            <span className="rounded-full border border-border/60 bg-background/40 px-3 py-2 text-xs font-semibold text-muted-foreground">
-              {t("home.rankLabel", "Rank")}: <span className="text-foreground">{rank.name}</span>
+            <span className="rounded-xl border border-border/60 bg-background/50 px-3 py-1.5 text-xs font-medium text-muted-foreground">
+              {t("home.rankLabel", "Rank")}: <span className="font-semibold text-foreground">{rank.name}</span>
             </span>
             <Link
               to="/watched"
-              className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-primary px-3.5 text-sm font-semibold text-primary-foreground shadow-[0_10px_24px_hsl(var(--primary)/0.18)] transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               {t("home.logSomething", "Log something")}
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-primary/15 bg-background/45 p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                {nextRank ? t("home.nextRank", "Next rank") : t("home.maxRank", "Top rank")}
-              </p>
-              <p className="mt-1 text-sm font-bold text-foreground">
-                {nextRank ? nextRank.name : rank.name}
-              </p>
-            </div>
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
-              {nextRank ? <LockKeyhole className="h-5 w-5" aria-hidden="true" /> : <Check className="h-5 w-5" aria-hidden="true" />}
-            </div>
-          </div>
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted/60">
-            <div
-              className="h-full rounded-full bg-primary transition-[width] duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
-            <span>{streakDays} {t("home.days", "days")}</span>
-            <span>
+        <div className="rounded-xl border border-border/60 bg-background/40 p-4">
+          <div className="flex items-center justify-between gap-3 text-xs">
+            <span className="font-medium text-muted-foreground">
+              {nextRank ? t("home.nextRank", "Next rank") : t("home.maxRank", "Top rank")}:{" "}
+              <strong className="text-foreground">{nextRank ? nextRank.name : rank.name}</strong>
+            </span>
+            <span className="text-[11px] text-muted-foreground">
               {nextRank
                 ? t("home.daysToNextRank", "{{count}} days to go", { count: daysToNextRank })
                 : t("home.topRankReached", "All ranks unlocked")}
             </span>
           </div>
-          <div className="mt-4 grid grid-cols-7 gap-1.5" aria-label={t("home.streakLastSeven", "Last seven days of streak") }>
+
+          <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-muted/50">
+            <div
+              className="h-full rounded-full bg-primary transition-[width] duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          <div className="mt-4 grid grid-cols-7 gap-1" aria-label={t("home.streakLastSeven", "Last seven days of streak")}>
             {Array.from({ length: 7 }, (_, index) => {
               const day = subDays(new Date(), 6 - index);
               const isFilled = checkedInToday && index >= Math.max(0, 7 - Math.min(streakDays, 7));
               return (
                 <div key={format(day, "yyyy-MM-dd")} className="flex flex-col items-center gap-1">
-                  <span className="text-[9px] font-semibold text-muted-foreground">{format(day, "EEE").slice(0, 1)}</span>
+                  <span className="text-[9px] font-medium text-muted-foreground">{format(day, "EEE").slice(0, 1)}</span>
                   <span
                     className={cn(
-                      "inline-flex h-7 w-7 items-center justify-center rounded-full border text-[10px] font-bold",
+                      "inline-flex h-6 w-6 items-center justify-center rounded-lg border text-[10px] font-semibold transition-colors",
                       isFilled
                         ? "border-primary/40 bg-primary text-primary-foreground"
-                        : "border-border/60 bg-background/40 text-muted-foreground",
+                        : "border-border/50 bg-background/30 text-muted-foreground/80",
                     )}
                     title={format(day, "MMM d")}
                   >

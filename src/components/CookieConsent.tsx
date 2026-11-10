@@ -1,13 +1,31 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { useCookieConsent } from "@/hooks/useCookieConsent";
 
+function isQuickStartEligible(): boolean {
+  if (typeof window === "undefined") return false;
+  return !window.localStorage.getItem("cinetrekker_onboarding_quickstart_dismissed");
+}
+
 export function CookieConsent() {
   const { t } = useTranslation();
   const { choice, acceptAll, rejectNonEssential } = useCookieConsent();
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isQuickStartActive, setIsQuickStartActive] = useState(() => isQuickStartEligible());
+
+  useEffect(() => {
+    const handleQuickStartState = (e: Event) => {
+      const custom = e as CustomEvent<{ open?: boolean }>;
+      setIsQuickStartActive(Boolean(custom.detail?.open));
+    };
+
+    window.addEventListener("cinetrekker:quickstart-state", handleQuickStartState);
+    return () => {
+      window.removeEventListener("cinetrekker:quickstart-state", handleQuickStartState);
+    };
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -33,7 +51,7 @@ export function CookieConsent() {
     };
   }, []);
 
-  if (choice) {
+  if (choice || isQuickStartActive) {
     return null;
   }
 
