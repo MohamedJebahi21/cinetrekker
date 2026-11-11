@@ -37,7 +37,11 @@ test("English Preferences overlay stays non-modal and keeps desktop page geometr
 });
 
 test("Arabic Preferences overlay stays non-modal and keeps desktop page geometry fixed", async ({ page }) => {
-  await page.addInitScript(() => window.localStorage.setItem("i18nextLng", "ar"));
+  await page.addInitScript(() => {
+    window.localStorage.setItem("i18nextLng", "ar");
+    window.localStorage.setItem("cinetrekker_guest_onboarding_seen", "true");
+    window.localStorage.setItem("cinetrekker_onboarding_quickstart_dismissed", "true");
+  });
   await page.setViewportSize({ width: 1365, height: 900 });
   await page.goto("/");
 

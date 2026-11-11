@@ -7,6 +7,10 @@
         {
           "name": "cinetrekker_guest_onboarding_seen",
           "value": "true"
+        },
+        {
+          "name": "cinetrekker_onboarding_quickstart_dismissed",
+          "value": "true"
         }
       ]
     },
@@ -15,6 +19,36 @@
       "localStorage": [
         {
           "name": "cinetrekker_guest_onboarding_seen",
+          "value": "true"
+        },
+        {
+          "name": "cinetrekker_onboarding_quickstart_dismissed",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "origin": "http://localhost:4181",
+      "localStorage": [
+        {
+          "name": "cinetrekker_guest_onboarding_seen",
+          "value": "true"
+        },
+        {
+          "name": "cinetrekker_onboarding_quickstart_dismissed",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "origin": "http://127.0.0.1:4181",
+      "localStorage": [
+        {
+          "name": "cinetrekker_guest_onboarding_seen",
+          "value": "true"
+        },
+        {
+          "name": "cinetrekker_onboarding_quickstart_dismissed",
           "value": "true"
         }
       ]

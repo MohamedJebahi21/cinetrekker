@@ -6,7 +6,11 @@ async function openLanguageMenu(page: import("@playwright/test").Page) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => window.localStorage.setItem("i18nextLng", "en"));
+  await page.addInitScript(() => {
+    window.localStorage.setItem("i18nextLng", "en");
+    window.localStorage.setItem("cinetrekker_guest_onboarding_seen", "true");
+    window.localStorage.setItem("cinetrekker_onboarding_quickstart_dismissed", "true");
+  });
 });
 
 test("switching to French loads the translated interface before the language changes", async ({ page }) => {
