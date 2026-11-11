@@ -60,3 +60,20 @@ test("NotificationBell renders all unread notifications in scrollable container 
   assert.match(bellSource, /max-h-\[22rem\] sm:max-h-\[28rem\] space-y-2 overflow-y-auto overscroll-contain/);
   assert.match(bellSource, /unreadNotifications\.map/);
 });
+
+test("CommunityActivityFeed uses CineTrekker dark restrained styling without amber accents", () => {
+  const feedSource = fs.readFileSync("src/components/home/CommunityActivityFeed.tsx", "utf-8");
+
+  assert.doesNotMatch(feedSource, /text-amber-400/);
+  assert.doesNotMatch(feedSource, /bg-amber-400/);
+  assert.match(feedSource, /text-primary/);
+  assert.match(feedSource, /border-border\/60 bg-card\/60/);
+});
+
+test("GuestSyncBanner uses refined dark styling without heavy multi-stop gradients or yellow glows", () => {
+  const bannerSource = fs.readFileSync("src/components/GuestSyncBanner.tsx", "utf-8");
+
+  assert.doesNotMatch(bannerSource, /rgba\(234,179,8/);
+  assert.doesNotMatch(bannerSource, /bg-gradient-to-r/);
+  assert.match(bannerSource, /border-border\/60/);
+});
