@@ -151,7 +151,7 @@ export function useContinueWatchingViewModel(): {
     () =>
       allProgress.filter(
         (show) =>
-          (show.isFollowed || show.watchedEpisodeCount > 0) &&
+          show.watchedEpisodeCount > 0 &&
           !completedShowIds.has(show.showId),
       ),
     [allProgress, completedShowIds],
@@ -240,7 +240,7 @@ export function useContinueWatchingViewModel(): {
       // 4c. Merge TMDB metadata into progress (totals only, NO status re-derivation)
       const mergedProgress = rankedMerged.filter(
         (show) =>
-          (show.isFollowed || show.watchedEpisodeCount > 0) &&
+          show.watchedEpisodeCount > 0 &&
           !isShowDefinitelyCompleted(show) &&
           !completedShowIds.has(show.showId),
       );
@@ -311,12 +311,12 @@ export function useContinueWatchingViewModel(): {
           };
         })
         // 4e. Continue Watching inclusion rules:
-        //     - Show is followed OR has at least one watched episode
+        //     - Must have at least one watched episode (watchedEpisodeCount > 0)
         //     - Exclude completed shows (by explicit status or all released episodes watched)
         //     - Must have one or more episodes not watched (exclude caught-up shows with no next episode)
         .filter(
           (vm) =>
-            (vm.isFollowed || vm.watchedEpisodeCount > 0) &&
+            vm.watchedEpisodeCount > 0 &&
             !completedShowIds.has(vm.showId) &&
             !vm.isFinished &&
             (vm.releasedEpisodeCount == null || vm.watchedEpisodeCount < vm.releasedEpisodeCount) &&

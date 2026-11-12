@@ -86,3 +86,12 @@ test("ContinueWatching uses clean and restrained dark styling without heavy grad
   assert.doesNotMatch(cwSource, /shadow-\[0_16px_38px/);
   assert.match(cwSource, /border-border\/60 bg-card\/60/);
 });
+
+test("Continue Watching only includes shows with at least one watched episode", () => {
+  const hookSource = fs.readFileSync("src/hooks/useContinueWatchingViewModel.ts", "utf-8");
+
+  assert.doesNotMatch(hookSource, /show\.isFollowed\s*\|\|\s*show\.watchedEpisodeCount\s*>\s*0/);
+  assert.doesNotMatch(hookSource, /vm\.isFollowed\s*\|\|\s*vm\.watchedEpisodeCount\s*>\s*0/);
+  assert.match(hookSource, /show\.watchedEpisodeCount > 0 &&\s*!completedShowIds\.has\(show\.showId\)/);
+  assert.match(hookSource, /vm\.watchedEpisodeCount > 0 &&\s*!completedShowIds\.has\(vm\.showId\)/);
+});
