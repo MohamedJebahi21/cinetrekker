@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Calendar, CheckCircle2, Clock3, Loader2, Play, RefreshCw, Sparkles, Tv } from "lucide-react";
+import { Calendar, CheckCircle2, ChevronRight, Clock3, Loader2, Play, RefreshCw, Sparkles, Tv } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,16 +27,16 @@ function formatEpisodeCode(seasonNumber: number, episodeNumber: number) {
 
 function ContinueWatchingSkeleton() {
   return (
-    <section className="ct-panel p-4 md:p-6">
-      <div className="mb-4 space-y-2">
-        <div className="h-7 w-48 rounded-md skeleton-shimmer" />
-        <div className="h-4 w-72 rounded-md skeleton-shimmer" />
+    <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/60 p-5 shadow-sm backdrop-blur-sm md:p-6">
+      <div className="mb-5 space-y-2">
+        <div className="h-6 w-44 rounded-lg skeleton-shimmer" />
+        <div className="h-3.5 w-64 rounded-md skeleton-shimmer" />
       </div>
       <div className="hide-scrollbar -mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
         {Array.from({ length: 3 }).map((_, index) => (
           <div
             key={index}
-            className="h-[420px] w-[calc(50vw-1.5rem)] shrink-0 rounded-[1.5rem] border border-border/60 bg-card/60 skeleton-shimmer sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
+            className="h-[380px] w-[calc(50vw-1.5rem)] shrink-0 rounded-2xl border border-border/60 bg-background/40 skeleton-shimmer sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
           />
         ))}
       </div>
@@ -120,31 +120,31 @@ function ContinueWatchingCard({
   return (
     <Card
       ref={cardRef}
-      className="group w-[calc(50vw-1.5rem)] shrink-0 snap-start overflow-hidden rounded-2xl border-border/70 bg-card/95 shadow-[0_16px_38px_rgba(0,0,0,0.18)] transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-primary/45 hover:shadow-[0_20px_48px_rgba(229,9,20,0.14)] sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
+      className="group w-[calc(50vw-1.5rem)] shrink-0 snap-start overflow-hidden rounded-2xl border border-border/60 bg-card/80 shadow-sm transition-all duration-200 hover:border-primary/40 hover:bg-card/95 hover:shadow-md sm:w-[180px] md:w-[200px] lg:w-[220px] xl:w-[240px]"
     >
       <CardContent className="p-0">
         <div className="flex h-full flex-col">
-          <div className="relative aspect-[3/2] w-full shrink-0 overflow-hidden bg-muted/40">
+          <div className="relative aspect-[3/2] w-full shrink-0 overflow-hidden bg-muted/30">
             <Image
               src={display.posterPath ? `https://image.tmdb.org/t/p/w500${display.posterPath}` : ""}
               alt={display.title}
               width={500}
               height={750}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.035]"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
               loading="lazy"
               showSkeleton
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-card/95 via-card/25 to-transparent" />
             {display.progressPercent != null ? (
-              <span className="absolute bottom-3 right-3 rounded-full border border-white/15 bg-black/60 px-2 py-1 text-xs font-bold tabular-nums text-white backdrop-blur-md">
+              <span className="absolute bottom-2.5 right-2.5 rounded-lg border border-white/10 bg-black/70 px-2 py-0.5 text-[11px] font-bold tabular-nums text-white backdrop-blur-md">
                 {display.progressPercent}%
               </span>
             ) : null}
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col p-3">
+          <div className="flex min-h-0 flex-1 flex-col p-3.5">
             <div className="min-w-0">
-              <h3 className="line-clamp-2 text-base font-bold leading-tight text-foreground">
+              <h3 className="line-clamp-2 text-sm font-bold leading-tight text-foreground transition-colors group-hover:text-primary">
                 <bdi dir="auto">{display.title}</bdi>
               </h3>
               <p className="mt-1 text-xs text-muted-foreground">
@@ -170,12 +170,12 @@ function ContinueWatchingCard({
                 </div>
               ) : nextEpisodeCode ? (
                 <>
-                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-primary/90">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
                     {hasNextEpisode
                       ? t("home.nextEpisode", "Next episode")
                       : t("home.upNext", "Up next")}
                   </p>
-                  <p className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-foreground">
+                  <p className="mt-1 line-clamp-2 text-xs font-semibold leading-snug text-foreground">
                     <span className="mr-1 text-xs font-bold text-primary">{nextEpisodeCode}</span>
                     {display.nextEpisodeName}
                   </p>
@@ -188,10 +188,10 @@ function ContinueWatchingCard({
                 </>
               ) : display.lastWatchedEpisode ? (
                 <>
-                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                     {t("home.lastWatched", "Last watched")}
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-foreground">
+                  <p className="mt-1 text-xs font-semibold text-foreground">
                     S{display.lastWatchedEpisode.season}E{display.lastWatchedEpisode.episode}
                   </p>
                 </>
@@ -202,7 +202,7 @@ function ContinueWatchingCard({
               )}
             </div>
 
-            <div className="mt-3">
+            <div className="mt-3 space-y-1.5">
               <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
                 <span className="font-medium">{t("home.seriesProgress", "Series progress")}</span>
                 {isRefreshing ? (
@@ -214,18 +214,18 @@ function ContinueWatchingCard({
                 )}
               </div>
               {display.progressPercent != null ? (
-                <Progress value={display.progressPercent} className="mt-1.5 h-1.5 bg-muted/70 [&>div]:bg-primary" />
+                <Progress value={display.progressPercent} className="h-1.5 bg-muted/70 [&>div]:bg-primary" />
               ) : (
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                <p className="text-right text-[11px] text-muted-foreground/80">
                   {t("home.progressMetadataPending", "Progress will appear after the released episode total is confirmed.")}
                 </p>
               )}
             </div>
 
             <div className="mt-3 flex items-center gap-2 border-t border-border/50 pt-3">
-              <Button asChild className="h-9 min-w-0 flex-1 gap-1.5 text-xs font-semibold shadow-[0_10px_22px_rgba(229,9,20,0.16)]">
+              <Button asChild size="sm" className="h-8 min-w-0 flex-1 gap-1.5 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary">
                 <Link to={display.href}>
-                  <Play className="h-3.5 w-3.5" aria-hidden="true" />
+                  <Play className="h-3 w-3 fill-current" aria-hidden="true" />
                   {t("common.details", "Details")}
                 </Link>
               </Button>
@@ -233,7 +233,7 @@ function ContinueWatchingCard({
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-9 shrink-0 gap-1.5 border-primary/20 bg-background/50 px-2.5 text-xs font-semibold hover:border-primary/45 hover:bg-primary/5"
+                  size="sm" className="h-8 shrink-0 gap-1.5 rounded-xl border-border/60 bg-background/50 px-2.5 text-xs font-semibold transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary"
                   disabled={isMarkingThisEpisode}
                   aria-label={t("home.markNextEpisode", "Mark Next Episode")}
                   title={t("home.markNextEpisode", "Mark Next Episode")}
@@ -368,9 +368,9 @@ export function ContinueWatching() {
 
   if (error instanceof Error) {
     return (
-      <section className="ct-panel p-6 text-center">
-        <h2 className="section-title mb-1">{safeT(t, "home.continueWatching", "Continue Watching")}</h2>
-        <p className="text-sm text-muted-foreground">
+      <section className="relative overflow-hidden rounded-2xl border border-destructive/20 bg-destructive/5 p-6 text-center shadow-sm">
+        <h2 className="text-lg font-bold text-foreground">{safeT(t, "home.continueWatching", "Continue Watching")}</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
           {safeT(
             t,
             "home.continueWatchingLoadError",
@@ -380,7 +380,7 @@ export function ContinueWatching() {
         <Button
           type="button"
           variant="outline"
-          className="mt-4 gap-2"
+          size="sm" className="mt-4 gap-2 rounded-xl border-border/60 bg-background/50 text-xs"
           onClick={() => refetch()}
         >
           <RefreshCw className="h-4 w-4" />
@@ -392,7 +392,7 @@ export function ContinueWatching() {
 
   if (!data || data.length === 0) {
     return (
-      <section className="ct-panel relative min-h-[280px] overflow-hidden border-primary/15 bg-[radial-gradient(circle_at_top_right,rgba(229,9,20,0.12),transparent_34%),linear-gradient(145deg,hsl(var(--card)),hsl(var(--background)))] p-4 md:min-h-[320px] md:p-6">
+      <section className="relative min-h-[280px] overflow-hidden rounded-2xl border border-border/60 bg-card/60 p-5 shadow-sm backdrop-blur-sm md:min-h-[320px] md:p-6">
         <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -408,7 +408,7 @@ export function ContinueWatching() {
             </p>
           </div>
           <Button asChild variant="outline" size="sm">
-            <Link to="/watched">{t("home.viewWatchingList", "View Watching List")}</Link>
+            <Link to="/watched">{t("home.viewWatchingList", "View Watching List")} <ChevronRight className="ml-1 h-3.5 w-3.5" aria-hidden="true" /></Link>
           </Button>
         </div>
 
@@ -446,9 +446,8 @@ export function ContinueWatching() {
   ).length;
 
   return (
-    <section className="ct-panel relative overflow-hidden border-primary/15 bg-[radial-gradient(circle_at_100%_0%,rgba(229,9,20,0.15),transparent_28%),linear-gradient(145deg,hsl(var(--card)),hsl(var(--background)))] p-4 md:p-6">
-      <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-primary/10 blur-3xl" aria-hidden="true" />
-      <div className="relative mb-5 flex flex-col gap-4 border-b border-border/60 pb-5 sm:flex-row sm:items-end sm:justify-between">
+    <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/60 p-5 shadow-sm backdrop-blur-sm md:p-6">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
             <Play className="h-5 w-5 text-primary" />
@@ -482,8 +481,8 @@ export function ContinueWatching() {
             ) : null}
           </div>
         </div>
-        <Button asChild variant="outline" size="sm" className="relative min-h-10 border-primary/20 bg-background/55 hover:border-primary/45 hover:bg-primary/5">
-          <Link to="/watched">{t("home.viewWatchingList", "View Watching List")}</Link>
+        <Button asChild variant="outline" size="sm" className="relative min-h-9 rounded-xl border-border/60 bg-background/50 text-xs hover:border-primary/40 hover:bg-background/80 hover:text-primary">
+          <Link to="/watched">{t("home.viewWatchingList", "View Watching List")} <ChevronRight className="ml-1 h-3.5 w-3.5" aria-hidden="true" /></Link>
         </Button>
       </div>
 

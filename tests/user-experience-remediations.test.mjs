@@ -77,3 +77,12 @@ test("GuestSyncBanner uses refined dark styling without heavy multi-stop gradien
   assert.doesNotMatch(bannerSource, /bg-gradient-to-r/);
   assert.match(bannerSource, /border-border\/60/);
 });
+
+test("ContinueWatching uses clean and restrained dark styling without heavy gradients or floating orbs", () => {
+  const cwSource = fs.readFileSync("src/components/ContinueWatching.tsx", "utf-8");
+
+  assert.doesNotMatch(cwSource, /radial-gradient/);
+  assert.doesNotMatch(cwSource, /blur-3xl/);
+  assert.doesNotMatch(cwSource, /shadow-\[0_16px_38px/);
+  assert.match(cwSource, /border-border\/60 bg-card\/60/);
+});
