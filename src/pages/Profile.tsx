@@ -51,6 +51,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -1038,8 +1039,29 @@ export default function Profile() {
     return Array.from(map.values());
   }, [watched]);
 
+  const sortedWatchedEntries = useMemo(
+    () =>
+      [...uniqueWatchedEntries].sort(
+        (a, b) =>
+          new Date(b.watchedAt || b.addedAt || 0).getTime() -
+          new Date(a.watchedAt || a.addedAt || 0).getTime(),
+      ),
+    [uniqueWatchedEntries],
+  );
+
+  const recentlyWatched = useMemo(
+    () => sortedWatchedEntries.slice(0, 10),
+    [sortedWatchedEntries],
+  );
+
   const previewLookupItems = useMemo(() => {
-    const merged = [...pinnedFavoriteBase];
+    const merged: PinnedFavoriteRef[] = [
+      ...pinnedFavoriteBase,
+      ...recentlyWatched.map((item) => ({
+        mediaType: item.mediaType,
+        mediaId: item.mediaId,
+      })),
+    ];
     const unique = new Map<string, PinnedFavoriteRef>();
 
     merged.forEach((item) => {
@@ -1047,10 +1069,14 @@ export default function Profile() {
     });
 
     return Array.from(unique.values());
-  }, [pinnedFavoriteBase]);
+  }, [pinnedFavoriteBase, recentlyWatched]);
 
   const { data: previewMap = {}, isLoading: isLoadingPreviews } = useQuery({
-    queryKey: ["profile-preview-media", previewLookupItems, i18n.language],
+    queryKey: [
+      "profile-preview-media",
+      previewLookupItems.map((item) => `${item.mediaType}-${item.mediaId}`),
+      i18n.language,
+    ],
     enabled: previewLookupItems.length > 0,
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {
@@ -1103,13 +1129,13 @@ export default function Profile() {
   const { data: watchedInsights = [] } = useQuery({
     queryKey: [
       "profile-watched-insights",
-      uniqueWatchedEntries.map((item) => `${item.mediaType}-${item.mediaId}`),
+      sortedWatchedEntries.map((item) => `${item.mediaType}-${item.mediaId}`),
       i18n.language,
     ],
-    enabled: uniqueWatchedEntries.length > 0,
+    enabled: sortedWatchedEntries.length > 0,
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {
-      const capped = uniqueWatchedEntries.slice(0, 120);
+      const capped = sortedWatchedEntries.slice(0, 120);
       return Promise.all(
         capped.map(async (item) => {
           try {
@@ -1730,17 +1756,7 @@ export default function Profile() {
     [uniqueWatchedEntries],
   );
 
-  const recentlyWatched = useMemo(
-    () =>
-      [...uniqueWatchedEntries]
-        .sort(
-          (a, b) =>
-            new Date(b.watchedAt || b.addedAt || 0).getTime() -
-            new Date(a.watchedAt || a.addedAt || 0).getTime(),
-        )
-        .slice(0, 10),
-    [uniqueWatchedEntries],
-  );
+
 
   const formatUnlockMonthYear = useCallback((date: Date | undefined) => {
     if (!date) return null;
@@ -2531,7 +2547,11 @@ export default function Profile() {
                     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                       {recentlyWatched.slice(0, 6).map((item) => {
                         const itemKey = `${item.mediaType}-${item.mediaId}`;
+                        const preview = previewMap[itemKey];
                         const insight = watchedInsights.find((wi) => wi.key === itemKey);
+                        const mediaTitle = preview?.title || insight?.title;
+                        const posterPath = preview?.posterPath ?? insight?.posterPath;
+                        const isLoadingMedia = isLoadingPreviews && !mediaTitle;
                         const daysAgo = Math.floor(
                           (Date.now() - new Date(item.watchedAt || item.addedAt || 0).getTime()) /
                             (24 * 60 * 60 * 1000),
@@ -2549,6 +2569,23 @@ export default function Profile() {
                             ? text("profile.pausedWatching", "Paused watching")
                             : text("profile.loggedWatch", "Logged a watch");
 
+                        if (isLoadingMedia) {
+                          return (
+                            <div
+                              key={itemKey}
+                              className="flex min-h-[124px] gap-3 rounded-xl border border-border bg-card p-3"
+                              aria-busy="true"
+                            >
+                              <Skeleton className="h-[98px] w-[66px] shrink-0 rounded-md" />
+                              <div className="min-w-0 flex-1 py-0.5 space-y-2">
+                                <Skeleton className="h-4 w-3/4 rounded" />
+                                <Skeleton className="h-3 w-1/2 rounded" />
+                                <Skeleton className="mt-4 h-2.5 w-1/3 rounded" />
+                              </div>
+                            </div>
+                          );
+                        }
+
                         return (
                           <Link
                             key={itemKey}
@@ -2556,10 +2593,10 @@ export default function Profile() {
                             className="group flex min-h-[124px] gap-3 rounded-xl border border-border bg-card p-3 transition-colors duration-150 hover:bg-accent/35"
                           >
                             <div className="relative h-[98px] w-[66px] shrink-0 overflow-hidden rounded-md border border-border bg-muted">
-                              {insight?.posterPath ? (
+                              {posterPath ? (
                                 <Image
-                                  src={getImageUrl(insight.posterPath, "w185")}
-                                  alt={insight.title}
+                                  src={getImageUrl(posterPath, "w185")}
+                                  alt={mediaTitle || ""}
                                   width={185}
                                   height={278}
                                   className="h-full w-full object-cover"
@@ -2575,7 +2612,7 @@ export default function Profile() {
                             <div className="min-w-0 flex-1 py-0.5">
                               <div className="flex items-start justify-between gap-2">
                                 <p className="line-clamp-2 text-sm font-semibold leading-tight text-foreground">
-                                  {insight?.title || `#${item.mediaId}`}
+                                  {mediaTitle || (item.mediaType === "movie" ? text("common.movie", "Movie") : text("profile.series", "Series"))}
                                 </p>
                                 {typeof item.rating === "number" ? (
                                   <span className="shrink-0 rounded bg-primary/12 px-1.5 py-0.5 text-[10px] font-bold text-primary">

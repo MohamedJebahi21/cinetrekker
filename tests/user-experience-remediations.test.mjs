@@ -115,3 +115,19 @@ test("Profile and HomeStatsSnapshot use restrained dark styling without legacy r
   assert.doesNotMatch(profilePageSource, /text-yellow-500/);
   assert.doesNotMatch(profilePageSource, /#E50914/);
 });
+
+test("Profile page recent activity resolves media previews and avoids raw mediaId fallbacks", () => {
+  const profileSource = fs.readFileSync("src/pages/Profile.tsx", "utf-8");
+
+  // Verifies that recentlyWatched is included in previewLookupItems for preview queries
+  assert.match(profileSource, /previewLookupItems = useMemo\(\(\) => \{[\s\S]*?\.\.\.recentlyWatched/);
+
+  // Verifies that watched entries are sorted by date descending before capping for insights
+  assert.match(profileSource, /const sortedWatchedEntries = useMemo\(\s*\(\) =>\s*\[\.\.\.uniqueWatchedEntries\]\.sort/);
+  assert.match(profileSource, /const capped = sortedWatchedEntries\.slice\(0, 120\);/);
+
+  // Verifies that Recent Activity uses mediaTitle from preview/insight and does not fall back to raw #mediaId
+  assert.doesNotMatch(profileSource, /insight\?\.title \|\| `#\$\{item\.mediaId\}`/);
+  assert.match(profileSource, /const mediaTitle = preview\?\.title \|\| insight\?\.title;/);
+  assert.match(profileSource, /if \(isLoadingMedia\) \{/);
+});
