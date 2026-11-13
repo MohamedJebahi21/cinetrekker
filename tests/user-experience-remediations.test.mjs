@@ -131,3 +131,23 @@ test("Profile page recent activity resolves media previews and avoids raw mediaI
   assert.match(profileSource, /const mediaTitle = preview\?\.title \|\| insight\?\.title;/);
   assert.match(profileSource, /if \(isLoadingMedia\) \{/);
 });
+
+test("Watchlist page and filters use restrained dark styling and keep existing actions", () => {
+  const watchlistSource = fs.readFileSync("src/pages/Watchlist.tsx", "utf-8");
+  const filtersSource = fs.readFileSync("src/components/WatchlistFilters.tsx", "utf-8");
+
+  // Restrained dark surface styling
+  assert.doesNotMatch(filtersSource, /bg-gradient-to-r/);
+  assert.match(filtersSource, /border-border\/60 bg-card\/(?:60|70)/);
+  assert.match(filtersSource, /hasActiveFilters/);
+
+  // Watchlist keeps essential queue progress and actions
+  assert.match(watchlistSource, /completionRate/);
+  assert.match(watchlistSource, /handleBulkMarkWatched/);
+  assert.match(watchlistSource, /handleBulkRemove/);
+  assert.match(watchlistSource, /<RandomPicker/);
+  assert.match(watchlistSource, /watchlistPage\.pickTonight/);
+  assert.match(watchlistSource, /exportToJSON/);
+  assert.match(watchlistSource, /exportToCSV/);
+  assert.match(watchlistSource, /handleImport/);
+});

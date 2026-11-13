@@ -402,24 +402,24 @@ export default function Watchlist() {
         <div className="page-container max-w-7xl pt-20 pb-24 md:pb-10">
           {!user ? <GuestSyncBanner /> : null}
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-10 flex flex-col justify-between gap-6 sm:flex-row sm:items-center"
+            className="mb-8 flex flex-col justify-between gap-6 sm:flex-row sm:items-end"
           >
             <div>
               <p className="ct-kicker mb-2">{t("watchlistPage.kicker", "Curated Queue")}</p>
-              <h1 className="mb-2 text-3xl font-bold tracking-tight sm:text-4xl">
+              <h1 className="mb-2 text-3xl font-bold tracking-tight sm:text-4xl text-foreground">
                 {isSharedView
                   ? t("watchlistPage.sharedTitle", "Shared Watchlist")
                   : t("watchlist.title")}
               </h1>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+              <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
                 {t("watchlistPage.focusedQueueCopy", "Choose one title for tonight, then keep the rest of your queue calm and organized.")}
               </p>
             </div>
 
             {listItems.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 md:gap-3 w-full sm:w-auto z-10">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto z-10">
                 <RandomPicker
                   source="watchlist"
                   variant="outline"
@@ -531,12 +531,14 @@ export default function Watchlist() {
           </motion.div>
 
           {isSharedView && (
-            <div className="mb-8 rounded-2xl border border-amber-500/20 bg-amber-500/8 px-6 py-4 text-sm text-amber-200 backdrop-blur-sm shadow-md flex items-center gap-3">
-              <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-              {t(
-                "watchlistPage.sharedHint",
-                "You are viewing a shared watchlist. Sign in to add or manage your own list.",
-              )}
+            <div className="mb-6 rounded-2xl border border-border/70 bg-card/70 px-5 py-4 text-sm text-muted-foreground backdrop-blur-sm shadow-xs flex items-center gap-3">
+              <span className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
+              <span>
+                {t(
+                  "watchlistPage.sharedHint",
+                  "You are viewing a shared watchlist. Sign in to add or manage your own list.",
+                )}
+              </span>
             </div>
           )}
 
@@ -547,21 +549,21 @@ export default function Watchlist() {
             const stalePoster = oldestStale ? getImageUrl(oldestStale.poster_path, "w92") : null;
             const staleTitle = oldestStale ? getMediaTitle(oldestStale) : null;
             return (
-              <div className="mb-6 rounded-2xl border border-amber-500/25 bg-amber-500/8 overflow-hidden shadow-md">
-                <div className="flex items-center gap-4 px-5 py-4">
+              <div className="mb-6 rounded-2xl border border-border/70 bg-card/70 p-4 sm:p-5 backdrop-blur-sm shadow-sm transition-colors hover:border-border">
+                <div className="flex items-center gap-4">
                   {stalePoster && (
-                    <div className="h-16 w-11 flex-shrink-0 overflow-hidden rounded-lg border border-amber-500/20 shadow-sm">
+                    <div className="h-14 w-10 flex-shrink-0 overflow-hidden rounded-md border border-border/60 bg-muted shadow-xs">
                       <img src={stalePoster} alt={staleTitle || ""} className="h-full w-full object-cover" loading="lazy" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse flex-shrink-0" />
-                      <p className="text-sm font-semibold text-amber-300">
+                      <span className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
+                      <p className="text-sm font-semibold text-foreground">
                         {t("watchlistPage.staleQueueTitle", "Time to clear your queue!")}
                       </p>
                     </div>
-                    <p className="text-xs text-amber-200/70 line-clamp-1">
+                    <p className="text-xs text-muted-foreground line-clamp-1">
                       {staleTitle ? `"${staleTitle}" and ` : ""}
                       {t(
                         "watchlistPage.staleQueueHint",
@@ -570,11 +572,11 @@ export default function Watchlist() {
                       )}
                     </p>
                   </div>
-                  <div className="flex shrink-0 items-center gap-1">
+                  <div className="flex shrink-0 items-center gap-1.5">
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 rounded-full border-amber-500/30 px-4 text-xs text-amber-300 hover:bg-amber-500/25 hover:text-white"
+                      className="h-8 rounded-lg px-3 text-xs text-foreground hover:bg-secondary"
                       onClick={() => {
                         const staleList = Array.from(staleQueueKeys);
                         const randomStale = staleList[Math.floor(Math.random() * staleList.length)];
@@ -587,7 +589,7 @@ export default function Watchlist() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-amber-200/70 hover:bg-amber-500/15 hover:text-amber-100"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
                       onClick={() => setShowStaleNudge(false)}
                       aria-label={t("common.close", "Close")}
                     >
@@ -599,16 +601,15 @@ export default function Watchlist() {
             );
           })()}
 
-
           {!isSharedView && mediaDetails.length > 0 && (
-            <div className="mb-6 rounded-[2rem] border border-border/50 bg-card/45 p-6 shadow-md">
+            <div className="mb-6 rounded-2xl border border-border/60 bg-card/70 p-5 sm:p-6 backdrop-blur-sm shadow-sm">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                 <div>
                   <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                    <CheckSquare className="h-5 w-5 text-primary" />
+                    <CheckSquare className="h-4.5 w-4.5 text-primary" />
                     {t("watchlistPage.progressHeadline", "Queue progress")}
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-sm text-muted-foreground mt-1 max-w-2xl leading-relaxed">
                     {t(
                       "watchlistPage.progressCopy",
                       "You've watched {{completed}} of {{total}} saved titles ({{percent}}%). Estimated watch time still in queue: about {{hours}} hours.",
@@ -621,21 +622,21 @@ export default function Watchlist() {
                     )}
                   </p>
                 </div>
-                <div className="text-right shrink-0">
-                  <span className="text-2xl font-black text-primary">{completionRate}%</span>
-                  <span className="text-xs text-muted-foreground block uppercase tracking-wider font-semibold">Completed</span>
+                <div className="flex md:flex-col items-baseline md:items-end justify-between md:justify-center gap-1 shrink-0">
+                  <span className="text-2xl font-black tracking-tight text-foreground">{completionRate}%</span>
+                  <span className="text-[11px] text-muted-foreground uppercase tracking-wider font-semibold">Completed</span>
                 </div>
               </div>
-              <Progress value={completionRate} className="h-2.5 bg-secondary/80 border border-border/40 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-rose-400" />
+              <Progress value={completionRate} className="h-2 rounded-full bg-secondary/80 border border-border/40 [&>div]:bg-primary" />
             </div>
           )}
 
           {!isSharedView && mediaDetails.length > 0 && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="mb-10"
+              transition={{ delay: 0.1 }}
+              className="mb-8"
             >
               <WatchlistFilters
                 statusFilter={statusFilter}
@@ -652,12 +653,12 @@ export default function Watchlist() {
 
           {!isSharedView && selectionMode && mediaDetails.length > 0 && (
             <motion.div
-              initial={{ opacity: 0, y: 14 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 rounded-2xl border border-border/60 bg-card/80 p-4 backdrop-blur-sm"
+              className="mb-6 rounded-2xl border border-primary/25 bg-card/95 p-4 backdrop-blur-md shadow-md"
             >
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
+                <div className="flex flex-wrap items-center gap-3">
                   <p className="text-sm font-semibold text-foreground">
                     {selectedCount === 0
                       ? t("watchlistPage.selectTitlesHint", "Select titles to manage them together")
@@ -665,21 +666,37 @@ export default function Watchlist() {
                           count: selectedCount,
                         })}
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    {t(
-                      "watchlistPage.bulkHint",
-                      "Mark selected titles as watched or remove them from your watchlist in one pass.",
-                    )}
-                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-primary h-7 px-2"
+                    onClick={() => {
+                      const allKeys = new Set(filteredMedia.map((m) => `${getMediaType(m)}-${m.id}`));
+                      setSelectedKeys(allKeys);
+                    }}
+                  >
+                    {t("common.selectAll", "Select All")}
+                  </Button>
+                  {selectedCount > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-muted-foreground h-7 px-2"
+                      onClick={() => setSelectedKeys(new Set())}
+                    >
+                      {t("common.deselectAll", "Deselect All")}
+                    </Button>
+                  )}
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Button
                     size="sm"
                     variant="outline"
                     disabled={selectedCount === 0}
                     onClick={() => void handleBulkMarkWatched()}
+                    className="gap-1.5"
                   >
-                    <CheckSquare className="mr-2 h-4 w-4" />
+                    <CheckSquare className="mr-1.5 h-4 w-4" />
                     {t("actions.watched", "Watched")}
                   </Button>
                   <Button
@@ -687,8 +704,9 @@ export default function Watchlist() {
                     variant="destructive"
                     disabled={selectedCount === 0}
                     onClick={() => void handleBulkRemove()}
+                    className="gap-1.5"
                   >
-                    <Trash2 className="mr-2 h-4 w-4" />
+                    <Trash2 className="mr-1.5 h-4 w-4" />
                     {t("common.delete", "Remove")}
                   </Button>
                   <Button size="sm" variant="ghost" onClick={clearSelection}>
@@ -738,12 +756,12 @@ export default function Watchlist() {
                     <Link
                       key={`${mediaType}-${media.id}`}
                       to={`/${mediaType}/${media.id}`}
-                      className="ct-list-row group items-start gap-4 p-4 sm:items-center sm:gap-5 sm:p-5 rounded-2xl border border-transparent hover:border-border/30 hover:bg-card/45 transition-all duration-300"
+                      className="ct-list-row group items-center gap-4 p-3.5 sm:gap-5 sm:p-4 hover:bg-card/60 transition-colors"
                     >
                       {selectionMode && (
                         <button
                           type="button"
-                          className={`mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                          className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors ${
                             selectedKeys.has(`${mediaType}-${media.id}`)
                               ? "border-primary bg-primary text-primary-foreground"
                               : "border-border/60 bg-card text-muted-foreground hover:border-primary/45"
@@ -770,14 +788,14 @@ export default function Watchlist() {
                           )}
                         </button>
                       )}
-                      <div className="h-24 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-muted border border-border/40 shadow-sm relative group-hover:shadow-md group-hover:border-primary/20 transition-all duration-300">
+                      <div className="h-20 w-14 sm:h-24 sm:w-16 flex-shrink-0 overflow-hidden rounded-lg bg-muted border border-border/50 shadow-xs relative">
                         {poster ? (
                           <Image
                             src={poster}
                             alt={title}
                             width={154}
                             height={231}
-                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                             loading="lazy"
                           />
                         ) : (
@@ -792,18 +810,18 @@ export default function Watchlist() {
                           </h3>
                           <Badge
                             variant="secondary"
-                            className="uppercase text-xs tracking-wider px-2 py-0.5 bg-secondary/80 text-secondary-foreground border border-border/30 rounded-md font-semibold"
+                            className="uppercase text-[10px] tracking-wider px-2 py-0.5 bg-secondary/80 text-secondary-foreground border border-border/30 rounded-md font-semibold"
                           >
                             {mediaType === "movie" ? t("common.movie", "Movie") : t("common.tvShow", "TV Show")}
                           </Badge>
                         </div>
 
-                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
-                          {year && <span>{year}</span>}
+                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
+                          {year && <span className="text-xs">{year}</span>}
                           {media.vote_average > 0 && (
                             <Badge
                               variant="secondary"
-                              className="rounded-full border border-amber-500/25 bg-amber-500/10 text-amber-200 font-semibold"
+                              className="rounded-md border border-border/60 bg-secondary/70 text-foreground text-xs font-semibold px-1.5 py-0"
                             >
                               ★ {media.vote_average.toFixed(1)}
                             </Badge>
@@ -814,14 +832,13 @@ export default function Watchlist() {
                             </Badge>
                           )}
                           {staleQueueKeys.has(`${mediaType}-${media.id}`) && (
-                            <Badge className="rounded-full border border-amber-500/35 bg-amber-500/15 text-amber-200">
+                            <Badge className="rounded-md border border-border/60 bg-muted/70 text-muted-foreground text-xs font-normal">
                               {t("watchlistPage.leavingSoon", "30+ days in queue")}
                             </Badge>
                           )}
                         </div>
-                        {/* Overview snippet — visible on hover (desktop) */}
                         {media.overview && (
-                          <p className="mt-1.5 line-clamp-1 text-xs text-muted-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hidden sm:block">
+                          <p className="mt-1 line-clamp-1 text-xs text-muted-foreground/70 hidden sm:block">
                             {media.overview}
                           </p>
                         )}
@@ -832,13 +849,17 @@ export default function Watchlist() {
               </div>
             )
           ) : mediaDetails.length > 0 ? (
-            <div className="ct-panel py-20 text-center">
-              <Bookmark className="mx-auto mb-6 h-20 w-20 text-muted-foreground/40" />
-              <h2 className="mb-3 text-2xl font-semibold">
+            <div className="ct-panel py-16 text-center">
+              <Bookmark className="mx-auto mb-4 h-12 w-12 text-muted-foreground/30" />
+              <h2 className="mb-2 text-xl font-semibold text-foreground">
                 {t("watchlist.noItemsInFilter", "No items match your filters")}
               </h2>
+              <p className="mb-6 text-sm text-muted-foreground max-w-sm mx-auto">
+                {t("watchlistPage.noItemsFilterDesc", "Try selecting another status or clearing your filters to see your saved titles.")}
+              </p>
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => {
                   setStatusFilter("all");
                   setSortBy("added-desc");
@@ -848,7 +869,7 @@ export default function Watchlist() {
               </Button>
             </div>
           ) : (
-            <div className="ct-panel">
+            <div className="ct-panel py-12">
               <EmptyState
                 icon={Bookmark}
                 title={t("watchlist.empty", "Your watchlist is empty")}
@@ -861,7 +882,7 @@ export default function Watchlist() {
                   onClick: () => navigate("/search?sort=popularity.desc"),
                 }}
               />
-              <p className="mt-2 text-center text-sm text-muted-foreground">
+              <p className="mt-3 text-center text-sm text-muted-foreground">
                 {t(
                   "watchlistPage.buildQueueHint",
                   "Browse search, trending, or title pages and tap the bookmark to start building your queue.",
