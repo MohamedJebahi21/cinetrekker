@@ -389,7 +389,7 @@ export default function ActorMatchesSection({
     return (
       <Card>
         <CardContent className="space-y-3 pt-6 text-center">
-          <Sparkles className="mx-auto mb-2 h-6 w-6 text-yellow-500" />
+          <Sparkles className="mx-auto mb-2 h-6 w-6 text-primary" />
           <p className="text-sm font-semibold text-foreground">
             {t("profile.actorMatchesWaiting", "Actor Matches are waiting")}
           </p>
@@ -421,7 +421,7 @@ export default function ActorMatchesSection({
     return (
       <Card>
         <CardContent className="pt-6 text-center">
-          <Sparkles className="mx-auto mb-2 h-6 w-6 text-yellow-500" />
+          <Sparkles className="mx-auto mb-2 h-6 w-6 text-primary" />
           <p className="text-sm font-semibold text-foreground">
             {t("profile.actorMatchesWaiting", "Actor Matches are waiting")}
           </p>
@@ -512,9 +512,9 @@ export default function ActorMatchesSection({
 
         {/* Optimization Status Badge */}
         {!error && (
-          <div className="flex items-center gap-1.5 rounded-full border border-green-500/20 bg-green-500/5 px-2 py-0.5">
-            <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-[10px] font-medium text-green-500/80">
+          <div className="flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 px-2.5 py-0.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+            <span className="text-[10px] font-medium text-muted-foreground">
               {t("profile.optimized", "Optimized")}
             </span>
           </div>

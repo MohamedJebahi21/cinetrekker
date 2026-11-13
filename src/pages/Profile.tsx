@@ -686,7 +686,7 @@ export default function Profile() {
           "Your latest profile changes are now live.",
         ),
         className:
-          "border-l-4 border-l-[#E50914] bg-neutral-900/95 text-neutral-100 rounded-full",
+          "border border-border/60 bg-card/95 text-foreground rounded-xl shadow-md",
       });
       setIsEditMode(false);
     } catch (error) {
@@ -2604,7 +2604,7 @@ export default function Profile() {
                   <motion.section variants={itemVariants}>
                     <div className="mb-4 space-y-1">
                       <h2 className="flex items-center gap-2 text-xl font-bold">
-                        <Sparkles className="h-5 w-5 text-yellow-500" />
+                        <Sparkles className="h-5 w-5 text-primary" />
                         {t("profile.actorMatches")}
                       </h2>
                       <p className="text-sm text-muted-foreground">
@@ -3260,7 +3260,7 @@ export default function Profile() {
                       <div className="space-y-6">
                         <motion.section variants={itemVariants} className="space-y-3">
                           <h2 className="flex items-center gap-2 text-xl font-bold">
-                            <Sparkles className="h-5 w-5 text-yellow-500" />
+                            <Sparkles className="h-5 w-5 text-primary" />
                             {text("profile.favoriteGenres", "Favorite Genres")}
                           </h2>
                           <p className="text-xs text-muted-foreground">
@@ -3382,7 +3382,7 @@ export default function Profile() {
                           className="space-y-3"
                         >
                           <h3 className="flex items-center gap-2 text-xl font-bold">
-                            <BarChart3 className="h-5 w-5 text-[#E50914]" />
+                            <BarChart3 className="h-5 w-5 text-primary" />
                             {text("profile.ratingDistribution", "Rating Distribution")}
                           </h3>
                           <p className="text-xs text-muted-foreground">

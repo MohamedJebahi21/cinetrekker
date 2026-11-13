@@ -46,22 +46,20 @@ export function HomeStatsSnapshot({
   ];
 
   return (
-    <section className="ct-panel relative overflow-hidden p-5 md:p-6">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top,hsla(var(--primary)/0.14),transparent_68%)]"
-      />
+    <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/60 p-5 shadow-sm backdrop-blur-sm md:p-6">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
             {t("home.librarySnapshot", "Library Snapshot")}
           </p>
-          <h2 className="section-title mb-1">{t("home.statsSnapshot", "Stats Snapshot")}</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">
+            {t("home.statsSnapshot", "Stats Snapshot")}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
             {t("home.statsSnapshotDesc", "A quick view of how your library is taking shape.")}
           </p>
         </div>
-        <Button asChild variant="outline" size="sm">
+        <Button asChild variant="outline" size="sm" className="h-9 rounded-xl border-border/60 text-xs font-semibold">
           <Link to={ctaHref}>{ctaLabel || t("home.openFullStats", "Open Full Stats")}</Link>
         </Button>
       </div>
@@ -72,17 +70,17 @@ export function HomeStatsSnapshot({
           return (
             <div
               key={stat.label}
-              className="rounded-2xl border border-border/60 bg-[linear-gradient(180deg,hsla(var(--card)/0.9),hsla(var(--card)/0.72))] p-4 shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
+              className="rounded-xl border border-border/60 bg-background/40 p-4 transition-colors hover:border-border hover:bg-background/60"
             >
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  <p className="mt-1 text-2xl font-bold text-foreground">
+                  <p className="text-xs font-medium text-muted-foreground">{stat.label}</p>
+                  <p className="mt-1 text-2xl font-bold tabular-nums tracking-tight text-foreground">
                     {stat.value}
                   </p>
                 </div>
-                <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/12 text-primary">
-                  <Icon className="h-5 w-5" />
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+                  <Icon className="h-4 w-4" />
                 </span>
               </div>
             </div>

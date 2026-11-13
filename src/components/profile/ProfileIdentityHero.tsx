@@ -88,7 +88,7 @@ export function ProfileIdentityHero({
   };
 
   return (
-    <Card className="profile-identity-card profile-premium-hero relative overflow-hidden border border-border/70 bg-card/65 backdrop-blur-xl shadow-xl ring-1 ring-white/5">
+    <Card className="profile-identity-card profile-premium-hero relative overflow-hidden border border-border/60 bg-card/60 backdrop-blur-sm shadow-sm">
       {/* Subtle top edge highlight */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       <CardContent className="relative z-10 p-5 sm:p-6 lg:p-7">
@@ -119,7 +119,7 @@ export function ProfileIdentityHero({
             >
               <div
                 className={cn(
-                  "profile-avatar-frame relative h-20 w-20 overflow-hidden rounded-2xl border border-border/80 bg-muted/80 shadow-md ring-1 ring-white/10 sm:h-28 sm:w-28 transition-all duration-200",
+                  "profile-avatar-frame relative h-20 w-20 overflow-hidden rounded-2xl border border-border/60 bg-muted/60 shadow-sm sm:h-28 sm:w-28 transition-all duration-200",
                   isEditMode && "ring-2 ring-primary/30 group-hover:ring-primary/60 focus-visible:ring-2 focus-visible:ring-primary",
                   isAvatarDragActive && "border-primary ring-2 ring-primary scale-[1.02]",
                 )}
@@ -255,9 +255,9 @@ export function ProfileIdentityHero({
             ) : (
               <>
                 <div className="profile-stat-grid mt-5 grid gap-3 sm:grid-cols-3">
-                  <div className="profile-stat rounded-xl border border-border/70 bg-card/40 px-4 py-3 backdrop-blur-sm transition-colors hover:border-border hover:bg-card/60">
+                  <div className="profile-stat rounded-xl border border-border/60 bg-background/40 px-4 py-3 backdrop-blur-sm transition-colors hover:border-border hover:bg-background/60">
                     <div className="mb-1 flex items-center gap-2">
-                      <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-primary">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-md border border-primary/20 bg-primary/10 text-primary">
                         <Film className="h-3.5 w-3.5" />
                       </div>
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -266,9 +266,9 @@ export function ProfileIdentityHero({
                     </div>
                     <p className="tabular-nums text-2xl font-bold tracking-tight text-foreground">{countMoviesWatched}</p>
                   </div>
-                  <div className="profile-stat rounded-xl border border-border/70 bg-card/40 px-4 py-3 backdrop-blur-sm transition-colors hover:border-border hover:bg-card/60">
+                  <div className="profile-stat rounded-xl border border-border/60 bg-background/40 px-4 py-3 backdrop-blur-sm transition-colors hover:border-border hover:bg-background/60">
                     <div className="mb-1 flex items-center gap-2">
-                      <div className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-500/10 text-amber-400">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-md border border-primary/20 bg-primary/10 text-primary">
                         <Star className="h-3.5 w-3.5" />
                       </div>
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -277,9 +277,9 @@ export function ProfileIdentityHero({
                     </div>
                     <p className="tabular-nums text-2xl font-bold tracking-tight text-foreground">{countRatings}</p>
                   </div>
-                  <div className="profile-stat rounded-xl border border-border/70 bg-card/40 px-4 py-3 backdrop-blur-sm transition-colors hover:border-border hover:bg-card/60">
+                  <div className="profile-stat rounded-xl border border-border/60 bg-background/40 px-4 py-3 backdrop-blur-sm transition-colors hover:border-border hover:bg-background/60">
                     <div className="mb-1 flex items-center gap-2">
-                      <div className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-500/10 text-blue-400">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-md border border-primary/20 bg-primary/10 text-primary">
                         <Clock className="h-3.5 w-3.5" />
                       </div>
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -303,8 +303,8 @@ export function ProfileIdentityHero({
                         className={cn(
                           "rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition-colors",
                           unlocked
-                            ? "border-primary/20 bg-primary/10 text-primary"
-                            : "border-border/60 bg-muted/20 text-muted-foreground",
+                            ? "border-primary/25 bg-primary/10 text-primary font-semibold"
+                            : "border-border/50 bg-background/30 text-muted-foreground/80",
                         )}
                       >
                         {unlocked ? "✓ " : ""}{milestone.label}

@@ -95,3 +95,23 @@ test("Continue Watching only includes shows with at least one watched episode", 
   assert.match(hookSource, /show\.watchedEpisodeCount > 0 &&\s*!completedShowIds\.has\(show\.showId\)/);
   assert.match(hookSource, /vm\.watchedEpisodeCount > 0 &&\s*!completedShowIds\.has\(vm\.showId\)/);
 });
+test("Profile and HomeStatsSnapshot use restrained dark styling without legacy radial glows or amber accents", () => {
+  const snapshotSource = fs.readFileSync("src/components/home/HomeStatsSnapshot.tsx", "utf-8");
+  const heroSource = fs.readFileSync("src/components/profile/ProfileIdentityHero.tsx", "utf-8");
+  const actorMatchesSource = fs.readFileSync("src/components/profile/ActorMatchesSection.tsx", "utf-8");
+  const profilePageSource = fs.readFileSync("src/pages/Profile.tsx", "utf-8");
+
+  assert.doesNotMatch(snapshotSource, /radial-gradient/);
+  assert.doesNotMatch(snapshotSource, /linear-gradient/);
+  assert.match(snapshotSource, /border-border\/60 bg-card\/60/);
+
+  assert.doesNotMatch(heroSource, /text-amber-400/);
+  assert.doesNotMatch(heroSource, /text-blue-400/);
+  assert.match(heroSource, /border-border\/60 bg-card\/60/);
+
+  assert.doesNotMatch(actorMatchesSource, /text-yellow-500/);
+  assert.doesNotMatch(actorMatchesSource, /bg-green-500/);
+
+  assert.doesNotMatch(profilePageSource, /text-yellow-500/);
+  assert.doesNotMatch(profilePageSource, /#E50914/);
+});

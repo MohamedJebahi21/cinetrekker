@@ -1545,113 +1545,98 @@ button:active,
   pointer-events: none;
 }
 
-/* Profile: identity first, supporting information second. */
+/* Profile: clean, restrained cinematic styling */
 .profile-page { isolation: isolate; }
 .profile-page > .absolute:first-child { border-radius: 1rem 1rem 0 0; }
 .profile-identity-card {
-  border: 1px solid hsl(var(--border) / 0.84) !important;
-  background: linear-gradient(125deg, hsl(var(--card) / 0.98), hsl(var(--card) / 0.86)) !important;
-  box-shadow: var(--shadow-card);
+  border: 1px solid hsl(var(--border) / 0.6) !important;
+  background: hsl(var(--card) / 0.6) !important;
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-sm);
 }
-.profile-identity-card::after {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  background: hsl(var(--primary));
-  opacity: 0.85;
-}
+.profile-identity-card::after { display: none; }
 .profile-premium-hero {
-  border-color: hsl(var(--border) / 0.96) !important;
-  background:
-    radial-gradient(circle at 86% 18%, hsl(var(--primary) / 0.055), transparent 30%),
-    linear-gradient(125deg, hsl(var(--card)), hsl(var(--card) / 0.92)) !important;
+  border-color: hsl(var(--border) / 0.6) !important;
+  background: hsl(var(--card) / 0.6) !important;
+  backdrop-filter: blur(12px);
 }
-.profile-premium-hero::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent 0%, hsl(var(--foreground) / 0.025) 100%);
-  pointer-events: none;
-}
+.profile-premium-hero::before { display: none; }
 .profile-identity-layout { position: relative; }
 .profile-avatar-frame {
-  border-color: hsl(var(--primary) / 0.48) !important;
-  box-shadow: 0 0 0 5px hsl(var(--background) / 0.55), 0 16px 34px hsl(var(--foreground) / 0.18);
+  border-color: hsl(var(--border) / 0.8) !important;
+  box-shadow: 0 0 0 3px hsl(var(--background) / 0.8), 0 4px 12px hsl(var(--foreground) / 0.06);
 }
 .profile-hero-eyebrow { letter-spacing: 0.16em; }
 .profile-hero-bio { max-width: 44rem; }
 .profile-stat-grid { position: relative; }
 .profile-stat {
-  min-height: 5.25rem;
-  background: linear-gradient(145deg, hsl(var(--background) / 0.58), hsl(var(--background) / 0.25));
+  min-height: 5rem;
+  background: hsl(var(--background) / 0.4);
+  border: 1px solid hsl(var(--border) / 0.6);
+  border-radius: 0.75rem;
+  transition: border-color 150ms ease, background-color 150ms ease;
 }
 .profile-stat:hover {
-  border-color: hsl(var(--primary) / 0.36);
-  background: hsl(var(--background) / 0.7);
+  border-color: hsl(var(--border));
+  background: hsl(var(--background) / 0.65);
 }
-.profile-milestone-row { border-top: 1px solid hsl(var(--border) / 0.55); }
+.profile-milestone-row { border-top: 1px solid hsl(var(--border) / 0.5); }
 .profile-section-heading { position: relative; }
-.profile-overview-grid > * {
-  border-radius: 1rem;
-}
+.profile-overview-grid > * { border-radius: 0.75rem; }
 .profile-overview-grid > * > .border,
 .profile-overview-grid > .border {
-  box-shadow: 0 10px 24px hsl(var(--foreground) / 0.035);
+  border-color: hsl(var(--border) / 0.6);
+  background: hsl(var(--card) / 0.6);
+  box-shadow: var(--shadow-sm);
 }
 .profile-recap-card {
   overflow: hidden;
-  background:
-    linear-gradient(100deg, hsl(var(--card)), hsl(var(--primary) / 0.07)),
-    hsl(var(--card)) !important;
-  box-shadow: 0 10px 28px hsl(var(--foreground) / 0.045);
+  background: hsl(var(--card) / 0.6) !important;
+  border: 1px solid hsl(var(--border) / 0.6) !important;
+  box-shadow: var(--shadow-sm);
 }
 .profile-top-picks-grid > a { transition: transform 180ms ease; }
-.profile-top-picks-grid > a:hover { transform: translateY(-3px); }
+.profile-top-picks-grid > a:hover { transform: translateY(-2px); }
 .profile-activity-section {
-  border-top: 1px solid hsl(var(--border) / 0.58);
+  border-top: 1px solid hsl(var(--border) / 0.5);
   padding-top: 1.5rem;
 }
-.profile-activity-section > div > a {
-  box-shadow: 0 5px 16px hsl(var(--foreground) / 0.025);
-}
-.profile-stat {
-  border: 1px solid hsl(var(--border) / 0.72);
-  border-radius: 0.75rem;
-}
+.profile-activity-section > div > a { box-shadow: none; }
 .profile-achievement-strip > * { min-height: 3.25rem; }
 .profile-tabs {
   display: flex;
-  border: 1px solid hsl(var(--border) / 0.82);
-  border-radius: 0.875rem;
-  background: hsl(var(--card) / 0.92);
-  box-shadow: 0 10px 24px hsl(var(--foreground) / 0.06);
+  border: 1px solid hsl(var(--border) / 0.6);
+  border-radius: 0.75rem;
+  background: hsl(var(--card) / 0.6);
+  backdrop-filter: blur(8px);
+  box-shadow: none;
 }
 .profile-tabs [data-state="active"] {
-  background: hsl(var(--background)) !important;
-  color: hsl(var(--foreground)) !important;
-  box-shadow: 0 1px 2px hsl(var(--foreground) / 0.08);
+  background: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  box-shadow: var(--shadow-sm);
 }
 .profile-insight {
-  border: 1px solid hsl(var(--border) / 0.78);
-  border-radius: 0.875rem;
-  background: hsl(var(--card) / 0.74);
-  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+  border: 1px solid hsl(var(--border) / 0.6);
+  border-radius: 0.75rem;
+  background: hsl(var(--card) / 0.6);
+  transition: border-color 150ms ease, background-color 150ms ease;
 }
 .profile-insight:hover {
-  border-color: hsl(var(--primary) / 0.34);
-  background: hsl(var(--card));
-  box-shadow: var(--shadow-card);
-  transform: translateY(-2px);
+  border-color: hsl(var(--border));
+  background: hsl(var(--accent) / 0.3);
+  box-shadow: none;
+  transform: none;
 }
 @media (max-width: 639px) {
   .profile-page > .absolute:first-child { border-radius: 0; }
-  .profile-identity-card::after { width: 2px; }
-  .profile-avatar-frame { box-shadow: 0 0 0 4px hsl(var(--background) / 0.55), 0 10px 22px hsl(var(--foreground) / 0.16); }
+  .profile-identity-card::after { display: none; }
+  .profile-avatar-frame { box-shadow: 0 0 0 3px hsl(var(--background) / 0.8), 0 4px 10px hsl(var(--foreground) / 0.08); }
   .profile-activity-section { padding-top: 1.25rem; }
   .profile-tabs { scrollbar-width: none; }
   .profile-tabs::-webkit-scrollbar { display: none; }
 }
+
 @media (min-width: 768px) {
   .desktop-menu-group + .desktop-menu-group {
     border-left: 1px solid hsl(var(--border) / 0.55);
