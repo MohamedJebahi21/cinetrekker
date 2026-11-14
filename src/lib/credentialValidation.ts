@@ -1,4 +1,7 @@
 import { z } from 'zod';
+
+// Ensure Zod avoids runtime `new Function("")` feature-probes under strict CSP / Trusted Types
+z.config({ jitless: true });
 import { COMMON_STRINGS } from '@/lib/constants';
 
 /**

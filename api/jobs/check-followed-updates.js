@@ -22,7 +22,16 @@ function isAuthorizedCronCall(req) {
       ? req.headers["x-cron-secret"].trim()
       : "";
 
-  return cronHeader === cronSecret;
+  const authHeader =
+    typeof req?.headers?.authorization === "string"
+      ? req.headers.authorization.trim()
+      : "";
+
+  const bearerToken = authHeader.startsWith("Bearer ")
+    ? authHeader.slice(7).trim()
+    : "";
+
+  return cronHeader === cronSecret || bearerToken === cronSecret;
 }
 
 function getBatchSize() {
@@ -261,6 +270,7 @@ async function processTitle({ supabase, parsed, tmdbApiKey, followers, stateByUs
 }
 
 export const __testables = {
+  isAuthorizedCronCall,
   getBatchSize,
   parseMovieKey,
   getExpiryIso,

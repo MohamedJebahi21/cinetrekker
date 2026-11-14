@@ -44,6 +44,21 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = TMDB_TIMEOUT_MS) 
   }
 }
 
+function formatTmdbRequest(urlStr, tmdbKey) {
+  const isV4Token = typeof tmdbKey === "string" && tmdbKey.includes(".");
+  const delimiter = urlStr.includes("?") ? "&" : "?";
+  const finalUrl = isV4Token ? urlStr : `${urlStr}${delimiter}api_key=${encodeURIComponent(tmdbKey)}`;
+  const headers = isV4Token
+    ? { Authorization: `Bearer ${tmdbKey}`, "Content-Type": "application/json" }
+    : { "Content-Type": "application/json" };
+  return { url: finalUrl, headers };
+}
+
+async function fetchTmdb(urlStr, tmdbKey, timeoutMs = TMDB_TIMEOUT_MS) {
+  const { url, headers } = formatTmdbRequest(urlStr, tmdbKey);
+  return fetchWithTimeout(url, { headers }, timeoutMs);
+}
+
 async function mapConcurrently(items, concurrency, fn) {
   const results = [];
   let index = 0;
@@ -201,11 +216,7 @@ export default async function handler(req, res) {
       const searchUrl = `${TMDB_BASE}/search/${media}?query=${encodeURIComponent(suggestion.title)}&include_adult=false&language=${encodeURIComponent(language)}`;
 
       try {
-        const searchResponse = await fetchWithTimeout(searchUrl, {
-          headers: {
-            Authorization: `Bearer ${tmdbKey}`,
-          },
-        });
+        const searchResponse = await fetchTmdb(searchUrl, tmdbKey);
 
         if (!searchResponse.ok) return;
 
@@ -225,11 +236,7 @@ export default async function handler(req, res) {
         // Optional recommendation expansion (best effort)
         try {
           const recommendationsUrl = `${TMDB_BASE}/${media}/${first.id}/recommendations?language=${encodeURIComponent(language)}`;
-          const recommendationsResponse = await fetchWithTimeout(recommendationsUrl, {
-            headers: {
-              Authorization: `Bearer ${tmdbKey}`,
-            },
-          }, 3000);
+          const recommendationsResponse = await fetchTmdb(recommendationsUrl, tmdbKey, 3000);
 
           if (recommendationsResponse.ok) {
             const recommendationsJson = await recommendationsResponse.json();
@@ -257,11 +264,7 @@ export default async function handler(req, res) {
     if (resolved.length === 0) {
       try {
         const searchUrl = `${TMDB_BASE}/search/multi?query=${encodeURIComponent(normalizedPrompt)}&include_adult=false&language=${encodeURIComponent(language)}`;
-        const searchResponse = await fetchWithTimeout(searchUrl, {
-          headers: {
-            Authorization: `Bearer ${tmdbKey}`,
-          },
-        });
+        const searchResponse = await fetchTmdb(searchUrl, tmdbKey);
 
         if (searchResponse.ok) {
           const searchJson = await searchResponse.json();
@@ -320,3 +323,8 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Internal server error" });
   }
 }
+
+export const __testables = {
+  formatTmdbRequest,
+  fetchTmdb,
+};

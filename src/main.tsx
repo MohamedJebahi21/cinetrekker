@@ -16,6 +16,10 @@ import { installChunkErrorHandlers } from "@/lib/chunkErrorRecovery";
 // Initialise Trusted Types policies (cinetrekker + default) before any React
 // code runs so that all DOM sink assignments are covered from the start.
 import "@/lib/trustedTypes";
+import { z } from "zod";
+
+// Avoid dynamic Function eval probe under strict CSP / Trusted Types
+z.config({ jitless: true });
 import { scheduleIdleTask } from "@/lib/idleCallback";
 import { createLogger } from "@/lib/logger";
 import { registerCineTrekkerServiceWorker } from "@/lib/browserPush";

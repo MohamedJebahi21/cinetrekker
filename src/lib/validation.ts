@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+// Ensure Zod avoids runtime `new Function("")` feature-probes under strict CSP / Trusted Types
+z.config({ jitless: true });
+
 // Validation schemas for user input
 export const userNoteSchema = z
   .string()

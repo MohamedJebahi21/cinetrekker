@@ -209,3 +209,33 @@ test("Navigation overhaul items 1-8: focused product map, first-class calendar, 
   assert.match(homeSource, /showMoreLink="\/discover\?tab=week"/);
   assert.match(homeSource, /showMoreLink="\/discover\?tab=new"/);
 });
+
+
+test("audit remediation: TMDB token handling in api/recommend supports v3 and v4, and Zod jitless is enabled", async () => {
+  const { __testables: recommendTestables } = await import("../api/recommend.js");
+  const { formatTmdbRequest } = recommendTestables;
+
+  // TMDB v3 API key: 32 hex characters, no period
+  const v3Key = "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4";
+  const v3Formatted = formatTmdbRequest("https://api.themoviedb.org/3/search/movie?query=Inception", v3Key);
+  assert.equal(
+    v3Formatted.url,
+    "https://api.themoviedb.org/3/search/movie?query=Inception&api_key=a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  );
+  assert.deepEqual(v3Formatted.headers, { "Content-Type": "application/json" });
+
+  // TMDB v4 Access Token: contains period
+  const v4Token = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIxMjMifQ.signature";
+  const v4Formatted = formatTmdbRequest("https://api.themoviedb.org/3/search/movie?query=Inception", v4Token);
+  assert.equal(v4Formatted.url, "https://api.themoviedb.org/3/search/movie?query=Inception");
+  assert.deepEqual(v4Formatted.headers, {
+    Authorization: `Bearer ${v4Token}`,
+    "Content-Type": "application/json",
+  });
+
+  // Verify Zod jitless configuration in application bootstrap and validation modules
+  const mainSource = fs.readFileSync("src/main.tsx", "utf-8");
+  const validationSource = fs.readFileSync("src/lib/validation.ts", "utf-8");
+  assert.match(mainSource, /z\.config\(\{\s*jitless:\s*true\s*\}\)/);
+  assert.match(validationSource, /z\.config\(\{\s*jitless:\s*true\s*\}\)/);
+});

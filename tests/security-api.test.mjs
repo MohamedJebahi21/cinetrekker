@@ -5,7 +5,7 @@ import followHandler from "../api/follow.ts";
 import feedbackHandler from "../api/feedback.js";
 import notificationsHandler from "../api/notifications.js";
 import tmdbProxyHandler from "../api/tmdb-proxy.js";
-import cronHandler from "../api/jobs/check-followed-updates.js";
+import cronHandler, { __testables as cronTestables } from "../api/jobs/check-followed-updates.js";
 import healthHandler from "../api/health.js";
 import clientErrorsHandler from "../api/client-errors.js";
 import {
@@ -142,12 +142,12 @@ test("invalid token flooding is blocked by pre-auth rate limiting before extra a
   assert.equal(authCalls, 12);
 });
 
-test("cron auth bypass attempts fail without x-cron-secret even when authorization header is present", async () => {
+test("cron auth rejects requests with missing or invalid credentials", async () => {
   process.env.CRON_SECRET = "real-cron-secret";
   const req = createMockReq({
     method: "POST",
     headers: {
-      authorization: "Bearer real-cron-secret",
+      authorization: "Bearer wrong-secret",
     },
     url: "/api/jobs/check-followed-updates",
   });
@@ -157,6 +157,32 @@ test("cron auth bypass attempts fail without x-cron-secret even when authorizati
 
   assert.equal(res.statusCode, 401);
   assert.equal(res.body.error, "Unauthorized");
+});
+
+test("cron auth accepts valid Vercel Bearer authorization header and x-cron-secret", () => {
+  const { isAuthorizedCronCall } = cronTestables;
+  process.env.CRON_SECRET = "real-cron-secret";
+
+  assert.equal(
+    isAuthorizedCronCall({ headers: { authorization: "Bearer real-cron-secret" } }),
+    true,
+  );
+  assert.equal(
+    isAuthorizedCronCall({ headers: { "x-cron-secret": "real-cron-secret" } }),
+    true,
+  );
+  assert.equal(
+    isAuthorizedCronCall({ headers: { authorization: "Bearer wrong-secret" } }),
+    false,
+  );
+  assert.equal(
+    isAuthorizedCronCall({ headers: { "x-cron-secret": "wrong-secret" } }),
+    false,
+  );
+  assert.equal(
+    isAuthorizedCronCall({ headers: {} }),
+    false,
+  );
 });
 
 test("production permits origin-less safe reads but rejects origin-less writes", () => {
