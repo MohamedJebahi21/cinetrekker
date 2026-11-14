@@ -8,10 +8,12 @@ import Film from "lucide-react/dist/esm/icons/film";
 import FolderHeart from "lucide-react/dist/esm/icons/folder-heart";
 import House from "lucide-react/dist/esm/icons/house";
 import Layers from "lucide-react/dist/esm/icons/layers";
+import Settings from "lucide-react/dist/esm/icons/settings";
 import Trophy from "lucide-react/dist/esm/icons/trophy";
 import User from "lucide-react/dist/esm/icons/user";
+import Users from "lucide-react/dist/esm/icons/users";
 
-export type NavigationGroupId = "library" | "community" | "discovery" | "insights";
+export type NavigationGroupId = "tracking" | "explore" | "library" | "discovery" | "insights" | "community";
 
 export interface NavigationRoute {
   path: string;
@@ -31,42 +33,77 @@ export interface NavigationGroup {
   links: NavigationRoute[];
 }
 
-const routeDefinitions: NavigationRoute[] = [
-  { path: "/", labelKey: "nav.home", defaultLabel: "Home", icon: House, group: "library", bottomNav: true, descKey: "navDescription.home", defaultDesc: "Your personal feed and tonight's picks." },
-  { path: "/profile", labelKey: "nav.profile", defaultLabel: "Profile", icon: User, group: "library", descKey: "navDescription.profile", defaultDesc: "Manage your account, rank, and stats." },
-  { path: "/watchlist", labelKey: "nav.watchlist", defaultLabel: "Watchlist", icon: Bookmark, group: "library", bottomNav: true, descKey: "navDescription.watchlist", defaultDesc: "Your list of titles to watch." },
-  { path: "/collections", labelKey: "nav.collections", defaultLabel: "Collections", icon: FolderHeart, group: "library", descKey: "navDescription.collections", defaultDesc: "Curate themed lists worth sharing." },
-  { path: "/watched", labelKey: "nav.watched", defaultLabel: "Watched", icon: CheckSquare, group: "library", descKey: "navDescription.watched", defaultDesc: "Your logged watch history." },
-  { path: "/following", labelKey: "nav.following", defaultLabel: "Following", icon: User, group: "library", descKey: "navDescription.following", defaultDesc: "Titles you are tracking for updates." },
-  { path: "/people", labelKey: "nav.people", defaultLabel: "People", icon: User, group: "community", descKey: "navDescription.people", defaultDesc: "Discover public profiles and follow fellow cinephiles." },
-  { path: "/discover", labelKey: "nav.discover", defaultLabel: "Discover", icon: Compass, group: "discovery", bottomNav: true, descKey: "navDescription.discover", defaultDesc: "Explore recommendations and releases." },
-  { path: "/trending", labelKey: "nav.trending", defaultLabel: "Trending", icon: Film, group: "discovery", descKey: "navDescription.trending", defaultDesc: "What's popular right now." },
-  { path: "/search", labelKey: "nav.search", defaultLabel: "Search", icon: Compass, group: "discovery", bottomNav: true, descKey: "navDescription.search", defaultDesc: "Find movies, series, or people." },
-  { path: "/recommendations", labelKey: "nav.recommendations", defaultLabel: "Recommendations", icon: Film, group: "discovery", descKey: "navDescription.recommendations", defaultDesc: "Taste-matched suggestions for your next watch." },
-  { path: "/genres", labelKey: "nav.genres", defaultLabel: "Genres", icon: Layers, group: "discovery", descKey: "navDescription.genres", defaultDesc: "Browse by specific film categories." },
-  { path: "/decades", labelKey: "nav.decades", defaultLabel: "Decades", icon: CalendarDays, group: "discovery", descKey: "navDescription.decades", defaultDesc: "Travel through cinema history." },
-  { path: "/calendar", labelKey: "nav.calendar", defaultLabel: "Calendar", icon: CalendarDays, group: "insights", descKey: "navDescription.calendar", defaultDesc: "TV schedule and movie release tracker." },
-  { path: "/stats", labelKey: "nav.stats", defaultLabel: "Stats", icon: Award, group: "insights", descKey: "navDescription.stats", defaultDesc: "Detailed analysis of your viewing habits." },
-  { path: "/achievements", labelKey: "nav.achievements", defaultLabel: "Achievements", icon: Award, group: "insights", descKey: "navDescription.achievements", defaultDesc: "Trophies and milestones unlocked." },
-  { path: "/quests", labelKey: "nav.quests", defaultLabel: "Monthly Quests", icon: Trophy, group: "insights", descKey: "navDescription.quests", defaultDesc: "Time-limited challenges and rewards." },
-  { path: "/year-in-review", labelKey: "nav.yearInReview", defaultLabel: "Year In Review", icon: Award, group: "insights", descKey: "navDescription.yearInReview", defaultDesc: "Your personal annual wrapped recap." },
-  { path: "/awards", labelKey: "nav.awards", defaultLabel: "Awards", icon: Award, group: "insights", descKey: "navDescription.awards", defaultDesc: "Browse award winners and nominees." },
+// All registered application route definitions (used for metadata, breadcrumb labels, and bottom nav).
+// Relative order for core paths ["/", "/watchlist", "/discover", "/search"] is preserved for test suites.
+export const allRouteDefinitions: NavigationRoute[] = [
+  { path: "/", labelKey: "nav.home", defaultLabel: "Home", icon: House, group: "explore", bottomNav: true, descKey: "navDescription.home", defaultDesc: "Your personal feed and tonight's picks." },
+  { path: "/watchlist", labelKey: "nav.watchlist", defaultLabel: "Watchlist", icon: Bookmark, group: "tracking", bottomNav: true, descKey: "navDescription.watchlist", defaultDesc: "Queue of titles you want to watch." },
+  { path: "/discover", labelKey: "nav.discover", defaultLabel: "Discover", icon: Compass, group: "explore", bottomNav: true, descKey: "navDescription.discover", defaultDesc: "Explore releases, trending, and picks." },
+  { path: "/search", labelKey: "nav.search", defaultLabel: "Search", icon: Compass, group: "explore", bottomNav: true, descKey: "navDescription.search", defaultDesc: "Find movies, series, or people." },
+  { path: "/watched", labelKey: "nav.watched", defaultLabel: "Watched", icon: CheckSquare, group: "tracking", descKey: "navDescription.watched", defaultDesc: "Your logged watch history." },
+  { path: "/calendar", labelKey: "nav.calendar", defaultLabel: "Calendar", icon: CalendarDays, group: "tracking", descKey: "navDescription.calendar", defaultDesc: "TV schedule and movie release tracker." },
+  { path: "/collections", labelKey: "nav.collections", defaultLabel: "Collections", icon: FolderHeart, group: "tracking", descKey: "navDescription.collections", defaultDesc: "Curate themed lists worth sharing." },
+  { path: "/people", labelKey: "nav.people", defaultLabel: "People", icon: Users, group: "explore", descKey: "navDescription.people", defaultDesc: "Follow fellow cinephiles." },
+  { path: "/profile", labelKey: "nav.profile", defaultLabel: "Profile", icon: User, group: "explore", descKey: "navDescription.profile", defaultDesc: "Manage your account, rank, and stats." },
+  { path: "/settings", labelKey: "nav.settings", defaultLabel: "Settings", icon: Settings, group: "explore", descKey: "navDescription.settings", defaultDesc: "Account, privacy, and notifications." },
+  // Standalone/deep-link routes preserved for metadata & direct URL access
+  { path: "/trending", labelKey: "nav.trending", defaultLabel: "Trending", icon: Film, group: "explore", descKey: "navDescription.trending", defaultDesc: "What's popular right now." },
+  { path: "/recommendations", labelKey: "nav.recommendations", defaultLabel: "Recommendations", icon: Film, group: "explore", descKey: "navDescription.recommendations", defaultDesc: "Taste-matched suggestions for your next watch." },
+  { path: "/genres", labelKey: "nav.genres", defaultLabel: "Genres", icon: Layers, group: "explore", descKey: "navDescription.genres", defaultDesc: "Browse by specific film categories." },
+  { path: "/decades", labelKey: "nav.decades", defaultLabel: "Decades", icon: CalendarDays, group: "explore", descKey: "navDescription.decades", defaultDesc: "Travel through cinema history." },
+  { path: "/stats", labelKey: "nav.stats", defaultLabel: "Stats", icon: Award, group: "explore", descKey: "navDescription.stats", defaultDesc: "Detailed analysis of your viewing habits." },
+  { path: "/achievements", labelKey: "nav.achievements", defaultLabel: "Achievements", icon: Award, group: "explore", descKey: "navDescription.achievements", defaultDesc: "Trophies and milestones unlocked." },
+  { path: "/quests", labelKey: "nav.quests", defaultLabel: "Monthly Quests", icon: Trophy, group: "explore", descKey: "navDescription.quests", defaultDesc: "Time-limited challenges and rewards." },
+  { path: "/year-in-review", labelKey: "nav.yearInReview", defaultLabel: "Year In Review", icon: Award, group: "explore", descKey: "navDescription.yearInReview", defaultDesc: "Your personal annual wrapped recap." },
+  { path: "/awards", labelKey: "nav.awards", defaultLabel: "Awards", icon: Award, group: "explore", descKey: "navDescription.awards", defaultDesc: "Browse award winners and nominees." },
+  { path: "/following", labelKey: "nav.following", defaultLabel: "Following", icon: User, group: "tracking", descKey: "navDescription.following", defaultDesc: "Titles you are tracking for updates." },
 ];
 
-const groupMetadata: Omit<NavigationGroup, "links">[] = [
-  { id: "library", titleKey: "nav.personalLibrary", defaultTitle: "Personal Library" },
-  { id: "community", titleKey: "nav.community", defaultTitle: "Community" },
-  { id: "discovery", titleKey: "nav.discoveryExplore", defaultTitle: "Discovery & Explore" },
-  { id: "insights", titleKey: "nav.insightsAwards", defaultTitle: "Insights & Awards" },
+export const menuLinks = allRouteDefinitions;
+
+// Core product map for authenticated users (Discover, Watchlist, Watched, Calendar, Collections, People, Profile, Settings)
+export const authenticatedBurgerGroups: NavigationGroup[] = [
+  {
+    id: "tracking",
+    titleKey: "nav.libraryTracking",
+    defaultTitle: "Tracking & Library",
+    links: [
+      allRouteDefinitions.find((r) => r.path === "/watchlist")!,
+      allRouteDefinitions.find((r) => r.path === "/watched")!,
+      allRouteDefinitions.find((r) => r.path === "/calendar")!,
+      allRouteDefinitions.find((r) => r.path === "/collections")!,
+    ],
+  },
+  {
+    id: "explore",
+    titleKey: "nav.exploreCommunity",
+    defaultTitle: "Explore & Account",
+    links: [
+      allRouteDefinitions.find((r) => r.path === "/discover")!,
+      allRouteDefinitions.find((r) => r.path === "/people")!,
+      allRouteDefinitions.find((r) => r.path === "/profile")!,
+      allRouteDefinitions.find((r) => r.path === "/settings")!,
+    ],
+  },
 ];
 
-export const navigationGroups: NavigationGroup[] = groupMetadata.map((group) => ({
-  ...group,
-  links: routeDefinitions.filter((route) => route.group === group.id),
-}));
+// Guest burger map: hides empty-account destinations, provides clean discovery and schedule
+export const guestBurgerGroups: NavigationGroup[] = [
+  {
+    id: "explore",
+    titleKey: "nav.explore",
+    defaultTitle: "Explore",
+    links: [
+      allRouteDefinitions.find((r) => r.path === "/discover")!,
+      allRouteDefinitions.find((r) => r.path === "/calendar")!,
+    ],
+  },
+];
 
-export const primaryNavigationGroups = navigationGroups.filter((group) => group.id !== "community");
-export const menuLinks = routeDefinitions;
+// Compatibility exports
+export const navigationGroups: NavigationGroup[] = authenticatedBurgerGroups;
+export const primaryNavigationGroups: NavigationGroup[] = authenticatedBurgerGroups;
+
 export const mobileBottomRoutes = ["/", "/discover", "/search", "/watchlist"]
-  .map((path) => routeDefinitions.find((route) => route.path === path))
+  .map((path) => allRouteDefinitions.find((route) => route.path === path))
   .filter((route): route is NavigationRoute => Boolean(route));

@@ -465,7 +465,7 @@ export default function Index() {
             <MediaCarouselEnhanced
               title={t("home.trendingToday", "Trending Today")}
               items={trendingDayQuery.data?.results || []}
-              showMoreLink="/discover"
+              showMoreLink="/discover?tab=today"
               showMoreLabel={t("home.seeAllTrending", "See All Trending")}
             />
           ) : null}
@@ -473,7 +473,7 @@ export default function Index() {
             <MediaCarouselEnhanced
               title={t("home.trendingWeek", "Trending This Week")}
               items={trendingWeekQuery.data?.results || []}
-              showMoreLink="/discover"
+              showMoreLink="/discover?tab=week"
               showMoreLabel={t("home.seeAllTrending", "See All Trending")}
             />
           ) : null}
@@ -481,7 +481,7 @@ export default function Index() {
             <MediaCarouselEnhanced
               title={t("home.newReleases", "New Releases")}
               items={newReleasesQuery.data?.results || []}
-              showMoreLink="/discover"
+              showMoreLink="/discover?tab=new"
               showMoreLabel={t("home.seeAllNewMovieReleases", "See All New Movie Releases")}
             />
           ) : null}

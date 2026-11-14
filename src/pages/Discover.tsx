@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Compass, Flame, Layers, Sparkles, Trophy, Tv, Film, Star, ChevronRight, Play, TrendingUp, Clock, Popcorn } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import SEO from "@/components/SEO";
@@ -236,6 +236,22 @@ export default function Discover() {
   const [activeMood, setActiveMood] = useState<number | null>(null);
   const [moodPickerOpen, setMoodPickerOpen] = useState(false);
   const [deferredDiscoveryReady, setDeferredDiscoveryReady] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const activeTab: "today" | "week" | "for-you" | "new" = 
+    tabParam === "week" || tabParam === "for-you" || tabParam === "new" ? tabParam : "today";
+
+  const handleTabChange = (nextTab: "today" | "week" | "for-you" | "new") => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (nextTab === "today") {
+        next.delete("tab");
+      } else {
+        next.set("tab", nextTab);
+      }
+      return next;
+    }, { replace: true });
+  };
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDeferredDiscoveryReady(true), 800);
@@ -314,7 +330,7 @@ export default function Discover() {
 
       <div className="page-container space-y-9 pb-24 pt-20 md:pb-12">
 
-        {/* ── Page header ── */}
+        {/* ── Page header & Discovery tabs ── */}
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="ct-kicker mb-2">Curated selection</p>
@@ -325,9 +341,69 @@ export default function Discover() {
               Discover
             </h1>
           </div>
-          <Button asChild variant="outline" className="hidden gap-2 sm:flex">
-            <Link to="/search"><Sparkles className="w-4 h-4" />Search Everything</Link>
-          </Button>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div role="tablist" aria-label="Discovery views" className="inline-flex rounded-xl border border-border/60 bg-card/60 p-1 backdrop-blur-sm shadow-sm">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "today"}
+                onClick={() => handleTabChange("today")}
+                className={cn(
+                  "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
+                  activeTab === "today"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Today
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "week"}
+                onClick={() => handleTabChange("week")}
+                className={cn(
+                  "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
+                  activeTab === "week"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Week
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "for-you"}
+                onClick={() => handleTabChange("for-you")}
+                className={cn(
+                  "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
+                  activeTab === "for-you"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                For You
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "new"}
+                onClick={() => handleTabChange("new")}
+                className={cn(
+                  "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
+                  activeTab === "new"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                New
+              </button>
+            </div>
+            <Button asChild variant="outline" className="hidden gap-2 sm:flex">
+              <Link to="/search"><Sparkles className="w-4 h-4" />Search</Link>
+            </Button>
+          </div>
         </div>
 
         {/* ── Spotlight Hero ── */}
@@ -462,91 +538,130 @@ export default function Discover() {
           </section>
         )}
 
+        {/* ── For You Recommendations Highlight ── */}
+        {activeTab === "for-you" && (
+          <section className="ct-panel p-6 sm:p-7 rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/[0.08] via-card to-card motion-safe:animate-fade-in" aria-label="Personalized recommendations">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="max-w-xl">
+                <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary mb-3">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Taste-Matched Engine
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                  Personalized for your screen taste
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+                  Based on your tracked watchlist, ratings, and watch history. Explore dynamic recommendations with runtime, mood, and streaming service filters.
+                </p>
+              </div>
+              <Button asChild size="lg" className="rounded-xl font-semibold gap-2 shrink-0 shadow-sm">
+                <Link to="/recommendations">
+                  Launch Recs Engine <ChevronRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </section>
+        )}
+
         {/* ── Trending Today ── */}
-        <MediaSection
-          title="Trending Today"
-          icon={Flame}
-          items={trendingNow?.results || []}
-          loading={trendingNowLoading}
-          error={trendingNowError}
-          onRetry={() => void retryTrendingNow()}
-          showMoreLink="/trending"
-          emptyMessage="Trending titles will appear shortly."
-        />
+        {(activeTab === "today" || activeTab === "for-you") && (
+          <MediaSection
+            title="Trending Today"
+            icon={Flame}
+            items={trendingNow?.results || []}
+            loading={trendingNowLoading}
+            error={trendingNowError}
+            onRetry={() => void retryTrendingNow()}
+            showMoreLink="/trending"
+            emptyMessage="Trending titles will appear shortly."
+          />
+        )}
 
         {deferredDiscoveryReady ? (
           <>
-        {/* ── Airing on TV Today ── */}
-        <MediaSection
-          title="Airing on TV Today"
-          icon={Tv}
-          items={airingTodayTV?.results || []}
-          loading={airingTodayTVLoading}
-          error={airingTodayTVError}
-          onRetry={() => void retryAiringTodayTV()}
-          showMoreLink="/search?type=tv"
-          emptyMessage="Today's airing shows will appear shortly."
-        />
+            {/* ── Trending This Week ── */}
+            {activeTab === "week" && (
+              <MediaSection
+                title="Trending This Week"
+                icon={TrendingUp}
+                items={trendingWeek?.results || []}
+                loading={trendingWeekLoading}
+                error={trendingWeekError}
+                onRetry={() => void retryTrendingWeek()}
+                showMoreLink="/trending"
+                emptyMessage="Weekly trending will appear shortly."
+              />
+            )}
 
-        {/* ── Now Playing in Cinemas ── */}
-        <MediaSection
-          title="Now Playing in Cinemas"
-          icon={Film}
-          items={nowPlayingMovies?.results || []}
-          loading={nowPlayingMoviesLoading}
-          error={nowPlayingMoviesError}
-          onRetry={() => void retryNowPlayingMovies()}
-          showMoreLink="/search?type=movie&sort=release_date.desc"
-          emptyMessage="Now playing movies will appear shortly."
-        />
+            {/* ── Now Playing in Cinemas ── */}
+            {activeTab === "new" && (
+              <MediaSection
+                title="Now Playing in Cinemas"
+                icon={Film}
+                items={nowPlayingMovies?.results || []}
+                loading={nowPlayingMoviesLoading}
+                error={nowPlayingMoviesError}
+                onRetry={() => void retryNowPlayingMovies()}
+                showMoreLink="/search?type=movie&sort=release_date.desc"
+                emptyMessage="Now playing movies will appear shortly."
+              />
+            )}
 
-        {/* ── Upcoming Movies ── */}
-        <MediaSection
-          title="Coming Soon"
-          icon={Clock}
-          items={upcomingMovies?.results || []}
-          loading={upcomingMoviesLoading}
-          error={upcomingMoviesError}
-          onRetry={() => void retryUpcomingMovies()}
-          showMoreLink="/search?type=movie&sort=release_date.asc"
-          emptyMessage="Upcoming movies will appear shortly."
-        />
+            {/* ── Upcoming Movies ── */}
+            {activeTab === "new" && (
+              <MediaSection
+                title="Coming Soon"
+                icon={Clock}
+                items={upcomingMovies?.results || []}
+                loading={upcomingMoviesLoading}
+                error={upcomingMoviesError}
+                onRetry={() => void retryUpcomingMovies()}
+                showMoreLink="/search?type=movie&sort=release_date.asc"
+                emptyMessage="Upcoming movies will appear shortly."
+              />
+            )}
 
-        {/* ── Trending This Week ── */}
-        <MediaSection
-          title="Trending This Week"
-          icon={TrendingUp}
-          items={trendingWeek?.results || []}
-          loading={trendingWeekLoading}
-          error={trendingWeekError}
-          onRetry={() => void retryTrendingWeek()}
-          showMoreLink="/trending"
-          emptyMessage="Weekly trending will appear shortly."
-        />
+            {/* ── Airing on TV Today ── */}
+            {(activeTab === "today" || activeTab === "new") && (
+              <MediaSection
+                title="Airing on TV Today"
+                icon={Tv}
+                items={airingTodayTV?.results || []}
+                loading={airingTodayTVLoading}
+                error={airingTodayTVError}
+                onRetry={() => void retryAiringTodayTV()}
+                showMoreLink="/search?type=tv"
+                emptyMessage="Today's airing shows will appear shortly."
+              />
+            )}
 
-        {/* ── Currently Airing TV ── */}
-        <MediaSection
-          title="Currently Airing Shows"
-          icon={Tv}
-          items={onTheAirTV?.results || []}
-          loading={onTheAirTVLoading}
-          error={onTheAirTVError}
-          onRetry={() => void retryOnTheAirTV()}
-          showMoreLink="/search?type=tv"
-          emptyMessage="On the air shows will appear shortly."
-        />
+            {/* ── Currently Airing TV ── */}
+            {(activeTab === "week" || activeTab === "new") && (
+              <MediaSection
+                title="Currently Airing Shows"
+                icon={Tv}
+                items={onTheAirTV?.results || []}
+                loading={onTheAirTVLoading}
+                error={onTheAirTVError}
+                onRetry={() => void retryOnTheAirTV()}
+                showMoreLink="/search?type=tv"
+                emptyMessage="On the air shows will appear shortly."
+              />
+            )}
 
-        {/* ── Top Rated Movies ── */}
-        <MediaSection
-          title="Top Rated Movies of All Time"
-          icon={Star}
-          items={topRatedMovies?.results || []}
-          loading={topRatedMoviesLoading}
-          error={topRatedMoviesError}
-          onRetry={() => void retryTopRatedMovies()}
-          showMoreLink="/search?type=movie&sort=vote_average.desc"
-          emptyMessage="Top rated movies will appear shortly."
-        />
+            {/* ── Top Rated Movies ── */}
+            {(activeTab === "today" || activeTab === "week") && (
+              <MediaSection
+                title="Top Rated Movies of All Time"
+                icon={Star}
+                items={topRatedMovies?.results || []}
+                loading={topRatedMoviesLoading}
+                error={topRatedMoviesError}
+                onRetry={() => void retryTopRatedMovies()}
+                showMoreLink="/search?type=movie&sort=vote_average.desc"
+                emptyMessage="Top rated movies will appear shortly."
+              />
+            )}
 
         {/* ── Top Rated TV ── */}
         <MediaSection

@@ -151,3 +151,61 @@ test("Watchlist page and filters use restrained dark styling and keep existing a
   assert.match(watchlistSource, /exportToCSV/);
   assert.match(watchlistSource, /handleImport/);
 });
+
+test("Navigation overhaul items 1-8: focused product map, first-class calendar, discover tabs, and guest filtering", () => {
+  const routesSource = fs.readFileSync("src/navigation/routes.ts", "utf-8");
+  const navSource = fs.readFileSync("src/components/UnifiedNav.tsx", "utf-8");
+  const discoverSource = fs.readFileSync("src/pages/Discover.tsx", "utf-8");
+  const homeSource = fs.readFileSync("src/pages/Index.tsx", "utf-8");
+  const profileSource = fs.readFileSync("src/pages/Profile.tsx", "utf-8");
+
+  // 1 & 2: Authenticated burger groups are concise (Tracking & Library, Explore & Account) and include Calendar
+  assert.match(routesSource, /authenticatedBurgerGroups/);
+  assert.match(routesSource, /path: "\/calendar"/);
+  assert.match(routesSource, /path: "\/collections"/);
+
+  // 4: Guest burger groups hide empty-account destinations and show only Discover and Calendar
+  assert.match(routesSource, /guestBurgerGroups/);
+  // Guest group should not include profile, following, collections, recommendations, stats, achievements, quests, year-in-review
+  const guestGroupMatch = routesSource.match(/export const guestBurgerGroups: NavigationGroup\[\] = (\[[\s\S]*?\]);/);
+  assert.ok(guestGroupMatch, "guestBurgerGroups must be defined");
+  const guestGroupContent = guestGroupMatch[1];
+  assert.ok(guestGroupContent.includes('"/discover"'), "guest menu includes discover");
+  assert.ok(guestGroupContent.includes('"/calendar"'), "guest menu includes calendar");
+  for (const emptyDest of ["/profile", "/following", "/collections", "/recommendations", "/stats", "/achievements", "/quests", "/year-in-review"]) {
+    assert.ok(!guestGroupContent.includes(`"${emptyDest}"`), `guest menu hides empty-account destination ${emptyDest}`);
+  }
+
+  // 5: Gamification pile folded into Profile
+  assert.match(profileSource, /to="\/stats"/);
+  assert.match(profileSource, /to="\/achievements"/);
+  assert.match(profileSource, /to="\/quests"/);
+  assert.match(profileSource, /to="\/year-in-review"/);
+
+  // 6: No duplicate Home or Search in burger groups; no duplicate Watchlist/Watched/Profile shortcuts in XP card
+  const authGroupMatch = routesSource.match(/export const authenticatedBurgerGroups: NavigationGroup\[\] = (\[[\s\S]*?\]);/);
+  assert.ok(authGroupMatch, "authenticatedBurgerGroups must be defined");
+  const authGroupContent = authGroupMatch[1];
+  assert.ok(!authGroupContent.includes('r.path === "/"'), "burger groups drop home");
+  assert.ok(!authGroupContent.includes('r.path === "/search"'), "burger groups drop search");
+  assert.ok(!authGroupContent.includes('r.path === "/genres"'), "burger groups drop genres");
+  assert.ok(!authGroupContent.includes('r.path === "/decades"'), "burger groups drop decades");
+  assert.ok(!authGroupContent.includes('r.path === "/trending"'), "burger groups drop trending");
+  assert.ok(!authGroupContent.includes('r.path === "/achievements"'), "burger groups drop achievements");
+
+  // XP card no longer repeats Watchlist, Watched, and Profile shortcuts
+  assert.doesNotMatch(navSource, /Quick shortcuts to Watchlist, Watched, and Profile/);
+
+  // 7: People is present in authenticated burger groups
+  assert.ok(authGroupContent.includes('r.path === "/people"'), "People is included in authenticated burger groups");
+
+  // 3: Discover page supports tabs (Today / Week / For you / New) and Home See All points to tabs
+  assert.match(discoverSource, /role="tablist"/);
+  assert.match(discoverSource, /activeTab === "today"/);
+  assert.match(discoverSource, /activeTab === "week"/);
+  assert.match(discoverSource, /activeTab === "for-you"/);
+  assert.match(discoverSource, /activeTab === "new"/);
+  assert.match(homeSource, /showMoreLink="\/discover\?tab=today"/);
+  assert.match(homeSource, /showMoreLink="\/discover\?tab=week"/);
+  assert.match(homeSource, /showMoreLink="\/discover\?tab=new"/);
+});

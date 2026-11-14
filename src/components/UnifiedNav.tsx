@@ -38,7 +38,14 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { changeLanguage, languages } from "@/i18n";
-import { menuLinks, navigationGroups, primaryNavigationGroups } from "@/navigation/routes";
+import {
+  allRouteDefinitions,
+  authenticatedBurgerGroups,
+  guestBurgerGroups,
+  menuLinks,
+  navigationGroups,
+  primaryNavigationGroups,
+} from "@/navigation/routes";
 
 const SearchDropdown = lazy(() =>
   import("@/components/SearchDropdown").then((mod) => ({
@@ -260,23 +267,10 @@ export function UnifiedNav() {
   })();
 
   const mobileNavigationGroups = useMemo(() => {
-    if (user) return primaryNavigationGroups;
-
-    const [personal, community, discovery, insights] = navigationGroups;
-    return [
-      {
-        titleKey: "nav.explore",
-        defaultTitle: "Explore",
-        links: [
-          personal.links[0],
-          ...discovery.links.filter((item) => item.path !== "/recommendations"),
-          insights.links[0],
-          insights.links[5],
-          ...community.links,
-        ],
-      },
-    ];
+    return user ? authenticatedBurgerGroups : guestBurgerGroups;
   }, [user]);
+
+  const activeBurgerGroups = user ? authenticatedBurgerGroups : guestBurgerGroups;
 
   return (
     <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
@@ -514,9 +508,12 @@ export function UnifiedNav() {
               />
 
               <div className="relative z-20 h-full w-full overflow-y-auto border-t border-border bg-background px-4 py-6 shadow-none motion-safe:animate-fade-in sm:px-6 sm:py-8">
-                <div className="desktop-menu-shell mx-auto flex min-h-full max-w-[78rem] items-center">
-                  <nav aria-label={t("nav.main", "Main navigation")} className="desktop-menu-grid grid w-full gap-5 md:grid-cols-3">
-                    {primaryNavigationGroups.map((group) => (
+                <div className="desktop-menu-shell mx-auto flex min-h-full max-w-[56rem] items-center">
+                  <nav aria-label={t("nav.main", "Main navigation")} className={cn(
+                    "desktop-menu-grid grid w-full gap-5",
+                    user ? "md:grid-cols-2" : "max-w-md mx-auto"
+                  )}>
+                    {activeBurgerGroups.map((group) => (
                       <section key={group.titleKey} className="desktop-menu-group min-w-0 self-stretch rounded-2xl border border-border/60 bg-card/75 p-5 shadow-sm backdrop-blur-md transition-all">
                         <div className="mb-3.5 flex items-center justify-between gap-3 border-b border-border/50 pb-2.5">
                           <h3 className="text-[0.7rem] font-bold uppercase tracking-[0.17em] text-primary">{t(group.titleKey, group.defaultTitle)}</h3>
@@ -556,6 +553,25 @@ export function UnifiedNav() {
                         </div>
                       </section>
                     ))}
+                    {!user && (
+                      <section className="desktop-menu-group min-w-0 self-stretch rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/[0.08] via-card to-card p-5 shadow-sm">
+                        <div className="mb-3 flex items-center gap-2">
+                          <User className="h-4 w-4 text-primary" />
+                          <h3 className="text-[0.7rem] font-bold uppercase tracking-[0.17em] text-primary">{t("nav.accountOnly", "Your account")}</h3>
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {t("nav.accountOnlyDescription", "Sign in to unlock your watchlist, progress, collections, recommendations, and viewing stats.")}
+                        </p>
+                        <div className="mt-4 flex gap-2">
+                          <Button asChild size="sm" className="h-9 px-4 rounded-xl font-semibold text-xs shadow-sm">
+                            <Link to="/signup" onClick={() => setIsDesktopMenuOpen(false)}>{t("home.createFreeAccount", "Register")}</Link>
+                          </Button>
+                          <Button asChild size="sm" variant="outline" className="h-9 px-4 rounded-xl font-semibold text-xs border-border/70 hover:bg-accent">
+                            <Link to="/login" onClick={() => setIsDesktopMenuOpen(false)}>{t("nav.signIn", "Sign In")}</Link>
+                          </Button>
+                        </div>
+                      </section>
+                    )}
                   </nav>
                 </div>
               </div>
@@ -630,33 +646,7 @@ export function UnifiedNav() {
                       />
                     </div>
                   </div>
-                  {/* Quick shortcuts to Watchlist, Watched, and Profile */}
-                  <div className="mt-3.5 pt-3 border-t border-border/50 grid grid-cols-3 gap-1.5 relative z-10">
-                    <Link
-                      to="/watchlist"
-                      onClick={() => setIsMobileSheetOpen(false)}
-                      className="flex flex-col items-center justify-center rounded-xl bg-background/50 hover:bg-background/90 py-1.5 px-1 text-center transition-colors border border-border/40"
-                    >
-                      <Bookmark className="h-3.5 w-3.5 text-primary mb-0.5" />
-                      <span className="text-[10px] font-semibold text-foreground">{t("nav.watchlist", "Watchlist")}</span>
-                    </Link>
-                    <Link
-                      to="/watched"
-                      onClick={() => setIsMobileSheetOpen(false)}
-                      className="flex flex-col items-center justify-center rounded-xl bg-background/50 hover:bg-background/90 py-1.5 px-1 text-center transition-colors border border-border/40"
-                    >
-                      <CheckSquare className="h-3.5 w-3.5 text-primary mb-0.5" />
-                      <span className="text-[10px] font-semibold text-foreground">{t("nav.watched", "Watched")}</span>
-                    </Link>
-                    <Link
-                      to="/profile"
-                      onClick={() => setIsMobileSheetOpen(false)}
-                      className="flex flex-col items-center justify-center rounded-xl bg-background/50 hover:bg-background/90 py-1.5 px-1 text-center transition-colors border border-border/40"
-                    >
-                      <User className="h-3.5 w-3.5 text-primary mb-0.5" />
-                      <span className="text-[10px] font-semibold text-foreground">{t("nav.profile", "Profile")}</span>
-                    </Link>
-                  </div>
+
                 </div>
               )}
 
@@ -668,12 +658,9 @@ export function UnifiedNav() {
                   </div>
                   <h4 className="text-sm font-bold text-foreground">{t("home.makeEveryVisitPersonal", "Make every visit personal")}</h4>
                   <p className="text-xs text-muted-foreground mt-1 max-w-[17rem] mx-auto leading-relaxed">{t("home.createAccountSyncDesc", "Create a free account to sync watchlist & ratings.")}</p>
-                  <div className="mt-3.5 flex gap-2 justify-center">
+                  <div className="mt-3.5 flex justify-center">
                     <Button asChild size="sm" className="h-9 px-4 rounded-xl font-semibold text-xs shadow-sm">
                       <Link to="/signup" onClick={() => setIsMobileSheetOpen(false)}>{t("home.createFreeAccount", "Register")}</Link>
-                    </Button>
-                    <Button asChild size="sm" variant="outline" className="h-9 px-4 rounded-xl font-semibold text-xs border-border/70 hover:bg-accent">
-                      <Link to="/login" onClick={() => setIsMobileSheetOpen(false)}>{t("nav.signIn", "Sign In")}</Link>
                     </Button>
                   </div>
                 </div>

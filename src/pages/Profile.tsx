@@ -2252,14 +2252,95 @@ export default function Profile() {
                     </div>
 
                     {!isProfileInactive ? (
-                      <Suspense fallback={null}>
-                        <HomeStatsSnapshot
-                          watched={watched}
-                          watchlist={watchlist}
-                          ctaHref="#taste"
-                          ctaLabel={text("profile.openTasteStats", "Open Taste & Stats")}
-                        />
-                      </Suspense>
+                      <>
+                        <Suspense fallback={null}>
+                          <HomeStatsSnapshot
+                            watched={watched}
+                            watchlist={watchlist}
+                            ctaHref="#taste"
+                            ctaLabel={text("profile.openTasteStats", "Open Taste & Stats")}
+                          />
+                        </Suspense>
+
+                        <section className="gamification-hub mt-6" aria-label={text("profile.milestonesAndInsights", "Milestones & Insights")}>
+                          <div className="mb-3 flex items-center justify-between">
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-primary">
+                                {text("profile.trackingMilestones", "Trophies & Deep Analytics")}
+                              </p>
+                              <h3 className="text-lg font-semibold text-foreground">
+                                {text("profile.milestonesAndInsights", "Milestones & Insights")}
+                              </h3>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                            <Link
+                              to="/stats"
+                              className="group flex flex-col justify-between rounded-xl border border-border/60 bg-card/60 p-3.5 backdrop-blur-sm transition-all hover:border-primary/40 hover:bg-card/90"
+                            >
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                                <BarChart3 className="h-4 w-4" />
+                              </div>
+                              <div className="mt-3">
+                                <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
+                                  {text("nav.stats", "Detailed Stats")}
+                                </p>
+                                <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">
+                                  {text("profile.detailedStatsDesc", "Full taste & time breakdown")}
+                                </p>
+                              </div>
+                            </Link>
+                            <Link
+                              to="/achievements"
+                              className="group flex flex-col justify-between rounded-xl border border-border/60 bg-card/60 p-3.5 backdrop-blur-sm transition-all hover:border-primary/40 hover:bg-card/90"
+                            >
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                                <Trophy className="h-4 w-4" />
+                              </div>
+                              <div className="mt-3">
+                                <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
+                                  {text("nav.achievements", "Achievements")}
+                                </p>
+                                <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">
+                                  {text("profile.achievementsDesc", "Unlocked milestones & badges")}
+                                </p>
+                              </div>
+                            </Link>
+                            <Link
+                              to="/quests"
+                              className="group flex flex-col justify-between rounded-xl border border-border/60 bg-card/60 p-3.5 backdrop-blur-sm transition-all hover:border-primary/40 hover:bg-card/90"
+                            >
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                                <Award className="h-4 w-4" />
+                              </div>
+                              <div className="mt-3">
+                                <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
+                                  {text("nav.quests", "Monthly Quests")}
+                                </p>
+                                <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">
+                                  {text("profile.questsDesc", "Tracker challenges & tasks")}
+                                </p>
+                              </div>
+                            </Link>
+                            <Link
+                              to="/year-in-review"
+                              className="group flex flex-col justify-between rounded-xl border border-border/60 bg-card/60 p-3.5 backdrop-blur-sm transition-all hover:border-primary/40 hover:bg-card/90"
+                            >
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                                <Sparkles className="h-4 w-4" />
+                              </div>
+                              <div className="mt-3">
+                                <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
+                                  {text("nav.yearInReview", "Year in Review")}
+                                </p>
+                                <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">
+                                  {text("profile.yearInReviewDesc", "Your annual wrapped recap")}
+                                </p>
+                              </div>
+                            </Link>
+                          </div>
+                        </section>
+                      </>
                     ) : null}
 
                     <div className="hidden grid-cols-1 gap-4 md:grid-cols-3">
