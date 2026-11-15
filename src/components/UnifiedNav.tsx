@@ -299,7 +299,7 @@ export function UnifiedNav() {
           </span>
         </div>
 
-        <nav aria-label={t("nav.primary", "Primary navigation")} className="hidden shrink-0 items-center gap-1 xl:flex">
+        <nav aria-label={t("nav.primary", "Primary navigation")} className="hidden shrink-0 items-center gap-1 lg:flex">
           {[
             { path: "/discover", labelKey: "nav.discover", defaultLabel: "Discover" },
             { path: "/watchlist", labelKey: "nav.watchlist", defaultLabel: "Watchlist" },

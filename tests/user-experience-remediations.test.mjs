@@ -192,6 +192,13 @@ test("Navigation overhaul items 1-8: focused product map, first-class calendar, 
   assert.ok(!authGroupContent.includes('r.path === "/decades"'), "burger groups drop decades");
   assert.ok(!authGroupContent.includes('r.path === "/trending"'), "burger groups drop trending");
   assert.ok(!authGroupContent.includes('r.path === "/achievements"'), "burger groups drop achievements");
+  assert.ok(!authGroupContent.includes('r.path === "/discover"'), "burger groups drop discover (on top bar)");
+  assert.ok(!authGroupContent.includes('r.path === "/watchlist"'), "burger groups drop watchlist (on top bar)");
+  assert.ok(!authGroupContent.includes('r.path === "/watched"'), "burger groups drop watched (on top bar)");
+  assert.ok(authGroupContent.includes('r.path === "/recommendations"'), "burger groups include recommendations");
+  assert.ok(authGroupContent.includes('r.path === "/stats"'), "burger groups include stats");
+  assert.ok(authGroupContent.includes('r.path === "/following"'), "burger groups include following");
+  assert.ok(authGroupContent.includes('r.path === "/quests"'), "burger groups include quests");
 
   // XP card no longer repeats Watchlist, Watched, and Profile shortcuts
   assert.doesNotMatch(navSource, /Quick shortcuts to Watchlist, Watched, and Profile/);
