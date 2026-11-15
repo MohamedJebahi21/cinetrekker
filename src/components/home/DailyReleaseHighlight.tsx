@@ -48,13 +48,9 @@ export function DailyReleaseHighlight() {
 
   return (
     <section
-      className="relative overflow-hidden rounded-[1.75rem] border border-primary/20 bg-[radial-gradient(circle_at_top_right,hsla(var(--primary)/0.18),transparent_44%),linear-gradient(135deg,hsla(var(--card)/0.98),hsla(var(--background)/0.92))] p-5 shadow-[0_20px_60px_hsl(var(--primary)/0.08)] md:p-6"
+      className="rounded-2xl border border-primary/20 bg-card/60 p-5 md:p-6 shadow-sm"
       aria-labelledby="daily-release-highlight-title"
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-primary/10 blur-3xl"
-      />
       <div className="relative">
         <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
@@ -195,7 +191,7 @@ export function DailyReleaseHighlight() {
                 "inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                 hasCandidates
                   ? "border border-border/60 bg-background/45 text-foreground hover:border-primary/30 hover:text-primary"
-                  : "bg-primary text-primary-foreground shadow-[0_12px_28px_hsl(var(--primary)/0.2)] hover:bg-primary/90",
+                  : "bg-primary text-primary-foreground hover:bg-primary/90",
               )}
             >
               {hasCandidates

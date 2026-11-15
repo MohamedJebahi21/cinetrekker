@@ -38,78 +38,15 @@ import { buildCanonicalUrl, toBreadcrumbJsonLd } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
 const DECADES = [
-  {
-    value: "2020",
-    label: "2020s",
-    start: 2020,
-    end: 2029,
-    emoji: "🤖",
-    color: "from-cyan-600/15 to-transparent border-cyan-500/35 hover:border-cyan-500/60 text-cyan-500",
-  },
-  {
-    value: "2010",
-    label: "2010s",
-    start: 2010,
-    end: 2019,
-    emoji: "📱",
-    color: "from-blue-600/15 to-transparent border-blue-500/35 hover:border-blue-500/60 text-blue-500",
-  },
-  {
-    value: "2000",
-    label: "2000s",
-    start: 2000,
-    end: 2009,
-    emoji: "💿",
-    color: "from-indigo-600/15 to-transparent border-indigo-500/35 hover:border-indigo-500/60 text-indigo-500",
-  },
-  {
-    value: "1990",
-    label: "1990s",
-    start: 1990,
-    end: 1999,
-    emoji: "📼",
-    color: "from-pink-600/15 to-transparent border-pink-500/35 hover:border-pink-500/60 text-pink-400",
-  },
-  {
-    value: "1980",
-    label: "1980s",
-    start: 1980,
-    end: 1989,
-    emoji: "👾",
-    color: "from-purple-600/15 to-transparent border-purple-500/35 hover:border-purple-500/60 text-purple-500",
-  },
-  {
-    value: "1970",
-    label: "1970s",
-    start: 1970,
-    end: 1979,
-    emoji: "🕺",
-    color: "from-yellow-600/15 to-transparent border-yellow-500/35 hover:border-yellow-500/60 text-yellow-500",
-  },
-  {
-    value: "1960",
-    label: "1960s",
-    start: 1960,
-    end: 1969,
-    emoji: "☮️",
-    color: "from-emerald-600/15 to-transparent border-emerald-500/35 hover:border-emerald-500/60 text-emerald-500",
-  },
-  {
-    value: "1950",
-    label: "1950s",
-    start: 1950,
-    end: 1959,
-    emoji: "🛸",
-    color: "from-amber-600/15 to-transparent border-amber-500/35 hover:border-amber-500/60 text-amber-500",
-  },
-  {
-    value: "1940",
-    label: "Classic (Pre-1950)",
-    start: 1900,
-    end: 1949,
-    emoji: "📜",
-    color: "from-slate-600/15 to-transparent border-slate-500/35 hover:border-slate-500/60 text-slate-400",
-  },
+  { value: "2020", label: "2020s", era: "'20s", start: 2020, end: 2029 },
+  { value: "2010", label: "2010s", era: "'10s", start: 2010, end: 2019 },
+  { value: "2000", label: "2000s", era: "'00s", start: 2000, end: 2009 },
+  { value: "1990", label: "1990s", era: "'90s", start: 1990, end: 1999 },
+  { value: "1980", label: "1980s", era: "'80s", start: 1980, end: 1989 },
+  { value: "1970", label: "1970s", era: "'70s", start: 1970, end: 1979 },
+  { value: "1960", label: "1960s", era: "'60s", start: 1960, end: 1969 },
+  { value: "1950", label: "1950s", era: "'50s", start: 1950, end: 1959 },
+  { value: "1940", label: "Classic (Pre-1950)", era: "Pre-50", start: 1900, end: 1949 },
 ];
 
 export default function DecadeExplorer() {
@@ -272,11 +209,8 @@ export default function DecadeExplorer() {
       />
 
       <div className="page-container pt-20 pb-24 md:pb-12 space-y-8">
-        {/* Cinematic Header Block */}
-        <section className="relative overflow-hidden rounded-3xl border border-border/40 bg-card/25 p-6 md:p-8 backdrop-blur-md">
-          {/* Glowing overlays */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_120%,rgba(229,9,20,0.12),transparent_70%)] pointer-events-none" />
-          <div className="absolute -right-20 -top-20 w-80 h-80 bg-primary/10 rounded-full blur-3xl opacity-30 pointer-events-none" />
+        {/* Header Block */}
+        <section className="rounded-2xl border border-border/60 bg-card/60 p-6 md:p-8 shadow-sm">
 
           <div className="relative z-10 flex items-start gap-4">
             <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 text-primary">
@@ -326,26 +260,30 @@ export default function DecadeExplorer() {
             {t("decades.pickEra", "Choose an era to open its collection")}
           </p>
 
-          <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-4">
+          <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-3">
             {DECADES.map((decade) => {
               const isActive = selectedDecade.value === decade.value;
-              const colorClass = decade.color;
 
               return (
                 <button
                   key={decade.value}
                   onClick={() => updateParams({ decade: decade.value })}
                   className={cn(
-                    "flex flex-col items-center justify-center p-4 border rounded-2xl transition-all duration-300 gap-2 cursor-pointer bg-gradient-to-b",
+                    "group flex flex-col items-center justify-center p-3 sm:p-4 border rounded-xl transition-colors duration-150 gap-2 cursor-pointer text-center",
                     isActive
-                      ? cn(colorClass, "bg-card shadow-lg shadow-primary/5 -translate-y-1")
-                      : "bg-card/30 border-border/20 hover:bg-card/50 text-muted-foreground hover:text-foreground"
+                      ? "border-primary/50 bg-primary/10 text-primary"
+                      : "border-border/60 bg-card/60 hover:border-border hover:bg-card text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <span className="text-3xl filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300">
-                    {decade.emoji}
+                  <span className={cn(
+                    "text-xs font-mono font-bold tracking-tight rounded-md px-2 py-0.5 border transition-colors",
+                    isActive
+                      ? "border-primary/40 bg-primary/20 text-primary"
+                      : "border-border/60 bg-background/50 text-muted-foreground group-hover:text-foreground"
+                  )}>
+                    {decade.era}
                   </span>
-                  <span className="text-xs font-bold text-center leading-tight">
+                  <span className="text-xs font-semibold leading-tight">
                     {decade.label}
                   </span>
                 </button>

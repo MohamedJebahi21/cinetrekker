@@ -219,7 +219,7 @@ export function HeroSection() {
               {activeYear && <span aria-hidden="true">•</span>}
               {activeYear && <span>{activeYear}</span>}
               {activeItem.vote_average > 0 && (
-                <><span aria-hidden="true">•</span><span className="text-primary">★ {activeItem.vote_average.toFixed(1)}</span></>
+                <><span aria-hidden="true">•</span><span className="inline-flex items-center text-primary"><Star className="mr-1 h-3 w-3 fill-primary text-primary" aria-hidden="true" />{activeItem.vote_average.toFixed(1)}</span></>
               )}
             </div>
 

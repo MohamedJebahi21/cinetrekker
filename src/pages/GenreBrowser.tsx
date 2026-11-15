@@ -14,6 +14,28 @@ import {
   X,
   Sparkles,
   SlidersHorizontal,
+  Zap,
+  Palette,
+  Laugh,
+  ShieldAlert,
+  Video,
+  Drama,
+  Users,
+  Wand2,
+  BookOpen,
+  Ghost,
+  Music,
+  Heart,
+  Rocket,
+  Tv,
+  Eye,
+  Shield,
+  Baby,
+  Newspaper,
+  Radio,
+  MessageSquare,
+  Film,
+  type LucideIcon,
 } from "lucide-react";
 import {
   getMovieGenres,
@@ -42,43 +64,35 @@ import { applySafetyFilter } from "@/lib/contentFilter";
 import { buildCanonicalUrl, toBreadcrumbJsonLd } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
-// Mapping TMDB Genre IDs to Emojis and premium color gradient/glow themes
-const GENRE_VISUALS: Record<number, { emoji: string; color: string }> = {
-  // Movie & Shared Genres
-  28: { emoji: "💥", color: "from-red-600/15 to-transparent border-red-500/35 hover:border-red-500/60 text-red-500" }, // Action
-  12: { emoji: "🧭", color: "from-amber-600/15 to-transparent border-amber-500/35 hover:border-amber-500/60 text-amber-500" }, // Adventure
-  16: { emoji: "🎨", color: "from-pink-600/15 to-transparent border-pink-500/35 hover:border-pink-500/60 text-pink-500" }, // Animation
-  35: { emoji: "😂", color: "from-yellow-600/15 to-transparent border-yellow-500/35 hover:border-yellow-500/60 text-yellow-500" }, // Comedy
-  80: { emoji: "🕵️", color: "from-slate-600/15 to-transparent border-slate-400/35 hover:border-slate-400/60 text-slate-400" }, // Crime
-  99: { emoji: "📹", color: "from-teal-600/15 to-transparent border-teal-500/35 hover:border-teal-500/60 text-teal-500" }, // Documentary
-  18: { emoji: "🎭", color: "from-emerald-600/15 to-transparent border-emerald-500/35 hover:border-emerald-500/60 text-emerald-500" }, // Drama
-  10751: { emoji: "👨‍👩‍👧‍👦", color: "from-sky-600/15 to-transparent border-sky-500/35 hover:border-sky-500/60 text-sky-500" }, // Family
-  14: { emoji: "🪄", color: "from-purple-600/15 to-transparent border-purple-500/35 hover:border-purple-500/60 text-purple-500" }, // Fantasy
-  36: { emoji: "📜", color: "from-amber-800/15 to-transparent border-amber-700/35 hover:border-amber-700/60 text-amber-700" }, // History
-  27: { emoji: "👻", color: "from-red-850/15 to-transparent border-red-700/35 hover:border-red-700/60 text-red-650" }, // Horror
-  10402: { emoji: "🎵", color: "from-rose-600/15 to-transparent border-rose-500/35 hover:border-rose-500/60 text-rose-500" }, // Music
-  9648: { emoji: "🔍", color: "from-indigo-600/15 to-transparent border-indigo-500/35 hover:border-indigo-500/60 text-indigo-500" }, // Mystery
-  10749: { emoji: "💖", color: "from-pink-500/15 to-transparent border-pink-400/35 hover:border-pink-400/60 text-pink-400" }, // Romance
-  878: { emoji: "🚀", color: "from-cyan-600/15 to-transparent border-cyan-500/35 hover:border-cyan-500/60 text-cyan-500" }, // Science Fiction
-  10770: { emoji: "📺", color: "from-blue-600/15 to-transparent border-blue-500/35 hover:border-blue-500/60 text-blue-500" }, // TV Movie
-  53: { emoji: "🔪", color: "from-orange-800/15 to-transparent border-orange-755/35 hover:border-orange-755/60 text-orange-600" }, // Thriller
-  10752: { emoji: "⚔️", color: "from-red-900/15 to-transparent border-red-900/35 hover:border-red-900/60 text-red-700" }, // War
-  37: { emoji: "🤠", color: "from-yellow-850/15 to-transparent border-yellow-800/35 hover:border-yellow-800/60 text-yellow-800" }, // Western
-
-  // TV Specific Genres
-  10759: { emoji: "⚔️", color: "from-red-600/15 to-transparent border-red-500/35 hover:border-red-500/60 text-red-500" }, // Action & Adventure
-  10762: { emoji: "👶", color: "from-sky-500/15 to-transparent border-sky-400/35 hover:border-sky-400/60 text-sky-400" }, // Kids
-  10763: { emoji: "📰", color: "from-zinc-600/15 to-transparent border-zinc-400/35 hover:border-zinc-400/60 text-zinc-400" }, // News
-  10764: { emoji: "👥", color: "from-teal-500/15 to-transparent border-teal-400/35 hover:border-teal-400/60 text-teal-400" }, // Reality
-  10765: { emoji: "👽", color: "from-purple-600/15 to-transparent border-purple-400/35 hover:border-purple-400/60 text-purple-400" }, // Sci-Fi & Fantasy
-  10766: { emoji: "🧼", color: "from-pink-600/15 to-transparent border-pink-400/35 hover:border-pink-400/60 text-pink-400" }, // Soap
-  10767: { emoji: "🗣️", color: "from-indigo-650/15 to-transparent border-indigo-600/35 hover:border-indigo-600/60 text-indigo-600" }, // Talk
-  10768: { emoji: "🎖️", color: "from-orange-700/15 to-transparent border-orange-650/35 hover:border-orange-650/60 text-orange-650" }, // War & Politics
-};
-
-const DEFAULT_GENRE_VISUAL = {
-  emoji: "🎬",
-  color: "from-primary/10 to-transparent border-primary/20 hover:border-primary/55 text-primary",
+// Mapping TMDB Genre IDs to consistent Lucide icons
+const GENRE_ICONS: Record<number, LucideIcon> = {
+  28: Zap,
+  12: Compass,
+  16: Palette,
+  35: Laugh,
+  80: ShieldAlert,
+  99: Video,
+  18: Drama,
+  10751: Users,
+  14: Wand2,
+  36: BookOpen,
+  27: Ghost,
+  10402: Music,
+  9648: Search,
+  10749: Heart,
+  878: Rocket,
+  10770: Tv,
+  53: Eye,
+  10752: Shield,
+  37: Compass,
+  10759: Zap,
+  10762: Baby,
+  10763: Newspaper,
+  10764: Radio,
+  10765: Rocket,
+  10766: Tv,
+  10767: MessageSquare,
+  10768: Shield,
 };
 
 export default function GenreBrowser() {
@@ -346,23 +360,28 @@ export default function GenreBrowser() {
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
             {displayedGenres.map((genre) => {
               const isActive = selectedGenre === genre.id.toString();
-              const visuals = GENRE_VISUALS[genre.id] || DEFAULT_GENRE_VISUAL;
+              const Icon = GENRE_ICONS[genre.id] || Film;
 
               return (
                 <button
                   key={genre.id}
                   onClick={() => updateParams({ genre: genre.id.toString() })}
                   className={cn(
-                    "flex flex-col items-center justify-center p-4 border rounded-2xl transition-all duration-300 gap-2 cursor-pointer bg-gradient-to-b",
+                    "group flex flex-col items-center justify-center p-3 sm:p-4 border rounded-xl transition-colors duration-150 gap-2.5 cursor-pointer text-left",
                     isActive
-                      ? cn(visuals.color, "bg-card shadow-lg shadow-primary/5 -translate-y-1")
-                      : "bg-card/30 border-border/20 hover:bg-card/50 text-muted-foreground hover:text-foreground"
+                      ? "border-primary/50 bg-primary/10 text-primary"
+                      : "border-border/60 bg-card/60 hover:border-border hover:bg-card text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <span className="text-3xl filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300">
-                    {visuals.emoji}
-                  </span>
-                  <span className="text-xs font-bold text-center leading-tight">
+                  <div className={cn(
+                    "flex h-9 w-9 items-center justify-center rounded-lg border transition-colors",
+                    isActive
+                      ? "border-primary/40 bg-primary/20 text-primary"
+                      : "border-border/60 bg-background/50 text-muted-foreground group-hover:text-foreground"
+                  )}>
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                  </div>
+                  <span className="text-xs font-semibold text-center leading-tight">
                     {genre.name}
                   </span>
                 </button>

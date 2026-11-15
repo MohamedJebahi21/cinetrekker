@@ -138,10 +138,9 @@ export function ActivationJourney() {
 
   return (
     <section
-      className="relative overflow-hidden rounded-[1.75rem] border border-primary/20 bg-[radial-gradient(circle_at_top_right,rgba(229,9,20,0.18),transparent_42%),linear-gradient(145deg,hsl(var(--card)),hsl(var(--background)))] p-4 shadow-[0_20px_56px_rgba(0,0,0,0.16)] md:p-6"
+      className="rounded-2xl border border-primary/20 bg-card/60 p-4 md:p-6 shadow-sm"
       aria-labelledby="activation-journey-title"
     >
-      <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
       <div className="relative">
         <div className="flex gap-3 sm:items-start sm:justify-between">
           <div className="min-w-0">

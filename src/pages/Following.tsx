@@ -327,7 +327,7 @@ export default function Following() {
               <h1 className="section-title flex items-center gap-3">
                 <div className="relative">
                   <div className="absolute inset-0 bg-primary/30 blur-md rounded-full" />
-                  <Heart className="relative w-8 h-8 text-primary fill-primary/10 animate-pulse" />
+                  <Heart className="relative w-8 h-8 text-primary fill-primary/10" aria-hidden="true" />
                 </div>
                 {t("nav.following", "Following")}
               </h1>
@@ -341,54 +341,43 @@ export default function Following() {
 
           {/* Stats Snapshot */}
           {followedTitles.length > 0 && (
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4 mb-8">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 mb-8">
               {[
                 {
                   label: t("following.totalTracked", "Total Tracked"),
                   value: stats.total,
                   icon: Heart,
-                  color: "text-red-500 bg-red-500/10 border-red-500/20",
-                  glow: "shadow-[0_0_15px_-3px_rgba(239,68,68,0.2)]",
                 },
                 {
                   label: t("following.statsMovies", "Movies"),
                   value: stats.movies,
                   icon: Film,
-                  color: "text-blue-500 bg-blue-500/10 border-blue-500/20",
-                  glow: "shadow-[0_0_15px_-3px_rgba(59,130,246,0.2)]",
                 },
                 {
                   label: t("following.statsTv", "TV Series"),
                   value: stats.tv,
                   icon: Tv,
-                  color: "text-purple-500 bg-purple-500/10 border-purple-500/20",
-                  glow: "shadow-[0_0_15px_-3px_rgba(168,85,247,0.2)]",
                 },
                 {
                   label: t("following.statsUpcoming", "Upcoming / Active"),
                   value: stats.upcoming,
                   icon: Calendar,
-                  color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
-                  glow: "shadow-[0_0_15px_-3px_rgba(16,185,129,0.2)]",
                 },
               ].map((stat) => {
                 const Icon = stat.icon;
                 return (
                   <div
                     key={stat.label}
-                    className={cn(
-                      "relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/5 to-transparent p-4 backdrop-blur-md transition-all duration-300 hover:border-white/20",
-                      stat.glow
-                    )}
+                    className="rounded-xl border border-border/60 bg-card/60 p-4 transition-colors duration-150 hover:border-border"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{stat.label}</span>
-                      <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg border", stat.color)}>
-                        <Icon className="h-4 w-4" />
+                      <span className="text-xs font-medium text-muted-foreground">{stat.label}</span>
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/50 text-muted-foreground">
+                        <Icon className="h-4 w-4" aria-hidden="true" />
                       </div>
                     </div>
                     <div className="mt-2 flex items-baseline gap-2">
-                      <span className="text-3xl font-extrabold text-foreground tracking-tight">{stat.value}</span>
+                      <span className="text-2xl font-bold text-foreground tracking-tight">{stat.value}</span>
                     </div>
                   </div>
                 );

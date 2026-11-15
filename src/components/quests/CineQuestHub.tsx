@@ -30,8 +30,7 @@ export function CineQuestHub({
   const displayedQuests = isStarterPreview ? quests.slice(0, 3) : visibleQuests;
 
   return (
-    <section className="relative overflow-hidden rounded-[1.75rem] border border-primary/20 bg-[radial-gradient(circle_at_top_right,hsla(var(--primary)/0.16),transparent_42%),linear-gradient(135deg,hsla(var(--card)/0.98),hsla(var(--background)/0.94))] p-5 md:p-6" aria-labelledby="cine-quests-title">
-      <div aria-hidden="true" className="pointer-events-none absolute -left-20 -top-24 h-52 w-52 rounded-full bg-primary/8 blur-3xl" />
+    <section className="rounded-2xl border border-primary/20 bg-card/60 p-5 md:p-6 shadow-sm" aria-labelledby="cine-quests-title">
       <div className="relative">
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>

@@ -31,16 +31,16 @@ import type { Media } from "@/types/media";
 
 // ── Mood filter definitions with correct genre IDs ──────────────────────────
 const MOODS = [
-  { label: "😂 Funny",        genre: 35,    sort: "popularity.desc",    color: "from-yellow-500/20 to-yellow-600/5",  border: "border-yellow-500/25",  text: "text-yellow-300" },
-  { label: "😨 Scary",        genre: 27,    sort: "vote_average.desc",  color: "from-red-900/30 to-red-800/5",        border: "border-red-700/30",      text: "text-red-300" },
-  { label: "🤯 Mind-bending", genre: 878,   sort: "vote_average.desc",  color: "from-violet-500/20 to-violet-600/5", border: "border-violet-500/25",   text: "text-violet-300" },
-  { label: "❤️ Romantic",     genre: 10749, sort: "popularity.desc",    color: "from-pink-500/20 to-pink-600/5",     border: "border-pink-500/25",     text: "text-pink-300" },
-  { label: "🏃 Action",       genre: 28,    sort: "popularity.desc",    color: "from-orange-500/20 to-orange-600/5", border: "border-orange-500/25",   text: "text-orange-300" },
-  { label: "😢 Emotional",    genre: 18,    sort: "vote_average.desc",  color: "from-blue-500/20 to-blue-600/5",     border: "border-blue-500/25",     text: "text-blue-300" },
-  { label: "👨‍👩‍👧 Family",  genre: 10751, sort: "popularity.desc",    color: "from-green-500/20 to-green-600/5",   border: "border-green-500/25",    text: "text-green-300" },
-  { label: "🔍 Mystery",      genre: 9648,  sort: "vote_average.desc",  color: "from-slate-500/20 to-slate-600/5",  border: "border-slate-500/25",    text: "text-slate-300" },
-  { label: "🎭 Drama",        genre: 18,    sort: "popularity.desc",    color: "from-amber-500/20 to-amber-600/5",  border: "border-amber-500/25",    text: "text-amber-300" },
-  { label: "🚀 Sci-Fi",       genre: 878,   sort: "popularity.desc",    color: "from-cyan-500/20 to-cyan-600/5",    border: "border-cyan-500/25",     text: "text-cyan-300" },
+  { label: "Funny",        genre: 35,    sort: "popularity.desc" },
+  { label: "Scary",        genre: 27,    sort: "vote_average.desc" },
+  { label: "Mind-bending", genre: 878,   sort: "vote_average.desc" },
+  { label: "Romantic",     genre: 10749, sort: "popularity.desc" },
+  { label: "Action",       genre: 28,    sort: "popularity.desc" },
+  { label: "Emotional",    genre: 18,    sort: "vote_average.desc" },
+  { label: "Family",       genre: 10751, sort: "popularity.desc" },
+  { label: "Mystery",      genre: 9648,  sort: "vote_average.desc" },
+  { label: "Drama",        genre: 18,    sort: "popularity.desc" },
+  { label: "Sci-Fi",       genre: 878,   sort: "popularity.desc" },
 ];
 
 // ── Spotlight auto-cycle hero ────────────────────────────────────────────────
@@ -512,10 +512,10 @@ export default function Discover() {
                   }}
                   aria-pressed={activeMood === i}
                   className={cn(
-                    "min-h-11 rounded-lg border px-3.5 py-2 text-sm font-medium transition-colors duration-200",
+                    "min-h-11 rounded-lg border px-3.5 py-2 text-xs font-semibold transition-colors duration-150",
                     activeMood === i
-                      ? cn(mood.color, mood.border, mood.text, "border-opacity-60 shadow-sm")
-                      : "bg-card/40 text-foreground/70 hover:bg-card hover:text-foreground",
+                      ? "border-primary/40 bg-primary/10 text-primary shadow-sm"
+                      : "border-border/60 bg-card/40 text-muted-foreground hover:border-border hover:bg-card hover:text-foreground",
                   )}
                 >
                   {mood.label}

@@ -691,13 +691,10 @@ export default function Recommendations() {
               animate={{ opacity: 1, y: 0 }}
               className="mx-auto max-w-sm text-center"
             >
-              <div className="relative mx-auto mb-8 h-24 w-24">
-                <div className="absolute inset-0 rounded-3xl bg-muted/40 blur-xl" />
-                <div className="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-muted/50 border border-border/50">
-                  <Clock3 className="h-10 w-10 text-muted-foreground" />
-                </div>
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-border/60 bg-card/60 text-muted-foreground">
+                <Clock3 className="h-8 w-8" aria-hidden="true" />
               </div>
-              <h1 className="mb-2 text-2xl font-black tracking-tight text-foreground">
+              <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground">
                 {t("recommendations.watchMore", "Building your feed…")}
               </h1>
               <p className="mb-6 text-sm text-muted-foreground">
@@ -720,7 +717,7 @@ export default function Recommendations() {
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
                     transition={{ duration: 1, ease: "easeOut" }}
-                    className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70"
+                    className="h-full rounded-full bg-primary"
                   />
                 </div>
                 <p className="mt-1.5 text-[10px] text-muted-foreground">

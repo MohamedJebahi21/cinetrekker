@@ -287,19 +287,15 @@ export default function YearInReview() {
 
       <div className="ct-page-shell min-h-screen px-4 pb-24 pt-20 sm:pb-10">
         <div className="max-w-5xl mx-auto space-y-8">
-          {/* Cinematic wrapped recap header */}
-          <div className="relative overflow-hidden rounded-3xl border border-border/40 bg-card/25 p-6 sm:p-8 backdrop-blur-md">
-            {/* Glowing background radial overlays */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_120%,rgba(229,9,20,0.12),transparent_70%)] pointer-events-none" />
-            <div className="absolute -right-20 -top-20 w-80 h-80 bg-primary/10 rounded-full blur-3xl opacity-30 pointer-events-none" />
-
-            <div className="relative z-10 flex flex-col sm:flex-row gap-6 items-center justify-between">
-              <div className="space-y-3 text-center sm:text-left">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black uppercase tracking-widest text-primary">
-                  <Sparkles className="h-3.5 w-3.5 fill-current animate-pulse" />
+          {/* Recap header */}
+          <div className="rounded-2xl border border-border/60 bg-card/60 p-6 sm:p-8 shadow-sm">
+            <div className="flex flex-col sm:flex-row gap-6 items-center justify-between">
+              <div className="space-y-2 text-center sm:text-left">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[11px] font-semibold uppercase tracking-wider text-primary">
+                  <Sparkles className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
                   Annual Recap
                 </div>
-                <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl">
+                <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
                   {t("yearInReview.title", "{{year}} Year in Review", { year: currentYear })}
                 </h1>
                 <p className="text-muted-foreground text-xs sm:text-sm max-w-lg">
@@ -331,19 +327,21 @@ export default function YearInReview() {
             </div>
           </div>
 
-          {/* Upgraded Glass Stat Cards overview row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Stat Cards overview row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* 1. Total titles watched */}
-            <Card className="ct-panel relative overflow-hidden rounded-3xl border border-border/40 bg-card/40 p-6 backdrop-blur-sm flex flex-col justify-between h-40">
-              <div className="flex items-center gap-3 text-primary mb-2">
-                <TrendingUp className="h-5 w-5" />
-                <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">
+            <Card className="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-medium text-muted-foreground">
                   {t("yearInReview.totalWatched", "Total Watched")}
                 </span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+                  <TrendingUp className="h-4 w-4" aria-hidden="true" />
+                </div>
               </div>
               <div className="space-y-1">
-                <p className="text-4xl font-black text-foreground">{totalWatched}</p>
-                <p className="text-[10px] text-muted-foreground font-semibold">
+                <p className="text-3xl font-bold tracking-tight text-foreground">{totalWatched}</p>
+                <p className="text-xs text-muted-foreground">
                   {t("yearInReview.moviesAndShows", "{{movies}} movies • {{shows}} TV shows", {
                     movies: thisYearMovies.length,
                     shows: thisYearTV.length,
@@ -353,16 +351,18 @@ export default function YearInReview() {
             </Card>
 
             {/* 2. Time Invested */}
-            <Card className="ct-panel relative overflow-hidden rounded-3xl border border-border/40 bg-card/40 p-6 backdrop-blur-sm flex flex-col justify-between h-40">
-              <div className="flex items-center gap-3 text-primary mb-2">
-                <Clock className="h-5 w-5" />
-                <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">
+            <Card className="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-medium text-muted-foreground">
                   {t("yearInReview.timeInvested", "Time Invested")}
                 </span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+                  <Clock className="h-4 w-4" aria-hidden="true" />
+                </div>
               </div>
               <div className="space-y-1">
-                <p className="text-4xl font-black text-foreground">{totalHours}h</p>
-                <p className="text-[10px] text-muted-foreground font-semibold">
+                <p className="text-3xl font-bold tracking-tight text-foreground">{totalHours}h</p>
+                <p className="text-xs text-muted-foreground">
                   {t("yearInReview.daysOfContent", "≈ {{days}} days of content", {
                     days: totalDays,
                   })}
@@ -371,18 +371,20 @@ export default function YearInReview() {
             </Card>
 
             {/* 3. Favorite Genre */}
-            <Card className="ct-panel relative overflow-hidden rounded-3xl border border-border/40 bg-card/40 p-6 backdrop-blur-sm flex flex-col justify-between h-40">
-              <div className="flex items-center gap-3 text-primary mb-2">
-                <Award className="h-5 w-5" />
-                <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">
+            <Card className="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-medium text-muted-foreground">
                   {t("yearInReview.favoriteGenre", "Favorite Genre")}
                 </span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+                  <Award className="h-4 w-4" aria-hidden="true" />
+                </div>
               </div>
               <div className="space-y-1">
-                <p className="text-2xl font-black text-foreground truncate">
+                <p className="text-2xl font-bold tracking-tight text-foreground truncate">
                   {genreData[0]?.name || "—"}
                 </p>
-                <p className="text-[10px] text-muted-foreground font-semibold">
+                <p className="text-xs text-muted-foreground">
                   {t("yearInReview.titlesCount", "{{count}} titles", {
                     count: genreData[0]?.value || 0,
                   })}
@@ -391,16 +393,18 @@ export default function YearInReview() {
             </Card>
 
             {/* 4. Busiest Month */}
-            <Card className="ct-panel relative overflow-hidden rounded-3xl border border-border/40 bg-card/40 p-6 backdrop-blur-sm flex flex-col justify-between h-40">
-              <div className="flex items-center gap-3 text-primary mb-2">
-                <Flame className="h-5 w-5" />
-                <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">
+            <Card className="rounded-xl border border-border/60 bg-card/60 p-5 shadow-sm flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-medium text-muted-foreground">
                   {t("yearInReview.busiestMonth", "Busiest Month")}
                 </span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+                  <Flame className="h-4 w-4" aria-hidden="true" />
+                </div>
               </div>
               <div className="space-y-1">
-                <p className="text-2xl font-black text-foreground">{busiestMonth.month}</p>
-                <p className="text-[10px] text-muted-foreground font-semibold">
+                <p className="text-2xl font-bold tracking-tight text-foreground">{busiestMonth.month}</p>
+                <p className="text-xs text-muted-foreground">
                   {t("yearInReview.titlesWatched", "{{count}} titles watched", {
                     count: busiestMonth.count,
                   })}

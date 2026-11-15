@@ -18,7 +18,7 @@ import MovieSkeleton from "@/components/ui/MovieSkeleton";
 import SEO from "@/components/SEO";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Award, Globe, Clock, Layers, Calendar, X, SlidersHorizontal, Search, Sparkles } from "lucide-react";
+import { Award, Trophy, Tv, Film, Globe, Clock, Layers, Calendar, X, SlidersHorizontal, Search, Sparkles } from "lucide-react";
 import { useContentPolicy } from "@/contexts/content-policy-context";
 import { applySafetyFilter } from "@/lib/contentFilter";
 import {
@@ -35,30 +35,10 @@ import { buildCanonicalUrl, toBreadcrumbJsonLd } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
 const CATEGORY_CARDS = [
-  {
-    value: "oscar",
-    label: "Oscars",
-    emoji: "🏆",
-    color: "from-yellow-600/15 to-transparent border-yellow-500/35 hover:border-yellow-500/60 text-yellow-500",
-  },
-  {
-    value: "emmy",
-    label: "Emmys",
-    emoji: "📺",
-    color: "from-purple-600/15 to-transparent border-purple-500/35 hover:border-purple-500/60 text-purple-400",
-  },
-  {
-    value: "golden_globe",
-    label: "Golden Globes",
-    emoji: "🌐",
-    color: "from-amber-600/15 to-transparent border-amber-500/35 hover:border-amber-500/60 text-amber-500",
-  },
-  {
-    value: "bafta",
-    label: "BAFTA",
-    emoji: "🎭",
-    color: "from-slate-600/15 to-transparent border-slate-500/35 hover:border-slate-500/60 text-slate-400",
-  },
+  { value: "oscar", label: "Oscars", icon: Trophy },
+  { value: "emmy", label: "Emmys", icon: Tv },
+  { value: "golden_globe", label: "Golden Globes", icon: Globe },
+  { value: "bafta", label: "BAFTA", icon: Film },
 ];
 
 export default function AwardWinners() {
@@ -438,21 +418,17 @@ export default function AwardWinners() {
       />
 
       <div className="page-container pt-20 pb-24 md:pb-12 space-y-8">
-        {/* Gold Prestige Header Block */}
-        <section className="relative overflow-hidden rounded-3xl border border-yellow-500/20 bg-card/25 p-6 md:p-8 backdrop-blur-md">
-          {/* Glowing overlays */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_120%,rgba(250,204,21,0.1),transparent_70%)] pointer-events-none" />
-          <div className="absolute -right-20 -top-20 w-80 h-80 bg-yellow-500/5 rounded-full blur-3xl opacity-30 pointer-events-none" />
-
-          <div className="relative z-10 flex items-start gap-4">
-            <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">
-              <Award className="h-6 w-6 animate-pulse" />
+        {/* Header Block */}
+        <section className="rounded-2xl border border-border/60 bg-card/60 p-6 md:p-8 shadow-sm">
+          <div className="flex items-start gap-4">
+            <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 text-primary">
+              <Award className="h-6 w-6" aria-hidden="true" />
             </span>
             <div className="min-w-0">
-              <p className="ct-kicker text-yellow-500/90 mb-1">
+              <p className="ct-kicker mb-1">
                 {t("awards.kicker", "Prestige-first browsing")}
               </p>
-              <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl">
+              <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
                 {t("awards.title", "Award Winners & Nominees")}
               </h1>
               <p className="mt-2 max-w-3xl text-xs sm:text-sm leading-relaxed text-muted-foreground">
@@ -472,26 +448,31 @@ export default function AwardWinners() {
             Select Award Ceremony
           </p>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {CATEGORY_CARDS.map((cat) => {
               const isActive = selectedCategory === cat.value;
-              const colorClass = cat.color;
+              const Icon = cat.icon;
 
               return (
                 <button
                   key={cat.value}
                   onClick={() => updateParams({ category: cat.value })}
                   className={cn(
-                    "flex flex-col items-center justify-center p-4 border rounded-2xl transition-all duration-300 gap-2 cursor-pointer bg-gradient-to-b",
+                    "group flex flex-col items-center justify-center p-3 sm:p-4 border rounded-xl transition-colors duration-150 gap-2 cursor-pointer text-center",
                     isActive
-                      ? cn(colorClass, "bg-card shadow-lg shadow-yellow-500/5 -translate-y-1")
-                      : "bg-card/30 border-border/20 hover:bg-card/50 text-muted-foreground hover:text-foreground",
+                      ? "border-primary/50 bg-primary/10 text-primary"
+                      : "border-border/60 bg-card/60 hover:border-border hover:bg-card text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  <span className="text-3xl filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300">
-                    {cat.emoji}
-                  </span>
-                  <span className="text-xs font-bold text-center leading-tight">
+                  <div className={cn(
+                    "flex h-9 w-9 items-center justify-center rounded-lg border transition-colors",
+                    isActive
+                      ? "border-primary/40 bg-primary/20 text-primary"
+                      : "border-border/60 bg-background/50 text-muted-foreground group-hover:text-foreground"
+                  )}>
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                  </div>
+                  <span className="text-xs font-semibold leading-tight">
                     {cat.label}
                   </span>
                 </button>

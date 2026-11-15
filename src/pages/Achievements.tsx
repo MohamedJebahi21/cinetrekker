@@ -932,32 +932,28 @@ Track your cinematic journey on CineTrekker!`;
                 // Tier Styling configurations
                 const tierStyles = {
                   bronze: {
-                    border: "border-amber-700/35 hover:border-amber-700/60",
-                    glow: "bg-amber-500/10 text-amber-500",
+                    border: "border-border/60 hover:border-border",
+                    badge: "bg-muted text-muted-foreground border-border/40",
                     label: "Bronze",
                     text: "text-amber-500",
-                    gradient: "from-amber-600/20 to-transparent",
                   },
                   silver: {
-                    border: "border-slate-400/35 hover:border-slate-400/60",
-                    glow: "bg-slate-400/10 text-slate-400",
+                    border: "border-border/60 hover:border-border",
+                    badge: "bg-muted text-foreground border-border/40",
                     label: "Silver",
-                    text: "text-slate-400",
-                    gradient: "from-slate-400/20 to-transparent",
+                    text: "text-slate-300",
                   },
                   gold: {
-                    border: "border-yellow-500/35 hover:border-yellow-500/60",
-                    glow: "bg-yellow-500/10 text-yellow-500",
+                    border: "border-primary/30 hover:border-primary/50",
+                    badge: "bg-primary/10 text-primary border-primary/20",
                     label: "Gold",
-                    text: "text-yellow-500",
-                    gradient: "from-yellow-500/20 to-transparent",
+                    text: "text-primary",
                   },
                   legendary: {
-                    border: "border-purple-500/35 hover:border-purple-500/60",
-                    glow: "bg-purple-500/10 text-purple-400",
+                    border: "border-primary/40 hover:border-primary/60",
+                    badge: "bg-primary/15 text-primary border-primary/30 font-bold",
                     label: "Legendary",
-                    text: "text-purple-400",
-                    gradient: "from-purple-600/20 to-transparent",
+                    text: "text-primary",
                   },
                 }[item.tier];
 
@@ -967,52 +963,49 @@ Track your cinematic journey on CineTrekker!`;
                     : 0;
 
                 return (
-                  <motion.div
+                  <div
                     key={item.id}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.02, duration: 0.3 }}
-                    whileHover={{ y: -6 }}
                     className="h-full"
                   >
                     <div
                       className={cn(
-                        "ct-panel relative h-full flex flex-col justify-between overflow-hidden border p-5 rounded-2xl transition-all duration-300 group backdrop-blur-md",
+                        "ct-panel relative h-full flex flex-col justify-between overflow-hidden border p-5 rounded-xl transition-colors duration-150 group",
                         isUnlocked
-                          ? cn("bg-card/45 shadow-lg shadow-primary/5", tierStyles.border)
-                          : "bg-card/15 border-border/20 opacity-70",
+                          ? cn("bg-card/70 shadow-sm", tierStyles.border)
+                          : "bg-card/30 border-border/40 opacity-70",
                       )}
                     >
                       {/* Top Right Status Badge */}
                       <div className="absolute top-4 right-4">
                         {isUnlocked ? (
-                          <Trophy className={cn("h-4.5 w-4.5 animate-pulse", tierStyles.text)} />
+                          <Trophy className={cn("h-4 w-4", tierStyles.text)} aria-hidden="true" />
                         ) : (
-                          <Lock className="h-4.5 w-4.5 text-muted-foreground/60" />
+                          <Lock className="h-4 w-4 text-muted-foreground/50" aria-hidden="true" />
                         )}
                       </div>
 
                       {/* Info layout */}
                       <div className="space-y-4">
-                        <div className="flex items-start gap-4">
-                          {/* Colored Gradient icon */}
+                        <div className="flex items-start gap-3.5">
+                          {/* Clean icon container */}
                           <div
                             className={cn(
-                              "w-12 h-12 flex items-center justify-center text-2xl rounded-2xl shrink-0 border border-border/40 bg-gradient-to-b shadow-sm",
-                              isUnlocked ? tierStyles.gradient : "from-muted/20 to-transparent",
+                              "w-11 h-11 flex items-center justify-center text-xl rounded-xl shrink-0 border",
+                              isUnlocked ? "border-primary/20 bg-primary/10 text-primary" : "border-border/60 bg-muted/30 text-muted-foreground",
                             )}
                           >
-                            {item.icon}
+                            <Award className="h-5 w-5" aria-hidden="true" />
                           </div>
 
                           <div className="min-w-0 space-y-1">
                             <Badge
+                              variant="outline"
                               className={cn(
-                                "px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider leading-none border-0",
-                                isUnlocked ? tierStyles.glow : "bg-muted/40 text-muted-foreground",
+                                "px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider leading-none",
+                                isUnlocked ? tierStyles.badge : "bg-muted/40 text-muted-foreground border-border/40",
                               )}
                             >
-                              {tierStyles.label} — {item.points} pts
+                              {tierStyles.label} · {item.points} pts
                             </Badge>
 
                             <h3 className="font-bold text-sm text-foreground leading-snug group-hover:text-primary transition-colors">
@@ -1057,7 +1050,7 @@ Track your cinematic journey on CineTrekker!`;
                         )}
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
                 );
               })}
             </div>

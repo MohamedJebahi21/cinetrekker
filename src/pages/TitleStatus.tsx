@@ -33,27 +33,30 @@ const TitleStatus = () => {
 
       <div className="flex min-h-[100dvh] items-center justify-center">
         <div className="page-container py-24 pb-24 text-center md:pb-0">
-          <div className="mb-6 inline-flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/10 shadow-glow">
-            <Film className="h-12 w-12 text-primary" />
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-border/60 bg-card/60 text-primary">
+            <Film className="h-8 w-8" aria-hidden="true" />
           </div>
-          <h1 className="heading-cinematic mb-4 text-6xl font-bold text-primary">
-            404
+          <div className="mb-3 inline-flex items-center rounded-full border border-border/60 bg-muted/40 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            404 Error
+          </div>
+          <h1 className="mb-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            {t("status.heading", "Page not found")}
           </h1>
-          <p className="mb-4 text-lg text-muted-foreground">
-            {t("status.message", "This scene was cut from the final edit.")}
+          <p className="mx-auto mb-2 max-w-md text-base text-muted-foreground">
+            {t("status.message", "The page you are looking for doesn't exist or has been moved.")}
           </p>
-          <p className="mb-8 text-sm text-muted-foreground/70">
+          <p className="mx-auto mb-8 max-w-md text-xs text-muted-foreground/70">
             {t("status.help", "Try returning home, browsing Discover, or using search.")}
           </p>
 
-          <div className="flex items-center justify-center gap-3">
-            <Button asChild size="lg">
-              <Link to="/">{t("notFound.returnHome", "Return to Home")}</Link>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Button asChild size="default" className="min-h-10 rounded-xl px-5 font-semibold">
+              <Link to="/">{t("notFound.returnHome", "Return home")}</Link>
             </Button>
-            <Button asChild size="lg" variant="outline">
+            <Button asChild size="default" variant="outline" className="min-h-10 rounded-xl border-border/60 bg-card/40 px-5 font-semibold">
               <Link to="/discover">{t("nav.discover", "Discover")}</Link>
             </Button>
-            <Button asChild size="lg" variant="outline">
+            <Button asChild size="default" variant="outline" className="min-h-10 rounded-xl border-border/60 bg-card/40 px-5 font-semibold">
               <Link to="/search">{t("notFound.search", "Search")}</Link>
             </Button>
           </div>
