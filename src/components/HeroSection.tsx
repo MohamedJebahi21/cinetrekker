@@ -1,8 +1,8 @@
-import { Bookmark, Check, Info, Star } from "lucide-react";
+import { Bookmark, Check, Info, Sparkles, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState, type TouchEvent } from "react";
+import { useEffect, useMemo, useState, useCallback, type TouchEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getBackdropUrl, getImageUrl, getMediaTitle, getTrending } from "@/services/tmdb";
@@ -111,6 +111,12 @@ export function HeroSection() {
   // the largest contentful element long after first paint, worsening LCP. Users
   // can still choose any spotlight with the visible controls below.
 
+  const goToSlide = useCallback((index: number) => {
+    const total = topWeekly.length;
+    if (total === 0) return;
+    setActiveIndex(((index % total) + total) % total);
+  }, [topWeekly.length]);
+
   // Preload next image
   useEffect(() => {
     if (topWeekly.length <= 1) return;
@@ -119,6 +125,29 @@ export function HeroSection() {
     const img = new Image();
     img.src = getBackdropUrl(next.backdrop_path, isMobileViewport ? "w780" : "w1280") || "";
   }, [activeIndex, topWeekly, isMobileViewport]);
+
+  // Desktop keyboard controls for hero carousel
+  useEffect(() => {
+    if (topWeekly.length <= 1) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target instanceof HTMLElement && e.target.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        goToSlide(activeIndex - 1);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        goToSlide(activeIndex + 1);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeIndex, topWeekly.length, goToSlide]);
 
   if (topWeekly.length === 0) {
     return <HeroSectionSkeleton isMobileViewport={isMobileViewport} />;
@@ -137,10 +166,7 @@ export function HeroSection() {
   const inWatchlist = isInWatchlist(activeItem.id, activeMediaType);
   const inWatched = isWatched(activeItem.id, activeMediaType);
 
-  const goToSlide = (index: number) => {
-    const total = topWeekly.length;
-    setActiveIndex(((index % total) + total) % total);
-  };
+
 
   const handleTouchStart = (e: TouchEvent<HTMLElement>) => {
     setTouchStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
@@ -256,6 +282,16 @@ export function HeroSection() {
               >
                 <Check className="mr-2 h-4.5 w-4.5" />
                 {inWatched ? t("actions.watched", "Watched") : t("actions.markAsWatched", "Mark as Watched")}
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="h-11 rounded-lg border-primary/40 bg-primary/10 px-4 font-semibold text-primary hover:bg-primary/20 hover:text-primary"
+              >
+                <a href="#tonights-pick">
+                  <Sparkles className="mr-2 h-4.5 w-4.5 text-primary" aria-hidden="true" />
+                  {t("home.decideTonight", "Decide Tonight")}
+                </a>
               </Button>
             </div>
         </div>
