@@ -6,7 +6,7 @@ const tonightsPickPath = new URL("../src/components/home/TonightsPick.tsx", impo
 const homePagePath = new URL("../src/pages/Index.tsx", import.meta.url);
 const heroSectionPath = new URL("../src/components/HeroSection.tsx", import.meta.url);
 
-test("TonightsPick provides a 3-tap decision engine with vibe, format, and era", async () => {
+test("TonightsPick provides a clean hero trigger with guided step-by-step modal", async () => {
   const [pickSource, homeSource, heroSource] = await Promise.all([
     readFile(tonightsPickPath, "utf8"),
     readFile(homePagePath, "utf8"),
@@ -16,6 +16,21 @@ test("TonightsPick provides a 3-tap decision engine with vibe, format, and era",
   // Component structure & export
   assert.match(pickSource, /export function TonightsPick/);
   assert.match(pickSource, /id="tonights-pick"/);
+
+  // Clean collapsed homepage state: single prominent CTA button
+  assert.match(pickSource, /handleOpenModal/);
+  assert.match(pickSource, /decideWhatToWatch/);
+
+  // Guided modal dialog integration
+  assert.match(pickSource, /Dialog/);
+  assert.match(pickSource, /DialogContent/);
+  assert.match(pickSource, /isModalOpen/);
+  assert.match(pickSource, /modalStep/);
+
+  // Step-by-step navigation
+  assert.match(pickSource, /handleNextStep/);
+  assert.match(pickSource, /handlePrevStep/);
+  assert.match(pickSource, /handleDecide/);
 
   // Vibe options
   assert.match(pickSource, /High-Octane/);
@@ -41,7 +56,7 @@ test("TonightsPick provides a 3-tap decision engine with vibe, format, and era",
   assert.match(pickSource, /new Set\(watched\.map\(\(w\) => w\.mediaId\)\)/);
   assert.match(pickSource, /!watchedIds\.has\(item\.id\)/);
 
-  // Decisive actions on pick
+  // Decisive actions on pick within modal result view
   assert.match(pickSource, /handleRollAnother/);
   assert.match(pickSource, /TrailerModal/);
   assert.match(pickSource, /addToWatchlist/);
