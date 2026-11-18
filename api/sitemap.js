@@ -150,7 +150,7 @@ export default async function handler(_req, res) {
     if (chunkIndex >= 0 && chunkIndex < staticChunks.length) {
       const xml = toSitemapXml(staticChunks[chunkIndex]);
       res.setHeader("Content-Type", "application/xml; charset=utf-8");
-      res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=86400");
+      res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
       return res.status(200).send(xml);
     }
     return res.status(404).send("Sitemap chunk not found");
@@ -162,7 +162,7 @@ export default async function handler(_req, res) {
     if (chunkIndex >= 0 && chunkIndex < dynamicChunks.length) {
       const xml = toSitemapXml(dynamicChunks[chunkIndex]);
       res.setHeader("Content-Type", "application/xml; charset=utf-8");
-      res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=86400");
+      res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
       return res.status(200).send(xml);
     }
     return res.status(404).send("Sitemap chunk not found");
@@ -188,7 +188,7 @@ export default async function handler(_req, res) {
 
     const xml = toSitemapIndexXml(sitemaps);
     res.setHeader("Content-Type", "application/xml; charset=utf-8");
-    res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=86400");
+    res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
     return res.status(200).send(xml);
   }
 
@@ -197,6 +197,6 @@ export default async function handler(_req, res) {
   const xml = toSitemapXml(allUrls);
 
   res.setHeader("Content-Type", "application/xml; charset=utf-8");
-  res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=86400");
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
   return res.status(200).send(xml);
 }

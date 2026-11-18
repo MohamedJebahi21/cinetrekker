@@ -210,6 +210,13 @@ function buildLegacyHeadHtml({ title, description, image, canonical, type, relea
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Inter:wght@400..700&family=Noto+Sans+Arabic:wght@400..700&family=Space+Grotesk:wght@300..700&display=swap"
+  />
+
   <!-- Preconnect for TMDB images -->
   <link rel="preconnect" href="https://image.tmdb.org" />
 
@@ -220,11 +227,11 @@ function buildLegacyHeadHtml({ title, description, image, canonical, type, relea
 
   <!-- Standard SPA shell placeholder — React will hydrate over this -->
   <style>
-    body { background: #0a0a0a; color: #fafafa; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: #0a0a0a; color: #fafafa; font-family: "DM Sans", system-ui, -apple-system, sans-serif; }
     .app-shell { display: flex; flex-direction: column; min-height: 100vh; }
     .loading-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 1rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
-    .loading-logo { font-size: 1.5rem; font-weight: 900; color: #e50914; }
-    .loading-title { font-size: 1.125rem; font-weight: 700; }
+    .loading-logo { font-size: 1.5rem; font-weight: 900; color: #e50914; font-family: "Space Grotesk", sans-serif; }
+    .loading-title { font-size: 1.125rem; font-weight: 700; font-family: "Space Grotesk", sans-serif; }
     .loading-hero { width: 100%; height: 550px; background: rgba(255,255,255,0.03); position: relative; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.08); }
     @media (max-width: 767px) {
       .loading-hero { height: 54vh; }
@@ -674,7 +681,7 @@ export default async function handler(req, res) {
   if (pathname === "/movie-tracker") {
     const html = buildHeadHtml(buildMovieTrackerMeta());
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Cache-Control", "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800");
     return res.status(200).send(html);
   }
 
@@ -726,16 +733,16 @@ export default async function handler(req, res) {
     const html = buildHeadHtml(meta);
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    // The HTML points at deployment-hashed assets. Cache it neither at the
-    // edge nor in browsers so direct content links never retain a previous
-    // deployment's entry bundle after a release.
-    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    // Edge CDN cache for public title pages: 24h at the edge (s-maxage), 7d SWR, max-age=0 so browsers revalidate with CDN
+    res.setHeader("Cache-Control", "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800");
     return res.status(200).send(html);
   } catch (error) {
     logger.error(`[edge-meta] Error for ${pathname}:`, error?.message || error);
 
     // Fall through to SPA shell on error
     const { headTags, scriptTag } = getEntryAssets();
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     return res.status(200).send(`
 <!DOCTYPE html>
 <html lang="en" class="dark">

@@ -12,7 +12,7 @@ const logger = createServerLogger("tmdb-proxy");
 
 function getCacheControlHeader(endpoint) {
   if (endpoint.startsWith("/trending")) {
-    return "s-maxage=300, stale-while-revalidate=600";
+    return "public, s-maxage=300, stale-while-revalidate=600";
   }
 
   if (
@@ -21,10 +21,10 @@ function getCacheControlHeader(endpoint) {
       endpoint,
     )
   ) {
-    return "s-maxage=86400, stale-while-revalidate=604800";
+    return "public, s-maxage=86400, stale-while-revalidate=604800";
   }
 
-  return "s-maxage=300, stale-while-revalidate=600";
+  return "public, s-maxage=300, stale-while-revalidate=600";
 }
 
 function parseMaturityRating(rawValue) {
@@ -237,6 +237,7 @@ export default async function handler(req, res) {
         status: response.status,
         durationMs: Date.now() - upstreamStartedAt,
       });
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
       return json(res, response.status === 404 ? 404 : 502, {
         error:
           response.status === 404
@@ -260,6 +261,7 @@ export default async function handler(req, res) {
       timedOut,
       error,
     });
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
     return json(res, timedOut ? 504 : 502, {
       error: "Content data is temporarily unavailable.",
     });

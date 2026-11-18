@@ -51,7 +51,7 @@ await handler(
 assert.equal(response.statusCode, 200);
 assert.equal(
   response.headers.get("cache-control"),
-  "no-store, no-cache, must-revalidate, proxy-revalidate",
+  "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800",
 );
 assert.match(response.body, /<title>Jenna Ortega \| CineTrekker<\/title>/);
 assert.match(response.body, /<script defer src="\/boot-watchdog\.js"><\/script>/);
