@@ -172,7 +172,7 @@
       ]
     },
     {
-      "source": "/api/(?!tmdb-proxy|enrichment|sitemap)(.*)",
+      "source": "/api/((?!tmdb-proxy|enrichment|sitemap).*)",
       "headers": [
         {
           "key": "Cache-Control",

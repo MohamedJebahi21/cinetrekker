@@ -57,7 +57,7 @@ test("vercel.json configures edge caching for catalog and sitemap while protecti
   assert.match(sitemapCache, /s-maxage=3600/);
 
   // Private/dynamic APIs stay no-store
-  const privateApiHeader = vercelJson.headers.find((h) => h.source === "/api/(?!tmdb-proxy|enrichment|sitemap)(.*)");
+  const privateApiHeader = vercelJson.headers.find((h) => h.source === "/api/((?!tmdb-proxy|enrichment|sitemap).*)");
   assert.ok(privateApiHeader, "Private API rule must explicitly exclude cacheable proxies");
   const privateApiCache = privateApiHeader.headers.find((h) => h.key === "Cache-Control")?.value;
   assert.match(privateApiCache, /no-store/);
