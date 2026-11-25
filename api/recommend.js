@@ -8,11 +8,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { json, parseBody } from "./_lib/http.js";
-import { authenticateRequest } from "./_lib/supabaseAdmin.js";
-import {
-  enforceAuthenticatedRequestSecurity,
-  enforceRequestSecurity,
-} from "./_lib/requestSecurity.js";
+import { requireAuthenticatedUser } from "./_lib/requestSecurity.js";
 import { getMissingServerEnv, getServerEnv } from "./_lib/env.js";
 import { createServerLogger } from "./_lib/logger.js";
 
@@ -96,24 +92,9 @@ export default async function handler(req, res) {
     return json(res, 405, { error: "Method Not Allowed" });
   }
 
-  const security = await enforceRequestSecurity(req, res, "recommend");
-  if (!security.ok) {
-    return json(res, security.status, { error: security.error });
-  }
-
-  const auth = await authenticateRequest(req);
-  if (!auth.ok || !auth.userId) {
-    return json(res, auth.status || 401, { error: auth.error });
-  }
-
-  const authedSecurity = await enforceAuthenticatedRequestSecurity(
-    req,
-    res,
-    "recommend",
-    auth.userId,
-  );
-  if (!authedSecurity.ok) {
-    return json(res, authedSecurity.status, { error: authedSecurity.error });
+  const auth = await requireAuthenticatedUser(req, res, "recommend");
+  if (!auth.ok) {
+    return json(res, auth.status, { error: auth.error });
   }
 
   const body = parseBody(req);

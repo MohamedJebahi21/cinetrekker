@@ -1,9 +1,6 @@
 import { json, parseBody } from "./_lib/http.js";
-import { authenticateRequest, getSupabaseAdminClient } from "./_lib/supabaseAdmin.js";
-import {
-  enforceAuthenticatedRequestSecurity,
-  enforceRequestSecurity,
-} from "./_lib/requestSecurity.js";
+import { getSupabaseAdminClient } from "./_lib/supabaseAdmin.js";
+import { requireAuthenticatedUser } from "./_lib/requestSecurity.js";
 import { createServerLogger } from "./_lib/logger.js";
 
 const logger = createServerLogger("notifications");
@@ -29,26 +26,9 @@ function getAction(req) {
 }
 
 async function authenticateAndEnforce(req, res, scope) {
-  const security = await enforceRequestSecurity(req, res, scope);
-  if (!security.ok) {
-    json(res, security.status, { error: security.error });
-    return null;
-  }
-
-  const auth = await authenticateRequest(req);
+  const auth = await requireAuthenticatedUser(req, res, scope);
   if (!auth.ok) {
     json(res, auth.status, { error: auth.error });
-    return null;
-  }
-
-  const authedSecurity = await enforceAuthenticatedRequestSecurity(
-    req,
-    res,
-    scope,
-    auth.userId,
-  );
-  if (!authedSecurity.ok) {
-    json(res, authedSecurity.status, { error: authedSecurity.error });
     return null;
   }
 

@@ -1,9 +1,6 @@
 import { json, parseBody } from "./_lib/http.js";
-import { authenticateRequest, getSupabaseAdminClient } from "./_lib/supabaseAdmin.js";
-import {
-  enforceAuthenticatedRequestSecurity,
-  enforceRequestSecurity,
-} from "./_lib/requestSecurity.js";
+import { getSupabaseAdminClient } from "./_lib/supabaseAdmin.js";
+import { requireAuthenticatedUser } from "./_lib/requestSecurity.js";
 import { reportSecurityEvent } from "./_lib/securityMonitor.js";
 import { createServerLogger } from "./_lib/logger.js";
 import type { ApiServerRequest, ApiServerResponse } from "./_lib/types.ts";
@@ -50,24 +47,9 @@ export default async function handler(req: ApiServerRequest, res: ApiServerRespo
         ? "unfollow"
         : "follow";
 
-  const security = await enforceRequestSecurity(req, res, scope);
-  if (!security.ok) {
-    return json(res, security.status, { error: security.error });
-  }
-
-  const auth = await authenticateRequest(req);
+  const auth = await requireAuthenticatedUser(req, res, scope);
   if (!auth.ok || !auth.userId) {
     return json(res, auth.status || 401, { error: auth.error });
-  }
-
-  const authedSecurity = await enforceAuthenticatedRequestSecurity(
-    req,
-    res,
-    scope,
-    auth.userId,
-  );
-  if (!authedSecurity.ok) {
-    return json(res, authedSecurity.status, { error: authedSecurity.error });
   }
 
   if (req.method === "GET") {
