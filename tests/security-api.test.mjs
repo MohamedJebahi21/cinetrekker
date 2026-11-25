@@ -6,8 +6,12 @@ import feedbackHandler from "../api/feedback.js";
 import notificationsHandler from "../api/notifications.js";
 import tmdbProxyHandler from "../api/tmdb-proxy.js";
 import cronHandler, { __testables as cronTestables } from "../api/jobs/check-followed-updates.js";
-import healthHandler from "../api/health.js";
+import healthHandler, {
+  resetDatabaseProbeForTests,
+  setDatabaseProbeForTests,
+} from "../api/health.js";
 import clientErrorsHandler from "../api/client-errors.js";
+import recommendHandler from "../api/recommend.js";
 import {
   ensureRequestId,
   isAllowedOrigin,
@@ -493,6 +497,7 @@ test("health endpoint reports only coarse dependency readiness and never configu
     process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-secret";
     process.env.TMDB_API_KEY = "tmdb-secret";
     process.env.CRON_SECRET = "cron-secret";
+    setDatabaseProbeForTests(async () => true);
 
     const req = createMockReq({
       method: "GET",
@@ -514,7 +519,15 @@ test("health endpoint reports only coarse dependency readiness and never configu
     assert.equal(res.body.requestId, "health_check_2026");
     assert.equal(res.headers["Cache-Control"], "no-store, max-age=0");
     assert.equal(JSON.stringify(res.body).includes("secret"), false);
+
+    setDatabaseProbeForTests(async () => false);
+    const degradedRes = createMockRes();
+    await healthHandler(req, degradedRes);
+    assert.equal(degradedRes.statusCode, 503);
+    assert.equal(degradedRes.body.status, "degraded");
+    assert.equal(degradedRes.body.dependencies.database, false);
   } finally {
+    resetDatabaseProbeForTests();
     for (const [key, value] of Object.entries(snapshot)) {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
@@ -615,4 +628,113 @@ test("client incident endpoint preserves method and origin protection", async ()
   const originRes = createMockRes();
   await clientErrorsHandler(originReq, originRes);
   assert.equal(originRes.statusCode, 403);
+});
+
+test("recommend endpoint rejects unauthenticated requests before calling OpenAI", async () => {
+  let fetchCalled = false;
+  const originalFetch = global.fetch;
+  global.fetch = async () => {
+    fetchCalled = true;
+    return { ok: true, async json() { return {}; } };
+  };
+
+  try {
+    const req = createMockReq({
+      method: "POST",
+      headers: { origin: "http://localhost:8080" },
+      body: { prompt: "mind-bending sci-fi" },
+      url: "/api/recommend",
+    });
+    const res = createMockRes();
+
+    await recommendHandler(req, res);
+
+    assert.equal(res.statusCode, 401);
+    assert.equal(fetchCalled, false);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test("recommend endpoint enforces per-user rate limit and returns sanitized results when authenticated", async () => {
+  const prevOpenAi = process.env.OPENAI_API_KEY;
+  const prevTmdb = process.env.TMDB_API_KEY;
+  const originalFetch = global.fetch;
+
+  process.env.OPENAI_API_KEY = "sk-test";
+  process.env.TMDB_API_KEY = "tmdb-test";
+  setAuthUserResolverForTests(async () => ({
+    data: { user: { id: "11111111-1111-4111-8111-111111111111" } },
+    error: null,
+  }));
+
+  global.fetch = async (url) => {
+    if (String(url).includes("/chat/completions")) {
+      return {
+        ok: true,
+        async json() {
+          return {
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    summary: "Cerebral sci-fi picks.",
+                    suggestions: [{ title: "Arrival", year: 2016, media_type: "movie" }],
+                  }),
+                },
+              },
+            ],
+          };
+        },
+      };
+    }
+    return {
+      ok: true,
+      async json() {
+        return {
+          results: [
+            {
+              id: 329865,
+              title: "Arrival",
+              poster_path: "/x2FJsf1ElAgr63Y3PNPtJrcmpoe.jpg",
+              overview: "Linguist communicates with aliens.",
+              vote_average: 7.6,
+              adult: false,
+            },
+          ],
+        };
+      },
+    };
+  };
+
+  try {
+    let lastRes = null;
+    for (let i = 0; i < 11; i++) {
+      const req = createMockReq({
+        method: "POST",
+        headers: {
+          origin: "http://localhost:8080",
+          authorization: "Bearer valid-token",
+        },
+        body: { prompt: "cerebral sci-fi", limit: 3 },
+        url: "/api/recommend",
+      });
+      const res = createMockRes();
+      await recommendHandler(req, res);
+      lastRes = res;
+      if (i === 0) {
+        assert.equal(res.statusCode, 200);
+        assert.equal(res.body.summary, "Cerebral sci-fi picks.");
+        assert.equal(res.body.results[0].id, 329865);
+      }
+    }
+
+    assert.equal(lastRes.statusCode, 429);
+  } finally {
+    global.fetch = originalFetch;
+    if (prevOpenAi === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = prevOpenAi;
+    if (prevTmdb === undefined) delete process.env.TMDB_API_KEY;
+    else process.env.TMDB_API_KEY = prevTmdb;
+  }
 });

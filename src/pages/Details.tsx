@@ -794,12 +794,6 @@ export default function Details() {
 
                 {/* Meta row */}
                 <div className="details-hero-meta flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-white/68">
-                  {runtime && (
-                    <span className="inline-flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5" />
-                      {runtime} {t("details.minutes")}
-                    </span>
-                  )}
                   {details.number_of_seasons && (
                     <span>{details.number_of_seasons} {t("details.seasons")}</span>
                   )}
@@ -921,7 +915,7 @@ export default function Details() {
                     onClick={() => handlePlayVideo(featuredTrailerKey)}
                   >
                     <PlayCircle className="w-5 h-5 fill-black" />
-                    Watch Trailer
+                    {t("details.watchTrailer", "Watch Trailer")}
                   </Button>
                 )}
               </div>

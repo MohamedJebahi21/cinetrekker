@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { searchMulti, searchMovies, searchTV, searchPeople } from '@/services/tmdb';
 import { RequestCanceller, RequestThrottler } from '@/lib/requestUtils';
 import { Media, PersonSearchResult, TMDBResponse } from '@/types/media';
-import { validateSearchQuery } from '@/lib/validation';
 import { useDebounce } from '@/hooks/useDebounce';
 
 const canceller = new RequestCanceller();
@@ -33,6 +32,7 @@ export function useSearch(
   // Create search function based on type
   const searchFn = async (): Promise<TMDBResponse<Media | PersonSearchResult>> => {
     // Validate search query
+    const { validateSearchQuery } = await import('@/lib/validation');
     const validatedQuery = validateSearchQuery(debouncedQuery);
     
     // Rate limit check

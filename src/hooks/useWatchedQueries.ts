@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { UserMediaItem } from '@/types/media';
-import { validateNote, validateRating } from '@/lib/validation';
+// validation loaded dynamically on mutation
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { logSupabaseIssue } from '@/lib/supabaseRuntime';
@@ -81,6 +81,7 @@ export function useAddToWatched() {
       note?: string;
       status?: string;
     }) => {
+      const { validateNote, validateRating } = await import('@/lib/validation');
       const validatedNote = validateNote(params.note);
       const validatedRating = validateRating(params.rating);
 
@@ -99,7 +100,7 @@ export function useAddToWatched() {
       }
       return { ...params, rating: validatedRating, note: validatedNote };
     },
-    onMutate: async (params) => {
+    onMutate: async (params) => { const { validateNote, validateRating } = await import('@/lib/validation');
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: [WATCHED_QUERY_ID, user?.id] });
 
@@ -192,7 +193,7 @@ export function useRemoveFromWatched() {
       }
       return params;
     },
-    onMutate: async (params) => {
+    onMutate: async (params) => { const { validateNote, validateRating } = await import('@/lib/validation');
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: [WATCHED_QUERY_ID, user?.id] });
 
@@ -254,7 +255,7 @@ export function useUpdateWatched() {
       mediaType: 'movie' | 'tv';
       updates: Partial<UserMediaItem>;
     }) => {
-      const validatedUpdates = { ...params.updates };
+      const validatedUpdates = { ...params.updates }; const { validateNote, validateRating } = (params.updates.note !== undefined || params.updates.rating !== undefined) ? await import('@/lib/validation') : { validateNote: (v?: string) => v, validateRating: (v?: number) => v };
       if (params.updates.note !== undefined) {
         validatedUpdates.note = validateNote(params.updates.note);
       }
@@ -283,7 +284,7 @@ export function useUpdateWatched() {
       }
       return params;
     },
-    onMutate: async (params) => {
+    onMutate: async (params) => { const { validateNote, validateRating } = await import('@/lib/validation');
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: [WATCHED_QUERY_ID, user?.id] });
 

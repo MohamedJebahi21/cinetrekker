@@ -12,6 +12,31 @@
  * policy before our code runs – the duplicate error is silently swallowed.
  */
 
+import DOMPurify from "isomorphic-dompurify";
+
+const ALLOWED_SCRIPT_ORIGINS = new Set([
+  "https://vercel.live",
+  "https://va.vercel-scripts.com",
+  "https://challenges.cloudflare.com",
+  "https://cloud.umami.is",
+]);
+
+function validateScriptUrl(url: string): string {
+  if (typeof window === "undefined") return url;
+  try {
+    const parsed = new URL(url, window.location.origin);
+    if (
+      parsed.origin === window.location.origin ||
+      ALLOWED_SCRIPT_ORIGINS.has(parsed.origin)
+    ) {
+      return parsed.toString();
+    }
+  } catch {
+    // Invalid URL falls through to rejection
+  }
+  throw new TypeError(`Blocked untrusted script URL: ${url}`);
+}
+
 let _policy: TrustedTypePolicy | null = null;
 
 function init(): void {
@@ -20,24 +45,23 @@ function init(): void {
   // Create the named `cinetrekker` policy and retain the reference.
   try {
     _policy = window.trustedTypes.createPolicy("cinetrekker", {
-      createHTML: (v) => v,
+      createHTML: (v) => DOMPurify.sanitize(v, { RETURN_TRUSTED_TYPE: false }) as string,
       createScript: (v) => v,
-      createScriptURL: (v) => v,
+      createScriptURL: (v) => validateScriptUrl(v),
     });
   } catch {
     // Already created – nothing to do.
   }
 
-  // Also attempt a permissive `default` policy so that third-party code
-  // (e.g. Vercel analytics, CAPTCHA widgets) that passes plain strings to
-  // trusted-type sinks continues to work without errors. Extensions or the
-  // runtime may have already created a `default` policy (possibly without all
-  // three handlers), so swallow duplicate-creation errors here.
+  // Enforce sanitization/allowlisting on the `default` policy so third-party
+  // or accidental DOM sink writes cannot bypass Trusted Types with raw strings.
   try {
     window.trustedTypes.createPolicy("default", {
-      createHTML: (v) => v,
-      createScript: (v) => v,
-      createScriptURL: (v) => v,
+      createHTML: (v) => DOMPurify.sanitize(v, { RETURN_TRUSTED_TYPE: false }) as string,
+      createScript: () => {
+        throw new TypeError("Blocked untrusted inline script via default Trusted Types policy");
+      },
+      createScriptURL: (v) => validateScriptUrl(v),
     });
   } catch {
     // Already created – nothing to do.

@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { json } from "../_lib/http.js";
 import { getSupabaseAdminClient } from "../_lib/supabaseAdmin.js";
 import { getServerEnv } from "../_lib/env.js";
@@ -13,6 +14,14 @@ const TMDB_TIMEOUT_MS = 4000;
 const NOTIFICATION_RETENTION_DAYS = 90;
 const logger = createServerLogger("check-followed-updates");
 
+function secretsMatch(provided, expected) {
+  if (!provided || !expected) return false;
+  const a = Buffer.from(provided, "utf8");
+  const b = Buffer.from(expected, "utf8");
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}
+
 function isAuthorizedCronCall(req) {
   const cronSecret = getServerEnv("CRON_SECRET");
   if (!cronSecret) return false;
@@ -27,11 +36,10 @@ function isAuthorizedCronCall(req) {
       ? req.headers.authorization.trim()
       : "";
 
-  const bearerToken = authHeader.startsWith("Bearer ")
-    ? authHeader.slice(7).trim()
-    : "";
+  const bearerMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+  const bearerToken = bearerMatch ? bearerMatch[1].trim() : "";
 
-  return cronHeader === cronSecret || bearerToken === cronSecret;
+  return secretsMatch(cronHeader, cronSecret) || secretsMatch(bearerToken, cronSecret);
 }
 
 function getBatchSize() {
@@ -269,6 +277,24 @@ async function processTitle({ supabase, parsed, tmdbApiKey, followers, stateByUs
   return inserted;
 }
 
+function computeNextCursor({
+  deadlineReached,
+  lastProcessedIndex,
+  parsedTitles,
+  movieIds,
+  batchSize,
+  previousCursor,
+}) {
+  if (deadlineReached) {
+    if (lastProcessedIndex >= 0 && parsedTitles[lastProcessedIndex]?.movieKey) {
+      return parsedTitles[lastProcessedIndex].movieKey;
+    }
+    return previousCursor ?? null;
+  }
+
+  return movieIds.length >= batchSize ? movieIds[movieIds.length - 1] : null;
+}
+
 export const __testables = {
   isAuthorizedCronCall,
   getBatchSize,
@@ -276,13 +302,17 @@ export const __testables = {
   getExpiryIso,
   getSnapshotFromTmdb,
   createChangeEvents,
+  computeNextCursor,
   NOTIFICATION_RETENTION_DAYS,
   DEFAULT_BATCH_SIZE,
   MAX_BATCH_SIZE,
 };
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return json(res, 405, { error: "Method Not Allowed" });
+  if (req.method !== "GET" && req.method !== "POST") {
+    res.setHeader("Allow", "GET, POST");
+    return json(res, 405, { error: "Method Not Allowed" });
+  }
 
   if (!isAuthorizedCronCall(req)) {
     await reportSecurityEvent({
@@ -353,6 +383,7 @@ export default async function handler(req, res) {
     const FUNCTION_DEADLINE_MS = 8000;
     const workerStartedAt = Date.now();
     let deadlineReached = false;
+    let lastProcessedIndex = -1;
 
     for (let i = 0; i < parsedTitles.length; i++) {
       if (Date.now() - workerStartedAt > FUNCTION_DEADLINE_MS) {
@@ -374,11 +405,17 @@ export default async function handler(req, res) {
         errors += 1;
         logger.error(`Failed processing ${parsed.movieKey}`, error);
       }
+      lastProcessedIndex = i;
     }
 
-    const nextCursor = deadlineReached
-      ? parsedTitles[Math.max(0, notificationsCreated > 0 ? notificationsCreated - 1 : 0)]?.movieKey || movieIds[0]
-      : (movieIds.length >= batchSize ? movieIds[movieIds.length - 1] : null);
+    const nextCursor = computeNextCursor({
+      deadlineReached,
+      lastProcessedIndex,
+      parsedTitles,
+      movieIds,
+      batchSize,
+      previousCursor: state.cursor_movie_id,
+    });
     await writeWorkerState(supabase, {
       cursor_movie_id: nextCursor,
       last_completed_at: nextCursor ? null : new Date().toISOString(),

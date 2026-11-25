@@ -9,11 +9,63 @@ const REQUIRED_DEPENDENCIES = [
   "TMDB_API_KEY",
   "CRON_SECRET",
 ];
+const PROBE_TIMEOUT_MS = 1500;
 
-function buildDependencies() {
+let databaseProbe = async (supabaseUrl, serviceRoleKey) => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${supabaseUrl.replace(/\/+$/, "")}/rest/v1/`, {
+      method: "HEAD",
+      signal: controller.signal,
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+      },
+    });
+    return res.ok || res.status === 404;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+};
+
+export function setDatabaseProbeForTests(probe) {
+  databaseProbe = probe;
+}
+
+export function resetDatabaseProbeForTests() {
+  databaseProbe = async (supabaseUrl, serviceRoleKey) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
+    try {
+      const res = await fetch(`${supabaseUrl.replace(/\/+$/, "")}/rest/v1/`, {
+        method: "HEAD",
+        signal: controller.signal,
+        headers: {
+          apikey: serviceRoleKey,
+          Authorization: `Bearer ${serviceRoleKey}`,
+        },
+      });
+      return res.ok || res.status === 404;
+    } catch {
+      return false;
+    } finally {
+      clearTimeout(timeout);
+    }
+  };
+}
+
+async function buildDependencies() {
   const missing = new Set(getMissingServerEnv(REQUIRED_DEPENDENCIES));
+  const dbConfigured = !missing.has("SUPABASE_URL") && !missing.has("SUPABASE_SERVICE_ROLE_KEY");
+  const database = dbConfigured
+    ? await databaseProbe(getServerEnv("SUPABASE_URL"), getServerEnv("SUPABASE_SERVICE_ROLE_KEY"))
+    : false;
+
   return {
-    database: !missing.has("SUPABASE_URL") && !missing.has("SUPABASE_SERVICE_ROLE_KEY"),
+    database,
     contentProvider: !missing.has("TMDB_API_KEY"),
     scheduledJobs: !missing.has("CRON_SECRET"),
     rateLimiting: true,
@@ -30,7 +82,7 @@ export default async function handler(req, res) {
     return json(res, 405, { error: "Method Not Allowed" });
   }
 
-  const dependencies = buildDependencies();
+  const dependencies = await buildDependencies();
   const ready = Object.values(dependencies).every(Boolean);
   const payload = {
     status: ready ? "ok" : "degraded",

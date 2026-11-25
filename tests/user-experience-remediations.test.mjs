@@ -240,9 +240,9 @@ test("audit remediation: TMDB token handling in api/recommend supports v3 and v4
     "Content-Type": "application/json",
   });
 
-  // Verify Zod jitless configuration in application bootstrap and validation modules
-  const mainSource = fs.readFileSync("src/main.tsx", "utf-8");
+  // Verify Zod jitless configuration in validation modules (main.tsx defers Zod from startup)
+  const credentialValidationSource = fs.readFileSync("src/lib/credentialValidation.ts", "utf-8");
   const validationSource = fs.readFileSync("src/lib/validation.ts", "utf-8");
-  assert.match(mainSource, /z\.config\(\{\s*jitless:\s*true\s*\}\)/);
+  assert.match(credentialValidationSource, /z\.config\(\{\s*jitless:\s*true\s*\}\)/);
   assert.match(validationSource, /z\.config\(\{\s*jitless:\s*true\s*\}\)/);
 });

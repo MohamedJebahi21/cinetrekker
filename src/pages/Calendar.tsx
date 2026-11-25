@@ -469,11 +469,23 @@ export default function Calendar() {
   }, [itemsByDate, weekDays, monthDays, calendarRange]);
 
   const calendarSummary = useMemo(() => {
+    const targetDays = calendarRange === 'month' ? monthDays : weekDays;
+    const periodDateKeys = new Set(targetDays.map((day) => format(day, 'yyyy-MM-dd')));
+    const periodItems = filteredCalendarItems.filter((item) => periodDateKeys.has(item.date));
+    const todayKey = format(new Date(), 'yyyy-MM-dd');
+    const upcomingInPeriod = periodItems
+      .filter((item) => item.date >= todayKey)
+      .sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
+    const nextRelease =
+      upcomingInPeriod[0] ??
+      [...periodItems].sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime())[0] ??
+      filteredCalendarItems
+        .filter((item) => item.date >= todayKey)
+        .sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime())[0];
+
     const movieCount = filteredCalendarItems.filter((item) => item.type === 'movie').length;
     const tvCount = filteredCalendarItems.filter((item) => item.type === 'tv').length;
     const savedCount = filteredCalendarItems.filter((item) => item.isFollowed).length;
-    const nextRelease = [...filteredCalendarItems]
-      .sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime())[0];
 
     return {
       totalCount: filteredCalendarItems.length,
@@ -482,7 +494,7 @@ export default function Calendar() {
       savedCount,
       nextRelease,
     };
-  }, [filteredCalendarItems]);
+  }, [filteredCalendarItems, calendarRange, monthDays, weekDays]);
 
   // Watchlist & Follow direct togglers
   const handleWatchlistToggle = useCallback(

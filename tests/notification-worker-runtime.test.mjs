@@ -6,6 +6,8 @@ const {
   parseMovieKey,
   getExpiryIso,
   createChangeEvents,
+  computeNextCursor,
+  isAuthorizedCronCall,
   NOTIFICATION_RETENTION_DAYS,
   DEFAULT_BATCH_SIZE,
   MAX_BATCH_SIZE,
@@ -59,4 +61,84 @@ test("change events are deterministic and idempotency-keyed by title state", () 
     "tv-99:episode:3-1",
   ]);
   assert.deepEqual(createChangeEvents(next, next, "Example"), []);
+});
+
+test("cron auth supports GET Bearer (Vercel Cron) and POST x-cron-secret", () => {
+  const prev = process.env.CRON_SECRET;
+  process.env.CRON_SECRET = "cron-secret-123";
+  try {
+    assert.equal(
+      isAuthorizedCronCall({ method: "GET", headers: { authorization: "Bearer cron-secret-123" } }),
+      true,
+    );
+    assert.equal(
+      isAuthorizedCronCall({ method: "GET", headers: { authorization: "Bearer wrong" } }),
+      false,
+    );
+    assert.equal(
+      isAuthorizedCronCall({ method: "POST", headers: { "x-cron-secret": "cron-secret-123" } }),
+      true,
+    );
+  } finally {
+    if (prev === undefined) delete process.env.CRON_SECRET;
+    else process.env.CRON_SECRET = prev;
+  }
+});
+
+test("computeNextCursor advances by processed loop index on deadline and preserves cursor if none processed", () => {
+  const parsedTitles = [
+    { movieKey: "movie-1" },
+    { movieKey: "movie-2" },
+    { movieKey: "movie-3" },
+    { movieKey: "movie-4" },
+  ];
+  const movieIds = parsedTitles.map((t) => t.movieKey);
+
+  assert.equal(
+    computeNextCursor({
+      deadlineReached: true,
+      lastProcessedIndex: 1,
+      parsedTitles,
+      movieIds,
+      batchSize: 4,
+      previousCursor: "movie-0",
+    }),
+    "movie-2",
+  );
+
+  assert.equal(
+    computeNextCursor({
+      deadlineReached: true,
+      lastProcessedIndex: -1,
+      parsedTitles,
+      movieIds,
+      batchSize: 4,
+      previousCursor: "movie-0",
+    }),
+    "movie-0",
+  );
+
+  assert.equal(
+    computeNextCursor({
+      deadlineReached: false,
+      lastProcessedIndex: 3,
+      parsedTitles,
+      movieIds,
+      batchSize: 4,
+      previousCursor: "movie-0",
+    }),
+    "movie-4",
+  );
+
+  assert.equal(
+    computeNextCursor({
+      deadlineReached: false,
+      lastProcessedIndex: 3,
+      parsedTitles,
+      movieIds,
+      batchSize: 12,
+      previousCursor: "movie-0",
+    }),
+    null,
+  );
 });

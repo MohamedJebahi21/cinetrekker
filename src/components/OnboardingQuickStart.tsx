@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useUserLists } from "@/contexts/UserListsContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { trackProductEvent } from "@/lib/analytics";
+import { getImageUrl } from "@/services/tmdb";
 import { cn } from "@/lib/utils";
 
 const ONBOARDING_QUICKSTART_KEY = "cinetrekker_onboarding_quickstart_dismissed";
@@ -31,11 +32,11 @@ const STARTER_TITLES: StarterTitle[] = [
   { id: 693134, title: "Dune: Part Two", type: "movie", year: "2024", poster: "/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg" },
   { id: 1396, title: "Breaking Bad", type: "tv", year: "2008", poster: "/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg" },
   { id: 66732, title: "Stranger Things", type: "tv", year: "2016", poster: "/49WJfeN0moxb9IPfGn8AIqMGskD.jpg" },
-  { id: 100088, title: "The Last of Us", type: "tv", year: "2023", poster: "/uKvVjK1q1NVx4G2Z378L1Rkm164.jpg" },
-  { id: 129, title: "Spirited Away", type: "movie", year: "2001", poster: "/39wmItIWsg5sZMyRUHLkWBcuVqa.jpg" },
+  { id: 100088, title: "The Last of Us", type: "tv", year: "2023", poster: "/dmo6TYuuJgaYinXBPjrgG9mB5od.jpg" },
+  { id: 129, title: "Spirited Away", type: "movie", year: "2001", poster: "/jUo8cNmU400WtZiJss45HNXlQ2e.jpg" },
   { id: 76600, title: "Avatar: The Way of Water", type: "movie", year: "2022", poster: "/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg" },
   { id: 94605, title: "Arcane", type: "tv", year: "2021", poster: "/fqldf2t8ztc9aiwn3k6mlX3tvRT.jpg" },
-  { id: 46648, title: "True Detective", type: "tv", year: "2014", poster: "/cuV2O52338nmyi2UQ5nYuP5oW5x.jpg" },
+  { id: 46648, title: "True Detective", type: "tv", year: "2014", poster: "/cuV2O5ZyDLHSOWzg3nLVljp1ubw.jpg" },
   { id: 872585, title: "Oppenheimer", type: "movie", year: "2023", poster: "/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg" },
 ];
 
@@ -46,6 +47,7 @@ export function OnboardingQuickStart() {
 
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [failedPosters, setFailedPosters] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -112,7 +114,7 @@ export function OnboardingQuickStart() {
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && handleDismiss()}>
         <DialogContent className="max-w-2xl bg-card/95 backdrop-blur-xl border-border/60 max-h-[90vh] overflow-y-auto p-5 sm:p-6">
-          <DialogHeader className="text-left space-y-2">
+          <DialogHeader className="text-start space-y-2">
             <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
               <Sparkles className="h-4 w-4" />
               {t("onboarding.quickstartEyebrow", "Quick Start")}
@@ -142,27 +144,47 @@ export function OnboardingQuickStart() {
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
               {STARTER_TITLES.map((title) => {
                 const isSelected = selectedIds.has(title.id);
+                const hasFailed = failedPosters.has(title.id);
+                const posterSrc = getImageUrl(title.poster, "w342");
                 return (
                   <button
                     key={title.id}
                     type="button"
                     onClick={() => togglePick(title)}
                     className={cn(
-                      "group relative aspect-[2/3] rounded-lg overflow-hidden border text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary",
+                      "group relative aspect-[2/3] rounded-lg overflow-hidden border text-start transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary bg-muted/40",
                       isSelected
                         ? "border-primary ring-2 ring-primary scale-[0.98]"
                         : "border-border/50 hover:border-foreground/30 hover:scale-[1.02]"
                     )}
                   >
-                    <img
-                      src={`https://image.tmdb.org/t/p/w300${title.poster}`}
-                      alt={title.title}
-                      className={cn(
-                        "w-full h-full object-cover transition-opacity",
-                        isSelected ? "opacity-60" : "opacity-90 group-hover:opacity-100"
-                      )}
-                      loading="lazy"
-                    />
+                    {!hasFailed && posterSrc ? (
+                      <img
+                        src={posterSrc}
+                        alt={title.title}
+                        className={cn(
+                          "w-full h-full object-cover transition-opacity",
+                          isSelected ? "opacity-60" : "opacity-90 group-hover:opacity-100"
+                        )}
+                        loading="lazy"
+                        onError={() => {
+                          setFailedPosters((prev) => {
+                            if (prev.has(title.id)) return prev;
+                            const next = new Set(prev);
+                            next.add(title.id);
+                            return next;
+                          });
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-muted/60 text-muted-foreground">
+                        {title.type === "movie" ? (
+                          <Film className="h-7 w-7 opacity-60" />
+                        ) : (
+                          <Tv className="h-7 w-7 opacity-60" />
+                        )}
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-1.5">
                       <p className="text-[11px] font-bold text-white line-clamp-1">{title.title}</p>
                       <div className="flex items-center gap-1 text-[9px] text-zinc-300">
@@ -171,7 +193,7 @@ export function OnboardingQuickStart() {
                       </div>
                     </div>
                     {isSelected && (
-                      <div className="absolute top-1.5 right-1.5 h-5 w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md animate-scale-in">
+                      <div className="absolute top-1.5 end-1.5 h-5 w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md animate-scale-in">
                         <Check className="h-3 w-3 stroke-[3]" />
                       </div>
                     )}
@@ -187,7 +209,7 @@ export function OnboardingQuickStart() {
             </Button>
             <Button size="sm" onClick={handleComplete} className="gap-1.5">
               <span>{t("common.done", "Done")}</span>
-              <ArrowRight className="h-3.5 w-3.5" />
+              <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
             </Button>
           </div>
         </DialogContent>

@@ -61,7 +61,9 @@
     "today": "Heute",
     "tv": "Fernseher",
     "user": "CineTrekker Benutzer",
-    "yesterday": "Gestern"
+    "yesterday": "Gestern",
+    "skip": "Erstmal entdecken",
+    "done": "Fertig"
   },
   "nav": {
     "home": "Startseite",
@@ -158,7 +160,7 @@
     "releasedToday": "Heute",
     "releasedHoursAgo": "Vor {{hours}}h",
     "becauseYouLiked": "Weil dir {{title}} gefallen hat",
-    "basedOnRecentActivity": "Basierend auf deiner letzten Aktivität",
+    "basedOnRecentActivity": "Basierend auf Ihrer letzten Aktivität",
     "basedOnRecentActivityDesc": "Diese Vorschläge basieren auf deinen letzten gespeicherten Titeln und deiner Sehaktivität.",
     "becauseYouLikedContext": "Diese Vorschläge bauen auf {{title}} und deiner letzten Aktivität auf.",
     "welcome": "Hallo!",
@@ -250,7 +252,6 @@
     },
     "today": "Heute",
     "recentActivity": "Letzte Aktivität",
-    "basedOnRecentActivity": "Basierend auf Ihrer letzten Aktivität",
     "checkInComeback": "Willkommen zurück. Ihr Uhrenrhythmus ist bereit für den Neustart.",
     "checkInNudge": "Ein kleiner Check-in hält Ihren Kinorhythmus in Bewegung.",
     "checkInStreak": "Sie haben einen starken Lauf. Halten Sie den Schwung noch heute aufrecht.",
@@ -363,7 +364,88 @@
     "upNextTitle": "Als nächstes",
     "viewAllDailyReleases": "Alle Veröffentlichungen anzeigen",
     "viewFullCalendar": "Kalender ansehen",
-    "viewProfile": "Profil ansehen"
+    "viewProfile": "Profil ansehen",
+    "tonightsPickKicker": "30-Sekunden-Entscheidungshilfe",
+    "tonightsPickTitle": "Tipp für heute Abend",
+    "discoverNew": "Neu entdecken",
+    "fromMyWatchlist": "Meine Watchlist ({{count}})",
+    "tonightsPickDescription": "Schluss mit endlosem Scrollen. Wähle Stimmung und verfügbare Zeit für eine treffsichere Empfehlung.",
+    "decideWhatToWatch": "Film oder Serie wählen",
+    "quickDecisionSubtext": "3 geführte Schritte • Auf deine Zeit abgestimmt",
+    "yourTailoredPick": "Deine maßgeschneiderte Empfehlung für heute Abend",
+    "modalStepCounter": "Schritt {{current}} von 3",
+    "pickVibeLabel": "Stimmung wählen",
+    "vibePrompt": "Nach welcher Energie oder Stimmung steht dir heute der Sinn?",
+    "availableTimeLabel": "Verfügbare Zeit & Format",
+    "timePrompt": "Wie viel Zeit möchtest du heute Abend investieren?",
+    "eraFilterLabel": "Ära & Fokus",
+    "eraPrompt": "Nach Erscheinungszeitraum filtern oder alle Top-Klassiker einbeziehen.",
+    "findingBestPick": "Suche deinen passenden Tipp für heute Abend...",
+    "filteringByVibe": "Abgleich von {{vibe}} mit Top-Bewertungen",
+    "rollAnotherPick": "Neu würfeln",
+    "changeVibe": "Stimmung ändern",
+    "noTonightsPickFound": "Kein exakter Treffer für diese Kombination gefunden.",
+    "tryBroadeningFilters": "Erweitere den Zeitraum oder wechsle zu „Jede Ära“.",
+    "resetFilters": "Filter zurücksetzen",
+    "adjustCriteria": "Kriterien anpassen",
+    "vibes": {
+      "action": {
+        "label": "Volle Action",
+        "description": "Adrenalin, hohes Tempo und pure Spannung"
+      },
+      "comedy": {
+        "label": "Zum Totlachen",
+        "description": "Leicht, scharfsinnig, null Stress"
+      },
+      "scifi": {
+        "label": "Kopfkino",
+        "description": "Tiefe Rätsel, Zukunftsvisionen, Twists"
+      },
+      "horror": {
+        "label": "Düster & packend",
+        "description": "Psychologische Spannung, Krimi und Düsternis"
+      },
+      "drama": {
+        "label": "Tiefgründig",
+        "description": "Charakterstarkes, intensives Storytelling"
+      },
+      "feelgood": {
+        "label": "Gemütlich & Wohlfühl",
+        "description": "Warm, visuell stark, entspanntes Schauen"
+      }
+    },
+    "formats": {
+      "quick": {
+        "label": "Unter 95 Min.",
+        "hint": "Kurzer, knackiger Film"
+      },
+      "standard": {
+        "label": "95–130 Min.",
+        "hint": "Klassischer Spielfilm"
+      },
+      "epic": {
+        "label": "130+ Min.",
+        "hint": "Großes Kino-Epos"
+      },
+      "series": {
+        "label": "TV-Serie",
+        "hint": "Serienstaffel am Stück"
+      }
+    },
+    "eras": {
+      "any": {
+        "label": "Jede Ära (Bestbewertet)"
+      },
+      "modern": {
+        "label": "Aktuell (2020er)"
+      },
+      "millennium": {
+        "label": "2000er–2010er"
+      },
+      "classic": {
+        "label": "Klassiker vor 2000"
+      }
+    }
   },
   "search": {
     "placeholder": "Filme und Serien suchen...",
@@ -1239,7 +1321,12 @@
     "step2Desc": "Klicken Sie bei einem beliebigen Titel auf das Lesezeichensymbol, um ihn für später auf Ihrer Merkliste zu speichern.",
     "step3Title": "Beginnen Sie mit dem Entdecken",
     "step3Desc": "Durchsuchen Sie angesagte Titel, suchen Sie nach Stimmung oder Genre und springen Sie direkt zu Ihrer nächsten Uhr.",
-    "next": "Nächste"
+    "next": "Nächste",
+    "quickstartEyebrow": "Schnellstart",
+    "quickstartTitle": "Willkommen bei CineTrekker",
+    "quickstartDesc": "Deine Bibliothek ist leer. Wähle ein paar Favoriten, um Empfehlungen zu kalibrieren.",
+    "pickFavorites": "Oder tippe auf bereits gesehene Titel",
+    "selectedCount": "ausgewählt"
   },
   "comingSoon": "Demnächst",
   "trending": {

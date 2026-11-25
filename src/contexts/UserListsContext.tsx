@@ -10,7 +10,6 @@ import React, {
 } from "react";
 import type { HiddenRecommendation, UserMediaItem } from "@/types/media";
 import { useAuth } from "@/contexts/AuthContext";
-import { validateNote, validateRating } from "@/lib/validation";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import {
@@ -141,6 +140,7 @@ function GuestUserListsProvider({ children }: { children: React.ReactNode }) {
       note?: string,
       status?: "watching" | "completed" | "dropped" | "plan_to_watch",
     ) => {
+      const { validateNote, validateRating } = await import("@/lib/validation");
       guestWatched.addToGuestWatched(mediaId, mediaType, {
         rating: validateRating(rating),
         note: validateNote(note),

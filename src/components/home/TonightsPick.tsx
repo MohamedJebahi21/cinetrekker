@@ -501,7 +501,7 @@ export function TonightsPick() {
                         onClick={() => setSelectedVibe(vibe.key)}
                         aria-pressed={isSelected}
                         className={cn(
-                          "group relative flex flex-col items-start rounded-xl border p-3 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                          "group relative flex flex-col items-start rounded-xl border p-3 text-start transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                           isSelected
                             ? "border-primary/80 bg-primary/[0.04] text-foreground ring-1 ring-primary/20"
                             : "border-border/60 bg-secondary/20 text-muted-foreground hover:border-border hover:bg-secondary/40 hover:text-foreground",
@@ -516,7 +516,7 @@ export function TonightsPick() {
                                 : "text-foreground/90 group-hover:text-foreground",
                             )}
                           >
-                            {vibe.label}
+                            {t(`home.vibes.${vibe.key}.label`, vibe.label)}
                           </span>
                           {isSelected && (
                             <span
@@ -526,7 +526,7 @@ export function TonightsPick() {
                           )}
                         </div>
                         <span className="mt-1 line-clamp-2 text-[11px] leading-4 text-muted-foreground">
-                          {vibe.description}
+                          {t(`home.vibes.${vibe.key}.description`, vibe.description)}
                         </span>
                       </button>
                     );
@@ -560,7 +560,7 @@ export function TonightsPick() {
                         onClick={() => setSelectedFormat(format.key)}
                         aria-pressed={isSelected}
                         className={cn(
-                          "group relative flex flex-col items-start gap-2 rounded-xl border p-3 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                          "group relative flex flex-col items-start gap-2 rounded-xl border p-3 text-start transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                           isSelected
                             ? "border-primary/80 bg-primary/[0.04] text-foreground ring-1 ring-primary/20"
                             : "border-border/60 bg-secondary/20 text-muted-foreground hover:border-border hover:bg-secondary/40 hover:text-foreground",
@@ -590,10 +590,10 @@ export function TonightsPick() {
                         </div>
                         <div>
                           <p className="text-xs font-semibold leading-tight text-foreground">
-                            {format.label}
+                            {t(`home.formats.${format.key}.label`, format.label)}
                           </p>
                           <p className="mt-0.5 text-[11px] leading-3 text-muted-foreground">
-                            {format.hint}
+                            {t(`home.formats.${format.key}.hint`, format.hint)}
                           </p>
                         </div>
                       </button>
@@ -628,7 +628,7 @@ export function TonightsPick() {
                         onClick={() => setSelectedEra(era.key)}
                         aria-pressed={isSelected}
                         className={cn(
-                          "group flex items-center justify-between rounded-xl border p-3 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                          "group flex items-center justify-between rounded-xl border p-3 text-start transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                           isSelected
                             ? "border-primary/80 bg-primary/[0.04] text-foreground ring-1 ring-primary/20"
                             : "border-border/60 bg-secondary/20 text-muted-foreground hover:border-border hover:bg-secondary/40 hover:text-foreground",
@@ -642,7 +642,7 @@ export function TonightsPick() {
                             />
                           )}
                           <span className="text-xs font-semibold text-foreground">
-                            {era.label}
+                            {t(`home.eras.${era.key}.label`, era.label)}
                           </span>
                         </div>
                         <span className="font-mono text-[11px] text-muted-foreground">
@@ -899,7 +899,7 @@ export function TonightsPick() {
                   onClick={handlePrevStep}
                   className="h-8 gap-1 text-xs text-muted-foreground hover:text-foreground"
                 >
-                  <ChevronLeft className="h-3.5 w-3.5" />
+                  <ChevronLeft className="h-3.5 w-3.5 rtl:rotate-180" />
                   <span>{t("home.adjustCriteria", "Adjust Criteria")}</span>
                 </Button>
 
@@ -923,7 +923,7 @@ export function TonightsPick() {
                     onClick={handlePrevStep}
                     className="h-8 gap-1 text-xs text-muted-foreground hover:text-foreground"
                   >
-                    <ChevronLeft className="h-3.5 w-3.5" />
+                    <ChevronLeft className="h-3.5 w-3.5 rtl:rotate-180" />
                     <span>{t("common.back", "Back")}</span>
                   </Button>
                 ) : (
@@ -946,7 +946,7 @@ export function TonightsPick() {
                     className="h-8 gap-1 rounded-lg bg-secondary text-foreground hover:bg-secondary/80 text-xs font-medium shadow-xs"
                   >
                     <span>{t("common.next", "Next")}</span>
-                    <ChevronRight className="h-3.5 w-3.5" />
+                    <ChevronRight className="h-3.5 w-3.5 rtl:rotate-180" />
                   </Button>
                 ) : (
                   <Button

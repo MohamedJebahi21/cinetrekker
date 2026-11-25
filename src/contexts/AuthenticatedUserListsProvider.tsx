@@ -3,7 +3,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { HiddenRecommendation, UserMediaItem } from "@/types/media";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { validateNote, validateRating } from "@/lib/validation";
 import {
   useWatchlistQuery,
   useAddToWatchlist as useAddToWatchlistMutation,
@@ -89,7 +88,13 @@ export function AuthenticatedUserListsProvider({
       : STORAGE_KEYS.hidden;
     const storedHidden = localStorage.getItem(storageKey);
     if (storedHidden) {
-      setHiddenRecommendations(JSON.parse(storedHidden));
+      try {
+        const parsed = JSON.parse(storedHidden);
+        setHiddenRecommendations(Array.isArray(parsed) ? parsed : []);
+      } catch {
+        logger.warn("Corrupted hidden recommendations in localStorage; resetting.");
+        setHiddenRecommendations([]);
+      }
       return;
     }
 
@@ -237,6 +242,7 @@ export function AuthenticatedUserListsProvider({
         return;
       }
 
+      const { validateNote, validateRating } = await import("@/lib/validation");
       guestWatched.addToGuestWatched(mediaId, mediaType, {
         rating: validateRating(rating),
         note: validateNote(note),

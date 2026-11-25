@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
-import { validateShowName, validateEpisodeName } from '@/lib/validation';
 import {
   markTvEpisodeWatched,
   markTvEpisodesBatch,
@@ -186,6 +185,7 @@ export function useFollowedShows() {
       if (!user) throw new Error('Not authenticated');
       
       // Validate show name
+      const { validateShowName } = await import('@/lib/validation');
       const validatedShowName = validateShowName(showName);
       
       const { error } = await supabase
@@ -294,6 +294,7 @@ export function useWatchedEpisodes(showId?: number) {
     }) => {
       if (!user) throw new Error('Not authenticated');
 
+      const { validateEpisodeName, validateShowName } = await import('@/lib/validation');
       const validatedEpisodeName = validateEpisodeName(episodeName);
       const validatedShowName = showName ? validateShowName(showName) : undefined;
 
@@ -417,6 +418,7 @@ export function useWatchedEpisodes(showId?: number) {
     }) => {
       if (!user) throw new Error('Not authenticated');
 
+      const { validateEpisodeName, validateShowName } = await import('@/lib/validation');
       const validatedShowName = showName ? validateShowName(showName) : undefined;
       const lastEpisode = episodes[episodes.length - 1];
 
@@ -499,6 +501,7 @@ export function useWatchedEpisodes(showId?: number) {
     }) => {
       if (!user) throw new Error('Not authenticated');
 
+      const { validateEpisodeName, validateShowName } = await import('@/lib/validation');
       const validatedShowName = showName ? validateShowName(showName) : undefined;
       const lastEpisode = allEpisodes.reduce((latest, current) => {
         if (current.season_number > latest.season_number) return current;

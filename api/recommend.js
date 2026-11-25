@@ -7,19 +7,25 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { enforceRequestSecurity } from "./_lib/requestSecurity.js";
+import { json, parseBody } from "./_lib/http.js";
+import { authenticateRequest } from "./_lib/supabaseAdmin.js";
+import {
+  enforceAuthenticatedRequestSecurity,
+  enforceRequestSecurity,
+} from "./_lib/requestSecurity.js";
 import { getMissingServerEnv, getServerEnv } from "./_lib/env.js";
 import { createServerLogger } from "./_lib/logger.js";
 
-const fetch = globalThis.fetch;
 const logger = createServerLogger("recommend");
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const MAX_PROMPT_LENGTH = 500;
 const MAX_LIMIT = 20;
 const MIN_LIMIT = 1;
+const OPENAI_TIMEOUT_MS = 10_000;
 const TMDB_TIMEOUT_MS = 4000;
 const CONCURRENCY_LIMIT = 3;
+const LANGUAGE_PATTERN = /^[a-z]{2}(?:-[A-Z]{2})?$/;
 
 const REQUIRED_ENV_VARS = ["OPENAI_API_KEY"];
 const missingVars = getMissingServerEnv(REQUIRED_ENV_VARS);
@@ -85,70 +91,96 @@ async function mapConcurrently(items, concurrency, fn) {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
+    return json(res, 405, { error: "Method Not Allowed" });
+  }
 
   const security = await enforceRequestSecurity(req, res, "recommend");
   if (!security.ok) {
-    return res.status(security.status).json({ error: security.error });
+    return json(res, security.status, { error: security.error });
   }
 
-  const { prompt, language = "en", limit = 12 } = req.body || {};
+  const auth = await authenticateRequest(req);
+  if (!auth.ok || !auth.userId) {
+    return json(res, auth.status || 401, { error: auth.error });
+  }
+
+  const authedSecurity = await enforceAuthenticatedRequestSecurity(
+    req,
+    res,
+    "recommend",
+    auth.userId,
+  );
+  if (!authedSecurity.ok) {
+    return json(res, authedSecurity.status, { error: authedSecurity.error });
+  }
+
+  const body = parseBody(req);
+  const { prompt, language: rawLanguage = "en", limit = 12 } = body;
   if (!prompt || typeof prompt !== "string") {
-    return res.status(400).json({ error: "Missing prompt" });
+    return json(res, 400, { error: "Missing prompt" });
   }
 
   const normalizedPrompt = prompt.trim();
   if (!normalizedPrompt) {
-    return res.status(400).json({ error: "Missing prompt" });
+    return json(res, 400, { error: "Missing prompt" });
   }
   if (normalizedPrompt.length > MAX_PROMPT_LENGTH) {
-    return res
-      .status(400)
-      .json({ error: `Prompt exceeds ${MAX_PROMPT_LENGTH} characters` });
+    return json(res, 400, { error: `Prompt exceeds ${MAX_PROMPT_LENGTH} characters` });
   }
 
+  const language =
+    typeof rawLanguage === "string" && LANGUAGE_PATTERN.test(rawLanguage.trim())
+      ? rawLanguage.trim()
+      : "en";
+
   const normalizedLimit = Number.isFinite(Number(limit))
-    ? Math.max(MIN_LIMIT, Math.min(MAX_LIMIT, Number(limit)))
+    ? Math.max(MIN_LIMIT, Math.min(MAX_LIMIT, Math.trunc(Number(limit))))
     : 12;
 
   const openAiKey = getServerEnv("OPENAI_API_KEY");
   const tmdbKey = getServerEnv("TMDB_API_KEY");
   const openaiBase = getServerEnv("OPENAI_API_BASE", "https://api.openai.com/v1");
 
-  logger.info(`Keys status: OpenAI=${!!openAiKey}, TMDB=${!!tmdbKey}, Base=${openaiBase}`);
-
   if (!openAiKey || !tmdbKey) {
-    return res.status(503).json({ error: "Service temporarily unavailable" });
+    return json(res, 503, { error: "Service temporarily unavailable" });
   }
 
   try {
     const system = `You are a helpful film expert. Given a short user prompt, return a strict JSON object with two keys: "summary" (a short 1-2 sentence summary as a film critic, no more than ~140 characters) and "suggestions" (an array of up to ${normalizedLimit} items). Each suggestion must be an object with keys: "title" (string), optionally "year" (number), and "media_type" which must be either "movie" or "tv". Do NOT include adult content. Output MUST be valid JSON and contain only the JSON object.`;
 
-    // openaiBase is already resolved above; no need to re-declare it here.
-    const openaiRes = await fetch(
-      `${openaiBase}/chat/completions`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${openAiKey}`,
+    let openaiRes;
+    try {
+      openaiRes = await fetchWithTimeout(
+        `${openaiBase}/chat/completions`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${openAiKey}`,
+          },
+          body: JSON.stringify({
+            model: getServerEnv("OPENAI_MODEL", "gpt-4o-mini"),
+            messages: [
+              { role: "system", content: system },
+              { role: "user", content: normalizedPrompt },
+            ],
+            max_tokens: 600,
+            temperature: 0.8,
+          }),
         },
-        body: JSON.stringify({
-          model: getServerEnv("OPENAI_MODEL", "gpt-4o-mini"),
-          messages: [
-            { role: "system", content: system },
-            { role: "user", content: normalizedPrompt },
-          ],
-          max_tokens: 600,
-          temperature: 0.8,
-        }),
-      },
-    );
+        OPENAI_TIMEOUT_MS,
+      );
+    } catch (err) {
+      if (err?.name === "AbortError") {
+        return json(res, 504, { error: "AI service timed out" });
+      }
+      return json(res, 502, { error: "AI service temporarily unavailable" });
+    }
 
     if (!openaiRes.ok) {
-      return res
-        .status(502)
-        .json({ error: "AI service temporarily unavailable" });
+      return json(res, 502, { error: "AI service temporarily unavailable" });
     }
 
     const openaiJson = await openaiRes.json();

@@ -61,7 +61,9 @@
     "today": "Bugün",
     "tv": "TV",
     "user": "CineTrekker Kullanıcısı",
-    "yesterday": "Dün"
+    "yesterday": "Dün",
+    "skip": "Önce keşfedeceğim",
+    "done": "Bitti"
   },
   "nav": {
     "home": "Ana Sayfa",
@@ -158,7 +160,7 @@
     "releasedToday": "Bugün",
     "releasedHoursAgo": "{{hours}} saat önce",
     "becauseYouLiked": "{{title}} beğendiğin için",
-    "basedOnRecentActivity": "Son etkinliğine göre",
+    "basedOnRecentActivity": "Son Etkinliğinize Göre",
     "basedOnRecentActivityDesc": "Bu öneriler son kaydetmelerini ve izleme etkinliğini yansıtır.",
     "becauseYouLikedContext": "Bu öneriler {{title}} ve son etkinliğine dayanır.",
     "welcome": "Merhaba!",
@@ -250,7 +252,6 @@
     },
     "today": "Bugün",
     "recentActivity": "Son Etkinlik",
-    "basedOnRecentActivity": "Son Etkinliğinize Göre",
     "checkInComeback": "Tekrar hoşgeldiniz. Saat ritminiz yeniden başlatılmaya hazır.",
     "checkInNudge": "Küçük bir giriş, sinema ritminizin hareket etmesini sağlar.",
     "checkInStreak": "Güçlü bir yoldasın. Bugün momentumu canlı tutun.",
@@ -363,7 +364,88 @@
     "upNextTitle": "Sonraki",
     "viewAllDailyReleases": "Tüm sürümleri görüntüle",
     "viewFullCalendar": "Takvimi görüntüle",
-    "viewProfile": "Profili görüntüle"
+    "viewProfile": "Profili görüntüle",
+    "tonightsPickKicker": "30 Saniyelik Karar Aracı",
+    "tonightsPickTitle": "Bu Akşamın Seçimi",
+    "discoverNew": "Yeni Keşfet",
+    "fromMyWatchlist": "İzleme Listem ({{count}})",
+    "tonightsPickDescription": "Sonsuz kaydırmayı bırak. Bu akşamki modunu ve zamanını seç, tek bir net öneri al.",
+    "decideWhatToWatch": "Ne İzleyeceğine Karar Ver",
+    "quickDecisionSubtext": "3 rehberli adım • Zamanına göre uyarlandı",
+    "yourTailoredPick": "Bu akşam için sana özel önerimiz",
+    "modalStepCounter": "Adım {{current}} / 3",
+    "pickVibeLabel": "Modunu Seç",
+    "vibePrompt": "Bu akşam nasıl bir enerji veya atmosfer arıyorsun?",
+    "availableTimeLabel": "Mevcut Zaman ve Format",
+    "timePrompt": "Bu akşamki izleme için ne kadar zaman ayırmak istiyorsun?",
+    "eraFilterLabel": "Dönem ve Odak",
+    "eraPrompt": "Yayın dönemine göre filtrele veya tüm zamanların en iyilerine aç.",
+    "findingBestPick": "Bu akşam için en iyi seçim bulunuyor...",
+    "filteringByVibe": "{{vibe}} en yüksek topluluk puanlarıyla eşleştiriliyor",
+    "rollAnotherPick": "Başka Öner",
+    "changeVibe": "Modu Değiştir",
+    "noTonightsPickFound": "Bu özel kombinasyon için tam eşleşme bulunamadı.",
+    "tryBroadeningFilters": "Dönemi genişletmeyi veya 'Herhangi Bir Dönem'e geçmeyi dene.",
+    "resetFilters": "Filtreleri Sıfırla",
+    "adjustCriteria": "Kriterleri Düzenle",
+    "vibes": {
+      "action": {
+        "label": "Yüksek Tempolu",
+        "description": "Adrenalin, hızlı tempo, nefes kesen heyecan"
+      },
+      "comedy": {
+        "label": "Kahkaha Tufanı",
+        "description": "Keyifli, keskin zekâ, sıfır stres"
+      },
+      "scifi": {
+        "label": "Akıl Bükücü",
+        "description": "Derin gizemler, fütüristik fikirler, ters köşeler"
+      },
+      "horror": {
+        "label": "Ürpertici ve Karanlık",
+        "description": "Psikolojik gerilim, suç ve karanlık atmosfer"
+      },
+      "drama": {
+        "label": "Derin ve Sürükleyici",
+        "description": "Karakter odaklı, güçlü anlatım"
+      },
+      "feelgood": {
+        "label": "Sıcak ve Rahatlatıcı",
+        "description": "Samimi, görsel açıdan zengin, rahat izleme"
+      }
+    },
+    "formats": {
+      "quick": {
+        "label": "95 dk altı",
+        "hint": "Kısa ve vurucu film"
+      },
+      "standard": {
+        "label": "95–130 dk",
+        "hint": "Standart uzun metraj film"
+      },
+      "epic": {
+        "label": "130+ dk",
+        "hint": "Derin sinematik destan"
+      },
+      "series": {
+        "label": "TV Dizisi",
+        "hint": "Bölümlük sezon maratonu"
+      }
+    },
+    "eras": {
+      "any": {
+        "label": "Herhangi Bir Dönem (En İyiler)"
+      },
+      "modern": {
+        "label": "Güncel (2020'ler)"
+      },
+      "millennium": {
+        "label": "2000'ler–2010'lar"
+      },
+      "classic": {
+        "label": "2000 Öncesi Klasikler"
+      }
+    }
   },
   "search": {
     "placeholder": "Film ve dizi ara...",
@@ -1239,7 +1321,12 @@
     "step2Desc": "Daha sonra izlemek üzere izleme listenize kaydetmek için herhangi bir içeriğin üzerindeki yer imi simgesini tıklayın.",
     "step3Title": "Keşfetmeye Başlayın",
     "step3Desc": "Trend olan içeriklere göz atın, ruh halinize veya türe göre arama yapın ve doğrudan bir sonraki saatinize geçin.",
-    "next": "Sonraki"
+    "next": "Sonraki",
+    "quickstartEyebrow": "Hızlı Başlangıç",
+    "quickstartTitle": "CineTrekker'a Hoş Geldin",
+    "quickstartDesc": "Kitaplığın boş. Önerileri ayarlamak için sevdiğin birkaç yapımı seç.",
+    "pickFavorites": "Veya izlediğin yapımlara dokun",
+    "selectedCount": "seçildi"
   },
   "comingSoon": "Çıkışta",
   "trending": {

@@ -6,7 +6,7 @@ const REQUEST_ID_PATTERN = /^[a-zA-Z0-9_-]{8,96}$/;
 const REQUEST_ID_PROPERTY = "__cinetrekkerRequestId";
 const ENDPOINT_LIMITS = {
   default: { windowMs: 60 * 1000, ipMaxRequests: 30 },
-  recommend: { windowMs: 60 * 1000, ipMaxRequests: 15 },
+  recommend: { windowMs: 60 * 1000, ipMaxRequests: 15, userMaxRequests: 10 },
   "tmdb-proxy": { windowMs: 60 * 1000, ipMaxRequests: 240 },
   enrichment: { windowMs: 60 * 1000, ipMaxRequests: 240 },
   feedback: { windowMs: 10 * 60 * 1000, ipMaxRequests: 3 },
@@ -148,9 +148,64 @@ function isRateLimitedInMemory(key, config, limit) {
   return { limited: false, retryAfter: 0 };
 }
 
+async function isRateLimitedDistributed(key, config, limit) {
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL?.trim();
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+  if (!redisUrl || !redisToken) {
+    return null;
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 1500);
+  try {
+    const response = await fetch(`${redisUrl.replace(/\/+$/, "")}/pipeline`, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${redisToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify([
+        ["INCR", `rl:${key}`],
+        ["PTTL", `rl:${key}`],
+      ]),
+    });
+
+    if (!response.ok) return null;
+    const results = await response.json();
+    const count = Number(results?.[0]?.result);
+    let ttlMs = Number(results?.[1]?.result);
+
+    if (!Number.isFinite(count)) return null;
+
+    if (!Number.isFinite(ttlMs) || ttlMs < 0) {
+      await fetch(`${redisUrl.replace(/\/+$/, "")}/pexpire/${encodeURIComponent(`rl:${key}`)}/${config.windowMs}`, {
+        method: "POST",
+        signal: controller.signal,
+        headers: { Authorization: `Bearer ${redisToken}` },
+      }).catch(() => {});
+      ttlMs = config.windowMs;
+    }
+
+    if (count > limit) {
+      return {
+        limited: true,
+        retryAfter: Math.max(1, Math.ceil(ttlMs / 1000)),
+      };
+    }
+
+    return { limited: false, retryAfter: 0 };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function applyRateLimit(req, res, prefix, key, limitKind, limit) {
   const config = getEndpointConfig(prefix);
-  const limitCheck = isRateLimitedInMemory(key, config, limit);
+  const distributedCheck = await isRateLimitedDistributed(key, config, limit);
+  const limitCheck = distributedCheck ?? isRateLimitedInMemory(key, config, limit);
 
   if (!limitCheck.limited) {
     return { ok: true };

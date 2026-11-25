@@ -1,5 +1,5 @@
 import { defineConfig, loadEnv } from "vite";
-import react from "@vitejs/plugin-react-swc";
+import react from "@vitejs/plugin-react";
 import path from "path";
 import type { ServerResponse } from "node:http";
 import type { Plugin } from "vite";
@@ -371,7 +371,9 @@ export default defineConfig(({ mode }) => {
               id.includes("node_modules/class-variance-authority/") ||
               id.includes("node_modules/clsx/") ||
               id.includes("node_modules/tailwind-merge/") ||
-              id.includes("node_modules/embla-carousel")
+              id.includes("node_modules/embla-carousel") ||
+              id.includes("node_modules/dompurify") ||
+              id.includes("node_modules/isomorphic-dompurify")
             ) {
               return "vendor-ui";
             }

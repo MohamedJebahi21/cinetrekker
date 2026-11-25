@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **AI recommendation endpoint (`api/recommend.js`)**: Require authenticated requests (`401` on missing/invalid Bearer token), enforce per-user and IP rate limits, validate language parameters, and enforce a 10-second OpenAI request timeout (`504` on abort).
+- **Distributed rate limiting (`api/_lib/requestSecurity.js`)**: Integrate Upstash Redis REST `INCR`/`PTTL` pipeline with safe in-memory fallback.
+- **Vercel Cron worker (`api/jobs/check-followed-updates.js`)**: Support `GET` (`Authorization: Bearer`) and `POST` (`x-cron-secret`) with `crypto.timingSafeEqual` secret comparison and corrected cursor advancement.
+- **Trusted Types & client resilience (`src/lib/trustedTypes.ts`, `src/contexts/AuthenticatedUserListsProvider.tsx`)**: Enforce DOMPurify HTML sanitization, strict script origin allowlist, and safe `localStorage` JSON parsing.
+
+### Fixed
+- **TMDB attribution logo (`src/components/Footer.tsx`, `public/tmdb-logo.svg`)**: Host official TMDB attribution SVG locally to eliminate `ERR_BLOCKED_BY_ORB` failures.
+- **Quick Start onboarding posters (`src/components/OnboardingQuickStart.tsx`)**: Update broken poster paths, use `getImageUrl(..., "w342")`, and add `onError` icon fallback.
+- **Localization & RTL (`src/components/home/TonightsPick.tsx`, `src/locales/*.json`)**: Localize 54 Quick Start and Tonight's Pick strings across all 6 locales (`en`, `ar`, `fr`, `es`, `de`, `tr`) and fix RTL alignment/icon direction.
+- **Details & Calendar polish (`src/pages/Details.tsx`, `src/pages/Calendar.tsx`)**: Remove duplicate runtime in hero metadata, localize "Watch Trailer", and scope `nextRelease` to active period days `>= todayKey`.
+- **Health probe & lockfile (`api/health.js`, `package-lock.json`)**: Add live Supabase REST `HEAD` probe and synchronize `package-lock.json` with `@vitejs/plugin-react@^6.0.1`.
+
+### Performance
+- **Deferred Zod validation (`src/main.tsx`, `src/contexts/*`, `src/hooks/*`)**: Remove eager `zod` import from startup and dynamically import `@/lib/validation` inside async handlers, reducing the initial preload graph by 81.8 KiB.
+
+### Added
+- **Database index migration (`supabase/migrations/20261125120000_add_profile_search_trgm_index.sql`)**: Add `pg_trgm` GIN index definition for public profile display name search (staged in repo; not yet applied to production).
+- **Regression tests (`tests/phase5-browser-remediations.test.mjs`, `tests/security-api.test.mjs`, `tests/notification-worker-runtime.test.mjs`)**: Cover Phase 2 security fixes and Phase 5 browser, i18n, and bundle remediations.
+
 ### Fixed
 - **Runtime dependency gate**: Added a policy-tested, expiring exception for only the accepted Zod advisory; every other high or critical production advisory continues to fail the gate.
 - **Development dependency advisories**: Override vulnerable transitive `minimatch` and typography parser versions with patched releases; update `@types/react-dom` to 19.3.0.

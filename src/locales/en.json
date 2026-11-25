@@ -70,7 +70,9 @@
     "today": "Today",
     "tv": "TV",
     "user": "CineTrekker User",
-    "yesterday": "Yesterday"
+    "yesterday": "Yesterday",
+    "skip": "I'll explore first",
+    "done": "Done"
   },
   "nav": {
     "home": "Home",
@@ -527,7 +529,88 @@
     "upNextTitle": "Up Next",
     "viewAllDailyReleases": "View all releases",
     "viewFullCalendar": "View calendar",
-    "viewProfile": "View profile"
+    "viewProfile": "View profile",
+    "tonightsPickKicker": "30-Second Decision Tool",
+    "tonightsPickTitle": "Tonight's Pick",
+    "discoverNew": "Discover New",
+    "fromMyWatchlist": "My Watchlist ({{count}})",
+    "tonightsPickDescription": "Stop endless scrolling. Pick a vibe and your available time tonight to get one confident title recommendation.",
+    "decideWhatToWatch": "Decide What to Watch",
+    "quickDecisionSubtext": "3 guided steps • Tailored to your time",
+    "yourTailoredPick": "Your tailored recommendation for tonight",
+    "modalStepCounter": "Step {{current}} of 3",
+    "pickVibeLabel": "Pick Your Vibe",
+    "vibePrompt": "What kind of energy or mood are you craving tonight?",
+    "availableTimeLabel": "Available Time & Format",
+    "timePrompt": "How much time do you want to invest in tonight's watch?",
+    "eraFilterLabel": "Era & Focus",
+    "eraPrompt": "Filter by release period or open it up to all-time top-rated classics.",
+    "findingBestPick": "Finding your decisive pick tonight...",
+    "filteringByVibe": "Matching {{vibe}} with top community ratings",
+    "rollAnotherPick": "Roll Another",
+    "changeVibe": "Change Vibe",
+    "noTonightsPickFound": "No exact match found for this specific combination.",
+    "tryBroadeningFilters": "Try broadening your era or switching to 'Any Era' to find top-rated titles.",
+    "resetFilters": "Reset Filters",
+    "adjustCriteria": "Adjust Criteria",
+    "vibes": {
+      "action": {
+        "label": "High-Octane",
+        "description": "Adrenaline, fast pacing, edge-of-your-seat thrills"
+      },
+      "comedy": {
+        "label": "Laugh Out Loud",
+        "description": "Uplifting, sharp wit, zero stress"
+      },
+      "scifi": {
+        "label": "Mind-Bending",
+        "description": "Deep mysteries, futuristic concepts, twists"
+      },
+      "horror": {
+        "label": "Chilling & Dark",
+        "description": "Psychological tension, crime, and darkness"
+      },
+      "drama": {
+        "label": "Deep & Gripping",
+        "description": "Character-driven, powerful storytelling"
+      },
+      "feelgood": {
+        "label": "Cozy & Feel-Good",
+        "description": "Warm, visually rich, comfortable watching"
+      }
+    },
+    "formats": {
+      "quick": {
+        "label": "Under 95 min",
+        "hint": "Short & punchy film"
+      },
+      "standard": {
+        "label": "95–130 min",
+        "hint": "Standard feature film"
+      },
+      "epic": {
+        "label": "130+ min",
+        "hint": "Deep cinematic epic"
+      },
+      "series": {
+        "label": "TV Series",
+        "hint": "Episodic season binge"
+      }
+    },
+    "eras": {
+      "any": {
+        "label": "Any Era (Top Rated)"
+      },
+      "modern": {
+        "label": "Recent (2020s)"
+      },
+      "millennium": {
+        "label": "2000s–2010s"
+      },
+      "classic": {
+        "label": "Pre-2000 Classics"
+      }
+    }
   },
   "search": {
     "placeholder": "Search movies, TV shows, actors...",
@@ -1421,7 +1504,12 @@
     "step3Desc": "Browse trending titles, search by mood or genre, and jump straight into your next watch.",
     "skip": "Skip",
     "next": "Next",
-    "start": "Get Started"
+    "start": "Get Started",
+    "quickstartEyebrow": "Quick Start",
+    "quickstartTitle": "Welcome to CineTrekker",
+    "quickstartDesc": "Your library is empty. Tap a few favorites you love to calibrate recommendations.",
+    "pickFavorites": "Or tap titles you have watched",
+    "selectedCount": "selected"
   },
   "comingSoon": "Coming Soon",
   "about": {

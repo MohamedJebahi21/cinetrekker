@@ -61,7 +61,9 @@
     "today": "Aujourd'hui",
     "tv": "TV",
     "user": "CineTrekker Utilisateur",
-    "yesterday": "Hier"
+    "yesterday": "Hier",
+    "skip": "Je vais explorer d'abord",
+    "done": "Terminé"
   },
   "nav": {
     "home": "Accueil",
@@ -250,7 +252,6 @@
     },
     "today": "Aujourd'hui",
     "recentActivity": "Activité récente",
-    "basedOnRecentActivity": "Basé sur votre activité récente",
     "checkInComeback": "Content de te revoir. Le rythme de votre montre est prêt à redémarrer.",
     "checkInNudge": "Un petit enregistrement maintient votre rythme cinématographique en mouvement.",
     "checkInStreak": "Vous êtes sur une bonne lancée. Gardez l’élan vivant aujourd’hui.",
@@ -363,7 +364,88 @@
     "upNextTitle": "Suivant",
     "viewAllDailyReleases": "Voir toutes les versions",
     "viewFullCalendar": "Afficher le calendrier",
-    "viewProfile": "Voir le profil"
+    "viewProfile": "Voir le profil",
+    "tonightsPickKicker": "Outil de décision en 30 secondes",
+    "tonightsPickTitle": "Le choix du soir",
+    "discoverNew": "Découvrir",
+    "fromMyWatchlist": "Ma liste ({{count}})",
+    "tonightsPickDescription": "Arrêtez de défiler sans fin. Choisissez une ambiance et votre temps disponible pour obtenir une recommandation sûre.",
+    "decideWhatToWatch": "Choisir quoi regarder",
+    "quickDecisionSubtext": "3 étapes guidées • Adapté à votre temps",
+    "yourTailoredPick": "Votre recommandation sur mesure pour ce soir",
+    "modalStepCounter": "Étape {{current}} sur 3",
+    "pickVibeLabel": "Choisissez l'ambiance",
+    "vibePrompt": "Quel type d'énergie ou d'humeur recherchez-vous ce soir ?",
+    "availableTimeLabel": "Temps disponible et format",
+    "timePrompt": "Combien de temps souhaitez-vous consacrer à votre séance ?",
+    "eraFilterLabel": "Époque et sélection",
+    "eraPrompt": "Filtrez par période de sortie ou ouvrez à tous les classiques les mieux notés.",
+    "findingBestPick": "Recherche de votre meilleur choix pour ce soir...",
+    "filteringByVibe": "Correspondance {{vibe}} avec les meilleures notes",
+    "rollAnotherPick": "Relancer",
+    "changeVibe": "Changer d'ambiance",
+    "noTonightsPickFound": "Aucune correspondance exacte pour cette combinaison.",
+    "tryBroadeningFilters": "Essayez d'élargir l'époque ou de passer à « Toute époque ».",
+    "resetFilters": "Réinitialiser les filtres",
+    "adjustCriteria": "Ajuster les critères",
+    "vibes": {
+      "action": {
+        "label": "Haute tension",
+        "description": "Adrénaline, rythme soutenu et frissons"
+      },
+      "comedy": {
+        "label": "Fous rires",
+        "description": "Esprit vif, légèreté, zéro stress"
+      },
+      "scifi": {
+        "label": "Cérébral",
+        "description": "Mystères profonds, futurisme et rebondissements"
+      },
+      "horror": {
+        "label": "Sombre et glaçant",
+        "description": "Tension psychologique, polar et obscurité"
+      },
+      "drama": {
+        "label": "Profond et captivant",
+        "description": "Récits puissants centrés sur les personnages"
+      },
+      "feelgood": {
+        "label": "Cosy et réconfortant",
+        "description": "Chaleureux, visuellement riche et apaisant"
+      }
+    },
+    "formats": {
+      "quick": {
+        "label": "Moins de 95 min",
+        "hint": "Film court et percutant"
+      },
+      "standard": {
+        "label": "95 à 130 min",
+        "hint": "Long métrage standard"
+      },
+      "epic": {
+        "label": "130 min et +",
+        "hint": "Grande fresque cinématographique"
+      },
+      "series": {
+        "label": "Série TV",
+        "hint": "Saison en épisodes"
+      }
+    },
+    "eras": {
+      "any": {
+        "label": "Toute époque (Mieux notés)"
+      },
+      "modern": {
+        "label": "Récent (Années 2020)"
+      },
+      "millennium": {
+        "label": "Années 2000–2010"
+      },
+      "classic": {
+        "label": "Classiques avant 2000"
+      }
+    }
   },
   "search": {
     "placeholder": "Rechercher des films et séries...",
@@ -1239,7 +1321,12 @@
     "step2Desc": "Cliquez sur l'icône de signet sur n'importe quel titre pour l'enregistrer dans votre liste de surveillance pour plus tard.",
     "step3Title": "Commencez à découvrir",
     "step3Desc": "Parcourez les titres tendance, effectuez une recherche par humeur ou par genre et passez directement à votre prochaine montre.",
-    "next": "Suivant"
+    "next": "Suivant",
+    "quickstartEyebrow": "Démarrage rapide",
+    "quickstartTitle": "Bienvenue sur CineTrekker",
+    "quickstartDesc": "Votre bibliothèque est vide. Sélectionnez quelques favoris pour calibrer vos recommandations.",
+    "pickFavorites": "Ou touchez des titres déjà vus",
+    "selectedCount": "sélectionné(s)"
   },
   "comingSoon": "Bientôt",
   "notFound": {
