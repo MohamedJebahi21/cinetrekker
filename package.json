@@ -53,7 +53,7 @@
     "readiness:public": "node ./scripts/check-public-readiness.mjs",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit && tsc -p tsconfig.api.json --noEmit",
     "test": "npm run test:ci && npm run test:smoke",
     "test:ci": "npm run lint && npm run type-check && npm run test:security && npm run test:privacy && npm run test:professionalization && npm run i18n:verify",
     "preview": "vite preview",
