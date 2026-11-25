@@ -39,7 +39,6 @@ import { Link } from "react-router-dom";
 import { useUserLists } from "@/contexts/UserListsContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { profileService, type UserProfile } from "@/services/profile";
-import { validateDisplayName, sanitizeBio } from "@/lib/validation";
 import { profileUpdateRateLimiter } from "@/lib/reviewRateLimiter";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -632,6 +631,7 @@ export default function Profile() {
       }
 
       // Validate and sanitize inputs before saving
+      const { validateDisplayName, sanitizeBio } = await import("@/lib/validation");
       const validatedDisplayName = validateDisplayName(displayName);
       const sanitizedBio = sanitizeBio(bio);
 

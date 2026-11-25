@@ -1,4 +1,5 @@
 import { reportSecurityEvent } from "./securityMonitor.js";
+import { authenticateRequest } from "./supabaseAdmin.js";
 
 const RATE_LIMIT_CLEANUP_MS = 5 * 60 * 1000;
 const REQUEST_ID_HEADER = "x-request-id";
@@ -300,6 +301,37 @@ export async function enforceAuthenticatedRequestSecurity(
     "user",
     config.userMaxRequests,
   );
+}
+
+/**
+ * Enforces IP security, bearer authentication, and per-user rate limiting in one step.
+ */
+export async function requireAuthenticatedUser(req, res, scope, options = {}) {
+  const security = await enforceRequestSecurity(req, res, scope, options);
+  if (!security.ok) {
+    return { ok: false, status: security.status, error: security.error };
+  }
+
+  const auth = await authenticateRequest(req);
+  if (!auth.ok || !auth.userId) {
+    return { ok: false, status: auth.status || 401, error: auth.error };
+  }
+
+  const authedSecurity = await enforceAuthenticatedRequestSecurity(
+    req,
+    res,
+    scope,
+    auth.userId,
+  );
+  if (!authedSecurity.ok) {
+    return {
+      ok: false,
+      status: authedSecurity.status,
+      error: authedSecurity.error,
+    };
+  }
+
+  return { ok: true, userId: auth.userId };
 }
 
 export function setRateLimitDependenciesForTests() {

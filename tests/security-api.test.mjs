@@ -738,3 +738,31 @@ test("recommend endpoint enforces per-user rate limit and returns sanitized resu
     else process.env.TMDB_API_KEY = prevTmdb;
   }
 });
+
+test("consolidated GET /api/follow validates user_id query param and enforces ownership", async () => {
+  setAuthUserResolverForTests(async () => ({
+    data: { user: { id: "11111111-1111-4111-8111-111111111111" } },
+    error: null,
+  }));
+
+  const missingReq = createMockReq({
+    method: "GET",
+    headers: { authorization: "Bearer valid-token", origin: "http://localhost:8080" },
+    query: {},
+    url: "/api/user/followed",
+  });
+  const missingRes = createMockRes();
+  await followHandler(missingReq, missingRes);
+  assert.equal(missingRes.statusCode, 400);
+
+  const mismatchReq = createMockReq({
+    method: "GET",
+    headers: { authorization: "Bearer valid-token", origin: "http://localhost:8080" },
+    query: { user_id: "22222222-2222-4222-8222-222222222222" },
+    url: "/api/user/followed?user_id=22222222-2222-4222-8222-222222222222",
+  });
+  const mismatchRes = createMockRes();
+  await followHandler(mismatchReq, mismatchRes);
+  assert.equal(mismatchRes.statusCode, 403);
+  assert.match(mismatchRes.body.error, /user_id does not match/i);
+});

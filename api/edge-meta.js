@@ -287,7 +287,7 @@ function buildLegacyHeadHtml({ title, description, image, canonical, type, relea
 function escapeHtmlAttribute(value) {
   return String(value || "")
     .replace(/&/g, "&amp;")
-    .replace(/\"/g, "&quot;")
+    .replace(/"/g, "&quot;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 }
@@ -577,7 +577,7 @@ async function buildPersonMeta(id) {
     : null;
   const biography = data.biography || "";
   const knownFor = data.known_for_department || "Actor";
-  const description = `Learn about ${name}, ${knownFor}. ${biography.slice(0, 200)}` || undefined;
+  const description = `Learn about ${name}, ${knownFor}. ${biography.slice(0, 200)}`;
 
   // Known for titles
   const knownForTitles = (data.combined_credits?.cast || [])
