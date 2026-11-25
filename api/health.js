@@ -1,3 +1,4 @@
+import { createClient } from "@supabase/supabase-js";
 import { json } from "./_lib/http.js";
 import { getServerEnv, getMissingServerEnv } from "./_lib/env.js";
 import { ensureRequestId } from "./_lib/requestSecurity.js";
@@ -9,52 +10,35 @@ const REQUIRED_DEPENDENCIES = [
   "TMDB_API_KEY",
   "CRON_SECRET",
 ];
-const PROBE_TIMEOUT_MS = 1500;
+const PROBE_TIMEOUT_MS = 3000;
 
-let databaseProbe = async (supabaseUrl, serviceRoleKey) => {
+async function defaultDatabaseProbe(supabaseUrl, serviceRoleKey) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
   try {
-    const res = await fetch(`${supabaseUrl.replace(/\/+$/, "")}/rest/v1/`, {
-      method: "HEAD",
-      signal: controller.signal,
-      headers: {
-        apikey: serviceRoleKey,
-        Authorization: `Bearer ${serviceRoleKey}`,
-      },
+    const client = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
     });
-    return res.ok || res.status === 404;
+    const { error } = await client
+      .from("profiles")
+      .select("id", { head: true, count: "exact" })
+      .abortSignal(controller.signal);
+    return !error;
   } catch {
     return false;
   } finally {
     clearTimeout(timeout);
   }
-};
+}
+
+let databaseProbe = defaultDatabaseProbe;
 
 export function setDatabaseProbeForTests(probe) {
   databaseProbe = probe;
 }
 
 export function resetDatabaseProbeForTests() {
-  databaseProbe = async (supabaseUrl, serviceRoleKey) => {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
-    try {
-      const res = await fetch(`${supabaseUrl.replace(/\/+$/, "")}/rest/v1/`, {
-        method: "HEAD",
-        signal: controller.signal,
-        headers: {
-          apikey: serviceRoleKey,
-          Authorization: `Bearer ${serviceRoleKey}`,
-        },
-      });
-      return res.ok || res.status === 404;
-    } catch {
-      return false;
-    } finally {
-      clearTimeout(timeout);
-    }
-  };
+  databaseProbe = defaultDatabaseProbe;
 }
 
 async function buildDependencies() {
