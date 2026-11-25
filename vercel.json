@@ -22,6 +22,10 @@
       "destination": "/api/follow"
     },
     {
+      "source": "/api/user/followed",
+      "destination": "/api/follow"
+    },
+    {
       "source": "/api/enrichment/ratings",
       "destination": "/api/enrichment?action=ratings"
     },
