@@ -1,15 +1,25 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { ChevronDown, LogOut, User as UserIcon } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import {
+  BarChart2,
+  Bell,
+  CalendarDays,
+  LogOut,
+  Settings,
+  Trophy,
+  User as UserIcon,
+} from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { Image } from '@/components/ui/Image';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -60,6 +70,25 @@ const itemVariants = {
   }),
 };
 
+interface DropdownNavItem {
+  path: string;
+  labelKey: string;
+  defaultLabel: string;
+  icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+}
+
+const profileInsightsItems: DropdownNavItem[] = [
+  { path: '/profile', labelKey: 'nav.profile', defaultLabel: 'Profile', icon: UserIcon },
+  { path: '/stats', labelKey: 'nav.stats', defaultLabel: 'Stats', icon: BarChart2 },
+  { path: '/achievements', labelKey: 'nav.achievements', defaultLabel: 'Achievements', icon: Trophy },
+  { path: '/year-in-review', labelKey: 'nav.yearInReview', defaultLabel: 'Year In Review', icon: CalendarDays },
+];
+
+const accountAlertsItems: DropdownNavItem[] = [
+  { path: '/settings', labelKey: 'nav.settings', defaultLabel: 'Settings', icon: Settings },
+  { path: '/notifications', labelKey: 'notifications.title', defaultLabel: 'Notifications', icon: Bell },
+];
+
 export function UserProfileDropdown({
   profilePhoto,
   displayName,
@@ -68,6 +97,7 @@ export function UserProfileDropdown({
   const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const [isOpen, setIsOpen] = React.useState(false);
+  const { pathname } = useLocation();
   const navigate = useNavigate();
 
   const userEmail = user?.email || '';
@@ -78,6 +108,41 @@ export function UserProfileDropdown({
     await signOut();
     navigate("/", { replace: true });
   };
+
+  const renderNavGroup = (items: DropdownNavItem[]) => (
+    <DropdownMenuGroup className="p-1.5">
+      {items.map((item) => {
+        const Icon = item.icon;
+        const isActive = pathname === item.path;
+        return (
+          <DropdownMenuItem key={item.path} asChild>
+            <Link
+              to={item.path}
+              onClick={() => setIsOpen(false)}
+              aria-current={isActive ? 'page' : undefined}
+              className={cn(
+                'flex min-h-10 w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-primary/10 font-semibold text-primary'
+                  : 'text-foreground/90 hover:text-foreground focus:bg-accent focus:text-accent-foreground',
+              )}
+            >
+              <Icon
+                className={cn(
+                  'h-4 w-4 shrink-0',
+                  isActive ? 'text-primary' : 'text-muted-foreground',
+                )}
+                aria-hidden={true}
+              />
+              <span className="min-w-0 flex-1 truncate">
+                {t(item.labelKey, item.defaultLabel)}
+              </span>
+            </Link>
+          </DropdownMenuItem>
+        );
+      })}
+    </DropdownMenuGroup>
+  );
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen} modal={false}>
@@ -129,7 +194,7 @@ export function UserProfileDropdown({
             <DropdownMenuContent
               align="end"
               className={cn(
-                'w-56 bg-popover border-border/50 shadow-xl',
+                'w-60 bg-popover border-border/50 shadow-xl',
                 'p-0 overflow-hidden'
               )}
               style={{
@@ -142,7 +207,7 @@ export function UserProfileDropdown({
                 custom={0}
                 initial="hidden"
                 animate="visible"
-                className="px-4 py-4 border-b border-border/50 bg-card/80"
+                className="px-4 py-4 bg-card/80"
               >
                 <div
                   className="flex items-center gap-3 group cursor-pointer"
@@ -182,24 +247,35 @@ export function UserProfileDropdown({
                 </div>
               </motion.div>
 
+              <DropdownMenuSeparator className="my-0 bg-border/50" />
+
+              {renderNavGroup(profileInsightsItems)}
+
+              <DropdownMenuSeparator className="my-0 bg-border/50" />
+
+              {renderNavGroup(accountAlertsItems)}
+
+              <DropdownMenuSeparator className="my-0 bg-border/50" />
+
               {/* Logout Section */}
               <motion.div
                 variants={itemVariants}
                 custom={1}
                 initial="hidden"
                 animate="visible"
-                className="py-2"
+                className="p-1.5"
               >
                 <DropdownMenuItem asChild>
                   <button
+                    type="button"
                     onClick={handleSignOut}
                     className={cn(
-                      'flex w-full items-center gap-3 px-4 py-2 text-sm cursor-pointer group',
+                      'flex min-h-10 w-full items-center gap-3 rounded-lg px-3 py-2 text-sm cursor-pointer group',
                       'text-red-500 transition-colors duration-150',
                       'hover:bg-red-500/10 hover:text-red-600'
                     )}
                   >
-                    <LogOut className="w-4 h-4 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                    <LogOut className="w-4 h-4 shrink-0 group-hover:scale-110 transition-transform" aria-hidden={true} />
                     <span>{t('nav.signOut', 'Sign Out')}</span>
                   </button>
                 </DropdownMenuItem>
