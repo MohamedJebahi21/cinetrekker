@@ -7,6 +7,10 @@ const source = fs.readFileSync(
   path.join(process.cwd(), "src/pages/Profile.tsx"),
   "utf8",
 );
+const tasteBreakdownSource = fs.readFileSync(
+  path.join(process.cwd(), "src/components/profile/ProfileTasteBreakdown.tsx"),
+  "utf8",
+);
 
 test("favorite removal requires a deliberate confirmation step", () => {
   assert.match(source, /pendingFavoriteRemoval/);
@@ -16,8 +20,8 @@ test("favorite removal requires a deliberate confirmation step", () => {
 });
 
 test("Taste & Stats explains its methodology and provides a history action", () => {
-  assert.match(source, /tasteMethodTitle/);
-  assert.match(source, /tasteMethodCopy/);
-  assert.match(source, /to="\/watched"/);
-  assert.match(source, /reviewHistory/);
+  assert.match(tasteBreakdownSource, /tasteMethodTitle/);
+  assert.match(tasteBreakdownSource, /tasteMethodCopy/);
+  assert.match(tasteBreakdownSource, /to="\/watched"/);
+  assert.match(tasteBreakdownSource, /reviewHistory/);
 });
