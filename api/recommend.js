@@ -72,7 +72,7 @@ async function mapConcurrently(items, concurrency, fn) {
       try {
         const res = await fn(items[currentIndex], currentIndex);
         results[currentIndex] = res;
-      } catch (err) {
+      } catch (_err) {
         results[currentIndex] = null;
       }
     }

@@ -363,7 +363,6 @@ async function buildMovieMeta(id) {
 
   // Build description
   const releaseDate = data.release_date || "";
-  const year = releaseDate ? new Date(releaseDate).getFullYear() : "";
   const rating = data.vote_average || 0;
   const overview = data.overview || "";
   const description = [overview, releaseDate ? `Release: ${releaseDate}.` : "", rating > 0 ? `Rating: ${rating.toFixed(1)}/10.` : ""]
@@ -473,7 +472,6 @@ async function buildTVMeta(id) {
     : null;
 
   const releaseDate = data.first_air_date || "";
-  const year = releaseDate ? new Date(releaseDate).getFullYear() : "";
   const rating = data.vote_average || 0;
   const overview = data.overview || "";
   const description = [overview, releaseDate ? `First aired: ${releaseDate}.` : "", rating > 0 ? `Rating: ${rating.toFixed(1)}/10.` : ""]
@@ -693,7 +691,7 @@ export default async function handler(req, res) {
     return res.status(404).send("Not found");
   }
 
-  const { mediaType, id, slug } = parsed;
+  const { mediaType, id } = parsed;
 
   try {
     let meta;

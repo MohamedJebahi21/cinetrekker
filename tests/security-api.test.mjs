@@ -24,6 +24,7 @@ import {
 } from "../api/_lib/supabaseAdmin.js";
 import { resetSecurityAlertsForTests } from "../api/_lib/securityMonitor.js";
 import { resetOperationalAlertsForTests } from "../api/_lib/operationalMonitor.js";
+import { parseBody } from "../api/_lib/http.js";
 
 function createMockReq({
   method = "GET",
@@ -765,4 +766,79 @@ test("consolidated GET /api/follow validates user_id query param and enforces ow
   await followHandler(mismatchReq, mismatchRes);
   assert.equal(mismatchRes.statusCode, 403);
   assert.match(mismatchRes.body.error, /user_id does not match/i);
+});
+
+test("parseBody handles object, valid JSON string, malformed JSON, missing, null, and primitive inputs", () => {
+  assert.deepEqual(parseBody({ body: { name: "Alice" } }), { name: "Alice" });
+  assert.deepEqual(parseBody({ body: '{"name":"Alice","count":2}' }), { name: "Alice", count: 2 });
+  assert.deepEqual(parseBody({ body: "{not-valid-json" }), {});
+  assert.deepEqual(parseBody({ body: "" }), {});
+  assert.deepEqual(parseBody({}), {});
+  assert.deepEqual(parseBody(undefined), {});
+  assert.deepEqual(parseBody({ body: null }), {});
+  assert.deepEqual(parseBody(null), {});
+  assert.deepEqual(parseBody({ body: 42 }), {});
+  assert.deepEqual(parseBody({ body: true }), {});
+});
+
+test("feedback endpoint handles stringified JSON and malformed JSON bodies consistently", async () => {
+  process.env.TURNSTILE_SECRET_KEY = "turnstile-secret";
+  process.env.RESEND_API_KEY = "resend-secret";
+  process.env.FEEDBACK_TO_EMAIL = "alerts@example.com";
+
+  const originalFetch = global.fetch;
+  global.fetch = async (url) => {
+    if (String(url).includes("turnstile")) {
+      return {
+        ok: true,
+        async json() {
+          return { success: true };
+        },
+      };
+    }
+
+    return {
+      ok: true,
+      async json() {
+        return { id: "email-string-json" };
+      },
+    };
+  };
+
+  try {
+    const validStringReq = createMockReq({
+      method: "POST",
+      headers: {
+        origin: "http://localhost:8080",
+        "x-forwarded-for": "198.51.100.77",
+      },
+      body: JSON.stringify({
+        name: "Alice",
+        email: "alice@example.com",
+        message: "Great app!",
+        captchaToken: "token-1",
+        website: "",
+      }),
+      url: "/api/feedback",
+    });
+    const validStringRes = createMockRes();
+    await feedbackHandler(validStringReq, validStringRes);
+    assert.equal(validStringRes.statusCode, 200);
+    assert.deepEqual(validStringRes.body, { ok: true });
+
+    const malformedReq = createMockReq({
+      method: "POST",
+      headers: {
+        origin: "http://localhost:8080",
+        "x-forwarded-for": "198.51.100.78",
+      },
+      body: "{malformed-json",
+      url: "/api/feedback",
+    });
+    const malformedRes = createMockRes();
+    await feedbackHandler(malformedReq, malformedRes);
+    assert.equal(malformedRes.statusCode, 400);
+  } finally {
+    global.fetch = originalFetch;
+  }
 });
