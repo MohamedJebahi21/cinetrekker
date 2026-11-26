@@ -5,7 +5,7 @@ import test from "node:test";
 const source = (relativePath) => readFile(new URL(`../${relativePath}`, import.meta.url), "utf8");
 
 test("mobile audit remediations preserve navigation position, form access, and compact-screen hierarchy", async () => {
-  const [scrollToTop, bottomNav, footer, hero, nav, guestBanner, discover, details, carousel, styles, lintConfig, chunkRecovery] = await Promise.all([
+  const [scrollToTop, bottomNav, footer, hero, nav, guestBanner, discover, details, detailsHero, carousel, styles, lintConfig, chunkRecovery] = await Promise.all([
     source("src/components/ScrollToTop.tsx"),
     source("src/components/MobileBottomNav.tsx"),
     source("src/components/Footer.tsx"),
@@ -14,6 +14,7 @@ test("mobile audit remediations preserve navigation position, form access, and c
     source("src/components/GuestSyncBanner.tsx"),
     source("src/pages/Discover.tsx"),
     source("src/pages/Details.tsx"),
+    source("src/components/details/DetailsHero.tsx"),
     source("src/components/MediaCarouselEnhanced.tsx"),
     source("src/index.css"),
     source("eslint.config.js"),
@@ -54,7 +55,7 @@ test("mobile audit remediations preserve navigation position, form access, and c
 
   assert.match(details, /className="h-11 w-11 rounded-full"[\s\S]{0,200}aria-label="Scroll videos left"/);
   assert.match(details, /className="h-11 w-11 rounded-full"[\s\S]{0,200}aria-label="Scroll videos right"/);
-  assert.match(details, /className="details-hero relative overflow-hidden md:min-h-\[clamp\(420px,68vh,740px\)\]"/);
+  assert.match(detailsHero, /className="details-hero relative overflow-hidden md:min-h-\[clamp\(420px,68vh,740px\)\]"/);
   assert.match(details, /const isSelectedSeasonAvailable =/);
   assert.match(details, /enabled: isSelectedSeasonAvailable/);
   assert.match(details, /Promise\.allSettled\(availableSeasonNumbers\.map/);

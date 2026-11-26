@@ -14,12 +14,10 @@ import {
   PlayCircle,
   Loader2,
   Share2,
-  ExternalLink,
   Globe,
   Film,
   Tv,
   TrendingUp,
-  DollarSign,
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
@@ -52,18 +50,9 @@ import MovieSchema from "@/components/MovieSchema";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
   Select,
@@ -73,7 +62,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
-import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { WatchedStatusDialog } from "@/components/WatchedStatusDialog";
 import TrailerModal from "@/components/TrailerModal";
@@ -95,18 +83,18 @@ import {
   buildCanonicalUrl,
   buildMediaPath,
   buildPersonPath,
-  getMediaAltText,
   parseMediaPath,
   toBreadcrumbJsonLd,
 } from "@/lib/seo";
 
-import { ScoreRing } from "@/components/details/ScoreRing";
+import { DetailsHero } from "@/components/details/DetailsHero";
+import { DetailsEpisodesDialog } from "@/components/details/DetailsEpisodesDialog";
+import { DetailsSidebar } from "@/components/details/DetailsSidebar";
 import { VideoCard } from "@/components/details/VideoCard";
 import { DeferredBlock } from "@/components/details/DeferredBlock";
 import { Reveal } from "@/components/details/Reveal";
 import {
   getPolicyRatingTag,
-  formatCurrency,
   getStatusConfig,
 } from "@/components/details/detailsFormatters";
 
@@ -721,208 +709,36 @@ export default function Details() {
       {/* ══════════════════════════════════════════════
           CINEMATIC HERO — full bleed with parallax
       ══════════════════════════════════════════════ */}
-      <div ref={heroRef} className="details-hero relative overflow-hidden md:min-h-[clamp(420px,68vh,740px)]">
-        {/* Parallax backdrop */}
-        <div ref={backdropRef} className="details-hero-backdrop absolute will-change-transform" style={{ inset: "-15% 0 0 0", height: "130%" }}>
-          {backdropUrl ? (
-            <Image src={backdropUrl} srcSet={backdropSrcSet || undefined} sizes="100vw" alt={getMediaAltText(title, mediaType, "backdrop")} width={1280} height={720} fetchPriority="high" loading="eager" priority className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800" />
-          )}
-        </div>
-
-        {/* Layered overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/78 to-black/15 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-transparent pointer-events-none" />
-
-        {/* Back button */}
-        <Link to="/" className="absolute top-20 left-4 z-20 flex items-center gap-2 rounded-lg border border-white/15 bg-black/45 px-3 py-2 text-sm text-white/80 transition-colors hover:border-white/30 hover:bg-black/65 hover:text-white" aria-label={t("nav.home")}>
-          <ChevronLeft className="w-4 h-4" />{t("nav.home")}
-        </Link>
-
-        {/* Hero content */}
-        <div className="details-hero-content absolute bottom-0 left-0 right-0 z-10">
-          <div className="details-hero-container page-container pb-8 pt-16 md:pb-10">
-            <div className="details-hero-layout flex flex-col md:flex-row md:items-end gap-6 lg:gap-8">
-
-              {/* Poster — large and prominent in the hero */}
-              <div className="details-hero-poster flex-shrink-0 mx-auto md:mx-0 relative group">
-                <div className="relative">
-                  {details.poster_path ? (
-                    <Image
-                      src={posterUrl} srcSet={posterSrcSet || undefined}
-                      sizes="(max-width: 768px) 140px, 200px"
-                      alt={getMediaAltText(title, mediaType, "poster")}
-                      width={500} height={750} loading="lazy" showSkeleton
-                      className="w-36 rounded-xl border border-white/10 shadow-2xl transition-colors duration-200 group-hover:border-primary/40 md:w-44"
-                    />
-                  ) : (
-                    <div className="flex w-36 aspect-[2/3] items-center justify-center rounded-xl border border-white/10 bg-muted/30 md:w-44">
-                      <Film className="w-12 h-12 text-white/30" />
-                    </div>
-                  )}
-                  {/* Score ring on poster */}
-                  {rating > 0 && (
-                    <div className="absolute -bottom-3 -right-3 rounded-full border border-white/10 bg-background p-1 shadow-lg">
-                      <ScoreRing score={rating} size={54} />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Title and metadata */}
-              <div className="details-hero-copy min-w-0 flex-1 space-y-3 md:pb-1">
-                {/* Primary metadata */}
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-white/70">
-                  <span className="uppercase tracking-[0.16em] text-primary">{mediaType === "movie" ? t("common.movie") : t("common.tvShow")}</span>
-                  {year && <><span aria-hidden="true">•</span><span>{year}</span></>}
-                  {contentRatingTag && <><span aria-hidden="true">•</span><span>{contentRatingTag}</span></>}
-                  {statusConfig && details.status && (
-                    <><span aria-hidden="true">•</span><span className="inline-flex items-center gap-1.5"><span className={cn("h-1.5 w-1.5 rounded-full", statusConfig.dot)} />{details.status}</span></>
-                  )}
-                </div>
-
-                {/* Title */}
-                <h1 className="max-w-4xl text-3xl font-black leading-[1.03] text-white drop-shadow-lg md:text-5xl md:leading-[0.98] lg:text-6xl tracking-tight">
-                  {title}
-                </h1>
-
-                {/* Tagline */}
-                {details.tagline && (
-                  <p className="max-w-[58ch] text-sm italic leading-6 text-white/62 md:text-base">"{details.tagline}"</p>
-                )}
-
-                {/* Meta row */}
-                <div className="details-hero-meta flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-white/68">
-                  {details.number_of_seasons && (
-                    <span>{details.number_of_seasons} {t("details.seasons")}</span>
-                  )}
-                  {details.number_of_episodes && (
-                    <span>{details.number_of_episodes} {t("details.episodes")}</span>
-                  )}
-                  {(directors.length > 0 || creators.length > 0) && (
-                    <span className="inline-flex items-center gap-1.5">
-                      <Film className="w-3.5 h-3.5" />
-                      {(directors.length > 0 ? directors : creators).slice(0, 2).map((d: { name: string }) => d.name).join(", ")}
-                    </span>
-                  )}
-                  {details.networks && details.networks.length > 0 && (
-                    <span className="inline-flex items-center gap-1.5">
-                      <Tv className="w-3.5 h-3.5" />
-                      {details.networks.slice(0, 2).map((n: { name: string }) => n.name).join(", ")}
-                    </span>
-                  )}
-                </div>
-
-                {/* Genres */}
-                {details.genres && details.genres.length > 0 && (
-                  <p className="text-sm leading-6 text-white/72">{details.genres.map((g: { id: number; name: string }) => g.name).join(" · ")}</p>
-                )}
-
-                {watchedItem || heroFacts.length > 0 ? (
-                  <div className="details-hero-facts flex min-w-0 flex-wrap items-center gap-2">
-                    {watchedItem && (
-                      <span className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs text-white/80 backdrop-blur-sm">
-                        <span className="font-semibold uppercase tracking-[0.16em] text-white/55">
-                          {t("details.yourLibrary", "Your library")}
-                        </span>
-                        <span className="rounded-full border border-white/10 bg-black/30 px-2 py-0.5 font-medium">
-                          {watchedItem.status?.replace(/_/g, " ") || t("details.watched", "Watched")}
-                        </span>
-                        {typeof watchedItem.rating === "number" ? (
-                          <span className="rounded-full border border-white/10 bg-black/30 px-2 py-0.5 font-medium">
-                            {watchedItem.rating}/10
-                          </span>
-                        ) : null}
-                        {mediaType === "tv" && personalStats ? (
-                          <span className="rounded-full border border-white/10 bg-black/30 px-2 py-0.5 font-medium">
-                            {personalStats.percentageComplete}%
-                          </span>
-                        ) : null}
-                      </span>
-                    )}
-
-                    {heroFacts.map((fact) => {
-                      const Icon = fact.icon;
-                      return (
-                        <span
-                          key={fact.label}
-                          className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-medium text-white/78 backdrop-blur-sm"
-                        >
-                          <Icon className="h-3.5 w-3.5 text-white/55" />
-                          <span>{fact.value}</span>
-                        </span>
-                      );
-                    })}
-                  </div>
-                ) : null}
-
-                {/* Multi-API Enriched Ratings (Rotten Tomatoes, Metacritic, IMDb) */}
-                {enrichedRatings && (enrichedRatings.rottenTomatoes || enrichedRatings.metascore || enrichedRatings.imdbRating) ? (
-                  <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                    {enrichedRatings.rottenTomatoes && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-950/50 px-3 py-1 text-xs font-semibold text-red-300 shadow-sm backdrop-blur-sm">
-                        <span aria-hidden="true">🍅</span>
-                        <span>{enrichedRatings.rottenTomatoes} Rotten Tomatoes</span>
-                      </span>
-                    )}
-                    {enrichedRatings.metascore && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-950/50 px-3 py-1 text-xs font-semibold text-emerald-300 shadow-sm backdrop-blur-sm">
-                        <span aria-hidden="true">Ⓜ️</span>
-                        <span>{enrichedRatings.metascore} Metascore</span>
-                      </span>
-                    )}
-                    {enrichedRatings.imdbRating && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-950/50 px-3 py-1 text-xs font-semibold text-amber-300 shadow-sm backdrop-blur-sm">
-                        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                        <span>{enrichedRatings.imdbRating}/10 IMDb</span>
-                      </span>
-                    )}
-                    {enrichedRatings.boxOffice && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs font-medium text-white/75 backdrop-blur-sm">
-                        <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
-                        <span>{enrichedRatings.boxOffice}</span>
-                      </span>
-                    )}
-                  </div>
-                ) : null}
-
-                {/* TV Broadcast Schedule & Next Episode Countdown (TVMaze) */}
-                {tvSchedule && (tvSchedule.network || tvSchedule.nextEpisode) ? (
-                  <div className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-xl border border-primary/25 bg-primary/10 px-3.5 py-1.5 text-xs text-white/90 shadow-sm backdrop-blur-sm">
-                    <Tv className="h-3.5 w-3.5 text-primary shrink-0" />
-                    {tvSchedule.network && (
-                      <span className="font-semibold text-primary">{tvSchedule.network}</span>
-                    )}
-                    {tvSchedule.days.length > 0 && tvSchedule.time && (
-                      <span className="text-white/70">
-                        {tvSchedule.days.join(", ")} at {tvSchedule.time}
-                      </span>
-                    )}
-                    {tvSchedule.nextEpisode && (
-                      <span className="rounded-md bg-black/40 px-2 py-0.5 font-medium text-white/90">
-                        Next: S{tvSchedule.nextEpisode.season}E{tvSchedule.nextEpisode.number} &ldquo;{tvSchedule.nextEpisode.name}&rdquo; ({tvSchedule.nextEpisode.airdate})
-                      </span>
-                    )}
-                  </div>
-                ) : null}
-
-                {/* Hero CTA */}
-                {featuredTrailerKey && (
-                  <Button
-                    size="lg"
-                    className="w-full justify-center gap-2 bg-white text-black hover:bg-white/90 font-bold shadow-xl hover:shadow-white/20 transition-all hover:scale-[1.02] active:scale-95 rounded-xl sm:w-auto"
-                    onClick={() => handlePlayVideo(featuredTrailerKey)}
-                  >
-                    <PlayCircle className="w-5 h-5 fill-black" />
-                    {t("details.watchTrailer", "Watch Trailer")}
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <DetailsHero
+        heroRef={heroRef}
+        backdropRef={backdropRef}
+        backdropUrl={backdropUrl}
+        backdropSrcSet={backdropSrcSet}
+        posterUrl={posterUrl}
+        posterSrcSet={posterSrcSet}
+        hasPoster={Boolean(details.poster_path)}
+        title={title}
+        mediaType={mediaType}
+        year={year}
+        contentRatingTag={contentRatingTag}
+        statusConfig={statusConfig}
+        status={details.status}
+        tagline={details.tagline}
+        numberOfSeasons={details.number_of_seasons}
+        numberOfEpisodes={details.number_of_episodes}
+        directors={directors}
+        creators={creators}
+        networks={details.networks}
+        genres={details.genres}
+        rating={rating}
+        watchedItem={watchedItem}
+        personalStats={personalStats}
+        heroFacts={heroFacts}
+        enrichedRatings={enrichedRatings}
+        tvSchedule={tvSchedule}
+        featuredTrailerKey={featuredTrailerKey}
+        onPlayVideo={handlePlayVideo}
+      />
 
       {/* ══════════════════════════════════════════════
           STICKY NAV
@@ -1000,71 +816,26 @@ export default function Details() {
               </Button>
 
               {mediaType === "tv" && seasons.length > 0 && user && (
-                <Dialog open={episodesDialogOpen} onOpenChange={setEpisodesDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="gap-2 rounded-xl"><PlayCircle className="w-4 h-4" />{t("episodes.allEpisodes")}</Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>{t("episodes.allEpisodes")} — {title}</DialogTitle>
-                      <DialogDescription>{t("tv.selectEpisodes", "Select the episodes you have watched")}</DialogDescription>
-                    </DialogHeader>
-                    <Accordion type="single" collapsible className="w-full" onValueChange={v => setSelectedSeason(v ? parseInt(v) : null)}>
-                      {seasons.map(n => (
-                        <AccordionItem key={n} value={n.toString()}>
-                          <AccordionTrigger className="md:hover:no-underline">{t("episodes.season")} {n}</AccordionTrigger>
-                          <AccordionContent>
-                            {selectedSeason === n && seasonDetails?.episodes ? (
-                              <div className="space-y-2">
-                                {seasonDetails.episodes.map(ep => {
-                                  const ew = isEpisodeWatched(mediaId, n, ep.episode_number);
-                                  return (
-                                    <div key={ep.id} className={cn("flex items-start gap-3 p-3 rounded-xl transition-colors", ew ? "bg-muted/50" : "md:hover:bg-muted/30")}>
-                                      <Checkbox checked={ew} onCheckedChange={() => handleEpisodeToggle(n, ep.episode_number, ep.name, ep.air_date)} />
-                                      <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                          <span className="text-sm font-medium">E{ep.episode_number}</span>
-                                          <span className={cn("text-sm", ew && "line-through opacity-60")}>{ep.name}</span>
-                                        </div>
-                                        {ep.air_date && <span className="text-xs text-muted-foreground">{new Date(ep.air_date).toLocaleDateString(language)}</span>}
-                                      </div>
-                                      {ep.runtime && <span className="text-xs text-muted-foreground shrink-0">{ep.runtime} {t("details.minutes")}</span>}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            ) : !selectedSeason ? (
-                              <p className="py-4 text-center text-muted-foreground text-sm">{t("details.selectSeasonPrompt", "Choose a season from the dropdown to browse episodes.")}</p>
-                            ) : seasonError || seasonLoadingTimedOut ? (
-                              <AsyncSectionMessage
-                                title={t("common.error", "An error occurred")}
-                                description={t("details.seasonLoadError", "Season episodes could not be loaded.")}
-                                onRetry={() => {
-                                  setSeasonRetryVersion((version) => version + 1);
-                                  void retrySeasonDetails();
-                                }}
-                              />
-                            ) : seasonLoading ? (
-                              <div className="flex min-h-16 items-center justify-center gap-2 py-4 text-muted-foreground text-sm" role="status" aria-busy="true">
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                {t("details.loadingSeasonEpisodes", "Loading season episodes...")}
-                              </div>
-                            ) : (
-                              <AsyncSectionMessage
-                                title={t("common.error", "An error occurred")}
-                                description={t("details.seasonUnavailable", "Season episode details are unavailable right now.")}
-                                onRetry={() => {
-                                  setSeasonRetryVersion((version) => version + 1);
-                                  void retrySeasonDetails();
-                                }}
-                              />
-                            )}
-                          </AccordionContent>
-                        </AccordionItem>
-                      ))}
-                    </Accordion>
-                  </DialogContent>
-                </Dialog>
+                <DetailsEpisodesDialog
+                  open={episodesDialogOpen}
+                  onOpenChange={setEpisodesDialogOpen}
+                  title={title}
+                  seasons={seasons}
+                  selectedSeason={selectedSeason}
+                  onSelectSeason={setSelectedSeason}
+                  seasonDetails={seasonDetails}
+                  seasonLoading={seasonLoading}
+                  seasonError={seasonError}
+                  seasonLoadingTimedOut={seasonLoadingTimedOut}
+                  onRetrySeasonDetails={() => {
+                    setSeasonRetryVersion((version) => version + 1);
+                    void retrySeasonDetails();
+                  }}
+                  mediaId={mediaId}
+                  isEpisodeWatched={isEpisodeWatched}
+                  onToggleEpisode={handleEpisodeToggle}
+                  language={language}
+                />
               )}
             </div>
           </div>
@@ -1390,167 +1161,30 @@ export default function Details() {
           </Reveal>
 
           {/* Sidebar */}
-          <div className="min-w-0 space-y-4">
-            {details.credits?.cast && details.credits.cast.length > 0 && (
-              <Reveal>
-                <div className="rounded-2xl border border-white/8 bg-card/40 p-5 backdrop-blur-sm">
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground">Cast</p>
-                      <p className="mt-1 text-xs text-muted-foreground">Explore the people behind the story.</p>
-                    </div>
-                    <button type="button" onClick={() => scrollTo("cast")} className="shrink-0 text-xs font-semibold text-primary transition-colors hover:text-primary/80">View all</button>
-                  </div>
-                  <div ref={castPreviewScrollRef} className="hide-scrollbar -mx-1 flex max-w-full snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2">
-                    {details.credits.cast.slice(0, 8).map((person: { id: number; name: string; character?: string; profile_path?: string | null }) => (
-                      <Link key={`sidebar-cast-${person.id}`} to={buildPersonPath(person.id, person.name)} className="group/cast w-20 shrink-0 snap-start">
-                        <div className="aspect-[2/3] overflow-hidden rounded-xl border border-white/8 bg-muted/50 transition-colors group-hover/cast:border-primary/40">
-                          {person.profile_path ? (
-                            <Image src={getImageUrl(person.profile_path, "w185") || ""} alt={person.name} width={185} height={278} className="h-full w-full object-cover transition-transform duration-300 group-hover/cast:scale-105" loading="lazy" showSkeleton />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-muted text-xl font-bold text-muted-foreground" aria-hidden="true">{person.name.slice(0, 1)}</div>
-                          )}
-                        </div>
-                        <p className="mt-1.5 line-clamp-2 text-[11px] font-semibold leading-tight text-foreground group-hover/cast:text-primary">{person.name}</p>
-                        <p className="mt-0.5 line-clamp-1 text-[10px] text-muted-foreground">{person.character || "Cast"}</p>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </Reveal>
-            )}
-            {/* Watch options */}
-            <Reveal>
-              <div className="details-panel rounded-2xl border border-white/8 bg-card/40 backdrop-blur-sm p-5">
-                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground mb-4">{t("details.whereToWatch", "Where to Watch")}</p>
-                {flatrateProviders.length > 0 || rentProviders.length > 0 || buyProviders.length > 0 ? (
-                  <div className="space-y-3">
-                    {flatrateProviders.length > 0 && (
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">{t("details.streaming", "Streaming")}</p>
-                        <div className="flex flex-wrap gap-2">{flatrateProviders.map(renderProvider)}</div>
-                      </div>
-                    )}
-                    {rentProviders.length > 0 && (
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Rent</p>
-                        <div className="flex flex-wrap gap-2">{rentProviders.map(renderProvider)}</div>
-                      </div>
-                    )}
-                    {buyProviders.length > 0 && (
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Buy</p>
-                        <div className="flex flex-wrap gap-2">{buyProviders.map(renderProvider)}</div>
-                      </div>
-                    )}
-                    <p className="text-[10px] text-muted-foreground pt-1">Watch options data by JustWatch</p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">{t("details.notAvailableInRegion", "Not available in your region")}</p>
-                )}
-              </div>
-            </Reveal>
-
-            {/* Facts */}
-            <Reveal>
-              <div className="details-panel rounded-2xl border border-white/8 bg-card/40 backdrop-blur-sm p-5">
-                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground mb-4">Details</p>
-                <dl className="space-y-2.5 text-sm">
-                  {details.status && statusConfig && (
-                    <div className="flex min-w-0 justify-between gap-2 items-center">
-                      <dt className="text-muted-foreground">Status</dt>
-                      <dd className={cn("flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border", statusConfig.cls)}>
-                        <span className={cn("w-1.5 h-1.5 rounded-full", statusConfig.dot)} />{details.status}
-                      </dd>
-                    </div>
-                  )}
-                  {releaseDate && (
-                    <div className="flex min-w-0 justify-between gap-2">
-                      <dt className="text-muted-foreground">{mediaType === "movie" ? "Released" : "First aired"}</dt>
-                      <dd className="min-w-0 break-words font-medium text-right text-sm">{new Date(releaseDate).toLocaleDateString(language, { year: "numeric", month: "long", day: "numeric" })}</dd>
-                    </div>
-                  )}
-                  {runtime && (
-                    <div className="flex min-w-0 justify-between gap-2">
-                      <dt className="text-muted-foreground">Runtime</dt>
-                      <dd className="font-medium">{Math.floor(runtime / 60) > 0 ? `${Math.floor(runtime / 60)}h ` : ""}{runtime % 60 > 0 ? `${runtime % 60}m` : ""}</dd>
-                    </div>
-                  )}
-                  {details.original_language && (
-                    <div className="flex min-w-0 justify-between gap-2">
-                      <dt className="text-muted-foreground">Language</dt>
-                      <dd className="flex min-w-0 items-center gap-1 break-words font-medium"><Globe className="w-3 h-3 shrink-0 opacity-60" />{new Intl.DisplayNames([language], { type: "language" }).of(details.original_language) || details.original_language}</dd>
-                    </div>
-                  )}
-                  {details.production_countries && details.production_countries.length > 0 && (
-                    <div className="flex min-w-0 justify-between gap-2">
-                      <dt className="text-muted-foreground">Country</dt>
-                      <dd className="min-w-0 break-words font-medium text-right">{details.production_countries.slice(0, 2).map((c: { name: string }) => c.name).join(", ")}</dd>
-                    </div>
-                  )}
-                  {mediaType === "movie" && (details.budget ?? 0) > 0 && (
-                    <div className="flex justify-between gap-2">
-                      <dt className="text-muted-foreground flex items-center gap-1"><DollarSign className="w-3 h-3 opacity-60" />Budget</dt>
-                      <dd className="font-medium">{formatCurrency(details.budget!)}</dd>
-                    </div>
-                  )}
-                  {mediaType === "movie" && (details.revenue ?? 0) > 0 && (
-                    <div className="flex justify-between gap-2">
-                      <dt className="text-muted-foreground flex items-center gap-1"><TrendingUp className="w-3 h-3 opacity-60" />Box Office</dt>
-                      <dd className="font-bold text-emerald-400">{formatCurrency(details.revenue!)}</dd>
-                    </div>
-                  )}
-                  {details.production_companies && details.production_companies.length > 0 && (
-                    <div className="flex min-w-0 justify-between gap-2">
-                      <dt className="text-muted-foreground shrink-0">Studio</dt>
-                      <dd className="min-w-0 break-words font-medium text-right text-xs leading-relaxed">{details.production_companies.slice(0, 3).map((c: { name: string }) => c.name).join(" · ")}</dd>
-                    </div>
-                  )}
-                </dl>
-                {/* External links */}
-                {(imdbId || homepage) && (
-                  <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/6">
-                    {imdbId && (
-                      <a href={`https://www.imdb.com/title/${imdbId}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F5C518]/10 border border-[#F5C518]/25 text-[#F5C518] text-xs font-bold hover:bg-[#F5C518]/20 transition-colors">
-                        IMDb <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
-                    {homepage && (
-                      <a href={homepage} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/12 text-foreground/60 text-xs font-medium hover:bg-white/10 hover:text-foreground transition-colors">
-                        Official Site <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
-                  </div>
-                )}
-              </div>
-            </Reveal>
-
-            {/* TV personal stats */}
-            {user && personalStats && mediaType === "tv" && (
-              <Reveal>
-                <div className="details-panel rounded-2xl border border-white/8 bg-card/40 backdrop-blur-sm p-5">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground mb-4">{t("details.yourStats", "Your Progress")}</p>
-                  <div className="details-progress-grid grid grid-cols-3 gap-3 mb-4">
-                    <div className="text-center rounded-xl bg-white/5 p-3">
-                      <p className="text-xl font-black text-foreground">{personalStats.episodesWatched}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">Episodes</p>
-                    </div>
-                    <div className="text-center rounded-xl bg-white/5 p-3">
-                      <p className="text-xl font-black text-foreground">{personalStats.totalHours}h</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">Watched</p>
-                    </div>
-                    <div className="text-center rounded-xl bg-white/5 p-3">
-                      <p className="text-xl font-black text-primary">{personalStats.percentageComplete}%</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">Done</p>
-                    </div>
-                  </div>
-                  <div className="w-full bg-muted/60 rounded-full h-2 overflow-hidden">
-                    <div className="h-2 rounded-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-700" style={{ width: `${personalStats.percentageComplete}%` }} />
-                  </div>
-                </div>
-              </Reveal>
-            )}
-          </div>
+          <DetailsSidebar
+            cast={details.credits?.cast}
+            castPreviewScrollRef={castPreviewScrollRef}
+            onScrollToCast={() => scrollTo("cast")}
+            flatrateProviders={flatrateProviders}
+            rentProviders={rentProviders}
+            buyProviders={buyProviders}
+            renderProvider={renderProvider}
+            status={details.status}
+            statusConfig={statusConfig}
+            releaseDate={releaseDate}
+            mediaType={mediaType}
+            language={language}
+            runtime={runtime}
+            originalLanguage={details.original_language}
+            productionCountries={details.production_countries}
+            budget={details.budget}
+            revenue={details.revenue}
+            productionCompanies={details.production_companies}
+            imdbId={imdbId}
+            homepage={homepage}
+            showPersonalStats={Boolean(user)}
+            personalStats={personalStats}
+          />
         </div>
 
         {/* ─── VIDEO GALLERY ──────────────────────────────────── */}
