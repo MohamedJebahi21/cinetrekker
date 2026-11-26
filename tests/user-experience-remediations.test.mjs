@@ -37,11 +37,15 @@ test("Home page does not render Discovery Hub or HomeStatsSnapshot for authentic
 
 test("Profile page renders HomeStatsSnapshot in the overview section", () => {
   const profileSource = fs.readFileSync("src/pages/Profile.tsx", "utf-8");
+  const overviewStatsSource = fs.readFileSync("src/components/profile/ProfileOverviewStats.tsx", "utf-8");
 
-  assert.match(profileSource, /import\("@\/components\/home\/HomeStatsSnapshot"\)/);
-  assert.match(profileSource, /<HomeStatsSnapshot/);
+  assert.match(profileSource, /<ProfileOverviewStats/);
   assert.match(profileSource, /watched=\{watched\}/);
   assert.match(profileSource, /watchlist=\{watchlist\}/);
+  assert.match(overviewStatsSource, /import\("@\/components\/home\/HomeStatsSnapshot"\)/);
+  assert.match(overviewStatsSource, /<HomeStatsSnapshot/);
+  assert.match(overviewStatsSource, /watched=\{watched\}/);
+  assert.match(overviewStatsSource, /watchlist=\{watchlist\}/);
 });
 
 test("DailyCheckInCard uses clean and restrained styling", () => {
@@ -158,6 +162,7 @@ test("Navigation overhaul items 1-8: focused product map, first-class calendar, 
   const discoverSource = fs.readFileSync("src/pages/Discover.tsx", "utf-8");
   const homeSource = fs.readFileSync("src/pages/Index.tsx", "utf-8");
   const profileSource = fs.readFileSync("src/pages/Profile.tsx", "utf-8");
+  const overviewStatsSource = fs.readFileSync("src/components/profile/ProfileOverviewStats.tsx", "utf-8");
 
   // 1 & 2: Authenticated burger groups are concise (Tracking & Library, Explore & Account) and include Calendar
   assert.match(routesSource, /authenticatedBurgerGroups/);
@@ -177,10 +182,11 @@ test("Navigation overhaul items 1-8: focused product map, first-class calendar, 
   }
 
   // 5: Gamification pile folded into Profile
-  assert.match(profileSource, /to="\/stats"/);
-  assert.match(profileSource, /to="\/achievements"/);
-  assert.match(profileSource, /to="\/quests"/);
-  assert.match(profileSource, /to="\/year-in-review"/);
+  assert.match(profileSource, /<ProfileOverviewStats/);
+  assert.match(overviewStatsSource, /to="\/stats"/);
+  assert.match(overviewStatsSource, /to="\/achievements"/);
+  assert.match(overviewStatsSource, /to="\/quests"/);
+  assert.match(overviewStatsSource, /to="\/year-in-review"/);
 
   // 6: No duplicate Home or Search in burger groups; no duplicate Watchlist/Watched/Profile shortcuts in XP card
   const authGroupMatch = routesSource.match(/export const authenticatedBurgerGroups: NavigationGroup\[\] = (\[[\s\S]*?\]);/);
