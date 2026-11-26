@@ -1,5 +1,6 @@
 import { enforceRequestSecurity, isAllowedOrigin } from './_lib/requestSecurity.js';
 import { getBotProtectionClientConfig, verifyBotProtection } from './_lib/botProtection.js';
+import { parseBody } from './_lib/http.js';
 import { createServerLogger } from './_lib/logger.js';
 import { reportSecurityEvent } from './_lib/securityMonitor.js';
 
@@ -11,19 +12,6 @@ const logger = createServerLogger("feedback");
 function normalizeText(value, maxLength) {
   if (typeof value !== 'string') return '';
   return value.trim().slice(0, maxLength);
-}
-
-function parseBody(req) {
-  if (!req || typeof req !== 'object') return {};
-  if (req.body && typeof req.body === 'object') return req.body;
-  if (typeof req.body === 'string') {
-    try {
-      return JSON.parse(req.body);
-    } catch {
-      return {};
-    }
-  }
-  return {};
 }
 
 export default async function handler(req, res) {
