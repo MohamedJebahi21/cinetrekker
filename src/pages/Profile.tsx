@@ -68,6 +68,7 @@ import { ProfileIdentityHero } from "@/components/profile/ProfileIdentityHero";
 import { PrivateProfileSkeleton } from "@/components/profile/ProfilePageSkeletons";
 import { ProfileTasteBreakdown } from "@/components/profile/ProfileTasteBreakdown";
 import { ProfileOverviewStats } from "@/components/profile/ProfileOverviewStats";
+import { ProfileFavoriteRemovalDialog } from "@/components/profile/ProfileFavoriteRemovalDialog";
 import { humanizeUiText } from "@/lib/humanize-ui-text";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePinnedFavorites } from "@/hooks/usePinnedFavorites";
@@ -125,7 +126,7 @@ type PinnedFavoriteRef = {
   mediaType: "movie" | "tv";
 };
 
-type PendingFavoriteRemoval = PinnedFavoriteRef & {
+export type PendingFavoriteRemoval = PinnedFavoriteRef & {
   title: string;
 };
 
@@ -2826,46 +2827,12 @@ export default function Profile() {
                   </motion.section>
                   ) : null}
 
-                  <Dialog
-                    open={Boolean(pendingFavoriteRemoval)}
-                    onOpenChange={(open) => {
-                      if (!open) setPendingFavoriteRemoval(null);
-                    }}
-                  >
-                    <DialogContent className="max-w-md border-border bg-card text-foreground">
-                      <DialogHeader>
-                        <DialogTitle>{text("profile.confirmFavoriteRemovalTitle", "Remove from favorites?")}</DialogTitle>
-                        <DialogDescription>
-                          {pendingFavoriteRemoval
-                            ? text(
-                                "profile.confirmFavoriteRemovalDescription",
-                                "{{title}} will be removed from your favorites shelf. You can add it back anytime.",
-                              ).replace("{{title}}", pendingFavoriteRemoval.title)
-                            : ""}
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="mt-2 flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setPendingFavoriteRemoval(null)}>
-                          {text("common.cancel", "Cancel")}
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={() => {
-                            if (pendingFavoriteRemoval) {
-                              unpinFavorite(
-                                pendingFavoriteRemoval.mediaId,
-                                pendingFavoriteRemoval.mediaType,
-                                pendingFavoriteRemoval.title,
-                              );
-                            }
-                            setPendingFavoriteRemoval(null);
-                          }}
-                        >
-                          {text("profile.removeFavorite", "Remove favorite")}
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                  <ProfileFavoriteRemovalDialog
+                    pendingRemoval={pendingFavoriteRemoval}
+                    onClose={() => setPendingFavoriteRemoval(null)}
+                    onConfirm={unpinFavorite}
+                    text={text}
+                  />
 
                   <Dialog
                     open={isFavoritesPickerOpen}

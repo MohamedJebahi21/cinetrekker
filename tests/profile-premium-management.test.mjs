@@ -11,12 +11,16 @@ const tasteBreakdownSource = fs.readFileSync(
   path.join(process.cwd(), "src/components/profile/ProfileTasteBreakdown.tsx"),
   "utf8",
 );
+const removalDialogSource = fs.readFileSync(
+  path.join(process.cwd(), "src/components/profile/ProfileFavoriteRemovalDialog.tsx"),
+  "utf8",
+);
 
 test("favorite removal requires a deliberate confirmation step", () => {
   assert.match(source, /pendingFavoriteRemoval/);
   assert.match(source, /requestFavoriteRemoval/);
-  assert.match(source, /confirmFavoriteRemovalTitle/);
-  assert.match(source, /unpinFavorite\(\s*pendingFavoriteRemoval\.mediaId/);
+  assert.match(removalDialogSource, /confirmFavoriteRemovalTitle/);
+  assert.match(source, /onConfirm=\{unpinFavorite\}/);
 });
 
 test("Taste & Stats explains its methodology and provides a history action", () => {
