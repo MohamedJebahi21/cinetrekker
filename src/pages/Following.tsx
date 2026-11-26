@@ -329,7 +329,7 @@ export default function Following() {
                   <div className="absolute inset-0 bg-primary/30 blur-md rounded-full" />
                   <Heart className="relative w-8 h-8 text-primary fill-primary/10" aria-hidden="true" />
                 </div>
-                {t("nav.following", "Following")}
+                {t("nav.following", "Tracked Shows")}
               </h1>
               <p className="text-muted-foreground mt-2">
                 {t("following.followedCount", "{{count}} titles you're tracking", {

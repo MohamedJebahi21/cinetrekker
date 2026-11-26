@@ -341,11 +341,16 @@ export function UnifiedNav() {
             </div>
           ) : (
             <div className="topbar-action-group">
-            <Button asChild variant="ghost" size="icon" className="topbar-icon-button">
-              <Link to="/login" aria-label={t("nav.signIn", "Sign In")}>
-                <User className="h-5 w-5" />
-              </Link>
-            </Button>
+              <Button
+                asChild
+                variant="ghost"
+                className="h-9.5 shrink-0 gap-1.5 rounded-[0.625rem] px-2.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 hover:text-primary"
+              >
+                <Link to="/login">
+                  <User className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span className="whitespace-nowrap">{t("nav.signIn", "Sign In")}</span>
+                </Link>
+              </Button>
             </div>
           )}
 

@@ -24,3 +24,8 @@ test("shared navigation keeps the core destinations and main-only destinations i
     ["/", "/watchlist", "/discover", "/search"],
   );
 });
+
+test("R08 and R13: guest top-bar Sign In is labeled and /following uses Tracked Shows", () => {
+  assert.match(unifiedNavSource, /to="\/login"[\s\S]*?<span className="whitespace-nowrap">\{t\("nav\.signIn", "Sign In"\)\}<\/span>/);
+  assert.match(routesSource, /path: "\/following",\s*labelKey: "nav\.following",\s*defaultLabel: "Tracked Shows"/);
+});

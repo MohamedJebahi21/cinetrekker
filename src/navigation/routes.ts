@@ -44,7 +44,7 @@ export const allRouteDefinitions: NavigationRoute[] = [
   { path: "/watched", labelKey: "nav.watched", defaultLabel: "Watched", icon: CheckSquare, group: "tracking", descKey: "navDescription.watched", defaultDesc: "Your logged watch history." },
   { path: "/calendar", labelKey: "nav.calendar", defaultLabel: "Calendar", icon: CalendarDays, group: "tracking", descKey: "navDescription.calendar", defaultDesc: "TV schedule and movie release tracker." },
   { path: "/collections", labelKey: "nav.collections", defaultLabel: "Collections", icon: FolderHeart, group: "tracking", descKey: "navDescription.collections", defaultDesc: "Curate themed lists worth sharing." },
-  { path: "/following", labelKey: "nav.following", defaultLabel: "Following", icon: Heart, group: "tracking", descKey: "navDescription.following", defaultDesc: "Titles you are tracking for updates." },
+  { path: "/following", labelKey: "nav.following", defaultLabel: "Tracked Shows", icon: Heart, group: "tracking", descKey: "navDescription.following", defaultDesc: "Titles you are tracking for updates." },
   { path: "/stats", labelKey: "nav.stats", defaultLabel: "Stats", icon: BarChart2, group: "tracking", descKey: "navDescription.stats", defaultDesc: "Detailed analysis of your viewing habits." },
   { path: "/recommendations", labelKey: "nav.recommendations", defaultLabel: "Recommendations", icon: Sparkles, group: "explore", descKey: "navDescription.recommendations", defaultDesc: "Taste-matched suggestions for your next watch." },
   { path: "/quests", labelKey: "nav.quests", defaultLabel: "Monthly Quests", icon: Trophy, group: "explore", descKey: "navDescription.quests", defaultDesc: "Time-limited challenges and rewards." },

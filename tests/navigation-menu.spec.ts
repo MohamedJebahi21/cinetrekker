@@ -57,3 +57,36 @@ test("mobile bottom navigation exposes its visual order and visible keyboard foc
     expect(focusStyle).toBe(true);
   }
 });
+
+test("R08: guest Sign In button is visibly labeled and fits cleanly at 768px and 1280px", async ({ page }) => {
+  for (const viewport of [
+    { width: 768, height: 1024 },
+    { width: 1280, height: 800 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/");
+
+    const header = page.locator("header");
+    const signInLink = header.getByRole("link", { name: "Sign In" });
+    await expect(signInLink).toBeVisible();
+    await expect(signInLink).toHaveText("Sign In");
+    await expect(signInLink).toHaveAttribute("href", "/login");
+
+    const metrics = await page.evaluate(() => {
+      const link = document.querySelector('header a[href="/login"]');
+      const hdr = document.querySelector("header");
+      if (!link || !hdr) return null;
+      const rect = link.getBoundingClientRect();
+      const hdrRect = hdr.getBoundingClientRect();
+      return {
+        rightOverflow: rect.right > hdrRect.right + 1,
+        docOverflow: document.documentElement.scrollWidth > window.innerWidth,
+        height: rect.height,
+      };
+    });
+    expect(metrics).not.toBeNull();
+    expect(metrics!.rightOverflow).toBe(false);
+    expect(metrics!.docOverflow).toBe(false);
+    expect(metrics!.height).toBeLessThanOrEqual(48);
+  }
+});
